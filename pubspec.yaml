@@ -14,6 +14,8 @@ dependencies:
   # Offline recovery of wallet EIP-712 signatures; no keys are generated.
   web3dart: 3.0.3
   decimal: ^3.2.6
+  # Preserve repeating financial ratios until the final exchange-step floor.
+  rational: ^2.2.3
   http: ^1.6.0
   web_socket_channel: ^3.0.3
   privy_flutter: 0.10.2

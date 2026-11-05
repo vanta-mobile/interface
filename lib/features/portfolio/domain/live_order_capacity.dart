@@ -66,7 +66,10 @@ class LiveOrderCapacity {
     final riskCap = notionalCap > exposure.currentNotional ? notionalCap : exposure.currentNotional;
     bool fits(Decimal quantity) {
       final cost = exposure.cost(
-        buy: buy, quantity: quantity, marginPrice: marginPrice, lossPrice: lossPrice,
+        buy: buy,
+        quantity: quantity,
+        marginPrice: marginPrice,
+        lossPrice: lossPrice,
       );
       return cost.total <= budget &&
           cost.notionalAfter <= riskCap &&
@@ -93,7 +96,10 @@ class LiveOrderCapacity {
         : rule.minimum + Decimal.fromBigInt(low - BigInt.one) * rule.step;
     if (maximum * notionalPrice < minimumNotional) maximum = Decimal.zero;
     return LiveOrderSideCapacity(
-      buy: buy, maximum: maximum, conversionPrice: conversionPrice, rule: rule,
+      buy: buy,
+      maximum: maximum,
+      conversionPrice: conversionPrice,
+      rule: rule,
     );
   }
 }
@@ -114,11 +120,13 @@ class LiveOrderSideCapacity {
   /// Tiny allocations stay zero; never increase them to the exchange minimum.
   Decimal quantityAt(int percent) {
     if (percent < 0 || percent > 100) throw ArgumentError('Invalid order percentage');
-    final raw = maximum.toRational() * Decimal.fromInt(percent).toRational() /
+    final raw =
+        maximum.toRational() *
+        Decimal.fromInt(percent).toRational() /
         Decimal.fromInt(100).toRational();
     if (raw < rule.minimum.toRational()) return Decimal.zero;
-    return rule.minimum + Decimal.fromBigInt(
-      ((raw - rule.minimum.toRational()) / rule.step.toRational()).floor(),
-    ) * rule.step;
+    return rule.minimum +
+        Decimal.fromBigInt(((raw - rule.minimum.toRational()) / rule.step.toRational()).floor()) *
+            rule.step;
   }
 }

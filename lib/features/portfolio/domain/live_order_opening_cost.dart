@@ -31,7 +31,8 @@ class LiveOrderOpeningExposure {
   final Decimal? hedgeGrossNotional;
   bool get hedge => hedgeGrossNotional != null;
   Decimal get signedNotional => positionQuantity * markPrice;
-  Decimal get currentNotional => hedgeGrossNotional ??
+  Decimal get currentNotional =>
+      hedgeGrossNotional ??
       _max((signedNotional + buyOrderNotional).abs(), (signedNotional - sellOrderNotional).abs());
 
   void _validate() {
@@ -46,7 +47,8 @@ class LiveOrderOpeningExposure {
 
   Decimal openingQuantity({required bool buy, required Decimal quantity}) {
     if (quantity < Decimal.zero) throw ArgumentError('Invalid order quantity');
-    final closes = !hedge && (buy ? positionQuantity < Decimal.zero : positionQuantity > Decimal.zero);
+    final closes =
+        !hedge && (buy ? positionQuantity < Decimal.zero : positionQuantity > Decimal.zero);
     return closes ? _max(quantity - positionQuantity.abs(), Decimal.zero) : quantity;
   }
 

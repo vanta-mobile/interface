@@ -1,5 +1,15 @@
 ## 当前验收安排
 
+## 2026-11-05 README 精简与 Actions 失败修复
+
+README 仅保留项目简介、本地运行、检查构建和文档入口，移除参考项目来源、逐轮进度及历史验收流水账。
+
+检查 GitHub 的 CI `42013630852` 与 Native Performance `42013630787` 失败日志：前者因 `live_order_capacity.dart`、`live_order_opening_cost.dart` 未格式化退出，后者因 `rational` 未声明为直接依赖触发 `depend_on_referenced_packages`。源码使用统一格式，`pubspec.yaml` 和 lockfile 将已锁定的 rational 2.2.3 声明为直接依赖，无依赖版本升级。本轮提交仅包含格式和 CI 修复，其他正在开发的额度计算改动保持未提交。性能工作流的格式检查扩展到 `lib test integration_test test_driver`，与 CI 一致，不放宽任何质量检查。
+
+本地工作区（含未提交的额度开发改动）已通过全目录格式检查（859 个 Dart 文件零改动）、`dart analyze --fatal-infos`、全量 4272 项 Flutter 测试、Python 工具测试（47 项通过、1 项 macOS 专项在 Linux 跳过）、12 项性能报告测试、actionlint 1.7.12 全工作流检查及 Android arm64 Release APK 构建。
+
+本次没有 UI 变更，未安装 APK 或进行真机操作。当前为 Linux，无 macOS／Xcode，未重新构建 iOS；上述旧 CI 中 Android Release 与 iOS 未签名归档均已成功，Release Mobile 因质量检查失败跳过。本地通过不代表远程工作流已经重跑成功。
+
 ## 2026-11-05 Google Play 内部测试自动上传
 
 `Release Mobile` 在 main 新版本的 Android AAB 正式签名、结构／16 KB 校验及 artifacts 保存成功后，按 `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` Secret 自动启用 Google Play 上传。未填／只有空白时明确跳过；非 main 预发布、既有 Tag 或仅发布工作流重建不上传。固定包名 `exchange.vanta.vanta`、轨道 `internal`、状态 `completed`，一并上传 R8 mapping，Action 固定到 v1.1.3 对应 commit。配置错误或上传失败使 Android 发布失败并阻止 GitHub Release；已保存的安装产物仍可下载。

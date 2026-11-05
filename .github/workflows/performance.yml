@@ -47,7 +47,7 @@ jobs:
 
       - name: Verify report logic and journeys
         run: |
-          dart format --output=none --set-exit-if-changed test/performance integration_test test_driver
+          dart format --output=none --set-exit-if-changed lib test integration_test test_driver
           dart analyze --fatal-infos
           node --test scripts/performance-report.test.mjs
           flutter test test/performance/performance_scenarios_test.dart
