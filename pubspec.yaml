@@ -1,7 +1,7 @@
 name: vanta
 description: Vanta mobile perpetual trading experience built with Flutter.
 publish_to: none
-version: 1.0.0+1
+version: 0.0.1+1
 environment:
   sdk: ^3.13.0
 dependencies:
