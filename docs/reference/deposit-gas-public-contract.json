@@ -1,0 +1,60 @@
+{
+  "recorded_at_utc": "2026-11-03T17:33:48.238246+00:00",
+  "scope": "Unsigned next-transaction encoding and read-only gas simulation, not actual deposit submission.",
+  "prd": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+  "official_document": "https://github.com/asterdex/api-docs/blob/master/demo/aster-deposit-withdrawal.md",
+  "document_commit": "10391d12716923729c0255becfb7211bc7b17465",
+  "document_sha256": "e6943bd414e9e09bc1592446dd1b39d67e2750bf6480a368da8cc5caec9ae39a",
+  "deposit_contract": {
+    "chains": [
+      1,
+      56,
+      42161
+    ],
+    "vaults": {
+      "1": "0x604DD02d620633Ae427888d41bfd15e38483736E",
+      "56": "0x128463A60784c4D3f46c23Af3f65Ed859Ba87974",
+      "42161": "0x9E36CB86a159d479cEd94Fa05036f235Ac40E1d5"
+    },
+    "abi": "depositFor(address currency,address forAddress,uint256 amount,uint256 broker)",
+    "selector": "0xcf4a0c5e",
+    "selector_validation": "Offline Keccak-256 using installed transitive pointycastle; no dependency added. Exact ABI vectors in deposit_transaction_test.dart.",
+    "receiver": "Current identity EOA/Privy wallet, never a replacement wallet.",
+    "broker": {
+      "spot": 1000,
+      "futures": 0
+    },
+    "native_placeholder": "0xfdae1ba7c826abdc4c99903c8056f82a1a04a615",
+    "native": "18 decimals, msg.value == amount in exact smallest units.",
+    "erc20": "msg.value = 0. Sufficient allowance -> deposit; zero insufficient allowance -> approve(vault,exact amount); nonzero insufficient allowance -> approve(vault,0) first. Reset is a conservative client policy, not a claim every token requires it.",
+    "approval_selector": "0x095ea7b3",
+    "boundaries": "normal routes only; validated nonzero addresses, uint256 units, known chain and native metadata. No unlimited approval, direct transfer fallback, wallet switch, signature or broadcast."
+  },
+  "simulation": {
+    "fresh_read": "Reuse full fixed-block wallet read with chain/precision/balance/allowance/hash validation.",
+    "methods_added": [
+      "eth_gasPrice",
+      "eth_getTransactionCount",
+      "eth_estimateGas"
+    ],
+    "nonce": "latest == pending; reject pending transactions, invalid 64-bit nonce and changed pending nonce after simulation.",
+    "call": "Exact from/to/data/value, quoted legacy gasPrice and pending nonce; eth_estimateGas(call,pending).",
+    "gas_limit": "ceil(estimate * 120 / 100); 20% is a client reserve policy, not a chain fee guarantee.",
+    "native_required": "native value + gas limit * quoted legacy gas price, exact BigInt; require native balance >= total.",
+    "postcheck": "Fixed block hash unchanged, padded limit <= captured block gasLimit, pending nonce unchanged.",
+    "freshness": "Earliest of wallet.receivedAt + 30s, quote.receivedAt + 30s and blockTime + 2min. Refuse invalid future times. No automatic polling.",
+    "rpc_safety": "Read-only allowlist; broadcast/sign methods refused before network. Standard error envelopes without result accepted then safely mapped; raw node details never displayed.",
+    "ui": "Explicit step and amount, copyable wallet/target, value/units/limit/gasPrice/reserve/total/time. Failure retains stale quote, amount changes mark previous amount; no submit action, native Max stays disabled.",
+    "scope": "Identity/address/wallet-kind/signing-availability changes clear quote and invalidate pending work; stop/disposal discard late results; screen retains family while lazy children scroll offscreen."
+  },
+  "remaining": [
+    "Actual chain switch and wallet transaction submission, allowance and deposit receipts, replacement/reorg handling, platform credit and durable unknown-result recovery.",
+    "User/platform caps depend on website private BAPI with no validated third-party login this phase; missing caps are not unlimited.",
+    "Each quote covers only current reset/approval/deposit step, not later steps or final network fees. Re-read and re-estimate after any state change.",
+    "Real RPC simulation, wallet integration, Android/iOS native layouts and storage remain unverified; no device tooling or APK installation this phase."
+  ],
+  "live_rpc_requests_sent": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "device_tools_used": false
+}

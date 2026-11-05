@@ -1,0 +1,133 @@
+{
+  "date": "2026-11-04",
+  "scope": "CHANNEL events, engagement tasks, explicit progress reads and current-wallet check-in/wallet-connect actions",
+  "prd": {
+    "url": "https://app.notion.com/p/40d080d974e7801eb12dfab2b95d60cf",
+    "last_edited": "2026-11-03T07:41:40.173Z",
+    "requirement": "Follow event list/detail and points website fields and buttons; all event types retained"
+  },
+  "source": {
+    "url": "https://app.vanta.exchange/assets/Index-Wa2TmD6z.js",
+    "sha256": "80cdc4e0a63f07846c42760bf8279691af78bc5444e7ac043a6bef44e4482fce",
+    "source_functions": [
+      "sa/Ft/Lt/Dt/At/Vt",
+      "nt/it/Pt",
+      "signed callbacks xe/Z"
+    ],
+    "runtime_origin": "https://api.vanta.exchange/api/; runtime /points-api/ rewrite verified in points-public-contract.json"
+  },
+  "public_observations": [
+    {
+      "url": "https://api.vanta.exchange/api/trading-events?type=CHANNEL",
+      "method": "GET",
+      "kind": "anonymous list",
+      "http_status": 200,
+      "bytes": 28433,
+      "sha256": "3453a645ebddeecdcac60b8e1f742717cc4f8930e13285788aa847b489e4ce9a"
+    },
+    {
+      "url": "https://api.vanta.exchange/api/trading-events/17",
+      "method": "GET",
+      "kind": "anonymous detail",
+      "http_status": 200,
+      "bytes": 9545,
+      "sha256": "7d87d07e8c065bbfcfad309beee2271cadff6057dffa2bfb883457b2fbdf3e12"
+    },
+    {
+      "url": "https://api.vanta.exchange/api/trading-events/17/rankings/channel-volume?limit=10",
+      "method": "GET",
+      "kind": "anonymous empty ranking",
+      "http_status": 200,
+      "bytes": 46,
+      "sha256": "3cc602fdfb21d4110452e56386f26a9614f8cd236788a4ba49dcded2343a9253"
+    },
+    {
+      "url": "https://api.vanta.exchange/api/trading-events/6/rankings/channel-volume?limit=10",
+      "method": "GET",
+      "kind": "anonymous public ranking",
+      "http_status": 200,
+      "bytes": 153,
+      "sha256": "e268be91d0c74e2216b4ce6531c3b56beb1c64af706c94f533e14bbac3dd45a3"
+    }
+  ],
+  "mapping_observation": {
+    "channel_events": 7,
+    "engagement_events": 3,
+    "metrics": [
+      "newUserTasks",
+      "dailyCheckIn",
+      "milestoneRewards",
+      "networkActiveTraderCount",
+      "whitelistTotalVolume",
+      "qualifiedInviteeCount",
+      "totalVolume"
+    ],
+    "detail_id": 17,
+    "new_user_deposit": "100",
+    "end": "2026-11-03T08:00:00.000Z",
+    "published_status": "ACTIVE",
+    "active_at_2026_11_04": false,
+    "top10_rows": {
+      "17": 0,
+      "6": 1
+    }
+  },
+  "models": {
+    "type": "Distinct RETAIL/CHANNEL, exact positive IDs, source channelName/allowlist count; omit whitelist address arrays and administrative fields",
+    "new_user": "Published registration/wallet/deposit rewards, exact net deposit amount/token and optional chain; observed public source omits chainId, no guessed chain",
+    "daily": "UTC server date, checked flag, checked dates, exact target and daily volume. Missing amounts/flags stay unknown; calendar/duplicates/future dates/flag inconsistencies rejected",
+    "milestones": "Published ordered unique thresholds/descriptions/rewards/trackMetric, optional server current/completed/remaining; never infer paid rewards",
+    "other_metrics": "ownVolume; own+network only when both known; qualifiedInviteeCount; networkActiveTraderCount; whitelistTotalVolume; per-chain-token depositProgress. Decimal/integers, no double amount arithmetic",
+    "rankings": "CHANNEL channel-volume top10; RETAIL retail-volume top30; exact event/type binding, server order/ties retained, no own-volume re-ranking or guessed outside rank"
+  },
+  "progress": {
+    "path": "GET /api/trading-events/{id}/participants/{lowercaseAddress}/tasks",
+    "evidence": "Public frontend source only. No actual address-bearing endpoint requested; test fixtures are synthetic. Echoed eventId/address validated when supplied.",
+    "transport": "Fixed anonymous GET; application/json, no redirects/credentials, 2 MiB streamed bound, exact numeric decoder, 12 second timeout with abort; service disposal aborts active task reads",
+    "privacy": "No personal reads on entry/background resume. User explicitly refreshes participation and task progress. Wallet identity/address/kind changes clear progress; stale/failed/paused/stop/late result handled independently."
+  },
+  "actions": {
+    "wallet_connect": {
+      "path": "POST /api/trading-events/{id}/wallet-connect",
+      "message": "Vanta Trading Event Wallet Connect\nEvent ID: {id}\nAddress: {lowercaseAddress}\nTimestamp: {milliseconds}",
+      "eligibility": "Active event time and status, registered participant, server newUser.completeRegistration.completed=true and connectWallet.completed=false"
+    },
+    "check_in": {
+      "path": "POST /api/trading-events/{id}/check-in",
+      "message": "Vanta Trading Event Check-In\nEvent ID: {id}\nAddress: {lowercaseAddress}\nDate: {UTC YYYY-MM-DD}\nTimestamp: {milliseconds}",
+      "eligibility": "Active event time/status, registered, matching current UTC server day, explicit checkedInToday=false and day absent from checkedInDates, known server volume>=known server target"
+    },
+    "body_fields": [
+      "address",
+      "timestamp",
+      "signature"
+    ],
+    "signer": "Existing selected wallet personal_sign through WalletMessageSigner; connected EOA remains signer, existing Privy wallet allowed, no new wallet or Privy token substitution",
+    "approval": "Independent native confirmation with event/wallet/action and check-in UTC date; new event+participant+task reads before and after signing, complete published terms fingerprint, identity/disposal/date checks across awaits",
+    "local_time_policy": "Signature age0..120000ms; local defensive bound, not an official server TTL. UTC day, signature age and event end checked again after journal write before sending.",
+    "execution": "One POST, no redirect/retry; transport abort on12s timeout/disposal; 2xx acknowledgement only, response body not used as evidence. Original scoped task progress must prove completion."
+  },
+  "recovery": {
+    "storage": "SharedPreferencesAsync vanta.eventEngagement.pending.v1. Serialized acknowledged writes; only public eventId/address/action/original UTC day, never signature/token/raw response. Persist before POST.",
+    "bounds": "100 unresolved entries /65536 characters; malformed/corrupt/duplicate records fail closed, no eviction or silent reset",
+    "scope": "Any unresolved entry blocks both actions for same event/wallet across screens/repository reconstruction; other wallet entries retained",
+    "reconcile": "Explicit task GET; walletCompleted=true or original check-in date in checkedInDates proves completion and permits removal. False/missing/current balance/HTTP status alone never clears unknown. Old-day check-in uses original day, not today.",
+    "known_unsent": "Scope/expiry changes detected immediately after journal write remove known-unsent marker; deletion failure retains unknown",
+    "limits": "SharedPreferences acknowledgement and synthetic storage reconstruction are not OS power-loss/kill guarantees; no recovery after app-data deletion/uninstall. No official pending-request lookup; missing/false progress can keep unknown blocked indefinitely."
+  },
+  "ui": "Points -> events -> Retail/Channel chips -> fresh detail; published source text/rules/rewards remain source content; app strings bilingual. Channel task cards show unknown explicitly, date/history and milestones; current-address copy and same-wallet action confirmation. Published ACTIVE with elapsed end is shown ended in list and cannot submit; detail retains published status plus computed end. Campaign deposits/trading/referrals open exact Vanta Orderly website paths, never Aster funding/trading. Completion is not reward payment.",
+  "not_performed": {
+    "device_tools": false,
+    "apk_install": false,
+    "personal_endpoint_requests": false,
+    "real_wallet_signing": false,
+    "live_action_post": false,
+    "rpc_or_private_or_financial_requests": false,
+    "ios_build": false
+  },
+  "remaining": [
+    "Actual task response schema and signature acceptance remain source-only plus synthetic tests; no real personal endpoint or action POST",
+    "Native TLS/image/layout/accessibility/wallet return/refusal/background/kill recovery and iOS unverified",
+    "AI, full cross-product Portfolio, collateral contribution/Swap and other PRD gaps remain; BAPI statistics/TWAP skipped by user"
+  ]
+}

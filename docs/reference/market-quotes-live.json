@@ -1,0 +1,189 @@
+{
+  "purpose": "Anonymous public all-market ticker and mark stream verification",
+  "streams": [
+    "!ticker@arr",
+    "!markPrice@arr@1s"
+  ],
+  "records": [
+    {
+      "receivedAt": "2026-11-02T05:22:24.402597Z",
+      "connection": "connecting",
+      "failure": null,
+      "updatedAt": null,
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78294.7",
+      "change": "0.638",
+      "quoteVolume": "190948843.3",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:25.543576Z",
+      "connection": "connecting",
+      "failure": null,
+      "updatedAt": null,
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78294.7",
+      "change": "0.638",
+      "quoteVolume": "190948843.3",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:25.544144Z",
+      "connection": "connecting",
+      "failure": null,
+      "updatedAt": null,
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78294.7",
+      "change": "0.638",
+      "quoteVolume": "190948843.3",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:25.903015Z",
+      "connection": "partial",
+      "failure": null,
+      "updatedAt": "2026-11-02T05:22:25.652330Z",
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78311.1",
+      "change": "0.659",
+      "quoteVolume": "190965836.75",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:26.072051Z",
+      "connection": "partial",
+      "failure": null,
+      "updatedAt": "2026-11-02T05:22:26.071926Z",
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78311.1",
+      "change": "0.659",
+      "quoteVolume": "190965836.75",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:26.400297Z",
+      "connection": "live",
+      "failure": null,
+      "updatedAt": "2026-11-02T05:22:26.153749Z",
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78311.1",
+      "change": "0.659",
+      "quoteVolume": "190965836.75",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:26.901299Z",
+      "connection": "live",
+      "failure": null,
+      "updatedAt": "2026-11-02T05:22:26.650370Z",
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78311.1",
+      "change": "0.659",
+      "quoteVolume": "190980872.48",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:27.396264Z",
+      "connection": "live",
+      "failure": null,
+      "updatedAt": "2026-11-02T05:22:27.148119Z",
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78311.1",
+      "change": "0.659",
+      "quoteVolume": "190980872.48",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:27.904269Z",
+      "connection": "live",
+      "failure": null,
+      "updatedAt": "2026-11-02T05:22:27.653672Z",
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78311.1",
+      "change": "0.659",
+      "quoteVolume": "190980872.48",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:28.347251Z",
+      "connection": "live",
+      "failure": null,
+      "updatedAt": "2026-11-02T05:22:28.099131Z",
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78311.1",
+      "change": "0.659",
+      "quoteVolume": "190980872.48",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:28.908292Z",
+      "connection": "live",
+      "failure": null,
+      "updatedAt": "2026-11-02T05:22:28.657387Z",
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78311.1",
+      "change": "0.659",
+      "quoteVolume": "190980872.48",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:29.372282Z",
+      "connection": "live",
+      "failure": null,
+      "updatedAt": "2026-11-02T05:22:29.123338Z",
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78311.1",
+      "change": "0.659",
+      "quoteVolume": "190980872.48",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:29.907271Z",
+      "connection": "live",
+      "failure": null,
+      "updatedAt": "2026-11-02T05:22:29.656567Z",
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78311.1",
+      "change": "0.659",
+      "quoteVolume": "190980872.48",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:30.365259Z",
+      "connection": "live",
+      "failure": null,
+      "updatedAt": "2026-11-02T05:22:30.116754Z",
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78311.1",
+      "change": "0.659",
+      "quoteVolume": "190980872.48",
+      "funding": "0.0001"
+    },
+    {
+      "receivedAt": "2026-11-02T05:22:30.908262Z",
+      "connection": "live",
+      "failure": null,
+      "updatedAt": "2026-11-02T05:22:30.657663Z",
+      "symbolCount": 100,
+      "symbol": "BTCUSDT",
+      "price": "78311.1",
+      "change": "0.659",
+      "quoteVolume": "190980872.48",
+      "funding": "0.0001"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "verified_at": "2026-11-02T10:46:49.051776+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "build": "arm64 release",
+  "apk_mb": 41.9,
+  "apk_sha256": "7ca2f462b8eb5de5779166448d572641ee9a536544303b0d944ea023c2b337bd",
+  "automated_tests": 184,
+  "analysis": "no issues",
+  "format": "118 files, no changes",
+  "public_catalog_evidence": "market-catalog-live.json",
+  "native_checks": [
+    "all contracts: 567 / 567",
+    "Top category: 16 / 567",
+    "USD1-RWA empty category: 0 / 567",
+    "TQQQ search: 1 / 567",
+    "select TQQQ updates chart header, OHLC and public order book",
+    "TQQQ displayed as order quantity unit"
+  ],
+  "screenshots": [
+    "market-categories-all-android.png",
+    "market-categories-top-android.png",
+    "market-categories-empty-android.png",
+    "market-categories-search-android.png",
+    "market-categories-selected-android.png",
+    "market-categories-book-android.png"
+  ],
+  "boundaries": [
+    "Only public market data used; no authenticated financial actions",
+    "All eligible contracts loaded without additional Kline preloading",
+    "New category window and operational sequenceNo order remain undefined",
+    "Favorites remain in-memory for this app session",
+    "OI units and leverage badge source remain unconfirmed",
+    "iOS build unavailable on Linux"
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "verified_at_utc": "2026-11-03T00:36:41.014269+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "apk": {
+    "bytes": 42695932,
+    "sha256": "d6b3eadb9a48558fb8f82a13d6d4e4529ffd01dfdfcd0ee1d9ca6d61dab7fbec",
+    "installed": true,
+    "build_seconds": 67.4
+  },
+  "automated_tests": 629,
+  "new_tests": {
+    "mapper_domain": 4,
+    "signed_repository": 18,
+    "controller": 12,
+    "widget": 8,
+    "cross_settings_activity": 3
+  },
+  "format_dart_files": 285,
+  "format_changed_files": 0,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 569,
+    "zh": 569
+  },
+  "official_contract": "futures-position-mode-public-contract.json",
+  "unit_widget_checks": [
+    "No automatic private reads or extra wallets; explicit read binds current identity",
+    "Three sequential signed GET requests: mode, unfiltered positions and unfiltered orders; freshness begins at first response",
+    "Strict boolean mode response; side/mode consistency, duplicate and malformed quantity checks with Decimal",
+    "Other-symbol positions including tiny nonzero values and other-symbol orders block review",
+    "Exact account-wide POST body dualSidePosition true/false strings, no symbol or margin parameter; exact signature bytes, same EOA user/signer, shared unique nonces",
+    "POST acknowledgement does not prove success; separate signed GET determines mode and time",
+    "Timeout or refused verification retains uncertainty; GET-only recheck never repeats POST",
+    "Refused write sends no POST; third-read refusal cannot become an empty-order state; identity switch prevents old follow-up signature",
+    "30-second lease includes remaining signatures and is checked at send boundary; refresh/failure keeps selection and historical context",
+    "All three settings share activity, unresolved-result blocking and epoch; old identity completion cannot release newer lease",
+    "Full-wallet and all-symbol scope in confirmation; cancel sends nothing; known blockers disable review",
+    "English 360-wide 2x and Chinese 844x390 landscape 1.5x selection, confirmation and observed result layouts"
+  ],
+  "native_checks": [
+    "Chinese risk settings entry opens actual all-symbol position-mode screen; scope, one-way/hedge explanations and sign-in action readable",
+    "Actual Chinese email/EOA sheet opens; no authentication, wallet creation or signature performed",
+    "English language selection persists on route; English risk entry and position-mode scope render localized",
+    "English landscape shows all-symbol scope, explanations, action and freshness text without clipping or overflow",
+    "Restored Chinese app locale, portrait, accelerometer_rotation 0, user_rotation 0, font_scale 1.0; system settings and native hierarchy verified"
+  ],
+  "screenshots": [
+    {
+      "file": "futures-position-mode-zh-android.png",
+      "sha256": "365033accb7b230b50b6c3864c41a5f31af6c67d5ef11d6d0af4424317088555"
+    },
+    {
+      "file": "futures-position-mode-zh-auth-android.png",
+      "sha256": "84c265f50499211d98d75305949806e04ade52b932bb8ad7f84f2f762cf4292d"
+    },
+    {
+      "file": "futures-position-mode-en-android.png",
+      "sha256": "ac6db17c7a3c628c9693efb1f60adfa4cd32569c927ee99b3c6dd6b3a7c5abe0"
+    },
+    {
+      "file": "futures-position-mode-en-landscape-android.png",
+      "sha256": "eeb989ce35564d78ffb1f7314b559ce2616ffc5bbcad75f68c7f70a72b0c9a61"
+    },
+    {
+      "file": "futures-position-mode-restored-zh-android.png",
+      "sha256": "94a850d2c4fe04f2e7e30209c86bd81f1c4094970f49e876581e50a6d260bfb5"
+    }
+  ],
+  "original_settings": {
+    "app_locale": "zh",
+    "accelerometer_rotation": 0,
+    "user_rotation": 0,
+    "font_scale": "1.0",
+    "restored": true
+  },
+  "live_private_requests_sent": false,
+  "financial_actions_sent": false,
+  "signed_in_native_values_faked": false,
+  "unverified": [
+    "Real authorized EOA/Privy request acceptance and position-mode change",
+    "Signed-in native values, confirmation and verification; controlled unit/widget fixtures only",
+    "iOS build requires macOS/Xcode unavailable on Linux"
+  ],
+  "remaining": [
+    "Real authentication acceptance, account gap recovery and live order-entry/quick-order integration",
+    "Single/multi-asset mode, close/reverse, isolated margin, TP/SL, subaccounts, funding and notifications",
+    "Private BAPI historical statistics and TWAP skipped per user instruction"
+  ]
+}

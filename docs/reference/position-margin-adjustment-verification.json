@@ -1,0 +1,100 @@
+{
+  "recorded_at_utc": "2026-11-04T15:49:07.494954+00:00",
+  "increment": "Isolated position add/remove margin: UI, exact limits/liquidation/ratio, direct EOA signing, durable original-reference history recovery, primary snapshot refresh and success close",
+  "contract": "position-margin-adjustment-public-contract.json",
+  "baseline": "asset-collateral-verification.json",
+  "tests": {
+    "baseline_full": 3348,
+    "new_total": 98,
+    "margin_targeted_passed": 97,
+    "subaccount_isolation_regression_new": 1,
+    "full_passed": 3446,
+    "exit_code": 0,
+    "files": [
+      "test/features/portfolio/position_margin_adjustment_test.dart",
+      "test/features/portfolio/position_margin_mapper_test.dart",
+      "test/features/portfolio/signed_position_margin_repository_test.dart",
+      "test/features/portfolio/position_margin_provider_test.dart",
+      "test/features/portfolio/position_margin_journal_test.dart",
+      "test/features/portfolio/position_margin_widget_test.dart",
+      "test/features/subaccounts/subaccount_management_repository_test.dart"
+    ],
+    "coverage": [
+      "Decimal min of both add/remove bounds, signed long/short PnL, missing fields/units, conservative repeating division, two decimal Max, invalid/over-limit inputs.",
+      "Rational liquidation bracket crossing and direction, unknown positive solution, original quantity/entry unchanged; same-account ratio and nonpositive equity.",
+      "Exact fractional JSON, brackets cumulative offsets and exact original ID+all terms history verification; conflicting/duplicate ID rejected, balance/ACK not success.",
+      "Mock HTTP exact POST bytes and parameters; same EOA user/signer, shared unique microsecond nonces and EIP712 chain1666; preflight consistency and late final signature expiry.",
+      "Journal-before-dispatch and failed prepare/report, unknown timeout GET-only recovery, explicit rejected codes saved separately and limits refreshed, original record survives wallet switch.",
+      "No automatic private reads/wallet creation, forged intent rejection, expiry/backwards clock, same-time stream event, single submit, stop/logout and shared unresolved locks; canonical stored check terms.",
+      "Host temp flush/rename/restart and corruption preserved; separate journal cannot enter subaccount operation path.",
+      "Real screen input retention, Add/Remove revalidation, exact review/cancel, verified-only clearing, pushed route closes after complete refresh; original records accessible without open positions.",
+      "Primary account/full position snapshots updated after verified history and actual reads; older in-flight reads invalidated.",
+      "EN/ZH320width text1.5,844x390landscape,768x1024tablet form/review with no layout exception."
+    ]
+  },
+  "format": {
+    "files": 766,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1547,
+    "zh": 1547,
+    "new_per_locale": 40,
+    "message_keys_equal": true
+  },
+  "android": {
+    "command": "flutter build apk --no-pub --release --target-platform android-arm64 --dart-define-from-file=config/privy.local.json",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45646676,
+    "sha256": "1ebaeee0da4c8ff92d6f75d0a1736ce9b76856387fb6a3a23f726768ec5e1a06",
+    "aot_bytes": 15664008,
+    "packaged_probes": {
+      "en:marginAdjustTitle": true,
+      "zh:marginAdjustTitle": true,
+      "positionMargin": true,
+      "history": true,
+      "separateJournal": true
+    },
+    "installed": false,
+    "device_tools_used": false,
+    "signing": "Existing local debug signing, not store distribution",
+    "build_notice": "Existing dependency Built-in Kotlin/KGP migration warnings; build succeeded."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "performed": {
+    "synthetic_tests": true,
+    "host_files": true,
+    "unit_widget_tests": true,
+    "actual_wallet_signature": false,
+    "actual_private_api": false,
+    "address_bearing_rpc": false,
+    "financial_actions": false,
+    "native_device_testing": false,
+    "local_privy_config_read_by_agent": false
+  },
+  "remaining": [
+    "Real EOA/Privy TRADE permissions and actual isolated margin/limits/liquidation fields not exercised.",
+    "Native network/TLS/time/signature roundtrips, process/phone filesystem recovery, keyboard/accessibility/layout and iOS pending per user.",
+    "History query limited500 rows with no documented by-ID lookup/pagination; unmatched remains blocked. Local cap100 records and no archival UI.",
+    "Client input<=8dp and 30second lifetime policy remain subject to real exchange validation; no exchange-wide precision claim.",
+    "Primary accepted snapshots retain existing stale caution; they do not prove continuous synchronization or absence of later exchange events.",
+    "Full cross-product Portfolio, Swap and other PRD gaps remain tracked; BAPI statistics/TWAP skipped per user; overall goal incomplete."
+  ],
+  "logs": {
+    "targeted": "/tmp/vanta-margin-targeted.log",
+    "full": "/tmp/vanta-margin-all-tests.log",
+    "analysis": "/tmp/vanta-margin-analysis-clean.log",
+    "format": "/tmp/vanta-margin-format-clean.log",
+    "build": "/tmp/vanta-margin-build.log"
+  },
+  "verification_note": "Early fixture teardown left fake-clock expiry timers and dropdown scroll missed appbar; fixed fixture disposal/centering. A temporary missing import after status extraction was corrected. Final97 targeted/full3446 results authoritative; no device or real financial call."
+}

@@ -1,0 +1,53 @@
+{
+  "verified_at_utc": "2026-11-02T17:25:13.683640+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "apk": {
+    "bytes": 42367976,
+    "sha256": "ebf784a4a3de829ede665e566be265f6e6592c7a1537204618a40e689cde438f"
+  },
+  "automated_tests": 331,
+  "new_unit_widget_tests": 21,
+  "format_dart_files": 187,
+  "analysis": "no issues",
+  "localized_messages_per_language": 437,
+  "native_checks": [
+    "Portfolio futures risk entry",
+    "Chinese and English signed-out risk page",
+    "read action opens EOA and email login; no authentication submitted",
+    "English landscape layout",
+    "original Chinese locale and locked portrait restored"
+  ],
+  "screenshots": [
+    "position-risk-zh-android.png",
+    "position-risk-en-android.png",
+    "position-risk-login-android.png",
+    "position-risk-landscape-android.png"
+  ],
+  "unit_widget_checks": [
+    "Decimal precision and signed quantities",
+    "hedged long/short and isolated zero-quantity debt",
+    "malformed values, duplicates and mixed modes rejected",
+    "zero/absent liquidation is unknown",
+    "GET exact query bytes with current wallet as user/signer",
+    "metadata failure preserves financial data without invented units",
+    "wallet rejection and late signer/metadata responses",
+    "manual reads, duplicate prevention, stale error recovery",
+    "logout or signing capability loss clears snapshots",
+    "30-second expiry and lifecycle invalidation",
+    "current-symbol filtering needs no signatures",
+    "Chinese 360-width and English 2x text plus landscape layouts"
+  ],
+  "public_read_evidence": "position-risk-public-contract.json",
+  "unverified": [
+    "real authorized EOA/Privy signed Aster reads",
+    "signed-in record layouts on physical device (fixtures only in tests)",
+    "iOS build requires macOS/Xcode"
+  ],
+  "remaining": [
+    "ADL quantiles",
+    "live mark and authenticated account streams",
+    "cross-position initial margin and ROI",
+    "close/reverse, margin changes and TP/SL"
+  ]
+}

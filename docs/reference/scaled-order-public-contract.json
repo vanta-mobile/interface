@@ -1,0 +1,39 @@
+{
+  "recorded_at_utc": "2026-11-03T16:55:24.454405+00:00",
+  "prd": {
+    "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+    "page_last_edited_at": "2026-11-03T06:09:04.117Z",
+    "verification": "unverified",
+    "confirmed": "Total quantity split into child orders inside a user-specified price range, with a child-order preview.",
+    "unspecified": "Actual App form, price distribution, quantity distribution, count/spacing and remainder rules. No Scaled-specific creation endpoint confirmed."
+  },
+  "official_public_document": {
+    "url": "https://github.com/asterdex/api-docs/blob/10391d12716923729c0255becfb7211bc7b17465/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+    "commit": "10391d12716923729c0255becfb7211bc7b17465",
+    "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4",
+    "ordinary_order": "POST /fapi/v3/order LIMIT requires quantity, price, timeInForce; newClientOrderId is a unique 1–36 character identifier. Signed GET /fapi/v3/order uses origClientOrderId to verify the exact child.",
+    "candidate_batch": "POST /fapi/v3/batchOrders permits at most five child orders and concurrent independent results. This proves batch capability, not the official App Scaled implementation. This client does not use that endpoint."
+  },
+  "initial_vanta_product_rule": {
+    "confirmation": "Previously proposed optional rule; no explicit product confirmation received. Rule displayed in form and confirmation. Do not describe as official Aster behavior.",
+    "count": "User selects 2–5; initial client product limit.",
+    "prices": "Inclusive valid endpoints; nearly equal ascending gaps. Interior price = low + floor(spanTicks * index / (count - 1)) * tick; all prices distinct.",
+    "quantity": "Positive LOT_SIZE minimum plus whole steps. Subtract count * minimum, divide remaining whole steps equally, assign remainders from lowest price upward. Reject totals not exactly representable; never silently discard quantity.",
+    "notional": "Exact Decimal sum of child price times quantity.",
+    "margin": "Gross limit notional / leverage, explicitly before position netting; no fees, pending-order effects, released margin or executable allowance claimed."
+  },
+  "execution": "Independent ordinary LIMIT/GTC children sent sequentially in ascending price order. Fresh four-signature account/config/funds read before each child, then signed submit and independent signed original-ID query. Existing EOA signing path, no additional wallet.",
+  "failure_and_recovery": [
+    "Freeze exact terms and independent IDs at confirmation.",
+    "Configuration/capability/expiry/account-event drift before a POST stops the remaining plan. Same-time account events also invalidate it.",
+    "Stop or route exit blocks unsent POSTs, while a sent order may still be queried. Already sent orders are not canceled.",
+    "A failed, rejected/canceled/expired or unresolved child stops later children; no automatic retry or compensation.",
+    "Each sent child uses existing durable pre-POST journal. Verified children are removed. Restart queries only unresolved sent IDs and never resumes the unsent plan."
+  ],
+  "boundaries": [
+    "Partial success is possible; no atomicity or fill guarantee.",
+    "Real Aster self-EOA trading authorization remains unproven and enable-trading unfinished.",
+    "Initial rule does not include progressive/degressive quantities, geometric spacing, BBO or TP/SL children. PRD does not confirm these options.",
+    "No real private requests, financial actions, APK installation or device tools. Native/iOS checks remain pending."
+  ]
+}

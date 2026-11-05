@@ -1,0 +1,61 @@
+{
+  "recorded_at_utc": "2026-11-04T02:11:56.711237+00:00",
+  "scope": "Vanta RETAIL event list/detail, source rules/media/task links, exact volume ranking, explicit participant and confirmed personal-message registration",
+  "contract": "trading-events-public-contract.json",
+  "automated_tests": 2663,
+  "new_tests": 103,
+  "test_breakdown": {
+    "event_mapper_document": 30,
+    "event_read_repository": 3,
+    "registration_protocol": 25,
+    "controllers": 16,
+    "media_service": 7,
+    "widgets": 12,
+    "existing_auth_suites_new_cases": 10
+  },
+  "format": "635 Dart files, zero changes after final formatting",
+  "analysis": "No issues found",
+  "localized_messages_per_language": {
+    "en": 1261,
+    "zh": 1261
+  },
+  "acceptance_evidence": {
+    "mapper": "Immutable exact raw numeric tokens/Decimal/int64 counts and IDs, zoned dates, RETAIL/event/wallet binding, true unknown versus0, duplicate lists/addresses, exact server ranks/top30, participant/block schema, native rich rules including escaped entities/table/list boundaries and unsafe URLs/oversized/deep content",
+    "read_repository": "Mock HTTP exact fixed public list/detail/ranking and explicit address-bearing participant paths, method/headers/redirect/query, invalid paths without network, fractional numeric tokens",
+    "registration": "Mock signer/HTTP only: exact personal message/timestamp/JSON; already registered avoids signing, eligibility/rules/event/address checks before/after wallet prompt, no further address disclosure after scope change, invalid/expired signatures/clock rollback and final dispatch checks; one POST no redirect/retry, all HTTP/timeout unknown, acknowledgement distinct from verified registration",
+    "controllers": "Public-only entry/foreground reads, explicit participant, independent failure retention, wrong scope rejection, background late completion, fresh read/confirmation requirement, dedup, unknown/ack lock and read reconciliation, ID/address/kind/logout isolation, changed rules/stale/signing absence, safe errors/disposal/countdown lifetime",
+    "media": "Fixed public storage origin, MIME/size streamed bounds including absent Content-Length, no redirect/credentials and no provider auto retry; failed banner manual retry",
+    "widget": "EN/ZH320 width/text1.5,844x390landscape,768x1024tablet with registration dialog and rules/rewards; ranking10/page, source website link, points->events->detail navigation, no automatic personal request, cancellation, wallet switch during review, unknown-lock/reconcile, ended state and list failure/empty/manual retry",
+    "auth": "Existing EOA personal_sign delegates exclusively to connected wallet, invalidation rejects late response. Existing embedded wallet exact UTF8hex/native channel personal_sign with no new wallet, missing/duplicate/wrong address/logout block and delayed signature isolation. Fake Privy logger initialized in native-channel tests as Privy.init does in real app.",
+    "packaged_aot": "APK lib/arm64-v8a/libapp.so inspected without running; includes trading-events-page, event-register-confirm, Vanta Trading Event Registration and EventMediaService"
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 44663448,
+    "sha256": "fe29bcebbe6c6ecfb093f08965083a5c8e6d5331ea14e89f29a30efcc1606981"
+  },
+  "ios": "Linux has no macOS/Xcode; not built or natively verified",
+  "device_tools_used": false,
+  "personal_network_requests_sent": false,
+  "real_wallet_requests_sent": false,
+  "live_rpc_requests_sent": false,
+  "private_live_requests_sent": false,
+  "live_post_requests_sent": false,
+  "financial_actions_sent": false,
+  "public_network_reads": "Notion points&campaigns page and anonymous public retail-volume top30 JSON; source/runtime configuration/list/detail from cached prior anonymous reads. No wallet address endpoint or chat call.",
+  "native_testing": "Deferred by user; see ../native-verification-pending.md",
+  "remaining": [
+    "Actual participant/block schema/permissions, EOA/Privy personal signature and registration acceptance, website native link/media/networking pending",
+    "CHANNEL affiliate/exclusive extensions, newUserTasks/dailyCheckIn/milestoneRewards and signed check-in/wallet-connect not implemented",
+    "AI assistant and overall PRD incomplete: enable-trading, subaccount management/main-sub transfers, external funding, Chase, full Portfolio and asset metadata/collateral/Swap"
+  ],
+  "logs": {
+    "full": "/tmp/vanta-events-all-tests.log",
+    "analysis": "/tmp/vanta-events-analysis-clean.log",
+    "format": "/tmp/vanta-events-format-clean.log",
+    "build": "/tmp/vanta-events-build.log"
+  },
+  "log_note": "Final full regression includes all103 new tests. Earlier exploratory logs with missing fake-SDK logger, syntax/compiler/automatic retry/timeout failures are not acceptance evidence. Full regression is authoritative after final preflight scope test."
+}

@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-04",
+  "scope": "AI assistant protocol and chat data layer; mobile authorization, secure persistence, controller and UI are not implemented in this increment",
+  "prd": {
+    "page": "https://app.notion.com/p/40d080d974e7801a8999f3497abac377",
+    "requirement": "Follow https://app.vanta.exchange/perp/PERP_BTC_USDC assistant functionality",
+    "source_last_edited": "2026-11-03T07:43:10.602Z"
+  },
+  "source": {
+    "bundle": "https://app.vanta.exchange/assets/index-svFSKwtQ.js",
+    "sha256": "aa64f67c87338fd4fcd606f26a56898e5b3399bbcc7c83c6214398ea4823a803",
+    "bytes": 4145798,
+    "runtime": "https://app.vanta.exchange/config.js",
+    "chat_component": "_Yt",
+    "evidence": "Anonymous public source and cached runtime configuration only; no actual auth/chat/quota/personal endpoint call",
+    "runtime_bytes": 4454,
+    "runtime_sha256": "a644336ccced04d02f044e22fe75a9262b5800c1f30882f0ce6ab7d906b2befe"
+  },
+  "configuration": {
+    "origin": "https://nltkngcwiuydkpmqrili.supabase.co",
+    "resolution": "Explicit operation reads fixed public runtime JSON assignment; no JavaScript evaluation, redirects, or automatic network on construction",
+    "key_policy": "Extract public anonymous key into memory only; validate anon role and matching ref, reject service_role. No real key stored in source, fixtures, logs or this document",
+    "limits": "Runtime 65536 bytes/characters, generic JSON 262144 bytes, safe error JSON 65536 bytes, default request20s",
+    "trust": "TLS and fixed origins; decoding anonymous key metadata is not cryptographic verification of a user session"
+  },
+  "wallet_auth_next_increment": {
+    "nonce": "POST /functions/v1/auth-nonce; body address,chain=evm,domain,uri,optional chainId; response message,nonce",
+    "signing": "Existing connected EOA or existing Privy wallet personal_sign over exact returned message; no replacement wallet",
+    "verify": "POST /functions/v1/verify-wallet; body address,chain,nonce,message,signature,signature_encoding=hex; returns access_token,refresh_token",
+    "binding": "Source uses vanta.wallet_bindings filtered by user_id, matching normalized address and nonempty verified_at",
+    "warning": "Challenge grammar, actual mobile relying-party behavior and live acceptance remain unverified. Do not substitute Privy token or infer authentication from locally decoded JWT claims"
+  },
+  "chat": {
+    "method": "POST /functions/v1/starchild-chat",
+    "headers": [
+      "Content-Type: application/json",
+      "apikey: runtime public anon key",
+      "Authorization: Bearer Supabase access token"
+    ],
+    "body": {
+      "stream": true,
+      "user": "Supabase user UUID",
+      "request_id": "One caller-generated UUID per user turn",
+      "messages": "Role/content context"
+    },
+    "context": "Oldest messages removed until total content <=12000 UTF16 characters; newest user turn retained and limited to12000. Only nonempty complete user/assistant content sent; no reasoning, display status, local IDs, balances, orders or wallet credentials attached",
+    "stream": "UTF8 SSE multiline data, CR/LF across chunks, choices[0].delta.content and reasoning_content/thinking_delta; stop/end_turn/[DONE] terminal; length truncated",
+    "bounds": "65536 characters per line/frame,2MiB total SSE,131072 combined answer/reasoning characters;300s total,120s idle",
+    "fallback": "Interrupted, truncated, empty or eligible failed stream may use stream=false with same user/context/request_id. Reasoning-only completion gets one final-answer-only system instruction retry with that same ID",
+    "stop": "Shared operation cancellation aborts pending headers/body/completion, retains partial content as interrupted, and never starts another fallback. Service disposal aborts all active requests. Repository disposal/finalization cancels operation token",
+    "errors": "401/403 require authorization;429/daily_quota_exceeded supplies optional validated limit/used/remaining/reset_at; no raw server diagnostics exposed. Client4xx never triggers completion fallback",
+    "quota": "No verified remaining count is fabricated from browser default5; source separately reads vanta.ai_daily_usage request_count for current user_id/UTC usage_date. Quota controller/UI remain pending",
+    "acceptance": "Same request_id fallback matches source but backend deduplication and quota charging have not been live-tested"
+  },
+  "remaining": [
+    "Explicit wallet challenge review/validation, exact current-wallet signing, server-confirmed user and verified wallet binding",
+    "Secure scoped access/refresh token storage, refresh rotation and session/history isolation across identities",
+    "Riverpod lifecycle/cancel/late response guards, bounded native history and recovery",
+    "Native bilingual chat, safe Markdown, copy, stop, clear and quota interactions",
+    "Real auth/chat/quota and Android/iOS networking/layout/secure storage acceptance; device tests explicitly deferred"
+  ],
+  "financial_or_private_requests_performed": false,
+  "wallet_signature_performed": false,
+  "device_tools_used": false,
+  "follow_up": "Native Riverpod/lifecycle/foreground gate, explicit challenge review, bilingual chat/navigation/stop/copy/clear/local forget and quota UI subsequently implemented. See assistant-ui-public-contract.json and assistant-ui-verification.json. Real server/native acceptance remains deferred; earlier increment fields retain their historical scope."
+}

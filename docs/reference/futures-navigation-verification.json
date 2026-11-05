@@ -1,0 +1,118 @@
+{
+  "recorded_at_utc": "2026-11-05T08:39:30.173585+00:00",
+  "increment": "Futures first navigation/chart tab, session workspace retention, public quick unit, actual signed account settings and unknown market/book values",
+  "contract": "futures-navigation-public-contract.json",
+  "tests": {
+    "baseline_full": 3966,
+    "new_widgets": 33,
+    "focused_total": 69,
+    "full_passed": 3999,
+    "exit_code": 0,
+    "coverage": [
+      "EN/ZH signed-out and existing EOA at320width text1.5,844x390landscape and768tablet.",
+      "Actual user tab selection, all destinations/locale return, current symbol and Markets selection; new session resets.",
+      "Blank fields/percentages, real quote buttons, public metadata loading/failure/retry/mismatch and signed precedence.",
+      "Actual37x hedge+isolated/single and hedge+cross/multi settings, full decimal balance and missing balance.",
+      "No private account reads/settings writes/submits/wallet creation/signatures during navigation; only explicit mock context read.",
+      "Riverpod retained previous book during symbol loading and stream error; offline/disconnect and later new quotes.",
+      "Existing demo/chart/price precision/auth/wallet/performance journeys explicitly use required tab; account-sheet address assertions scoped to IdentityPanel."
+    ]
+  },
+  "format": {
+    "files": 834,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1660,
+    "zh": 1660,
+    "new_per_locale": 1,
+    "message_keys_equal": true,
+    "new_key": "assistantNavigation"
+  },
+  "android": {
+    "command": "make build-apk",
+    "expanded_command": "flutter build apk --release --target-platform android-arm64 --dart-define-from-file=.env",
+    "configuration": "Existing Makefile environment validation passed; values omitted. Previous config/privy.local.json path no longer exists. No replacement config or plugin registrants manually created.",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45840644,
+    "sha256": "08c9a98e6a3de63f53b1dce8253bea88d40a427a0b9dea1aada04c527609cd3a",
+    "aot_bytes": 15860616,
+    "packaged_probes": {
+      "navigation-": true,
+      "quick-order-leverage": true,
+      "quick-order-position-mode": true,
+      "quick-order-margin-mode": true,
+      "quick-order-asset-mode": true,
+      "quick-order-available": true,
+      "en:assetModeCurrentSetting": true,
+      "en:leverageCurrentSetting": true,
+      "zh:assetModeCurrentSetting": true,
+      "zh:leverageCurrentSetting": true
+    },
+    "installed": false,
+    "published": false,
+    "device_tools_used": false,
+    "notices": "Existing third-party KGP/Built-in Kotlin notices; normal Release build passed."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "logs": {
+    "focused": "/tmp/vanta-navigation-focused-final.log",
+    "full": "/tmp/vanta-navigation-all-tests-second.log",
+    "format": "/tmp/vanta-navigation-format-final.log",
+    "analysis": "/tmp/vanta-navigation-analysis-final.log",
+    "build": "/tmp/vanta-navigation-build-final.log"
+  },
+  "log_sha256": {
+    "focused": "332e35712c5c9567e33574e94df2c8eff9a9f52d230e2b39ebfdbaf0bfb78754",
+    "full": "22d0dbce7069a0b38ed530011bf6b934da9084db4e496ec9df90858eebb81b41",
+    "format": "4fdee0d4f994f406310bacd987b031dfc26173df8af8d64900225eb36231923e",
+    "analysis": "dd59d09fbc342124016fe556b92356f7e73cf9266486e1535e562c53297b613b",
+    "build": "f5272df206afc42bc481bb7e3c01e3a5bb89fbc2957fc59a166e0962284e2f10"
+  },
+  "source_sha256": {
+    "lib/features/trade/application/navigation_provider.dart": "0ecb60e0f539b4ce381c7e74f70068c29fc7d165637212f3136c26e8f87437b3",
+    "lib/features/trade/presentation/trading_screen.dart": "02d4ed7b03b9a46a89ed04ce665981c3d119e60e41dcfe7f4d417431d627f08d",
+    "lib/features/trade/presentation/futures_workspace.dart": "fbcf2ce739c34dfe01ea6b5a738a61fa7394db92b2c9686235b644680d570ab5",
+    "lib/features/trade/presentation/widgets/app_bottom_navigation.dart": "14da277d901dbfced0f34e9e6a5de88ad8b3efbeb0ded3695c0cd59817e73ba1",
+    "lib/features/market/application/market_providers.dart": "994a4ce91e9fc9f75cb907061e952d1b22592254dbd71ed5f429c8ededaf9465",
+    "lib/features/portfolio/presentation/quick_order_panel.dart": "8b813565a39068cbff2483d185bfb3fe12804afea82b8772e4eec5bc1dfa9777",
+    "lib/features/portfolio/presentation/quick_order_account_settings.dart": "31a5982fd10b9d8ff36f7953deeb1f68346da3e1a845b05e0f33b5972c82d771",
+    "lib/features/trade/presentation/widgets/market_header.dart": "f303800d6bd7f5cb13e93bddf35f47fcd6d68cb1420e043f70e7ed849aebd257",
+    "lib/l10n/app_en.arb": "33f176682f4bade96eb955c10ca8b439c2601d7ce97fec3fa161bc71f9ac7d10",
+    "lib/l10n/app_zh.arb": "30a16a47b503603037f3d951ad85a17045c179f403188c2e4388777e91fd6c48",
+    "lib/l10n/generated/app_localizations.dart": "b5fd4773ca439e1e41b3a83d641541de71324c4f0a8095f5a98e92a03e510242",
+    "lib/l10n/generated/app_localizations_en.dart": "07e8886e48efb846516d58c0356d6144c4d16ae95ec79ec26e7dbdbbf1ba04f9",
+    "lib/l10n/generated/app_localizations_zh.dart": "526ebfce9b6424b363f29ca900854041afd5a131533f55a0abd7ca91da625b6b",
+    "test/widget_test.dart": "a9f97230ae9720c862a761a34b1fb42b9a2a0c291a070c562fe276b7c9719cf7",
+    "test/order_book_test.dart": "1f44284242f5f5f59c272d99284e094918b7bf9308bda2d94a0a9da80c6ef731",
+    "test/features/auth/external_wallet_panel_test.dart": "e52f1246e4e075b611105d06a9df601d42ed089684c5b784bf4a121c6d374b8a",
+    "test/features/auth/identity_panel_test.dart": "0068853fc7ed13a4fa9286ae43fe462566b3178d7a5026e03afd94a5ec66ee52",
+    "test/features/trade/price_precision_widget_test.dart": "d2ed4f606831813ae189a07d9cde7f51b52ee7c74caa25402d732064abe1c584",
+    "test/features/portfolio/quick_order_widget_test.dart": "5166822e16ba2fbadb9266185d42d0909a3e1f39cca78cc2acf603d45837a0ed",
+    "test/performance/performance_scenarios.dart": "b3399b015e96a2ca07728671f61f91c98009d12ca3d2d29f66d8d846fb7c638d",
+    "test/features/trade/navigation_widget_test.dart": "72bed586ba2b493163918a0fdf7b04425bf49f16374e9d78df25ea66c5c29703",
+    "test/features/trade/futures_defaults_widget_test.dart": "d00a1464bc2224b4109365c4130c046d845fb56828245d2b5c6fe416d85cdcf4",
+    "test/features/trade/market_loading_widget_test.dart": "d810356f7b5bb32cb3a8f4cac93a26c2d4d3e73a6cd2df2b72c89c8ffc89ace1",
+    "test/support/navigation_fixture.dart": "abc4789754634e2cc789fdc30143d61926fbe7822b0f4c68b65897cfe0c1bdb6",
+    "test/support/workspace_navigation.dart": "2f7ce20ab2a09219e8fea329b92c434cffeb38651ca88e7cab6cfa6442dd4bcd",
+    "test/support/trade_fixture.dart": "0bea7e45d11fba0648026e66a1bfbc785382ea9515c960d75c53d9c5ca312c49"
+  },
+  "verification_note": "Initial five new tests exposed test teardown timers and were corrected to explicitly dispose the provider container. Initial full suite3994passed/5failed: three order-book tests assumed Trade default and two auth assertions counted background quick-panel addresses. Existing tests now choose Trade via real UI or scope address assertion to IdentityPanel; no financial validation assertions removed. Final focused69/full3999, format, analysis and normal Makefile Android build all passed.",
+  "financial_requests_sent": false,
+  "private_requests_sent": false,
+  "chat_requests_sent": false,
+  "address_rpc_requests_sent": false,
+  "wallet_signatures_requested": false,
+  "device_tools_used": false,
+  "acceptance": "Synthetic widget/account/market fixtures and host tests only; real wallet/platform/native behavior remains unverified.",
+  "outstanding": "Full PRD goal remains active. Newly read account PRD explicitly forbids embedded Privy subaccount creation; restriction pending as separate implementation task. Full strategy management, Chase recovery, full Portfolio, Swap and remaining form settings still incomplete."
+}

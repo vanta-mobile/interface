@@ -1,0 +1,65 @@
+{
+  "scope": "Explicit read-only per-leg execution details for a known attached OTO/OTOCO strategy; does not complete the full strategy management list or Futures history.",
+  "sources": [
+    {
+      "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+      "page_last_edited_at": "2026-11-05T02:53:35.835Z",
+      "requirement": "按订单回报显示实际已成交数量、退出单状态和数量。分批成交后，剩余量是否自动增补以及增补时点须认证联调。"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3(Recommended)/EN/aster-finance-futures-api-v3.md",
+      "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4",
+      "bytes": 243773,
+      "read": "Previously anonymously fetched official documentation, rechecked cached bytes and Query Order section in this increment; no live private or address-bearing request.",
+      "endpoints": [
+        "GET /fapi/v3/time",
+        "GET /fapi/v3/strategyOpenOrder",
+        "GET /fapi/v3/strategyHistoryOrder",
+        "GET /fapi/v3/order",
+        "GET /fapi/v3/exchangeInfo"
+      ],
+      "ordinary_order_fields": [
+        "orderId",
+        "clientOrderId",
+        "symbol",
+        "side",
+        "positionSide",
+        "origType",
+        "type",
+        "timeInForce",
+        "reduceOnly",
+        "closePosition",
+        "origQty",
+        "executedQty",
+        "cumQuote",
+        "avgPrice",
+        "price",
+        "stopPrice",
+        "workingType",
+        "priceProtect",
+        "time",
+        "updateTime"
+      ],
+      "retention_boundary": "Canceled or expired orders without fills are not found after creation plus7days; -2013 is not evidence of zero fills or cancellation."
+    }
+  ],
+  "implementation": {
+    "entry": "Independent explicit read action from the verified live strategy status or original recovery result. Route query is pinned across locale rebuilds. Opening never prompts a wallet or reads private data automatically.",
+    "preflight": "Validate complete frozen OrderQuery using the recovery codec before any signature; require attached terms and a positive strategyId.",
+    "strategy": "Recheck original clientStrategyId and strategyType. Fall back to history only on explicit -2013. Require exact strategyId, original leg quantities, identities, trigger/limit/peg/policy and driving relationships.",
+    "legs": "Query each actual exchange orderId with its original symbol. Missing or zero strategy orderId stays unknown and causes no ordinary order request. Each response must match exchange orderId, original clientOrderId, symbol, side, positionSide, origType, policy and reduce/close flags.",
+    "amounts": "Validated Decimal strings for origQty/executedQty/cumQuote/avgPrice/price. Canceled partial fills retain their exact positive quantity and quote value. Missing optional quote or average remains unknown, never derived from displayed quantity times price; unfilled average is unavailable.",
+    "change": "Display actual current ordinary order size and report quantity, fixed limit or trigger differences from original terms; never call the difference proven automatic replenishment. Conditional type transformation or positive execution can evidence triggering, not full execution or peer cancellation.",
+    "partial_failure": "First refused/failed/malformed child stops all subsequent wallet prompts. Preserve earlier valid legs; remaining actual-ID legs are explicitly skipped. Retrying is manual and read-only.",
+    "units": "Public exchangeInfo contract metadata including inactive contracts; missing metadata keeps amounts with unknown units. No inferred USD or units from the symbol suffix.",
+    "time": "Separate strategy check time, ordinary order update time and per-order read time. Thirty-second expiry measured from the strategy read; events, settings submissions, backwards clock and leaving foreground make evidence stale, including lifecycle changes while reading. No background polling/signing.",
+    "scope": "Connected EOA/existing Privy wallet only, same user=signer, chain1666, shared increasing microsecond read nonces, exact signed bytes and50second per-prompt expiry through existing SignedAccountRequest. No new wallet, POST/cancel, journal completion or inferred account/position update.",
+    "state": "Riverpod family per pinned query; auth identity/address/kind/signing changes clear private views and invalidate late responses. Global read lease prevents overlapping account operations. Stop/disposal releases its own lease without allowing old futures to release a newer lease. Corrupt storage and unknown-write ownership stay blocking; pending journals are never cleared."
+  },
+  "remaining": [
+    "Actual exchange self-EOA signer authorization, child identity/type/size report behavior, partial-fill activation and replenishment/peer cancellation remain unverified.",
+    "No actual wallet, private API, address-bearing RPC, funds or device actions performed. User deferred device acceptance; iOS requires macOS/Xcode.",
+    "Complete strategy list/edit/whole cancellation, Futures allOrders/userTrades/income, full Portfolio and Swap remain separate incomplete requirements. Only explicitly deferred historical statistics/Summary/TWAP stay skipped.",
+    "Latest PRD ordinary base/quote amount input and first-visit mode defaults still require alignment; current LiveOrderForm only has a base quantity controller, empty limit price and Last conditional basis. Scaled remains equal-quantity2-5 initial implementation; custom slippage lacks an agreed public-order execution contract. These are tracked development gaps, not deferred device tests."
+  ]
+}

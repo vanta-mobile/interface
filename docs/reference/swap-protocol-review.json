@@ -1,0 +1,85 @@
+{
+  "recorded_at_utc": "2026-11-04T14:19:38.170945+00:00",
+  "prd": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+  "scope": "Source-only review of Futures wallet Swap; not an implemented or tested transaction contract",
+  "implemented": false,
+  "sources": [
+    {
+      "url": "https://static2.asterdexfx.com/assets/UserInfo-l_1AJ7RG.js",
+      "bytes": 429132,
+      "sha256": "2a0959f8186f000e4c4885e1697e13e21af88216c0810732e270311ba3b01a73"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/esm-CyiOXf0g.js",
+      "bytes": 1294468,
+      "sha256": "b5567385fc09ceff47d557544643c7077443f5ec65b031fabd9b03bbb25a216c"
+    }
+  ],
+  "observed_website_flow": {
+    "entry": "Nonnegative supported wallet assets USDT/USDF/ASBNB on website supported EVM chain context; negative supported asset balances open separate Rebalance.",
+    "source_target": [
+      "USDT -> USDF",
+      "BNB -> asBNB",
+      "slisBNB -> asBNB"
+    ],
+    "submission": {
+      "method": "POST",
+      "path": "/bapi/futures/v1/private/future/swap/swapAsset",
+      "body_fields": [
+        "amount",
+        "assetTransferEnum",
+        "chainId"
+      ],
+      "assetTransferEnum": [
+        "USDT_USDF",
+        "BNB_ASBNB",
+        "SLISBNB_ASBNB"
+      ],
+      "website_chain": "BNB Chain context; amount as a decimal string from input"
+    },
+    "swap_capacity": {
+      "method": "GET",
+      "path": "/bapi/futures/v1/private/future/swap/swapBalance"
+    },
+    "source_available": {
+      "method": "POST",
+      "path": "/bapi/futures/v1/private/future/user-data/getMaxWithdrawAmount",
+      "body_fields": [
+        "assetName"
+      ]
+    },
+    "website_input_rules": "At most8 decimal places; displayed minima0.1 USDT or0.001 BNB/slisBNB. These are website-side validation observed in this bundle, not an authoritative current asset-specific contract.",
+    "reverse_direction": "Website guide withdraws target token to Web3 wallet then opens Trade & Earn redeem route. It is not an in-account symmetric reverse Swap."
+  },
+  "reviewed_open_api_documents": {
+    "count": 21,
+    "sources": "Cached official V3 and official API-docs markdown from prior protocol reviews",
+    "search_terms": [
+      "swapAsset",
+      "swapBalance",
+      "assetTransferEnum",
+      "USDT_USDF",
+      "SLISBNB_ASBNB"
+    ],
+    "matches": 0,
+    "boundary": "No corresponding documented V3 endpoint found in these reviewed files; this is not a claim that no future or unpublished endpoint exists."
+  },
+  "required_before_submission_implementation": [
+    "Third-party mobile BAPI login/session/authorization contract or documented equivalent V3 signed endpoints. Existing Privy session or V3 EOA signature does not establish a website BAPI session.",
+    "Authoritative chain/assets/source capacity, target capacity units, conversion quote/fees/minimum/precision and any slippage/expiry contract; avoid assuming equal input/output limits for BNB conversions.",
+    "Request reference/idempotency and a lookup/result contract for interrupted or unknown swap submissions, including definitive credited amounts."
+  ],
+  "session_context": "User previously confirmed no BAPI auth backend and skipped BAPI statistics/TWAP. Swap remains an explicit unresolved feature; not silently declared implemented or removed from original scope.",
+  "non_substitutions": [
+    "POST /fapi/v3/assetExchange is multi-asset Rebalance, not these Swap routes.",
+    "Token USD index/APY is not a swap quote or source/target allowance.",
+    "No cookie scraping, session guessing, extra wallet creation or fabricated success."
+  ],
+  "performed": {
+    "anonymous_js_source_downloads": true,
+    "private_endpoint_calls": false,
+    "wallet_or_rpc_requests": false,
+    "swap_or_financial_actions": false,
+    "native_device_testing": false
+  }
+}

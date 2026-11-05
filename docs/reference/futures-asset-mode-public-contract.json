@@ -1,0 +1,43 @@
+{
+  "verified_at_utc": "2026-11-03T00:48:12.997948+00:00",
+  "official_doc": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_doc_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "prd_section": "3.1 保证金模式 → 全仓 → 单一／多资产；切换多资产需要把所有逐仓仓位切换成全仓",
+  "endpoints": {
+    "context": [
+      "GET /fapi/v3/multiAssetsMargin",
+      "GET /fapi/v3/positionRisk (no symbol)"
+    ],
+    "mutation": "POST /fapi/v3/multiAssetsMargin; multiAssetsMargin string true/false, no symbol",
+    "verification": "GET /fapi/v3/multiAssetsMargin (new signature)"
+  },
+  "contract_checks": [
+    "Official asset-mode GET and POST apply to Every symbol in the account",
+    "Read multiAssetsMargin is required JSON boolean; multi/single explicitly map to string true/false at write boundary",
+    "Full-account position configuration groups by symbol, validates BOTH or complete LONG/SHORT, margin coherence, exact Decimal amounts and isolated collateral",
+    "Existing nonzero isolated positions or retained isolated collateral block multi-assets target; empty isolated config and cross positions do not",
+    "Single-asset target uses exchange eligibility rather than applying the multi-assets isolated-position restriction backwards",
+    "No unsupported error codes are invented: unknown errors retain safe existing read-failure reason and numeric code; raw messages never reach UI",
+    "Exact signed body, shared fresh nonce, chainId 1666, current wallet both user and signer; no symbol, marginType, dualSidePosition, API key or extra wallet",
+    "POST acknowledgement does not prove final mode; separate signed GET records observation and UTC time"
+  ],
+  "reference_project": [
+    "/data/dodo/rwa-interface/lib/domain/models/position_leverage_context.dart",
+    "/data/dodo/rwa-interface/lib/data/services/hip3_position_intents.dart",
+    "/data/dodo/rwa-interface/lib/data/repositories/positions_repository_impl.dart"
+  ],
+  "reference_boundary": "Reference informs supported-mode checks, context validity and explicit mutation boundaries. Its Hip3 backend does not define Aster multiAssetsMargin.",
+  "implementation_boundaries": [
+    "No automatic private read on entry; explicit mode and position read requires two signatures",
+    "30-second lease starts at first response including second signature/read; account events or any settings mutation invalidate prior confirmations",
+    "Preflight is not an atomic exchange lock; balance requirements, eligible collateral, supported assets and final acceptance are Aster validation",
+    "No automatic symbol margin conversion, closing, order cancellation, asset exchange or transfer",
+    "All four settings serialize activity; unresolved writes block other settings until GET-only recovery; no automatic POST retry",
+    "Submission marks balance/risk/ADL/order snapshots historical; result does not synthesize financial fields or refresh them automatically",
+    "Independent settings route not yet integrated into live order-entry / quick orders",
+    "No real private request or financial action sent; real authorized EOA/Privy acceptance remains unverified"
+  ],
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false
+}

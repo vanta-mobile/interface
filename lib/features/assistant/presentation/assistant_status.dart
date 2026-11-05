@@ -1,0 +1,84 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/strings.dart';
+import '../../../core/theme.dart';
+import '../../../l10n/generated/app_localizations.dart';
+import '../application/assistant_provider.dart';
+
+Future<void> copyAssistantText(BuildContext context, String value) async {
+  final l10n = AppLocalizations.of(context);
+  String message;
+  try {
+    await Clipboard.setData(ClipboardData(text: value));
+    message = l10n.assistantCopied;
+  } catch (_) {
+    message = l10n.assistantCopyFailed;
+  }
+  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+class AssistantStatus extends ConsumerWidget {
+  const AssistantStatus({super.key});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final (failure, storage, ready, authenticated, busy, active, phase) = ref.watch(
+      assistantProvider.select(
+        (s) => (
+          s.failureKey,
+          s.storageFailureKey,
+          s.historyReady,
+          s.authenticated,
+          s.busy,
+          s.active,
+          s.phase,
+        ),
+      ),
+    );
+    final l10n = AppLocalizations.of(context), controller = ref.read(assistantProvider.notifier);
+    final phaseKey = switch (phase) {
+      AssistantPhase.preparing => 'assistantPreparing',
+      AssistantPhase.signing => 'assistantSigning',
+      AssistantPhase.restoring => 'assistantRestoring',
+      AssistantPhase.loadingHistory => 'assistantLoadingHistory',
+      AssistantPhase.readingUsage => 'assistantReadingUsage',
+      AssistantPhase.clearing => 'assistantClearing',
+      _ => null,
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (phaseKey != null) Text(tr(context, phaseKey), semanticsLabel: tr(context, phaseKey)),
+        if (failure != null) AssistantNotice(text: tr(context, failure)),
+        if (storage != null) ...[
+          AssistantNotice(text: tr(context, storage)),
+          if (ready)
+            OutlinedButton(
+              key: const Key('assistant-retry-save'),
+              onPressed: active && !busy ? controller.retrySave : null,
+              child: Text(l10n.assistantRetrySave),
+            ),
+        ],
+        if (authenticated && !ready && !busy) ...[
+          Text(l10n.assistantHistoryBlocked),
+          OutlinedButton(
+            key: const Key('assistant-retry-history'),
+            onPressed: active ? controller.retryHistory : null,
+            child: Text(l10n.assistantRetryHistory),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class AssistantNotice extends StatelessWidget {
+  const AssistantNotice({super.key, required this.text});
+  final String text;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Text(text, style: const TextStyle(color: AppColors.warning)),
+  );
+}

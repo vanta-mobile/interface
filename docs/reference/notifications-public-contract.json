@@ -1,0 +1,38 @@
+{
+  "prd": "https://app.notion.com/p/409080d974e780e7afeed701ef37e67a",
+  "prd_snapshot_fetched_at": "2026-11-02T11:43:06.416Z",
+  "official_futures_document": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_futures_document_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "implemented_sources": [
+    "ORDER_TRADE_UPDATE: typed order details, multiple fills, liquidation and ADL classification",
+    "MARGIN_CALL: one critical notification preserving all reported positions"
+  ],
+  "deduplication": {
+    "trade": "wallet + PERP + symbol + orderId + tradeId",
+    "non_trade": "wallet + PERP + symbol + orderId + executionType + status + eventTime + orderTradeTime",
+    "margin": "wallet + PERP + MARGIN_CALL + eventTime + canonical crossWalletBalance and sorted position details"
+  },
+  "financial_boundaries": [
+    "Decimal strings only for amounts and prices; integer timestamps and IDs validated separately.",
+    "Commission and currency are optional as a pair. Realized PnL is the value reported by this event, not a recomputed account return.",
+    "autoclose- prefix, NEW_INSURANCE, CALCULATED or LIQUIDATION identify liquidation; adl_autoclose or NEW_ADL identify ADL. Explicit conflicting ADL/liquidation identities are rejected. ADL identity takes priority over a generic CALCULATED execution.",
+    "Risk orders bypass ordinary open-order reconciliation, but still invalidate signed snapshots. One event produces one risk notification, never an additional ordinary order notification.",
+    "No whole-position liquidation inference, supplied liquidation price, risk percentage, countdown or delivery-before-liquidation guarantee.",
+    "Quantities, original type, execution, status, last/cumulative fills, prices, all three timestamps, IDs, commission, reported PnL and supplied trigger/working/reduce/close flags are retained. Trailing-stop sp is ignored per official documentation.",
+    "Public exchangeInfo supplies base/quote/margin units. Missing or failed metadata is labeled unknown and may be retried without private signing. Margin-call cw has no supplied asset identifier and is not assigned an invented unit."
+  ],
+  "delivery_and_storage": [
+    "Only the explicitly authorized current-wallet stream can ingest events. Socket generation and captured authorized address are checked before routing.",
+    "Background pauses, stream expiry and disconnections can leave gaps; there is no system push or missed-event replay.",
+    "Local inbox and read state are scoped by wallet. An already-open detail route hides its previous event immediately on wallet change/logout.",
+    "SharedPreferences stores versioned normalized typed event details, not raw WebSocket payloads, keys, tokens, signatures or credentials. Up to 500 recent records and 4 MiB across wallets; oldest records are removed when either limit is reached.",
+    "Operations are serialized. Initial load failure/corruption does not overwrite stored data; live events/read changes remain in memory and merge on retry. Persisted read status survives duplicate replay during recovery.",
+    "Write failure retains the current in-memory snapshot and a safe retry error. Notifications are best-effort local history, not the durable financial request journal; clearing app data/uninstall removes them. Accepted queued writes may finish after listeners are disposed."
+  ],
+  "not_implemented": [
+    "Spot executionReport subscription and notifications",
+    "Deposit/withdrawal history baseline, state transitions and notifications",
+    "ACCOUNT_UPDATE funding reasons triggering deposit/withdrawal history refresh; balance change alone must not claim on-chain completion"
+  ],
+  "native_verification": "Skipped at user request; no device tools, APK installation or real private financial requests."
+}

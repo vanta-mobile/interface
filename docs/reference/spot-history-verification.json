@@ -1,0 +1,54 @@
+{
+  "verified_at_utc": "2026-11-02T17:03:56.929835+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "apk": {
+    "bytes": 42367976,
+    "sha256": "1f2d3811b4101c04a07faf9b4c048b72c35064d753442b153962edc9b95bc9ee"
+  },
+  "automated_tests": 310,
+  "new_unit_widget_tests": 39,
+  "format_dart_files": 176,
+  "analysis": "no issues",
+  "localized_messages_per_language": 422,
+  "native_checks": [
+    "Spot history entries separate from demo",
+    "Chinese order history and seven-day retention note",
+    "Chinese transaction history with asset filter",
+    "English trade history with symbol filter",
+    "read action opens sign-in with EOA and email options",
+    "landscape scrolling keeps read control accessible",
+    "restored original Chinese language and portrait rotation"
+  ],
+  "screenshots": [
+    "spot-history-entries-android.png",
+    "spot-history-orders-zh-android.png",
+    "spot-history-transactions-zh-android.png",
+    "spot-history-trades-en-android.png",
+    "spot-history-login-android.png",
+    "spot-history-landscape-android.png"
+  ],
+  "unit_widget_checks": [
+    "active, partial and terminal order statuses retained",
+    "Decimal amounts, huge IDs, fees and original signs",
+    "malformed or conflicting immutable events rejected",
+    "exact GET endpoints, query bytes, same wallet and unique shared nonces",
+    "metadata unavailable without inventing units",
+    "long ranges segment at seven days, saturated windows split inclusively",
+    "single-millisecond overflow explicitly incomplete",
+    "failure retains prior records and exact pending range",
+    "stop/back and identity changes discard late results",
+    "display pagination never signs",
+    "custom UTC dates, language preservation, narrow 2x text and landscape 1.5x text"
+  ],
+  "public_read_evidence": "spot-history-public-contract.json",
+  "unverified": [
+    "real email/EOA sign-in",
+    "Aster accepts selected wallet as signer",
+    "successful private Spot history reads",
+    "signed-in results on native device",
+    "iOS compilation: Linux environment"
+  ],
+  "real_financial_requests_sent": false,
+  "test_data_boundary": "All successful private history responses are controlled fixtures. Native screenshots use the signed-out app without fake identities or assets."
+}

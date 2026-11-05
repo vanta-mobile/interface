@@ -1,0 +1,532 @@
+{
+  "purpose": "Anonymous public mark-price REST/stream verification; no wallet, private API or financial action",
+  "verified_at_utc": "2026-11-02T18:30:17.566224Z",
+  "rest": "https://fapi.asterdex.com/fapi/v3/premiumIndex",
+  "stream": "!markPrice@arr@1s",
+  "symbols": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT"
+  ],
+  "initial_fresh_marks": true,
+  "paused_without_fresh_values": true,
+  "resumed_with_new_marks": true,
+  "distinct_event_times": {
+    "initial:BTCUSDT": 3,
+    "initial:ETHUSDT": 3,
+    "initial:SOLUSDT": 3,
+    "resumed:BTCUSDT": 3,
+    "resumed:ETHUSDT": 3,
+    "resumed:SOLUSDT": 3
+  },
+  "records": [
+    {
+      "phase": "initial",
+      "received_at_utc": "2026-11-02T18:30:09.525780Z",
+      "connection": "connecting",
+      "fresh_symbols": [],
+      "snapshot_failed": false,
+      "quotes": {}
+    },
+    {
+      "phase": "initial",
+      "received_at_utc": "2026-11-02T18:30:10.181729Z",
+      "connection": "online",
+      "fresh_symbols": [],
+      "snapshot_failed": false,
+      "quotes": {}
+    },
+    {
+      "phase": "initial",
+      "received_at_utc": "2026-11-02T18:30:10.523445Z",
+      "connection": "online",
+      "fresh_symbols": [],
+      "snapshot_failed": false,
+      "quotes": {}
+    },
+    {
+      "phase": "initial",
+      "received_at_utc": "2026-11-02T18:30:11.467253Z",
+      "connection": "online",
+      "fresh_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76954.7",
+          "event_time_utc": "2026-11-02T18:30:11.000Z",
+          "received_at_utc": "2026-11-02T18:30:11.212953Z"
+        },
+        "ETHUSDT": {
+          "price": "2250.99294574",
+          "event_time_utc": "2026-11-02T18:30:11.000Z",
+          "received_at_utc": "2026-11-02T18:30:11.215338Z"
+        },
+        "SOLUSDT": {
+          "price": "91.96962015",
+          "event_time_utc": "2026-11-02T18:30:11.000Z",
+          "received_at_utc": "2026-11-02T18:30:11.215368Z"
+        }
+      }
+    },
+    {
+      "phase": "initial",
+      "received_at_utc": "2026-11-02T18:30:11.523355Z",
+      "connection": "online",
+      "fresh_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76954.7",
+          "event_time_utc": "2026-11-02T18:30:11.000Z",
+          "received_at_utc": "2026-11-02T18:30:11.212953Z"
+        },
+        "ETHUSDT": {
+          "price": "2250.99294574",
+          "event_time_utc": "2026-11-02T18:30:11.000Z",
+          "received_at_utc": "2026-11-02T18:30:11.215338Z"
+        },
+        "SOLUSDT": {
+          "price": "91.96962015",
+          "event_time_utc": "2026-11-02T18:30:11.000Z",
+          "received_at_utc": "2026-11-02T18:30:11.215368Z"
+        }
+      }
+    },
+    {
+      "phase": "initial",
+      "received_at_utc": "2026-11-02T18:30:11.865583Z",
+      "connection": "online",
+      "fresh_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76954.7",
+          "event_time_utc": "2026-11-02T18:30:11.000Z",
+          "received_at_utc": "2026-11-02T18:30:11.212953Z"
+        },
+        "ETHUSDT": {
+          "price": "2250.99294574",
+          "event_time_utc": "2026-11-02T18:30:11.000Z",
+          "received_at_utc": "2026-11-02T18:30:11.215338Z"
+        },
+        "SOLUSDT": {
+          "price": "91.96962015",
+          "event_time_utc": "2026-11-02T18:30:11.000Z",
+          "received_at_utc": "2026-11-02T18:30:11.215368Z"
+        }
+      }
+    },
+    {
+      "phase": "initial",
+      "received_at_utc": "2026-11-02T18:30:12.346336Z",
+      "connection": "online",
+      "fresh_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76957.18693116",
+          "event_time_utc": "2026-11-02T18:30:12.001Z",
+          "received_at_utc": "2026-11-02T18:30:12.095674Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.16201551",
+          "event_time_utc": "2026-11-02T18:30:12.001Z",
+          "received_at_utc": "2026-11-02T18:30:12.095921Z"
+        },
+        "SOLUSDT": {
+          "price": "91.98",
+          "event_time_utc": "2026-11-02T18:30:12.001Z",
+          "received_at_utc": "2026-11-02T18:30:12.095951Z"
+        }
+      }
+    },
+    {
+      "phase": "initial",
+      "received_at_utc": "2026-11-02T18:30:12.523305Z",
+      "connection": "online",
+      "fresh_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76957.18693116",
+          "event_time_utc": "2026-11-02T18:30:12.001Z",
+          "received_at_utc": "2026-11-02T18:30:12.095674Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.16201551",
+          "event_time_utc": "2026-11-02T18:30:12.001Z",
+          "received_at_utc": "2026-11-02T18:30:12.095921Z"
+        },
+        "SOLUSDT": {
+          "price": "91.98",
+          "event_time_utc": "2026-11-02T18:30:12.001Z",
+          "received_at_utc": "2026-11-02T18:30:12.095951Z"
+        }
+      }
+    },
+    {
+      "phase": "initial",
+      "received_at_utc": "2026-11-02T18:30:13.339194Z",
+      "connection": "online",
+      "fresh_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76957.19342391",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088862Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.15890698",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088912Z"
+        },
+        "SOLUSDT": {
+          "price": "91.98",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088934Z"
+        }
+      }
+    },
+    {
+      "phase": "initial",
+      "received_at_utc": "2026-11-02T18:30:13.523351Z",
+      "connection": "online",
+      "fresh_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76957.19342391",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088862Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.15890698",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088912Z"
+        },
+        "SOLUSDT": {
+          "price": "91.98",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088934Z"
+        }
+      }
+    },
+    {
+      "phase": "paused",
+      "received_at_utc": "2026-11-02T18:30:13.547029Z",
+      "connection": "offline",
+      "fresh_symbols": [],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76957.19342391",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088862Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.15890698",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088912Z"
+        },
+        "SOLUSDT": {
+          "price": "91.98",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088934Z"
+        }
+      }
+    },
+    {
+      "phase": "resumed",
+      "received_at_utc": "2026-11-02T18:30:13.549126Z",
+      "connection": "connecting",
+      "fresh_symbols": [],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76957.19342391",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088862Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.15890698",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088912Z"
+        },
+        "SOLUSDT": {
+          "price": "91.98",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088934Z"
+        }
+      }
+    },
+    {
+      "phase": "resumed",
+      "received_at_utc": "2026-11-02T18:30:13.766728Z",
+      "connection": "connecting",
+      "fresh_symbols": [],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76957.19342391",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088862Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.15890698",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088912Z"
+        },
+        "SOLUSDT": {
+          "price": "91.98",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088934Z"
+        }
+      }
+    },
+    {
+      "phase": "resumed",
+      "received_at_utc": "2026-11-02T18:30:14.097591Z",
+      "connection": "online",
+      "fresh_symbols": [],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76957.19342391",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088862Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.15890698",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088912Z"
+        },
+        "SOLUSDT": {
+          "price": "91.98",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088934Z"
+        }
+      }
+    },
+    {
+      "phase": "resumed",
+      "received_at_utc": "2026-11-02T18:30:14.549187Z",
+      "connection": "online",
+      "fresh_symbols": [],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76957.19342391",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088862Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.15890698",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088912Z"
+        },
+        "SOLUSDT": {
+          "price": "91.98",
+          "event_time_utc": "2026-11-02T18:30:13.000Z",
+          "received_at_utc": "2026-11-02T18:30:13.088934Z"
+        }
+      }
+    },
+    {
+      "phase": "resumed",
+      "received_at_utc": "2026-11-02T18:30:15.389234Z",
+      "connection": "online",
+      "fresh_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76966.2",
+          "event_time_utc": "2026-11-02T18:30:15.001Z",
+          "received_at_utc": "2026-11-02T18:30:15.138575Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.30797674",
+          "event_time_utc": "2026-11-02T18:30:15.001Z",
+          "received_at_utc": "2026-11-02T18:30:15.138635Z"
+        },
+        "SOLUSDT": {
+          "price": "91.99",
+          "event_time_utc": "2026-11-02T18:30:15.001Z",
+          "received_at_utc": "2026-11-02T18:30:15.138648Z"
+        }
+      }
+    },
+    {
+      "phase": "resumed",
+      "received_at_utc": "2026-11-02T18:30:15.549286Z",
+      "connection": "online",
+      "fresh_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76966.2",
+          "event_time_utc": "2026-11-02T18:30:15.001Z",
+          "received_at_utc": "2026-11-02T18:30:15.138575Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.30797674",
+          "event_time_utc": "2026-11-02T18:30:15.001Z",
+          "received_at_utc": "2026-11-02T18:30:15.138635Z"
+        },
+        "SOLUSDT": {
+          "price": "91.99",
+          "event_time_utc": "2026-11-02T18:30:15.001Z",
+          "received_at_utc": "2026-11-02T18:30:15.138648Z"
+        }
+      }
+    },
+    {
+      "phase": "resumed",
+      "received_at_utc": "2026-11-02T18:30:16.334220Z",
+      "connection": "online",
+      "fresh_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76967.8",
+          "event_time_utc": "2026-11-02T18:30:16.000Z",
+          "received_at_utc": "2026-11-02T18:30:16.083102Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.30797674",
+          "event_time_utc": "2026-11-02T18:30:16.000Z",
+          "received_at_utc": "2026-11-02T18:30:16.083155Z"
+        },
+        "SOLUSDT": {
+          "price": "91.99029409",
+          "event_time_utc": "2026-11-02T18:30:16.000Z",
+          "received_at_utc": "2026-11-02T18:30:16.083171Z"
+        }
+      }
+    },
+    {
+      "phase": "resumed",
+      "received_at_utc": "2026-11-02T18:30:16.549316Z",
+      "connection": "online",
+      "fresh_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76967.8",
+          "event_time_utc": "2026-11-02T18:30:16.000Z",
+          "received_at_utc": "2026-11-02T18:30:16.083102Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.30797674",
+          "event_time_utc": "2026-11-02T18:30:16.000Z",
+          "received_at_utc": "2026-11-02T18:30:16.083155Z"
+        },
+        "SOLUSDT": {
+          "price": "91.99029409",
+          "event_time_utc": "2026-11-02T18:30:16.000Z",
+          "received_at_utc": "2026-11-02T18:30:16.083171Z"
+        }
+      }
+    },
+    {
+      "phase": "resumed",
+      "received_at_utc": "2026-11-02T18:30:17.352270Z",
+      "connection": "online",
+      "fresh_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76967.8",
+          "event_time_utc": "2026-11-02T18:30:17.000Z",
+          "received_at_utc": "2026-11-02T18:30:17.101429Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.34448837",
+          "event_time_utc": "2026-11-02T18:30:17.000Z",
+          "received_at_utc": "2026-11-02T18:30:17.101489Z"
+        },
+        "SOLUSDT": {
+          "price": "91.99410379",
+          "event_time_utc": "2026-11-02T18:30:17.000Z",
+          "received_at_utc": "2026-11-02T18:30:17.101505Z"
+        }
+      }
+    },
+    {
+      "phase": "resumed",
+      "received_at_utc": "2026-11-02T18:30:17.549300Z",
+      "connection": "online",
+      "fresh_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "snapshot_failed": false,
+      "quotes": {
+        "BTCUSDT": {
+          "price": "76967.8",
+          "event_time_utc": "2026-11-02T18:30:17.000Z",
+          "received_at_utc": "2026-11-02T18:30:17.101429Z"
+        },
+        "ETHUSDT": {
+          "price": "2251.34448837",
+          "event_time_utc": "2026-11-02T18:30:17.000Z",
+          "received_at_utc": "2026-11-02T18:30:17.101489Z"
+        },
+        "SOLUSDT": {
+          "price": "91.99410379",
+          "event_time_utc": "2026-11-02T18:30:17.000Z",
+          "received_at_utc": "2026-11-02T18:30:17.101505Z"
+        }
+      }
+    }
+  ]
+}

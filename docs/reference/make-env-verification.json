@@ -1,0 +1,74 @@
+{
+  "verified_at_utc": "2026-11-05T07:35:41.120713+00:00",
+  "source_reference": "/data/dodo/rwa-interface/Makefile",
+  "environment": {
+    "os": "Linux / Nix",
+    "flutter": "3.47.4"
+  },
+  "configuration": {
+    "default": ".env",
+    "override": "ENV_FILE",
+    "extra_flutter_args": "FLUTTER_ARGS",
+    "public_keys": [
+      "PRIVY_APP_ID",
+      "PRIVY_CLIENT_ID",
+      "REOWN_PROJECT_ID",
+      "WALLET_LOGIN_ORIGIN"
+    ],
+    "existing_env_overwritten": false,
+    "values_logged": false,
+    "shell_execution": false,
+    "secrets_compiled": false
+  },
+  "checks": {
+    "python_tools": {
+      "total": 43,
+      "passed": 42,
+      "skipped": 1
+    },
+    "make_smoke": {
+      "flutter_targets": 5,
+      "alternate_path_with_spaces": true,
+      "flutter_args_forwarded": true,
+      "invalid_config_prevents_launch_cases": 3,
+      "status": "passed"
+    },
+    "dart_format": {
+      "files": 825,
+      "changed": 0,
+      "status": "passed"
+    },
+    "dart_analyze_fatal_infos": {
+      "issues": 0,
+      "status": "passed"
+    },
+    "flutter_relevant_tests": {
+      "passed": 27,
+      "status": "passed"
+    },
+    "make_build_apk": {
+      "status": "passed",
+      "abi": "arm64-v8a",
+      "configuration_file": ".env",
+      "signing": "local development",
+      "bytes": 45840644,
+      "sha256": "7e0bf8146afe72b60db5dbe8c4dad8760154d0ae7d595a8e8e485330f947cf96",
+      "installed": false
+    }
+  },
+  "not_verified": [
+    "iOS compilation requires macOS / Xcode",
+    "native device execution"
+  ],
+  "notes": [
+    "Test and build checks completed sequentially after an initial generated-plugin registration race.",
+    "No production signing credentials were read; no external login or account action was performed."
+  ],
+  "source_sha256": {
+    "Makefile": "eadb5f6f39a3af168fd5d22eb5a0d058a31a0b288dc301055243cbfb2ed2fb21",
+    ".env.example": "db67f45ca2820813ed7d5aaad71646921aeeadd8d42732277f89e04967bf7e46",
+    "scripts/check_env.py": "320c4ab373235f19f6a340dadeb4a4df541a15a37665db0743eaf373bd7b7271",
+    "scripts/check_env_test.py": "998919bc24717c37dfb2875c4239290541bcc24ad70470c2af5c2c4017c04ebd",
+    "scripts/ci_config.py": "30362e60277d125ad2f3c518d62fa468bc13cc7678712a17ef733c93f1df8b7a"
+  }
+}

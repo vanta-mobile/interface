@@ -1,0 +1,87 @@
+{
+  "recorded_at_utc": "2026-11-05T05:43:16.321106+00:00",
+  "increment": "Independent Futures order, fill and income history using official signed V3 read endpoints",
+  "sources": {
+    "official_v3": {
+      "url": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3(Recommended)/EN/aster-finance-futures-api-v3.md",
+      "cached_file": "/tmp/vanta-attached-alignment-api.md",
+      "bytes": 243773,
+      "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4",
+      "sections": [
+        "All Orders (USER_DATA)",
+        "Account Trade List (USER_DATA)",
+        "Get Income History(USER_DATA)"
+      ]
+    },
+    "prd_context": [
+      "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+      "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64"
+    ],
+    "scope_note": "Closes the separately tracked Futures history gap. Detailed endpoint fields and time/query limits come from official V3 documentation, not a claim that each field is an explicit PRD row. This is separate from user-deferred private BAPI statistics/Futures Summary/TWAP."
+  },
+  "endpoints": {
+    "orders": {
+      "method": "GET",
+      "path": "/fapi/v3/allOrders",
+      "symbol": "optional exact symbol; blank means all symbols",
+      "window": "end-start strictly less than seven days",
+      "limit": 1000,
+      "retention": "Canceled or expired orders with no fills and created more than seven days earlier are omitted by exchange; this does not apply to partially filled cancellations.",
+      "display": [
+        "actual executedQty separately from origQty/closePosition",
+        "optional cumQuote/avgPrice never inferred",
+        "original/current type and UTC create/update time",
+        "trailing activatePrice/priceRate; ignore trailing stopPrice",
+        "copyable original identifiers"
+      ]
+    },
+    "trades": {
+      "method": "GET",
+      "path": "/fapi/v3/userTrades",
+      "symbol": "required exact symbol",
+      "window": "official maximum seven days; implementation uses less than seven days",
+      "limit": 1000,
+      "query_modes": "Only symbol and time range; do not send fromId or orderId. Official fromId cannot combine with times; orderId takes precedence over other modes.",
+      "display": [
+        "one row per fill ID, not one row per order",
+        "quoteQty and signed commission in commissionAsset",
+        "reported signed realizedPnl in original contract margin asset, separate from fee; no net aggregation",
+        "maker/taker and position side"
+      ]
+    },
+    "income": {
+      "method": "GET",
+      "path": "/fapi/v3/income",
+      "symbol": "optional exact symbol",
+      "incomeType": "17 documented filter options or all",
+      "window": "inclusive milliseconds; implementation also segments less than seven days",
+      "limit": 1000,
+      "identity": "incomeType + tranId, not globally unique tranId",
+      "display": [
+        "original signed income and asset",
+        "optional symbol/tradeId",
+        "safe type and copyable transaction reference"
+      ],
+      "privacy": "Do not expose raw info field"
+    }
+  },
+  "boundaries": [
+    "Widget -> Riverpod controller -> signed repository -> existing AsterAccountService; immutable Decimal records at data boundary.",
+    "Current EOA/previously existing Privy wallet is both user and signer; chain1666 and shared microsecond nonces; never create replacement wallet/API signer.",
+    "Opening, filtering, local pagination, localization and lifecycle never sign/read automatically. One explicit read/continuation requests one batch; no retry or automatic second signature.",
+    "Latest time segment first. Saturated1000-row batches split inclusive halves with no gaps; at1ms mark truncated. This is manual time subdivision, not server page/cursor support.",
+    "Keep maximum10000 records; reject overflow preserving existing rows and pending work, advise narrower range. Local display pages contain10 rows and do not sign.",
+    "Deduplicate by symbol+orderId / symbol+fillId / incomeType+tranId; reject immutable conflicts, execution regressions and terminal status regressions. Newest valid order update wins; original type immutable when both known.",
+    "Public exchange metadata including inactive symbols only supplies original units; metadata failure preserves exact signed amounts with unknown units. Capture private response timestamp before metadata delay.",
+    "Failures retain successful records and query; 30second staleness, background/resume and account events mark old snapshots stale; segmented data is not atomic. No server-side completeness beyond actual returned/retained scope.",
+    "Auth ID/address/kind/signing changes clear private results; stop/back/disposal discard late responses. UTC custom end capped now. No persistent personal historical cache or financial write.",
+    "Real exchange acceptance and native behavior remain deferred; synthetic tests are not real account acceptance."
+  ],
+  "performed": {
+    "real_wallet_signatures": false,
+    "real_private_requests": false,
+    "address_bearing_rpc": false,
+    "financial_actions": false,
+    "native_device_tools": false
+  }
+}

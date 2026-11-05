@@ -1,0 +1,70 @@
+{
+  "recorded_at_utc": "2026-11-03T21:50:49.734301+00:00",
+  "requirement": {
+    "page": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+    "last_edited_at": "2026-11-02T11:42:11.267Z",
+    "fields": [
+      "Futures Balances: USDF APY up to",
+      "Futures Balances: ASBNB APY",
+      "Asset-card yield source and calculation"
+    ]
+  },
+  "public_sources": [
+    {
+      "url": "https://www.asterdex.com/bapi/futures/v1/public/future/aster/usdf/info?day=7",
+      "method": "GET",
+      "authorization": "none",
+      "formula": "baseApyList[0].apy + tradeApyList[0].apy; already percentage points, no factor 100",
+      "sample_source_day": "2026-10-22",
+      "sample_base_percent": "1.75000000",
+      "sample_trade_percent": "9.70000000",
+      "sample_total_percent": "11.45000000",
+      "response_sha256": "c140db86af6ab08c48af657125e565ce28464715a8ffe49cbedcc3044aa3408a"
+    },
+    {
+      "url": "https://api.lista.org/v1/stakes/latest-apr",
+      "method": "GET",
+      "authorization": "none",
+      "formula": "data.comprehensiveApy * 100; neither apr alone nor launchPoolApy alone",
+      "sample_ratio": "0.014499999999999999",
+      "sample_percent": "1.4499999999999999",
+      "sample_source_day": "2026-11-02",
+      "sample_updated_at_utc": "2026-11-02T23:50:00.105Z",
+      "response_sha256": "1c3b0a208808e173f3a161d62340d02bec0548415a88b78273df5e381e91ad62"
+    }
+  ],
+  "website_evidence": [
+    {
+      "url": "https://static2.asterdexfx.com/assets/useUSDFInfo-BYU8EJCn.js",
+      "sha256": "3ff33fe369a7ca30439c94d7706645cab1ac9d825a438bbe975c74567bf54eeb",
+      "finding": "Y returns first base APY + first trade APY, two-place display; request day7"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/DepositAndWithdrawDialogBase-DnWoJCns.js",
+      "sha256": "9c2784c215d8a0ff60c58b36040d34d34a9976af56045ec41dbc1e90b2e67036",
+      "finding": "Cached source exports c=Q_ (USDF up-to badge using USDF hook) and s=Z_ (asBNB badge using comprehensiveApy*100); source dates preserved in client addition"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/UserInfo-l_1AJ7RG.js",
+      "sha256": "2a0959f8186f000e4c4885e1697e13e21af88216c0810732e270311ba3b01a73",
+      "finding": "Futures Iu asset cell maps USDF to Ui and ASBNB to Ki imported from deposit component"
+    }
+  ],
+  "implementation": {
+    "flow": "Asset card -> Riverpod family controller -> repository -> fixed-origin service -> validated immutable quote",
+    "scope": "Exact USDF/ASBNB asset symbols in displayed Spot/Futures cards; public rate shared across markets, never a personal earned rate",
+    "precision": "Bounded exact JSON parser keeps original numeric tokens; Decimal for rates and sum/multiplication; two decimal display only",
+    "missing": "No fallback to zero, apr, latest list sorting or guessed asset aliases. Missing/invalid dates/rates, mismatched USDF component dates or unsuccessful envelope rejected; previous quote retained on refresh failure",
+    "freshness": "Received <5 minutes ago; source calendar date not ahead of UTC today and at most two calendar days old; future receive/publisher timestamps beyond30sec mark stale. UTC dates are publisher calendar labels, not inferred precise timestamps",
+    "refresh": "First displayed subscription, explicit retry and five-minute refresh only while foreground; per-asset dedup; families share one repository and close clients after disposal; no source loaded for unsupported assets",
+    "lifecycle": "Background cancels timers, marks quote stale and discards late reads; foreground explicitly schedules public re-read; last listener disposal cancels timers and discards late data",
+    "ux": "Compact expandable rate, source date/received time, optional publisher time, USDF components, source and conditional/estimated yield explanation; localized loading/partial failure/stale/paused/retry; financial quantities unchanged",
+    "authentication": "No wallet, signature, address, balance, Privy token, extra wallet or financial write needed"
+  },
+  "boundaries": [
+    "These are anonymous website/third-party endpoints with observed source evidence, not a documented long-term Aster developer contract",
+    "A fresh HTTP response may carry old source data; it remains labeled historical",
+    "No Swap, staking action, deposit/withdrawal, individual income, asset name/logo metadata or full Portfolio added",
+    "Real phone networks, native expansion/scrolling/large text/lifecycle and iOS remain unverified at user request"
+  ]
+}

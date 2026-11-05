@@ -1,0 +1,71 @@
+{
+  "recorded_at_utc": "2026-11-04T15:27:19.287474+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "prd_last_edited_observed": "2026-11-04T14:02:29.109Z",
+  "requirement": "Futures position actions explicitly include add/remove margin; supersedes earlier scope review which did not define that entry.",
+  "public_sources": [
+    {
+      "url": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+      "bytes": 243773,
+      "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4"
+    },
+    {
+      "url": "https://docs.asterdex.com/trading/perpetuals/margin/calculating-maximum-transfers-in-cross-and-isolated-margin.md",
+      "bytes": 1855,
+      "sha256": "2b2bdb5e2f90bf6a5cd50e9ec1109a60587c2f21bce257eaf033acf013d18fbd"
+    },
+    {
+      "url": "https://docs.asterdex.com/trading/perpetuals/fees-and-specs/liquidations.md",
+      "bytes": 4936,
+      "sha256": "6154371c1a5d16718bae386ba7a0336147e560e4ebc32a346374af9d874758da"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/ADLBlock-DN0q0ZUu.js",
+      "bytes": 19856,
+      "sha256": "c673225804ee7cb2d1733cc7c6bec7852289bbad6ed30d4a7a6f6ffeae367979"
+    }
+  ],
+  "scope": {
+    "entry": "Nonzero isolated linear position only; symbol and positionSide locked. Recovery entry remains available without an open position.",
+    "reads": [
+      "Public exchangeInfo units",
+      "Signed accountWithJoinMargin",
+      "Signed positionRisk(symbol)",
+      "Signed leverageBrackets(symbol)"
+    ],
+    "mutation": "POST /fapi/v3/positionMargin: symbol,positionSide,positive amount,type 1 add / 2 remove,clientTranId",
+    "verification": "GET /fapi/v3/positionMargin/history: symbol,type,startTime,endTime,limit=500. Exact original clientTranId plus asset/side/symbol/type/amount/USER_ADJUST/time. Duplicate/conflicting same-ID rows rejected. Then signed full account-wide positionRisk and accountWithJoinMargin; target leverageBrackets refreshes limits.",
+    "idempotency": "Official clientTranId length <=64, duplicate same account/symbol rejected for 7days; client uses vm_ + 128 random bits. No automatic replay even after 7days.",
+    "signer": "Existing connected EOA or existing Privy wallet is user and signer; no replacement key/wallet; EIP712 Message chain1666 and shared microsecond nonces."
+  },
+  "calculations": {
+    "current_margin": "positionRisk.isolatedWallet, cross-checked against the signed account position; not isolatedMargin or UPL",
+    "add_max": "max(0,min(asset.availableBalance,asset.crossWalletBalance - sum(same margin asset isolated positionInitialMargin) - sum(same margin asset crossed maintMargin)))",
+    "remove_max": "max(0,min(isolatedWallet - own signed account maintMargin,isolatedWallet + signedQuantity*(mark-entry) - mark*abs(quantity)/leverage))",
+    "precision": "Decimal and exact Rational; recurring initial margin division rounds UP at32dp; Max floors to2dp. Client input policy <=8dp, not a claim of exchange precision for all assets; Aster validates final amount.",
+    "liquidation": "Solve adjustedWallet + q*(P-entry) = abs(q)*P*MMR - cum in each bracket; compare candidate notional to floor/cap as Rational before24dp conversion. No valid nonnegative candidate => unknown. Display8dp estimate; actual liquidation reread separately.",
+    "ratio": "Same signed account row maintMargin / (isolatedWallet + unrealizedProfit) *100; missing => unknown, nonpositive equity => explicit risk, no fabricated ratio."
+  },
+  "integrity": [
+    "30second lifetime begins before first signed account read; preflight and final dispatch check original and new receipts, identity, revision and account/settings invalidation.",
+    "Default Add, empty amount; switching direction/cancel/error preserves input; clear original amount only after exact history verification.",
+    "Full context re-read before POST; quantity/entry/wallet/side/leverage/tiers must agree and current limit must still cover amount.",
+    "Separate position-margin-operations-v1.json loaded before runApp, flush and rename before dispatch; no signatures/credentials persisted. Corrupt/failed storage blocks writes. Shared order/settings/internal-transfer lease.",
+    "Once possibly sent, original public record persists across stop/logout/late response. Only exact original history verifies success; ACK and balance differences do not.",
+    "Explicit documented rejection codes -1021,-1022,-2014,-2015,-4049,-4050,-4051,-4054,-4055 are durably labeled rejected, not successful; refresh limits when possible. Other errors remain pending.",
+    "Actual position/account/tiers re-read after matching history. A later refresh failure is distinct from verified history and disables stale confirmation.",
+    "No auto reads/signing at page entry or startup; recovery is manual GET-only; no sent request cancellation implied by leaving.",
+    "New wallet operation enum excluded from subaccount menu and rejected by subaccount repository before network/signature.",
+    "Exact success with successful account/position reread closes the adjustment route; full signed snapshots update primary account and risk lists, invalidating older in-flight reads. Refresh errors keep a visible partial result. Explicit Cancel and close leave sent records recoverable."
+  ],
+  "remaining_boundaries": [
+    "Real signer permissions, exact financial outcome, true server clock/nonce compatibility and native storage/lifecycle/layout acceptance not exercised.",
+    "History is bounded to500 returned rows; no documented pagination/result-by-ID endpoint. No match or truncated result stays pending, no balance inference/replay.",
+    "Local journal cap100 records, no silent eviction; archival UX not provided. Clear app data/uninstall cannot guarantee recovery.",
+    "User deferred device testing; no device tools or installation. Linux has no macOS/Xcode for iOS build.",
+    "Full cross-product Portfolio and Swap remain incomplete; BAPI stats/TWAP skipped per user."
+  ],
+  "live_private_requests_sent": false,
+  "financial_actions_sent": false,
+  "device_tools_used": false
+}

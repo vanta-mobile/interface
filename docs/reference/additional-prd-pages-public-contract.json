@@ -1,0 +1,88 @@
+{
+  "recorded_at_utc": "2026-11-04T02:11:56.711237+00:00",
+  "scope": "Two additional root children revalidated; not excluded from original PRD objective",
+  "points_campaigns": {
+    "page": "https://app.notion.com/p/40d080d974e7801eb12dfab2b95d60cf",
+    "last_edited_at": "2026-11-03T07:41:40.173Z",
+    "requirements": [
+      "Event list",
+      "Event detail",
+      "Points home",
+      "Follow website fields/buttons; product says counterpart will supply page APIs"
+    ],
+    "references": [
+      "https://app.vanta.exchange/campaigns/trading-events",
+      "https://app.vanta.exchange/campaigns/trading-events/vanta-trading-carnival-phase-4-share-100-000-usdc-prize-pool-00ofvhrz",
+      "https://app.vanta.exchange/points"
+    ],
+    "source_bundle": {
+      "url": "https://app.vanta.exchange/assets/index-svFSKwtQ.js",
+      "sha256": "aa64f67c87338fd4fcd606f26a56898e5b3399bbcc7c83c6214398ea4823a803",
+      "bytes": 4145798
+    },
+    "source_paths": [
+      "/points-api/campaign/current",
+      "/points-api/campaigns",
+      "/points-api/leaderboard/total",
+      "/points-api/leaderboard/campaign/{id}",
+      "/points-api/points/{address}",
+      "/points-api/points/{address}/campaigns",
+      "/points-api/trading-events?type={eventType}",
+      "/points-api/trading-events/{id}"
+    ],
+    "origin_rule": "Resolved public runtime VITE_POINTS_API_BASE_URL=https://api.vanta.exchange/; GFt rewrites /points-api/ to /api/. See points-public-contract.json",
+    "anonymous_probe": "Historical same-origin probes returned SPA HTML; subsequent runtime-origin anonymous probes succeeded for current/campaigns/total/campaign rankings and retail events/detail. No address-bearing or private request.",
+    "status": "Points home, RETAIL and CHANNEL list/detail/registration implemented; channel extension adds task progress/new-user/deposit/daily-check-in/milestones/network metrics and confirmed wallet-connect/check-in with durable public intent journal. Real personal endpoints/signatures/action POST/native remain unverified. See channel-events-public-contract.json and channel-events-verification.json.",
+    "retail_event_contract": {
+      "list": "GET /api/trading-events?type=RETAIL",
+      "detail": "GET /api/trading-events/{id}",
+      "observed_list_rows": 4,
+      "observed_detail_id": 11,
+      "fields": [
+        "id",
+        "eventType",
+        "name",
+        "subtitle",
+        "rulesHtml",
+        "headerImageUrl",
+        "tasks",
+        "activityRules",
+        "coreRewardPool",
+        "startTime",
+        "endTime",
+        "status",
+        "orderlyBrokerId"
+      ],
+      "source_chunk": {
+        "url": "https://app.vanta.exchange/assets/Index-Wa2TmD6z.js",
+        "sha256": "80cdc4e0a63f07846c42760bf8279691af78bc5444e7ac043a6bef44e4482fce",
+        "bytes": 51170
+      },
+      "signed_action_paths": [
+        "/api/trading-events/{id}/register",
+        "/api/trading-events/{id}/check-in",
+        "/api/trading-events/{id}/wallet-connect"
+      ],
+      "signed_action_note": "Source personal-sign/timestamp; check-in additionally signs UTC day. RETAIL registration and later CHANNEL wallet-connect/check-in are implemented; actual personal/signature/action POST acceptance remains unverified."
+    }
+  },
+  "ai_assistant": {
+    "page": "https://app.notion.com/p/40d080d974e7801a8999f3497abac377",
+    "last_edited_at": "2026-11-03T07:43:10.602Z",
+    "reference": "https://app.vanta.exchange/perp/PERP_BTC_USDC",
+    "requirement": "Follow existing assistant functionality and interaction",
+    "status": "Data layers plus Riverpod/lifecycle/current-wallet foreground handoff and bilingual native page/navigation implemented. New57 tests, full3268 passed. No actual auth/chat/personal usage or device calls. See assistant-ui-public-contract.json and assistant-ui-verification.json.",
+    "wallet_auth_bridge": {
+      "basis": "Re-read original AI PRD and main public bundle; source only, no auth or chat call",
+      "nonce": "POST Supabase functions/v1/auth-nonce; body address,chain=evm,domain,uri,chainId; response message/nonce",
+      "signature": "gUt uses current EVM provider personal_sign over exact returned message, signature_encoding=hex",
+      "verify": "POST functions/v1/verify-wallet; body address,chain,nonce,message,signature,signature_encoding; response access_token/refresh_token becomes Supabase session",
+      "chat": "POST functions/v1/starchild-chat with that Supabase session token; Privy access token is not substituted",
+      "stream": "SSE data frames; choices[0].delta.content, reasoning_content/thinking_delta, finish_reason stop/end_turn/length and [DONE]; source total300s/idle120s, request_id and quota limit/remaining/used/reset_at",
+      "next": "Actual source challenge/mobile relying party, server signature/auth/refresh/binding/chat/quota acceptance and deferred native checks remain; no new wallet or financial AI action."
+    }
+  },
+  "user_question": "Backend documentation/address asked asynchronously; no reply yet, independent public discovery continued successfully. Missing reply is not a blocker.",
+  "financial_or_private_calls": false,
+  "device_tools_used": false
+}

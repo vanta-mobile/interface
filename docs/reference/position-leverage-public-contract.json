@@ -1,0 +1,45 @@
+{
+  "verified_at_utc": "2026-11-02T22:50:21.873053+00:00",
+  "official_doc": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_doc_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "prd_sections": [
+    "3.1 交易前配置：杠杆倍数",
+    "3.3 快捷下单采用当前交易对已有杠杆配置",
+    "Positions 方向及杠杆展示"
+  ],
+  "endpoints": {
+    "limits": "GET /fapi/v3/leverageBrackets (recommended plural)",
+    "configuration_and_verification": "GET /fapi/v3/positionRisk?symbol=…",
+    "change": "POST /fapi/v3/leverage; symbol + integer leverage 1..125"
+  },
+  "contract_checks": [
+    "Official symbol-scoped bracket response is object; array variant accepted only for exactly one matching symbol",
+    "Bracket initialLeverage is market maximum, not proof of the current account exposure allowance",
+    "Bracket integer notionals stay exact; decimal strings retain precision; floating JSON values rejected",
+    "Position configuration includes zero-sized BOTH or coherent LONG + SHORT rows",
+    "POST accepts form body; exact query bytes signed using Aster EIP712 chainId 1666",
+    "Connected address is both user and signer; no new wallet, agent or API key",
+    "Symbol-scoped leverage affects both hedge sides; no per-side parameter",
+    "HTTP acknowledgement is not a verified final setting; explicit separately signed GET determines observed leverage",
+    "Documented errors -2027 maximum exposure, -2028 insufficient margin, -4028 invalid leverage mapped to safe reasons"
+  ],
+  "reference_project": [
+    "/data/dodo/rwa-interface/lib/data/repositories/positions_repository_impl.dart",
+    "/data/dodo/rwa-interface/lib/domain/models/position_leverage_context.dart",
+    "/data/dodo/rwa-interface/lib/data/services/hip3_position_intents.dart"
+  ],
+  "reference_boundary": "Reference uses its own Hip3 backend/context; its signing and wire protocol are not used as Aster authority.",
+  "implementation_boundaries": [
+    "Explicit context read requires two signatures; no read on page entry",
+    "UI bound is min(documented 125, max bracket initialLeverage); actual exposure/margin validation stays at Aster",
+    "Context expires after 30 seconds and new observed account events invalidate it; wallet approval must still be current at send boundary",
+    "Target is an integer differing from queried current setting; confirmation freezes wallet/symbol/previous/target",
+    "POST never automatically retried; unknown outcome blocks new submissions and exposes GET-only recheck",
+    "After submission, portfolio/risk/ADL/order snapshots are marked historical without automatic additional signatures",
+    "Verification is a time-labelled setting snapshot; no position/risk fields are fabricated from it",
+    "Live authorization acceptance and physical signed-in values are unverified; tests use controlled local responses"
+  ],
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false
+}

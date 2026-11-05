@@ -1,0 +1,42 @@
+{
+  "recorded_at_utc": "2026-11-03T04:45:21.693889+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "requirement": "Positions Close All: confirm scope; opposite MARKET for each nonzero exact absolute quantity; one-way reduceOnly or original hedge positionSide without reduceOnly; retain per-position outcomes/failures and reread positions.",
+  "official_protocol": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_protocol_local_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "automated_tests": 781,
+  "new_tests": 32,
+  "format_dart_files": 322,
+  "analysis": "no issues",
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "bytes": 42892660,
+    "sha256": "65dbdc8cabd277dbd6b2aef3a0d71ad073314548d59741c7bfc018850d53f20e"
+  },
+  "localized_messages_per_language": {
+    "en": 650,
+    "zh": 650
+  },
+  "native_testing": "Paused at user request. No device tools, APK installation or native testing this increment. See ../native-verification-pending.md.",
+  "ios": "Linux has no macOS/Xcode. Build and native flows remain unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "acceptance_evidence": {
+    "exact_scope_and_fresh_confirmation": "batch_close_provider_test.dart and batch_close_widget_test.dart",
+    "one_way_and_hedge_signed_bytes_nonce_and_final_read": "batch_close_protocol_test.dart uses actual signed repositories with local MockClient; 5 independent signatures per target plus final full read, same EOA",
+    "position_revalidation_and_no_resize": "batch_close_provider_test.dart plus existing signed_live_order_repository_test.dart",
+    "uncertainty_query_only_and_no_queue_resume": "batch_close_protocol_test.dart and batch_close_provider_test.dart",
+    "cross_page_locks_stop_identity_and_preserved_failures": "batch_close_provider_test.dart",
+    "localization_layout_and_signed_remaining_freshness": "batch_close_widget_test.dart: en/zh, 320 width, 1.5 text, 844x390, signed quantity, zero, stale and failure"
+  },
+  "boundaries": [
+    "No automatic resizing/splitting for quantity filters; stop with retained failure and require a fresh confirmation.",
+    "Refused or unknown outcomes stop new signature prompts; remaining positions can be explicitly reread.",
+    "Existing orders and positions outside confirmed scope are not cancelled/closed.",
+    "Order status is not evidence that the whole position or account is closed; later activity can change positions.",
+    "Unresolved client IDs and locks remain in memory only; restart recovery outstanding.",
+    "Aster EOA user/signer acceptance and enable-trading remain unverified; enable-trading not implemented.",
+    "Overall PRD remains in progress; BAPI historical statistics and TWAP skipped at user request."
+  ]
+}

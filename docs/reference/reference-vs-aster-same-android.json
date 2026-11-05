@@ -1,0 +1,263 @@
+{
+  "device": "Android12 / arm64 / d740793e",
+  "url": "https://app.vanta.exchange/perp/PERP_BTC_USDC",
+  "checkedAt": "2026-10-30T09:30:22.830Z",
+  "method": "Existing real Android Chrome reference tab reloaded. Observe TradingView onDataLoaded and two rAF after marking just before Playwright tap (includes CDP dispatch). Does not measure raster completion. Endpoint probes run afterward in the same page/browser/device; Aster200 bars versus Orderly1000 bars, different markets USDT/USDC.",
+  "actions": [
+    {
+      "interval": "1m",
+      "measurements": [
+        {
+          "resolution": "1",
+          "dataLoadedMs": 821.3000000119209,
+          "twoAnimationFramesMs": 839.3000000119209
+        }
+      ],
+      "requests": [
+        {
+          "type": "history",
+          "at": 14232,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=1&from=1793292669&to=1793352669&countback=1000",
+          "timing": {
+            "startTime": 1793352609175.8098,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.487,
+            "responseStart": 252.446,
+            "responseEnd": 598.728
+          }
+        }
+      ]
+    },
+    {
+      "interval": "1h",
+      "measurements": [
+        {
+          "resolution": "60",
+          "dataLoadedMs": 230.80000001192093,
+          "twoAnimationFramesMs": 254.80000001192093
+        }
+      ],
+      "requests": []
+    },
+    {
+      "interval": "4h",
+      "measurements": [
+        {
+          "resolution": "240",
+          "dataLoadedMs": 2226.0999999940395,
+          "twoAnimationFramesMs": 2264.5999999940395
+        }
+      ],
+      "requests": [
+        {
+          "type": "history",
+          "at": 16079,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=60&from=1789692659&to=1793292659&countback=1000",
+          "timing": {
+            "startTime": 1793352610923.1301,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.622,
+            "responseStart": 370.809,
+            "responseEnd": 698.508
+          }
+        },
+        {
+          "type": "history",
+          "at": 16793,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=60&from=1789752671&to=1793352671&countback=1000",
+          "timing": {
+            "startTime": 1793352611628.302,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.43,
+            "responseStart": 257.804,
+            "responseEnd": 709.319
+          }
+        },
+        {
+          "type": "history",
+          "at": 17412,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=60&from=1786154399&to=1789754399&countback=1000",
+          "timing": {
+            "startTime": 1793352612344.596,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.345,
+            "responseStart": 277.162,
+            "responseEnd": 610.867
+          }
+        }
+      ]
+    },
+    {
+      "interval": "1D",
+      "measurements": [
+        {
+          "resolution": "1D",
+          "dataLoadedMs": 1255.199999988079,
+          "twoAnimationFramesMs": 1268.199999988079
+        }
+      ],
+      "requests": [
+        {
+          "type": "history",
+          "at": 18972,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=1D&from=1707004800&to=1793404800&countback=1000",
+          "timing": {
+            "startTime": 1793352613544.607,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.892,
+            "responseStart": 584.798,
+            "responseEnd": 966.683
+          }
+        }
+      ]
+    },
+    {
+      "interval": "15m",
+      "measurements": [
+        {
+          "resolution": "15",
+          "dataLoadedMs": 785.4000000059605,
+          "twoAnimationFramesMs": 814.2000000178814
+        }
+      ],
+      "requests": [
+        {
+          "type": "history",
+          "at": 20149,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=15&from=1792452675&to=1793352675&countback=1000",
+          "timing": {
+            "startTime": 1793352615124.358,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.383,
+            "responseStart": 323.433,
+            "responseEnd": 569.047
+          }
+        }
+      ]
+    },
+    {
+      "interval": "1m",
+      "measurements": [
+        {
+          "resolution": "1",
+          "dataLoadedMs": 251.7999999821186,
+          "twoAnimationFramesMs": 277.40000000596046
+        }
+      ],
+      "requests": []
+    },
+    {
+      "interval": "1h",
+      "measurements": [
+        {
+          "resolution": "60",
+          "dataLoadedMs": 158.80000001192093,
+          "twoAnimationFramesMs": 184.80000001192093
+        }
+      ],
+      "requests": []
+    }
+  ],
+  "endpointSamples": [
+    {
+      "source": "aster",
+      "interval": "1m",
+      "status": 200,
+      "bytes": 24045,
+      "elapsedMs": 366.40000000596046
+    },
+    {
+      "source": "orderly",
+      "interval": "1m",
+      "status": 200,
+      "bytes": 57923,
+      "elapsedMs": 478.7999999821186
+    },
+    {
+      "source": "aster",
+      "interval": "5m",
+      "status": 200,
+      "bytes": 24955,
+      "elapsedMs": 427.7999999821186
+    },
+    {
+      "source": "orderly",
+      "interval": "5m",
+      "status": 200,
+      "bytes": 58840,
+      "elapsedMs": 457.2000000178814
+    },
+    {
+      "source": "aster",
+      "interval": "15m",
+      "status": 200,
+      "bytes": 25248,
+      "elapsedMs": 361.90000000596046
+    },
+    {
+      "source": "orderly",
+      "interval": "15m",
+      "status": 200,
+      "bytes": 59375,
+      "elapsedMs": 444.5
+    },
+    {
+      "source": "aster",
+      "interval": "1h",
+      "status": 200,
+      "bytes": 25693,
+      "elapsedMs": 785.5999999940395
+    },
+    {
+      "source": "orderly",
+      "interval": "1h",
+      "status": 200,
+      "bytes": 60105,
+      "elapsedMs": 532.2000000178814
+    },
+    {
+      "source": "aster",
+      "interval": "1d",
+      "status": 200,
+      "bytes": 27387,
+      "elapsedMs": 323.09999999403954
+    },
+    {
+      "source": "orderly",
+      "interval": "1d",
+      "status": 200,
+      "bytes": 65126,
+      "elapsedMs": 618.6999999880791
+    }
+  ],
+  "limitations": [
+    "Reload resets in-memory chart caches but preserves the saved initial resolution. Initial resolution in this run was60 (1h).",
+    "Timings before tap include CDP/Playwright input dispatch and are not directly equal to native notifier timing.",
+    "Both endpoints use their actual application payloads: Aster200USDT bars vs Orderly1000USDC bars. This is a user-path comparison, not an equal-payload server benchmark.",
+    "One mobile device and short observation window; no claim about all users or networks."
+  ]
+}

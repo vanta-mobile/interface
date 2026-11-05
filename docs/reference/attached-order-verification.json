@@ -1,0 +1,64 @@
+{
+  "recorded_at_utc": "2026-11-03T08:51:03.505408+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "requirements": [
+    "Optional attached TP/SL for opening ordinary/conditional orders",
+    "Review independent trigger terms with basis, comparison and unit",
+    "Linked protection must be distinguished from two independent conditional orders"
+  ],
+  "source": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_protocol_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "automated_tests": 1122,
+  "new_tests": 70,
+  "format_dart_files": 372,
+  "analysis": "no issues",
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43089268,
+    "sha256": "9a81218cad8a8b2017aca330943a0f30fe928c66e888cec605f62b2b873287c4"
+  },
+  "localized_messages_per_language": {
+    "en": 774,
+    "zh": 774
+  },
+  "native_testing": "Skipped at user request. No device tools, device tests or APK installation. See ../native-verification-pending.md.",
+  "ios": "Linux has no macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "implementation": [
+    "One exit uses OTO; TP plus SL uses OTOCO. Main order supports LIMIT/MARKET and STOP/TAKE_PROFIT conditional types; protection uses fixed-quantity TAKE_PROFIT_MARKET/STOP_MARKET.",
+    "Sequential child IDs with USDT_FUTURES security type. Each exit is placed when entry leg 1 is FILLED. With two exits, each fully filled exit cancels its sibling. Partial entry fills are explicitly unprotected until full entry fill.",
+    "Decimal net new exposure calculation excludes existing same-direction holdings and offsets an existing opposite one-way position. No new exposure blocks attachment. One-way exits reduceOnly; hedge exits retain LONG/SHORT and omit reduceOnly; no closePosition=true.",
+    "Independent exit lot/capability/price/trigger/protection checks, exact trigger-direction references, unavailable Last not replaced by Mark, IOC disallowed for strategy entries. Incompatible reduce-only/entire/trailing/quick scopes blocked.",
+    "Additional signed positionRisk recheck before POST verifies original positions, leverage and margin mode. Existing snapshot deadline, identity/configuration checks and send-boundary protection retained.",
+    "Same EOA signs position verification, exact strategy POST and original-clientStrategyId/type GET with distinct shared nonces. No ordinary order endpoint is used and no extra wallet is created.",
+    "HTTP200 failureCode is inspected, raw failureReason excluded. POST acknowledgement is never evidence of fill or absence. Failed or unknown outcomes use query-only recovery; no repeated POST.",
+    "An open query -2013 may fall back to an independently signed same-ID/type history query. History maximum lookback is 90 days. Other read/signature failures remain unresolved.",
+    "Query strictly matches parent/leg IDs, complete unique sequence, immutable quantity/price/trigger/policy/position flags and both linkage conditions/actions. Inactive order IDs can be missing/zero, and strategy ID is never treated as ordinary order ID.",
+    "Strategy query supplies statuses, not verified executed quantities, balances or remaining positions. Accepted strategies support explicit signed refresh of the same original intent; failed refresh retains query-only recovery.",
+    "Attached strategies always require their own confirmation, even if ordinary market confirmation is disabled. Chinese/English review includes independent trigger comparisons, fixed exit quantity and lifecycle limits.",
+    "320 width, 1.5 text scaling, landscape, canceled review, refresh preservation, unknown lock, query recovery, and hidden attachment settings excluded from trailing/other orders covered by widget tests."
+  ],
+  "evidence": [
+    "test/features/portfolio/attached_order_test.dart",
+    "test/features/portfolio/signed_attached_order_repository_test.dart",
+    "test/features/portfolio/attached_order_provider_test.dart",
+    "test/features/portfolio/attached_order_widget_test.dart",
+    "/tmp/vanta-attached-focused-final.log",
+    "/tmp/vanta-attached-all-tests.log",
+    "/tmp/vanta-attached-analysis-final.log",
+    "/tmp/vanta-attached-format-final.log",
+    "/tmp/vanta-attached-build.log"
+  ],
+  "boundaries": [
+    "This increment provides attached strategy creation and explicit queries, not in-app editing, whole-strategy cancellation or a cross-session strategy list.",
+    "Protection activates only on a fully filled entry, uses fixed new-exposure quantity and is not entire close. Neither partial entry fill nor partial exit fill proves peer cancellation.",
+    "Actual exchange activation, trigger execution, peer cancellation, signer authorization and native wallet prompts remain unverified.",
+    "Aster enable-trading and proof that the same connected EOA is accepted as API signer remain incomplete.",
+    "Chase recovery/ID protocol, ordinary BBO price parameters and Scaled distribution/split/remainder rules remain unresolved.",
+    "Subaccounts, funding/withdrawals/transfers, full asset valuation, notifications and durable unresolved-order recovery remain incomplete.",
+    "BAPI historical statistics and TWAP skipped this phase at user request."
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "recorded_date": "2026-11-04",
+  "scope": "Ordinary LIMIT/STOP/TAKE_PROFIT BBO pricing, including one-way reduce-only and dedicated one-way/hedge position close. Existing compound entry pegs remain separate.",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "prd_evidence": "Futures trading order-type table lists ordinary COUNTERPARTY_1 / QUEUE_1 under Limit, with the same signed V3 endpoint and mode-specific reduceOnly rules. Refetched without a truncation warning.",
+  "official_document": {
+    "url": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+    "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4",
+    "refresh": "Anonymous raw GitHub read this increment; unchanged document. No private/wallet/RPC/financial probe.",
+    "sections": [
+      "New Order (TRADE): pegPriceType describes COUNTERPARTY_1 / QUEUE_1 and placement/trigger resolution.",
+      "Error -5035 INVALID_PEG_PRICE: BBO peg price order requires price to be 0.",
+      "Query Order: price and optional pegPriceType fields."
+    ]
+  },
+  "prior_gap_resolution": "Earlier notes read the New Order table alone and left the zero-price rule unresolved. This implementation combines its explicit peg field with the same V3 document’s -5035 rule. It does not extend compound depths to ordinary requests or treat a frontend-private request as a public protocol.",
+  "placement": {
+    "method": "POST",
+    "path": "/fapi/v3/order",
+    "types": [
+      "LIMIT",
+      "STOP",
+      "TAKE_PROFIT"
+    ],
+    "pegs": [
+      "COUNTERPARTY_1",
+      "QUEUE_1"
+    ],
+    "price": "0",
+    "draft_price": "Empty; zero is introduced only in the wire request.",
+    "time_in_force": "Preserves selected exchange-supported GTC/IOC/GTX/HIDDEN. No compound IOC restriction inferred for ordinary orders; platform validates final compatibility.",
+    "quantity": "Exact fixed base-asset Decimal string. One-way explicit reduction uses reduceOnly=true; hedge close preserves original LONG/SHORT and omits reduceOnly. closePosition not sent.",
+    "trigger": "Original stopPrice/workingType/priceProtect and conditional direction/filter checks remain unchanged. Resolve once at trigger; never Chase.",
+    "authentication": "Existing current EOA or already-present Privy wallet; same address as user/signer, chain1666 and monotonic microsecond nonce. Actual Aster direct-EOA authorization remains unverified.",
+    "dispatch": "No automatic send on selection; explicit review, freshness/scope/position guards and durable original-ID log precede one POST. No additional wallet."
+  },
+  "query": {
+    "method": "GET",
+    "path": "/fapi/v3/order",
+    "parameters": [
+      "symbol",
+      "origClientOrderId"
+    ],
+    "validation": "Exact original peg required; absent/changed/unknown/deeper peg remains unresolved. Fixed-price/market orders reject unexpected nonempty peg. Original symbol/client ID/side/positionSide/type/trigger/quantity/execution/policy and reduction/close scope remain validated.",
+    "price": "Engine determines price. Accept only a finite unsigned decimal string, including documented zero sentinel or an engine-resolved nonnegative price; do not compare it to Mark or the reference estimate. Do not display the draft sentinel as an execution price.",
+    "completion": "POST acknowledgement never proves fill. Signed query supplies status and exact executedQuantity. Failed/mismatched queries retain record and block new orders/config; retries are GET-only."
+  },
+  "estimates": "Use Decimal Mark for plain BBO and trigger price for conditional BBO, including closing PnL. Explicitly label reference estimates; no selected-book-level or fill-price guarantee. Quantity/filter and trigger checks remain; engine enforces actual resolved price/risk.",
+  "ui": [
+    "Ordinary and dedicated close forms offer manual price / opposing level one / same-side level one.",
+    "Separate selection from compound ten-depth entry pricing; incompatible hidden selections do not leak into market/trailing/entire-close/attached requests.",
+    "Manual price retained when returning from BBO/market; refresh/scroll/failure preserve selected terms. Sign-out/wallet changes hide old scope.",
+    "Review, attempt status and recovery card display the frozen BBO selection and reference-price caveat. Unknown state disables editing and retains original ID.",
+    "English/Chinese catalogs and narrow/large-text/landscape/tablet Widget checks; no native verification."
+  ],
+  "recovery": {
+    "schema": 3,
+    "canonical_file": "pending-futures-orders-v1.json",
+    "compatibility": "Read strict schema1 and schema2 under original canonical filename; next write uses schema3. Ordinary peg key accepted only in schema3; old records do not acquire a peg. Unknown/malformed keys/values fail closed. Downgrade to older app unsupported.",
+    "content": "Public immutable query terms only. No keys/signatures/account snapshots/executable preflight or continuation queue.",
+    "verification": "Mock HTTP host-file restart proves saved peg/original ID, conflicting query retention and correct GET-only removal; mobile process-kill/power-loss durability remains unverified."
+  },
+  "additional_fix": "Listen to complete accountChange state, so equal-timestamp event replay invalidates live-order confirmation during signing; timestamp equality alone no longer permits dispatch.",
+  "remaining": [
+    "Aster actual signer permission, BBO pricing/GTX/IOC/trigger/fill behavior and native wallet/storage/layout/iOS acceptance remain unverified.",
+    "Ordinary deeper BBO levels lack documented support and are not offered. Compound entries retain their separate ten-depth contract.",
+    "Chase original strategy/order linkage protocol remains missing.",
+    "Enable-trading, subaccount management, actual funding/transfers and complete Portfolio remain incomplete; overall PRD goal active."
+  ]
+}

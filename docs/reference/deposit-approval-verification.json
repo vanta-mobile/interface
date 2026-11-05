@@ -1,0 +1,66 @@
+{
+  "recorded_at_utc": "2026-11-03T18:36:31.274830+00:00",
+  "scope": "ERC20 precise approval/reset confirmation, durable pre-dispatch journal, original/speedup/cancellation hash read-only receipt recovery. Actual deposit submission and credit recovery remain unavailable.",
+  "contract": "deposit-approval-public-contract.json",
+  "automated_tests": 2024,
+  "new_tests": 108,
+  "format_dart_files": 536,
+  "localized_messages_per_language": {
+    "en": 1056,
+    "zh": 1056
+  },
+  "acceptance_evidence": {
+    "journal": {
+      "tests": 19,
+      "file": "test/features/funding/deposit_approval_journal_test.dart",
+      "coverage": "Host file rebuild, exact public-only immutable terms, bounded lexical codec/tamper checks, duplicate wallet guard, corruption/temp preservation, failed locating/reading/writing after reported hash retain it in memory and reload merges it."
+    },
+    "receipt": {
+      "tests": 40,
+      "file": "test/features/funding/deposit_approval_receipt_repository_test.dart",
+      "coverage": "Mock RPC only: exact original/speedup transaction binding, wrong wallet/chain/nonce/hash, pending/missing/one-confirmation, canonical success/revert, same-nonce changed-intent replacement/cancellation/creation, freshness/reorg, exact legacy/effective fee and no broadcasts."
+    },
+    "controller": {
+      "tests": 40,
+      "file": "test/features/funding/deposit_approval_provider_test.dart",
+      "coverage": "Explicit EOA review, no wallet creation, reset-only and no deposit/native dispatch; fresh re-estimate drift/expiry, persistence before request, rejection/known-not-sent vs unknown, duplicate/stop/logout/disposal, hash and recovery isolation, invalid terminal proof, restored read-only EOA and actual host file pre-send/rebuild."
+    },
+    "widget": {
+      "tests": 9,
+      "file": "test/features/funding/deposit_approval_widget_test.dart",
+      "coverage": "English/Chinese 320 width at 1.5 text, landscape and tablet; precise/reset review and spender, cancel/input retention, confirm, one send only, recovery candidate hash, failure/scroll/stop retention and wallet isolation."
+    },
+    "full_regression": "All 2024 tests pass, including existing auth/funding/portfolio/bilingual widgets. Final test-only brace formatting followed by controller rerun; production code unchanged after full run/build."
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43745084,
+    "sha256": "37877e7f626c7a282e747b50f8169c6c897c0d2e5eb10f0dcc1fa91e08f70a6d"
+  },
+  "build_notes": "Existing third-party Kotlin migration notices; build successful. No installation.",
+  "ios": "Linux has no macOS/Xcode; not built or natively verified.",
+  "native_testing": "Not performed at user request; no device tools or APK installation. See ../native-verification-pending.md.",
+  "real_wallet_requests_sent": false,
+  "live_rpc_requests_sent": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "device_tools_used": false,
+  "remaining": [
+    "Unknown user/platform deposit caps; actual deposit submission, deposit receipt/platform credit and recovery.",
+    "Withdrawal and account-transfer workflows, native Max, explicit safe chain switching/older session permission renewal.",
+    "At least two observed confirmations is a client policy, not a finality guarantee; allowance must be re-read.",
+    "Native storage failures/process kill/power loss, wallet integration, network fees, layouts and iOS remain unverified.",
+    "Overall PRD goal remains active; see ../prd-progress.md."
+  ],
+  "logs": {
+    "all_tests": "/tmp/vanta-deposit-approval-all-tests.log",
+    "controller_final": "/tmp/vanta-deposit-approval-provider-final.log",
+    "analysis": "/tmp/vanta-deposit-approval-analysis-final.log",
+    "format": "/tmp/vanta-deposit-approval-format-clean.log",
+    "build": "/tmp/vanta-deposit-approval-build.log"
+  },
+  "analysis": "no issues",
+  "format": "536 Dart files, zero changes"
+}

@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-04",
+  "scope": "Native bilingual AI destination, Riverpod controller, current-wallet foreground handoff and scoped conversation lifecycle",
+  "prd": "https://app.notion.com/p/40d080d974e7801a8999f3497abac377",
+  "source_contracts": ["assistant-chat-public-contract.json", "assistant-session-public-contract.json"],
+  "entry": {
+    "destination": "TradingScreen destination 3 opens AssistantPage, replacing the placeholder",
+    "platforms": ["Android", "iOS"],
+    "initialization": "No HTTP, native credential read, automatic restore, wallet signature or wallet creation on entry. Existing app identity remains the source of the current wallet",
+    "authorization": "Explicit request for a login challenge, full selectable original message and separate confirm/cancel. Current connected EOA or existing Privy wallet signs; no new wallet. Reauthorization failure retains an already loaded conversation and draft",
+    "restore": "Explicit device-session restore verifies server user and wallet binding before loading that user's scoped history. Missing credentials never trigger signing as a fallback"
+  },
+  "lifecycle": {
+    "scope": "Application identity ID, normalized address and wallet kind isolate credentials; server subject additionally isolates conversation history. Identity, address, kind or signing capability change cancels and clears the visible personal state",
+    "foreground": "The expected signing handoff may remain pending through the wallet-app switch. The signature stays in memory until foreground resumes, and challenge deadline/cancellation still apply. No verify POST after a cancelled, expired or changed-wallet handoff",
+    "other_background": "Cancel ordinary requests and mark partial answers interrupted; no automatic auth refresh, usage read, retry, chat fallback or resumed generation on returning",
+    "leaving": "Auto-dispose cancels operations and flushes the last fully scoped history snapshot without mutating a later page. Late native writes remain scoped to the original wallet/user"
+  },
+  "conversation": {
+    "input": "Multiline, UTF-16 counter and 12000-character limit. A separate Send action shares the question plus bounded completed context. The next draft may be composed while a reply is streaming; failure never overwrites a newer draft",
+    "preflight": "Explicit Send rechecks the saved server session and same subject. Persist the user turn and pending reply before any chat POST; staging failure or cancelled preflight sends no chat",
+    "request": "Secure UUID v4 per turn; the existing repository keeps that same request ID for permitted completion attempts. Stop cancels the shared operation and prevents fallback; unknown service charging/deduplication remains a live-acceptance boundary",
+    "display": "Selectable native Markdown/GFM tables, message copy, returned explanation collapsed by default, partial/stopped/failed/truncated status. Only the changing message consumes streaming state; automatic scroll follows only near the bottom",
+    "rendering": "No WebView or script execution. All Markdown images replaced with localized text, including remote/data/file images; no automatic image fetch. Links open externally only on explicit activation and only for HTTPS with nonempty host and no userinfo, maximum2048characters",
+    "layout": "One constrained scroll surface supports narrow phones, tablets, landscape, keyboard-reduced height and enlarged text without fixed orientation",
+    "financial_boundary": "No financial tools/actions and no automatic balance, order, position, wallet credential or reasoning attachment to chat context. AI replies are not evidence of trades or market facts"
+  },
+  "history": {
+    "checkpoint": "400ms throttle, at most one in-flight native save plus one replaceable latest snapshot. A closing writer drains before same-session writer adoption; old callbacks cannot mutate a new page",
+    "bounds": "Existing latest200messages/512KiB UTF8 and12000UTF16 draft rules apply. No automatic resume of recovered streaming replies",
+    "failure": "Corrupt/unreadable history remains readonly until an explicit retry read or confirmed clear; no silent empty overwrite. Separate safe storage notice and retry-save action; input and partial response remain visible",
+    "clear": "Scope-version guarded confirmation; clear local history/draft only, not server records. Pending snapshots invalidated before serialized native deletion. Disposal during clear cannot resurrect old data",
+    "forget": "Scope-version guarded confirmation removes only this wallet's local AI credentials. History retained; neither main Privy login nor other-wallet storage deleted. UI explicitly states no remote Supabase revocation"
+  },
+  "quota": {
+    "read": "Explicit action revalidates session and reads UTC usage. Used count may be known while remaining/limit is unknown; never infer a remaining quota from website default5",
+    "freshness": "Stale after5minutes, UTC day rollover, clock rollback or a new submitted chat; preserved on read failure but marked stale. A fresh explicit remaining0 blocks Send. No automatic quota HTTP request",
+    "error": "Only validated quota-error fields are displayed/used; no raw server diagnostics or tokens in view state"
+  },
+  "acceptance_deferred": [
+    "Actual server challenge grammar, relying-party acceptance and current-wallet signature verification",
+    "Actual auth/refresh/binding/chat/usage requests, stream fallback deduplication and quota charging",
+    "Native TLS, wallet handoff/rejection/account switching, secure storage encryption/capacity/locked-device/kill/reinstall/backup behavior",
+    "Android/iOS native layout, clipboard, keyboard, accessibility and external browser behavior",
+    "iOS build requires macOS/Xcode; user deferred device testing"
+  ],
+  "actual_wallet_private_chat_or_funding_requests_performed": false,
+  "device_tools_used": false,
+  "overall_prd_complete": false
+}

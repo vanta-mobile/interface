@@ -1,0 +1,76 @@
+{
+  "recorded_at_utc": "2026-11-05 07:28:47 UTC",
+  "increment": "Scaled total quote/base input, four quantity distributions, Difference/Ratio, bounded frozen Random, 2–110 children and blank first-visit defaults",
+  "supersedes": "scaled-order-public-contract.json (historical initial client rule, not current feature limits)",
+  "prd": {
+    "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655?pvs=204",
+    "page_last_edited_at": "2026-11-05T07:06:39.541Z",
+    "verification": {
+      "state": "unverified"
+    },
+    "requirements": [
+      "Low/high/total/count blank on first visit; Equal selected; Difference preset hidden for Equal; initial preview empty.",
+      "Review includes Futures symbol, side, price endpoints, count, entered size/unit, distribution and applicable constant; child type/price/base quantity/portion. Scaled has dedicated confirmation without opt-out."
+    ],
+    "source_excerpts": [
+      "<tr>\n<td color=\"gray_bg\">\n分段委托<br />Scaled\n</td>\n<td>\n最低价：空<br />最高价：空<br />总金额：空<br />子单数量：空\n</td>\n<td>\n数量分布：Equal（等量）<br />常数方式预设：Difference，等量分布时隐藏<br />初始子单预览：空\n</td>\n<td>\n交易对、方向、价格区间、总金额、子单数、等量分布<br />预览逐笔列出子单类型、价格、数量和占比。\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n分时委托<br />TWAP",
+      "| 分段委托<br />Scaled | 交易对＋Futures<br />买／卖方向<br />最低价格 Lowest price<br />最高价格 Highest price<br />子订单数量 Sub-order count<br />总数量／金额 Size<br />数量分布 Size distribution<br />子订单类型、价格、数量、占比 | 部分分布方式额外展示分布常数；子单明细属于拟下单预览，不是已成交历史。 | 交易对：NVDAUSDT Futures<br />方向：Sell（演示）<br />最低价格：205.33 USDT（#483648）<br />最高价格：205.40 USDT（#483649）<br />子订单数量：2（演示）<br />总数量：0.96 NVDA（2×真实样本数量0.48）<br />分布：Equal（演示）<br />子单1：Limit／205.33／0.48 NVDA／50%<br />子单2：Limit／205.40／0.48 NVDA／50%<br />价格区间、单笔数量引用真实样本；拆分计划及总量为演示计算。 |",
+      "| 不再显示 | 普通订单、TWAP、追逐委托和快捷市价确认含 Don't show again，初始未勾选；分段专用确认未发现该项。 | ☐ Don't show again（示例初始状态） |"
+    ]
+  },
+  "anonymous_public_sources": [
+    {
+      "url": "https://docs.asterdex.com/trading/perpetuals/order-types/scaled-order.md",
+      "cache": "/tmp/vanta-scaled-official.md",
+      "establishes": "2–110 children, Equal/Increasing/Decreasing/Random, variance up to10%. Marketing simultaneous wording is not a V3 atomic strategy contract.",
+      "bytes": 4031,
+      "sha256": "dbb68a2ffca7b93f4efe410553b111fa3c3f8e933c9c1f6d5a6f0239bc0f6505"
+    },
+    {
+      "url": "https://www.asterdex.com/en/futures/BTCUSDT",
+      "cache": "/tmp/vanta-scaled-public-page.html",
+      "establishes": "Anonymous HTML identifies current public index.",
+      "bytes": 2613,
+      "sha256": "f9d4f5c124146721f7895955f4020afe809b94f176df2ba344a224a670242402"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/index-DfI95qz8.js",
+      "cache": "/tmp/vanta-scaled-public-index.js",
+      "establishes": "Anonymous route module reference.",
+      "bytes": 1850429,
+      "sha256": "7ba343e64924d511fc6b667f801688c4d52ea7be7eb5b2f6bdf6ecfab7cdc9a5"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/_-_locale_.trade.pro._tradeType._symbol-Bsysmh4D.js",
+      "cache": "/tmp/vanta-scaled-public-pro.js",
+      "establishes": "calculateScaledOrder, calculatePrices, calculateQuantitiesUSDTByQuantityDistribution, calculateIncreasingDifferenceCoin, calculateIncreasingRatioCoin; Equal and Difference UI defaults. Difference base weights1..n and reversed, Ratio powers of two and reversed; quote denominator sum(price*quantityWeight). Source read only, no JS execution or private requests.",
+      "bytes": 1140091,
+      "sha256": "b8217e5def709c5a1325648fd0bbecd9031bf9e0c3a2d4f73a449d738ef71a56"
+    },
+    {
+      "url": "https://github.com/asterdex/api-docs/blob/10391d12716923729c0255becfb7211bc7b17465/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+      "cache": "/tmp/vanta-attached-alignment-api.md",
+      "establishes": "Ordinary LIMIT/GTC signed POST and original-ID GET. batchOrders max5 is one HTTP batch limit, not a Scaled plan limit; current client keeps sequential ordinary orders.",
+      "bytes": 243773,
+      "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4"
+    }
+  ],
+  "client_financial_rules": {
+    "precision": "Decimal and exact Rational through division/alignment. No finance doubles/Number conversions. All final children pass current ordinary-order rules, funds, trading eligibility, LIMIT/GTC capability.",
+    "prices": "Inclusive endpoints, distinct valid ticks. low+floor(spanTicks*i/(count-1))*tick. Reject invalid, off-grid or too-narrow endpoints; do not alter user range.",
+    "weights": "Equal1; Increasing Difference1..n, Ratio2^i; Decreasing reverses weights. Same quantity distribution semantics for base and quote, independent of BUY/SELL.",
+    "base": "Ideal qty=total*w/sum(w). Floor on LOT minimum+k*step, reject ideal below minimum and nonrepresentable aggregate total; apportion remaining steps to largest fractional remainders, ties to lowest price. Total base quantity is conserved exactly.",
+    "quote": "Ideal qty=quote*w/sum(price*w). Floor each to LOT minimum+k*step. Reject minima/filter failures instead of increasing input or clamping to maxima. Exact sum(price*qty)<=input; unallocated quote explicitly displayed and never automatically spent. No leverage multiplication.",
+    "random": "Existing controller creates one public 32-bit seed when Random first chosen or explicit reshuffle; seed remains in immutable local draft. Pure integer LCG1664525/1013904223 modulo2^32, paired deviations (sample%20001-10000)*variance/100 around weight10000, optional unpaired weight10000, deterministic shuffle. Weights sum=count*10000. Validate final rounded child qty within entered0..10% of actual mean; otherwise concrete variance/step error. Rebuild, locale, prepare, intent revalidation, submit and recovery never draw new randomness.",
+    "margin": "Exact total limit notional/leverage before netting, fees, pending orders and released margin. Not spend cap, final margin, fill assurance or executable allowance."
+  },
+  "deliberate_differences_from_public_frontend": [
+    "Do not reproduce float conversions, hidden min clamps, silent aggregate base loss or upward budget inflation. Rounding/remainders are explicit Vanta rules, not claimed bit-for-bit Aster calculations.",
+    "Public quote Difference Decrease branch uses n-i+1 while base/common weights use n-i. Vanta consistently reverses1..n for both units.",
+    "Public source random path uses unbounded relative0.5..1.5 excess weights; Vanta follows official product variance<=10%, captures deterministic seed and checks actual post-step quantities."
+  ],
+  "presentation": "UI defaults quote unit, BUY, all four primary fields blank, Equal with hidden Difference; preserves independent raw base/quote inputs. Progressive modes expose Difference/Ratio, Random exposes variance default10 and explicit reshuffle. Preview/review/results show ten children per page without truncating frozen plan, all110 accessible; result page follows newly active child. Dialog resolves l10n on rebuild.",
+  "execution": "Existing same connected EOA or already-created Privy wallet; no new wallet/agent. Exact independent client IDs and ordinary LIMIT/GTC base quantity only. Fresh signed funds/config read per child, signed POST and separate original-ID query; ascending price, sequential. Full-plan not atomic, may partly succeed; many wallet confirmations possible.",
+  "recovery": "Pre-POST durable journal freezes each sent child. Failure/rejection/unknown/stop/route exit/config drift stops unsent children. Unknown only rechecks original sent IDs; no resampling, resizing, retransmission, rollback cancellation or automatic continuation. Wallet identity/type/signing change invalidates callbacks. Intent also rejects peg/trigger/trailing/attachments/reducing/close/quick/TIF tampering.",
+  "deferred": "Real Aster authorization/fills, native persistence/signature return/layout/accessibility and iOS build unverified. User explicitly deferred device tests. Full PRD remains incomplete (Portfolio, Swap, Chase/full strategy management, first navigation, etc)."
+}

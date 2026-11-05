@@ -1,0 +1,98 @@
+{
+  "date": "2026-11-04",
+  "scope": "Display-only asset names and PNG logos for signed Spot/Futures balances",
+  "prd": {
+    "url": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+    "last_edited": "2026-11-02T11:42:11.267Z",
+    "requirement": "Join canonical balance asset code to public asset metadata for names and icons"
+  },
+  "sources": [
+    {
+      "source": "names",
+      "method": "GET",
+      "url": "https://www.asterdex.com/bapi/asset/v2/public/asset/asset/ae/get-all-asset",
+      "body": null,
+      "read_only": true,
+      "observed_rows": 18,
+      "mapped_account_identifier_rows": 18,
+      "bytes": 11222,
+      "sha256": "dc55fb9298e68a880180ba85fc2c5444c283870e2225fc8c6e70b82e9479f1f2"
+    },
+    {
+      "source": "logos",
+      "method": "POST",
+      "url": "https://www.asterdex.com/bapi/futures/v1/public/future/asset/ae/all-asset-logo",
+      "body": {},
+      "read_only": true,
+      "observed_rows": 817,
+      "mapped_account_identifier_rows": 807,
+      "bytes": 117972,
+      "sha256": "562b45908f5f58aa92bac000f8914995851360747a8931a46f31e4ff3c73f04d"
+    }
+  ],
+  "mapping": {
+    "join": "Case-normalized exact asset code; asBNB -> ASBNB; no inferred aliases",
+    "names": "English/Chinese preferred by locale with available-name fallback; missing names retain canonical selectable symbol",
+    "unrelated_rows": "Skip space-containing protocol/points labels, never invent account symbols",
+    "validation": "Bounded envelope and names; reject case collisions, controls and malformed identifiers",
+    "financial_boundary": "Ignore assetDigit, price, gas, precision, token addresses and permissions; metadata never changes signed identifiers, balance quantities or valuations"
+  },
+  "transport": {
+    "anonymous": true,
+    "wallet_or_auth_headers": false,
+    "timeout_seconds": 12,
+    "abort": "AbortableRequest on timeout and service disposal; queued images do not start after close",
+    "redirects": false,
+    "json_bytes_max": 2097152,
+    "image_bytes_max": 524288,
+    "image_pixels_per_axis_max": 2048,
+    "image_type": "PNG signature/IHDR and image/png; fixed HTTPS static.astherus.finance image/admin_mgs_image_upload path only",
+    "image_concurrency": 4,
+    "image_cache": "Success-only LRU, 64 entries / 4 MiB, per-URI request sharing, manual eviction/retry"
+  },
+  "lifecycle": "Independent names/logos source state, shared across Spot/Futures, 15-minute freshness, no polling/retry loop. Background discards late catalog results; resume reuses fresh data or refreshes missing/expired nonfailed sources. Failed sources require manual retry. Original symbol and fallback icon remain usable.",
+  "public_png_observations": [
+    {
+      "symbol": "USDT",
+      "url": "https://static.astherus.finance/image/admin_mgs_image_upload/20251010/27fec40e-cf32-4996-8609-1db9657ecc3f.png",
+      "status": 200,
+      "content_type": "image/png",
+      "bytes": 1124,
+      "sha256": "39907e337b04c88b3676cb1b106f4e3fff94a86522abf11072355c841a0a67b9",
+      "dimensions": [
+        96,
+        96
+      ]
+    },
+    {
+      "symbol": "USDF",
+      "url": "https://static.astherus.finance/image/admin_mgs_image_upload/20251010/9f49edcc-fb82-425f-bce7-c52ac2d63097.png",
+      "status": 200,
+      "content_type": "image/png",
+      "bytes": 3381,
+      "sha256": "7fccafd13f0d067538774fe908a0f8125630ff9061b0ece6106302e0b57acb58",
+      "dimensions": [
+        96,
+        96
+      ]
+    },
+    {
+      "symbol": "asBNB",
+      "url": "https://static.astherus.finance/image/admin_mgs_image_upload/20251010/26561c3a-0aad-44d4-8c5b-91d95c433f7c.png",
+      "status": 200,
+      "content_type": "image/png",
+      "bytes": 1666,
+      "sha256": "eec2e36c794a76fbd52152f34c3de5e2e56fea40c1fee105436a32c53d087b55",
+      "dimensions": [
+        24,
+        24
+      ]
+    }
+  ],
+  "acceptance_limits": [
+    "Official public frontend endpoints have no stable third-party developer contract",
+    "Observed name source omits USDF/asBNB names; logo source covers them; unavailable names are not synthesized",
+    "Anonymous catalog and CDN observations do not verify real balances, private permissions or native rendering",
+    "No real wallet/signing/RPC/private/account/financial/device request; one anonymous read-only public POST was used"
+  ]
+}

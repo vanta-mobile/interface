@@ -1,0 +1,105 @@
+{
+  "recorded_at_utc": "2026-11-05T03:55:39.251220+00:00",
+  "increment": "Known attached strategy per-leg ordinary order execution details; explicit read-only action",
+  "contract": "strategy-execution-public-contract.json",
+  "tests": {
+    "baseline_full": 3529,
+    "baseline_note": "Attached-exit alignment3528 plus CI performance-scenario regression1; CI migration is a separate increment.",
+    "new_total": 88,
+    "mapper": 41,
+    "signed_repository": 18,
+    "provider": 17,
+    "widgets": 12,
+    "full_passed": 3617,
+    "exit_code": 0,
+    "existing_navigation_regression": "Four live attached-order cases and four legacy/current recovery cases now also open the real details route, verify original strategy/quantity and no additional submit/recheck. Full suite includes these cases.",
+    "coverage": [
+      "Canceled partial fills retain exact0.0004BTC and32.000000000000000001USDT; no quantity*price substitute for missing totals. Missing order IDs stay unknown, never queried as0.",
+      "Strict ordinary order identity, original conditional type, side/position, flags, policy, Decimal/status/time invariants and trigger basis. Four manual/auto TP/SL LIMIT transforms; market transforms and BBO engine price boundary.",
+      "Exact same EOA user=signer, chain1666, increasing shared microsecond nonces, exact transmitted signed bytes and GET-only sequence. Original strategy linkage/ID checked before ordinary reads; history fallback only-2013.",
+      "Refusal/missing retained order/malformed child stops later prompts, retains earlier success and marks remaining skipped. Public metadata failure retains quantities with unknown units.",
+      "Explicit-only Riverpod flow, concurrent/global operation exclusion, pending journal unchanged and corrupt/unknown-write ownership remains blocking. Stop/disposal/old-new read lease races, identity/address/kind/signing changes and late-response invalidation.",
+      "Thirty-second expiry from original strategy read, backwards clock, lifecycle during/after read and settings events mark stale without auto-signing. EN/ZH320width text1.5,844x390landscape,768x1024tablet; exact copyable IDs, separate statuses, stop/retry and route locale pinning."
+    ]
+  },
+  "format": {
+    "files": 787,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1593,
+    "zh": 1593,
+    "new_per_locale": 23,
+    "message_keys_equal": true
+  },
+  "android": {
+    "command": "flutter build apk --release --target-platform android-arm64 --dart-define-from-file=config/privy.local.json",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45709548,
+    "sha256": "e2fd88b34eca91125afd8cc9b705f49550128ece410d251602ddd88db2930d7a",
+    "aot_bytes": 15729544,
+    "packaged_probes": {
+      "en:strategyExecutionTitle": true,
+      "en:strategyExecutionFilledSize": true,
+      "en:strategyExecutionTermsChanged": true,
+      "zh:strategyExecutionTitle": true,
+      "zh:strategyExecutionFilledSize": true,
+      "zh:strategyExecutionTermsChanged": true
+    },
+    "installed": false,
+    "device_tools_used": false,
+    "initial_build_failure": "--no-pub retained the GeneratedPluginRegistrant from the earlier integration-test Profile build, registering a dev plugin omitted from Release dependencies. The normal Release command regenerated its platform registrant and succeeded; no generated source hand-edit or production dependency added.",
+    "notices": "Existing KGP migration notices for coinbase_wallet_sdk/package_info_plus/privy_flutter; successful build. Existing local development signing, not a production release."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "performed": {
+    "synthetic_tests": true,
+    "actual_wallet_signature": false,
+    "actual_private_api": false,
+    "address_bearing_rpc": false,
+    "financial_actions": false,
+    "native_device_testing": false,
+    "local_privy_config_read_by_agent": false
+  },
+  "public_reads": "Notion Futures PRD re-read; cached official V3 document bytes and Query Order section inspected. No live account/chat/financial request.",
+  "remaining": [
+    "Actual exchange self-EOA signer acceptance, strategy-to-order identities, partial-fill resizing/peer cancellation, native wallet/lifecycle/layout and iOS remain unverified.",
+    "Complete strategy management list/edit/whole cancellation, Futures order/trade/income history, full cross-product Portfolio and Swap remain incomplete.",
+    "Latest PRD base/quote amount entry and first-visit main-form defaults need alignment; Scaled distribution is an initial equal-quantity2-5 implementation and custom slippage needs an explicit execution contract.",
+    "User-deferred historical statistics/Futures Summary/TWAP remain skipped; overall PRD goal active."
+  ],
+  "logs": {
+    "full": "/tmp/vanta-strategy-execution-all-tests.log",
+    "format": "/tmp/vanta-strategy-execution-format-clean.log",
+    "analysis": "/tmp/vanta-strategy-execution-analysis-final.log",
+    "build": "/tmp/vanta-strategy-execution-build-final.log",
+    "initial_build": "/tmp/vanta-strategy-execution-build.log",
+    "widgets": "/tmp/vanta-strategy-execution-widgets-final.log",
+    "navigation": "/tmp/vanta-strategy-execution-ui-regression.log",
+    "repository": "/tmp/vanta-strategy-execution-repository.log",
+    "provider": "/tmp/vanta-strategy-execution-provider.log"
+  },
+  "verification_note": "Early widget attempts exposed fake-clock disposal awaiting a future without pumping frames and lazy-list .first finder assumptions; corrected test disposal/finders. Source analysis warnings corrected. Final full suite is authoritative and contains all88 new cases.",
+  "source_sha256": {
+    "lib/features/portfolio/application/strategy_execution_provider.dart": "43bafd16cfc5093e6d59478953e00b62fcde4ba4b4f61ee93cdf02226b721c94",
+    "lib/features/portfolio/data/signed_strategy_execution_repository.dart": "0c3d6fdbcd22c1d9e4ebca2835e7f6131548b178946b3947f2f411081abc13fd",
+    "lib/features/portfolio/data/strategy_execution_mapper.dart": "b6767e451c7f9ea656ace36705d775d934a7ba424c21a0b612dd0770c0d23b77",
+    "lib/features/portfolio/domain/strategy_execution.dart": "f57bb19c608be710e78c8b9eb255480b6a8dea483105013b700f44bd39751bb5",
+    "lib/features/portfolio/presentation/strategy_execution_leg_card.dart": "812071c4101d1c22dc89344af9ed8734509c45a99726c3fe1986c308b0ce44a0",
+    "lib/features/portfolio/presentation/strategy_execution_screen.dart": "9615eee56e0869019276c0e50b4f50e45c5a9719b76d0fa9985a3a3ebc751054",
+    "test/features/portfolio/signed_strategy_execution_repository_test.dart": "4ba585c9dc9a80bb05a80e272a51f8a5c55c19ddd13b5dd0d4c639271345067a",
+    "test/features/portfolio/strategy_execution_mapper_test.dart": "96e5b8e55097032e44dd52a414d431845a8d25e30312da6e384595cabb974282",
+    "test/features/portfolio/strategy_execution_provider_test.dart": "d6db9906528149d250f042b43a2313d6dc89277b8db617bba7fc20bc13021a7d",
+    "test/features/portfolio/strategy_execution_widget_test.dart": "6af57cfd336895ee92c53f5f9b560b655df2fa5fdd16d8404b353db38076c671",
+    "test/support/strategy_execution.dart": "9f39d319e8f6a32469d65f32829a0f7a8d495e68c991df5180b836b8a9eb1469"
+  }
+}

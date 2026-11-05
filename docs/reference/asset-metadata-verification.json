@@ -1,0 +1,83 @@
+{
+  "date": "2026-11-04",
+  "increment": "Display-only Spot/Futures asset names and logos",
+  "contract": "asset-metadata-public-contract.json",
+  "tests": {
+    "baseline": 2825,
+    "new": 79,
+    "focused_passed": 79,
+    "full_passed": 2904,
+    "result": "All tests passed",
+    "coverage": [
+      "Strict display-only mapping, original asset identity, Unicode/case collisions, missing names, independent sources",
+      "Exact anonymous GET/read-only POST, no auth, MIME/redirect/size bounds, timeout abort",
+      "PNG header/dimension/byte bounds, request sharing, LRU eviction, max4 concurrency, close active4 and queued2 without new network",
+      "Independent failure/retention/manual retry, freshness/clock rollback, no polling, pause/resume/late/dispose",
+      "English/Chinese symbol and name search, original balances unchanged, 320 width/text1.5/844x390 landscape/768x1024 tablet, icon fallback/retry"
+    ]
+  },
+  "format": {
+    "files": 688,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1379,
+    "zh": 1379,
+    "new_per_locale": 9
+  },
+  "android": {
+    "command": "flutter build apk --release --target-platform android-arm64 --dart-define-from-file=config/privy.local.json",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 44991256,
+    "sha256": "4dcc0ab06cd24986d56f77ab86b8152870a9989ba963cbf89872cc0b9392b5c9",
+    "packaged_aot_strings": {
+      "get-all-asset": true,
+      "all-asset-logo": true,
+      "asset-metadata-refresh": true
+    },
+    "installed": false,
+    "device_tools_used": false,
+    "signing": "Existing local debug signing for release experience build; not store distribution"
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "network": {
+    "anonymous_public_catalog_get": true,
+    "anonymous_public_read_only_logo_post": true,
+    "public_png_get_count": 3,
+    "production_mapper_on_cached_public_payloads": {
+      "name_rows": 18,
+      "raw_logo_rows": 817,
+      "valid_account_logo_rows": 807
+    },
+    "private_or_account": false,
+    "wallet_signing": false,
+    "live_rpc": false,
+    "financial_operation": false
+  },
+  "native_testing": "Deferred by explicit user request; native-verification-pending.md records remaining checks. Widget tests are not native acceptance.",
+  "remaining": [
+    "Name catalog currently omits USDF/asBNB and many assets; retain raw code rather than synthesize names",
+    "Official public frontend endpoints may change; independent source failures retain original identity",
+    "Actual Android/iOS TLS, image decoding, accessibility, foreground/background and layouts unverified",
+    "Broader PRD remains incomplete; no claim of real account permissions or financial execution"
+  ],
+  "logs": {
+    "focused": "/tmp/vanta-metadata-focused-clean.log",
+    "full": "/tmp/vanta-metadata-all-tests.log",
+    "analysis": "/tmp/vanta-metadata-analysis-clean.log",
+    "format": "/tmp/vanta-metadata-format-clean.log",
+    "build": "/tmp/vanta-metadata-build.log",
+    "production_mapping": "/tmp/vanta-metadata-public-mapping.json",
+    "public_png": "/tmp/vanta-asset-logo-public-probe.json"
+  },
+  "log_note": "Final clean focused/full logs are authoritative; exploratory fixture/timer test failures were corrected before final regression. Build emits existing third-party Kotlin plugin future compatibility notice; current release build succeeds."
+}

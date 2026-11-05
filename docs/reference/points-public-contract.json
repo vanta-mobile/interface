@@ -1,0 +1,131 @@
+{
+  "recorded_at_utc": "2026-11-03T22:47:59.031747+00:00",
+  "prd": "https://app.notion.com/p/40d080d974e7801eb12dfab2b95d60cf",
+  "scope": "Points home only: current campaign, exact personal scores/history, first100 total/campaign leaderboard. Retail campaign list/detail/actions are still unimplemented.",
+  "source": {
+    "runtime_config": {
+      "url": "https://app.vanta.exchange/config.js",
+      "sha256": "a644336ccced04d02f044e22fe75a9262b5800c1f30882f0ce6ab7d906b2befe",
+      "bytes": 4454,
+      "relevant_public_value": {
+        "VITE_POINTS_API_BASE_URL": "https://api.vanta.exchange/"
+      }
+    },
+    "main_bundle": {
+      "url": "https://app.vanta.exchange/assets/index-svFSKwtQ.js",
+      "sha256": "aa64f67c87338fd4fcd606f26a56898e5b3399bbcc7c83c6214398ea4823a803",
+      "bytes": 4145798
+    },
+    "points_chunk": {
+      "url": "https://app.vanta.exchange/assets/Index-DtQ2qCN5.js",
+      "sha256": "4664b4fd6e7a91fe4805c14f8518bbe6c9693aa25b1ac325c1002e9ab1ea159e",
+      "bytes": 12381
+    },
+    "wrapper": "GFt uses runtime base and rewrites /points-api/ to /api/; Ec GET has no authorization header. Initial same-origin paths returned SPA HTML; resolved origin above returned actual JSON."
+  },
+  "anonymous_observations": [
+    {
+      "url": "https://api.vanta.exchange/api/campaign/current",
+      "bytes": 395,
+      "sha256": "2e02604f59d8290b309d89a706e651fd7118b6495edd2a81a52dd556052f64a4",
+      "result": "HTTP200 JSON; anonymous public GET; no wallet address"
+    },
+    {
+      "url": "https://api.vanta.exchange/api/campaigns",
+      "bytes": 6517,
+      "sha256": "4921ae26a1958381ba77ef65643e51e05c7b17a9bf01c8ced46753ff84d6fc27",
+      "result": "HTTP200 JSON; anonymous public GET; no wallet address"
+    },
+    {
+      "url": "https://api.vanta.exchange/api/leaderboard/total",
+      "bytes": 18660,
+      "sha256": "15dff5ea3dd293f72aaccfb528aafeb69a2cc28716f3c7509178d07927f066db",
+      "result": "HTTP200 JSON; anonymous public GET; no wallet address"
+    },
+    {
+      "url": "https://api.vanta.exchange/api/leaderboard/campaign/17",
+      "bytes": 12,
+      "sha256": "eef46741adfc3a9f76294d3b78f37a45f113092ac9d44ee77c7a038a88ff09a1",
+      "result": "HTTP200 JSON; anonymous public GET; no wallet address"
+    },
+    {
+      "url": "https://api.vanta.exchange/api/leaderboard/campaign/1",
+      "bytes": 11156,
+      "sha256": "0d34712dcbd6742d9e434afd84bac706da64ca50cde254e6b1880a070d1e8491",
+      "result": "HTTP200 JSON; anonymous public GET; no wallet address"
+    }
+  ],
+  "campaign": {
+    "envelopes": {
+      "current": {
+        "campaign": "object or explicit null"
+      },
+      "list": {
+        "items": "array"
+      }
+    },
+    "fields": [
+      "campaignNumber",
+      "campaignName",
+      "description",
+      "totalVantaPoints",
+      "startTime",
+      "endTime",
+      "currentCampaign",
+      "status",
+      "orderlyBrokerId"
+    ],
+    "observed_current_number": 17,
+    "observed_current_broker": "vanta_exchange",
+    "observed_current_period_utc": [
+      "2026-10-29T00:00:00Z",
+      "2026-11-05T00:00:00Z"
+    ],
+    "behavior": "Preserve published flag/status; unknown status localized as unknown. Strict timezone/calendar validation, positive int64 IDs, exact Decimal pool, unique IDs and at most one current cycle. Do not infer payouts from dates."
+  },
+  "leaderboard": {
+    "envelope": "items array",
+    "total_fields": [
+      "address",
+      "rank",
+      "totalPoint",
+      "settledPoints",
+      "specialPoints",
+      "currentPoint"
+    ],
+    "campaign_fields": [
+      "address",
+      "rank",
+      "campaignNumber",
+      "points"
+    ],
+    "rules": "Keep returned order/rank/ties, require matching campaign IDs and unique address keys; EVM case-insensitive, Solana base58 case-sensitive. Validate bounded full response then show first100,20/page; no fabricated full ranking or100+ personal rank. Total and campaign readers stay separate.",
+    "observed_total_rows": 100,
+    "observed_campaign17_rows": 0,
+    "observed_campaign1_rows": 100
+  },
+  "personal": {
+    "paths": [
+      "/api/points/{evmAddress}",
+      "/api/points/{evmAddress}/campaigns"
+    ],
+    "validation_basis": "Production frontend Ec/FJt/UJt and UI field usage; synthetic fixtures only. No live address-bearing endpoint requested. Actual personal response/permission remains unverified.",
+    "summary": "Root totalPoint/currentPoint required; settledPoints/specialPoints optional unknown. Response address if present must match requested address.",
+    "history": "Root items array with campaignNumber, points and optional campaignName/address. Missing selected cycle is unknown, never zero.",
+    "privacy": "Only explicit user read/refresh discloses currently authenticated EVM address to fixed Vanta origin; no token/signature, extra wallet creation or Aster account change. Identity ID/address/wallet kind changes clear data, input selection and in-flight generations. Signing availability is not needed for this unsigned read."
+  },
+  "integrity": "Raw numeric JSON tokens retain lexemes; Decimal scores/pools, bounded integers and strings; no binary floating-point or missing-value zero coercion. Vanta Orderly broker program clearly labeled separately from Aster trading/balances; do not imply Aster activity qualifies for rewards.",
+  "lifecycle": "Public readers load on page entry and foreground resume, share/deduplicate requests and support manual retry. Five minutes marks stale without polling. Private reads never auto-refresh. Failures keep prior snapshot with warning, background/stop/dispose invalidates late completion; repository lives until final reader leaves. Scroll preserves page state until navigation away. Changed/removed selector options keep selected ID and unknown values rather than silently switching scope.",
+  "transport": "GET only, fixed HTTPS origin, Accept application/json only, no redirects/retries;12second timeout; safe localized error mapping. No raw payload/server errors shown.",
+  "remaining": [
+    "Retail event list/detail and signed registration/check-in/wallet-connect actions",
+    "Live personal response and device validation",
+    "AI assistant and overall PRD incomplete"
+  ],
+  "device_tools_used": false,
+  "personal_network_requests_sent": false,
+  "real_wallet_requests_sent": false,
+  "live_rpc_requests_sent": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false
+}

@@ -1,0 +1,57 @@
+{
+  "verified_at_utc": "2026-11-02T19:28:06.353449+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "apk": {
+    "bytes": 42433656,
+    "sha256": "9f0d48254456ada82107afc82e78f699655741c5d6ba845c9b882852bff83abd"
+  },
+  "automated_tests": 403,
+  "new_unit_widget_tests": 26,
+  "format_dart_files": 221,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 475,
+    "zh": 475
+  },
+  "official_contract": "account-change-public-contract.json",
+  "native_checks": [
+    "Chinese expanded monitor in futures account",
+    "Sign-in entry opens real Privy/EOA UI without creating wallet",
+    "English expanded scope, manual lease boundaries and action",
+    "English landscape scrolling with accessible action",
+    "Original Chinese, locked portrait and font scale 1.0 restored"
+  ],
+  "screenshots": [
+    "account-change-zh-android.png",
+    "account-change-login-android.png",
+    "account-change-en-android.png",
+    "account-change-landscape-android.png"
+  ],
+  "unit_widget_checks": [
+    "Exact EOA typed-data bytes sent in POST form; shared nonce; no DELETE",
+    "POST with active key used for explicit renewal",
+    "Memory-only lease and cancellation before/after signing",
+    "Native WebSocket raw private endpoint without SUBSCRIBE",
+    "Expiry, disconnect and malformed payload fail closed without key in errors",
+    "Quiet-account cancellation releases socket",
+    "Every event, including old/duplicate E, invalidates snapshots and late REST reads",
+    "No partial financial payload merging or automatic REST signing",
+    "Background closes and resume reuses valid lease; no signature",
+    "50-minute reminder and 60-minute conservative deadline; no automatic renewal",
+    "Logout/stop discard pending authorization",
+    "Signed-out entry opens real auth; no wallet creation",
+    "360-width English 2x and Chinese 844x390 1.5x layout"
+  ],
+  "live_private_requests_sent": false,
+  "unverified": [
+    "Real authorized EOA/Privy listenKey creation/renewal and private events",
+    "Signed-in physical device states (controlled widget fixtures only)",
+    "iOS build requires macOS/Xcode"
+  ],
+  "remaining": [
+    "Complete event merging, position quantity/order state synchronization and gap recovery",
+    "ROI and cross initial margin",
+    "Close/reverse, margin changes, TP/SL and remaining PRD work"
+  ]
+}

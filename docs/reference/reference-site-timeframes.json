@@ -1,0 +1,248 @@
+{
+  "url": "https://app.vanta.exchange/perp/PERP_BTC_USDC",
+  "checkedAt": "2026-10-30T08:08:48.229Z",
+  "method": "Fresh headless Chrome context; observe public HTTP history and kline WebSocket subscriptions while clicking timeframe controls. Timings describe network requests, not chart rendering.",
+  "initialEvents": [
+    {
+      "type": "ws-open",
+      "host": "ws-evm.orderly.org",
+      "at": 3978
+    },
+    {
+      "type": "history-request",
+      "at": 5270,
+      "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=15&from=1792447765&to=1793347765&countback=1000"
+    },
+    {
+      "type": "network-response",
+      "at": 5453,
+      "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=15&from=1792447765&to=1793347765&countback=1000",
+      "status": 200,
+      "fromDiskCache": false,
+      "fromServiceWorker": true,
+      "cacheControl": null
+    },
+    {
+      "type": "history-finished",
+      "at": 5611,
+      "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=15&from=1792447765&to=1793347765&countback=1000",
+      "timing": {
+        "startTime": 1793347705619.596,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.138,
+        "responseStart": 177.397,
+        "responseEnd": 340.447
+      }
+    },
+    {
+      "type": "ws-send",
+      "at": 5632,
+      "payload": {
+        "event": "subscribe",
+        "topic": "PERP_BTC_USDC@kline_15m",
+        "id": "PERP_BTC_USDC@kline_15m",
+        "ts": 1793347705977
+      }
+    }
+  ],
+  "actions": [
+    {
+      "interval": "1m",
+      "at": 12973,
+      "events": [
+        {
+          "type": "history-request",
+          "at": 13022,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=1&from=1793287773&to=1793347773&countback=1000"
+        },
+        {
+          "type": "network-response",
+          "at": 13211,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=1&from=1793287773&to=1793347773&countback=1000",
+          "status": 200,
+          "fromDiskCache": false,
+          "fromServiceWorker": true,
+          "cacheControl": null
+        },
+        {
+          "type": "history-finished",
+          "at": 13315,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=1&from=1793287773&to=1793347773&countback=1000",
+          "timing": {
+            "startTime": 1793347713371.468,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.121,
+            "responseStart": 185.77,
+            "responseEnd": 293.263
+          }
+        },
+        {
+          "type": "ws-send",
+          "at": 13323,
+          "payload": {
+            "event": "subscribe",
+            "topic": "PERP_BTC_USDC@kline_1m",
+            "id": "PERP_BTC_USDC@kline_1m",
+            "ts": 1793347713670
+          }
+        }
+      ]
+    },
+    {
+      "interval": "5m",
+      "at": 14818,
+      "events": [
+        {
+          "type": "history-request",
+          "at": 14873,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=5&from=1793047775&to=1793347775&countback=1000"
+        },
+        {
+          "type": "network-response",
+          "at": 15058,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=5&from=1793047775&to=1793347775&countback=1000",
+          "status": 200,
+          "fromDiskCache": false,
+          "fromServiceWorker": true,
+          "cacheControl": null
+        },
+        {
+          "type": "history-finished",
+          "at": 15095,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=5&from=1793047775&to=1793347775&countback=1000",
+          "timing": {
+            "startTime": 1793347715222.419,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.117,
+            "responseStart": 185.599,
+            "responseEnd": 222.259
+          }
+        },
+        {
+          "type": "ws-send",
+          "at": 15103,
+          "payload": {
+            "event": "subscribe",
+            "topic": "PERP_BTC_USDC@kline_5m",
+            "id": "PERP_BTC_USDC@kline_5m",
+            "ts": 1793347715450
+          }
+        }
+      ]
+    },
+    {
+      "interval": "15m",
+      "at": 16664,
+      "events": []
+    },
+    {
+      "interval": "1m",
+      "at": 18514,
+      "events": []
+    },
+    {
+      "interval": "5m",
+      "at": 20361,
+      "events": []
+    },
+    {
+      "interval": "15m",
+      "at": 22209,
+      "events": []
+    },
+    {
+      "interval": "1h",
+      "at": 24065,
+      "events": [
+        {
+          "type": "history-request",
+          "at": 24122,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=60&from=1789747784&to=1793347784&countback=1000"
+        },
+        {
+          "type": "network-response",
+          "at": 24301,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=60&from=1789747784&to=1793347784&countback=1000",
+          "status": 200,
+          "fromDiskCache": false,
+          "fromServiceWorker": true,
+          "cacheControl": null
+        },
+        {
+          "type": "history-finished",
+          "at": 24326,
+          "url": "https://api.orderly.org/tv/history?symbol=PERP_BTC_USDC&resolution=60&from=1789747784&to=1793347784&countback=1000",
+          "timing": {
+            "startTime": 1793347724471.723,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.095,
+            "responseStart": 178.838,
+            "responseEnd": 204.837
+          }
+        },
+        {
+          "type": "ws-send",
+          "at": 24331,
+          "payload": {
+            "event": "subscribe",
+            "topic": "PERP_BTC_USDC@kline_1h",
+            "id": "PERP_BTC_USDC@kline_1h",
+            "ts": 1793347724679
+          }
+        }
+      ]
+    },
+    {
+      "interval": "5m",
+      "at": 25912,
+      "events": []
+    }
+  ],
+  "findings": {
+    "initialRequestedResolutions": [
+      "15"
+    ],
+    "unvisitedIntervalsRequestedOnFirstSelection": [
+      "1m",
+      "5m",
+      "1h"
+    ],
+    "revisitedIntervalsWithoutNewHistoryOrKlineSubscription": [
+      "15m",
+      "1m",
+      "5m"
+    ],
+    "webSocketConnectionsDuringObservation": 1,
+    "historyRequestDurationMs": [
+      {
+        "interval": "1m",
+        "duration": 293.3
+      },
+      {
+        "interval": "5m",
+        "duration": 222.3
+      },
+      {
+        "interval": "1h",
+        "duration": 204.8
+      }
+    ],
+    "limitation": "One fresh desktop browser observation. Absence of a request on revisit demonstrates reuse during this observation; it does not establish all cache eviction or refresh rules."
+  }
+}

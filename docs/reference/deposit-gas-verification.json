@@ -1,0 +1,67 @@
+{
+  "recorded_at_utc": "2026-11-03T17:34:47.139605+00:00",
+  "scope": "Unsigned deposit/reset/approval encoding and explicit next-step gas simulation only; actual funding remains incomplete.",
+  "contract": "deposit-gas-public-contract.json",
+  "automated_tests": 1833,
+  "new_tests": 100,
+  "funding_focused_tests": 342,
+  "format_dart_files": 515,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 1024,
+    "zh": 1024
+  },
+  "acceptance_evidence": {
+    "domain": {
+      "new_tests": 26,
+      "file": "test/features/funding/deposit_transaction_test.dart",
+      "coverage": "Exact vectors across 3 chains, both account markets, native/ERC20, reset and exact approval, immutable calls, uint256 precision, unsupported and malformed routes/addresses/metadata/amounts/allowances."
+    },
+    "mock_rpc_repository": {
+      "new_tests": 37,
+      "file": "test/features/funding/deposit_gas_repository_test.dart",
+      "coverage": "Exact unsigned pending calls; large integers, ceil20%, native value+fee, approval/reset scope, invalid amounts, pending/changed nonce, nonce bound, gas price/quantity, block limit/reorg/time, safe simulation error without result, scope-loss stops and broadcast/sign method refusal."
+    },
+    "controller": {
+      "new_tests": 31,
+      "file": "test/features/funding/deposit_gas_provider_test.dart",
+      "coverage": "Explicit restored non-signing EOA, no new wallet, busy dedup, stale quote retention/retry, earliest wallet/quote/block deadline, invalid time, tampered wallet/query/amount/calldata/value/kind/fees, identity changes, stop and transport disposal/late response."
+    },
+    "widgets": {
+      "new_tests": 6,
+      "file": "test/features/funding/deposit_gas_widget_test.dart",
+      "coverage": "en/zh320 text1.5 and landscape; next-step review, exact approval/reset/native distinctions, fee display, input drift, stale failure/retry retention, offscreen retention, wallet clearing, native Max disabled, stop/route exit and zero wallet signing/creation."
+    },
+    "regression": "All 1833 tests pass, including 342 funding tests. Widget fixture uses an injected gas repository; no production RPC simulation."
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43614012,
+    "sha256": "9982048aadb1a47afcb03321fc04919923a9a82e020a8baa2f6e5af0438e56f9"
+  },
+  "build_notes": "Release succeeds with existing third-party Kotlin migration/compatibility notices. APK not installed.",
+  "native_testing": "Not performed at user request. No device tools, installation or real account integration; pending items in ../native-verification-pending.md.",
+  "ios": "Linux lacks macOS/Xcode, not built or tested.",
+  "live_rpc_requests_sent": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "device_tools_used": false,
+  "remaining": [
+    "Actual wallet chain switch, approval/deposit signing and submission, receipts, platform credit and durable unknown-result recovery.",
+    "User/platform residual deposit limits require website private BAPI authentication unavailable in this phase; native Max remains disabled.",
+    "Gas reserve covers current step only and is a changing legacy gas-price snapshot, not final fees or execution evidence.",
+    "Enable-trading/self-EOA authorization, full subaccounts/transfers, full Portfolio, Chase and ordinary/dedicated-close BBO remain incomplete. Private BAPI statistics/TWAP skipped by user decision."
+  ],
+  "logs": {
+    "domain": "/tmp/vanta-deposit-gas-domain.log",
+    "rpc": "/tmp/vanta-deposit-gas-repository.log",
+    "controller": "/tmp/vanta-deposit-gas-provider.log",
+    "focused": "/tmp/vanta-deposit-gas-focused.log",
+    "all_tests": "/tmp/vanta-deposit-gas-all-tests.log",
+    "analysis": "/tmp/vanta-deposit-gas-analysis.log",
+    "format": "/tmp/vanta-deposit-gas-format-final.log",
+    "build": "/tmp/vanta-deposit-gas-build.log"
+  }
+}

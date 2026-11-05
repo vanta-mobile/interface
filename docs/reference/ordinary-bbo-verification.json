@@ -1,0 +1,66 @@
+{
+  "recorded_at_utc": "2026-11-03T19:51:52.508407+00:00",
+  "scope": "Ordinary/conditional limit and dedicated single-position-close BBO, strict original-peg query and durable schema3 recovery; same-time account-event invalidation.",
+  "contract": "ordinary-bbo-public-contract.json",
+  "automated_tests": 2168,
+  "new_tests": 60,
+  "format_dart_files": 556,
+  "localized_messages_per_language": {
+    "en": 1088,
+    "zh": 1088
+  },
+  "acceptance_evidence": {
+    "domain_mapper_codec": {
+      "tests": 40,
+      "file": "test/features/portfolio/live_order_peg_test.dart",
+      "coverage": "Level-one ordinary pegs, buy/sell and one-way/hedge, dedicated close direction/reduction, conditional trigger and policies, incompatible request/codec shapes, Decimal reference and filters, strict missing/changed/deeper query peg, numeric engine-price boundary, fixed/market unexpected peg rejection, schema1/2 compatibility and schema3-only ordinary field."
+    },
+    "repository_host_recovery": {
+      "tests": 12,
+      "file": "test/features/portfolio/signed_live_order_peg_test.dart",
+      "coverage": "Mock HTTP/signer only: exact EOA/1666 bytes, nonce/user/signer, zero transport price/peg/scope, persistence before exactly one POST, independent original-ID GET and position recheck for close, refusal/scope/position changes, actual host restart with unknown peg retained, conflicting GET cannot resolve and correct GET-only recovery clears."
+    },
+    "widget": {
+      "tests": 6,
+      "file": "test/features/portfolio/live_order_peg_widget_test.dart",
+      "coverage": "English/Chinese 320 width at 1.5 text, 844x390 landscape conditional close and 768x1024 tablet. Explicit read/review/cancel/confirm/unknown query, no resubmission, selected terms and manual-input retention across refresh/market/attachment, wallet sign-out isolation; no device tools."
+    },
+    "controller_added": {
+      "tests": 2,
+      "file": "test/features/portfolio/live_order_provider_test.dart",
+      "coverage": "Same-timestamp replay during BBO signing invalidates send; unknown BBO preserves peg/empty draft price/original ID for GET-only recheck without creating wallets."
+    },
+    "full_regression": "All 2168 tests pass after production changes, schema assertion updates and formatting, including existing compound BBO/recovery/auth/close/trigger/funding/Rebalance widgets. Final test-only removal of an unused import and variable rename do not change behavior."
+  },
+  "analysis": "no issues",
+  "format": "556 Dart files, zero changes",
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43810620,
+    "sha256": "b1187a637ee70b906cc8b1cffc6f0b64ea72fba33811a64fdc666e1d5f2b3c5e"
+  },
+  "build_notes": "Existing third-party Kotlin migration notices; successful release build, no installation.",
+  "ios": "Linux has no macOS/Xcode; not built or natively verified.",
+  "native_testing": "Not performed at user request. No device tools or APK installation; see ../native-verification-pending.md.",
+  "real_wallet_requests_sent": false,
+  "live_rpc_requests_sent": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "device_tools_used": false,
+  "public_network_reads": "Notion Portfolio/Futures trading pages and anonymous official raw GitHub Markdown only; no exchange probes.",
+  "remaining": [
+    "Actual direct-EOA Aster authorization and BBO engine pricing/IOC/GTX/trigger/fill behavior are unverified.",
+    "Native wallet prompts/round-trips, schema1/2-to-3 storage/process-kill recovery, narrow/landscape layouts and iOS remain pending.",
+    "Only documented ordinary level-one values are offered; compound deeper values remain separate.",
+    "Enable-trading, subaccount management, funding/transfers, Chase recovery and complete Portfolio still incomplete; overall PRD goal active."
+  ],
+  "logs": {
+    "all_tests": "/tmp/vanta-ordinary-bbo-all-tests.log",
+    "widget": "/tmp/vanta-ordinary-bbo-widget-final.log",
+    "analysis": "/tmp/vanta-ordinary-bbo-analysis-final.log",
+    "format": "/tmp/vanta-ordinary-bbo-format-clean.log",
+    "build": "/tmp/vanta-ordinary-bbo-build.log"
+  }
+}

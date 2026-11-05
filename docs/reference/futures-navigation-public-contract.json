@@ -1,0 +1,62 @@
+{
+  "recorded_at_utc": "2026-11-05 08:29:40 UTC",
+  "scope": "Futures PRD section3.4: first destination/chart tab, selected symbol and session navigation; chart quick panel public unit, account settings and loading quotes.",
+  "sources": [
+    {
+      "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+      "page_last_edited_at": "2026-11-05T07:06:39.541Z",
+      "section": "3.4 futures交易页面默认配置, parts1and4; part3.3 quick order parameter independence",
+      "section_snapshot_sha256": "15d4dcb43c626c38c234ec6d13dd6a8e9e833b2a14957efda7fd4b73da70a35c",
+      "requirements": [
+        "No explicit symbol/history/draft: main navigation enters Futures, chart tab, BTCUSDT; quick panel shown.",
+        "Quick quantity empty, base-asset unit, no selected percentage or direction; fixed MARKET/OPEN with actual account configuration.",
+        "Unloaded market and balances show unknown; connected account values override new-user product presets."
+      ]
+    }
+  ],
+  "navigation": {
+    "initial_destination": "futures",
+    "initial_workspace": "chart",
+    "initial_symbol": "BTCUSDT unless symbolProvider already explicitly selected",
+    "session_return": "Chosen chart/trade workspace and selected symbol survive bottom navigation and locale changes; Markets row selection returns to Futures for that symbol.",
+    "persistence": "Session only. New application container resets navigation. No new durable order draft, route or financial configuration preference.",
+    "mounting": "Only selected destination mounted; chart/demo subpanels preserve state within workspace tab changes. Returning from another destination remounts workspace while providers retain appropriate session state.",
+    "accessibility": "Localized five destinations, selected/button semantics and minimum48px navigation touch height."
+  },
+  "quick_panel": {
+    "first_visit": "Shown on chart tab, blank quantity/no percentage; both directions disabled until explicit valid private context and quantity.",
+    "unit": "Matching signed context rules.baseAsset first; otherwise exact selected public AsterInstrument.base; absent/mismatched metadata gives unknown. No wallet creation or signature for public unit.",
+    "account_settings": "Leverage, margin mode, position mode, asset mode and USDT available balance show unknown before read or when required fields absent; actual signed values thereafter, preserving decimal balance precision.",
+    "product_presets": "Single asset/one-way/cross/10x are PRD product presets, not evidence of actual Aster account defaults. No automatic configuration writes or fake signed data.",
+    "read_boundary": "User explicitly requests private context/sizing read; navigation, metadata, locale and placeholders do not sign or submit.",
+    "quotes": "Buy reference ask, sell reference bid only from connected non-offline current feed. AsyncLoading/AsyncError suppress retained old quotes; fresh event restores. References are not specified execution prices.",
+    "independence": "Quick base quantity remains independent of demo/main price and quantity. Existing percentage sizing, confirmation preferences, fixed MARKET protocol and original-ID recovery are unchanged."
+  },
+  "architecture": {
+    "application": "Typed Riverpod destination and workspace selection; public matched-instrument provider.",
+    "presentation": "Extracted FuturesWorkspace, bottom navigation and QuickOrderAccountSettings. Widgets render provider state and collect intent; no HTTP clients or financial calculations added.",
+    "reviews": "New production files below400lines, new build methods below80lines. Existing MarketHeader long composed build reviewed; only extracted funding renderer placeholder behavior changes. Existing test fixture remains centralized wiring.",
+    "dependencies_added": []
+  },
+  "verification_scope": {
+    "new_widget_tests": 33,
+    "focused_total": 69,
+    "coverage": [
+      "EN/ZH signed-out and existing EOA at320width text1.5,844x390landscape and768tablet.",
+      "Actual user tab selection, all destinations/locale return, current symbol and Markets selection; new session resets.",
+      "Blank fields/percentages, real quote buttons, public metadata loading/failure/retry/mismatch and signed precedence.",
+      "Actual37x hedge+isolated/single and hedge+cross/multi settings, full decimal balance and missing balance.",
+      "No private account reads/settings writes/submits/wallet creation/signatures during navigation; only explicit mock context read.",
+      "Riverpod retained previous book during symbol loading and stream error; offline/disconnect and later new quotes.",
+      "Existing demo/chart/price precision/auth/wallet/performance journeys explicitly use required tab; account-sheet address assertions scoped to IdentityPanel."
+    ]
+  },
+  "remaining": [
+    "Full nine-order-mode entry/menu, some percentage/default settings and ordinary custom slippage execution contract remain incomplete.",
+    "Chase original strategy-to-order recovery, complete strategy list/edit/whole cancellation, full cross-product Portfolio and Swap remain incomplete.",
+    "Latest account PRD (2026-11-05T07:56:29.767Z) explicitly forbids Privy embedded-wallet subaccount creation; current implementation needs this restriction. Follow up separately; do not count prior subaccount implementation as fully aligned.",
+    "Only user-deferred private historical statistics/Futures Summary/TWAP are skipped. Device testing deferred by user; real financial acceptance and iOS build pending."
+  ],
+  "financial_requests_sent": false,
+  "device_tools_used": false
+}

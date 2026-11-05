@@ -1,0 +1,52 @@
+{
+  "verified_at_utc": "2026-11-02T21:27:53.621384+00:00",
+  "official_doc": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_doc_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "website_sources": [
+    {
+      "url": "https://static2.asterdexfx.com/assets/useUMColumn-B49LSHPK.js",
+      "sha256": "c687eb7cf017bfbe142d9b7ad3c3b3cd50d45537a55be0955774cfc5c4a66648"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/useJMColumn-CIFF_lYV.js",
+      "sha256": "7c46c2d25cbf11eb6c91df602ca72cff936f87094ad7cae90ce65995380725b2"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/futuresCalculatePre-bCeRTqn1.js",
+      "sha256": "516ccb2a986df729433d12b358368ed74ec4d01044e7b15486e020b8f8501b96"
+    }
+  ],
+  "prd": [
+    "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+    "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64"
+  ],
+  "checks": {
+    "positionRisk_fields": true,
+    "website_isolated_wallet_vs_cross": true,
+    "website_roe_initial_margin_basis": true,
+    "website_absolute_mark_notional": true,
+    "website_mark_pnl": true,
+    "website_reciprocal_precision": true
+  },
+  "implementation_formula": {
+    "initial_margin": "abs(positionAmt * markPrice) / leverage",
+    "isolated_allocation": "isolatedWallet",
+    "roe_percent": "unrealized PnL * leverage / abs(positionAmt * markPrice) * 100",
+    "rounding": "Exact Decimal/rational through final ROE percentage: two decimals, half away from zero. Repeating margin division uses input scale + 24 fractional digits.",
+    "intentional_difference": "Website rounds 1/leverage to five decimals; app uses exact reciprocal to avoid intermediate precision loss."
+  },
+  "reference_project": [
+    "/data/dodo/rwa-interface/lib/data/repositories/portfolio_repository_impl.dart",
+    "/data/dodo/rwa-interface/lib/app_review/ledger.dart"
+  ],
+  "boundaries": [
+    "Reference project production mapper carries server unrealizedPnlPercent; its review ledger is simulation, not authoritative Aster formula.",
+    "ROE percentage uses initial margin even when isolated allocation includes additional funds.",
+    "Only linear marginAsset==quoteAsset contracts with known units, positive mark and leverage qualify.",
+    "Zero position/debt-only, missing PnL/entry/leverage remain unknown.",
+    "Events clear missing leverage; public marks cannot revive obsolete ROE.",
+    "Snapshot and public-mark estimates have separate labels; stale flags remain.",
+    "Not Portfolio historical performance, account returns, available funds or a liquidation calculation."
+  ],
+  "private_live_requests_sent": false
+}

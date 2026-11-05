@@ -1,0 +1,29 @@
+{
+  "prd": "https://app.notion.com/p/409080d974e780e7afeed701ef37e67a",
+  "official_document": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-spot-api-v3.md",
+  "official_document_sha256": "9be32a9a356541301a36fc1ffc5fa60f04eea290200e749dabd02ab285fb98bf",
+  "protocol": {
+    "authorize_or_explicitly_renew": "POST https://sapi.asterdex.com/api/v3/listenKey",
+    "socket": "wss://sstream.asterdex.com/ws/{listenKey}",
+    "lease_minutes": 60,
+    "signature": "Shared Aster V3 EIP-712 chain 1666, exact form bytes and shared monotonic nonce; the connected EOA is used directly as user and signer. Exchange acceptance remains unverified.",
+    "lifecycle": "Explicit start/renew only. Reconnect or background resume reuses a still-valid in-memory lease without signing. Manual expiry reminder at 50 minutes; local hard expiry at 60. Stop disconnects locally without DELETE, because POST can return a key shared with other clients. No key persistence or automatic PUT/POST renewal."
+  },
+  "implemented": [
+    "executionReport maps to a distinct immutable SpotOrderNotification. Spot orders have no futures position side, realized PnL, reduce-only, close-position or liquidation/ADL fields.",
+    "Preserve symbol, order/client/trade IDs, buy/sell, type/original type, execution/status, original/last/cumulative quantities, order/average/last price, last/cumulative quote amounts Y/Z, optional fee/asset, E/T timestamps and optional O/P/Q fields.",
+    "O=0 remains explicitly unavailable as an actual creation timestamp; no fabricated 1970 date. Missing optional original type/fee/creation fields remain missing.",
+    "Decimal strings only. No floating-point amounts or recomputation of supplied Y/Z from price times quantity. MARKET quote-budget orders can report zero original base quantity when a positive Q is supplied.",
+    "Trade deduplication: wallet + SPOT + symbol + orderId + tradeId. Non-trades also use execution, status and E/T. Same IDs in PERP and SPOT are separate.",
+    "Spot metadata comes independently from public sapi /api/v3/exchangeInfo, not futures units or symbol-suffix inference. Unavailable metadata preserves values with unknown units and explicit retry.",
+    "Separate Spot/Futures controls and keys share the tested wallet-stream lifecycle controller. Wallet identity/signing changes stop streams and reject late callbacks. Authorized events enter the same local inbox while navigation changes.",
+    "Spot events invalidate Spot account/history snapshots, never futures open-order reconciliation. outboundAccountPosition is only an invalidation signal, not proof of completed on-chain deposit/withdrawal.",
+    "Version-one futures notification entries/read flags survive the addition of normalized Spot records. Existing serialized writes, corruption preservation, retry, wallet isolation, current-detail hiding and 500-record/4-MiB device retention apply."
+  ],
+  "boundaries": [
+    "Deposit/withdrawal history first-load baseline, status-transition notifications and account-event-triggered history refresh remain unimplemented.",
+    "No system push, background delivery guarantee or disconnected-event backfill. An empty inbox is not complete exchange history.",
+    "The stream is not a complete signed account snapshot; recovery after gaps requires explicit signed reads.",
+    "No real private requests, native tools or APK installation; real EOA/Privy authorization, Spot socket events, mobile storage and layout remain unverified. Linux lacks macOS/Xcode for iOS builds."
+  ]
+}

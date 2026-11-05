@@ -1,0 +1,123 @@
+{
+  "recorded_at_utc": "2026-11-05T05:51:25.548475+00:00",
+  "increment": "Independent Futures order/fill/income history with manual signed reads, strict Decimal mapping, time subdivision and native pages",
+  "contract": "futures-history-public-contract.json",
+  "tests": {
+    "baseline_full": 3680,
+    "new_total": 139,
+    "mapper_domain": 66,
+    "signed_repository": 17,
+    "provider": 24,
+    "widgets": 32,
+    "full_passed": 3819,
+    "exit_code": 0,
+    "coverage": [
+      "All official endpoint query bytes, exact current EOA user=signer, domain chain1666, shared strictly increasing microsecond nonces, no write endpoints, refused signature/change stops private request.",
+      "Strict Decimal amounts/IDs/time/filter boundary; partial cancellation retains fills and optional quote/average; entire close0 planned qty permits actual fills; no synthetic financial totals or units.",
+      "Individual fills even same order; signed commission in fee asset, signed reported realized PnL in margin asset; income same tranId across types stays distinct; raw info not exposed.",
+      "Duplicate immutable conflicts, same-version order conflict, original type changes, quantity/terminal regressions rejected; newer valid version wins; absent original type may be enriched.",
+      "Metadata failure keeps unknown units; truly inactive CLOSE contract supplies units. Query validation occurs before sign/network.",
+      "Less-than-seven-day segments, no automatic continuation; saturated1000-row response splits inclusive times latest first; at1ms explicit truncation;10000-record guard retains prior rows/pending.",
+      "Refresh/continuation failures preserve results/input/pending; invalid page shape/scope/wallet/rawCount/kind/receivedAt rejected; stop/disposal and identity/address/kind/signing changes discard late responses.",
+      "Capture private receivedAt before metadata;30second staleness, delayed metadata/backwards clock/account events/background/resume; stale snapshots not silently renewed by continuation.",
+      "Both Portfolio/open-orders actual navigation; signed-out read opens login, opening does not read; exact symbol requirement,17income types/all, UTC dates capped now before symbol entered, explicit day/week;10row local pagination and language switch do not sign.",
+      "EN/ZH320width text1.5,844x390landscape text1.5,768x1024tablet across orders/fills/income, locale preservation, expiry/logout isolation; valid full lifecycle sequence tested."
+    ],
+    "regression": "Full suite includes existing Spot history after shared HistoryWindow extraction and existing account/open-order/stream UI after additional history entries."
+  },
+  "format": {
+    "files": 812,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1625,
+    "zh": 1625,
+    "message_keys_equal": true,
+    "new_per_locale": 17
+  },
+  "android": {
+    "command": "flutter build apk --release --target-platform android-arm64 --dart-define-from-file=config/privy.local.json",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45840644,
+    "sha256": "ca9320ca7617148f72e37b4f142e81fcad39bd2303d2d0791f4997a911131262",
+    "aot_bytes": 15860616,
+    "packaged_probes": {
+      "en:futuresHistoryTitle": true,
+      "en:futuresHistoryTradeSymbol": true,
+      "en:futuresHistoryPnlHint": true,
+      "en:futuresHistoryRetention": true,
+      "zh:futuresHistoryTitle": true,
+      "zh:futuresHistoryTradeSymbol": true,
+      "zh:futuresHistoryPnlHint": true,
+      "zh:futuresHistoryRetention": true
+    },
+    "installed": false,
+    "device_tools_used": false,
+    "notices": "Existing third-party Built-in Kotlin migration notices; successful normal Release build, local development signing, not production publication."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "performed": {
+    "synthetic_tests": true,
+    "actual_wallet_signature": false,
+    "actual_private_api": false,
+    "address_bearing_rpc": false,
+    "financial_actions": false,
+    "native_device_testing": false,
+    "local_privy_config_read_by_agent": false
+  },
+  "public_reads": "Previously fetched Notion Futures/Portfolio PRD and cached official V3 text inspected; normal Flutter dependency resolution during build. No live account/chat/financial or address-bearing request.",
+  "remaining": [
+    "Actual Aster self-EOA acceptance, real private fields/retention/saturation and native wallet return/lifecycle/layout remain unverified, deferred by user.",
+    "The UI does not expose orderId/fromId filters, server paging or unlimited history; full/incomplete scope and retention are explicit.",
+    "Full cross-product Portfolio, independent Swap, Chase recovery/order linkage, complete strategy list, Scaled amount/distribution/defaults and confirmation/navigation audit remain incomplete.",
+    "Historical statistics/Futures Summary/TWAP deferred by user; overall PRD remains active."
+  ],
+  "review": "New production files are under400lines and build methods reviewed for cohesive UI/logic/data separation; shared fixture additions are only DI overrides. Existing service receives three read-only GET methods; no new dependency.",
+  "logs": {
+    "full": "/tmp/vanta-futures-history-all-tests-final.log",
+    "format": "/tmp/vanta-futures-history-format-clean.log",
+    "analysis": "/tmp/vanta-futures-history-analysis-final.log",
+    "build": "/tmp/vanta-futures-history-build-final.log",
+    "focused_before_extra_domain_case": "/tmp/vanta-futures-history-focused.log",
+    "widgets": "/tmp/vanta-futures-history-widgets-final.log"
+  },
+  "verification_note": "Initial provider fake reused orderId with contradictory creation time; corrected fixture, preserved production conflict check. Inactive metadata test now returns actual CLOSE status. Initial widget compilation/finder/grouping/lifecycle-sequence issues corrected; final widgets and full-suite logs are authoritative. Lint fixes scoped to11 reported unnecessary imports/missing braces.",
+  "source_sha256": {
+    "lib/core/strings.dart": "9bcd82dfad0667cce652470cf4e4d56bd6ee35dd4dc43e5799e54e863710fa2d",
+    "lib/features/portfolio/application/futures_history_provider.dart": "62fa96b266df5578c8ba94778a4fce4c1c6f5f6f25c8d83549644f25fef14adc",
+    "lib/features/portfolio/data/aster_account_service.dart": "6bcee6ef61853de9802bc49c620ba720f43249fe49a9d8084850568f2eef037b",
+    "lib/features/portfolio/data/futures_history_mapper.dart": "64b16121a2fe2dd102ae07b72fdd8407cc26e1f9d268f49b2c86eef94d3a37a9",
+    "lib/features/portfolio/data/signed_futures_history_repository.dart": "dff376a56c19b562fc689d66b01297124307efd86a28921c69a557fee20e5f1a",
+    "lib/features/portfolio/domain/futures_history.dart": "7002f41196c2115fe2b541a14fa76fa9649655a1f16b7cfe6099c8e5be46543b",
+    "lib/features/portfolio/domain/futures_history_merge.dart": "29cd8416b4f40008a140b5193989e46e01f13fe110d6aeb004be7ad206bf1056",
+    "lib/features/portfolio/domain/history_window.dart": "b73a92db52a1666566f7597c4473da5b57beb4984a74bb9dac26194e015d1373",
+    "lib/features/portfolio/domain/spot_history.dart": "836016232c2e065aa5a462c291aa90462ec59bd0c9d03e639bc23089979302ed",
+    "lib/features/portfolio/presentation/account_change_panel.dart": "44559c912c9b991900c9db9b04833f2ab1662c7efd75fdab11e711b36d30c3f2",
+    "lib/features/portfolio/presentation/aster_account_panel.dart": "22a8d096ca8bc462ad7035a7edea8dde6eb591cd5021bc51dc9a0cf404882cda",
+    "lib/features/portfolio/presentation/aster_open_orders_panel.dart": "14940242b23a4a4ac7edc575e794f14b1e31bdc1cf79dd7eac628f81a4a53999",
+    "lib/features/portfolio/presentation/futures_history_filters.dart": "d5e9d44f2aca31844f9d9b0f544feb86d6c4ce7f4b4ba40b0db61a675a4ebeac",
+    "lib/features/portfolio/presentation/futures_history_labels.dart": "45751c89161d46e8a57296312935d96d11527d5a59e827df0e0364c166c0476b",
+    "lib/features/portfolio/presentation/futures_history_record_card.dart": "58007febeccfe02175eca1bb50c892f75ca5df47bf50464bfc0bbec7834bd10c",
+    "lib/features/portfolio/presentation/futures_history_results.dart": "80fb230ee9505270998b0c260e260ff63f2a410c9125003ef404098cf23b9637",
+    "lib/features/portfolio/presentation/futures_history_screen.dart": "97aa74403fe47e64c922ec7468c4732a092685813b60a876361f524c21384360",
+    "lib/l10n/app_en.arb": "17db052f4640ee08b596dac69d654f2310e929afed2485696e3a261fdf7a285d",
+    "lib/l10n/app_zh.arb": "d9eb947008e8cf83dfc75455e194a6575c92a9c2bac4360685f72db96f03e0e5",
+    "test/features/portfolio/futures_history_layout_test.dart": "5f36dde9d56a3c994ba98bbab3450b3288ce918584209f27d39a325e2a9aa89c",
+    "test/features/portfolio/futures_history_mapper_test.dart": "97eafb2f81683c6da899c840be75d4fd09b95b574dd0c368da539c149db83558",
+    "test/features/portfolio/futures_history_provider_test.dart": "514b548e7b4d28080f410012321eb45ef9b4ec9ddf70f21c9ba4682976e30b9b",
+    "test/features/portfolio/futures_history_screen_test.dart": "8bab18fece65e4c9031f772b322cb41b4c532f8377bf89aa0711c5a9f23729f9",
+    "test/features/portfolio/signed_futures_history_repository_test.dart": "7bd676638dcaf6658f65035469c7e8b5057847261efc18db30d35f5baf4a8a3d",
+    "test/support/futures_history.dart": "cea3e28fbed359be4880911104fd6a81dec155936385c8fd551c332ee23fff6c",
+    "test/support/futures_history_widget.dart": "a954a60a91ca9ace3fb80d984d45bda98410f6cf46e7f68897091594a8e536df",
+    "test/support/trade_fixture.dart": "c61ba0bbe42f43ccac0fc4672f5ebcb56bfe86d6a0438a094091ef1182b3b947"
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "device": "Android 12 / arm64",
+  "mode": "profile",
+  "method": "Two independent Dart IO HTTP clients on the same device. Warm both with BTCUSDT 5m (limit200), wait20s, then request BTCUSDT15m (limit200). Both requests use the same Aster endpoint. Socket factory delegates to SecureSocket.startConnect with normal certificate validation and counts connections. No app prefetch is enabled.",
+  "events": [
+    {
+      "event": "new_connection",
+      "atMs": 0,
+      "client": "default15",
+      "host": "fapi.asterdex.com"
+    },
+    {
+      "event": "new_connection",
+      "atMs": 0,
+      "client": "keep120",
+      "host": "fapi.asterdex.com"
+    },
+    {
+      "event": "response",
+      "atMs": 1239,
+      "client": "default15",
+      "phase": "warm",
+      "elapsedMs": 1240,
+      "status": 200,
+      "bytes": 24959
+    },
+    {
+      "event": "response",
+      "atMs": 1758,
+      "client": "keep120",
+      "phase": "warm",
+      "elapsedMs": 1758,
+      "status": 200,
+      "bytes": 24959
+    },
+    {
+      "event": "new_connection",
+      "atMs": 21761,
+      "client": "default15",
+      "host": "fapi.asterdex.com"
+    },
+    {
+      "event": "response",
+      "atMs": 22114,
+      "client": "keep120",
+      "phase": "after_idle_20s",
+      "elapsedMs": 352,
+      "status": 200,
+      "bytes": 25242
+    },
+    {
+      "event": "response",
+      "atMs": 22616,
+      "client": "default15",
+      "phase": "after_idle_20s",
+      "elapsedMs": 855,
+      "status": 200,
+      "bytes": 25242
+    },
+    {
+      "event": "response",
+      "atMs": 22887,
+      "client": "default15",
+      "phase": "warm_again",
+      "elapsedMs": 269,
+      "status": 200,
+      "bytes": 25242
+    },
+    {
+      "event": "response",
+      "atMs": 23437,
+      "client": "keep120",
+      "phase": "warm_again",
+      "elapsedMs": 819,
+      "status": 200,
+      "bytes": 25242
+    },
+    {
+      "event": "done",
+      "atMs": 23438
+    }
+  ],
+  "observedAfterIdleMs": {
+    "default15": 855,
+    "keep120": 352
+  },
+  "limitation": "One paired native network sample. Later warm requests also vary (269ms / 819ms), so connection retention removes a confirmed reconnection cost, not all network variability."
+}

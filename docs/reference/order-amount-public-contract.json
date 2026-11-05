@@ -1,0 +1,69 @@
+{
+  "recorded_at_utc": "2026-11-05T04:38:50.904Z",
+  "scope": "Main live-order base/quote amount input and implemented main/conditional/trailing defaults; not an audit or completion of all PRD modes",
+  "sources": [
+    {
+      "kind": "Notion Futures trading PRD",
+      "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+      "snapshot_fetch_at_utc": "2026-11-05T02:53:39.248Z",
+      "last_edited_at_utc": "2026-11-05T02:53:35.835Z",
+      "sections": [
+        "开仓数量单位选择",
+        "首访基准／主表单数量单位",
+        "九种模式的初始表单",
+        "下单确认"
+      ],
+      "quote_amount_excerpt": "  开仓数量单位选择  \n\n  <b><code>ASTER ⇄ USDT</code></b><b> 的切换控件由前端实现，点击切换时无需调用 Aster。</b> 对于同一个 <code>ASTERUSDT</code> 永续合约，用户可以按 ASTER 填数量，也可以按 USDT 填委托金额。<b>普通限价单和市价单最终都提交 ASTER 数量</b>。追逐限价单（Chase）支持直接提交 USDT 金额。 [普通下单文档](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#new-order--trade) · [Chase 文档](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#place-chase-order-trade)\n\n  | 场景 | 前端取值与计算 | 提交给 Aster | 官方接口与文档 |\n  | --- | --- | --- | --- |\n  | 加载交易对 | 从 <code>baseAsset</code>、\\`quoteAsset\\` 取得两个单位。读取数量步长 <code>stepSize</code>、最小数量 <code>minQty</code> 和最小名义价值 <code>MIN_NOTIONAL.notional</code>。限价单用 <code>LOT_SIZE</code>，市价单用 <code>MARKET_LOT_SIZE</code>。 | 此步只读取规则 | [<code>GET /fapi/v3/exchangeInfo</code>](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#exchange-information) |\n  | 普通单 · 输入 ASTER | 输入值就是币数量。校验数量步长、数量范围和最小名义价值。 | <code>quantity = 用户输入的 ASTER 数量</code> | [<code>POST /fapi/v3/order</code>](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#new-order--trade) |\n  | 普通限价单 · 输入 USDT | 用<b>用户填写的限价</b>换算。币数量＝USDT 委托金额 ÷ 限价，按数量步长向下取整。 | <code>type=LIMIT</code>、\\`quantity=换算后的币数量\\`、\\`price=用户限价\\`，并传有效方式 | [限价单参数](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#new-order--trade) |\n  | 普通市价单 · 输入 USDT | Vanta 可用\\*\\*买入取卖一 <code>askPrice</code>、卖出取买一 <code>bidPrice</code>\\*\\*作为估算口径。币数量＝USDT 委托金额 ÷ 对应参考价，按市价数量步长向下取整。 | <code>type=MARKET</code>、\\`quantity=换算后的币数量\\`。实际成交金额随撮合价格变化。 | [<code>GET /fapi/v3/ticker/bookTicker</code>](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#symbol-order-book-ticker) · [市价单参数](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#new-order--trade) |\n  | Chase · 输入 USDT | 前端直接使用用户填写的金额。Aster 按标记价换算为基础币数量。 | <code>quantityUnit=QUOTE</code>、\\`quantity=USDT 金额\\`。若输入 ASTER，则传 <code>quantityUnit=BASE</code>。 | [<code>POST /fapi/v3/chase</code>](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#place-chase-order-trade) |\n\n  <b>具体 Demo：用户输入 </b><b><code>70 USDT</code></b><b>，市价买入 ASTER</b>\n\n  北京时间 <b>2026-11-04 12:05:34</b>，Aster 公开接口返回 <code>ASTERUSDT</code> 卖一价 <b>0.69890 USDT</b>，市价数量步长 <b>0.01 ASTER</b>，最小名义价值 <b>5 USDT</b>。以下用这组行情演示，未实际下单。 [盘口接口](https://fapi.asterdex.com/fapi/v3/ticker/bookTicker?symbol=ASTERUSDT) · [交易规则接口](https://fapi.asterdex.com/fapi/v3/exchangeInfo)\n\n  | 步骤 | 结果 |\n  | --- | --- |\n  | ① 用户输入 | 单位选择 <b>USDT</b>，填写 <b>70</b>，点击「买入／做多」。这里的 70 是本单委托金额，换算时无需再乘杠杆。 |\n  | ② 前端换算 | <code>70 ÷ 0.69890 = 100.157390… ASTER</code> |\n  | ③ 对齐步长 | 按 <code>0.01 ASTER</code> 向下取整，得到 <b>100.15 ASTER</b>。按参考价估算名义金额为 <code>100.15 × 0.69890 = 69.994835 USDT</code>，高于 5 USDT。 |\n  | ④ 提交普通市价单 | 向 <code>POST /fapi/v3/order</code> 提交业务字段 <code>symbol=ASTERUSDT</code>、\\`side=BUY\\`、\\`type=MARKET\\`、<b><code>quantity=100.15</code></b>。 |\n  | ⑤ 用户直接输入币数量时 | 若用户一开始选择 <b>ASTER</b> 并填写 <b>100.15</b>，通过校验后也提交 <b><code>quantity=100.15</code></b>，跳过第②步。 |\n  </toggle>"
+    },
+    {
+      "kind": "Official Futures V3 public documentation",
+      "url": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3(Recommended)/EN/aster-finance-futures-api-v3.md",
+      "cached_bytes": 243773,
+      "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4",
+      "sections": [
+        "Exchange Information",
+        "New Order (TRADE)",
+        "Symbol Order Book Ticker"
+      ],
+      "private_endpoints_called": false
+    }
+  ],
+  "requirements": {
+    "ordinary_base": "Keep exact trimmed base string; existing quantity, price, notional, funds, position and eligibility validators apply. Do not repair off-step user quantities.",
+    "ordinary_quote_limit": "quote amount / entered limit, rational division, floor to existing LOT_SIZE step/minimum convention.",
+    "ordinary_quote_market": "quote amount / buy ask or sell bid, rational division, floor MARKET_LOT_SIZE. Missing required quote blocks; no opposite/Mark/Last fallback.",
+    "quote_is_not_margin": "Never multiply entered quote order notional by leverage.",
+    "example": {
+      "symbol": "ASTERUSDT",
+      "quote_amount": "70",
+      "ask": "0.69890",
+      "step": "0.01",
+      "base_quantity": "100.15",
+      "reference_notional": "69.994835",
+      "source_example_only": true,
+      "no_live_order": true
+    },
+    "confirmation": "Capture immutable resolved base quantity before review or explicit skip-confirm submit. Only base quantity reaches POST, signature and journal; no quantityUnit/quoteOrderQty for ordinary orders. Recovery queries retain original ID and exact quantity.",
+    "defaults": "Opening input defaults to quote and blank, limit BUY/GTC, first valid Last snapshot seeds accepted PRICE_FILTER once, conditional and trailing default Mark; trailing activation and callback blank. Never overwrite read account settings.",
+    "editing": "Base and quote raw strings independent and retained; direction/type/limit/context changes recalculate before confirmation. User-edited/cleared limits not overwritten by refresh. Unknown operation locks size edits.",
+    "close": "Dedicated position-close defaults to base; choosing a position fraction switches to base, entire-close ignores dormant amount and transmits no quantity.",
+    "attachments": "PnL/ROI conversion and full-main-quantity protection use resolved base quantity, not quote amount."
+  },
+  "local_indicative_extensions": {
+    "conditional_market": "Use entered trigger as named estimate; existing conditional LOT_SIZE policy retained.",
+    "conditional_fixed_limit": "Use entered limit.",
+    "ordinary_bbo": "Use snapshot Mark as explicitly named indicative reference, not an engine BBO execution price.",
+    "conditional_bbo": "Use trigger as named estimate.",
+    "trailing": "Use snapshot of explicitly chosen Mark/Last; missing Last blocks.",
+    "guarantee": "These are Vanta local estimates, not an exchange quote-budget guarantee. UI names reference, amount, base quantity, estimated notional and UTC snapshot; execution amount can exceed input and this is not a spending cap."
+  },
+  "boundaries": [
+    "No new transport, wallet, signing credential or actionable quote budget stored. Connected EOA remains user=signer; no replacement wallet.",
+    "Normal market/limit conversion directly follows PRD. Indicative extensions are local rules and must not be described as an official Aster quote-budget execution contract.",
+    "Last seed requires positive accepted price; no Mark fallback or silent rounding into a different price. Missing/off-tick Last leaves limit blank for explicit entry.",
+    "No account configuration mutation on load. Existing market confirmation preference unchanged; per-mode/limit+Post Only preference alignment remains incomplete.",
+    "Scaled total quote input/distribution/defaults, Chase recovery, main navigation defaults and custom slippage execution contract remain separately incomplete.",
+    "Freshness, auth/operation locks, actual account limits and execution acceptance are inherited validators. Automated tests cannot prove live EOA signer permissions or actual fills.",
+    "Native testing deferred by user; no device tools, wallet signatures, private API requests, financial actions or address-bearing RPC calls."
+  ]
+}

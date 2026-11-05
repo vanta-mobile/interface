@@ -1,0 +1,102 @@
+{
+  "device": "Same AndroidChrome and page as UI measurement, kept in background during native probe",
+  "method": "Paired requests200bars each,1m5m15m,reverse source order in second round. Different exchanges and USDT/USDC markets. Short sample not general performance guarantee.",
+  "samples": [
+    {
+      "round": 0,
+      "source": "aster",
+      "interval": "1m",
+      "status": 200,
+      "elapsedMs": 2958,
+      "bars": 200
+    },
+    {
+      "round": 0,
+      "source": "orderly",
+      "interval": "1m",
+      "status": 200,
+      "elapsedMs": 330.09999999403954,
+      "bars": 200
+    },
+    {
+      "round": 0,
+      "source": "aster",
+      "interval": "5m",
+      "status": 200,
+      "elapsedMs": 647.5999999940395,
+      "bars": 200
+    },
+    {
+      "round": 0,
+      "source": "orderly",
+      "interval": "5m",
+      "status": 200,
+      "elapsedMs": 325,
+      "bars": 200
+    },
+    {
+      "round": 0,
+      "source": "aster",
+      "interval": "15m",
+      "status": 200,
+      "elapsedMs": 818,
+      "bars": 200
+    },
+    {
+      "round": 0,
+      "source": "orderly",
+      "interval": "15m",
+      "status": 200,
+      "elapsedMs": 428.19999998807907,
+      "bars": 200
+    },
+    {
+      "round": 1,
+      "source": "orderly",
+      "interval": "1m",
+      "status": 200,
+      "elapsedMs": 936.6000000238419,
+      "bars": 200
+    },
+    {
+      "round": 1,
+      "source": "aster",
+      "interval": "1m",
+      "status": 200,
+      "elapsedMs": 255.7999999821186,
+      "bars": 200
+    },
+    {
+      "round": 1,
+      "source": "orderly",
+      "interval": "5m",
+      "status": 200,
+      "elapsedMs": 971.2000000178814,
+      "bars": 200
+    },
+    {
+      "round": 1,
+      "source": "aster",
+      "interval": "5m",
+      "status": 200,
+      "elapsedMs": 230.69999998807907,
+      "bars": 200
+    },
+    {
+      "round": 1,
+      "source": "orderly",
+      "interval": "15m",
+      "status": 200,
+      "elapsedMs": 696.0999999940395,
+      "bars": 200
+    },
+    {
+      "round": 1,
+      "source": "aster",
+      "interval": "15m",
+      "status": 200,
+      "elapsedMs": 435.40000000596046,
+      "bars": 200
+    }
+  ]
+}

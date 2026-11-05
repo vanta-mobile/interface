@@ -1,0 +1,27 @@
+{
+  "recorded_at_utc": "2026-11-03T16:26:23.527088+00:00",
+  "scope": "Remaining-scope documentation audit and mechanical formatting/lint cleanup of unreachable Scaled draft. No completed Scaled feature claimed.",
+  "analysis": "no issues",
+  "format_dart_files": 496,
+  "existing_regression_tests": 1665,
+  "scaled_dedicated_tests": false,
+  "scaled_ui_integrated": false,
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43482940,
+    "sha256": "78e82dde547ad1cb503461003cb4756e8e1b16388a3383109e5ed366eddc1502"
+  },
+  "device_tools_used": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "ios": "Not built: Linux lacks macOS/Xcode.",
+  "pending_native_checks": "../native-verification-pending.md",
+  "logs": {
+    "analysis": "/tmp/vanta-status-analysis.log",
+    "format": "/tmp/vanta-status-format.log",
+    "tests": "/tmp/vanta-status-tests.log",
+    "build": "/tmp/vanta-status-build.log"
+  }
+}

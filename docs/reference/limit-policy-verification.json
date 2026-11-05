@@ -1,0 +1,52 @@
+{
+  "recorded_at_utc": "2026-11-03T05:39:36.279204+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "prd_requirements": [
+    "限价有效方式 GTC／IOC",
+    "只做 Maker（Post Only）映射 LIMIT＋GTX",
+    "限价平仓支持 HIDDEN"
+  ],
+  "public_contract": "limit-policy-public-contract.json",
+  "automated_tests": 848,
+  "new_tests": 38,
+  "format_dart_files": 331,
+  "analysis": "no issues",
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "bytes": 42892660,
+    "sha256": "c5124ec4a1b1ff97595d748093cbe580101051c5eb8e0f73b990d0a0c9b14385"
+  },
+  "localized_messages_per_language": {
+    "en": 675,
+    "zh": 675
+  },
+  "native_testing": "Paused at user request. No device tools, device testing or APK installation. See ../native-verification-pending.md.",
+  "ios": "Linux has no macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "implementation": [
+    "Validated immutable per-symbol policy capabilities; only documented GTC/IOC/GTX/HIDDEN intersection is exposed. Future unknown policies do not activate new submission modes.",
+    "Selected policy frozen in confirmation, signed LIMIT parameters and independent signed query verification. Missing or mismatched query policy remains unresolved.",
+    "MARKET omits price and timeInForce even after selecting a limit policy. Existing preflight/close-signature counts, EOA signer and Decimal filters remain in force.",
+    "Same-ID GET-only recovery preserves policy and never repeats POST. IOC expiry preserves actual partial executed quantity.",
+    "Dedicated Hidden close rechecks original position; one-way sends reduceOnly, hedge retains original side without reduceOnly.",
+    "Refresh removes unsupported selection without silently replacing it with GTC. Current-route form survives scroll disposal; inputs and policy remain through cancel, refresh and market/limit toggles."
+  ],
+  "evidence": [
+    "test/features/portfolio/live_order_time_in_force_test.dart",
+    "test/features/portfolio/live_order_policy_widget_test.dart",
+    "test/features/portfolio/signed_live_order_repository_test.dart",
+    "test/features/portfolio/live_order_provider_test.dart",
+    "test/features/portfolio/live_close_widget_test.dart",
+    "Existing account, close, batch, settings, localization and market tests pass in full suite."
+  ],
+  "boundaries": [
+    "No FOK: absent from documented futures timeInForce enum.",
+    "Post Only acceptance/fills require exchange verification; Hidden does not promise maker execution or fills.",
+    "BBO ordinary-order price parameter constraint remains unclear; compound-order price=0 rules are not assumed for ordinary POST /order.",
+    "Aster enable-trading and EOA user/signer acceptance remain unverified.",
+    "TP/SL, trailing/Chase, chart quick opening, subaccounts, funds operations, notification center and cross-process unresolved-order recovery remain in overall PRD scope.",
+    "BAPI historical statistics and TWAP skipped this phase at user request."
+  ]
+}

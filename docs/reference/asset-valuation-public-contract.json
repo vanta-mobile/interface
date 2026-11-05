@@ -1,0 +1,93 @@
+{
+  "recorded_at_utc": "2026-11-03T12:48:23.471904+00:00",
+  "prd": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+  "public_endpoint": "https://fapi.asterdex.com/fapi/v1/assetIndex",
+  "protocol_status": "Anonymous website price endpoint identified in PRD source analysis; no stable developer compatibility guarantee asserted.",
+  "public_probe": {
+    "authenticated": false,
+    "rows": 43,
+    "response_sha256": "6eacfec9dc7f009eaecdadab3c5a17edfa4bb80eb7ffe27723bf134e8b125353",
+    "samples": [
+      {
+        "symbol": "USDTUSD",
+        "index": "0.99836000",
+        "time": 1793707983000
+      },
+      {
+        "symbol": "BTCUSD",
+        "index": "77103.56800000",
+        "time": 1793707983000
+      },
+      {
+        "symbol": "USDFUSD",
+        "index": "0.99836000",
+        "time": 1793707983000
+      },
+      {
+        "symbol": "ASBNBUSD",
+        "index": "746.48844491",
+        "time": 1793707983000
+      }
+    ]
+  },
+  "mapping": [
+    "Exact forward asset + USD symbol lookup; use index string, ignore bid/ask buffers.",
+    "All prices must be positive decimal strings; duplicate symbols, malformed timestamps or envelopes reject the whole snapshot.",
+    "No inferred stablecoin peg, inverse pair, perpetual mark price or suffix-based exchange-rate inference."
+  ],
+  "calculations": [
+    "Spot total = free + locked; available = free; each multiplied by asset USD index.",
+    "Futures wallet = walletBalance x asset index; margin = (walletBalance + provided asset unrealizedProfit) x index. Missing UPL remains unknown.",
+    "Wallet reference USD sum excludes UPL, other accounts, Staking/Grid/Vault/prediction, collateral discounts and costs.",
+    "BTC display divides exact USD by BTCUSD. Wallet BTC divides once after exact USD aggregation.",
+    "Hide-low predicate uses exact USD x 10000 > BTCUSD; equal threshold excluded. Unknown/stale asset or BTC prices and stale account snapshots remain visible."
+  ],
+  "freshness_policy": {
+    "client_policy_not_exchange_guarantee": true,
+    "poll_seconds": 30,
+    "receipt_max_age_seconds_exclusive": 60,
+    "source_max_age_seconds_exclusive": 90,
+    "future_clock_skew_seconds_max": 30,
+    "failed_refresh": "Retain displayed estimates, mark stale, do not hide assets using them.",
+    "lifecycle": "Pause cancels timers; resume reads public prices; generations discard late results; no account signing."
+  },
+  "remaining_transfer_protocol_gap": {
+    "implemented": false,
+    "documented_submission": [
+      "POST /fapi/v3/asset/wallet/transfer",
+      "POST /api/v3/asset/wallet/transfer"
+    ],
+    "parameters": [
+      "amount",
+      "asset",
+      "clientTranId",
+      "kindType"
+    ],
+    "directions": [
+      "SPOT_FUTURE",
+      "FUTURE_SPOT"
+    ],
+    "sample_response": {
+      "tranId": 21841,
+      "status": "SUCCESS"
+    },
+    "missing": "Reviewed documents do not define lookup by clientTranId or a documented link from clientTranId to spot transactionHistory server tranId. A timed-out submission cannot be safely recovered from that contract alone.",
+    "no_inference": "Balance differences, duplicate-client errors or a UI action are not evidence of a specific transfer. No submission or financial request was sent.",
+    "other_pending": "Supported asset contract and transfer allowance, especially Futures collateral/position reserves; website BAPI max-withdraw endpoint requires a separate login state.",
+    "official_sources": [
+      {
+        "url": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+        "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4"
+      },
+      {
+        "url": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-spot-api-v3.md",
+        "sha256": "9be32a9a356541301a36fc1ffc5fa60f04eea290200e749dabd02ab285fb98bf"
+      }
+    ]
+  },
+  "internal_transfer_followup_2026_11_04": {
+    "contract": "internal-transfer-public-contract.json",
+    "implemented": "Public transferable whitelist, website input policy, source cap and explicit signed transfer now implemented.",
+    "still_open": "Original clientTranId result lookup/mapping remains undocumented; unknown transfer retains block."
+  }
+}

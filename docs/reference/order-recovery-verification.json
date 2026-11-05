@@ -1,0 +1,58 @@
+{
+  "recorded_at_utc": "2026-11-03T09:53:45.308639+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "requirements": [
+    "Unknown original order IDs must not be lost across process restart",
+    "Same-wallet signing and original-ID queries only, no resubmission",
+    "Frozen ordinary/conditional/trailing/entire/attached query terms and batch sent-item boundaries"
+  ],
+  "automated_tests": 1164,
+  "new_tests": 42,
+  "format_dart_files": 386,
+  "analysis": "no issues",
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43154892,
+    "sha256": "29f48dea96b75ae0a3f7aeee1de584c849be95e5006333503f348104b8aea30d"
+  },
+  "localized_messages_per_language": {
+    "en": 785,
+    "zh": 785
+  },
+  "native_testing": "Skipped at user request. No device tools, process-kill/device tests or APK installation. Host filesystem reconstruction tests are not native verification. See ../native-verification-pending.md.",
+  "ios": "Linux has no macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "implementation": [
+    "main loads and injects a file journal from the native application support directory before rendering. Failures remain blocking, never silently replaced by an empty memory journal.",
+    "Only public original ID, address, symbol, frozen query terms, mode, original attached protection quantity and record time are persisted; no balances, signed request bytes, nonce, signature, token, key or actionable preflight context.",
+    "After wallet signature and before POST, write, flush and atomically rename the pending record on the same filesystem. Revalidate confirmation after disk I/O. Persistence failure prevents POST; interrupted pre-send records remain unknown for GET-only review.",
+    "Versioned strict serialization rejects unknown fields, invalid scope/flags/enums/decimals, duplicate IDs and oversized UTF-8 bytes. Serial read-modify-write preserves other-wallet records and prevents overwriting current-wallet pending entries.",
+    "Only a matching signed ordinary/strategy query deletes the matching durable record. Missing, malformed, refused or timed-out queries retain it; completed-record removal failure retains both the verified response and a blocking storage error.",
+    "Recovery controller/repository is GET-only. Original symbol/origClientOrderId or clientStrategyId/type and existing strict mappers retained, including strategy same-ID history fallback on -2013.",
+    "Current-wallet pending entries block new order/configuration leases; explicit original-ID queries remain available. Records are isolated by wallet and survive logout/reconnect, while late callbacks are discarded on identity change.",
+    "Toolbar count and recovery page, explicit reconnect, copyable identifiers, local record time, loading/error/retry/empty/verified states and blocking notices on order/quick/config/batch routes.",
+    "Batch recovery contains only sent items, never resumes unsubmitted queue items. Ordinary/quick/conditional/trailing/entire/close and attached strategy writers use the same persistence boundary.",
+    "Tests cover filesystem reconstruction, failed writes/deletes, corrupted canonical files, interrupted temp file, duplicate/scope checks, UTF-8 size budget, after-signature expiry, GET-only recovery, strict query mismatches and Chinese/English 320 width with 1.5 text scaling and landscape."
+  ],
+  "evidence": [
+    "test/features/portfolio/order_recovery_journal_test.dart",
+    "test/features/portfolio/signed_order_recovery_test.dart",
+    "test/features/portfolio/order_recovery_provider_test.dart",
+    "test/features/portfolio/order_recovery_widget_test.dart",
+    "/tmp/vanta-recovery-all-tests-final.log",
+    "/tmp/vanta-recovery-analysis-final.log",
+    "/tmp/vanta-recovery-format-final.log",
+    "/tmp/vanta-recovery-build-final.log"
+  ],
+  "boundaries": [
+    "No real-device process-kill, background reclamation, filesystem fault, power-loss durability or native wallet reconnect was verified. flush and rename do not prove device/power-loss behavior.",
+    "Recovery applies only to entries recorded after this version is used. Uninstall, cleared app data or device loss removes local records. Exchange query retention windows still apply.",
+    "An unfound original query never proves non-submission and does not automatically clear its block. No automatic retry POST or manual assume-failed action exists.",
+    "This is unresolved order/strategy recovery, not a complete cross-session accepted-strategy list or durable recovery for configuration modifications, cancellations, subaccounts or funds operations.",
+    "Aster enable-trading/signer acceptance, attached strategy editing/whole cancellation, Chase, BBO, Scaled, subaccounts, deposit/withdrawal/transfers, complete valuation and notifications remain incomplete.",
+    "BAPI historical statistics and TWAP skipped this phase at user request."
+  ]
+}

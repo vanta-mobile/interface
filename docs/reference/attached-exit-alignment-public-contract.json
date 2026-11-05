@@ -1,0 +1,52 @@
+{
+  "recorded_at_utc": "2026-11-05T02:49:42Z",
+  "scope": "Attached TP/SL input modes, execution modes, full main quantity, current linkage and legacy query preservation. Not proof of real exchange acceptance.",
+  "sources": [
+    {
+      "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655?pvs=204",
+      "page_last_edited_at": "2026-11-05T01:34:20.212Z",
+      "type": "Notion Futures PRD",
+      "quoted_requirements": [
+        "保护数量：跟随本次主单数量。按本单基础币数量构造退出单。确认页标明本次保护数量。",
+        "默认盈亏金额（PnL），标记价格（Mark）；各腿独立选择输入模式与触发依据。",
+        "专业设置关闭，TP、SL 均预设市价；手动限价与自动限价分别设置。"
+      ],
+      "formula_excerpt": "盈亏换算（线性合约）</b>　设 E 为预计开仓价，Q 为基础币数量，L 为杠杆，方向系数 d 开多取 +1、开空取 −1。按目标盈亏金额 P 换算的价格为 E＋d×P÷Q，止损 P 取负数。按目标 ROI 换算的价格为 E×(1＋d×ROI÷L)，例如 5% 代入 0.05。手填退出限价时，盈亏预览按预计执行价计算，触发仍比较触发价。以上为下单前毛盈亏估算，实际盈亏取决于成交价、成交量及费用。\n\n<b>示例</b>　假设预计以 100 USDT 买入 2 枚，杠杆 5×。保持默认 PnL 输入，止盈填 +10 USDT，止损填 −4 USDT。预览显示「Mark ≥ 105 USDT，市价卖出」及「Mark ≤ 98 USDT，市价卖出」。对应预计 ROI 为 +25% 和 −10%。若将止损改为手动限价 97.5，仍在 Mark ≤ 98 时触发，随后挂出价格为 97.5 的卖单。\n\n<b>3　确认、成交与失败处理</b>\n\n<table fit-page-width=\"true\" header-row=\"true\" header-column=\"true\">\n<colgroup>\n<col width=\"175\" />\n<col width=\"405\" />\n<col width=\"425\" />\n</colgroup>\n<tr color=\"blue_bg\">\n<td>\n阶段\n</td>\n<td>\n发生什么\n</td>\n<td>\n页面显示与处理\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n确认前\n</td>\n<td>\n"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3(Recommended)/EN/aster-finance-futures-api-v3.md",
+      "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4",
+      "bytes": 243773,
+      "read": "Anonymous public GET",
+      "contract": "placeStrategyOrder documents STOP / TAKE_PROFIT with positive price and stopPrice, market variants, workingType, optional stop-order timeInForce default GTC, and PARTIALLY_FILLED_OR_FILLED driving events."
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/_-_locale_.trade.pro._tradeType._symbol-1Y12OOsm.js",
+      "sha256": "fa2432cdb911105d93de09b4a8c2c618989339a851ef11ce50ccfba2333536f5",
+      "bytes": 275554,
+      "read": "Anonymous public GET",
+      "observations": [
+        "firstDrivenOn and secondDrivenOn PARTIALLY_FILLED_OR_FILLED; PLACE_ORDER and CANCEL_ORDER respectively.",
+        "Manual or auto limit exits use TAKE_PROFIT / STOP; market variants otherwise; website uses GTE_GTC."
+      ],
+      "boundary": "Vanta sends documented GTC for limit exits; it does not assert website-internal GTE_GTC support in public V3."
+    }
+  ],
+  "implementation": {
+    "quantity": "New OrderQuery.capture stores exact main-order quantity. estimatedOpeningQuantity remains unchanged for incremental margin; it is not an exit quantity source.",
+    "input_modes": "PnL default; separate PnL / trigger price / ROI controllers for each leg. Positive TP and negative SL for PnL / ROI; price inputs positive. Disabled protection and advanced settings retain raw inputs but do not submit dormant terms.",
+    "entry_reference": "Ordinary limit uses entered entry price; ordinary market uses buy ask / sell bid. Conditional market uses main trigger. BBO uses indicative mark / trigger and delegates bracket direction to exchange. Missing needed quote shows unavailable; no silent replacement basis.",
+    "arithmetic": "Decimal and Rational only. PnL trigger E+d*P/Q. ROI percent trigger E*(1+d*ROIpercent/(100*L)). Derived triggers rounded once to nearest PRICE_FILTER tick relative to minPrice, then validated. Entered trigger and limit prices are never rounded.",
+    "preview": "Gross PnL uses manual exit limit if selected; otherwise trigger reference. Gross margin ROI excludes fees/slippage and is rounded to 8dp only for display if repeating.",
+    "execution": "Per leg MARKET / manual LIMIT / auto LIMIT. Auto limit price equals aligned trigger. Exit legs retain STOP / TAKE_PROFIT original type, GTC, workingType, reduceOnly in one-way mode and original LONG/SHORT without reduceOnly in hedge mode.",
+    "linkage": "New strategies use PARTIALLY_FILLED_OR_FILLED for entry PLACE_ORDER and peer CANCEL_ORDER. Query verifies exact fields before resolving; activation and fills are not inferred from request.",
+    "journal": "Schema4 uses same canonical pending-futures-orders-v1.json filename, reads versions1-4, retains old protectedQuantity and FILLED rules, adds exact execution mode / limit price / drivenOn. Schema1-3 reject modern fields; malformed data fails closed.",
+    "signing": "Existing connected EOA / existing Privy wallet signs as user=signer. No wallet creation, automatic signatures, POST retry or funds mutation during verification."
+  },
+  "remaining": [
+    "Strategy and leg statuses are displayed from the signed strategy query; actual per-leg executed quantities / execution amounts and a complete strategy management list are not yet implemented.",
+    "Actual partial-fill activation, quantity replenishment and peer cancellation need exchange reports and authenticated acceptance testing; none performed.",
+    "Real same-EOA API signer acceptance, native layouts / wallet roundtrips / process storage recovery and iOS remain pending per user.",
+    "Full PRD remains incomplete: Futures history, complete Portfolio, Swap and other tracked gaps; only explicitly deferred BAPI statistics / Summary / TWAP are skipped."
+  ]
+}

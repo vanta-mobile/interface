@@ -1,0 +1,185 @@
+{
+  "recorded_date": "2026-11-04",
+  "scope": "Explicit Spot ↔ Futures internal transfer. Direct connected EOA / existing email wallet signing; no replacement wallet. External deposit/withdrawal and main/subaccount transfer are separate and still unavailable.",
+  "prd": {
+    "page": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+    "section": "Portfolio: Spot/Futures transfer",
+    "requirements": [
+      "Switch direction/asset and re-read limits",
+      "Exact positive amount, input precision and source maximum",
+      "Explicit confirmation; clear amount only after a reported success and a fresh two-account read"
+    ]
+  },
+  "official_sources": [
+    {
+      "url": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+      "sections": [
+        "Transfer Between Futures And Spot (TRANSFER)",
+        "Account Information V3 (USER_DATA)"
+      ],
+      "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4",
+      "account_cap_comment": "assets[].maxWithdrawAmount: maximum amount for transfer out; root maxWithdrawAmount only for USDT is not used as other-asset cap."
+    },
+    {
+      "url": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-spot-api-v3.md",
+      "sections": [
+        "Account information",
+        "Transfer Between Spot And Futures",
+        "Transaction History"
+      ],
+      "boundary": "transactionHistory exposes server tranId; no documented original-clientTranId query/mapping was found. No speculative history recovery endpoint is called."
+    }
+  ],
+  "anonymous_public_evidence": [
+    {
+      "url": "https://www.asterdex.com/bapi/spot/v2/public/spot/asset/transferable",
+      "sha256": "bb2ffe6c545e9fcdebf5582ec6cb5cdee68082193ed29e65fea56be9a74dfff7",
+      "data": [
+        "SPCXB",
+        "USDT",
+        "USD1",
+        "SKHYB",
+        "NVDAB",
+        "BTC",
+        "SOL",
+        "ASTER",
+        "U",
+        "BNB",
+        "ETH",
+        "USDC",
+        "MSTRB",
+        "CRCLB"
+      ],
+      "policy": "Dynamic anonymous whitelist; success/code/data envelope required, exact asset identifiers, unique rows. Not a private login BAPI."
+    },
+    {
+      "url": "https://www.asterdex.com/bapi/futures/v1/public/future/asset/p-m-asset",
+      "sha256": "1eff63eb6798aad0b55cf279735dcb81ec3afd7fed82db54f51612b82126cbb5",
+      "selected_rows": [
+        {
+          "assetCode": "ASTER",
+          "assetDecimal": 2
+        },
+        {
+          "assetCode": "USDC",
+          "assetDecimal": 2
+        },
+        {
+          "assetCode": "USDT",
+          "assetDecimal": 2
+        },
+        {
+          "assetCode": "USD1",
+          "assetDecimal": 2
+        },
+        {
+          "assetCode": "BNB",
+          "assetDecimal": 5
+        },
+        {
+          "assetCode": "ETH",
+          "assetDecimal": 5
+        },
+        {
+          "assetCode": "BTC",
+          "assetDecimal": 7
+        },
+        {
+          "assetCode": "SOL",
+          "assetDecimal": 4
+        },
+        {
+          "assetCode": "U",
+          "assetDecimal": 2
+        },
+        {
+          "assetCode": "CRCLB",
+          "assetDecimal": 4
+        },
+        {
+          "assetCode": "NVDAB",
+          "assetDecimal": 4
+        },
+        {
+          "assetCode": "SPCXB",
+          "assetDecimal": 4
+        },
+        {
+          "assetCode": "SKHYB",
+          "assetDecimal": 4
+        }
+      ],
+      "policy": "Input/display metadata only. Identical duplicates accepted (live BONUSUSD duplicate); conflicts rejected. MSTRB missing in snapshot."
+    },
+    {
+      "source": "Cached public website transfer component Jm store",
+      "sha256": "9c2784c215d8a0ff60c58b36040d34d34a9976af56045ec41dbc1e90b2e67036",
+      "excerpt": "o=(e,t=0)=>{let n=cr[e],r=e&&Number(i[n||e]?.assetDecimal)||t;return r>8?8:r||2}",
+      "policy": "At most eight decimals, fallback two for absent/zero input metadata. The app preserves API asset IDs; no display alias substitution. Never claim this is on-chain or guaranteed ledger precision."
+    },
+    {
+      "source": "Cached public website funding API module",
+      "sha256": "b5567385fc09ceff47d557544643c7077443f5ec65b031fabd9b03bbb25a216c",
+      "excerpt": "wze / Kl: Q.get(\"/bapi/futures/v1/public/future/asset/p-m-asset\")"
+    }
+  ],
+  "endpoint": {
+    "method": "POST",
+    "origin": "https://fapi.asterdex.com",
+    "path": "/fapi/v3/asset/wallet/transfer",
+    "weight": 50,
+    "business_parameters": [
+      "amount",
+      "asset",
+      "clientTranId",
+      "kindType"
+    ],
+    "direction_values": {
+      "spot_to_futures": "SPOT_FUTURE",
+      "futures_to_spot": "FUTURE_SPOT"
+    },
+    "excluded_private_website_values": [
+      "MAIN_FUTURE",
+      "FUTURE_MAIN"
+    ],
+    "authentication": "V3 EIP-712 chain1666, monotonic microsecond nonce/user/signer; exact signed query bytes in form-urlencoded body, signature appended last. EOA uses its connected signer, no new wallet. Platform signer eligibility unverified.",
+    "response": "Only documented SUCCESS and positive int64 tranId is a known reply. Missing/malformed/nonterminal/error/timeout remains unresolved; one POST, no retry."
+  },
+  "client_policy": {
+    "entries": [
+      "Spot assets",
+      "Futures assets",
+      "Shared unresolved submission notice"
+    ],
+    "no_automatic_private_requests": "Entry alone never reads/signs/submits. Explicit read needs three wallet signatures: mode, Spot account, Futures full account. Changing selected direction/asset clears input/review and explicitly re-reads.",
+    "source_limit": "Spot balances[selected].free, never free+locked; Futures assets[selected].maxWithdrawAmount string, never walletBalance/availableBalance/root USDT value. Missing/negative source cap blocks; absent asset is unknown, not zero.",
+    "permissions": "Source canWithdraw and destination canDeposit both must be explicit true. Missing/false blocks; non-bool rejects payload.",
+    "amount": "Positive plain Decimal, at most 80 characters; compare exact maximum and website input precision. Max floors to step, never rounds up. No float money.",
+    "freshness_seconds": 30,
+    "confirmation": "Review original wallet, direction, exact asset/amount, maximum and original clientTranId. Fresh three-signature re-read compares selection, input policy, balances, selected maximum, permissions and mode. Account/Spot stream event including same-time replay, shared mutation epoch, scope/expiry change invalidates. Then one POST signature, durable prewrite, final scope/lifetime checks.",
+    "signatures": "Initial read3 + confirmation fresh read3 + POST1 + final mode/two-account read3 = typical full flow10; no hidden continuation.",
+    "known_reply": "Persist original server tranId before final read, even after stop/route exit/logout/provider disposal. Separately read both accounts and mode; refresh shared balance snapshots, then remove only corresponding record and clear input. Failure retains amount/reply for explicit read-only recovery.",
+    "unknown_reply": "Retain original client ID/nonce and block new transfer/order/configuration/Rebalance submissions for that wallet. No replay, deletion or success inference from balances. No documented original-clientTranId query: in-app resolution of truly unknown result remains unavailable. Contact platform with original identifiers; do not guess transactionHistory mapping.",
+    "lock_boundary": "Shared new-submission/settings lock; cancellation is outside this lock. Storage not ready/corrupt blocks new submissions; pending records isolated by wallet.",
+    "history_boundary": "The existing external deposit/withdrawal history is not internal transfer history. This increment does not claim a full transfer-history view or on-chain receipt.",
+    "presentation": "English/Chinese catalogs, explicit stale/empty/permission/precision/limit/failure states, exact identifiers selectable, amount retained on failures; stop/route loss invalidates UI scope without erasing original response."
+  },
+  "journal": {
+    "file": "pending-internal-transfers-v1.json",
+    "location": "Application support directory",
+    "schema_version": "1",
+    "max_wallets": 100,
+    "max_source_characters": 131072,
+    "content": "Exact wallet/asset/amount/direction/clientTranId/nonce/preparedAt/optional immutable public tranId. No signature, secret or executable queue.",
+    "writes": "Startup read before first screen, serial operations, strict duplicate-key/field/integer/asset validation; temp flush and same-directory rename. Retained original terms/missing canonical data cannot silently clear memory. No temp promotion or corrupt-file overwrite.",
+    "response_write_failure": "Retain reply in process memory even on directory/read/write failure; valid reload merges into matching original durable record. Host tests do not prove phone power-loss durability; app-data wipe/uninstall and a failed response write followed by process loss remain limitations."
+  },
+  "remaining": [
+    "Real connected-EOA/Privy authorization, actual platform permissions/precision/caps and accepted transfers are not verified.",
+    "Unknown original client-ID result lookup/mapping is not documented; unknown record retains submission block.",
+    "Public whitelist/input metadata can change; platform remains final authority.",
+    "External deposit/withdrawal, main/subaccount transfer, Chase recovery, full Portfolio and other remaining PRD scope are incomplete.",
+    "No device tools, APK installation, live wallet/RPC/private/financial calls; Linux has no macOS/Xcode for iOS."
+  ],
+  "supersedes": "Earlier asset-valuation/progress notes that transferable assets/input precision/Futures source-cap semantics were still unknown. It does not close the original-client-ID lookup gap."
+}

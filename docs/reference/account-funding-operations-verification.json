@@ -1,0 +1,68 @@
+{
+  "recorded_at_utc": "2026-11-04T03:55:45.772135+00:00",
+  "scope": "Aster self-wallet enable trading and optional IP withdrawal grant; existing EOA subaccount creation/switch/freeze/unfreeze/master-child transfers; ordinary deposit dispatch and credit recovery; own-address withdrawal double-signature dispatch and history reference matching",
+  "contract": "account-funding-operations-public-contract.json",
+  "automated_tests": 2825,
+  "baseline_tests": 2663,
+  "new_tests": 162,
+  "format": "677 Dart files, zero changes in final formatting check",
+  "analysis": "No issues found",
+  "localized_messages_per_language": {
+    "en": 1370,
+    "zh": 1370
+  },
+  "acceptance_evidence": {
+    "crypto": "Independent ethers6.16.0 Message chain56/1666 and Action vectors; digest/recovered address and malformed/wrong/high-s signature rejection. Fixed public test keys only.",
+    "authorization": "Mock HTTP exact self user/agent payload, chain56, expiry, default no withdrawal, opt-in IP/CIDR lexical bounds and exact encoded bytes, no builder/new wallet; read mappers and canTrade/canWithdraw field validation; unknown no implicit retry, scope cancellation. Controller grant propagation and UI opt-in reset at logout.",
+    "subaccounts": "Mock HTTP exact create/update/transfer query, dual address recovery, master qualification/count twice and10 cap, expired/malformed/wrong-child input before submission; pre-dispatch journal, failures/unknown/stop/logouts/late acknowledgements. Fresh target-bound SIWE switching success/wrong address/cancellation/logout failure.",
+    "deposits": "Fresh catalog twice, unknown-cap explicit external acknowledgement, unknown minimum never zero unless externally supplied, advertised minimum precedence; unsigned journal before wallet, stale/changed intent/Gas/nonce/allowance/fees, approval/deposit cross-workflow pending and mutex including stop; explicit hash receipt/replacement/canonical confirmations; signed platform credit exact hash/market/chain/asset/amount/status, no balance inference; late hash persisted for original wallet.",
+    "withdrawals": "Mock server master directory/withdraw info/fresh fee and strict quantity/USD amounts, receiver restricted to own wallet, pre-confirm repeat qualification/limits/fee, exact independent Action and encoded Message signatures, chain1666 envelope/nanosecond nonce; one POST, unsigned journal before POST, response withdrawId and signature digest validation, history matching and no match on wrong ID/terms.",
+    "storage": "Host temp file recovery/flush/rename, strict lexical/shape/unit/intent restore including3chains/native/ERC20/SpotPerp, malformed manual minimum, corruption/unknown pending/failed writes and retained returned hashes/ACK. Does not replace mobile filesystem/power-loss testing.",
+    "widgets": "EN/ZH320 width text1.5,844x390landscape,768x1024tablet; explicit grant/create/withdraw/deposit reviews, obscured child signature, source address/fee terms, opt-in and minimum reset at logout; existing funding/login tests updated to new entry/scope."
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "path": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 44860056,
+    "sha256": "7bd549c1e264d73d3cc68c57fe2155694023679d9ca24ee3c8e33577e9b4abb1",
+    "packaged_aot_identifiers": {
+      "authorization-prepare": true,
+      "registerAndApproveAgent": true,
+      "subaccount-action-prepare": true,
+      "createSubAccount": true,
+      "deposit-submit-confirm": true,
+      "pending-deposits-v1.json": true,
+      "wallet-operations-v1.json": true,
+      "withdrawal-confirm": true,
+      "/fapi/v3/aster/user-withdraw": true
+    }
+  },
+  "ios": "Linux has no macOS/Xcode; not built or natively verified",
+  "device_tools_used": false,
+  "real_wallet_requests_sent": false,
+  "live_rpc_requests_sent": false,
+  "private_live_requests_sent": false,
+  "live_post_requests_sent": false,
+  "financial_actions_sent": false,
+  "public_network_reads": "Anonymous official GitHub protocol/source reads and dependency downloads only; no live address-bearing request. Cached official frontend references used for nonce discrepancy.",
+  "native_testing": "Deferred by user; see ../native-verification-pending.md",
+  "remaining": [
+    "Self-agent acceptance and actual canSpotTrade/canPerpTrade/canWithdraw/IP scope still unverified; account reads do not prove execution privileges",
+    "Existing independent child wallet manual childSignature within45s; no authoritative remote address/freeze mapping or child balance preflight",
+    "Private deposit caps unavailable; user external verification required; public minimum may require manual verified input; normal3chain route only and native Max disabled",
+    "Withdrawal business microsecond userNonce chosen from official Action table/example/frontend, V3 prose says nanoseconds; live compatibility pending",
+    "Unknown account operation without returned reference has no official nonce lookup; persisted and blocks new operations; max100 no silent eviction/archival UI",
+    "Real wallet/financial/network/private/device/iOS/kill-recovery acceptance deferred; broader PRD still incomplete; BAPI stats/TWAP skipped per user"
+  ],
+  "logs": {
+    "full": "/tmp/vanta-access-full-tests.log",
+    "analysis": "/tmp/vanta-access-analysis.log",
+    "format": "/tmp/vanta-access-format-clean.log",
+    "build": "/tmp/vanta-access-build.log",
+    "targeted": "/tmp/vanta-access-target-tests.log",
+    "existing_funding_login_regression": "/tmp/vanta-access-old-regression.log"
+  },
+  "log_note": "Final full regression authoritative after optional grant/minimum/UI extraction. Earlier failed regression expected obsolete unavailable/login copy; updated to new review entry and minimum requirements. No device/live funds tested."
+}

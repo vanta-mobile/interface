@@ -1,0 +1,63 @@
+{
+  "device": "Android 12 / arm64",
+  "source": "Aster V3",
+  "scope": "Chart loads by selected symbol and interval; no candle prefetch. Native samples verify visible behavior; request scope is enforced by fake-service unit and widget tests.",
+  "initialScreenshot": "chart-demand-android-btc-1m.png",
+  "detailsScreenshot": "chart-demand-android-details.png",
+  "actions": [
+    {
+      "symbol": "BTCUSDT",
+      "interval": "5m",
+      "kind": "first-visit",
+      "screenshot": "chart-demand-android-btc-5m-first-visit.png"
+    },
+    {
+      "symbol": "BTCUSDT",
+      "interval": "15m",
+      "kind": "first-visit",
+      "screenshot": "chart-demand-android-btc-15m-first-visit.png"
+    },
+    {
+      "symbol": "BTCUSDT",
+      "interval": "1m",
+      "kind": "cached-return",
+      "screenshot": "chart-demand-android-btc-1m-cached-return.png"
+    },
+    {
+      "symbol": "BTCUSDT",
+      "interval": "5m",
+      "kind": "cached-return",
+      "screenshot": "chart-demand-android-btc-5m-cached-return.png"
+    },
+    {
+      "symbol": "ASTERUSDT",
+      "interval": "5m",
+      "kind": "first-visit",
+      "screenshot": "chart-demand-android-aster-5m.png"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "interval": "5m",
+      "kind": "first-visit-loading",
+      "screenshot": "chart-demand-android-eth-5m-loading.png"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "interval": "5m",
+      "kind": "loaded",
+      "screenshot": "chart-demand-android-eth-5m.png"
+    }
+  ],
+  "visualVerification": {
+    "currentChartProgress": "1 / 1",
+    "selectedIntervalsAndTimeAxesMatch": true,
+    "visitedChartsVisibleInCachedReturnSamples": true,
+    "coldSymbolShowsLoadingBeforeItsOwnCandles": true,
+    "liveStatusRestoredAfterLoading": true,
+    "requestScopeAndAbsenceOfPrefetchVerifiedBy": [
+      "test/features/market/market_sessions_test.dart",
+      "test/features/trade/timeframe_switch_test.dart"
+    ],
+    "limitation": "Native screenshots show visual states, not a network trace or measured rendering latency."
+  }
+}

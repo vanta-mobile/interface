@@ -1,0 +1,70 @@
+{
+  "verified_at_utc": "2026-11-02T22:02:02.986527+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "apk": {
+    "bytes": 42564728,
+    "sha256": "265bc806af40dc25db653e46d0be62c35e8d545013c6e02e36cb4ea6ac705ab4",
+    "installed": true
+  },
+  "automated_tests": 506,
+  "new_unit_tests": 15,
+  "new_widget_tests": 6,
+  "format_dart_files": 245,
+  "format_changed_files": 0,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 494,
+    "zh": 494
+  },
+  "official_contract": "position-returns-public-contract.json",
+  "unit_widget_checks": [
+    "Cross margin uses absolute mark notional divided by leverage, never total account equity",
+    "Isolated allocation remains separate from initial-margin ROE denominator",
+    "PRD ASTER sample, long/short/both, precision beyond double, tiny repeating margins",
+    "ROE rounds only at final percentage, halves away from zero; zero and losses below minus 100%",
+    "Exact reciprocal rather than website five-decimal reciprocal rounding",
+    "Unknown/nonlinear units, missing mark/PnL/entry/leverage, debt-only quantity remain unknown",
+    "Account events clear absent leverage and cannot reuse previous ROE",
+    "Snapshot/public mark labels differ; current public mark updates margin and ROE",
+    "Account or quote staleness remains visible",
+    "English 360-wide 2x and Chinese landscape 1.5x layouts",
+    "Existing risk-page debt rows located by localized label instead of duplicate amount or fixed scroll",
+    "Existing mark freshness test awaits the expected publication instead of racing a fixed wall-clock delay"
+  ],
+  "native_checks": [
+    "Chinese signed-out position-risk formula and scope readable",
+    "Chinese sign-in action opens actual Privy email / EOA login without login or wallet creation",
+    "English signed-out formula, scope and sign-in action readable",
+    "English landscape 2400x1080 formula readable and sign-in action reachable; scrolling exposes ADL and account monitor",
+    "Chinese locale restored; original portrait accelerometer_rotation=0, user_rotation=0 and font_scale=1.0 rechecked"
+  ],
+  "screenshots": [
+    "position-returns-zh-android.png",
+    "position-returns-zh-auth-android.png",
+    "position-returns-en-android.png",
+    "position-returns-en-landscape-android.png",
+    "position-returns-en-landscape-scrolled-android.png",
+    "position-returns-restored-zh-android.png"
+  ],
+  "live_private_requests_sent": false,
+  "financial_actions_sent": false,
+  "signed_in_native_values_faked": false,
+  "unverified": [
+    "Real authorized EOA/Privy signing acceptance and authenticated position values",
+    "Signed-in physical device margin and ROE; controlled fixtures only",
+    "iOS build requires macOS/Xcode unavailable on Linux"
+  ],
+  "remaining": [
+    "Full account gap recovery and real authorization acceptance",
+    "Close/reverse, leverage and margin modes, margin changes and TP/SL",
+    "Real order entry, subaccounts, transfers, deposits, withdrawals and notification list",
+    "Private BAPI historical statistics and TWAP skipped per user instruction"
+  ],
+  "original_settings": {
+    "locale": "zh",
+    "accelerometer_rotation": "0",
+    "user_rotation": "0",
+    "font_scale": "1.0"
+  }
+}

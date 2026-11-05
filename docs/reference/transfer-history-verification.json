@@ -1,0 +1,60 @@
+{
+  "recorded_at_utc": "2026-11-03T12:03:06.808620+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780e7afeed701ef37e67a",
+  "contract": "transfer-history-public-contract.json",
+  "scope": "Explicit signed deposit/withdrawal history, wallet baseline, persistent state notifications and refresh-needed signals; actual financial submissions excluded.",
+  "automated_tests": 1321,
+  "new_tests": 48,
+  "format_dart_files": 428,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 859,
+    "zh": 859
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43286100,
+    "sha256": "7293ab322cb56615e156b556f1315a781c84a1d0c88fc8a9cc23ec0346fdb34c"
+  },
+  "native_testing": "Skipped at user request. No device tools, APK install, mobile storage migration/force-kill or live wallet/private history validation. See ../native-verification-pending.md.",
+  "ios": "Linux lacks macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "acceptance_evidence": {
+    "exact_query_same_eoa_funding_nonce_isolation_safe_transport": [
+      "test/features/funding/signed_transfer_history_repository_test.dart"
+    ],
+    "strict_fields_decimal_precision_unknown_hash_and_record_time": [
+      "test/features/funding/transfer_history_mapper_test.dart"
+    ],
+    "silent_baseline_atomic_value_state_dedupe_migration_storage_failures_pruning_recreation": [
+      "test/features/notifications/transfer_baseline_repository_test.dart"
+    ],
+    "explicit_reads_wallet_changes_stop_late_events_no_automatic_signing": [
+      "test/features/funding/transfer_history_provider_test.dart"
+    ],
+    "bilingual_320_large_text_landscape_filter_details_wallet_isolation": [
+      "test/features/funding/transfer_history_widget_test.dart"
+    ],
+    "existing_behavior_regression": "Full test suite, including account updates, futures and Spot notifications, live order entry, cancellation, configurations, recovery and chart layouts."
+  },
+  "logs": {
+    "tests": "/tmp/vanta-transfers-all-tests.log",
+    "analysis": "/tmp/vanta-transfers-analysis-clean.log",
+    "format": "/tmp/vanta-transfers-format-clean.log",
+    "build": "/tmp/vanta-transfers-build.log"
+  },
+  "boundaries": [
+    "Same-EOA funding signer acceptance and enable-trading remain unverified. No new wallet or private key.",
+    "Explicit read-only POST; opening pages and receiving WebSocket events do not automatically sign.",
+    "No documented history pagination, update watermark, retention or complete-history guarantee.",
+    "First baseline suppresses existing history; later previously unseen record/state combinations notify once. No transition order is invented.",
+    "Record time and observation time are different. No completion time, fabricated failure reason or inference from bc.",
+    "Preferences v2 stores inbox and baseline together, preserving v1 read states. Local best-effort persistence, not system push or guaranteed background delivery.",
+    "Tracking overflow refuses new observations without dropping baseline; notifications remain bounded and may be pruned.",
+    "Actual deposit/withdrawal/transfers, subaccounts, complete valuation, Chase/BBO/Scaled remain incomplete. BAPI history and TWAP remain skipped by user request."
+  ],
+  "build_notes": "Passed with existing future KGP compatibility warning from third-party native plugins."
+}

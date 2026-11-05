@@ -1,0 +1,79 @@
+{
+  "verified_at_utc": "2026-11-02T20:58:06.413897+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "apk": {
+    "bytes": 42564728,
+    "sha256": "fb9e6698101a04dfb9d023eacac8f7b03b83c928267aefd3431d426e2c3c6897",
+    "installed": true
+  },
+  "automated_tests": 485,
+  "new_unit_widget_tests": 51,
+  "format_dart_files": 241,
+  "format_changed_files": 0,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 488,
+    "zh": 488
+  },
+  "official_contract": "account-events-public-contract.json",
+  "unit_widget_checks": [
+    "Strict exact ACCOUNT_UPDATE mapping; partial B-only funding and P-only events",
+    "Absolute wb and cw, not bc or accumulated cr; signed negative balances retained",
+    "Per-asset and symbol/positionSide E ordering, transaction T and REST updateTime",
+    "Duplicate events ignored; conflicting identical timestamps fail atomically and disconnect safely",
+    "Explicit zero closes only that position; negative isolated debt preserved in events and REST",
+    "Closed-position versions reject old events but permit newer reopening",
+    "REST/read progress and failure races retain newest applied values",
+    "Newer or equal-time REST records win; absent pre-read records are not manufactured",
+    "Existing REST records with no update time retain known event protection and stale state",
+    "No baseline means no displayed account; no automatic private reads or signing",
+    "Unsupported aggregate, availability, leverage and liquidation fields clear rather than retaining former values",
+    "First streamed position after empty baseline can use full public contract metadata",
+    "Position count and current-symbol filtering follow event closures",
+    "Public mark estimates use updated quantity and entry; quotes older than position transaction are not applied",
+    "Same-symbol quantity updates reuse public mark connection; symbol-set changes rebuild its scope",
+    "Disconnect/background retain stale data; wallet logout resets ledgers and blocks late reads",
+    "10000-key capacity fails without evicting zero-record protection or applying partial data",
+    "English 360-wide 2x and Chinese landscape 1.5x event card layouts"
+  ],
+  "native_checks": [
+    "Chinese risk screen explains signed baseline plus per-position events and public mark estimates",
+    "Expanded Chinese monitor scope and sign-in action readable",
+    "Monitor sign-in opens actual Privy email / EOA login without login or wallet creation",
+    "English risk screen and expanded monitor scope readable",
+    "English landscape 2400x1080 monitor scrolls with accessible sign-in action",
+    "Chinese language restored before final APK launch; original accelerometer_rotation=0, user_rotation=0 and font_scale=1.0 rechecked afterward."
+  ],
+  "native_layout_apk_sha256": "fbd5f71becb039fcb1f1e5e9be31fdcdc9036ec6d75e31d4f8e85da7450a368b",
+  "native_build_sequence": "Bilingual and landscape checks precede the final REST zero-position debt retention fix. No UI source changed after those checks; the final APK was rebuilt, reinstalled and visually confirmed launching in Chinese. Original device settings were rechecked/restored afterward.",
+  "screenshots": [
+    "account-events-risk-zh-android.png",
+    "account-events-monitor-zh-android.png",
+    "account-events-login-android.png",
+    "account-events-risk-en-android.png",
+    "account-events-monitor-en-android.png",
+    "account-events-landscape-android.png",
+    "account-events-final-android.png"
+  ],
+  "original_settings": {
+    "locale": "zh",
+    "accelerometer_rotation": "0",
+    "user_rotation": "0",
+    "font_scale": "1.0"
+  },
+  "live_private_requests_sent": false,
+  "financial_actions_sent": false,
+  "signed_in_native_values_faked": false,
+  "unverified": [
+    "Real authorized EOA/Privy signature acceptance, listenKey and private events",
+    "Signed-in physical device balance/position event values; controlled fixtures only",
+    "iOS build requires macOS/Xcode unavailable on Linux"
+  ],
+  "remaining": [
+    "Complete gap recovery and real account acceptance",
+    "ROI, cross initial margin, close/reverse, margin changes and TP/SL",
+    "Real order entry, subaccounts, transfers, deposits, withdrawals and notification list",
+    "Remaining PRD scope; private BAPI history statistics/TWAP skipped per user instruction"
+  ]
+}

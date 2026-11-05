@@ -1,0 +1,66 @@
+{
+  "recorded_at_utc": "2026-11-03T06:07:29.395590+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "requirements": [
+    "独立 TP/SL Limit 与 TP/SL Market",
+    "仓位指定数量止盈止损",
+    "Last／Mark、触发方向、触发价和独立委托价、触发价格保护"
+  ],
+  "source": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_protocol_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "public_last_ticker": {
+    "request": "GET https://fapi.asterdex.com/fapi/v3/ticker/price?symbol=BTCUSDT",
+    "authentication": "none",
+    "response": {
+      "symbol": "BTCUSDT",
+      "price": "76600.1",
+      "time": 1793685791850
+    },
+    "scope": "Shape evidence only. No wallet authorization, private request, placement, trigger or fill is proved."
+  },
+  "automated_tests": 903,
+  "new_tests": 55,
+  "format_dart_files": 335,
+  "analysis": "no issues",
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "bytes": 42958196,
+    "sha256": "151e74ad43642268914f554b09eb7eb981b8dc943364d200c014e3eb71d4b9f8"
+  },
+  "localized_messages_per_language": {
+    "en": 696,
+    "zh": 696
+  },
+  "native_testing": "Paused at user request. No device tools, device tests or APK installation. See ../native-verification-pending.md.",
+  "ios": "Linux has no macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "implementation": [
+    "Immutable independent trigger terms derive STOP/TAKE_PROFIT/STOP_MARKET/TAKE_PROFIT_MARKET; symbol orderTypes and protection threshold validated at the data boundary.",
+    "Last and Mark stay distinct. Optional public Last ticker failure does not block ordinary orders or silently substitute a reference. Last trade timestamp can be old in a quiet market; future timestamps and invalid prices fail validation.",
+    "Trigger side, Decimal price bounds/ticks, supported type, known protection threshold and already-met trigger checks gate review. General LOT_SIZE applies to conditional quantity; ordinary MARKET retains MARKET_LOT_SIZE. Aster checks actual trigger-time eligibility.",
+    "Conditional limit execution price is not blocked using current mark PERCENT_PRICE; exchange placement/trigger checks remain authoritative. Conditional estimates use trigger/limit reference with explicit limitations.",
+    "Position TP/SL route preserves symbol/position side and fixed conditional mode; explicit preflight and independent position recheck precede POST. No extra wallet or extra signatures.",
+    "POST ACK is not execution proof. Independent GET validates origType, trigger price, basis, protection, reduction flags, quantity and applicable limit policy, allowing corresponding LIMIT/MARKET type after trigger.",
+    "Unknown results preserve ID and frozen condition; GET-only recovery never repeats POST. Input survives cancel/refresh, missing references require explicit choice, dormant trigger terms are omitted from ordinary orders."
+  ],
+  "evidence": [
+    "test/features/portfolio/live_order_trigger_test.dart",
+    "test/features/portfolio/live_order_trigger_widget_test.dart",
+    "test/features/portfolio/signed_live_order_repository_test.dart",
+    "test/features/portfolio/live_order_provider_test.dart",
+    "test/features/portfolio/live_close_widget_test.dart",
+    "test/features/portfolio/batch_close_protocol_test.dart",
+    "Full suite covers existing wallet, account, policy, close/batch, market and localization regressions."
+  ],
+  "boundaries": [
+    "Each submission creates one specified-quantity conditional order. Independent TP and SL orders do not automatically cancel each other and are not represented as OCO.",
+    "Entire close closePosition=true, PnL/ROI input conversion and attached TP/SL/linkage/editing remain incomplete. BBO, trailing/Chase and chart quick opening also remain in PRD scope.",
+    "Trigger protection can delay/prevent triggering; it is not execution-price protection.",
+    "Current position, leverage and funds can change before triggering; reference PnL/margin excludes fees, funding, slippage and execution-time rules.",
+    "Aster enable-trading and acceptance of the selected EOA as its own API signer remain unverified.",
+    "Other remaining scope includes subaccounts, funding/withdrawals/transfers, valuation, notifications and cross-process unresolved-order recovery.",
+    "BAPI historical statistics and TWAP skipped this phase at user request."
+  ]
+}

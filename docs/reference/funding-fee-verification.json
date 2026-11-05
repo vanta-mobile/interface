@@ -1,0 +1,63 @@
+{
+  "recorded_at_utc": "2026-11-03T14:26:18.777155+00:00",
+  "prd": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+  "contract": "funding-fee-public-contract.json",
+  "scope": "Latest public platform withdrawal fee per selected market/network/asset, exact original numeric precision, independent asset/USD units, fixed-scope route and safe read lifecycle. No withdrawal submission.",
+  "automated_tests": 1531,
+  "new_tests": 70,
+  "format_dart_files": 475,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 941,
+    "zh": 941
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43417404,
+    "sha256": "8574301902ff2101f7a08a819a467e13905abe4365b6db693d04632788dfeac1"
+  },
+  "native_testing": "Skipped at user request. No device tools or APK install. Actual phone network, layout, route navigation, localization, timer/resume and real funding flows remain pending; see ../native-verification-pending.md.",
+  "ios": "Linux lacks macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "anonymous_public_probes": "BSC USDT/perp, BSC BNB/spot, Ethereum ETH/perp; actual production decoder/mapper accepted all three. Exact lexemes/hashes recorded in funding-fee-public-contract.json.",
+  "acceptance_evidence": {
+    "original_numeric_precision_scientific_notation_huge_integers_string_escapes_malformed_json_units_and_envelopes": {
+      "tests": 41,
+      "file": "test/features/funding/funding_fee_mapper_test.dart"
+    },
+    "fixed_https_three_chains_two_markets_no_signatures_redirects_timeouts_safe_api_errors_invalid_queries": {
+      "tests": 15,
+      "file": "test/features/funding/funding_fee_repository_test.dart"
+    },
+    "scope_isolation_duplicate_guard_staleness_during_read_failure_retention_wrong_result_transport_retention_disposal": {
+      "tests": 7,
+      "file": "test/features/funding/funding_fee_provider_test.dart"
+    },
+    "precise_units_bilingual_320_large_text_landscape_asset_entries_no_auth_no_batch_initial_failure_retry_pending_route_disposal": {
+      "tests": 7,
+      "file": "test/features/funding/funding_fee_widget_test.dart"
+    },
+    "existing_behavior_regression": "Full suite including original funding-info widgets, default shared transport decoding, auth, subaccounts, orders/configuration/recovery, account streams, notifications, valuation and charts."
+  },
+  "logs": {
+    "all_tests": "/tmp/vanta-funding-fee-all-tests.log",
+    "mapper": "/tmp/vanta-funding-fee-mapper-tests.log",
+    "repositories_providers": "/tmp/vanta-funding-fee-repository-provider-tests.log",
+    "widget": "/tmp/vanta-funding-fee-widget-tests.log",
+    "analysis": "/tmp/vanta-funding-fee-analysis.log",
+    "format": "/tmp/vanta-funding-fee-format.log",
+    "build": "/tmp/vanta-funding-fee-build.log",
+    "production_mapper": "/tmp/vanta-funding-fee-public-map.log"
+  },
+  "boundaries": [
+    "Only selected asset is queried. Public fee needs no login or wallet signature; zero is accepted only if explicitly returned, never synthesized from missing values.",
+    "Fee amount and USD estimate are distinct units; quote token price is optional. Platform fee does not estimate wallet transaction gas or authorize withdrawal.",
+    "Numeric JSON fee fields are decoded from raw lexemes directly to Decimal; all other existing account/catalog services retain default JSON decoder.",
+    "Thirty-second stale state and failed-refresh retention are visible; actual withdrawal must fetch current fee again before confirmation and signing.",
+    "Actual deposit/approval/withdraw/transfers, enable-trading, complete subaccounts/Portfolio and Chase/BBO/Scaled remain incomplete. BAPI historical statistics/TWAP skipped at user request."
+  ],
+  "build_notes": "Release build passed with existing third-party Kotlin migration/compatibility warnings; not installed."
+}

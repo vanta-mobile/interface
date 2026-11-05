@@ -1,0 +1,98 @@
+{
+  "recorded_at_utc": "2026-11-05T02:49:42Z",
+  "increment": "Attached TP/SL defaults, PnL/price/ROI, independent market/manual/auto-limit exits, full main-order protection, partial-fill driving events and legacy journal preservation",
+  "contract": "attached-exit-alignment-public-contract.json",
+  "baseline": "position-margin-adjustment-verification.json",
+  "tests": {
+    "baseline_full": 3446,
+    "new_total": 82,
+    "full_passed": 3528,
+    "exit_code": 0,
+    "files": [
+      "test/features/portfolio/attached_exit_input_test.dart",
+      "test/features/portfolio/attached_exit_recovery_test.dart",
+      "test/features/portfolio/attached_exit_input_widget_test.dart",
+      "test/features/portfolio/attached_exit_recovery_widget_test.dart",
+      "test/features/portfolio/attached_order_test.dart",
+      "test/features/portfolio/attached_entry_peg_test.dart",
+      "test/features/portfolio/order_recovery_journal_test.dart",
+      "test/features/portfolio/signed_attached_order_repository_test.dart",
+      "test/features/portfolio/attached_order_provider_test.dart",
+      "test/features/portfolio/attached_order_widget_test.dart",
+      "test/features/portfolio/attached_entry_peg_widget_test.dart"
+    ],
+    "coverage": [
+      "PRD E100 Q2 L5: TP+10 / SL-4 ->105/98, +25%/-10% ROI; both directions, all input modes, exact gross PnL / ROI.",
+      "Manual97.5 changes PnL while trigger98 retained; automatic limit equals trigger; repeating division and nearest tick; direct user prices are not repaired.",
+      "Raw targets recompute on main quantity, price, direction and leverage; signed targets, missing quotes, malformed / nonpositive / overprecision inputs and separate trigger bases.",
+      "Reverse order full protection quantity versus independently netted incremental margin; hedge / one-way and independent market / manual / auto limit query contracts.",
+      "Exact signed body and same EOA user=signer; POST timeout and GET-only query, original ID, no duplicate send.",
+      "Schema4 host-file restart, versions1-3 legacy net quantity and FILLED actions preserved through rewrite; corrupt or unsupported fields and unexpected limit / lifecycle rejected.",
+      "Actual native screen interaction using synthetic providers: defaults, mode raw values, advanced toggles, quantity recomputation, confirmation / cancel / unknown failure input retention and locking.",
+      "Recovery screen original quantities / limit prices / legacy versus current lifecycle; EN/ZH320width text1.5,844x390landscape,768x1024tablet without layout exceptions."
+    ]
+  },
+  "format": {
+    "files": 773,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1570,
+    "zh": 1570,
+    "new_per_locale": 23,
+    "message_keys_equal": true
+  },
+  "android": {
+    "command": "flutter build apk --no-pub --release --target-platform android-arm64 --dart-define-from-file=config/privy.local.json",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45646676,
+    "sha256": "91af35f0e1388c043c98682860066269571a6839ab9dd843388ca46a1196beee",
+    "aot_bytes": 15664008,
+    "packaged_probes": {
+      "en:Advanced exit settings": true,
+      "zh:专业退出设置": true,
+      "PARTIALLY_FILLED_OR_FILLED": true,
+      "automaticLimit": true,
+      "limitPrice": true
+    },
+    "installed": false,
+    "device_tools_used": false,
+    "signing": "Existing local debug signing, not store distribution",
+    "build_notice": "Existing coinbase_wallet_sdk/package_info_plus/privy_flutter KGP migration notices; build succeeded."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "performed": {
+    "synthetic_tests": true,
+    "host_files": true,
+    "unit_widget_tests": true,
+    "actual_wallet_signature": false,
+    "actual_private_api": false,
+    "address_bearing_rpc": false,
+    "financial_actions": false,
+    "native_device_testing": false,
+    "local_privy_config_read_by_agent": false
+  },
+  "remaining": [
+    "Per-leg actual executed quantity / amount display and full strategy management list are still missing; strategy status does not prove balances or fills.",
+    "Actual exchange acceptance, partial-fill size replenishment, peer cancellation, native wallet / layout / filesystem and iOS not verified.",
+    "Full cross-product Portfolio, Swap, Futures history and other PRD gaps remain; explicitly deferred BAPI statistics/Summary/TWAP stay skipped; overall goal incomplete."
+  ],
+  "logs": {
+    "full": "/tmp/vanta-attached-alignment-all-tests.log",
+    "analysis": "/tmp/vanta-attached-alignment-analysis-clean.log",
+    "format": "/tmp/vanta-attached-alignment-format-clean.log",
+    "build": "/tmp/vanta-attached-alignment-build.log",
+    "new_widgets": "/tmp/vanta-attached-alignment-new-widgets.log",
+    "recovery_widgets": "/tmp/vanta-attached-alignment-recovery-widgets.log"
+  },
+  "verification_note": "Early iterations exposed misplaced codec metadata, old synthetic fixtures without entry book quotes, duplicate UI text finders and offscreen recovery taps; corrected before final full3528/analysis/build. Full-suite result is authoritative; early focused logs retain development failures."
+}

@@ -1,0 +1,7 @@
+{
+  "purpose": "Anonymous GET through the actual Spot service; no signed account requests",
+  "endpoint": "https://sapi.asterdex.com/api/v3/time",
+  "receivedAt": "2026-11-02T11:07:34.724788Z",
+  "serverTime": 1793617654683,
+  "authenticatedAccountRead": "not verified"
+}

@@ -1,0 +1,69 @@
+{
+  "recorded_at_utc": "2026-11-03T15:58:25.573664+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "contract": "attached-entry-bbo-public-contract.json",
+  "scope": "OTO/OTOCO LIMIT / STOP / TAKE_PROFIT entry BBO pricing only, ten documented levels, no guessed ordinary-order protocol. Fixed-quantity market protection preserved.",
+  "automated_tests": 1665,
+  "new_tests": 56,
+  "format_dart_files": 494,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 978,
+    "zh": 978
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43482940,
+    "sha256": "81c422f6c53ff9467eb29856a22df42b9e188fd694e3e45763172960449d9e83"
+  },
+  "acceptance_evidence": {
+    "compound_prices_shapes_all_ten_pegs_conditional_triggered_terms_exact_query_and_v1_v2_codec": {
+      "new_tests": 41,
+      "file": "test/features/portfolio/attached_entry_peg_test.dart"
+    },
+    "signed_EOA_bytes_rejected_shape_post_timeout_http200_bracket_rejection_mismatch_then_GET_only": {
+      "new_tests": 5,
+      "file": "test/features/portfolio/signed_attached_order_repository_test.dart"
+    },
+    "unknown_peg_frozen_and_invalid_market_shape": {
+      "new_tests": 2,
+      "file": "test/features/portfolio/attached_order_provider_test.dart"
+    },
+    "actual_host_file_reconstruction_with_frozen_peg_and_GET_only": {
+      "new_tests": 1,
+      "file": "test/features/portfolio/signed_order_recovery_test.dart"
+    },
+    "existing_v1_canonical_file_read_and_schema2_rewrite": {
+      "new_tests": 1,
+      "file": "test/features/portfolio/order_recovery_journal_test.dart"
+    },
+    "bilingual_320_large_font_landscape_exact_level_no_truncation_input_toggles_unknown_lock_and_recovery": {
+      "new_tests": 6,
+      "file": "test/features/portfolio/attached_entry_peg_widget_test.dart"
+    },
+    "full_regression": "All existing orders, configuration, funds, recovery, charts, auth, subaccounts, funding and notifications included."
+  },
+  "native_testing": "Not performed at user request. No device tools or APK install; real wallet, Aster resolved-level/trigger/bracket results, phone layout, session/file upgrade and process recovery remain unverified; see ../native-verification-pending.md.",
+  "ios": "Linux lacks macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "anonymous_live_evidence": "Official public documentation/repository and static frontend source reads only; no live order acceptance claimed.",
+  "boundaries": [
+    "Existing EOA signing path retained; no additional wallet or signer created. Same-EOA Aster authorization remains unproven.",
+    "Compound strategy source explicitly requires price zero plus exact peg. Ordinary POST /order price constraints are still unresolved and not inferred from this source.",
+    "Estimate uses Mark/trigger, not selected-depth quotes or execution prices. Engine checks resolved-price brackets; HTTP200 failureCode is handled and unknown outcome never re-POSTed.",
+    "Schema2 reads strict legacy schema1 at the existing file path; downgrade to old reader unsupported. Corrupt/unknown-schema rows are not cleared.",
+    "Ordinary / dedicated-close BBO, Chase, Scaled, enable-trading, full subaccounts, actual funding/transfers and complete Portfolio remain incomplete; BAPI stats/TWAP skipped at user request."
+  ],
+  "logs": {
+    "all_tests": "/tmp/vanta-attached-bbo-all-tests.log",
+    "analysis": "/tmp/vanta-attached-bbo-analysis.log",
+    "format": "/tmp/vanta-attached-bbo-format-clean.log",
+    "build": "/tmp/vanta-attached-bbo-build.log",
+    "focused_tests": "/tmp/vanta-attached-bbo-focused-tests.log",
+    "label_layout_regression": "/tmp/vanta-attached-bbo-label-tests.log"
+  },
+  "build_notes": "Android arm64 Release succeeds with existing third-party Kotlin migration/compatibility warnings; not installed."
+}

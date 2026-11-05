@@ -1,0 +1,96 @@
+{
+  "recorded_at_utc": "2026-11-04T03:47:08.180739+00:00",
+  "scope": "Current-wallet Aster trading grant, existing EOA subaccounts, ordinary deposits and own-address withdrawals; real acceptance deferred",
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3(Recommended)/EN/aster-finance-futures-api-v3.md",
+      "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/asterdex/api-docs/master/demo/aster-deposit-withdrawal.md",
+      "sha256": "e6943bd414e9e09bc1592446dd1b39d67e2750bf6480a368da8cc5caec9ae39a"
+    }
+  ],
+  "authorization": {
+    "path": "POST /fapi/v3/registerAndApproveAgent",
+    "domain_chain": 56,
+    "same_user_agent": true,
+    "platform_accepts_self_agent": "UNVERIFIED",
+    "nonce": "microseconds, <=10s server window; local <9s",
+    "expiry": "30 days, milliseconds",
+    "default_permissions": [
+      "canSpotTrade",
+      "canPerpTrade"
+    ],
+    "optional_withdraw": "Explicit opt-in and nonempty literal IP/CIDR whitelist; no builder/key/additional wallet",
+    "checks": "Independent signed Futures and Spot account reads; canTrade and optional canWithdraw; Spot read acceptance does not prove Spot trading grant"
+  },
+  "subaccounts": {
+    "create": "POST /fapi/v3/createSubAccount; child signature over encoded name/source/nonce/user/signer, then master signs including childSignature",
+    "update": "POST /fapi/v3/updateSubAccount; status NORMAL/FROZEN",
+    "transfer": "POST /fapi/v3/subAccountTransfer; toAccountAddress,asset,amount,kindType,nonce,user,fromAccountAddress; documented user OR signer, user only chosen",
+    "signature_chain": 1666,
+    "directions": [
+      "FUTURE_FUTURE",
+      "FUTURE_SPOT",
+      "SPOT_FUTURE",
+      "SPOT_SPOT"
+    ],
+    "qualification": "Fresh master directory, exactly one parent marker, create max10; no address/status inference",
+    "switch": "Logout and fresh target-bound wallet SIWE; no local active account substitution",
+    "limitations": [
+      "Existing independent child EOA and manual external childSignature; 45s total review",
+      "No remote freeze status or child available balance preflight",
+      "Server checks actual relation/status/precision/available funds"
+    ]
+  },
+  "encoding": "URI application/x-www-form-urlencoded exact bytes signed and sent; spaces +, IPv6/CIDR escaped. General V3 URL encoding and raw demo concatenation differ; non-ASCII name/IP server behavior pending.",
+  "deposits": {
+    "chains": [
+      1,
+      56,
+      42161
+    ],
+    "route": "normal depositFor only",
+    "minimum": "Public minimum preferred; if omitted user must enter externally verified minimum (zero only if verified no positive minimum)",
+    "platform_caps": "Unavailable BAPI auth; explicit user external verification, never interpreted as unlimited",
+    "submission": "Fresh catalog, balance/allowance/Gas/nonce twice, immutable exact tx review, approval/deposit mutex and pending journal checks, flush before send",
+    "receipt": "Exact intent/chain/nonce and canonical >=2 confirmations; manual same-intent speedup hash permitted",
+    "credit": "Retain chain success until signed history exact hash,market,chain,asset,Decimal amount and unique SUCCESS",
+    "no_auto_retry": true
+  },
+  "withdrawals": {
+    "futures_path": "POST /fapi/v3/aster/user-withdraw",
+    "spot_path": "POST https://sapi.asterdex.com/api/v3/aster/user-withdraw",
+    "receiver": "Own registered current wallet only",
+    "review": "Fresh master directory, catalog, signed info and fee; repeat before submit, 30s expiry, amount+fee conservative quantity/USD caps",
+    "business_domain": "Aster / version1 / selected EVM chain",
+    "business_fields": [
+      "type",
+      "destination",
+      "destination Chain",
+      "token",
+      "amount",
+      "fee",
+      "nonce",
+      "aster chain"
+    ],
+    "business_nonce": "milliseconds x1000 per Action table, numeric EVM example and official web frontend",
+    "nonce_conflict": "V3 userNonce prose says nanoseconds; inconsistent with own example/table/frontend. LIVE ACCEPTANCE UNVERIFIED.",
+    "api_nonce": "Independent nanosecond nonce, chain1666 Message",
+    "response": "withdrawId is reference; hash is signature digest, NOT on-chain tx hash",
+    "recovery": "Signed history exact withdrawId/market/chain/asset/amount; unknown without ID cannot resolve by balances or reissue"
+  },
+  "durability": {
+    "account_file": "wallet-operations-v1.json",
+    "deposit_file": "pending-deposits-v1.json",
+    "terms": "Public unsigned exact intent only; no signatures/keys",
+    "bounded": "max100 each, no silent eviction; account journal no archival UI",
+    "unknown": "blocks another operation for same wallet; retained across stop/logout; no auto replay",
+    "limitation": "No official original-nonce lookup for unknown sub transfer/withdrawal without returned ID; requires platform verification"
+  },
+  "financial_requests_sent": false,
+  "device_tools_used": false,
+  "ios": "Linux; no Xcode build",
+  "implementation": "../implementation.md#2026-11-04-交易授权子账户管理与实际充提"
+}

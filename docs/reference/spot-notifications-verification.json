@@ -1,0 +1,67 @@
+{
+  "recorded_at_utc": "2026-11-03T11:22:03.677403+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780e7afeed701ef37e67a",
+  "contract": "spot-notifications-public-contract.json",
+  "scope": "Spot executionReport notifications and independent explicit Spot account monitoring, sharing the existing wallet-isolated inbox with futures.",
+  "automated_tests": 1273,
+  "new_tests": 49,
+  "format_dart_files": 413,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 829,
+    "zh": 829
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43286056,
+    "sha256": "adcdfbfc588f1340a80fbc7ccb70857904771512dbaf54973d90accc53158c40"
+  },
+  "native_testing": "Skipped at user request. No device tools, APK installation, mobile storage/force-kill or actual wallet/private stream validation. See ../native-verification-pending.md.",
+  "ios": "Linux lacks macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "acceptance_evidence": {
+    "exact_same_eoa_signatures_spot_origin_shared_nonce_and_lease": [
+      "test/features/portfolio/signed_spot_account_change_repository_test.dart"
+    ],
+    "local_socket_raw_uri_order_mapping_expiry_and_safe_errors": [
+      "test/features/portfolio/aster_spot_user_stream_test.dart"
+    ],
+    "precise_fields_market_dedup_quote_budget_and_v1_inbox_compatibility": [
+      "test/features/notifications/spot_notification_mapper_test.dart"
+    ],
+    "explicit_independent_leases_snapshot_invalidation_late_events_wallet_isolation_and_50_60_minute_timing": [
+      "test/features/portfolio/spot_account_change_provider_test.dart"
+    ],
+    "bilingual_320_large_text_landscape_units_retry_copyable_ids_and_spot_only_semantics": [
+      "test/features/notifications/spot_notification_widget_test.dart"
+    ],
+    "existing_futures_lifecycle_risk_account_and_notification_regression": [
+      "test/features/portfolio/account_change_provider_test.dart",
+      "test/features/portfolio/aster_user_stream_test.dart",
+      "test/features/portfolio/signed_account_change_repository_test.dart",
+      "test/features/notifications/notification_provider_test.dart",
+      "test/features/notifications/notification_widget_test.dart"
+    ]
+  },
+  "logs": [
+    "/tmp/vanta-spot-notifications-all-tests-clean.log",
+    "/tmp/vanta-spot-notifications-analysis-clean.log",
+    "/tmp/vanta-spot-notifications-format-clean.log",
+    "/tmp/vanta-spot-notifications-build-final.log"
+  ],
+  "boundaries": [
+    "Real exchange acceptance of same-EOA user/signer, enable-trading, real Privy/EOA wallet round-trip and Spot private streams remain unverified.",
+    "Manual start/renew only. Background resume/reconnect reuses valid in-memory keys without signing. Stop disconnects locally without invalidating keys that may be shared with other clients.",
+    "Only connected authorized live events are collected. No system push, background guarantee or missed-event backfill; explicit signed reads remain necessary after gaps.",
+    "Spot buys/sells never imply long/short positions or futures PnL/reduce-only/liquidation fields. Y/Z and other amounts remain exact Decimal values with independent Spot units.",
+    "O=0 or absent creation time is unknown, not an epoch-date claim. MARKET positive quote-budget Q may accompany zero original base quantity.",
+    "Existing v1 futures entries/read state are retained. The same wallet/symbol/order/trade identity in SPOT and PERP remains distinct.",
+    "Local inbox keeps at most 500 recent records and 4 MiB across wallets, preserving failure/retry/read-state and wallet-isolation boundaries. It is not complete exchange history.",
+    "Deposit/withdrawal history first-load baseline, state transitions and event-triggered history refresh are not yet connected. Balance updates alone never prove on-chain transfer completion.",
+    "Other PRD gaps remain: enable-trading, subaccounts, deposit/withdrawal/transfers, complete valuation, Chase/BBO/Scaled. BAPI historical statistics and TWAP skipped this phase at user request."
+  ],
+  "build_notes": "Build passed with the existing future KGP compatibility warning from third-party native plugins."
+}

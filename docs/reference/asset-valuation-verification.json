@@ -1,0 +1,57 @@
+{
+  "recorded_at_utc": "2026-11-03T12:51:39.144544+00:00",
+  "prd": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+  "contract": "asset-valuation-public-contract.json",
+  "scope": "Public asset-index USD/BTC reference values for signed Spot/Futures balance snapshots, wallet-only aggregation, strict Spot low-balance filtering; no full cross-product Portfolio total or financial transfer.",
+  "automated_tests": 1363,
+  "new_tests": 42,
+  "format_dart_files": 437,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 877,
+    "zh": 877
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43286100,
+    "sha256": "7b9aaa4ea7a2e1762c0c13aa67ed047c59602a8d714766f645306f4388424229"
+  },
+  "native_testing": "Skipped at user request. No device tools, APK install, native price lifecycle/layout or live private account validation. See ../native-verification-pending.md.",
+  "ios": "Linux lacks macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "acceptance_evidence": {
+    "exact_decimal_actual_stablecoin_price_tiny_values_strict_threshold_single_aggregate_division": [
+      "test/features/portfolio/asset_valuation_test.dart"
+    ],
+    "strict_index_mapping_and_anonymous_transport": [
+      "test/features/portfolio/asset_index_repository_test.dart"
+    ],
+    "polling_single_request_expiry_during_pending_read_failure_pause_late_results_disposal": [
+      "test/features/portfolio/asset_index_provider_test.dart"
+    ],
+    "bilingual_320_large_text_landscape_scope_unavailable_retry_filter_and_margin": [
+      "test/features/portfolio/asset_valuation_widget_test.dart"
+    ],
+    "existing_behavior_regression": "Full suite including Spot/Futures account reads, wallet isolation, orders, notifications, recovery and charts."
+  },
+  "logs": {
+    "tests": "/tmp/vanta-asset-values-all-tests.log",
+    "analysis": "/tmp/vanta-asset-values-analysis-clean.log",
+    "format": "/tmp/vanta-asset-values-format-clean.log",
+    "build": "/tmp/vanta-asset-values-build.log"
+  },
+  "boundaries": [
+    "Anonymous website index endpoint identified in PRD; stable developer compatibility guarantee not asserted.",
+    "No stablecoin peg, perpetual mark substitution or unknown balances treated as zero.",
+    "Wallet USD subtotal excludes UPL, other accounts/products, collateral discounts and costs. It is not complete Portfolio Total Value.",
+    "BTC display division is rounded; exact cross multiplication determines Spot threshold. Unknown/stale quotes and stale account snapshots retain assets.",
+    "30s poll, 60s receipt age, 90s quote age and 30s future skew are client policies, not exchange guarantees.",
+    "Only public prices refresh automatically. Private snapshots still require explicit current-wallet signing.",
+    "Same-EOA authorization acceptance, subaccounts, actual deposit/withdrawal/transfers and full Portfolio scope remain incomplete. BAPI historical statistics and TWAP are skipped at user request.",
+    "Transfer documents do not define original clientTranId result lookup or its association with server tranId; no transfer submission was implemented or sent."
+  ],
+  "build_notes": "Passed with existing future KGP compatibility warning from third-party native plugins."
+}

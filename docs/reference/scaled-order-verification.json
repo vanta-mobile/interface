@@ -1,0 +1,64 @@
+{
+  "recorded_at_utc": "2026-11-03T17:00:56.299230+00:00",
+  "scope": "Vanta initial Scaled order product rule: explicit 2–5 child GTC LIMIT plan, preview, confirmation, sequential current-EOA fresh checks and submission/query, no automatic continuation or compensation.",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "contract": "scaled-order-public-contract.json",
+  "product_rule_confirmation": "Initial rule was proposed and disclosed; explicit product confirmation is still pending. Do not claim these options are verified Aster App behavior.",
+  "automated_tests": 1733,
+  "new_tests": 68,
+  "format_dart_files": 506,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 1002,
+    "zh": 1002
+  },
+  "acceptance_evidence": {
+    "domain": {
+      "new_tests": 27,
+      "file": "test/features/portfolio/scaled_order_test.dart",
+      "coverage": "Exact endpoints, distinct ticks, all counts and buy/sell; low-price quantity remainder; offset LOT minimum and price origin; sub-wei-like precision conservation; filters, funds/capabilities, immutable and tampered plans."
+    },
+    "controller": {
+      "new_tests": 26,
+      "file": "test/features/portfolio/scaled_order_provider_test.dart",
+      "coverage": "Explicit fresh scoped preparation, unique frozen IDs, per-child fresh funds and sequential exact requests, shared locks, pending journal, no replay, pre/post-send stop, expiry/refusal/drift, same-time account events, wallet isolation and GET-only unknown recovery."
+    },
+    "signed_repository_and_host_file": {
+      "new_tests": 8,
+      "file": "test/features/portfolio/scaled_order_protocol_test.dart",
+      "coverage": "Both directions × one-way/hedge × all-known/second-unknown. Exact signed/transmitted POST bytes, user=signer=current EOA, ordinary LIMIT/GTC shape, real journal file verified before each POST, completed records removed, restart recovers only the sent unresolved second child and never sends the third."
+    },
+    "widgets": {
+      "new_tests": 7,
+      "file": "test/features/portfolio/scaled_order_widget_test.dart",
+      "coverage": "Bilingual 320-wide/text1.5/landscape; complete preview/IDs/percentage/notional and confirmation, cancel/refusal input retention, unknown edit lock and GET only, wallet form reset, ordinary-only entry, route exit and five-order sell stop button."
+    },
+    "full_regression": "All 1733 existing and new tests pass."
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43548476,
+    "sha256": "231dffdece23d790d3b40bf0d80156e53a7b5479116e69579408e6bf99b7b8c9"
+  },
+  "native_testing": "Not performed at user request; no device tools or APK installation. Real wallet signing/return, Aster permission/execution, native layout/storage and process-kill recovery remain pending; see ../native-verification-pending.md.",
+  "ios": "Linux lacks macOS/Xcode; not built or tested.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "boundaries": [
+    "No extra wallet or agent is created; same-EOA Aster authorization remains unproven.",
+    "Independent sequential orders may partly succeed; stopping does not cancel already sent orders.",
+    "GET-only unknown recovery never resubmits an ID or resumes an unsent plan.",
+    "Margin reference is gross limit notional/leverage, before netting and excluding fees, pending orders and released margin.",
+    "Enable-trading, full subaccounts, actual funding/transfers, complete Portfolio, Chase and ordinary/dedicated-close BBO remain incomplete; BAPI statistics/TWAP skipped by user decision."
+  ],
+  "logs": {
+    "focused_tests": "/tmp/vanta-scaled-focused.log",
+    "all_tests": "/tmp/vanta-scaled-all-tests.log",
+    "analysis": "/tmp/vanta-scaled-analysis.log",
+    "format": "/tmp/vanta-scaled-format-clean.log",
+    "build": "/tmp/vanta-scaled-build.log"
+  },
+  "build_notes": "Android release succeeds with existing third-party Kotlin migration/compatibility notices. Not installed."
+}

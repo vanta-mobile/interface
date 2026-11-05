@@ -1,0 +1,105 @@
+{
+  "recorded_at_utc": "2026-11-05T04:49:06.879576+00:00",
+  "increment": "Main live-order quote amount input, base-only frozen signing/recovery, and implemented main/conditional/trailing defaults",
+  "contract": "order-amount-public-contract.json",
+  "tests": {
+    "baseline_full": 3617,
+    "new_total": 63,
+    "domain": 43,
+    "signed_repository": 5,
+    "widgets": 15,
+    "full_passed": 3680,
+    "exit_code": 0,
+    "coverage": [
+      "PRD exact70/0.69890=>100.15ASTER and69.994835USDT; rational boundary floor with repeating/very precise decimals, offset minimum, below-step and maximum rejection, leverage1/10/125 independent.",
+      "Buy ask/sell bid with no missing required quote fallback; exact base input without step repair; existing LOT_SIZE and MARKET_LOT_SIZE policies; explicit indicative trigger/BBO/Mark/Last selection and missing references.",
+      "Exact signed ordinary MARKET/LIMIT BUY/SELL requests carry frozen base quantity and same EOA user=signer, chain1666; no ordinary quantityUnit/quoteOrderQty. Timeout/mismatched query retains original quantity/ID; GET-only recheck and journal encode/decode preserve original terms.",
+      "Production quote default and blank size, first valid Last seed/late seed/one-time retention/edit/clear, BUY/LIMIT/GTC, conditional/trailing Mark and blank trailing inputs. Base/quote independent strings retained, direction/price/context refresh recompute, invalid amount retained and blocked.",
+      "Quote-driven attached PnL conversion and full base quantity protection; close base default/percentage switches base/dormant quote retained; entire-close omits quantity.",
+      "Cancel/refused signature retains raw values; unknown locks units and query retains original base; refreshed account while dialog open invalidates old confirmation instead of silently signing new quantity.",
+      "EN/ZH320width text1.5,844x390landscape,768x1024tablet; visible amount/reference/base/notional/time/warning and copyable original wallet."
+    ],
+    "existing_regression_updates": "Nine existing widget test files explicitly select base before entering coin quantities; missing-Last trigger scenario explicitly chooses Last. Their prior financial and recovery assertions remain. Six ordinary BBO widget regressions passed independently before final full suite."
+  },
+  "format": {
+    "files": 794,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1608,
+    "zh": 1608,
+    "new_per_locale": 15,
+    "message_keys_equal": true
+  },
+  "android": {
+    "command": "flutter build apk --release --target-platform android-arm64 --dart-define-from-file=config/privy.local.json",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45775084,
+    "sha256": "1279e098176b9bc51f19e7be78c383ab3be3e5bc8bdb8dc2acf7240f133eb17f",
+    "aot_bytes": 15795080,
+    "packaged_probes": {
+      "en:liveAmountHint": true,
+      "en:liveAmountResolvedQuantity": true,
+      "en:liveAmountEstimateHint": true,
+      "zh:liveAmountHint": true,
+      "zh:liveAmountResolvedQuantity": true,
+      "zh:liveAmountEstimateHint": true
+    },
+    "installed": false,
+    "device_tools_used": false,
+    "notices": "Existing third-party Built-in Kotlin migration notices; successful normal Release build. Local development signing, not production publishing."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "performed": {
+    "synthetic_tests": true,
+    "actual_wallet_signature": false,
+    "actual_private_api": false,
+    "address_bearing_rpc": false,
+    "financial_actions": false,
+    "native_device_testing": false,
+    "local_privy_config_read_by_agent": false
+  },
+  "public_reads": "Cached Notion Futures PRD and cached official V3 document inspected; normal Flutter dependency resolution during build. No live account/chat/financial or address-bearing request.",
+  "remaining": [
+    "Actual exchange EOA acceptance, actual base quantity/execution results and native keyboard/lifecycle/wallet return/storage/layout remain unverified and deferred by user.",
+    "This increment does not complete all nine mode defaults, main navigation settings, per-mode/limit+Post Only confirmation preferences or Scaled quote total/distribution.",
+    "Custom slippage needs an explicit execution contract; Chase needs documented original strategy recovery/order linkage.",
+    "Futures allOrders/userTrades/income history, full cross-product Portfolio, Swap and complete strategy list remain incomplete.",
+    "Historical statistics/Futures Summary/TWAP deferred by user; overall PRD goal remains active."
+  ],
+  "logs": {
+    "full": "/tmp/vanta-order-amount-all-tests-final.log",
+    "format": "/tmp/vanta-order-amount-format-clean.log",
+    "analysis": "/tmp/vanta-order-amount-analysis-final.log",
+    "build": "/tmp/vanta-order-amount-build-final.log",
+    "bbo_regression": "/tmp/vanta-order-amount-peg-regression.log",
+    "earlier_focused": "/tmp/vanta-order-amount-focused-final.log"
+  },
+  "verification_note": "Earlier focused tests had unscoped duplicate-value finders, a missed direction tap, an empty-to-empty input that did not exercise editing, and a zero minimum rejected by the data mapper before conversion. Tests now target conversion preview, visible direction, actual edit/clear and boundary rejection. Initial full run identified four old BBO base-input scenarios relying on former default; they now explicitly select base. The final full suite is authoritative.",
+  "source_sha256": {
+    "lib/features/portfolio/domain/live_order_size.dart": "05d90cef8964b30f0b33ab6e66002e2b67cb9bae39552f2fc46dd4c14bbbbbac",
+    "lib/features/portfolio/domain/live_order_draft.dart": "1f6ab3ed8e51312fdf5ce9661485a0282e41367bfc9b74f867dfbdada44fdb19",
+    "lib/features/portfolio/presentation/live_order_form.dart": "c8efd20033af772de68d314c79117b18ba6f92253ec3710adfe25a02c4b3c2db",
+    "lib/features/portfolio/presentation/live_order_size_field.dart": "0623031fcfedd87a2b31b54a0ac1b9f1b0c0414b928c6e4d7b6c7e90de075660",
+    "lib/features/portfolio/presentation/live_order_price_inputs.dart": "11f27036ef3c42a04c11e2d988e3f2a719539da7e601b7c6e7cf2a990aaa14b8",
+    "lib/features/portfolio/presentation/live_order_review.dart": "8aea1948dfafcd43b0755c1d300f30ffd14e2fe4c5407c1e286278a35a9c4028",
+    "lib/core/strings.dart": "1a30cd81e3057bed1bb2b4d37f928a7f855616c6eed92de2275f82824abbb453",
+    "lib/l10n/app_en.arb": "2c94fa141a48cca3ea7455a9616883ba0de134af3364073211e40c82f8569464",
+    "lib/l10n/app_zh.arb": "b9bbab4cbfdeb6b10740d21299280954acdc823dcb7a0b11c99b0b43d865624c",
+    "test/features/portfolio/live_order_size_test.dart": "b14334caad4dca5c806577102389dc107f95dfba86d6cbfc1c92b8e5685b38d3",
+    "test/features/portfolio/live_order_size_widget_test.dart": "1566f786b55c1407fea19d2dc998d4c2579b056e4235089b9b19a41db8afa53b",
+    "test/features/portfolio/signed_live_order_repository_test.dart": "faf4185110c7d94954e8d2465cebdf4abdef3d1cbb53cbf30a097f11ed5e65f9",
+    "test/features/portfolio/live_order_trigger_widget_test.dart": "048b8ddf61415759a8bac8003ee300c73ec01cecfa0c1890997cfaec89d25060",
+    "test/features/portfolio/live_order_peg_widget_test.dart": "f3eab505c447365b3bed96a382c82ef22795ce90e0f0607b5fea426e88653493",
+    "test/support/live_order_widget.dart": "286dd253dfd8cc5da155b0ccc6674f783631e2ae6171edc2b137f31963ee7149"
+  }
+}

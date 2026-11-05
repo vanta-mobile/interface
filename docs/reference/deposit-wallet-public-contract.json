@@ -1,0 +1,104 @@
+{
+  "recorded_at_utc": "2026-11-03T15:05:50.112669+00:00",
+  "prd": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+  "official_document": "https://github.com/asterdex/api-docs/blob/master/demo/aster-deposit-withdrawal.md",
+  "document_sha256": "e6943bd414e9e09bc1592446dd1b39d67e2750bf6480a368da8cc5caec9ae39a",
+  "public_configuration": {
+    "method": "GET",
+    "origin": "https://www.asterdex.com",
+    "path": "/bapi/futures/v1/public/future/aster/deposit/assets",
+    "minimum": "Optional minDeposit retained as nonnegative exact Decimal. Missing is unknown, explicit zero means no positive minimum in this snapshot, never synthesize zero.",
+    "decoding": "Strict bounded JSON parser keeps original numeric lexemes without double, normalizes integer metadata independently from numeric strings. Fees and asset catalogs now share lexical parsing; other account services retain their original decoder.",
+    "bounds": {
+      "body_utf16_code_units": 262144,
+      "depth": 32,
+      "numeric_lexeme_characters": 160,
+      "monetary_exponent_absolute": 160
+    },
+    "ambiguity": "Duplicate object keys, noninteger or numeric-string chain/decimals metadata, malformed JSON and invalid/negative minDeposit are rejected.",
+    "regression": "All four cached anonymous production catalogs and three fee payloads passed the current production decoder/mapper again; original hashes/capture times remain in funding-info-public-contract.json and funding-fee-public-contract.json."
+  },
+  "chain_read": {
+    "origins": {
+      "1": "https://ethereum-rpc.publicnode.com",
+      "56": "https://bsc-rpc.publicnode.com",
+      "42161": "https://arbitrum-one-rpc.publicnode.com"
+    },
+    "methods": [
+      "eth_chainId",
+      "eth_getBlockByNumber",
+      "eth_getBalance",
+      "eth_call"
+    ],
+    "no_write_methods": "Transport rejects eth_sendTransaction and all unlisted methods before network. No wallet signature, approval or broadcast.",
+    "scope": "Explicit current-identity wallet address; selected chain/token metadata. Restored EOA may read without reconnecting for signing, and no replacement wallet is created.",
+    "sequence": "Validate expected chain ID, get latest block number/hash/time, read native balance and (ERC20 only) decimals()/balanceOf(owner)/allowance(owner,documented vault) at that block number, re-read block hash and reject if changed.",
+    "selectors": {
+      "decimals": "0x313ce567",
+      "balanceOf": "0x70a08231",
+      "allowance": "0xdd62ed3e"
+    },
+    "validation": "Strict canonical hex quantities and 32-byte ABI uint256 words; token decimals must match selected catalog, native EVM decimals must equal 18. Reject unknown chain, zero/malformed addresses, wrong JSON-RPC ID/envelope/error, wrong chain, missing/reorg block, impossible future timestamp, malformed data; no raw RPC response exposed.",
+    "snapshot": "Exact BigInt on-chain units and Decimal human units, block number/hash/time, native balance and separate optional token allowance. Native allowance remains null.",
+    "freshness": "Thirty-second historical marker; a block already more than two minutes old is historical immediately. No automatic signing or polling, failure retains historical data, stop/scope change/disposal ignores late results."
+  },
+  "vault_allowance_spenders": {
+    "1": "0x604DD02d620633Ae427888d41bfd15e38483736E",
+    "56": "0x128463A60784c4D3f46c23Af3f65Ed859Ba87974",
+    "42161": "0x9E36CB86a159d479cEd94Fa05036f235Ac40E1d5"
+  },
+  "amount_precheck": [
+    "Positive plain decimal input <=160 characters, token precision, exact uint256 smallest-unit range, configured minimum, matching fresh wallet balance; allowance compared separately.",
+    "Token wallet Max only fills read token balance, not a depositable maximum or platform allowance. Native Max is disabled until gas is estimated.",
+    "No gas or platform-cap availability is invented. No calldata, approval/deposit submission or execution receipt generated.",
+    "Input preserved after failed reads and scroll-offscreen; identity/address/wallet-kind changes clear input. Route retains read provider across lazy-child gaps."
+  ],
+  "remaining_platform_limit_dependency": {
+    "frontend_source": "https://static2.asterdexfx.com/assets/DepositAndWithdrawDialogBase-DnWoJCns.js",
+    "frontend_sha256": "9c2784c215d8a0ff60c58b36040d34d34a9976af56045ec41dbc1e90b2e67036",
+    "hook_source": "https://static2.asterdexfx.com/assets/hooks-mK3kRwSz.js",
+    "hook_sha256": "84c33bd0bc4db7df6075cd3c5e3fff83d2bf9fddfb0e558d17e2621a95044d5d",
+    "api_source": "https://static2.asterdexfx.com/assets/esm-CyiOXf0g.js",
+    "api_sha256": "b5567385fc09ceff47d557544643c7077443f5ec65b031fabd9b03bbb25a216c",
+    "private_endpoints": [
+      "POST /bapi/futures/v1/private/future/user-data/get-asset-residual-deposit",
+      "POST /bapi/futures/v4/private/future/user-data/user-balance"
+    ],
+    "fields": [
+      "residualDeposit",
+      "residualPlatformDeposit"
+    ],
+    "evidence": "Current public frontend hook computes maxDeposit from user residual plus wallet balance, platform residual and account residual. These require website private BAPI login and are not equivalent to public minDeposit or V3 withdrawal allowances.",
+    "boundary": "User has no third-party BAPI backend this phase. Do not guess authentication or treat missing caps as unlimited. Actual deposit remains incomplete, with gas/approval/signing/broadcast/receipt/platform-credit recovery still required."
+  },
+  "anonymous_rpc_probes": [
+    {
+      "origin": "https://ethereum-rpc.publicnode.com",
+      "chain_id": 1,
+      "request_method": "eth_chainId",
+      "response_sha256": "208c0be5a34cd9b241311e625b3035aa89cb237969cbc1a0c9cbd8c8517087eb",
+      "returned_chain_id": "0x1",
+      "captured_at_utc": "2026-11-03T14:57:45.034778+00:00"
+    },
+    {
+      "origin": "https://bsc-rpc.publicnode.com",
+      "chain_id": 56,
+      "request_method": "eth_chainId",
+      "response_sha256": "7c7ca3f8749c429839490413a34f1b23784b90f18ac1d8638aef1864f3a127b3",
+      "returned_chain_id": "0x38",
+      "captured_at_utc": "2026-11-03T14:57:45.098020+00:00"
+    },
+    {
+      "origin": "https://arbitrum-one-rpc.publicnode.com",
+      "chain_id": 42161,
+      "request_method": "eth_chainId",
+      "response_sha256": "91a950147615d1e67791f1b5fbebdd8e2e76cfcf83d781717b534cfe4eab0d71",
+      "returned_chain_id": "0xa4b1",
+      "captured_at_utc": "2026-11-03T14:57:45.112492+00:00"
+    }
+  ],
+  "real_wallet_balances_read": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "device_tools_used": false
+}

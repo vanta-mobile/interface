@@ -1,0 +1,40 @@
+{
+  "verified_at": "2026-11-02T11:22:02.094795+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "build": "arm64 release",
+  "apk_mb": 41.9,
+  "apk_sha256": "32f4e3723e75ecf8843149e8699c0bb69a989a70e3a03755ab1d860b9af866e2",
+  "automated_tests": 202,
+  "format": "136 files, no changes",
+  "analysis": "no issues",
+  "native_checks": [
+    "Chinese signed-out Spot panel",
+    "English switch retains Spot tab",
+    "Spot read button opens authentication sheet",
+    "English landscape scroll and read control visible",
+    "Spot panel displays no demo funds"
+  ],
+  "screenshots": [
+    "spot-account-zh-android.png",
+    "spot-account-en-android.png",
+    "spot-account-login-android.png",
+    "spot-account-landscape-android.png"
+  ],
+  "public_read_evidence": "spot-time-live.json",
+  "unverified": [
+    "real email OTP and EOA SIWE authentication",
+    "Aster accepts selected main wallet as signer",
+    "successful private Spot account read",
+    "wallet chainId 1666 signing compatibility",
+    "iOS compilation"
+  ],
+  "not_implemented": [
+    "Spot USD/BTC valuations and BTC low-balance filter",
+    "supported deposit/withdraw networks",
+    "Spot orders and histories",
+    "fund transfers",
+    "deposits and withdrawals"
+  ],
+  "test_data_boundary": "Successful balances in automated tests are fixtures. Native screenshots use the signed-out application without fake identities or assets."
+}

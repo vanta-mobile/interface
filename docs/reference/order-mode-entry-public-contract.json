@@ -1,0 +1,59 @@
+{
+  "recorded_at_utc": "2026-11-05 09:55:46 UTC",
+  "scope": "Futures PRD3.2/3.4: unified nine-mode entry, collapsed More menu, remembered Stop Limit, supported form routing and first-entry defaults.",
+  "source": {
+    "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+    "fetch_reported_as_of": "2026-11-05T07:06:39.541Z",
+    "section_snapshot": "3.4 futures交易页面默认配置（新用户首次访问的配置）\n\n<b>首访基准</b>　新用户从 Vanta 主导航进入 Futures，未指定合约，没有历史偏好和订单草稿。下表定义 Vanta 的唯一首访配置。默认交易对 BTCUSDT、新户单资产、单向、全仓、10× 为本版产品预设。Aster 新开户的实际初值尚待实测。\n\n<b>账户接入</b>　已连接的 Aster 账户以读取到的生效配置为准。页面加载只读取设置。行情及余额在加载期间显示 —，取得数据后显示实际值。\n\n<b>1　首屏、交易设置与主表单</b>\n\n<table fit-page-width=\"true\" header-row=\"true\" header-column=\"true\">\n<colgroup>\n<col width=\"180\" />\n<col width=\"320\" />\n</colgroup>\n<tr color=\"blue_bg\">\n<td>\n参数\n</td>\n<td>\n首次进入的默认值\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n首屏页签<br />交易对\n</td>\n<td>\n首屏页签：K 线<br />交易对：BTCUSDT\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n资产模式（账户级）\n</td>\n<td>\n单资产\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n持仓模式（账户级）\n</td>\n<td>\n单向持仓\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n保证金模式（BTCUSDT）\n</td>\n<td>\n全仓\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n杠杆倍数（BTCUSDT）\n</td>\n<td>\n10×\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n主订单类型<br />更多菜单\n</td>\n<td>\n主订单类型：限价单<br />更多菜单：收起<br />菜单记忆项：限价止盈止损\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n买卖方向<br />开平意图\n</td>\n<td>\n主表单方向：买入（BUY）<br />开平意图：开仓（OPEN）\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n委托价<br />委托数量\n</td>\n<td>\n委托价：BTCUSDT 首次取得的有效最新成交价，按价格精度预填<br />数量输入框：空<br />比例滑杆：0%\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n主表单数量单位\n</td>\n<td>\nUSDT（按委托金额输入）\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n有效方式<br />隐藏单<br />BBO\n</td>\n<td>\n有效方式：GTC<br />隐藏单：关闭<br />BBO：关闭\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n附加止盈止损\n</td>\n<td>\nTP/SL：关闭<br />止盈价、止损价、盈亏金额及百分比：空<br />触发依据预设：标记价格（Mark）<br />输入方式预设：盈亏金额（PnL）<br />执行方式预设：市价\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n只减仓<br />滑点容忍\n</td>\n<td>\n只减仓：关闭<br />自定义滑点：关闭<br />滑点值：空<br />滑点单位：百分比\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n可用保证金\n</td>\n<td>\n取当前合约账户 USDT 的 availableBalance，以 USDT 显示。\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n本单开仓数量<br />本单预计保证金\n</td>\n<td>\n本单开仓数量：—<br />本单预计保证金：—\n</td>\n</tr>\n</table>\n\n依据　[表单初值与单位读取](https://static2.asterdexfx.com/assets/useOrderFormData-DK3A6wo4.js) · [无偏好时的订单类型及开关](https://static2.asterdexfx.com/assets/useUMColumn-KUC5K38v.js) · [移动表单合并及价格预填](https://static2.asterdexfx.com/assets/_-_locale_.trade.pro._tradeType._symbol-1Y12OOsm.js) · [账户与交易对配置](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#accounttrades-endpoints) · [开仓成本](https://docs.asterdex.com/trading/perpetuals/fees-and-specs/costs-of-opening-positions) · [移动 Web 历史发布说明](https://docs.asterdex.com/trading)\n\n<b>2　九种模式的初始表单</b>\n\n首访选中限价单。其余八行描述用户首次打开对应模式时的唯一初值。各模式按 BTCUSDT、无历史偏好填写。确认字段列以补齐必填项、保留所有开关预设为准。\n\n<table fit-page-width=\"true\" header-row=\"true\" header-column=\"true\">\n<colgroup>\n<col width=\"175\" />\n<col width=\"295\" />\n<col width=\"380\" />\n<col width=\"300\" />\n</colgroup>\n<tr color=\"blue_bg\">\n<td>\n订单模式\n</td>\n<td>\n首次打开该模式的输入值\n</td>\n<td>\n开关与预设值\n</td>\n<td>\n仅填必填项、保留预设后的确认字段\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n限价单<br />Limit · 首访选中\n</td>\n<td>\n委托价：最新成交价<br />数量：空<br />有效方式：GTC\n</td>\n<td>\nBBO：关，预设对手价一档<br />隐藏单：关<br />只减仓：关<br />附加 TP/SL：关\n</td>\n<td>\n交易对、方向、委托价、数量\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n只做 Maker<br />Post Only\n</td>\n<td>\n委托价：最新成交价<br />数量：空<br />有效方式：GTX\n</td>\n<td>\nBBO：关，预设排队价一档<br />附加 TP/SL：关\n</td>\n<td>\n交易对、方向、委托价、数量\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n市价单<br />Market\n</td>\n<td>\n执行方式：市价<br />数量：空\n</td>\n<td>\n自定义滑点：关<br />滑点单位：百分比<br />容忍值：空<br />只减仓：关<br />附加 TP/SL：关\n</td>\n<td>\n交易对、方向、Market、数量\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n限价止盈止损<br />Stop Limit\n</td>\n<td>\n主单触发价：空<br />委托价：最新成交价<br />数量：空<br />有效方式：GTC\n</td>\n<td>\n主单触发依据：Mark<br />BBO：关，预设对手价一档<br />价格保护：关<br />附加 TP/SL：关\n</td>\n<td>\n交易对、方向、触发价、委托价、数量\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n市价止盈止损<br />Stop Market\n</td>\n<td>\n主单触发价：空<br />数量：空<br />触发后执行：市价\n</td>\n<td>\n主单触发依据：Mark<br />下单范围：指定数量<br />价格保护：关<br />附加 TP/SL：关<br />自定义滑点：关\n</td>\n<td>\n交易对、方向、触发价、Market、数量\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n跟踪委托<br />Trailing Stop\n</td>\n<td>\n回调比例：空<br />自定义激活价：空<br />数量：空\n</td>\n<td>\n触发依据：Mark<br />激活价留空时，交易所使用订单生效时的标记价格。\n</td>\n<td>\n交易对、方向、回调比例、数量\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n追逐限价委托<br />Chase\n</td>\n<td>\n跟价方式：BBO<br />金额输入框：空<br />金额单位：USDT（QUOTE）\n</td>\n<td>\n追价偏移输入：空，单位为绝对值<br />最大追价偏移：关<br />最大偏移输入：空，单位为绝对值\n</td>\n<td>\n交易对、方向、跟价依据、委托金额\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n分段委托<br />Scaled\n</td>\n<td>\n最低价：空<br />最高价：空<br />总金额：空<br />子单数量：空\n</td>\n<td>\n数量分布：Equal（等量）<br />常数方式预设：Difference，等量分布时隐藏<br />初始子单预览：空\n</td>\n<td>\n交易对、方向、价格区间、总金额、子单数、等量分布<br />预览逐笔列出子单类型、价格、数量和占比。\n</td>\n</tr>\n<tr>\n<td color=\"gray_bg\">\n分时委托<br />TWAP\n</td>\n<td>\n总委托量：空<br />执行时长：未设置（日、时、分输入框均为空）\n</td>\n<td>\n快捷比例：未选中<br />确认按钮：禁用，直至总量与时长有效。\n</td>\n<td>\n交易对、方向、基础币总数量、总时长、最新成交价\n</td>\n</tr>\n</table>\n\n依据　[策略与条件输入初值](https://static2.asterdexfx.com/assets/useOrderFormData-DK3A6wo4.js) · [表单及策略确认组件](https://static2.asterdexfx.com/assets/_-_locale_.trade.pro._tradeType._symbol-1Y12OOsm.js) · [下单参数](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#new-order--trade) · [追逐委托参数](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#place-chase-order-trade)",
+    "section_snapshot_sha256": "175969fa16370041e5a3ffa6743267db6cc598583be7442f0611a67baa97f664"
+  },
+  "entry": {
+    "initial": "Limit selected; More collapsed; remembered advanced entry TP/SL Limit. Available before authentication or explicit private context read.",
+    "basic": [
+      "Limit",
+      "Market"
+    ],
+    "more": [
+      "Post Only",
+      "TP/SL Limit",
+      "TP/SL Market",
+      "Trailing Stop",
+      "Chase",
+      "Scaled",
+      "TWAP"
+    ],
+    "supported": "Six ordinary opening modes map to existing ordinary/conditional/trailing submit/review flow. Scaled opens existing independent route/review/journal.",
+    "unavailable": "Chase and TWAP visible with localized unavailable reasons and disabled selection; never fallback to LIMIT or simulate successful submission. Chase lacks documented recovery/associated order query; TWAP user-deferred.",
+    "memory": "Screen-session only; advanced choice changes remembered More label, choosing basic leaves remembered advanced choice. Cancel/refresh/locale preserve; id/address/walletKind/signingAvailable change resets Limit/Stop Limit. No durable preference or new financial configuration write.",
+    "closing": "Dedicated position close and position triggers keep their specialized original selectors and mandatory review; Scaled/opening menu omitted.",
+    "defaults": "Blank raw amounts/quote unit, initial valid Last limit, Mark conditional/trailing, empty trigger/rate/activation, protection off and existing GTC defaults remain. Post Only pins GTX and disables changing its timeInForce; absent refreshed GTX support blocks review until explicitly selecting another mode.",
+    "drafts": "Switching keeps existing shared/raw inputs and dormant optional values; inactive trigger/limit/trailing/attachment fields excluded by existing draft rules. Initial empty defaults do not silently overwrite an edited draft. Explicit leaving Post Only selects new mode's GTC default; existing non-Post policies survive market round trips.",
+    "locks": "Mode/Scaled selection rechecks mounted, live busy/unknown result, settings ownership/recovery and auth busy. Menu-list virtualization does not discard result while owner screen remains live; disposed/locked owner ignores stale callback.",
+    "transport": "No new API/nonce/signature/submit implementation. Choosing entry never reads a private account, signs, creates wallet or submits. Current EOA or existing embedded wallet is retained."
+  },
+  "architecture": {
+    "domain": "Typed product modes, protocol-independent classification; separate strategy entries never treated as ordinary types.",
+    "presentation": "Localized wrapping basic chips and scrollable safe-area More sheet; no orientation lock, literal colors, HTTP clients or financial doubles. Existing long screen/form builds reviewed: selector and price/trigger/trailing components separate; stateful form remains under400lines, no transport added.",
+    "dependencies_added": []
+  },
+  "tests": {
+    "new_domain_cases": 18,
+    "new_widget_cases": 31,
+    "focused_total": 156,
+    "coverage": [
+      "EN/ZH320width text1.5,844x390landscape and768tablet; six opening modes each selected before private read, defaults, independent review then exact synthetic type/quantity/policy/basis assertions.",
+      "Signed-out all9 entries, both disabled choices cannot navigate, Scaled route opens with zero private reads/submits/wallet creation.",
+      "Refresh/menu cancel/locale preserve selected and remembered; same-address identity type change resets.",
+      "Captured callback while read pending cannot change mode/open Scaled; recycled selector still returns choice; disposed owner safely ignores callback.",
+      "Existing ordinary/close/TP/SL/Trailing/BBO/Scaled/amount/confirmation/unknown-result scenarios choose actual replacement opening menu. Original financial parameter and recovery assertions retained; fixed GTX unsupported path now explicitly switches mode rather than mutating fixed policy."
+    ]
+  },
+  "remaining": [
+    "Main opening percentage slider/sizing and some BBO/default settings remain incomplete; ordinary custom slippage lacks execution contract.",
+    "Chase not implemented: original strategy-ID recovery and associated ordinary order query not documented. TWAP remains user-deferred.",
+    "Full strategy list/edit/whole cancellation, full cross-product Portfolio and Swap incomplete.",
+    "Real EOA self-signer acceptance, signatures, execution, native layouts/storage/wallet returns and iOS build unverified; device testing deferred."
+  ],
+  "device_tools_used": false,
+  "financial_requests_sent": false
+}

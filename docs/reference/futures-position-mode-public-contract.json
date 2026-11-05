@@ -1,0 +1,43 @@
+{
+  "verified_at_utc": "2026-11-03T00:26:30.262801+00:00",
+  "official_doc": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_doc_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "prd_section": "3.1 持仓模式：单向／双向，切换需要平掉当前存在的仓位",
+  "endpoints": {
+    "context": [
+      "GET /fapi/v3/positionSide/dual",
+      "GET /fapi/v3/positionRisk (no symbol)",
+      "GET /fapi/v3/openOrders (no symbol)"
+    ],
+    "mutation": "POST /fapi/v3/positionSide/dual; dualSidePosition string true/false, no symbol",
+    "verification": "GET /fapi/v3/positionSide/dual (one new signature)"
+  },
+  "contract_checks": [
+    "Account-wide: official document states EVERY symbol for GET and POST",
+    "GET response dualSidePosition must be JSON boolean; write enum explicitly maps hedge to string true and one-way to string false",
+    "Strict full-account positionAmt Decimal validation and mode/position-side coherence; tiny positions and other symbols block",
+    "Active orders use existing strict mapper, all symbols included; incompatible position sides fail read",
+    "Official -4059 already set, -4067 open orders, -4068 positions map to localized safe failure reasons and code",
+    "Exact signed body with shared fresh nonce, EIP712 chain 1666, current connected wallet as both user and signer",
+    "POST acknowledgement does not prove final mode; new signed GET determines observed result and time"
+  ],
+  "reference_project": [
+    "/data/dodo/rwa-interface/lib/domain/models/position_leverage_context.dart",
+    "/data/dodo/rwa-interface/lib/data/services/hip3_position_intents.dart"
+  ],
+  "reference_boundary": "Reference informs explicit mode, context validity and mutation boundaries; its Hip3 protocol does not define Aster positionSide/dual.",
+  "implementation_boundaries": [
+    "No automatic private reads on entry; three explicitly initiated signatures for read",
+    "30-second validity begins at first mode response including remaining signatures and reads",
+    "Preflight responses are not an atomic exchange lock; external changes and eligibility remain Aster validation",
+    "No automatic close, cancel, margin or asset-mode change",
+    "All three setting types share activity, unresolved-result blocking and epoch invalidation",
+    "Unknown write persists across routes; GET-only verification never repeats POST",
+    "Submission marks account/risk/ADL/orders snapshots historical without generating financial values",
+    "Identity changes discard old results and block subsequent old signatures; no extra wallet, agent or API key",
+    "Independent settings page, not yet integrated into live order-entry or quick orders"
+  ],
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false
+}

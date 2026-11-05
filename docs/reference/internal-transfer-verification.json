@@ -1,0 +1,72 @@
+{
+  "recorded_at_utc": "2026-11-03T20:43:28.228753+00:00",
+  "scope": "Explicit Spot ↔ Futures internal transfer, dynamic public whitelist/input policy, source limits, ten-signature happy path, pre-send durable journal and original-wallet response recovery.",
+  "contract": "internal-transfer-public-contract.json",
+  "automated_tests": 2309,
+  "new_tests": 141,
+  "format_dart_files": 574,
+  "localized_messages_per_language": {
+    "en": 1126,
+    "zh": 1126
+  },
+  "acceptance_evidence": {
+    "domain_mapper": {
+      "tests": 37,
+      "file": "test/features/funding/internal_transfer_mapper_test.dart",
+      "coverage": "Exact whitelist/envelope; cap/fallback input precision; identical duplicates versus conflicts; Spot free versus locked and Futures selected maxWithdrawAmount versus wallet/available/root; missing cap/asset/permission; positive Decimal parsing/precision/exact step floor; strict SUCCESS positive int64 reply."
+    },
+    "journal": {
+      "tests": 24,
+      "file": "test/features/funding/internal_transfer_journal_test.dart",
+      "coverage": "Host filesystem restart preserves original client ID/amount/direction/nonce/public reply without secrets; duplicate wallet serial protection; strict key/schema/fields/money/identifiers; corrupt/temp/missing canonical preservation; report retention through directory/read/write faults; immutable reply and missing-original mutation guard."
+    },
+    "controller": {
+      "tests": 33,
+      "file": "test/features/funding/internal_transfer_provider_test.dart",
+      "coverage": "Explicit review/prewrite before exactly one dispatch; fresh two-account result read and shared snapshot refresh; dedup/cancel/expiry/selection/Max/input/failure; current EOA reconnect without wallet creation; same-time Futures and Spot replay; shared mutation lock/wallet isolation; unknown remains blocked after reads; known reply read-only recovery; response retention after stop/logout/dispose; actual host pre-dispatch journal."
+    },
+    "signed_repository": {
+      "tests": 38,
+      "file": "test/features/funding/signed_internal_transfer_repository_test.dart",
+      "coverage": "Mock HTTP/signers only. Both direction wire enums; 3 initial+3 recheck+1 POST+3 final signatures; chain1666 exact signed form, nonce uniqueness; public policy and balances/cap/permissions/mode drift; refusals at all seven pre-final prompts; original start30s expiry, scope/invalid signature/storage/timeout/errors and exactly one POST; terminal response after logout retained."
+    },
+    "widget": {
+      "tests": 9,
+      "file": "test/features/funding/internal_transfer_widget_test.dart",
+      "coverage": "English/Chinese320 width/text1.5, 844x390 landscape, 768x1024 tablet. No automatic read; direction re-read, exact Max/review/cancel/confirm/result/logout, known and unknown recovery without resending, manual amount retained after failure, asset selection clear/re-read, review expiry and route exit retaining late success. No device use."
+    },
+    "full_regression": "All 2309 tests passed after the final production/test edits. Includes existing order/recovery/settings/Rebalance/auth/funding/notification/portfolio/layout behavior."
+  },
+  "analysis": "No issues found",
+  "format": "574 Dart files, zero changes",
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43941692,
+    "sha256": "0a1793ed9e0c9558a0914e1c8205186f9a944878b5b8893c86cf649d41c686f6"
+  },
+  "build_notes": "Existing third-party Kotlin migration notices; release build successful, no APK installation.",
+  "ios": "Linux has no macOS/Xcode; not built or natively verified.",
+  "native_testing": "Not performed at user request; no device tools or APK installation. See ../native-verification-pending.md.",
+  "real_wallet_requests_sent": false,
+  "live_rpc_requests_sent": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "device_tools_used": false,
+  "public_network_reads": "Anonymous www.asterdex.com supported-asset/precision endpoints and sapi exchangeInfo earlier in increment. Spot exchangeInfo is not used to infer transfer precision. Official docs, sample and website modules read from existing public caches; no sample execution or signed exchange request.",
+  "remaining": [
+    "Platform direct-EOA/Privy signer authorization and actual transfer behavior remain unverified.",
+    "No original-clientTranId query/mapping contract; truly unknown transfer retains block and cannot be resolved from balances.",
+    "Phone storage/process-kill, wallet round-trips, native layouts and iOS remain pending.",
+    "External deposit/withdrawal, main/subaccount transfers, enable-trading, subaccount management, Chase recovery and complete Portfolio scope still incomplete; overall PRD goal active."
+  ],
+  "logs": {
+    "full_tests": "/tmp/vanta-internal-transfer-all-tests.log",
+    "focused": "/tmp/vanta-internal-transfer-focused-2.log (one obsolete controller expectation corrected; full final suite passed)",
+    "controller_final": "/tmp/vanta-internal-transfer-controller-final.log",
+    "analysis": "/tmp/vanta-internal-transfer-analysis-clean.log",
+    "format": "/tmp/vanta-internal-transfer-format-clean.log",
+    "build": "/tmp/vanta-internal-transfer-build.log"
+  }
+}

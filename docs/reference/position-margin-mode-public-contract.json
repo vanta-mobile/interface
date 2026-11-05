@@ -1,0 +1,44 @@
+{
+  "verified_at_utc": "2026-11-02T23:27:41.659406+00:00",
+  "official_doc": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_doc_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "prd_sections": [
+    "3.1 保证金模式：逐仓／全仓",
+    "资产模式与持仓模式为单独配置，不能隐式切换"
+  ],
+  "endpoints": {
+    "context": "GET /fapi/v3/positionRisk?symbol=… then GET /fapi/v3/openOrders?symbol=… (two explicit signatures)",
+    "mutation": "POST /fapi/v3/marginType; symbol + marginType=ISOLATED or CROSSED",
+    "verification": "GET /fapi/v3/positionRisk?symbol=… (one explicit signature)"
+  },
+  "contract_checks": [
+    "Official read configuration marginType is cross or isolated; mutation parameters map to CROSSED or ISOLATED",
+    "Zero-quantity rows still carry configuration; BOTH or complete LONG/SHORT modes are strictly validated",
+    "Both hedge sides share the symbol-scoped setting; contradictory modes and quantities fail mapping",
+    "Nonzero positionAmt, including tiny Decimal quantities, and active open orders block local review",
+    "Open-order response scope and fields validated using existing mapper; no positions closed or orders cancelled",
+    "Official -4046 no need to change, -4047 open orders, -4048 existing quantity map to localized safe reasons",
+    "HTTP acknowledgement does not prove final mode; separately signed current configuration decides observed result",
+    "Exact signed body, fresh nonce and Aster EIP712 chainId 1666; user and signer are the current connected EOA or Privy wallet"
+  ],
+  "reference_project": [
+    "/data/dodo/rwa-interface/lib/domain/models/position_leverage_context.dart",
+    "/data/dodo/rwa-interface/lib/data/services/hip3_position_intents.dart",
+    "/data/dodo/rwa-interface/lib/data/repositories/positions_repository_impl.dart"
+  ],
+  "reference_boundary": "Reference uses its own Hip3 backend and context. Only configuration lifetime, explicit supported modes and confirmation boundaries inform this client; Aster V3 supplies the wire contract.",
+  "implementation_boundaries": [
+    "No private read on page entry; context and open orders read only after explicit user action",
+    "Configuration lease starts on first response, not after the second signature; 30 seconds include second signature time",
+    "Known position/open-order blockers displayed; external changes and final eligibility remain exchange validation",
+    "Margin mode and leverage operations serialized across symbols/routes; unresolved write blocks the other setting until query resolves it",
+    "New settings mutation invalidates cached confirmations for both types; late completion cannot release a newer identity lease",
+    "POST never automatically retried, including timeout; unknown outcome exposes GET-only recheck",
+    "After submission, balance/risk/ADL/open-order snapshots remain historical until explicit reads",
+    "The request sets only cross/isolated margin; it does not submit leverage, position mode, asset mode or demo changes. Other live configuration still requires explicit refresh.",
+    "No real authorized private request or financial action sent in verification; authenticated acceptance remains unverified"
+  ],
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false
+}

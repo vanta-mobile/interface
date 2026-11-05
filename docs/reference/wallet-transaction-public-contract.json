@@ -1,0 +1,75 @@
+{
+  "recorded_at_utc": "2026-11-03T17:59:32.653995+00:00",
+  "scope": "Actual wallet send transport foundation for funding; no funding submit UI, journal, receipt or credit flow yet.",
+  "sources": [
+    {
+      "path": "/data/dodo/rwa-interface/lib/data/auth/privy_transaction_requester.dart",
+      "sha256": "dd3af55441b5143a4f5374eaa273dfbd42483e94500d18ba172bf73bf20f0c00"
+    },
+    {
+      "path": "/data/dodo/rwa-interface/lib/data/auth/privy_identity_auth_gateway.dart",
+      "sha256": "b9225387edddb2bd2af84798e929bc592730b99712749097007c6d0dcbacd2fa"
+    },
+    {
+      "path": "/home/junjie/.pub-cache/hosted/pub.dev/privy_flutter-0.10.2/lib/src/models/ethereum_rpc_request/ethereum_rpc_request.dart",
+      "sha256": "6b8699e4355e21f1ba50d7cd2ec972790aae5595ee8bec3f6d24c8b9757d0aed"
+    },
+    {
+      "path": "/home/junjie/.pub-cache/hosted/pub.dev/privy_flutter-0.10.2/lib/src/modules/embedded_ethereum_wallet_provider/real_embedded_ethereum_wallet_provider.dart",
+      "sha256": "3f24612ffbd90ad0b1026d4eff493f96d791ec9bca1129dcd7e76961dabaa57f"
+    },
+    {
+      "path": "/home/junjie/.pub-cache/hosted/pub.dev/privy_flutter-0.10.2/android/src/main/kotlin/io/privy/privyflutter/channel/WalletHandler.kt",
+      "sha256": "c9d4a435ff5262815831eeaa3ab5debd68ea33ee7daf2b3687ffb3a609784dd3"
+    },
+    {
+      "path": "/home/junjie/.pub-cache/hosted/pub.dev/privy_flutter-0.10.2/ios/privy_flutter/Sources/privy_flutter/channels/WalletHandler.swift",
+      "sha256": "9a8761e571b803c7819213388df6823bec562eb16bcc680d90337a0d33a87d32"
+    },
+    {
+      "path": "/home/junjie/.pub-cache/hosted/pub.dev/reown_appkit-1.9.0/lib/modal/appkit_modal_impl.dart",
+      "sha256": "1f98d6a7127b75618de330ccc4a2bdbaaf50172f9507bbd80ea662386e72b058"
+    }
+  ],
+  "request": {
+    "method": "eth_sendTransaction",
+    "supported_chains": [
+      1,
+      56,
+      42161
+    ],
+    "fields": [
+      "chainId",
+      "from",
+      "to",
+      "data",
+      "value",
+      "gas",
+      "gasPrice",
+      "nonce"
+    ],
+    "validation": "Immutable fully specified EVM transaction; nonzero exact-length addresses, even hex calldata <=64 KiB, uint256 value, positive uint256 gasPrice, positive uint64 gas limit, nonce < 2^64-1. BigInt serialized as canonical hex, no doubles.",
+    "external": "Current selected EOA only, same connected chain, approved eth_sendTransaction method and chain; request on original session topic with one object argument. Never create a replacement wallet or call Privy embedded transport.",
+    "embedded": "Exactly one existing matching Privy wallet, params is one JSON-encoded string per pinned native SDK; same ethSendRpcRequest channel with walletAddress. No createWallet fallback.",
+    "reown_namespace": "New connections request eth_sendTransaction alongside existing sign methods; older sessions lacking approval are rejected before modal request. No implicit permission upgrade or automatic chain switch.",
+    "gates": "Identity/address/signing capability/current generation/caller scope preflight; serial pending-send guard spans wallet prompt, logout and user changes. Reown also guards direct connection sends."
+  },
+  "outcomes": {
+    "not_sent": "Typed WalletTransactionNotSent for local validation, session, scope, chain or permission failure before invoking wallet RPC; not used for ambiguous post-dispatch errors.",
+    "hash_reported": "Nonzero 32-byte hex returned by provider. Preserve original hash even if wallet identity changes/logout/disposal occurs before response. This is not receipt, execution or platform credit evidence.",
+    "rejected": "Only structured EIP-1193 4001 (native PlatformException or Reown JsonRpcError). Message text mentioning rejected or 4001 is insufficient.",
+    "unknown": "Timeout, disconnection, generic/wrapped errors, malformed/empty/zero hash, wrong response method or async modal failure. No automatic retry, replacement or fallback.",
+    "pinned_native_limit": "Privy native SDK may normalize provider errors to RPC_REQUEST_FAILED. Dart adapter preserves whatever structured native code exists; it does not reconstruct missing 4001 from strings, so such cases remain unknown.",
+    "late_errors": "Contain async SDK modal errors in send zone without exposing raw payloads or changing an already returned outcome."
+  },
+  "remaining": [
+    "Wire funding confirmation and durable pre-dispatch journal before exposing a submit action; persist hashes under original wallet even after scope loss.",
+    "Bind chain receipts and transaction details to original nonce/call, reorg/replacement and unknown-hash recovery, then platform credit tracking.",
+    "Explicit safe chain-switch/reconnection flow, final quote/caps checks and native Max; user/platform private BAPI caps remain unavailable this phase.",
+    "No app-level deposit/approval workflow is complete solely because transport exists."
+  ],
+  "device_tools_used": false,
+  "real_wallet_requests_sent": false,
+  "financial_actions_sent": false,
+  "dependencies_added": []
+}

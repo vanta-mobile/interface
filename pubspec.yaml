@@ -1,0 +1,56 @@
+name: vanta
+description: Vanta mobile perpetual trading experience built with Flutter.
+publish_to: none
+version: 1.0.0+1
+environment:
+  sdk: ^3.13.0
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^3.4.3
+  k_chart_plus: ^1.0.4
+  # Offline recovery of wallet EIP-712 signatures; no keys are generated.
+  web3dart: 3.0.3
+  decimal: ^3.2.6
+  http: ^1.6.0
+  web_socket_channel: ^3.0.3
+  privy_flutter: 0.10.2
+  intl: ^0.20.3
+  reown_appkit: 1.9.0
+  shared_preferences: ^2.5.6
+  # Isolated AI session tokens and private conversation history on native storage.
+  flutter_secure_storage: 10.3.4
+  # Atomic, flushed pending-order journal in the native app support directory.
+  path_provider: ^2.1.5
+  html: ^0.15.6
+  url_launcher: ^6.3.3
+  # Native selectable chat Markdown and GFM tables, with remote images blocked.
+  flutter_markdown: 0.7.7+1
+dev_dependencies:
+  integration_test:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  generate: true
+  uses-material-design: true
+  assets:
+    - assets/branding/
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter.ttf
+    - family: NotoSansSC
+      fonts:
+        - asset: assets/fonts/NotoSansSC.ttf
+# k_chart_plus uses intl DateFormat APIs compatible with the SDK-pinned release.
+dependency_overrides:
+  # Reown permits 7.x; 7.0.0 avoids 7.1's iOS 26-only native API.
+  connectivity_plus: 7.0.0
+  # Local 1.0.4 patch: pinch must take over from a drag or long press.
+  k_chart_plus:
+    path: third_party/k_chart_plus
+  intl: ^0.20.3

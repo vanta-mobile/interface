@@ -1,0 +1,94 @@
+{
+  "recorded_at_utc": "2026-11-04T14:12:44.356891+00:00",
+  "increment": "Futures asset collateral contribution with public mark recomputation and signed snapshot fallback",
+  "contract": "asset-collateral-public-contract.json",
+  "baseline": "assistant-ui-verification.json",
+  "tests": {
+    "baseline_full": 3268,
+    "new": 80,
+    "targeted_passed": 80,
+    "full_passed": 3348,
+    "exit_code": 0,
+    "files": [
+      "test/features/portfolio/asset_collateral_test.dart",
+      "test/features/portfolio/asset_cross_pnl_test.dart",
+      "test/features/portfolio/collateral_mark_prices_provider_test.dart",
+      "test/features/portfolio/asset_collateral_widget_test.dart"
+    ],
+    "coverage": [
+      "Exact crossWalletBalance + crossUnPnl; min of bid/ask products for positive/negative/zero/high precision equity; no available/total/peg fallback.",
+      "Missing/invalid eligibility, crossed fields, optional rates/units; optional rates do not break independent index valuation; account events invalidate aggregate until new signed read.",
+      "Complete linear crossed long/short/hedge positions recompute Decimal PnL; incomplete/missing/invalid mark or position data use full signed aggregate, no partial mix; stale/disconnected complete marks retain stale reference.",
+      "No auth/private account/signature initialization; shared stable normalized account-wide mark scope; quantity/order dedupe; empty/zero/isolated/unsupported scope no transport; last consumer disposal and background/foreground/late old-wallet REST isolation.",
+      "Actual Futures asset card contribution, cross-PnL-only asset not hidden; public price changes update contribution/details and source label without another signed read; missing multi-symbol marks fallback; account events cancel marks; wallet changes clear old marks.",
+      "EN/ZH320width text1.5,844x390landscape,768x1024tablet expanded negative long-precision values, units/time/source/no layout exception."
+    ]
+  },
+  "format": {
+    "files": 749,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1507,
+    "zh": 1507,
+    "new_per_locale": 17,
+    "message_keys_equal": true
+  },
+  "android": {
+    "command": "flutter build apk --no-pub --release --target-platform android-arm64 --dart-define-from-file=config/privy.local.json",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45515604,
+    "sha256": "b5b8b63fe592ed3e54caf8f6e8afcbbd4bba79bcda15f8e78091a42177467458",
+    "aot_bytes": 15532936,
+    "aot_localization_probes": {
+      "en:collateralContribution": true,
+      "en:collateralLiveMarks": true,
+      "en:collateralSnapshotPnl": true,
+      "en:collateralEventsNeedRead": true,
+      "zh:collateralContribution": true,
+      "zh:collateralLiveMarks": true,
+      "zh:collateralSnapshotPnl": true,
+      "zh:collateralEventsNeedRead": true
+    },
+    "packaging_boundary": "Reachable AsterAccountRows imports AssetCollateralRows; English Latin1 and Chinese UTF16LE probes in AOT. Build and embedded strings do not prove native visual/network acceptance.",
+    "installed": false,
+    "device_tools_used": false,
+    "signing": "Existing local debug signing, not store distribution",
+    "build_notice": "Existing coinbase_wallet_sdk/package_info_plus/privy_flutter KGP migration warning; build succeeded, future plugin migration remains."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "performed": {
+    "anonymous_public_sources": true,
+    "synthetic_http_and_market_streams": true,
+    "unit_and_widget_tests": true,
+    "actual_wallet_signature": false,
+    "actual_private_api": false,
+    "address_bearing_rpc": false,
+    "financial_actions": false,
+    "native_device_testing": false,
+    "local_privy_config_read": false
+  },
+  "remaining": [
+    "Native networking/TLS/mark timing/lifecycle and real signed account fields; source-time/phone-clock/online transition compatibility.",
+    "EN/ZH narrow/landscape/tablet/accessibility/layout on actual Android/iOS; user deferred native testing.",
+    "iOS compilation requires macOS/Xcode.",
+    "Swap/full cross-product Portfolio and broader PRD gaps remain tracked in prd-progress.md; overall objective incomplete."
+  ],
+  "logs": {
+    "targeted": "/tmp/vanta-collateral-targeted.log",
+    "full": "/tmp/vanta-collateral-all-tests.log",
+    "analysis": "/tmp/vanta-collateral-analysis-clean.log",
+    "format": "/tmp/vanta-collateral-format-clean.log",
+    "build": "/tmp/vanta-collateral-build.log"
+  },
+  "verification_note": "Initial stream Widget fixture close stalled under fake clock; cancellation asserted and close drained with tester.runAsync. Final80 targeted/full3348 suite authoritative; no production behavior changed to satisfy the fixture."
+}

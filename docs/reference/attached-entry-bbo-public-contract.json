@@ -1,0 +1,70 @@
+{
+  "recorded_at_utc": "2026-11-03T15:32:52.342315+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "official_document": {
+    "url": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+    "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4",
+    "repository_commit": "10391d12716923729c0255becfb7211bc7b17465",
+    "placement_section": "Place Strategy Order (TRADE)",
+    "query_sections": [
+      "Query Strategy Open Order (USER_DATA)",
+      "Query Strategy History Order (USER_DATA)"
+    ]
+  },
+  "implemented_scope": "Compound OTO/OTOCO entry pricing only, retaining fixed-quantity market TP/SL exits and existing full-entry-fill activation / peer-filled cancellation linkage.",
+  "placement_contract": {
+    "method": "POST",
+    "path": "/fapi/v3/placeStrategyOrder",
+    "entry_types": [
+      "LIMIT",
+      "STOP",
+      "TAKE_PROFIT"
+    ],
+    "peg_values": [
+      "COUNTERPARTY_1",
+      "COUNTERPARTY_3",
+      "COUNTERPARTY_5",
+      "COUNTERPARTY_10",
+      "COUNTERPARTY_20",
+      "QUEUE_1",
+      "QUEUE_3",
+      "QUEUE_5",
+      "QUEUE_10",
+      "QUEUE_20"
+    ],
+    "price": "0",
+    "price_rule": "With pegPriceType, price must be string zero; other prices rejected. Zero is introduced at the transport boundary, not represented as a user price.",
+    "resolution": "At placement for LIMIT; at trigger for STOP/TAKE_PROFIT. One-time resolution, not continuous Chase.",
+    "policy": "Use current exchange timeInForce capabilities; IOC/FOK unavailable for compound orders.",
+    "bracket_rejection": "BBO entry TP/SL sanity check runs in strategy service; HTTP200 may carry failureCode=-4142. Check failureCode, then original-reference query; never auto-repeat POST."
+  },
+  "query_contract": {
+    "identity": [
+      "clientStrategyId",
+      "strategyType",
+      "leg clientOrderId",
+      "strategySubId",
+      "symbol",
+      "side",
+      "positionSide",
+      "quantity",
+      "timeInForce",
+      "trigger terms",
+      "linkage",
+      "pegPriceType"
+    ],
+    "bbo_price": "Query returns price=0 with exact pegPriceType. Missing, unknown, changed-depth/side peg or positive returned price remain unresolved.",
+    "fixed_price_legs": "Reject unexpected non-empty pegPriceType even when numeric price matches.",
+    "quantities": "Strategy status does not document executed quantities. Do not claim fills, executed prices or remaining balances."
+  },
+  "estimates": "Decimal notional and margin reference Mark for plain pegged entry and trigger price for conditional pegged entry. Neither is the selected level or an execution price. Aster validates resolved price and TP/SL; no local guessed book level for bracket rejection.",
+  "recovery": "Journal schema2 freezes the peg; accepts strict legacy schema1 rows without BBO. Stable existing canonical filename preserved so old pending rows are found. Frozen original-reference recovery is GET-only. Old app versions cannot read schema2; downgrade unsupported.",
+  "ordinary_bbo_remaining": {
+    "reason": "Ordinary POST /fapi/v3/order documents COUNTERPARTY_1 / QUEUE_1 but leaves peg-specific price constraints undefined. Compound contract is not extended to ordinary orders or dedicated position close.",
+    "public_frontend_url": "https://static2.asterdexfx.com/assets/_-_locale_.trade.pro._tradeType._symbol-1Y12OOsm.js",
+    "public_frontend_sha256": "fa2432cdb911105d93de09b4a8c2c618989339a851ef11ce50ccfba2333536f5",
+    "observation": "Website limit/post-only/stop-limit builders set price=0 with pegPriceType, but website private transport alone does not establish ordinary signed V3 contract.",
+    "superseded_on_2026_11_04": "Ordinary level-one BBO is now implemented after combining the same V3 New Order peg field with error -5035 zero-price requirement; see ordinary-bbo-public-contract.json. The historical observations above are retained; deeper ordinary pegs remain unsupported."
+  },
+  "live_requests": "Anonymous official docs, public Git repository and static frontend sources only. No wallet signing, private reads, orders, cancellation, funding or device tools."
+}

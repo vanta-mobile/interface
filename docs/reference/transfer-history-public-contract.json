@@ -1,0 +1,63 @@
+{
+  "recorded_at_utc": "2026-11-03T12:03:06.808620+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780e7afeed701ef37e67a",
+  "official_document": "https://github.com/asterdex/api-docs/blob/master/demo/aster-deposit-withdrawal.md#get-deposit-and-withdraw-historyv3",
+  "official_document_sha256": "e6943bd414e9e09bc1592446dd1b39d67e2750bf6480a368da8cc5caec9ae39a",
+  "method": "POST",
+  "origin": "https://fapi.asterdex.com",
+  "path": "/fapi/v3/aster/deposit-withdraw-history",
+  "operation": "Read history only. No deposit, withdrawal or transfer submission.",
+  "documented_parameters": "No additional parameters beyond V3 signature fields. No documented pagination, time, asset, or market filters.",
+  "fields": {
+    "id": "record ID (string)",
+    "type": [
+      "DEPOSIT",
+      "WITHDRAW"
+    ],
+    "asset": "asset symbol",
+    "amount": "decimal string",
+    "state": [
+      "PROCESSING",
+      "SUCCESS",
+      "FAILED"
+    ],
+    "txHash": "transaction hash; empty or absent stays unknown",
+    "time": "record time, Unix milliseconds; not a documented completion time",
+    "chainId": "integer network ID",
+    "accountType": [
+      "spot",
+      "perp"
+    ]
+  },
+  "authentication": {
+    "domain": {
+      "name": "AsterSignTransaction",
+      "version": "1",
+      "chainId": 1666,
+      "verifyingContract": "0x0000000000000000000000000000000000000000"
+    },
+    "message": "Message.msg is the exact query string; append signature last in URL as shown in the funding signature example.",
+    "funding_nonce": "Funding V3 example uses 1742198400000000000 for server time 1742198400000: milliseconds * 1000000. Valid for 30 seconds.",
+    "existing_trading_protocol": "Existing microsecond counters are separate and unchanged; shared nonce object owns both counters.",
+    "signer_boundary": "Official funding doc describes an issued dedicated EOA signer. This app continues signing with the connected EOA as both user and signer, creates no substitute key and surfaces authorization rejection. Same-EOA acceptance is not live-verified."
+  },
+  "notification_policy": {
+    "category": "FUND_TRANSFER",
+    "eventType": "type + state",
+    "sourceRecordId": "id",
+    "dedupe": "wallet + market + transfer type + id + state",
+    "first_read": "Silent wallet baseline for both markets, including empty response.",
+    "status_history": "Persist every observed state; the source has no status-update timestamp or documented transition ordering. Repeat states are not new notifications.",
+    "times": "Notification uses explicit read observation time; preserves source record time separately.",
+    "failure_reason": "Not supplied; never fabricated."
+  },
+  "account_update": "Retain a.m and optional Decimal bc. DEPOSIT / WITHDRAW / WITHDRAW_REJECT mark refresh needed; no automatic wallet prompt, separate duplicate balance notification, inferred request amount or completion.",
+  "storage": {
+    "read": "legacy v1 remains readable",
+    "write": "v2 outer envelope in same preferences key stores inbox and observed state sets together",
+    "retention": "500 recent notifications and 4 MiB total; tracking at most 100 wallets, 5000 records, 1 MiB; refuse tracking overflow without evicting seen states",
+    "failure": "No overwrite after load failure; keep in-memory write failures for retry. No guaranteed crash durability or cross-device sync."
+  },
+  "live_private_requests_sent": false,
+  "device_tools_used": false
+}

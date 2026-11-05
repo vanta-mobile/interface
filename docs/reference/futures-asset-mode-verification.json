@@ -1,0 +1,90 @@
+{
+  "verified_at_utc": "2026-11-03T00:59:05.817187+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "apk": {
+    "bytes": 42761528,
+    "sha256": "66bb6d9d40727d448a02bb19a16ea39512ec6c4fa187ba989f9205633b334ecb",
+    "installed": true,
+    "build_seconds": 68.6
+  },
+  "automated_tests": 678,
+  "new_tests": {
+    "mapper_domain": 7,
+    "signed_repository": 17,
+    "controller": 13,
+    "widget": 8,
+    "cross_settings_activity": 4
+  },
+  "format_dart_files": 297,
+  "format_changed_files": 0,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 593,
+    "zh": 593
+  },
+  "official_contract": "futures-asset-mode-public-contract.json",
+  "unit_widget_checks": [
+    "No automatic private reads or wallet creation; explicit two-signature read binds wallet and whole-account configuration",
+    "Strict boolean response; position grouping, complete hedge sides, margin and position-mode consistency and exact Decimal amounts",
+    "Other-symbol isolated exposure, tiny positions and retained positive/negative isolated collateral block only multi-assets target",
+    "Cross positions and isolated zero-size/zero-collateral configurations do not create blockers; isolated symbols immutable and selectable",
+    "Exact POST body multiAssetsMargin true/false strings, no symbol/margin/position-mode parameters; current wallet user/signer with unique shared nonces",
+    "POST acknowledgement cannot confirm mode; separate signed GET determines observation and UTC time",
+    "Timeout or refused verification preserves uncertainty; GET-only recovery never repeats POST",
+    "Refused write sends no POST; second read refusal or malformed data fails preflight without producing empty blockers",
+    "30-second lease begins at first response and checked after signature and at send; identity changes prevent old follow-up signatures/results",
+    "All four settings serialize activity, unresolved-result blocking and cached confirmation invalidation",
+    "English 360-wide 2x and Chinese 844x390 1.5x selection, confirmation and observed result; failure and refresh keep selection",
+    "Existing account-event widget regression fixed with page-scoped scroll and ensureVisible before tapping current-symbol switch; five related tests and full suite rerun passed"
+  ],
+  "native_checks": [
+    "Chinese risk settings entry opens actual all-symbol asset-mode page; scope, single/multi collateral explanations and sign-in action readable",
+    "Actual Chinese email/EOA sheet opens; dismissed without authentication, wallet creation or signature",
+    "English language selection and English risk entry display localized asset-mode screen",
+    "English landscape scope, collateral description, action and freshness text visible without clipping or overflow",
+    "Restored Chinese app locale, portrait, accelerometer_rotation 0, user_rotation 0 and font_scale 1.0; verified native hierarchy and settings"
+  ],
+  "screenshots": [
+    {
+      "file": "futures-asset-mode-zh-android.png",
+      "sha256": "10a423a8d1dca89ae93ce0f3b273be1092cdf7fd5b661c2e82ff04f767fc79d3"
+    },
+    {
+      "file": "futures-asset-mode-zh-auth-android.png",
+      "sha256": "2377cd7e37790d012ca443e8b02caa04bb6ad6ca8d58941f34294b213ef978aa"
+    },
+    {
+      "file": "futures-asset-mode-en-android.png",
+      "sha256": "0d9226cf535f524102b6b567c932523cc45b52c117d135eca3d1183b42a6bedc"
+    },
+    {
+      "file": "futures-asset-mode-en-landscape-android.png",
+      "sha256": "b0e232c6c625b5c63705ec0a36d645d169f7eb901004768179868dcdb5db30be"
+    },
+    {
+      "file": "futures-asset-mode-restored-zh-android.png",
+      "sha256": "a973365f18cf582a8d6de9cc3e4327f35476ea16f2f6091f24937da743cbf660"
+    }
+  ],
+  "original_settings": {
+    "app_locale": "zh",
+    "accelerometer_rotation": 0,
+    "user_rotation": 0,
+    "font_scale": "1.0",
+    "restored": true
+  },
+  "live_private_requests_sent": false,
+  "financial_actions_sent": false,
+  "signed_in_native_values_faked": false,
+  "unverified": [
+    "Real authorized EOA/Privy private acceptance and asset-mode mutation",
+    "Signed-in native field/confirmation/verification values; controlled unit/widget fixtures only",
+    "iOS build requires macOS/Xcode unavailable on Linux"
+  ],
+  "remaining": [
+    "Real authentication acceptance, account gap recovery and live order-entry/quick-order integration",
+    "Close/reverse, isolated margin, TP/SL, subaccounts, funding, full valuation and notifications",
+    "Private BAPI historical statistics and TWAP skipped per user instruction"
+  ]
+}

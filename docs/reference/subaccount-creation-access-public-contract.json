@@ -1,0 +1,45 @@
+{
+  "recorded_at_utc": "2026-11-05 09:14:40 UTC",
+  "scope": "Account PRD subaccounts section0: external EOA login required for creation; embedded Privy creation forbidden.",
+  "source": {
+    "url": "https://app.notion.com/p/408080d974e7803f8710f5e688c0d103",
+    "page_last_edited_at": "2026-11-05T07:56:29.767Z",
+    "fetched_at_utc": "2026-11-05T08:22:01.159Z",
+    "section_snapshot": "### 0、创建子账户的前提条件\n\n只有通过eoa钱包登录的账户，可以创建子账户\n\n通过privy托管钱包登录的用户，不允许创建子账户",
+    "section_snapshot_sha256": "436bfd499672810268108fbedc5f44de15899b28380dd917f7eacb236777ca08"
+  },
+  "implementation": {
+    "eligibility": "Current authenticated AuthIdentity.walletKind must be external. Linked email does not deny external EOA creation; a merely connected unrelated wallet does not grant embedded identity permission.",
+    "ui": "Create remains selected initially and disabled for embedded wallets, with EN/ZH explanation; no automatic selection of freeze, unfreeze or transfer. Creation fields/prepare disabled; stale creation review hidden.",
+    "application": "Prepare rejects embedded creation before repository calls. Confirm independently rejects embedded creation. Identity id/address/walletKind/signingAvailable/auth busy and generation participate in scope checks. Returned identity never revives older callbacks.",
+    "repository": "Prepare and submit reject embedded creation before signing, transport or journal writes. Signing availability also required. Existing child proof, fresh signed master qualification/count, ten-child limit,45sec review, signature verification and persist-before-POST retained.",
+    "switch": "Separate explicit switch address input and confirmation remain usable for embedded identity while creation is disabled; identity or signing capability changes clear entered addresses/name/amount/child proof.",
+    "other_actions": "Embedded list/read, management entry, switching, freeze/unfreeze and master-child four market-direction transfers remain available subject to signing capability and Aster master authorization; successful synthetic responses do not prove actual acceptance.",
+    "wallets": "Existing EOA signs directly as user=signer; no wallet/key generation or replacement agent. Child EOA independently owned and signs existing challenge."
+  },
+  "architecture": {
+    "flow": "Widget → Riverpod notifier → repository → AsterAccountService",
+    "extraction": "Localized action selector extracted. Existing management screen's long orchestration build reviewed: creation capability is domain helper, transport/signing guards in application/data, review separate part; no new HTTP or financial logic in widgets.",
+    "dependencies_added": []
+  },
+  "verification_scope": {
+    "new_repository_cases": 16,
+    "new_controller_cases": 16,
+    "new_widget_cases": 8,
+    "focused_total": 121,
+    "coverage": [
+      "Embedded creation both signable/restored: no signature/HTTP/journal; valid child proof cannot bypass forged embedded review.",
+      "External EOA with email allowed; disconnected EOA blocked; embedded freeze/unfreeze and all8 transfer direction/from-to combinations remain accepted by synthetic master.",
+      "Preparation/submission scope invalidated by wallet kind/signing/logout/stop; return to same EOA requires fresh generation; old confirm cannot send.",
+      "Independent confirm guard against unexpected embedded creation review.",
+      "EN/ZH320width text1.5,844x390landscape,768tablet; actual dropdown operation and explicit confirm for other actions.",
+      "Same-address EOA→Privy clears child proof/inputs, hides challenge/confirm; separate switching confirmation and explicit list read still usable."
+    ]
+  },
+  "boundaries": [
+    "Real EOA self-agent acceptance, embedded noncreation operation qualification, child account creation and financial results unverified.",
+    "No device tooling/APK installation or real signatures/private/financial/chat/address-bearing RPC requests in this increment.",
+    "Android normal Makefile build only. iOS needs macOS/Xcode.",
+    "Full PRD goal still active: complete strategy management, Chase recovery, nine-mode entry/default settings, full Portfolio and Swap incomplete. User skipped only historical statistics/Summary/TWAP."
+  ]
+}

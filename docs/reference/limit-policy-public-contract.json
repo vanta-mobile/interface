@@ -1,0 +1,75 @@
+{
+  "recorded_at_utc": "2026-11-03T05:33:23.641477+00:00",
+  "source": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_protocol_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "public_request": "GET https://fapi.asterdex.com/fapi/v3/exchangeInfo",
+  "authentication": "none",
+  "selected_symbols": [
+    {
+      "symbol": "ASTERUSDT",
+      "status": "TRADING",
+      "orderTypes": [
+        "LIMIT",
+        "MARKET",
+        "STOP",
+        "STOP_MARKET",
+        "TAKE_PROFIT",
+        "TAKE_PROFIT_MARKET",
+        "TRAILING_STOP_MARKET"
+      ],
+      "timeInForce": [
+        "GTC",
+        "IOC",
+        "GTX",
+        "HIDDEN"
+      ]
+    },
+    {
+      "symbol": "BTCUSDT",
+      "status": "TRADING",
+      "orderTypes": [
+        "LIMIT",
+        "MARKET",
+        "STOP",
+        "STOP_MARKET",
+        "TAKE_PROFIT",
+        "TAKE_PROFIT_MARKET",
+        "TRAILING_STOP_MARKET"
+      ],
+      "timeInForce": [
+        "GTC",
+        "IOC",
+        "GTX",
+        "HIDDEN"
+      ]
+    },
+    {
+      "symbol": "ETHUSDT",
+      "status": "TRADING",
+      "orderTypes": [
+        "LIMIT",
+        "MARKET",
+        "STOP",
+        "STOP_MARKET",
+        "TAKE_PROFIT",
+        "TAKE_PROFIT_MARKET",
+        "TRAILING_STOP_MARKET"
+      ],
+      "timeInForce": [
+        "GTC",
+        "IOC",
+        "GTX",
+        "HIDDEN"
+      ]
+    }
+  ],
+  "scope": "Capability evidence only; not proof of wallet authorization, order acceptance or fills.",
+  "documented_limit_policies": [
+    "GTC",
+    "IOC",
+    "GTX",
+    "HIDDEN"
+  ],
+  "unsupported": "FOK is absent from the documented futures timeInForce enum and is not exposed.",
+  "bbo_remaining": "Ordinary New Order documents pegPriceType COUNTERPARTY_1/QUEUE_1 and engine price resolution, but still lists price as required for LIMIT without its peg-specific constraint. Compound-order legs explicitly require price=0; that separate contract is not assumed for ordinary orders. No BBO mode is exposed by this increment."
+}

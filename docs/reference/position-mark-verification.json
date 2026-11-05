@@ -1,0 +1,65 @@
+{
+  "verified_at_utc": "2026-11-02T18:47:23.302510+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "apk": {
+    "bytes": 42433512,
+    "sha256": "dcfe8e2c0f430044761ad689ce172c6e00430e44e9d7702797c0c440b6128346"
+  },
+  "automated_tests": 377,
+  "new_unit_widget_tests": 24,
+  "format_dart_files": 211,
+  "analysis": "no issues",
+  "localized_messages_per_language": 460,
+  "native_checks": [
+    "Chinese updated mark estimate scope and sign-in entry",
+    "English updated scope and sign-in entry",
+    "English landscape scrolling",
+    "original Chinese locale, locked portrait and font scale restored"
+  ],
+  "screenshots": [
+    "position-mark-zh-android.png",
+    "position-mark-login-android.png",
+    "position-mark-en-android.png",
+    "position-mark-landscape-android.png"
+  ],
+  "unit_widget_checks": [
+    "strict Decimal mark parsing and signed linear estimates",
+    "per-symbol freshness bounded by receipt and server event age",
+    "duplicate, old, delayed or implausible future events cannot replace current quotes",
+    "invalid updates keep values and invalidate only affected symbols",
+    "late REST never replaces a newer stream mark",
+    "disconnect and resume require newly verified values",
+    "public transport exists only for an active nonzero signed position snapshot",
+    "logout, screen disposal and background release transport",
+    "newer signed snapshots take precedence over retained public marks",
+    "position expiry remains visible despite fresh marks",
+    "missing/non-linear units and zero-quantity debt never manufacture estimates",
+    "fully recovered stream suppresses failed REST warning",
+    "360-width English 2x text and Chinese 844x390 landscape 1.5x text values"
+  ],
+  "public_evidence": [
+    "position-mark-public-contract.json",
+    "position-mark-public-live.json"
+  ],
+  "anonymous_live_result": {
+    "symbols": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "initial_fresh_marks": true,
+    "paused_without_fresh_values": true,
+    "resumed_with_new_marks": true
+  },
+  "unverified": [
+    "real authorized EOA/Privy position reads",
+    "signed-in values on physical device (fixtures in widget tests only)",
+    "iOS build requires macOS/Xcode"
+  ],
+  "remaining": [
+    "authenticated account stream and position quantity updates",
+    "ROI and cross initial margin",
+    "close/reverse, margin changes and TP/SL"
+  ]
+}

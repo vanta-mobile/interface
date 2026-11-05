@@ -1,0 +1,55 @@
+{
+  "recorded_at_utc": "2026-11-03T18:34:41.348078+00:00",
+  "scope": "Explicit ERC20 precise approve/reset, pre-dispatch journal and read-only transaction/receipt recovery. Actual deposit submission remains unavailable.",
+  "prd": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+  "encoding_source": "deposit-gas-public-contract.json",
+  "wallet_transport": "wallet-transaction-public-contract.json",
+  "authorization": {
+    "chains": [
+      1,
+      56,
+      42161
+    ],
+    "method": "approve(address spender,uint256 amount)",
+    "selector": "0x095ea7b3",
+    "spender": "Fixed documented vault for the selected chain; displayed separately from the token target.",
+    "policy": "Zero insufficient allowance: exact requested units. Nonzero insufficient allowance: approve zero first. No unlimited approval, no native-asset approval.",
+    "confirmation": "Each step has a fresh explicit prepare, immutable review and confirmation. Full wallet/allowance/balance/Gas/nonce estimate repeated before send; changed parameters require a new review. Expiry and identity checked again after durable write.",
+    "signer": "Current Reown EOA or existing Privy embedded wallet; no new wallet, fallback signer, implicit chain switch, automatic next step or retries.",
+    "funding_boundary": "Approval costs native gas and is not a deposit. Deposit remains blocked on unknown user/platform caps and incomplete credit recovery."
+  },
+  "recovery": {
+    "file": "Application support directory/pending-deposit-approvals-v1.json",
+    "schema": "Version 1; strict bounded lexical JSON, canonical integer strings, immutable exact unsigned terms, wallet/chain/nonce, block/hash, timestamp and optional reported hash. No signature, secret or executable queue.",
+    "write": "Serialize mutations; flushed temporary file followed by same-directory rename before dispatch. At most one unresolved record per wallet across supported chains. Storage/corruption failures block new sends and preserve the record.",
+    "hash_failure": "Returned hashes retained in memory even if locating/reading/writing storage fails. Reload validates original unsigned terms and merges retained hash before further writes. A crash before a failed hash write is recovered through saved unsigned terms and manual hash.",
+    "dispatch_outcomes": "Only known-not-sent or structured rejection removes pre-send record without a receipt. Unknown result stays unresolved. Returned hashes journaled under original wallet even after stop/logout/disposal.",
+    "reads": [
+      "eth_chainId",
+      "eth_getTransactionByHash",
+      "eth_getTransactionReceipt",
+      "eth_getBlockByNumber"
+    ],
+    "transaction_binding": "Candidate hash, chain, from and nonce must match saved scope. Economic intent is exact to/input/value; matching speedup hashes can be checked, pending replacements do not overwrite original hash.",
+    "receipt_binding": "Match transaction hash/from/to/block/hash, status 0/1, gas usage, recent head and canonical receipt block. At least 2 observed confirmations required to resolve, including reverted transactions; this is an observation policy, not a finality guarantee.",
+    "replacement": "Same-wallet/chain/nonce different-intent transaction remains pending until canonical 2-confirmation receipt. Resolves as replaced, never as approval success. Does not overwrite stored original hash.",
+    "fees": "Exact BigInt gasUsed times effectiveGasPrice, legacy gasPrice fallback or unknown. Extra network fees may be separate.",
+    "ui": "Explicit read-only check; optional original/speedup/cancellation hash, retained after scroll/failure/stop; copyable terms; current-wallet isolation; no resend or delete action. Re-read current allowance after any terminal result.",
+    "limitations": [
+      "No automatic nonce scan, hash discovery, retry, queue continuation or deposit submission.",
+      "Uninstall/data clearing loses local recovery; native filesystem, power loss and process death have not been verified.",
+      "No receipt proves actual allowance change or platform credit. Future reorgs remain possible after observed confirmations."
+    ]
+  },
+  "remaining": [
+    "Actual deposit plus user/platform caps, on-chain receipt and platform credit recovery.",
+    "Withdrawal and Spot/Futures or main/subaccount transfer workflows.",
+    "Safe explicit chain switching/older-session reauthorization, final fees and native Max.",
+    "Native wallets, public RPC behavior, storage recovery, layouts and iOS build remain unverified."
+  ],
+  "real_wallet_requests_sent": false,
+  "live_rpc_requests_sent": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "device_tools_used": false
+}

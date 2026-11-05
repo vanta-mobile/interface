@@ -1,0 +1,55 @@
+{
+  "recorded_at_utc": "2026-11-03T05:10:32.228585+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "prd_requirements": [
+    "在下单之前，显示用户的可用保证金数量",
+    "本单开仓数量",
+    "本单消耗的保证金"
+  ],
+  "source": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_protocol_local_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "automated_tests": 810,
+  "new_tests": 29,
+  "format_dart_files": 327,
+  "analysis": "no issues",
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "bytes": 42892660,
+    "sha256": "abe7b1c9faa9a9c511deb312fbb50828f76bf579c9a414afa5e6be6ef4c6aa11"
+  },
+  "localized_messages_per_language": {
+    "en": 664,
+    "zh": 664
+  },
+  "native_testing": "Paused at user request. No device testing, device tools or APK installation this increment. See ../native-verification-pending.md.",
+  "ios": "Linux has no macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "implementation": [
+    "Four independently signed opening preflight GETs: position mode, symbol positionRisk, asset mode, accountWithJoinMargin. Shared EOA signer and nonce allocator.",
+    "Exact USDT availableBalance and per-asset available balances, eligibility and mode shown in form and confirmation. Unknown, zero, negative and tiny amounts remain distinct.",
+    "Account symbol positions reconciled with signed positionRisk; partial funds failure blocks ordinary opening without losing inputs.",
+    "Reference new opening exposure nets the opposite one-way position, opens hedge side in full, and is zero for valid reduce-only.",
+    "Reference additional opening initial margin = new exposure times limit/reference mark divided by leverage, with decimal/rational arithmetic.",
+    "Expiry covers all preflight prompts; late read signatures do not send expired GETs or trigger additional prompts.",
+    "Dedicated single/batch closes opt out of funds reads; a funds-free context cannot authorize ordinary opening."
+  ],
+  "evidence": [
+    "test/features/portfolio/live_order_funds_test.dart",
+    "test/features/portfolio/live_order_funds_widget_test.dart",
+    "test/features/portfolio/signed_live_order_repository_test.dart",
+    "test/features/portfolio/live_order_provider_test.dart",
+    "Existing close and batch protocol/regression tests all pass in full suite."
+  ],
+  "boundaries": [
+    "The account availableBalance is documented as USDT-only, not an aggregate multi-asset collateral valuation.",
+    "Unknown amounts are never replaced with wallet balance, withdrawal limits or demo funds; missing optional amount remains unknown.",
+    "Estimates exclude fees, funding, existing orders, released margin, actual execution price, risk tiers and later activity. Aster checks actual availability and eligibility.",
+    "Single-asset above-balance comparison is advisory, not an extra hard affordability rule; multi-asset collateral totals are not guessed.",
+    "True canTrade is not proof of real authorization; false blocks ordinary openings.",
+    "Aster enable-trading and actual EOA user/signer acceptance remain unverified.",
+    "Independent reverse and isolated-margin adjustment are not defined in current fetched Futures/Portfolio PRDs; classified as product questions instead of invented mandatory scope.",
+    "Overall PRD in progress; BAPI historical statistics and TWAP skipped at user request."
+  ]
+}

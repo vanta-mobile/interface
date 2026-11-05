@@ -1,0 +1,66 @@
+{
+  "recorded_at_utc": "2026-11-03T13:59:49.143361+00:00",
+  "prd": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+  "contract": "funding-info-public-contract.json",
+  "scope": "Public Spot/Perp deposit/withdraw asset catalogs on documented EVM networks and explicit current-EOA signed withdrawal-info snapshot. No financial submissions.",
+  "automated_tests": 1461,
+  "new_tests": 59,
+  "format_dart_files": 464,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 930,
+    "zh": 930
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43417404,
+    "sha256": "e220c4f197954a731145c0a226f10c45b209ddda6a2092801dbabd9cf2b02a13"
+  },
+  "native_testing": "Skipped at user request. No device tools, APK install, live wallet or private withdrawal-info reads. See ../native-verification-pending.md.",
+  "ios": "Linux lacks macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "anonymous_public_probes": {
+    "spot_deposit_rows": 94,
+    "spot_withdraw_rows": 95,
+    "perp_deposit_rows": 33,
+    "perp_withdraw_rows": 39,
+    "production_mapper_accepted_all_four": true
+  },
+  "acceptance_evidence": {
+    "strict_envelope_native_sentinel_address_precision_and_usd_asset_separation": [
+      "test/features/funding/funding_info_mapper_test.dart"
+    ],
+    "exact_anonymous_queries_private_nanosecond_signature_last_post_and_safe_rejection": [
+      "test/features/funding/funding_info_repository_test.dart"
+    ],
+    "query_identity_staleness_inflight_failure_retention_and_transport_lifecycle": [
+      "test/features/funding/funding_catalog_provider_test.dart"
+    ],
+    "explicit_signing_repeated_timestamp_events_scope_stop_disposal_and_snapshot_expiry": [
+      "test/features/funding/withdraw_info_provider_test.dart"
+    ],
+    "bilingual_320_large_text_landscape_market_network_search_failure_snapshot_retention_entries_login_stop": [
+      "test/features/funding/funding_info_widget_test.dart"
+    ],
+    "existing_behavior_regression": "Full suite including auth, account/subaccounts, orders/configuration/recovery, notifications, funding history, valuation and charts."
+  },
+  "logs": {
+    "all_tests": "/tmp/vanta-funding-info-all-tests.log",
+    "widget": "/tmp/vanta-funding-info-widget-tests.log",
+    "analysis": "/tmp/vanta-funding-info-analysis.log",
+    "format": "/tmp/vanta-funding-info-format.log",
+    "build": "/tmp/vanta-funding-info-build.log",
+    "production_mapper": "/tmp/vanta-funding-info-public-map.log"
+  },
+  "boundaries": [
+    "Catalog only covers documented EVM chains 1/56/42161. Token contracts and native sentinel are not deposit destinations.",
+    "Withdrawal amount fields and USD limits stay separate. Missing data remains unknown; no final Max or approval synthesized. Fee is only a snapshot.",
+    "Private read requires explicit action; no automatic signatures or additional EOA wallet generation. Aster same-EOA user/signer eligibility remains unproven.",
+    "Route retains snapshot through lazy widget gaps; disposal and wallet scope changes invalidate late operations. Stop does not claim to dismiss wallet dialog.",
+    "Actual deposit/withdraw/approval/transfers, enable-trading, complete subaccounts/Portfolio and Chase/BBO/Scaled remain incomplete. BAPI historical statistics/TWAP skipped by user."
+  ],
+  "build_notes": "Release build passed with existing third-party native plugin Kotlin migration/compatibility warnings; no install or native testing."
+}

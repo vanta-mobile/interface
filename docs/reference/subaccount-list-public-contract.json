@@ -1,0 +1,66 @@
+{
+  "recorded_at_utc": "2026-11-03T13:06:27.838941+00:00",
+  "prd": "https://app.notion.com/p/408080d974e7803f8710f5e688c0d103",
+  "official_document": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "document_sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4",
+  "refresh": "Anonymous raw GitHub document fetch only; identical to prior funding increment source. No signed private endpoint called.",
+  "implemented": {
+    "method": "GET",
+    "origin": "https://fapi.asterdex.com",
+    "path": "/fapi/v3/getSubAccountList",
+    "signed_query_order": [
+      "nonce",
+      "user",
+      "signer"
+    ],
+    "signature_appended_last": true,
+    "nonce": "Server milliseconds x 1000, shared monotonic microsecond counter with Spot/Futures account requests.",
+    "typed_data": {
+      "domain_name": "AsterSignTransaction",
+      "version": "1",
+      "chainId": 1666,
+      "verifyingContract": "0x0000000000000000000000000000000000000000",
+      "primaryType": "Message",
+      "field": "message.msg = exact encoded query"
+    },
+    "signing": "Document requires master-associated signer. Current implementation tries only connected EOA as both user and signer, as in existing account requests. Acceptance unproven; authorization failures surfaced, never bypassed by creating an agent wallet.",
+    "documented_response_fields": [
+      "accountId: LONG",
+      "subAccountName: STRING",
+      "parentAccount: BOOLEAN"
+    ],
+    "no_documented_fields": [
+      "subaccount wallet address",
+      "NORMAL/FROZEN status",
+      "active-account selection or switching authorization"
+    ],
+    "ui": [
+      "Authenticated account-menu entry",
+      "Explicit read/refresh only; no automatic signature",
+      "Names, copyable exact IDs, parent/subaccount labels, count, search",
+      "Initial/empty/parent-only, busy/stop waiting, failure with retained stale snapshot, retry",
+      "Directory auto-disposed on exit; no persisted list or local active-account selection"
+    ],
+    "client_resource_bounds": {
+      "rows": 1000,
+      "name_utf16_code_units": 4096,
+      "not_creation_limits": true
+    },
+    "creation_limit": "PRD max ten children is a creation rule. List preserves existing rows above ten; no child is silently dropped."
+  },
+  "remaining_subaccount_requirements": {
+    "create": "Requires independently controlled child wallet address, childSignature over first message, then master signature including childSignature. POST returns code/msg, not an address/private key. Child custody choice pending user preference; no new wallet generated.",
+    "switch": "List lacks child address, accountId-to-wallet mapping and switching authorization. Do not invent accountId transport parameter, label a row active, or replace signer based on a name.",
+    "freeze_update": "POST updateSubAccount requires subSourceAddr and master signature; list provides no address or state for preflight/final verification. No freeze/unfreeze POST exposed yet.",
+    "frozen_scope": "Document blocks cross-account transfers to/from frozen children; does not establish that orders, cancellation, TP/SL, existing tasks or internal Spot/Futures transfers stop.",
+    "cross_account_transfer": "Requires verified wallet relationship, source/destination addresses, allowance and result reconciliation. Not implemented.",
+    "enable_trading": "RegisterAndApproveAgent is agent registration with distinct protocol chainId=signatureChainId (56 for EVM) and ten-second nonce freshness. Not interchangeable with chain1666 account signatures or Privy SIWE. Self-agent authorization and compatible no-extra-wallet flow remain unproven; no approval submission was exposed or sent."
+  },
+  "security_boundaries": [
+    "No wallet generation, raw private key, secret persistence, financial request or account switch.",
+    "Redirects disabled; signed URL never forwarded or logged. Rejected signing and scope loss prevent send.",
+    "Auth observer now includes walletKind changes, so same-address signing-mode changes reset dependent snapshots.",
+    "Stopping only stops waiting and invalidates this operation; does not claim a wallet prompt was dismissed.",
+    "List and asset-index controllers watch auto-disposed repositories, retaining clients through pending operations and disposing them with the last consumer."
+  ]
+}

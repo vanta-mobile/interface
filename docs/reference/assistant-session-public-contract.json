@@ -1,0 +1,57 @@
+{
+  "date": "2026-11-04",
+  "scope": "AI wallet authentication, session refresh, native secure vault/history and usage data layer; Riverpod controller, navigation and native chat UI remain unimplemented",
+  "basis": {
+    "prd": "https://app.notion.com/p/40d080d974e7801a8999f3497abac377",
+    "reference": "https://app.vanta.exchange/perp/PERP_BTC_USDC",
+    "source_bundle": "https://app.vanta.exchange/assets/index-svFSKwtQ.js",
+    "source_sha256": "aa64f67c87338fd4fcd606f26a56898e5b3399bbcc7c83c6214398ea4823a803",
+    "source_functions": "yUt current-wallet binding/auth provider and _Yt AI assistant; Supabase SDK /auth/v1/user and refresh_token grant",
+    "public_source_only": true,
+    "live_auth_chat_personal_usage_calls": false
+  },
+  "wallet_auth": {
+    "prepare": "POST fixed Supabase /functions/v1/auth-nonce with current address,chain=evm,domain=app.vanta.exchange,uri=https://app.vanta.exchange. Optional source chainId omitted because AuthIdentity does not expose a current chain; no chain switch or transaction",
+    "review": "Returns a public challenge for a separate explicit UI review. Authentication is not granted at preparation. UI review/navigation have not yet been implemented",
+    "local_challenge_policy": "Bound8192characters, printable text with tab/LF/CR, exact address and nonce tokens, exact relying-party host token, and exact origin for any standard URI line. Nonce8..128 alphanumeric/underscore/hyphen and case-sensitive. Original bytes preserved; no invented full SIWE grammar",
+    "challenge_boundary": "Backend message generator is not public in the frontend bundle. Actual message text/grammar, optional chain behavior and mobile relying-party acceptance remain unverified. A real incompatible challenge must fail validation pending contract update; no blind-sign fallback",
+    "confirm": "Only the repository's own prepared challenge can be confirmed, locally one-use even after rejection/lost response; local5minute age/clock rollback checks. Current selected EOA or existing Privy wallet signs exact UTF8 message, never an extra/agent wallet",
+    "signature": "Local EIP191 recovery checks address,UTF8 byte length,low-s,r/s range andv27/28 or0/1; signature stays in memory and is not persisted",
+    "verify": "POST /functions/v1/verify-wallet with address,chain=evm,nonce,message,signature,signature_encoding=hex; no auto retry or re-sign",
+    "foreground_handoff": "Repository accepts an awaitForeground callback after the wallet returns its signature. It can wait through the expected wallet app switch before auth submission, bounded by challenge deadline and cancellation. Actual lifecycle wiring belongs to the pending Riverpod controller",
+    "cancellation": "Stop/close invalidates prepared data and active token; wallet prompt wait ends on cancellation/deadline; late signature cannot POST. Scope guards run after public config, after personal responses, before following requests and before native queued writes"
+  },
+  "session": {
+    "claims_boundary": "JWT role/sub/exp decoded only for expected subject and refresh scheduling. No local decoding is treated as authentication; all DTO string representations redact credentials",
+    "authority": "GET /auth/v1/user with Supabase access token must confirm exact subject; then vanta.wallet_bindings must contain exactly one verified binding for that subject and normalized current address",
+    "binding_query": "GET /rest/v1/wallet_bindings,Accept-Profile:vanta,select=user_id,address,verified_at,user_id=eq.{uuid},order=created_at.asc,limit=101. Local cap100 detects overflow; malformed,missing,duplicate,future or wrong bindings do not grant a session",
+    "refresh": "On explicit restore/send/usage intent only, refresh when <=30s remain via POST /auth/v1/token?grant_type=refresh_token. Subject cannot change. Persist rotated credentials before subsequent user/binding reads; a failed read never grants authenticated status, and later restore still verifies",
+    "scope": "App identity id + wallet kind + normalized address; credentials are scoped to this identity, history additionally to the server user UUID. A stored credential has no persisted authenticated flag or verifiedAt authority",
+    "limits": "Access token<=16384chars,refresh<=8192,serialized credential envelope<=32768. No automatic network on construction or on a missing saved credential",
+    "forget": "Vault deletes only the current local credential key. It does not call Supabase remote logout/revoke; no disconnect UI is claimed in this increment"
+  },
+  "native_storage": {
+    "dependency": "flutter_secure_storage10.3.4 promoted from existing transitive dependency to direct use; purpose is AI credentials/private history",
+    "android": "Independent vanta_assistant_v1 namespace; package AES-GCM/RSA-OAEP defaults,resetOnError=false; native encryption/backup/lock behavior not physically verified",
+    "ios": "Independent vanta_assistant_v1 accountName,unlocked_this_device,synchronizable=false; actual Keychain and reinstall behavior unverified on Linux",
+    "vault": "Hashed scope keys plus validated version/scope/user envelopes,serialized read/save/delete,guards before queued writes,storage errors mapped to safe keys,corrupt values retained until explicit clear; no deleteAll or other namespaces touched",
+    "history": "Draft<=12000chars;latest200messages/512KiB UTF8. Validate role,id,status,UTC timestamps,lengths and duplicates. Decode prior streaming replies as interrupted without resuming or sending. Encoding retains a bounded suffix without repeatedly serializing the full history; oversized single reply reports capacity failure rather than truncation",
+    "boundary": "Synthetic store and native MethodChannel configuration tests only. No claim of actual native cipher,Keychain capacity,power loss or process recovery acceptance; app data clear/uninstall/backup cannot promise restoration or deletion of every prior value"
+  },
+  "usage": {
+    "path": "GET /rest/v1/ai_daily_usage,Accept-Profile:vanta;select=user_id,usage_date,request_count;user_id=eq.{uuid};usage_date=eq.{UTCday};limit=2",
+    "semantics": "Explicit operation only,validated integer count and exact user/day; absent row means0used. Limit/remaining/reset remain unknown unless authoritative quota response supplies them; no guessed5request allowance",
+    "remaining_ui_work": "Controller must manage UTC rollover,staleness,request cancellation and quota display"
+  },
+  "remaining": [
+    "Riverpod current-identity/lifecycle state and foreground callback wiring",
+    "Explicit challenge review/current-wallet confirmation and restored history UX",
+    "Bilingual native chat/safe Markdown/input preservation/stop/clear/copy/usage UI and navigation",
+    "Real source challenge/signature/session/refresh/binding/chat/quota acceptance and server same-ID fallback behavior",
+    "Deferred Android/iOS TLS,wallet app return,secure storage,process/lock/reinstall and responsive layout acceptance"
+  ],
+  "financial_or_private_requests_performed": false,
+  "actual_wallet_signatures_performed": false,
+  "device_tools_used": false,
+  "follow_up": "Native Riverpod/lifecycle/foreground gate, explicit challenge review, bilingual chat/navigation/stop/copy/clear/local forget and quota UI subsequently implemented. See assistant-ui-public-contract.json and assistant-ui-verification.json. Real server/native acceptance remains deferred; earlier increment fields retain their historical scope."
+}

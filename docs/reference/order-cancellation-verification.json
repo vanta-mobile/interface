@@ -1,0 +1,32 @@
+{
+  "platform": "Android 12",
+  "apk": {
+    "bytes": 41974556,
+    "sha256": "b4b4c49250240e7a8c5b5f0437936335e3b1ca7c6bd07f0cff0f20776ab40926"
+  },
+  "automated_tests": 243,
+  "analysis": "no issues",
+  "format_dart_files": 155,
+  "unit_widget_checks": [
+    "DELETE followed by signed GET with exact parameter bytes and same wallet",
+    "distinct nonces shared with reads",
+    "no repeated cancellation after timeout",
+    "filled outcome differs from cancelled",
+    "unknown result retains order and enables GET-only recheck",
+    "identity change invalidates confirmation and in-flight results",
+    "late old snapshot cannot restore terminal order",
+    "narrow and landscape enlarged-text layouts"
+  ],
+  "native_checks": [
+    "explicit local demo heading",
+    "separate live Aster open-order section",
+    "signed-out login entry"
+  ],
+  "not_verified": [
+    "real EOA/embedded-wallet Aster authorization",
+    "real account/order read or cancellation",
+    "signed-in cancellation layouts on a native device",
+    "iOS build"
+  ],
+  "real_financial_requests_sent": false
+}

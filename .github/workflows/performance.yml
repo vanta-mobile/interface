@@ -1,0 +1,205 @@
+name: Native Performance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: native-performance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    name: Android profile performance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      PERF_RUNNER_LABEL: github-ubuntu-24.04-api35-pixel6-x86_64-v1
+      PERF_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      PERF_SAMPLES: 30
+      PERF_WARMUPS: 2
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.4
+          cache: true
+
+      - name: Resolve Flutter dependencies
+        run: flutter pub get
+
+      - name: Verify report logic and journeys
+        run: |
+          dart format --output=none --set-exit-if-changed test/performance integration_test test_driver
+          dart analyze --fatal-infos
+          node --test scripts/performance-report.test.mjs
+          flutter test test/performance/performance_scenarios_test.dart
+
+      - name: Find latest main baseline
+        id: baseline
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const runs = await github.paginate(
+              github.rest.actions.listWorkflowRuns,
+              {
+                owner,
+                repo,
+                workflow_id: 'performance.yml',
+                branch: 'main',
+                event: 'push',
+                status: 'success',
+                per_page: 20,
+              },
+            );
+            for (const run of runs) {
+              if (run.id === context.runId) continue;
+              const artifacts = await github.paginate(
+                github.rest.actions.listWorkflowRunArtifacts,
+                { owner, repo, run_id: run.id, per_page: 100 },
+              );
+              if (artifacts.some((artifact) =>
+                artifact.name === 'native-performance' && !artifact.expired,
+              )) {
+                core.setOutput('run_id', String(run.id));
+                return;
+              }
+            }
+
+      - name: Download main baseline
+        if: steps.baseline.outputs.run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: native-performance
+          path: build/performance-baseline
+          run-id: ${{ steps.baseline.outputs.run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Enable Android acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Measure native Android UI and trading operations
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          # Keep animations enabled: their rendering is part of the measurement.
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: node scripts/run-performance.mjs
+
+      - name: Generate visual report
+        if: always()
+        run: |
+          if [ -f build/performance/raw.json ]; then
+            node scripts/performance-report.mjs
+          else
+            echo '## Native performance test incomplete' >> "$GITHUB_STEP_SUMMARY"
+            echo 'No complete native samples were generated. Check the measurement step logs; this run has no valid performance report.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Capture complete report image
+        if: always()
+        run: |
+          if [ -f build/performance/report.html ]; then
+            node scripts/performance-screenshot.mjs
+          fi
+
+      - name: Upload report and raw native frames
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-performance
+          path: build/performance/
+          if-no-files-found: warn
+          retention-days: 30
+
+
+  comment:
+    name: Update pull request comment
+    needs: android
+    if: >-
+      always() &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Download performance report
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: native-performance
+          path: build/performance
+
+      - name: Comment performance result on pull request
+        uses: actions/github-script@v7
+        env:
+          PERFORMANCE_CHANGES: build/performance/changes.md
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- native-performance-report -->';
+            const runUrl = process.env.GITHUB_SERVER_URL + '/' +
+              process.env.GITHUB_REPOSITORY + '/actions/runs/' +
+              process.env.GITHUB_RUN_ID;
+            const changes = fs.existsSync(process.env.PERFORMANCE_CHANGES)
+              ? fs.readFileSync(process.env.PERFORMANCE_CHANGES, 'utf8').trim()
+              : [
+                  '## Native Flutter performance test incomplete',
+                  '',
+                  'No comparison report was generated. Check the Actions logs for this run.',
+                ].join('\n');
+            const body = [
+              marker,
+              changes,
+              '',
+              '[View the Actions run and download the full report](' + runUrl + '#artifacts)',
+            ].join('\n');
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { ...context.repo, issue_number: context.issue.number, per_page: 100 },
+            );
+            const previous = comments.find((comment) =>
+              comment.user?.type === 'Bot' && comment.body?.includes(marker),
+            );
+            if (previous) {
+              await github.rest.issues.updateComment({
+                ...context.repo,
+                comment_id: previous.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

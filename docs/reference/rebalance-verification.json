@@ -1,0 +1,70 @@
+{
+  "recorded_at_utc": "2026-11-03T19:23:49.941437+00:00",
+  "scope": "Negative-USDT collateral Rebalance and debt guard before multi-to-single asset-mode switch; actual withdrawals remain unavailable.",
+  "contract": "rebalance-public-contract.json",
+  "automated_tests": 2108,
+  "new_tests": 84,
+  "format_dart_files": 551,
+  "localized_messages_per_language": {
+    "en": 1085,
+    "zh": 1085
+  },
+  "acceptance_evidence": {
+    "repository": {
+      "tests": 25,
+      "file": "test/features/portfolio/signed_rebalance_repository_test.dart",
+      "coverage": "Mock HTTP and signer only: exact current-wallet/1666 signatures, complete fresh account reads and financial-term comparison, durable callback before dispatch, no business parameters, explicit empty/no-op versus invalid null/object, malformed fields, refusal/expiry/scope changes, no HTTP retry and response preservation after logout."
+    },
+    "journal": {
+      "tests": 18,
+      "file": "test/features/portfolio/rebalance_journal_test.dart",
+      "coverage": "Host files and rebuild: exact money/int64 values and public-only schema; strict bounds, duplicate keys/wallet, unknown retention, failure on locate/read/write and merge, missing/corrupt canonical/temp preservation, immutable replies including conflicting disk state."
+    },
+    "controller": {
+      "tests": 29,
+      "file": "test/features/portfolio/rebalance_provider_test.dart",
+      "coverage": "Explicit review/dispatch, current EOA without wallet creation, missing/negative/nonnegative/mode/scope/freshness guards, persistence before send, stop/expiry/logout/disposal response handling, unknown block despite healthy subsequent balances, known-reply GET-only recovery, same-time account-event replay during signing, event during final check, actual host journal prewrite/rebuild."
+    },
+    "widget": {
+      "tests": 7,
+      "file": "test/features/portfolio/rebalance_widget_test.dart",
+      "coverage": "English/Chinese 320 width at 1.5 text, landscape/tablet; explicit read/cancel/confirm, exact account ID/result, wallet isolation, known/unknown recovery without repeat POST, route exit before/after dispatch."
+    },
+    "mode_guard": {
+      "tests": 5,
+      "file": "test/features/portfolio/asset_mode_rebalance_test.dart",
+      "coverage": "Mock signed full-account read for multi-to-single switch; missing/negative USDT blocks before POST, zero/positive allows domain guard. Immutable review fields and reply behavior."
+    },
+    "full_regression": "All 2108 tests pass after localization generation, parser promotion, UI extraction, event/recovery tests and final formatting. Includes existing auth/funding/account-mode/order/shared-lock regression."
+  },
+  "analysis": "no issues",
+  "format": "551 Dart files, zero changes",
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43810620,
+    "sha256": "fa108c87ec96b8f009b06b65de624cbc1743ba9f10335daf4b29da77570a537c"
+  },
+  "build_notes": "Existing third-party Kotlin migration notices; successful build, not installed.",
+  "ios": "Linux has no macOS/Xcode; not built or natively verified.",
+  "native_testing": "Not performed at user request. No device tools or APK installation. See ../native-verification-pending.md.",
+  "real_wallet_requests_sent": false,
+  "live_rpc_requests_sent": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "device_tools_used": false,
+  "remaining": [
+    "Direct-EOA user/signer eligibility and real Aster conversion/rate/cost/collateral effects remain unverified.",
+    "No documented original-nonce result lookup: truly unknown records retain the submission block even if subsequent balances become nonnegative.",
+    "Actual withdrawals/deposits/transfers, enable-trading, subaccount management and complete Portfolio remain incomplete; see ../prd-progress.md.",
+    "Native signature round-trips, storage failures/process kill/restart, layouts and all iOS checks are pending."
+  ],
+  "logs": {
+    "focused": "/tmp/vanta-rebalance-focused-final.log",
+    "all_tests": "/tmp/vanta-rebalance-all-tests.log",
+    "analysis": "/tmp/vanta-rebalance-analysis-final.log",
+    "format": "/tmp/vanta-rebalance-format-clean.log",
+    "build": "/tmp/vanta-rebalance-build.log"
+  }
+}

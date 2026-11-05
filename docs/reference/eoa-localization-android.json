@@ -1,0 +1,29 @@
+{
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "locale_checks": [
+    "system Chinese",
+    "picker: system/zh/en",
+    "English applied",
+    "English survives force-stop and restart",
+    "follow system restores Chinese"
+  ],
+  "wallet_checks": [
+    "EOA chooser opened",
+    "cancellation shows safe retry reason",
+    "chooser reopened after cancellation"
+  ],
+  "automated_tests": 130,
+  "analysis": "no issues",
+  "android_release_mb": 41.8,
+  "unverified": [
+    "real EOA SIWE login",
+    "real email OTP login",
+    "iOS compilation"
+  ],
+  "not_integrated": [
+    "Aster authenticated account reads",
+    "Aster trading authorization and live execution"
+  ],
+  "third_party_language": "Reown 1.9 wallet chooser remains English"
+}

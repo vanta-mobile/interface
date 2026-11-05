@@ -1,0 +1,34 @@
+{
+  "platform": "Android 12",
+  "apk": {
+    "bytes": 42040092,
+    "sha256": "7f905aed8207a61860583aaafd52fbcab358cfb6e6e84a16b274cf9b31bd234d"
+  },
+  "automated_tests": 271,
+  "analysis": "no issues",
+  "format_dart_files": 163,
+  "unit_widget_checks": [
+    "per-symbol DELETE then filtered GET with same wallet and distinct shared nonces",
+    "frozen wallet and symbol scope, no unconfirmed-symbol expansion",
+    "empty result is not proof all orders were cancelled",
+    "refusal or unknown outcome stops later submissions",
+    "GET-only recheck never replays DELETE or resumes untouched symbols",
+    "local stop completes current reconciliation before skipping later symbols",
+    "single and batch operations share locks and invalidate old confirmations",
+    "late list refresh cannot restore removed orders",
+    "English narrow layout at 2x text; Chinese landscape at 1.5x; language change retains report"
+  ],
+  "native_checks": [
+    "explicit local demo heading separate from live Aster orders",
+    "cancel-all visible but disabled while signed out",
+    "read-live-orders-first explanation",
+    "read button opens login with direct EOA wallet option"
+  ],
+  "not_verified": [
+    "real EOA or embedded-wallet Aster authorization",
+    "real account read or cancellation",
+    "signed-in batch cancellation on a native device",
+    "iOS build: Linux environment"
+  ],
+  "real_financial_requests_sent": false
+}

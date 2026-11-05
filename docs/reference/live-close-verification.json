@@ -1,0 +1,34 @@
+{
+  "recorded_at_utc": "2026-11-03T04:22:15.004285+00:00",
+  "automated_tests": 749,
+  "new_tests": 40,
+  "format_dart_files": 314,
+  "analysis": "no issues",
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "bytes": 42827124,
+    "sha256": "50986b596f9424542f8e275e961935de6077f1daff63a5448d07b5df58c68659"
+  },
+  "localized_messages_per_language": {
+    "en": 641,
+    "zh": 641
+  },
+  "native_testing": "Paused at user request. No device testing or APK installation this increment. See ../native-verification-pending.md.",
+  "ios": "macOS/Xcode unavailable on Linux; build and native workflows unverified",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "implemented": [
+    "One-way reduce-only option",
+    "Single-position MARKET and GTC LIMIT close with original side",
+    "Decimal quantity, percentage buttons and slider, close PnL estimate",
+    "Independent signed position recheck before POST, then signed order query",
+    "Explicit signed remaining-position read; stale snapshots suppressed"
+  ],
+  "known_implementation_boundaries": [
+    "Close all, reverse, position margin adjustment, TP/SL, BBO/Hidden, other TIF and quick orders outstanding",
+    "Order balance and asset mode not displayed in live-order page",
+    "Unresolved client ID and operation lock in memory; durable restart recovery outstanding",
+    "Current EOA acceptance as user/signer and enable-trading not verified; enable-trading not yet implemented"
+  ]
+}

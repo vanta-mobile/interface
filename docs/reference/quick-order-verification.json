@@ -1,0 +1,61 @@
+{
+  "recorded_at_utc": "2026-11-03T08:13:41.378115+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "requirements": [
+    "Independent Chart/Trade workspaces with quick fixed MARKET entry",
+    "Base quantity, empty defaults, 25/50/75/100 percent sizing and shared market confirmation preference"
+  ],
+  "source": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_protocol_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "automated_tests": 1052,
+  "new_tests": 50,
+  "format_dart_files": 360,
+  "analysis": "no issues",
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43023732,
+    "sha256": "357cc49288121c5951ad2ffd3cb62c471d9c9ca4ad40ecbdd9946fca36b4c359"
+  },
+  "localized_messages_per_language": {
+    "en": 750,
+    "zh": 750
+  },
+  "native_testing": "Skipped at user request. No device tools, device tests or APK installation. See ../native-verification-pending.md.",
+  "ios": "Linux has no macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "implementation": [
+    "Retained independent Chart/Trade inputs; quick entry starts with empty quantity and no percentage. Fixed MARKET in base units without inheriting ordinary order fields.",
+    "One-way BOTH with explicit reduceOnly=false; hedge LONG/SHORT by direction and no reduceOnly. Query rejects reduction or closePosition flags.",
+    "Four account/configuration/funds reads followed by three separate signed commissionRate/leverageBrackets/openOrders GETs from the same selected EOA and shared nonces; no additional wallet.",
+    "Exact rational USDT budget with taker fee, leverage-eligible risk cap, existing position exposure and same-direction pending orders. Pending reductions consume opposite closing capacity before allowing a new one-way order to use it.",
+    "Use max(reference,mark) for risk headroom, cap by market maximum, apply percentage and floor by market step anchored at minimum; below minimum returns zero.",
+    "One 30-second deadline from the initial mark snapshot, configuration/order activity lock, stale/identity/symbol callback protection. Sizing-only read failure permits manual quantity if base context is still valid.",
+    "Buy ask/sell bid reference quotes observed locally. Shared persisted market-confirmation preference is enabled by default. Read failures require confirmation; stale reads and serial write races are handled. Cancel does not save the do-not-show choice.",
+    "Existing POST and original-client-ID GET flow, signing and send-boundary checks retained. Accepted query clears input; failure/unknown preserves it. Unknown locks editing and permits query only.",
+    "Chinese/English 320-width, 1.5 text and landscape widget coverage, independent input preservation, confirmation cancellation, preference persistence failure and ordinary market confirmation regression."
+  ],
+  "evidence": [
+    "test/features/portfolio/quick_order_test.dart",
+    "test/features/portfolio/signed_quick_order_repository_test.dart",
+    "test/features/portfolio/quick_order_provider_test.dart",
+    "test/features/portfolio/order_confirmation_provider_test.dart",
+    "test/features/portfolio/quick_order_widget_test.dart",
+    "test/features/portfolio/live_order_widget_test.dart",
+    "test/widget_test.dart",
+    "/tmp/vanta-quick-all-tests-final.log",
+    "/tmp/vanta-quick-analysis-final.log",
+    "/tmp/vanta-quick-format-final.log",
+    "/tmp/vanta-quick-build-final.log"
+  ],
+  "boundaries": [
+    "Reference USDT sizing is not an exchange-guaranteed executable maximum; released margin, non-USDT collateral and later fills are excluded. Actual account eligibility is exchange-authoritative.",
+    "No real wallet, seven-signature native journey, exchange authorization, live fee/exposure allowance or trade was verified.",
+    "Aster enable-trading is not implemented; same-EOA API signer acceptance remains unverified.",
+    "Chase lacks documented original strategy-ID recovery and ordinary-order association; BBO ordinary peg-price parameters and Scaled split/remainder rules remain unresolved.",
+    "Attached TP/SL and linkage/editing, subaccounts, funding/withdrawals/transfers, full valuation, notifications and durable unresolved-order recovery remain incomplete.",
+    "BAPI historical statistics and TWAP skipped this phase at user request."
+  ]
+}

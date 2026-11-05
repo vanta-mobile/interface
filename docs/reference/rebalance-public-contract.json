@@ -1,0 +1,63 @@
+{
+  "recorded_date": "2026-11-04",
+  "scope": "Explicit collateral Rebalance for negative USDT in Multi-Assets Mode; debt guard before switching to Single-Asset Mode. Withdrawal submission remains unavailable.",
+  "prd": {
+    "page": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+    "section": "USDT出现负余额的情况处理",
+    "requirement": "User-triggered Rebalance before withdrawal or returning from multi-assets to single-asset mode when USDT is negative."
+  },
+  "official_source": {
+    "url": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+    "section": "Asset Exchange (TRADE)",
+    "local_source_sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4"
+  },
+  "endpoint": {
+    "method": "POST",
+    "path": "/fapi/v3/assetExchange",
+    "weight": 1,
+    "business_parameters": [],
+    "authentication": "Existing V3 user/signer/nonce/signature form body; connected EOA signs directly, or existing email embedded wallet. No agent/new wallet creation. chainId 1666; microsecond nonce. Platform signer authorization remains unverified.",
+    "multi_assets_only": true,
+    "response": {
+      "reported": [
+        "accountId: positive int64",
+        "asset: identifier",
+        "balance: exact decimal string",
+        "updateTime: millisecond UTC timestamp"
+      ],
+      "no_exchange": "Empty body only. JSON null / empty object are invalid, not proof of no exchange."
+    }
+  },
+  "client_policy": {
+    "entry_points": [
+      "Asset-mode settings",
+      "Futures withdrawal information",
+      "Unresolved-record notice beside order recovery"
+    ],
+    "eligibility": "Fresh explicitly negative USDT walletBalance in Multi-Assets Mode; missing USDT is unknown, not zero.",
+    "review": "Full account balances, wallet and mode; Aster chooses conversion and collateral effect. No amount/rate/fee/quote guessed. No automatic request on entry or read.",
+    "signatures": "Initial mode/account read: 2. Confirmation fresh mode/account: 2; one API POST: 1; separate resulting mode/account read: 2. Typical total 7. Recovery read only: 2.",
+    "freshness_seconds": 30,
+    "pre_dispatch": "Compare all reported financial terms including account summary/assets/positions. Wallet, signing availability, account event (including same timestamp), settings epoch and expiry changes invalidate. Persist public recovery record before dispatch, then recheck.",
+    "known_reply": "Persist response for original wallet even after stop/logout/route exit/provider disposal. Distinguish no-op/reported conversion. Separately read current account before removing record. Reported balance never replaces current account snapshot; nonnegative balance alone does not grant withdrawal/mode-switch eligibility.",
+    "unknown_reply": "Retain original nonce and block new Rebalance/order/config submissions. No retry, resubmission, automatic conversion, deletion or queued continuation. Fresh nonnegative balance cannot prove original request completed.",
+    "lock_scope": "Shared submission/configuration lock, not all mutations (cancellation is outside this lock). Storage not ready/corrupt also blocks new submissions.",
+    "single_asset_guard": "When current mode is multi, read full account in addition to mode/positions; missing or negative USDT blocks single-asset confirmation. Single-to-multi retains existing isolated-position guard."
+  },
+  "journal": {
+    "file": "pending-asset-rebalances-v1.json",
+    "location": "Application support directory",
+    "schema_version": "1",
+    "max_wallets": 100,
+    "max_source_characters": 131072,
+    "writes": "Serialized, flush to temp and same-directory rename. Startup load before first screen. No temp promotion; corruption/missing original canonical record blocks.",
+    "content": "Wallet, original nonce, preparedAt, negative pre-request USDT and optional immutable public server response. No signature, secret or executable queue.",
+    "failure": "Retain returned response in memory on locate/read/write failure and merge after valid reload. Host filesystem tests do not prove mobile power-loss durability."
+  },
+  "remaining": [
+    "No documented original-nonce result lookup: a truly unknown request cannot be resolved safely in-app and retains the block. Requires authoritative platform recovery contract.",
+    "Actual withdrawal, deposit, Spot/Futures and main/subaccount transfers remain unavailable.",
+    "Aster direct-EOA signer eligibility, actual conversions/rates/costs/collateral and wallets are not verified.",
+    "No device tools, APK installation, real wallet/RPC/private/financial requests for this increment; Linux has no iOS build environment."
+  ]
+}

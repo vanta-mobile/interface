@@ -1,0 +1,87 @@
+{
+  "recorded_at_utc": "2026-11-03T14:20:30.875085+00:00",
+  "prd": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+  "official_document": "https://github.com/asterdex/api-docs/blob/master/demo/aster-deposit-withdrawal.md",
+  "document_sha256": "e6943bd414e9e09bc1592446dd1b39d67e2750bf6480a368da8cc5caec9ae39a",
+  "method": "GET",
+  "origin": "https://www.asterdex.com",
+  "path": "/bapi/futures/v1/public/future/aster/estimate-withdraw-fee",
+  "query": {
+    "chainId": "Selected documented EVM chain: 1,56,42161",
+    "network": "EVM",
+    "currency": "Selected asset name",
+    "accountType": "spot or perp"
+  },
+  "authorization": "Anonymous public quote; no wallet, signature, private account request or financial submission.",
+  "response_contract": {
+    "envelope": "code=string 000000, success=true, data=object",
+    "gasCost": "Required nonnegative Decimal in selected asset units",
+    "gasUsdValue": "Required nonnegative Decimal in USD",
+    "tokenPrice": "Optional positive USD reference price per asset unit; missing is unknown",
+    "gasPrice_gasLimit_nativePrice": "Not used to infer the gas required by a wallet transaction."
+  },
+  "precision": {
+    "decoder": "Before JSON decoding, quotes numeric value lexemes outside strings; preserves escapes and structure. Guards numeric object keys so malformed JSON is not repaired into valid data. Ordinary account/catalog decoding remains unchanged.",
+    "mapper": "Exact monetary strings/scientific notation to Decimal; no double conversion. Accepts documented JSON numbers through lossless decoder or decimal strings; rejects missing, negative, invalid and overflow/resource-exhausting values. Zero fee accepted only when explicitly returned.",
+    "resource_bounds": {
+      "body_utf16_code_units": 262144,
+      "numeric_lexeme_characters": 160,
+      "money_string_characters": 160,
+      "absolute_money_exponent": 160
+    },
+    "api_errors": "Negative numeric/string business codes classified safely by shared transport. Raw responses never shown."
+  },
+  "ui_and_lifecycle": [
+    "Withdraw asset cards provide explicit latest-fee entry. No fee requests for all visible assets or deposit cards.",
+    "Entry opens fixed market/network/asset scope and performs one anonymous initial read; manual refresh thereafter. Scope displayed with separate asset/USD units and optional reference price.",
+    "Equal queries share state; different markets/networks/assets do not share quotes. Wrong repository scope is rejected.",
+    "Thirty-second stale marker independent of refresh. Failure retains previous quote as stale; no quote remains unknown and is never fabricated as zero.",
+    "Provider and transport survive pending reads; final route release disposes them and drops late results. No automatic signing."
+  ],
+  "anonymous_probes": [
+    {
+      "asset": "USDT",
+      "market": "perp",
+      "chain_id": 56,
+      "url": "https://www.asterdex.com/bapi/futures/v1/public/future/aster/estimate-withdraw-fee?chainId=56&network=EVM&currency=USDT&accountType=perp",
+      "captured_at_utc": "2026-11-03T14:12:56.829023+00:00",
+      "sha256": "a81bb17c9781b90f539358705fc0bf3971012f016b8fb37ce109a93fbd46503a",
+      "fee_asset_lexeme": "0.11",
+      "fee_usd_lexeme": "0.1",
+      "asset_price_usd_lexeme": "0.99833500",
+      "production_decoder_and_mapper_accepted": true
+    },
+    {
+      "asset": "BNB",
+      "market": "spot",
+      "chain_id": 56,
+      "url": "https://www.asterdex.com/bapi/futures/v1/public/future/aster/estimate-withdraw-fee?chainId=56&network=EVM&currency=BNB&accountType=spot",
+      "captured_at_utc": "2026-11-03T14:12:56.802243+00:00",
+      "sha256": "4827ad3f13af95c9bd2a6dcb5202d39898157a33c2247d4e3f25fdfdac015d9c",
+      "fee_asset_lexeme": "0.00015",
+      "fee_usd_lexeme": "0.1",
+      "asset_price_usd_lexeme": "697.28546804",
+      "production_decoder_and_mapper_accepted": true
+    },
+    {
+      "asset": "ETH",
+      "market": "perp",
+      "chain_id": 1,
+      "url": "https://www.asterdex.com/bapi/futures/v1/public/future/aster/estimate-withdraw-fee?chainId=1&network=EVM&currency=ETH&accountType=perp",
+      "captured_at_utc": "2026-11-03T14:12:57.797626+00:00",
+      "sha256": "00a5152cca4e4e79738577320d5470cf4194a28bf573eab067157b9b9908520e",
+      "fee_asset_lexeme": "0.00022",
+      "fee_usd_lexeme": "0.5",
+      "asset_price_usd_lexeme": "2283.09814992",
+      "production_decoder_and_mapper_accepted": true
+    }
+  ],
+  "remaining_financial_requirements": [
+    "Fee is an estimate, not final fee or authorization. Actual withdrawal must re-fetch the selected scope, enforce master-only qualification and final limits, take business/API signatures, persist submission and recover unknown outcomes.",
+    "Actual deposit, approval, withdrawal and Spot/Futures/main-subaccount transfers remain incomplete.",
+    "Current EOA as both user/signer still needs Aster acceptance; native wallet/layout/clipboard checks and iOS build remain pending by user/environment constraints."
+  ],
+  "device_tools_used": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false
+}

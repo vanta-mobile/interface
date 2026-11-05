@@ -1,0 +1,82 @@
+{
+  "date": "2026-11-04",
+  "increment": "AI current-wallet auth, refresh, scoped secure vault/history and usage data layer; no controller/UI entry point",
+  "contract": "assistant-session-public-contract.json",
+  "tests": {
+    "baseline_full": 3078,
+    "new": 133,
+    "feature_suite_passed": 214,
+    "full_passed": 3211,
+    "exit_code": 0,
+    "coverage": [
+      "Exact address/domain/nonce challenge binding and case sensitivity, text/credential bounds, fresh/expired/clock rollback policies",
+      "EIP191 UTF8 local signature verification, exact request vectors, current signer only, rejection/cancellation/deadline and no auto re-sign",
+      "Expected wallet app handoff foreground gate, stop/late signature, session change before/after public config and every private response",
+      "Server user then verified binding authority; malformed/missing/duplicate/wrong/future/over100 bindings never grant authentication",
+      "Explicit no-network missing-credential restore, refresh rotation/subject binding/persist-before-follow-up-read, storage failure and no premature session grant",
+      "Hashed scope/envelope separation across identity/kind/address/user, serialized save/clear, queued guard, corrupt data and independent history/credential deletion",
+      "History validation/bounds/UTF8/latest200/partial interrupted recovery without resume; safe oversized reply capacity failure",
+      "Synthetic native MethodChannel namespace/options for Android/iOS, no deleteAll or other namespace mutation",
+      "UTC usage scope/count validation, no guessed remaining quota and no request on expired credential"
+    ]
+  },
+  "format": {
+    "files": 722,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "dependency": {
+    "package": "flutter_secure_storage",
+    "version": "10.3.4",
+    "change": "Already resolved transitively; direct dependency for AI credentials/private history, no version upgrade"
+  },
+  "localization": {
+    "en": 1419,
+    "zh": 1419,
+    "new_per_locale": 0,
+    "note": "No presentation or user-facing entry point added in this increment"
+  },
+  "android": {
+    "command": "flutter build apk --no-pub --release --target-platform android-arm64 --dart-define-from-file=config/privy.local.json",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45056792,
+    "sha256": "aebf33e14b677fa65571ec93a6bcba434e1723345a199ced87934fb29017c8bb",
+    "installed": false,
+    "device_tools_used": false,
+    "packaging_boundary": "No entry point imports assistant data layer. APK remains identical to prior CHANNEL baseline. No claim that new assistant classes are present in AOT or that AI is usable.",
+    "signing": "Existing local debug signing; not store distribution"
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "performed": {
+    "synthetic_http_and_wallet_signatures": true,
+    "synthetic_native_method_channel": true,
+    "actual_wallet_signature": false,
+    "actual_auth_refresh_binding_chat_usage_requests": false,
+    "private_financial_rpc": false,
+    "native_device_testing": false
+  },
+  "remaining": [
+    "Riverpod lifecycle/foreground gate and same-wallet scope wiring",
+    "Native bilingual challenge review and chat navigation/input/Markdown/stop/clear/copy/quota UX",
+    "Actual auth challenge format/chain/relying party and signature/refresh/binding/chat/usage acceptance",
+    "Native secure storage cipher/capacity/lock/kill/reinstall/backup and responsive layouts, iOS build",
+    "Other PRD gaps tracked in prd-progress.md; overall goal incomplete"
+  ],
+  "logs": {
+    "feature": "/tmp/vanta-ai-session-feature-clean.log",
+    "full": "/tmp/vanta-ai-session-all-tests.log",
+    "analysis": "/tmp/vanta-ai-session-analysis-clean.log",
+    "format": "/tmp/vanta-ai-session-format-clean.log",
+    "build": "/tmp/vanta-ai-session-build.log",
+    "pub_get": "/tmp/vanta-ai-session-pub.log"
+  },
+  "note": "Initial synthetic fixture used an obsolete address getter, then corrected to the pinned wallet library API. Final feature/full regressions and formatting/analysis are authoritative. Native plugin parameter tests do not prove native encryption or device recovery."
+}

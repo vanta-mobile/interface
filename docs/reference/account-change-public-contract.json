@@ -1,0 +1,16 @@
+{
+  "source": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "checks": {
+    "user_stream_requires_signer_and_signature": true,
+    "non_get_form_body": true,
+    "post_endpoint": true,
+    "post_also_renews": true,
+    "lease_60min": true,
+    "private_ws_path": true,
+    "out_of_order": true,
+    "partial_funding_updates": true
+  },
+  "live_private_requests_sent": false,
+  "implementation": "Direct connected wallet as user and signer; manual signed POST for start/renew. Metadata-only stream invalidates futures REST snapshots. No financial payload merge, automatic signature, PUT or DELETE."
+}

@@ -1,0 +1,37 @@
+{
+  "device": "Android 12 / arm64",
+  "source": "Aster V3",
+  "note": "Screenshot delays include ADB input and capture overhead; these are visual samples, not measured render latency.",
+  "actions": [
+    {
+      "interval": "5m",
+      "screenshotAfterActionMs": 527,
+      "file": "timeframe-cache-android-1-5m.png"
+    },
+    {
+      "interval": "15m",
+      "screenshotAfterActionMs": 531,
+      "file": "timeframe-cache-android-2-15m.png"
+    },
+    {
+      "interval": "1m",
+      "screenshotAfterActionMs": 562,
+      "file": "timeframe-cache-android-3-1m.png"
+    },
+    {
+      "interval": "5m",
+      "screenshotAfterActionMs": 577,
+      "file": "timeframe-cache-android-4-5m.png"
+    }
+  ],
+  "visualVerification": {
+    "selectedIntervalsMatchActions": true,
+    "timeAxesAndCandlesChangeWithIntervals": true,
+    "chartsVisibleInAllSamples": true,
+    "timeframeControlsRemainInPlace": true,
+    "cachedDataMarkedHistoricalDuringReconciliation": true,
+    "firstFrameWithoutSpinnerVerifiedBy": "test/features/trade/timeframe_switch_test.dart",
+    "liveStatusRestoredAfterReconciliation": true
+  },
+  "settledScreenshot": "timeframe-cache-android-settled.png"
+}

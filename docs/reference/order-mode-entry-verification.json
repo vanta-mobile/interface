@@ -1,0 +1,121 @@
+{
+  "recorded_at_utc": "2026-11-05T10:02:12.927257+00:00",
+  "increment": "Unified nine-mode entry with six ordinary modes, independent Scaled, unavailable Chase/TWAP, pinned Post Only and preserved specialized closing flow",
+  "contract": "order-mode-entry-public-contract.json",
+  "contract_sha256": "b68b4c8d7b5300d70adec5b883286cf538b8de2f58797d06cc30e29effdfb8ed",
+  "tests": {
+    "baseline_full": 4039,
+    "new_domain": 18,
+    "new_widgets": 31,
+    "focused_total": 156,
+    "full_passed": 4088,
+    "exit_code": 0,
+    "coverage": [
+      "EN/ZH320width text1.5,844x390landscape and768tablet; six opening modes each selected before private read, defaults, independent review then exact synthetic type/quantity/policy/basis assertions.",
+      "Signed-out all9 entries, both disabled choices cannot navigate, Scaled route opens with zero private reads/submits/wallet creation.",
+      "Refresh/menu cancel/locale preserve selected and remembered; same-address identity type change resets.",
+      "Captured callback while read pending cannot change mode/open Scaled; recycled selector still returns choice; disposed owner safely ignores callback.",
+      "Existing ordinary/close/TP/SL/Trailing/BBO/Scaled/amount/confirmation/unknown-result scenarios choose actual replacement opening menu. Original financial parameter and recovery assertions retained; fixed GTX unsupported path now explicitly switches mode rather than mutating fixed policy."
+    ]
+  },
+  "format": {
+    "files": 842,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1669,
+    "zh": 1669,
+    "new_per_locale": 8,
+    "message_keys_equal": true
+  },
+  "android": {
+    "command": "make env-check then make build-apk",
+    "expanded_command": "flutter build apk --release --target-platform android-arm64 --dart-define-from-file=.env",
+    "configuration": "Existing .env validated without printing values. No replacement config, --no-pub or manual plugin registrant modifications.",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45840644,
+    "sha256": "2d5b9e9c24c8ed34e4f7cc2f1cd38ed6a50e36355ff11b01aa3ca45851c24a32",
+    "aot_bytes": 15860616,
+    "packaged_probes": {
+      "order-mode-menu": true,
+      "order-mode-more": true,
+      "order-mode-option-": true,
+      "TP/SL Limit": true,
+      "Chase orders are not available yet.": true,
+      "en:More order types": true,
+      "zh:限价止盈止损": true,
+      "zh:追逐委托暂未开放。": true
+    },
+    "installed": false,
+    "published": false,
+    "device_tools_used": false,
+    "notices": "Existing third-party Built-in Kotlin/KGP notices; normal Release build passed."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux without macOS/Xcode; device testing deferred by user."
+  },
+  "logs": {
+    "focused": "/tmp/vanta-order-mode-focused-final.log",
+    "full": "/tmp/vanta-order-mode-all-tests.log",
+    "format": "/tmp/vanta-order-mode-format-final.log",
+    "analysis": "/tmp/vanta-order-mode-analysis-final.log",
+    "build": "/tmp/vanta-order-mode-build-final.log"
+  },
+  "log_sha256": {
+    "focused": "f51b1f4664109124ecb6cfaeac5bb4e25ff54234bd4f29b063ed9abdd7fb09ce",
+    "full": "15c26754ca8a066d4da63b596da9f9bf37c346844c57da9d25c4511c46ef4638",
+    "format": "a046dc35624a2dcf556e54ae25cf875ddbe5aca000081ca6daead78bb9e6cd68",
+    "analysis": "dd59d09fbc342124016fe556b92356f7e73cf9266486e1535e562c53297b613b",
+    "build": "0fb22cfc336d852c2719e7392d9edc4dc167d59450010bdac989d43b527cabe6"
+  },
+  "source_sha256": {
+    "lib/features/portfolio/domain/live_order_entry_mode.dart": "c4ccf21810730f1db6be3598e774c975a6bbdf82ba5876df61a17f3de125409f",
+    "lib/features/portfolio/presentation/live_order_mode_selector.dart": "8406f38e1690c3a9c0b954bddf5d162bae67feca0014eea1a7537b9b510c67b7",
+    "lib/features/portfolio/presentation/live_order_screen.dart": "4850b3781201d8154371a50a998cf204e8e2234fabda7c18df24fddcc68db9ec",
+    "lib/features/portfolio/presentation/live_order_form.dart": "bfe86c11e25f3e1f272689978a708fee7211e8f0bb3241ae87d215d8769d763c",
+    "lib/features/portfolio/presentation/live_order_price_inputs.dart": "f22ff5fae2714af7c5c0d137da6cff8c8b31c214a054c5f9995d1338ea6aa2d5",
+    "lib/features/portfolio/presentation/live_order_trigger_controls.dart": "77df53a4a56a5ed18e03581e003cff23d86a776c483ead70604316de5d19cf21",
+    "lib/features/portfolio/presentation/live_order_trailing_controls.dart": "0266cca85d63a15a5cb81d7f1fe60e5f19022165a1dc3cf43d9bd9498c4c73ca",
+    "test/features/portfolio/live_order_entry_mode_test.dart": "4cd4c219c46b8dd5e0d68475ea6567efcc5b67ed2d81e287f59671bac56ee4fc",
+    "test/features/portfolio/live_order_mode_widget_test.dart": "e00508dacff0b066fb811283953612b4ce43299cd208b2e2054456d944ffcf76",
+    "test/support/order_mode_widget.dart": "7d84ac94446638ba4d31974127b4df3ea315ad799b244808259b11cf0dad9156",
+    "test/support/order_confirmation_widget.dart": "695009268919c8307ee5e144a1a35f4e1c2d78ff23b6edab105a188461d83520",
+    "lib/l10n/app_en.arb": "f231a6c9194276132a6e8778a70351e0c04e8e193978dbcd2344d1a5a49aafc9",
+    "lib/l10n/app_zh.arb": "fb040a511abc866313b76550c6ed73aeefd8bc8df6769a2e5bc1d9a53800e635",
+    "lib/l10n/generated/app_localizations.dart": "0f3132b010ec6f7692941467bf17fc5956ccd3ebe06b407711782e280ff59f5a",
+    "lib/l10n/generated/app_localizations_en.dart": "497b50fac1c88af5f6a70118e3c685e9e84b4aa161deefa903f9b6ce1120c3b4",
+    "lib/l10n/generated/app_localizations_zh.dart": "f9a0fdd44ae6f52b8ef4f9935d91a98f7a73cffd73ec5d6e9fdba5bf5d11298f",
+    "test/features/portfolio/attached_exit_input_widget_test.dart": "b28fc9923f13091a7eb7da709481be7936a0607c3b3990df5bb3c588287ce514",
+    "test/features/portfolio/live_order_widget_test.dart": "7b1b01b3293cca357a905260628358b04d3f6845fb754e440094a0bbfa6bcfa9",
+    "test/features/portfolio/live_order_peg_widget_test.dart": "d749fffb020be394e38c49a875eb30594320c5392f3cf776751c0a70ec81f074",
+    "test/features/portfolio/live_order_size_widget_test.dart": "c5ea966e44b2a8664626d2c16a103ffd8bbcc04e2eaee27b8c1627c6d3127bca",
+    "test/features/portfolio/attached_order_widget_test.dart": "6ee05c0c68ebe2cb0b3b9a67c7711d294f49a488e92227564a1a716ab214f2ae",
+    "test/features/portfolio/live_order_trailing_widget_test.dart": "24874e8cdd769a90c43826c04ea40e2921f1de5ed64f4b00490661bd7953cf23",
+    "test/features/portfolio/scaled_order_widget_test.dart": "72f8dfa3237ca19b0c930a130678e23d9b5da6cf19282b6af0d0a2c6af8ef0e5",
+    "test/features/portfolio/live_order_trigger_widget_test.dart": "75518d59e5c919036341e6d8d3ca29ada5b35e16519c65e0e9856d7301a55009",
+    "test/features/portfolio/live_order_policy_widget_test.dart": "8785901460050affcaa2f9ae7e1b3f494b756785ac1e2362fe5e79b4f4d6750a",
+    "test/features/portfolio/attached_entry_peg_widget_test.dart": "94506aaf902fc466c82916a96629bc63b8208be6956aea5af76ba34de4ac3993",
+    "test/features/portfolio/order_confirmation_widget_test.dart": "7d56a8e884a4be911d474fae563dda8ad1576978f6cae8b733d2fc101a032a77"
+  },
+  "verification_note": "Existing opening tests migrated to actual new menu, preserving specialized closing controls and original parameter/recovery assertions. Initial test helper compile/name issue, virtualized fields and below-viewport option taps corrected. Unsupported Post Only now requires explicit mode change rather than editing fixed GTX. Dedicated regression covers recycled selector and disposed owner. Focused156 passed before final unavailable-copy simplification; full4088 passed on final current source/localizations.",
+  "wallet_signatures_requested": false,
+  "private_requests_sent": false,
+  "financial_requests_sent": false,
+  "address_rpc_requests_sent": false,
+  "chat_requests_sent": false,
+  "device_tools_used": false,
+  "acceptance": "Mock HTTP/market/account, synthetic signatures and Widget/host tests only; no native or real financial acceptance.",
+  "outstanding": [
+    "Main opening percentage slider/sizing and some BBO/default settings remain incomplete; ordinary custom slippage lacks execution contract.",
+    "Chase not implemented: original strategy-ID recovery and associated ordinary order query not documented. TWAP remains user-deferred.",
+    "Full strategy list/edit/whole cancellation, full cross-product Portfolio and Swap incomplete.",
+    "Real EOA self-signer acceptance, signatures, execution, native layouts/storage/wallet returns and iOS build unverified; device testing deferred."
+  ]
+}

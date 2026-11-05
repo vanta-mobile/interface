@@ -1,0 +1,108 @@
+{
+  "recorded_at_utc": "2026-11-05T09:16:56.599076+00:00",
+  "increment": "External EOA-only subaccount creation; embedded Privy restriction with identity generation invalidation and preserved noncreation operations",
+  "contract": "subaccount-creation-access-public-contract.json",
+  "contract_sha256": "0fc00f18c192f32d5a91447e6a9f3bdaaea5e42976bab5c52037088c79c6cc5d",
+  "tests": {
+    "baseline_full": 3999,
+    "new_repository": 16,
+    "new_controller": 16,
+    "new_widget": 8,
+    "focused_total": 121,
+    "full_passed": 4039,
+    "exit_code": 0,
+    "coverage": [
+      "Embedded creation both signable/restored: no signature/HTTP/journal; valid child proof cannot bypass forged embedded review.",
+      "External EOA with email allowed; disconnected EOA blocked; embedded freeze/unfreeze and all8 transfer direction/from-to combinations remain accepted by synthetic master.",
+      "Preparation/submission scope invalidated by wallet kind/signing/logout/stop; return to same EOA requires fresh generation; old confirm cannot send.",
+      "Independent confirm guard against unexpected embedded creation review.",
+      "EN/ZH320width text1.5,844x390landscape,768tablet; actual dropdown operation and explicit confirm for other actions.",
+      "Same-address EOA→Privy clears child proof/inputs, hides challenge/confirm; separate switching confirmation and explicit list read still usable."
+    ]
+  },
+  "format": {
+    "files": 837,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1661,
+    "zh": 1661,
+    "message_keys_equal": true,
+    "new_key": "subaccountCreateExternalOnly"
+  },
+  "android": {
+    "command": "make env-check then make build-apk",
+    "expanded_command": "flutter build apk --release --target-platform android-arm64 --dart-define-from-file=.env",
+    "configuration": "Existing .env validated with values omitted; no replacement configuration or manual plugin registrant edits; normal dependency resolution.",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45840644,
+    "sha256": "efc261dd3ca52a6112b9aaa6c47245905d3a27360a28c93a0781a75665e390c6",
+    "aot_bytes": 15860616,
+    "packaged_probes": {
+      "subaccount-create-restriction": true,
+      "subaccount-switch-address": true,
+      "subaccountCreateExternalOnly": true,
+      "Only accounts signed in with an external EOA wallet can create subaccounts. Privy embedded wallets cannot create subaccounts.": true
+    },
+    "installed": false,
+    "published": false,
+    "device_tools_used": false,
+    "notices": "Existing third-party Built-in Kotlin/KGP notices; build succeeded."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; macOS/Xcode unavailable; device testing deferred by user."
+  },
+  "logs": {
+    "focused": "/tmp/vanta-subaccount-access-focused-final.log",
+    "full": "/tmp/vanta-subaccount-access-all-tests.log",
+    "format": "/tmp/vanta-subaccount-access-format-final.log",
+    "analysis": "/tmp/vanta-subaccount-access-analysis-final.log",
+    "build": "/tmp/vanta-subaccount-access-build-final.log"
+  },
+  "log_sha256": {
+    "focused": "dcab8301b836ac450091cfe7cbbb0b4de427165a270bd9503a7050031c39584d",
+    "full": "d6408ad0b3e27aa3b946d17b3b899cdfe4e843ee0c08f78a2ad7bffc6a02a659",
+    "format": "a1d9a4ecab6adb09c098fdb19adcfe008b43e3bfd0a6895c9d77818dbd51c667",
+    "analysis": "dd59d09fbc342124016fe556b92356f7e73cf9266486e1535e562c53297b613b",
+    "build": "a38cb38f42ecc30197e9058f7663ffb960d73eef5d9ea41732449a33d62e8543"
+  },
+  "source_sha256": {
+    "lib/features/subaccounts/domain/subaccount_management.dart": "57045534b54122c283f7609660494069d6ba6ee14ecdf5204758143546e82932",
+    "lib/features/subaccounts/application/subaccount_management_provider.dart": "40206c899038612f6ca975fb2c0c7e08ad58fda1708bba1e17e2b59be3e6c483",
+    "lib/features/subaccounts/data/subaccount_management_repository.dart": "b6e327a9a83dacf226f97c0fc3024f27e06fd147908751079fc068d0d732e551",
+    "lib/features/subaccounts/presentation/subaccount_action_selector.dart": "bad40de8fc8c4d16bc820daf7b1487e9ed91fc9100918458dfe46b3d1b6e3689",
+    "lib/features/subaccounts/presentation/subaccount_management_screen.dart": "78ef95605275c9a67f2fa0cd8db2110bb1a5575e4e7eaa7fe6cdfe5f299f7f2e",
+    "lib/features/subaccounts/presentation/subaccount_management_review.dart": "b01f083ea6516e763358af56655be89e57734a339b9272b98faa31c8a15cc0b9",
+    "lib/core/strings.dart": "d752c0e0bd910ba4d35ae48f454661ff018a50724fed9745b2091a48b8dc5693",
+    "lib/l10n/app_en.arb": "50332f818b36ba2943ee2181aaa0a3669fe67e6ff07ed708227f7f6b60ee1c30",
+    "lib/l10n/app_zh.arb": "0fa6f6000faa6f512df7a5cea52330bf52c17ebae8c072555a6cb0d674aae63f",
+    "lib/l10n/generated/app_localizations.dart": "c484022737759be2e566eb3236290ffe8a1965f41d4ac2a40c22e835d16e9731",
+    "lib/l10n/generated/app_localizations_en.dart": "060301e5c248420da167238c37c33857632c6c4abad8794fe3a9ffd7560f0b51",
+    "lib/l10n/generated/app_localizations_zh.dart": "36b9252057debcfa79f07f6a8f09fc520ed17641556446e0a2c6b0c14e99bfc0",
+    "test/features/subaccounts/subaccount_management_repository_test.dart": "f9fbe7bdc4102a20fb4875295607be03091c28ff7121fe7b4e5f6cde824ccc2c",
+    "test/features/subaccounts/subaccount_creation_access_controller_test.dart": "2631dc1ecf0c96659fe357f801fb31c384df5237f60918037f762e6f9d3163b7",
+    "test/features/subaccounts/subaccount_creation_access_widget_test.dart": "badb71af522a1f52ca0da5cd56d5eddb151d8407d6a6e2dbe3db1f0a38f97adb",
+    "test/support/account_operations.dart": "936dec2c559a4ba34235b8da27b3dddb1f10ed063cddb40142744e817e893aac"
+  },
+  "verification_note": "Initial controller logout tests incorrectly simulated re-login with observer-only events after signed-out state; fixed to use explicit bootstrap. Initial widget assertions counted background address input; scoped to dialog. Explicit widget unmount/container disposal cancels account snapshot expiry timers. All final focused/full checks passed.",
+  "financial_requests_sent": false,
+  "private_requests_sent": false,
+  "chat_requests_sent": false,
+  "address_rpc_requests_sent": false,
+  "wallet_signatures_requested": false,
+  "device_tools_used": false,
+  "acceptance": "Mock HTTP, synthetic EIP712 fixtures, Riverpod/Widget and host tests only. No APK installation or native/real financial acceptance.",
+  "outstanding": [
+    "Real EOA self-agent acceptance, embedded noncreation operation qualification, child account creation and financial results unverified.",
+    "No device tooling/APK installation or real signatures/private/financial/chat/address-bearing RPC requests in this increment.",
+    "Android normal Makefile build only. iOS needs macOS/Xcode.",
+    "Full PRD goal still active: complete strategy management, Chase recovery, nine-mode entry/default settings, full Portfolio and Swap incomplete. User skipped only historical statistics/Summary/TWAP."
+  ]
+}

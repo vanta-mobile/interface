@@ -1,0 +1,95 @@
+{
+  "verified_at_utc": "2026-11-03T00:05:44.874568+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "apk": {
+    "bytes": 42630348,
+    "sha256": "b6909a9878dd3f654d674ca059521ed4d64d05c35cfb01b86deb7d277dbaa59f",
+    "installed": true
+  },
+  "automated_tests": 584,
+  "new_tests": {
+    "mapper_domain": 5,
+    "signed_repository": 14,
+    "controller": 12,
+    "cross_setting_activity": 6,
+    "widget": 8
+  },
+  "format_dart_files": 272,
+  "format_changed_files": 0,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 543,
+    "zh": 543
+  },
+  "official_contract": "position-margin-mode-public-contract.json",
+  "unit_widget_checks": [
+    "No private read on route entry; explicit two-signature preflight binds symbol and current wallet",
+    "Zero-sized BOTH and consistent complete hedge sides retain mode; wrong scope, malformed values, incomplete or contradictory rows fail",
+    "Quantities use Decimal, including tiny nonzero positions and signed direction checks",
+    "Current positions and active orders block review with specific localized reasons; no automatic closes or cancellations",
+    "Exact POST form bytes contain only symbol, marginType, nonce, user, signer and signature; current EOA is user/signer, no extra wallet",
+    "Mode values explicitly map read cross/isolated to write CROSSED/ISOLATED",
+    "Post acknowledgement never proves target; separately signed GET determines observed mode and UTC time",
+    "Failed POST or timeout never replays; unknown results require GET-only query",
+    "Refused submission sends no POST; refused verification retains uncertainty; identity changes prevent follow-up signatures",
+    "30-second lease includes second signature time, validated at actual send boundary",
+    "Leverage and margin-mode reads/submissions serialize across routes and symbols; unresolved write blocks other setting",
+    "Any settings submission invalidates both cached contexts; old identity completion cannot release newer lease",
+    "Failed read releases operation; failed refresh retains previous settings as historical",
+    "Confirmation shows exact wallet, symbol, previous mode and target; cancel sends no change",
+    "Failure/refresh/scroll/query retain selection; safe errors and documented codes without raw payload",
+    "English 360-wide 2x and Chinese 844x390 landscape 1.5x selection, confirmation and result layouts",
+    "Existing ADL test now settles layout and ensures header is visible before expansion"
+  ],
+  "native_checks": [
+    "Android 12 installed final release: Chinese risk entry opens BTCUSDT margin-mode page; scope, cross/isolated explanations and sign-in action readable",
+    "Actual Chinese authentication sheet opens with email OTP and external EOA options, explains no additional EOA wallet creation; dismissed without authentication or signing",
+    "Language selector changes to English; English risk entry and margin-mode page render localized scope, explanations and action",
+    "English landscape displays title, symbol, mode explanations, sign-in action and freshness description without clipping or overflow",
+    "Restored Chinese app locale, portrait rotation 0, accelerometer_rotation 0 and font_scale 1.0; verified via native hierarchy and system settings"
+  ],
+  "screenshots": [
+    {
+      "file": "position-margin-mode-zh-android.png",
+      "sha256": "5c02896cea2cbe7f6bec3d70361170ae04ae6d5448f8de32703a9d7654c2c80e"
+    },
+    {
+      "file": "position-margin-mode-zh-auth-android.png",
+      "sha256": "74cd59268538d431c7b83bb45e719a492809db59896e8ed7179cd9d53739a3d9"
+    },
+    {
+      "file": "position-margin-mode-en-android.png",
+      "sha256": "26c3dc154d79e271ad8693e134a3d7ad59e3b6bd25e683ee35e077e2d50f4a13"
+    },
+    {
+      "file": "position-margin-mode-en-landscape-android.png",
+      "sha256": "9819d9b4a3af41752e64551f96928b850c2027893bef76e94f6e29fb2fd406ea"
+    },
+    {
+      "file": "position-margin-mode-restored-zh-android.png",
+      "sha256": "753b49299fb32307d2f18a60f4001a00d1fb9ceca9a4b35f8b2a480f1aac0309"
+    }
+  ],
+  "live_private_requests_sent": false,
+  "financial_actions_sent": false,
+  "signed_in_native_values_faked": false,
+  "unverified": [
+    "Real authorized EOA/Privy private request acceptance and margin mode mutation",
+    "Signed-in native configuration, input, confirmation and verification values; controlled unit/widget fixtures only",
+    "iOS build requires macOS/Xcode unavailable on Linux"
+  ],
+  "remaining": [
+    "Real authentication acceptance and account gap recovery",
+    "Live order-entry / quick-order configuration integration; single/multi-asset and one-way/hedge modes",
+    "Close/reverse, isolated margin changes, TP/SL, subaccounts, transfers, deposits, withdrawals and notifications",
+    "Private BAPI historical statistics and TWAP skipped per user instruction"
+  ],
+  "original_settings": {
+    "app_locale": "zh",
+    "accelerometer_rotation": 0,
+    "user_rotation": 0,
+    "font_scale": "1.0",
+    "restored": true
+  }
+}

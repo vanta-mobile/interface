@@ -1,0 +1,164 @@
+{
+  "verified_at_utc": "2026-11-05T03:48:37.699796+00:00",
+  "environment": {
+    "os": "Linux / Nix",
+    "flutter": "3.47.4",
+    "dart": "3.13.3",
+    "java": "17"
+  },
+  "migration": {
+    "source": "/data/dodo/rwa-interface",
+    "workflows": [
+      "ci.yml",
+      "performance.yml",
+      "pr-agent.yml",
+      "release.yml"
+    ],
+    "excluded": [
+      "Flutter Web build/deployment",
+      "private-key export site deployment",
+      "source-only contract / App Review / Rive / Sentry checks"
+    ]
+  },
+  "checks": {
+    "actions_and_embedded_shell": {
+      "tools": [
+        "actionlint 1.7.12",
+        "shellcheck 0.11.0"
+      ],
+      "status": "passed"
+    },
+    "dart_format": {
+      "files": 789,
+      "changed": 0,
+      "status": "passed"
+    },
+    "dart_analyze_fatal_infos": {
+      "issues": 0,
+      "status": "passed"
+    },
+    "flutter_full_suite": {
+      "passed": 3617,
+      "status": "passed",
+      "snapshot_stable_after_capture": true
+    },
+    "performance_journey_widget_regression": {
+      "scenarios": 26,
+      "warmups": 1,
+      "samples": 1,
+      "native_frame_measurement": false,
+      "status": "passed"
+    },
+    "python_tools": {
+      "total": 37,
+      "passed": 36,
+      "skipped": 1,
+      "skip_reason": "macOS Keychain import requires macOS",
+      "status": "passed"
+    },
+    "node_performance_report": {
+      "passed": 12,
+      "status": "passed"
+    },
+    "android_arm64_release": {
+      "status": "passed",
+      "installed": false
+    },
+    "android_split_release": {
+      "abis": [
+        "arm64-v8a",
+        "x86_64"
+      ],
+      "obfuscated": true,
+      "signing": "temporary test certificate, not production",
+      "apksigner_verified": true,
+      "elf_16kb_verified": true,
+      "status": "passed"
+    },
+    "android_release_bundle": {
+      "obfuscated": true,
+      "signing": "temporary test certificate, not production",
+      "jarsigner_verified": true,
+      "debug_signing": false,
+      "bundletool": "1.18.2",
+      "bundletool_sha256": "378b5434cd1378bef6b2bc527b8c7f0ff2584b273830335bce54d6d0813c8584",
+      "native_64bit_libraries": 8,
+      "generated_native_apks": 2,
+      "structure_elf_and_zipalign_16kb": "passed",
+      "status": "passed"
+    },
+    "android_performance_profile_compile": {
+      "abi": "x86_64",
+      "target": "integration_test/performance_test.dart",
+      "status": "passed",
+      "installed": false,
+      "executed": false
+    }
+  },
+  "local_environment_adaptations": [
+    "Reference-project Gradle 9 workaround copies integration_test Android sources from the read-only Nix SDK into ignored android/.gradle.",
+    "Local AAB command supplies APKANALYZER_OPTS toolsdir to the composed SDK to fix the Nix wrapper Build Tools lookup; no check was disabled."
+  ],
+  "temporary_test_signing_keys": "deleted; no production signing files read or copied",
+  "not_verified": [
+    "remote GitHub Actions execution",
+    "iOS archive/IPA/Keychain on macOS",
+    "native device timing and layout",
+    "performance screenshot",
+    "production signing",
+    "TestFlight upload",
+    "GitHub Release publication"
+  ],
+  "source_sha256": {
+    ".github/workflows/ci.yml": "418a3b24feef314c9bab67392ba2b066542c62c50d1944d7cbd876a33610e0da",
+    ".github/workflows/performance.yml": "1ca99680782ed018788970daf35c89eb2cd3e0b14d9267f2c170d095aa275f4c",
+    ".github/workflows/pr-agent.yml": "23ed6bf0ad7fa374756924c075f33cab9d25680fd008675b8b6d7ad0ee162973",
+    ".github/workflows/release.yml": "2595b464cae82508bfe0a7959622f4cb5ede4d88b1359d5b997e02819d4a4dcf",
+    "android/app/build.gradle.kts": "02e619ee5dd6ce2277b6de0c2bdf0911e8658471c96d9ba5022bf23db5b626f5",
+    "android/settings.gradle.kts": "31a5c815acdb615f6a94c96773b53c0f7775408c9e500fa5c6c2a3d8f0613616",
+    "integration_test/performance_test.dart": "a259e59ec19d0b9ceb483077a86b49fd49e66194650da6e527c17a3234a22d16",
+    "pubspec.lock": "7ae7be26de24373127aff14686ed6882f8fd706a43ebc2f7a848b7421efc3df4",
+    "pubspec.yaml": "c599a931820ea66c652161e71dfa5558dc97e446cd0008898fd3821edcf49fcb",
+    "scripts/ci_config.py": "c24daaee4ac93033c08e71e78cd524eefe2f76c99414b2881f707e94e693c04c",
+    "scripts/ci_config_test.py": "2245871f07a359d05f5517b5d9415633af0d1b3628f8723b11436ecfde1803fe",
+    "scripts/ios_release.py": "ad8666c52504c4c1b828d113cb1bfc1592f192a3081842aec2a4e4c264da380f",
+    "scripts/ios_release_test.py": "f8f2f13e8ef8b6bf55b1e62f814d74a9f4b6ec1eadc0c59c03ae23232cae7ce3",
+    "scripts/performance-report.mjs": "146d0c23f24358debc1682a5698e0413a7973f0cba0393dd5fb31099c4235248",
+    "scripts/performance-report.test.mjs": "7871d4980d67aabaf3ba4ec2151bbe8fe1e96365c329f0847231a026087ae578",
+    "scripts/performance-screenshot.mjs": "21800cf15abdfee1b4eb172b84ca9596600b6b5712cd9dc9dcf96e7500a8cf78",
+    "scripts/run-performance.mjs": "b490e30962773a7c135c1fa0f3d36e4e907235e3fa69bcb89d2fbc4c8319857b",
+    "scripts/verify_android_bundle.py": "cb6974930d5af17bb069405fd2098f76103d83801d13f43c91898b8b1f4914d4",
+    "scripts/verify_android_bundle_test.py": "4ea0c53098971fa1e36d821abbf5ea877250b07e71a1302bac432cda2296bb72",
+    "test/performance/performance_fixture.dart": "418fa5f54ec56a64d2a3f1b6b989f4288d74f862db0d24d6df97e2ca25a2c686",
+    "test/performance/performance_scenarios.dart": "cf1d797c5fe69f4163385abbe5a4e7ff3f3ec6ef2a95192251ec47c7a6a76340",
+    "test/performance/performance_scenarios_test.dart": "0735b26a9da32a989ed89b1f238246111ce07fed0f0d31a544ea18d8409aeea3",
+    "test_driver/performance_driver.dart": "eb83b91b7cc44d700306dcab630274f173819ec7a5520aefc863f4d81113d7cc",
+    "test/features/portfolio/strategy_execution_widget_test.dart": "6af57cfd336895ee92c53f5f9b560b655df2fa5fdd16d8404b353db38076c671",
+    "test/features/portfolio/signed_strategy_execution_repository_test.dart": "4ba585c9dc9a80bb05a80e272a51f8a5c55c19ddd13b5dd0d4c639271345067a",
+    "test/support/strategy_execution.dart": "9f39d319e8f6a32469d65f32829a0f7a8d495e68c991df5180b836b8a9eb1469"
+  },
+  "local_artifacts_not_committed": {
+    "build/ci-verification/vanta-test-signed-arm64-v8a.apk": {
+      "bytes": 43031836,
+      "sha256": "525c51baec7f0c9ff0640a59d0415d5e6f7c28bf720fdb251933151ced38995e"
+    },
+    "build/ci-verification/vanta-test-signed-x86_64.apk": {
+      "bytes": 44777752,
+      "sha256": "ff9fc96887aee3cdc0efebb737714716e830e24945e32ee19abf07a820004e41"
+    },
+    "build/ci-verification/vanta-test-signed.aab": {
+      "bytes": 64651349,
+      "sha256": "485978ef0897f5834b0107021098240e3d462182adb796d519525a9154259afe"
+    },
+    "build/app/outputs/flutter-apk/app-profile.apk": {
+      "bytes": 87825128,
+      "sha256": "311bb1341af9315b9dcfd094e23efa4729eea028d8792e4b91ba1d4b4b271f46"
+    }
+  },
+  "verification_notes": [
+    "Initial full suite passed 3529 tests. Concurrent feature edits were preserved.",
+    "A supplemental run loaded an obsolete version of the concurrently edited strategy execution widget test; that process was stopped. The current isolated widget file passed 10 tests, and the subsequent full suite passed 3617 tests.",
+    "Removed two unused imports and added braces to two if statements in concurrent feature test files to satisfy the new static-analysis gate; test behavior was unchanged.",
+    "Build artifacts are identified by their own hashes and do not certify functional changes made concurrently or afterward."
+  ]
+}

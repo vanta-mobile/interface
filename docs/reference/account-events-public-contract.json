@@ -1,0 +1,31 @@
+{
+  "verified_at_utc": "2026-11-02T20:28:10.614134+00:00",
+  "source": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "source_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "checks": {
+    "partial_balance_position_event": true,
+    "event_and_transaction_times": true,
+    "wallet_not_delta": true,
+    "cross_funding_can_omit_positions": true,
+    "isolated_funding_only_related_position": true,
+    "position_amount_entry_pnl_margin_side": true,
+    "no_leverage_liquidation_mark_in_event": true,
+    "rest_record_update_times": true,
+    "stream_sort_E": true
+  },
+  "private_live_requests_sent": false,
+  "boundaries": [
+    "Events are partial updates, not complete account snapshots.",
+    "Missing P never implies closure; explicit zero quantities are handled per symbol and position side.",
+    "Wallet balances are absolute wb/cw, not bc or cr deltas.",
+    "Unsupported risk fields and aggregate balances require signed REST verification.",
+    "Event E orders each key; transaction T compares with REST per-record updateTime; local receive clock is not a sequence.",
+    "Disconnects still require explicit complete signed reads; no automatic wallet prompts."
+  ],
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "prd_requirements": [
+    "Futures Positions: account events update positions and balances; public Mark Price updates estimates.",
+    "Retain explicit abnormal and historical states; reconnect requires a complete account recheck.",
+    "Position quantity, entry price and financial units remain precise; unavailable liquidation price stays unknown."
+  ]
+}

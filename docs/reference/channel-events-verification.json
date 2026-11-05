@@ -1,0 +1,103 @@
+{
+  "date": "2026-11-04",
+  "increment": "CHANNEL activity list/detail, engagement tasks and existing-wallet actions",
+  "contract": "channel-events-public-contract.json",
+  "tests": {
+    "baseline_full": 2904,
+    "new": 93,
+    "feature_suite_passed": 278,
+    "full_passed": 2997,
+    "result": "All tests passed",
+    "exit_code": 0,
+    "coverage": [
+      "Distinct Retail/Channel source/venue binding and ranking paths; typed immutable models, exact decimal amounts and source mapping",
+      "Unknown/absent personal fields; UTC calendar, duplicate/future/history/flag checks; account and event scope; task/terms mutation",
+      "Wallet message/body vectors; new event/participant/progress checks before and after signing; no new wallet; rejection, clock rollback/midnight/expiry and stale preflight",
+      "Durable public-intent serialization/reconstruction, corrupted/duplicate/100cap/write/delete failures, known-unsent removal and unresolved original-date lock",
+      "12second bounded/abortable task reads, JSON MIME/redirect/declared+streamed body bounds, action POST abort/timeout/disposal and duplicate mutex",
+      "Server state acknowledged vs verified; unknown blocks both actions, explicit original-date completion reconciliation, missing/false cannot clear",
+      "Independent controllers, explicit address disclosure,5minute expiry, pause/resume/late/stop/dispose/identity changes",
+      "Native Widget interaction in English/Chinese,320wide text1.5/844x390landscape/768x1024tablet, confirm/cancel, same-wallet actions, original website deposit target"
+    ]
+  },
+  "format": {
+    "files": 701,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1419,
+    "zh": 1419,
+    "new_per_locale": 40
+  },
+  "android": {
+    "command": "flutter build apk --release --target-platform android-arm64 --dart-define-from-file=config/privy.local.json",
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "exit_code": 0,
+    "bytes": 45056792,
+    "sha256": "aebf33e14b677fa65571ec93a6bcba434e1723345a199ced87934fb29017c8bb",
+    "packaged_aot_strings": {
+      "Vanta Trading Event Check-In": true,
+      "Vanta Trading Event Wallet Connect": true,
+      "vanta.eventEngagement.pending.v1": true,
+      "event-engagement-confirm": true
+    },
+    "installed": false,
+    "device_tools_used": false,
+    "signing": "Existing debug signing for local experience release; not store distribution"
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "public_source_mapping": {
+    "channel_events": 7,
+    "engagement_events": 3,
+    "metrics": [
+      "newUserTasks",
+      "dailyCheckIn",
+      "milestoneRewards",
+      "networkActiveTraderCount",
+      "whitelistTotalVolume",
+      "qualifiedInviteeCount",
+      "totalVolume"
+    ],
+    "detail_id": 17,
+    "new_user_deposit": "100",
+    "end": "2026-11-03T08:00:00.000Z",
+    "published_status": "ACTIVE",
+    "active_at_2026_11_04": false,
+    "top10_rows": {
+      "17": 0,
+      "6": 1
+    }
+  },
+  "not_performed": {
+    "personal_endpoint_requests": false,
+    "actual_wallet_signature": false,
+    "real_action_post": false,
+    "rpc": false,
+    "private_or_financial_requests": false,
+    "native_device_testing": false
+  },
+  "remaining": [
+    "Actual personal task schema and current EOA/Privy signature acceptance need live verification; production requests were not performed",
+    "Unknown task submission without matching completion can remain blocked indefinitely; no authoritative pending-request lookup or false-as-unsent assumption",
+    "SharedPreferences acknowledged writes are tested with synthetic backing storage; native app kill/power-loss and uninstall/data-clear boundaries unverified",
+    "Native image/RTL published text/layout/TLS/accessibility and iOS not verified; user explicitly deferred device tests",
+    "Overall PRD remains incomplete, including AI, full cross-product Portfolio, collateral contribution/Swap and protocol/product-dependent trading gaps; BAPI stats/TWAP skipped by user"
+  ],
+  "logs": {
+    "feature": "/tmp/vanta-channel-feature-clean.log",
+    "full": "/tmp/vanta-channel-all-tests.log",
+    "analysis": "/tmp/vanta-channel-analysis-clean.log",
+    "format": "/tmp/vanta-channel-format-clean.log",
+    "build": "/tmp/vanta-channel-build.log",
+    "public_mapping": "/tmp/vanta-channel-public-mapping.json"
+  },
+  "log_note": "Final full regression authoritative. Earlier synthetic fixture typing, scroll alignment and missing typed_data import were corrected before final checks. Existing third-party Kotlin plugin future-compatibility notice did not block current release build."
+}

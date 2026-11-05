@@ -1,0 +1,55 @@
+{
+  "recorded_at_utc": "2026-11-03T21:50:49.734301+00:00",
+  "scope": "USDF/asBNB published yield rates in Spot/Futures cards, exact source calculation and dates, lifecycle/partial failures and double-language expandable UI",
+  "contract": "asset-yield-public-contract.json",
+  "automated_tests": 2468,
+  "new_tests": 78,
+  "test_breakdown": {
+    "mapper": 45,
+    "repository": 12,
+    "controller": 12,
+    "widget": 9
+  },
+  "format": "597 Dart files, zero changes after final formatting",
+  "analysis": "No issues found",
+  "localized_messages_per_language": {
+    "en": 1154,
+    "zh": 1154
+  },
+  "acceptance_evidence": {
+    "mapper": "Exact numeric tokens/Decimal calculations, percentage versus ratio, no native double, zero/negative/missing/invalid rates, date mismatch/leap-day validation, source order, bounds, optional update time, freshness and exact symbols",
+    "repository": "Mock HTTP only: exact public fixed URLs/GET/no auth or wallet fields, each selected source only, no redirects/retry, timeout/rate-limit/server/malformed failure",
+    "controller": "No unobserved request, shared-family dedup, source isolation, receipt/source freshness and UTC midnight while refreshing, retained failure/retry, inactive/disposal/late-result protection, resource lifetime, safe errors and wrong-asset rejection",
+    "widget": "EN/ZH 320 width and text1.5, 844x390 landscape and768x1024tablet; expand dates/source/caveats/refresh, stale upstream data, independent failures and safe retry, loading/pause/resume, unsupported symbols no read, Spot/Futures share same rate with unchanged quantities",
+    "packaged_aot": "APK lib/arm64-v8a/libapp.so inspected without running; contains asset-yield-rate-, assetYieldUsdf, Reference APY and PublicAssetYieldRepository"
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43941692,
+    "sha256": "eb173c7c8d46c0feb033be009cdb89bb81bcf25e061bad92345882b7d565f1a6"
+  },
+  "ios": "Linux has no macOS/Xcode; not built or natively verified",
+  "device_tools_used": false,
+  "real_wallet_requests_sent": false,
+  "live_rpc_requests_sent": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "public_network_reads": "Notion root/Portfolio/points-and-campaigns/AI pages; anonymous public yield data and website JS; anonymous Vanta page/JS and three path checks returning HTML. No user wallet/address queried",
+  "native_testing": "Deferred by user; see ../native-verification-pending.md",
+  "remaining": [
+    "Overall PRD remains incomplete; enable-trading, subaccount management/main-sub transfers, actual external funding, Chase and complete Portfolio",
+    "Points/campaigns and AI pages included in scope audit; no app implementation or verified mobile backend contract yet",
+    "Asset name/logo metadata, collateral contribution and Swap remain incomplete"
+  ],
+  "logs": {
+    "data": "/tmp/vanta-asset-yield-data-tests.log",
+    "widget": "/tmp/vanta-asset-yield-widget-tests.log",
+    "full": "/tmp/vanta-asset-yield-all-tests.log",
+    "analysis": "/tmp/vanta-asset-yield-analysis-clean.log",
+    "format": "/tmp/vanta-asset-yield-format-clean.log",
+    "build": "/tmp/vanta-asset-yield-build.log"
+  },
+  "log_note": "Final full regression covers all12 controller cases, including resource lifetime; widget log covers9 new +11 existing tests. Earlier failing exploratory logs are not acceptance evidence."
+}

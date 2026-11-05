@@ -1,0 +1,50 @@
+{
+  "verified_at_utc": "2026-11-02T17:50:16.422451+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "apk": {
+    "bytes": 42433512,
+    "sha256": "efbfd5c6d6d907259e2cbecf5aa0e6e36c99544502e2105cd28274d5333f9492"
+  },
+  "automated_tests": 353,
+  "new_unit_widget_tests": 22,
+  "format_dart_files": 198,
+  "analysis": "no issues",
+  "localized_messages_per_language": 446,
+  "native_checks": [
+    "Chinese ADL expansion and scope text",
+    "ADL action opens EOA/email sign-in",
+    "English ADL expansion and scope text",
+    "English landscape scroll reaches ADL read control",
+    "original Chinese language and locked portrait restored"
+  ],
+  "screenshots": [
+    "position-adl-zh-android.png",
+    "position-adl-login-android.png",
+    "position-adl-en-android.png",
+    "position-adl-landscape-android.png"
+  ],
+  "unit_widget_checks": [
+    "exact current-wallet GET /fapi/v3/adlQuantile bytes and shared nonce",
+    "all five levels and four-bar official color mapping plus accessible labels",
+    "one-way BOTH, isolated hedge exact side, crossed hedge marker ignored",
+    "missing side, mode mismatch and zero-quantity records never manufacture zero",
+    "malformed levels, duplicates and conflicting crossed hedge response rejected",
+    "signature refusal, late replies, logout and signing capability loss",
+    "ADL failure retains its stale snapshot without changing positions",
+    "30-second expiry and stale positions keep ADL indicator historical",
+    "mutual UI signing exclusion with risk read",
+    "360-width English 2x text and Chinese 844x390 landscape 1.5x text unknown layout"
+  ],
+  "public_contract_evidence": "position-adl-public-contract.json",
+  "unverified": [
+    "real authorized ADL reads with EOA/Privy",
+    "signed-in ADL cards on physical device (fixtures in widgets only)",
+    "iOS build requires macOS/Xcode"
+  ],
+  "remaining": [
+    "live mark valuation and authenticated account stream",
+    "cross initial margin and ROI",
+    "close/reverse, margin changes and TP/SL"
+  ]
+}

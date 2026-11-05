@@ -1,0 +1,110 @@
+{
+  "date": "2026-11-04",
+  "increment": "Native bilingual AI page/navigation, Riverpod lifecycle/foreground handoff, bounded history checkpointing and recovery UX",
+  "contract": "assistant-ui-public-contract.json",
+  "baseline": "assistant-session-verification.json",
+  "files": {
+    "page": "lib/features/assistant/presentation/assistant_page.dart",
+    "navigation": "lib/features/trade/presentation/trading_screen.dart",
+    "controller": "lib/features/assistant/application/assistant_controller.dart",
+    "writer": "lib/features/assistant/application/assistant_history_writer.dart"
+  },
+  "tests": {
+    "baseline_full": 3211,
+    "new": 57,
+    "new_controller_lifecycle": 32,
+    "new_history_writer": 7,
+    "new_widget": 18,
+    "full_passed": 3268,
+    "exit_code": 0,
+    "ai_feature_tests_in_full_suite": 271,
+    "coverage": [
+      "No request/signature/native credential read/automatic restore or wallet creation on page entry",
+      "Original challenge separate confirmation/cancel, reauthorization retain memory/input, rejection/expiry and current-wallet-only signer",
+      "Expected wallet background foreground gate; no verify after stop/cancel/changed scope or late signature",
+      "Identity/address/kind/signing changes clear private view; late responses ignored and old confirmation dialogs cannot mutate new wallet",
+      "Explicit restore, failed/corrupt history readonly until retry/confirmed clear, interrupted history never resumes chat",
+      "Persist-before-chat, native staging failure/stop sends no POST, stopped preflight restores unsent draft even after delayed native write",
+      "Partial response stop, ignored late reply, retained new draft on failure and no automatic background/resume request",
+      "400ms stream/typing throttle, bounded one in-flight plus one pending save, invalidate/serialized clear/no resurrection during disposal and ordered writer adoption",
+      "Local forget only current credentials, retains history, no server revoke claim",
+      "Explicit used-only quota, no guessed five remaining, UTC rollover/clock rollback/stale after send/failure, explicit quota-zero blocking",
+      "Native Markdown/GFM table, collapsed returned explanation, copy clipboard, blocked remote images and manual HTTPS-only link opener",
+      "Responsive challenge/chat/table/code/input at320width EN/ZH text1.5,844x390landscape,768x1024tablet and320x620minus300keyboard; no layout exceptions",
+      "Reader scroll not pulled to latest update; actual AI bottom navigation opens page and disposes provider on leaving"
+    ]
+  },
+  "format": {
+    "files": 742,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "dependency": {
+    "package": "flutter_markdown",
+    "version": "0.7.7+1",
+    "purpose": "Native selectable Markdown/GFM chat rendering, all images blocked; no WebView",
+    "new_transitive": [
+      "markdown 7.3.1"
+    ]
+  },
+  "localization": {
+    "en": 1490,
+    "zh": 1490,
+    "new_per_locale": 71,
+    "message_keys_equal": true,
+    "note": "Existing ARB metadata-only differences retained; all user-visible keys match"
+  },
+  "android": {
+    "command": "flutter build apk --no-pub --release --target-platform android-arm64 --dart-define-from-file=config/privy.local.json",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45515604,
+    "sha256": "4d8daa49608706c0a7734c16fc73f2d72524312d6d82fafa911f33047c768325",
+    "installed": false,
+    "device_tools_used": false,
+    "signing": "Existing local debug signing, not store distribution",
+    "packaging_boundary": "Reachable AssistantPage imported in actual destination3; APK differs from prior data-only baseline. English/Chinese AI localization text found in compiled libapp.so; compilation does not prove real server or native acceptance.",
+    "aot_bytes": 15532936,
+    "aot_localization_probes": {
+      "Vanta AI": true,
+      "Authorize with your connected wallet": true,
+      "此钱包在本设备上没有保存的 AI 会话": true,
+      "Remote image hidden": true
+    }
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "performed": {
+    "synthetic_http_and_wallet_signatures": true,
+    "synthetic_native_method_channel_in_full_regression": true,
+    "actual_wallet_signature": false,
+    "actual_auth_refresh_binding_chat_usage_requests": false,
+    "private_financial_rpc": false,
+    "native_device_testing": false
+  },
+  "remaining": [
+    "Actual challenge grammar/domain/optional chain and current EOA/Privy personal-sign acceptance",
+    "Actual Supabase user/binding/refresh/chat/usage behavior, same-ID completion deduplication and quota charging",
+    "Native TLS/clipboard/browser/wallet handoff/keyboard/accessibility/layout and secure storage capacity/cipher/lock/kill/reinstall/backup; user deferred device tests",
+    "iOS build requires macOS/Xcode",
+    "Other PRD gaps remain in prd-progress.md; overall objective incomplete"
+  ],
+  "logs": {
+    "full": "/tmp/vanta-ai-ui-all-tests.log",
+    "controller": "/tmp/vanta-ai-ui-controller-tests.log",
+    "lifecycle": "/tmp/vanta-ai-ui-lifecycle-tests.log",
+    "writer": "/tmp/vanta-ai-ui-writer-tests.log",
+    "widgets": "/tmp/vanta-ai-ui-widget-clean.log",
+    "analysis": "/tmp/vanta-ai-ui-analysis-clean.log",
+    "format": "/tmp/vanta-ai-ui-format-clean.log",
+    "build": "/tmp/vanta-ai-ui-build.log",
+    "pub_get": "/tmp/vanta-ai-ui-pub.log"
+  },
+  "note": "Intermediate widget fixture iterations required real-event draining alongside pumped frames for MockClient response streams; final full regression is authoritative. Message cards use Material to preserve expansion ink. No native or real API acceptance inferred from synthetic success."
+}

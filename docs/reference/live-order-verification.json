@@ -1,0 +1,51 @@
+{
+  "recorded_at_utc": "2026-11-03T03:17:57.989513+00:00",
+  "automated_tests": 709,
+  "new_tests": 31,
+  "format_dart_files": 310,
+  "analysis": "no issues",
+  "android_release": {
+    "built": true,
+    "installed_before_user_pause": true,
+    "bytes": 42761528,
+    "sha256": "db61b43bbed73a6aa6b432975a6bdb9f950dcbe005c8be523c779fd89d449f37"
+  },
+  "localized_messages_per_language": {
+    "en": 625,
+    "zh": 625
+  },
+  "native_testing": "Paused at user request; do not continue native testing. Record remaining checks only.",
+  "completed_limited_native_checks": [
+    "Chinese signed-out live-order page",
+    "Chinese email/EOA login sheet; no authentication or signatures"
+  ],
+  "screenshots": [
+    {
+      "file": "live-order-zh-android.png",
+      "sha256": "02d631c6d5f054aa37fdc5d16e4a05bfcce0321b552fb26e30a2fc3829b91c2c"
+    },
+    {
+      "file": "live-order-zh-auth-android.png",
+      "sha256": "c8b79572b96383949c0c560b3b54931de6d17a1235dc92ad2da89eaf6e768592"
+    }
+  ],
+  "native_checks_not_completed": [
+    "English and landscape live-order screens",
+    "Actual Privy email verification and recovery",
+    "Actual EOA connection, SIWE signature and native callback",
+    "Aster enable-trading and acceptance of current EOA as user/signer",
+    "Authenticated account, orders, history, position and user-stream acceptance",
+    "Real live MARKET and GTC LIMIT placement, query, partial/final fills",
+    "Real cancellation and four futures configuration changes",
+    "Network gap recovery with authenticated data",
+    "iOS build and native workflow"
+  ],
+  "known_implementation_boundaries": [
+    "Order balance and asset mode not displayed in live-order page",
+    "No reduceOnly, dedicated close/reverse, TP/SL, BBO, other TIF or quick orders",
+    "Unresolved client ID and operation lock currently in memory; durable restart recovery outstanding"
+  ],
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "ios": "macOS/Xcode unavailable on Linux; unverified"
+}

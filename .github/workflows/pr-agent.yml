@@ -1,0 +1,45 @@
+name: PR Agent Review
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - synchronize
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: pr-agent-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: AI Code Review
+    if: >-
+      github.event.sender.type != 'Bot' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run PR Agent review
+        uses: the-pr-agent/pr-agent@1d01f24f455bb879c1d9c557ad7de3d72dcc7975 # v0.46.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+          OPENAI.API_BASE: ${{ vars.OPENAI_API_BASE }}
+          config.model: "gpt-5.6-sol"
+          config.ai_timeout: "240"
+          config.max_model_tokens: "24000"
+          github_action_config.auto_review: "true"
+          github_action_config.pr_actions: '["opened", "reopened", "synchronize", "ready_for_review"]'
+          pr_reviewer.enable_large_pr_chunking: "true"
+          pr_reviewer.max_number_of_calls: "3"
+          pr_code_suggestions.max_number_of_calls: "3"
+          pr_code_suggestions.extra_instructions: >-
+            Return exactly one top-level code_suggestions list. When no
+            suggestions apply, return exactly `code_suggestions: []`; never
+            nest another code_suggestions key inside it.

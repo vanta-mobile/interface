@@ -1,0 +1,91 @@
+{
+  "verified_at_utc": "2026-11-03T01:49:35.186691+00:00",
+  "official_doc": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_doc_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "endpoints": {
+    "public": [
+      "GET /fapi/v3/exchangeInfo",
+      "GET /fapi/v3/premiumIndex?symbol",
+      "GET /fapi/v3/time"
+    ],
+    "context": [
+      "GET /fapi/v3/positionSide/dual",
+      "GET /fapi/v3/positionRisk?symbol"
+    ],
+    "mutation": "POST /fapi/v3/order",
+    "verification": "GET /fapi/v3/order?symbol&origClientOrderId"
+  },
+  "contract_checks": [
+    "MARKET only quantity; no price, timeInForce or stopPrice",
+    "LIMIT requires quantity, price and explicit GTC",
+    "One-way uses BOTH; hedge entry uses BUY LONG or SELL SHORT without reduceOnly",
+    "newClientOrderId frozen before placement; length <= 36 and official character set",
+    "Decimal PRICE_FILTER, LOT_SIZE, MARKET_LOT_SIZE, MIN_NOTIONAL and side-specific PERCENT_PRICE based on mark",
+    "Price and quantity increments use value-minus-minimum per official docs",
+    "POST form bytes exactly match EIP-712 query; current EOA user/signer and shared fresh nonce",
+    "ACK never confirms a fill; independent signed query validates client ID, symbol, type, side, original/executed quantities and limit terms",
+    "Possible submission failure remains unknown and GET-only; no automatic placement retry"
+  ],
+  "anonymous_btcusdt_rules": {
+    "symbol": "BTCUSDT",
+    "status": "TRADING",
+    "contractType": "PERPETUAL",
+    "baseAsset": "BTC",
+    "quoteAsset": "USDT",
+    "marginAsset": "USDT",
+    "orderTypes": [
+      "LIMIT",
+      "MARKET",
+      "STOP",
+      "STOP_MARKET",
+      "TAKE_PROFIT",
+      "TAKE_PROFIT_MARKET",
+      "TRAILING_STOP_MARKET"
+    ],
+    "filters": [
+      {
+        "minPrice": "1",
+        "maxPrice": "1000000",
+        "filterType": "PRICE_FILTER",
+        "tickSize": "0.1"
+      },
+      {
+        "stepSize": "0.001",
+        "filterType": "LOT_SIZE",
+        "maxQty": "1000",
+        "minQty": "0.001"
+      },
+      {
+        "stepSize": "0.001",
+        "filterType": "MARKET_LOT_SIZE",
+        "maxQty": "120",
+        "minQty": "0.001"
+      },
+      {
+        "limit": 200,
+        "filterType": "MAX_NUM_ORDERS"
+      },
+      {
+        "limit": 10,
+        "filterType": "MAX_NUM_ALGO_ORDERS"
+      },
+      {
+        "notional": "5",
+        "filterType": "MIN_NOTIONAL"
+      },
+      {
+        "multiplierDown": "0.9800",
+        "multiplierUp": "1.0200",
+        "ltMultiplierDown": "0",
+        "multiplierDecimal": "4",
+        "filterType": "PERCENT_PRICE",
+        "ltMultiplierUp": "0"
+      }
+    ]
+  },
+  "reference_project": "/data/dodo/rwa-interface/lib/domain/models/order_intent.dart",
+  "reference_boundary": "Architecture reference only; Hip3 parameters do not define Aster order protocol.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false
+}

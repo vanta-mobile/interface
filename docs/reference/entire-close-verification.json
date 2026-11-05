@@ -1,0 +1,57 @@
+{
+  "recorded_at_utc": "2026-11-03T06:27:32.566696+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "requirements": [
+    "Position TP/SL entire close at trigger",
+    "Signed PnL and leveraged ROI targets converted into candidate trigger prices"
+  ],
+  "source": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "official_protocol_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "automated_tests": 948,
+  "new_tests": 45,
+  "format_dart_files": 342,
+  "analysis": "no issues",
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 42958196,
+    "sha256": "c769e52224eebf00b5a95338e4eee414902b2e58dd2a5023fd9897e8c228fe5a"
+  },
+  "localized_messages_per_language": {
+    "en": 717,
+    "zh": 717
+  },
+  "native_testing": "Paused at user request. No device tools, device tests or APK installation. See ../native-verification-pending.md.",
+  "ios": "Linux has no macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "implementation": [
+    "Position conditional market orders support closePosition=true; quantity, reduceOnly, price and timeInForce are omitted. Direction and position-side guards support one-way long/short and hedge LONG/SHORT.",
+    "Trigger-time position size is determined by Aster. Read-time size is a preview, not the submitted size. Fixed lot and notional checks are skipped only for valid entire-close shapes; trigger and capability checks remain.",
+    "Original position/configuration is independently rechecked before POST. Same selected EOA signs position GET, exact POST bytes and separate query GET. No extra wallet is created.",
+    "Query verifies entire-close flags and original conditional terms, allows origQty=0 and execution differing from read-time size, and validates statuses/positive fills/nonzero reported-size bounds. Remaining position requires a separate signed read.",
+    "PnL=d*Q*(P-E); ROI%=d*(P/E-1)*L*100. Decimal and exact rational inverse results are rounded once to the nearest exchange (price-minPrice)/tickSize lattice. Half-step ties round away from zero. Candidate estimates use the rounded price.",
+    "Selected partial quantity or reviewed entire quantity supplies Q. ROI uses entry price and leverage; it is not account yield. Conditional limit execution estimates still use the separate limit price.",
+    "Preview and refresh never overwrite trigger input. Explicit Apply only updates the field, not submission. Partial inputs survive entire-mode toggles. Unknown outcomes lock editing/Apply and recover with original-ID GET only."
+  ],
+  "evidence": [
+    "test/features/portfolio/live_order_entire_test.dart",
+    "test/features/portfolio/position_trigger_calculation_test.dart",
+    "test/features/portfolio/signed_live_order_repository_test.dart",
+    "test/features/portfolio/live_order_trigger_widget_test.dart",
+    "Full regression suite includes existing auth, account, policy, close/batch, market and localization checks.",
+    "/tmp/vanta-entire-all-tests.log",
+    "/tmp/vanta-entire-analysis.log",
+    "/tmp/vanta-entire-format-check.log",
+    "/tmp/vanta-entire-build.log"
+  ],
+  "boundaries": [
+    "Independent TP and SL are not OCO and do not auto-cancel. Attached TP/SL and linkage/editing remain incomplete.",
+    "Estimates exclude fees, funding, slippage and trigger-time state changes. Aster determines eligibility and actual execution.",
+    "Trailing/Chase, BBO and chart quick entry remain incomplete.",
+    "Aster enable-trading is not implemented; acceptance of the same EOA as its own API signer remains unverified.",
+    "Subaccounts, deposits/withdrawals/transfers, full valuation, notifications and durable unresolved-order recovery remain incomplete.",
+    "BAPI historical statistics and TWAP are skipped this phase at user request."
+  ]
+}

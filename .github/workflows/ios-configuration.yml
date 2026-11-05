@@ -1,0 +1,61 @@
+name: Detect iOS Configuration
+
+on:
+  workflow_call:
+    inputs:
+      apple-team-id:
+        type: string
+        required: false
+        default: ''
+    secrets:
+      IOS_DISTRIBUTION_CERTIFICATE_BASE64:
+        required: false
+      IOS_DISTRIBUTION_CERTIFICATE_PASSWORD:
+        required: false
+      IOS_PROVISIONING_PROFILE_BASE64:
+        required: false
+    outputs:
+      enabled:
+        value: ${{ jobs.detect.outputs.enabled }}
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    name: Check optional iOS signing configuration
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.configuration.outputs.enabled }}
+    steps:
+      # Do not checkout or execute PR code while these secrets are available.
+      - name: Detect complete iOS signing configuration
+        id: configuration
+        env:
+          APPLE_TEAM_ID: ${{ inputs.apple-team-id }}
+          IOS_DISTRIBUTION_CERTIFICATE_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_BASE64 }}
+          IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          configured=0
+          missing=()
+          for key in APPLE_TEAM_ID IOS_DISTRIBUTION_CERTIFICATE_BASE64 IOS_DISTRIBUTION_CERTIFICATE_PASSWORD IOS_PROVISIONING_PROFILE_BASE64; do
+            value="${!key:-}"
+            if [[ -n "${value//[[:space:]]/}" ]]; then
+              configured=$((configured + 1))
+            else
+              missing+=("$key")
+            fi
+          done
+          if (( configured == 0 )); then
+            echo 'enabled=false' >> "$GITHUB_OUTPUT"
+            echo 'iOS signing is not configured; skipping iOS builds.' >> "$GITHUB_STEP_SUMMARY"
+          elif (( ${#missing[@]} > 0 )); then
+            printf '::error::Incomplete iOS signing configuration. Missing: %s\n' "${missing[*]}"
+            exit 1
+          else
+            echo 'enabled=true' >> "$GITHUB_OUTPUT"
+            echo 'iOS signing configuration is present; enabling iOS builds.' >> "$GITHUB_STEP_SUMMARY"
+          fi

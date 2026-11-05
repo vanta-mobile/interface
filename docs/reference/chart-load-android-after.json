@@ -1,0 +1,818 @@
+{
+  "device": "Android12 / arm64",
+  "mode": "profile",
+  "method": "Real app/provider timing after setting HTTP idle timeout to120s, with20s pause before first interval switch. Programmatic notifier selection and Flutter post-frame callback; not raster completion. No historical prefetch.",
+  "events": [
+    {
+      "event": "request_start",
+      "atMs": 0,
+      "path": "/fapi/v3/exchangeInfo",
+      "query": null
+    },
+    {
+      "event": "request_start",
+      "atMs": 0,
+      "path": "/fapi/v3/ticker/24hr",
+      "query": null
+    },
+    {
+      "event": "request_start",
+      "atMs": 0,
+      "path": "/fapi/v3/time",
+      "query": null
+    },
+    {
+      "event": "request_start",
+      "atMs": 0,
+      "path": "/fapi/v3/premiumIndex",
+      "query": null
+    },
+    {
+      "event": "http_send",
+      "atMs": 0,
+      "path": "/fapi/v3/exchangeInfo",
+      "query": {}
+    },
+    {
+      "event": "http_send",
+      "atMs": 1,
+      "path": "/fapi/v3/ticker/24hr",
+      "query": {}
+    },
+    {
+      "event": "http_send",
+      "atMs": 1,
+      "path": "/fapi/v3/time",
+      "query": {}
+    },
+    {
+      "event": "http_send",
+      "atMs": 1,
+      "path": "/fapi/v3/premiumIndex",
+      "query": {}
+    },
+    {
+      "event": "ws_start",
+      "atMs": 199,
+      "streams": [
+        "btcusdt@depth20@500ms"
+      ]
+    },
+    {
+      "event": "ws_start",
+      "atMs": 199,
+      "streams": [
+        "btcusdt@aggTrade"
+      ]
+    },
+    {
+      "event": "http_headers",
+      "atMs": 1785,
+      "path": "/fapi/v3/time",
+      "elapsedMs": 1784,
+      "status": 200,
+      "persistent": true
+    },
+    {
+      "event": "request_complete",
+      "atMs": 1786,
+      "path": "/fapi/v3/time",
+      "query": null,
+      "elapsedMs": 1786
+    },
+    {
+      "event": "http_headers",
+      "atMs": 1810,
+      "path": "/fapi/v3/ticker/24hr",
+      "elapsedMs": 1809,
+      "status": 200,
+      "persistent": true
+    },
+    {
+      "event": "http_headers",
+      "atMs": 1822,
+      "path": "/fapi/v3/premiumIndex",
+      "elapsedMs": 1821,
+      "status": 200,
+      "persistent": true
+    },
+    {
+      "event": "request_complete",
+      "atMs": 1840,
+      "path": "/fapi/v3/premiumIndex",
+      "query": null,
+      "elapsedMs": 1839
+    },
+    {
+      "event": "request_complete",
+      "atMs": 1955,
+      "path": "/fapi/v3/ticker/24hr",
+      "query": null,
+      "elapsedMs": 1955
+    },
+    {
+      "event": "http_headers",
+      "atMs": 2080,
+      "path": "/fapi/v3/exchangeInfo",
+      "elapsedMs": 2079,
+      "status": 200,
+      "persistent": true
+    },
+    {
+      "event": "request_complete",
+      "atMs": 2159,
+      "path": "/fapi/v3/exchangeInfo",
+      "query": null,
+      "elapsedMs": 2159
+    },
+    {
+      "event": "ws_start",
+      "atMs": 2163,
+      "streams": [
+        "btcusdt@kline_1m"
+      ]
+    },
+    {
+      "event": "request_start",
+      "atMs": 2163,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "1m",
+        "limit": "200"
+      }
+    },
+    {
+      "event": "http_send",
+      "atMs": 2163,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "1m",
+        "limit": "200"
+      }
+    },
+    {
+      "event": "ws_state",
+      "atMs": 2168,
+      "streams": [
+        "btcusdt@aggTrade"
+      ],
+      "connected": true,
+      "elapsedMs": 1968
+    },
+    {
+      "event": "ws_state",
+      "atMs": 2169,
+      "streams": [
+        "btcusdt@depth20@500ms"
+      ],
+      "connected": true,
+      "elapsedMs": 1969
+    },
+    {
+      "event": "http_headers",
+      "atMs": 2723,
+      "path": "/fapi/v3/klines",
+      "elapsedMs": 559,
+      "status": 200,
+      "persistent": true
+    },
+    {
+      "event": "request_complete",
+      "atMs": 2740,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "1m",
+        "limit": "200"
+      },
+      "elapsedMs": 577
+    },
+    {
+      "event": "idle_before_selection",
+      "atMs": 3750,
+      "seconds": 20,
+      "httpIdleTimeoutSeconds": 120
+    },
+    {
+      "event": "ws_state",
+      "atMs": 4686,
+      "streams": [
+        "btcusdt@kline_1m"
+      ],
+      "connected": true,
+      "elapsedMs": 2522
+    },
+    {
+      "event": "select",
+      "atMs": 23751,
+      "symbol": "BTCUSDT",
+      "interval": "5m"
+    },
+    {
+      "event": "ws_start",
+      "atMs": 23753,
+      "streams": [
+        "btcusdt@kline_5m"
+      ]
+    },
+    {
+      "event": "request_start",
+      "atMs": 23754,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "5m",
+        "limit": "200"
+      }
+    },
+    {
+      "event": "http_send",
+      "atMs": 23756,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "5m",
+        "limit": "200"
+      }
+    },
+    {
+      "event": "http_headers",
+      "atMs": 24110,
+      "path": "/fapi/v3/klines",
+      "elapsedMs": 353,
+      "status": 200,
+      "persistent": true
+    },
+    {
+      "event": "request_complete",
+      "atMs": 24112,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "5m",
+        "limit": "200"
+      },
+      "elapsedMs": 357
+    },
+    {
+      "event": "provider_data",
+      "atMs": 24114,
+      "interval": "5m",
+      "elapsedMs": 362,
+      "candles": 200,
+      "offline": true
+    },
+    {
+      "event": "first_data_frame",
+      "atMs": 24140,
+      "interval": "5m",
+      "elapsedMs": 389
+    },
+    {
+      "event": "select",
+      "atMs": 25162,
+      "symbol": "BTCUSDT",
+      "interval": "15m"
+    },
+    {
+      "event": "ws_start",
+      "atMs": 25163,
+      "streams": [
+        "btcusdt@kline_15m"
+      ]
+    },
+    {
+      "event": "request_start",
+      "atMs": 25164,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "15m",
+        "limit": "200"
+      }
+    },
+    {
+      "event": "http_send",
+      "atMs": 25164,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "15m",
+        "limit": "200"
+      }
+    },
+    {
+      "event": "http_headers",
+      "atMs": 25515,
+      "path": "/fapi/v3/klines",
+      "elapsedMs": 350,
+      "status": 200,
+      "persistent": true
+    },
+    {
+      "event": "request_complete",
+      "atMs": 25528,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "15m",
+        "limit": "200"
+      },
+      "elapsedMs": 364
+    },
+    {
+      "event": "provider_data",
+      "atMs": 25532,
+      "interval": "15m",
+      "elapsedMs": 369,
+      "candles": 200,
+      "offline": true
+    },
+    {
+      "event": "first_data_frame",
+      "atMs": 25563,
+      "interval": "15m",
+      "elapsedMs": 400
+    },
+    {
+      "event": "select",
+      "atMs": 26565,
+      "symbol": "BTCUSDT",
+      "interval": "1h"
+    },
+    {
+      "event": "ws_start",
+      "atMs": 26565,
+      "streams": [
+        "btcusdt@kline_1h"
+      ]
+    },
+    {
+      "event": "request_start",
+      "atMs": 26566,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "1h",
+        "limit": "200"
+      }
+    },
+    {
+      "event": "http_send",
+      "atMs": 26567,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "1h",
+        "limit": "200"
+      }
+    },
+    {
+      "event": "http_headers",
+      "atMs": 26928,
+      "path": "/fapi/v3/klines",
+      "elapsedMs": 360,
+      "status": 200,
+      "persistent": true
+    },
+    {
+      "event": "request_complete",
+      "atMs": 26932,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "1h",
+        "limit": "200"
+      },
+      "elapsedMs": 365
+    },
+    {
+      "event": "provider_data",
+      "atMs": 26937,
+      "interval": "1h",
+      "elapsedMs": 372,
+      "candles": 200,
+      "offline": true
+    },
+    {
+      "event": "first_data_frame",
+      "atMs": 26968,
+      "interval": "1h",
+      "elapsedMs": 402
+    },
+    {
+      "event": "select",
+      "atMs": 27996,
+      "symbol": "BTCUSDT",
+      "interval": "4h"
+    },
+    {
+      "event": "ws_start",
+      "atMs": 27996,
+      "streams": [
+        "btcusdt@kline_4h"
+      ]
+    },
+    {
+      "event": "request_start",
+      "atMs": 27997,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "4h",
+        "limit": "200"
+      }
+    },
+    {
+      "event": "http_send",
+      "atMs": 27999,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "4h",
+        "limit": "200"
+      }
+    },
+    {
+      "event": "http_headers",
+      "atMs": 28396,
+      "path": "/fapi/v3/klines",
+      "elapsedMs": 396,
+      "status": 200,
+      "persistent": true
+    },
+    {
+      "event": "request_complete",
+      "atMs": 29074,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "4h",
+        "limit": "200"
+      },
+      "elapsedMs": 1076
+    },
+    {
+      "event": "provider_data",
+      "atMs": 29078,
+      "interval": "4h",
+      "elapsedMs": 1082,
+      "candles": 200,
+      "offline": true
+    },
+    {
+      "event": "first_data_frame",
+      "atMs": 29107,
+      "interval": "4h",
+      "elapsedMs": 1111
+    },
+    {
+      "event": "ws_state",
+      "atMs": 29197,
+      "streams": [
+        "btcusdt@kline_4h"
+      ],
+      "connected": true,
+      "elapsedMs": 1200
+    },
+    {
+      "event": "select",
+      "atMs": 30109,
+      "symbol": "BTCUSDT",
+      "interval": "1d"
+    },
+    {
+      "event": "ws_start",
+      "atMs": 30109,
+      "streams": [
+        "btcusdt@kline_1d"
+      ]
+    },
+    {
+      "event": "request_start",
+      "atMs": 30110,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "1d",
+        "limit": "200"
+      }
+    },
+    {
+      "event": "http_send",
+      "atMs": 30110,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "1d",
+        "limit": "200"
+      }
+    },
+    {
+      "event": "http_headers",
+      "atMs": 30422,
+      "path": "/fapi/v3/klines",
+      "elapsedMs": 311,
+      "status": 200,
+      "persistent": true
+    },
+    {
+      "event": "request_complete",
+      "atMs": 30761,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "1d",
+        "limit": "200"
+      },
+      "elapsedMs": 651
+    },
+    {
+      "event": "provider_data",
+      "atMs": 30765,
+      "interval": "1d",
+      "elapsedMs": 656,
+      "candles": 200,
+      "offline": true
+    },
+    {
+      "event": "first_data_frame",
+      "atMs": 30802,
+      "interval": "1d",
+      "elapsedMs": 692
+    },
+    {
+      "event": "ws_state",
+      "atMs": 30820,
+      "streams": [
+        "btcusdt@kline_1d"
+      ],
+      "connected": true,
+      "elapsedMs": 710
+    },
+    {
+      "event": "select",
+      "atMs": 31804,
+      "symbol": "BTCUSDT",
+      "interval": "1m"
+    },
+    {
+      "event": "ws_start",
+      "atMs": 31804,
+      "streams": [
+        "btcusdt@kline_1m"
+      ]
+    },
+    {
+      "event": "request_start",
+      "atMs": 31807,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "1m",
+        "limit": "4",
+        "startTime": "1793351700000",
+        "endTime": "1793351892042"
+      }
+    },
+    {
+      "event": "provider_data",
+      "atMs": 31811,
+      "interval": "1m",
+      "elapsedMs": 7,
+      "candles": 201,
+      "offline": true
+    },
+    {
+      "event": "http_send",
+      "atMs": 31812,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "1m",
+        "limit": "4",
+        "startTime": "1793351700000",
+        "endTime": "1793351892042"
+      }
+    },
+    {
+      "event": "provider_data",
+      "atMs": 31819,
+      "interval": "1m",
+      "elapsedMs": 15,
+      "candles": 201,
+      "offline": true
+    },
+    {
+      "event": "first_data_frame",
+      "atMs": 31887,
+      "interval": "1m",
+      "elapsedMs": 83
+    },
+    {
+      "event": "http_headers",
+      "atMs": 32153,
+      "path": "/fapi/v3/klines",
+      "elapsedMs": 340,
+      "status": 200,
+      "persistent": true
+    },
+    {
+      "event": "request_complete",
+      "atMs": 32155,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "1m",
+        "limit": "4",
+        "startTime": "1793351700000",
+        "endTime": "1793351892042"
+      },
+      "elapsedMs": 347
+    },
+    {
+      "event": "ws_state",
+      "atMs": 32770,
+      "streams": [
+        "btcusdt@kline_1m"
+      ],
+      "connected": true,
+      "elapsedMs": 965
+    },
+    {
+      "event": "select",
+      "atMs": 32888,
+      "symbol": "BTCUSDT",
+      "interval": "5m"
+    },
+    {
+      "event": "ws_start",
+      "atMs": 32888,
+      "streams": [
+        "btcusdt@kline_5m"
+      ]
+    },
+    {
+      "event": "request_start",
+      "atMs": 32889,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "5m",
+        "limit": "3",
+        "startTime": "1793351100000",
+        "endTime": "1793351893123"
+      }
+    },
+    {
+      "event": "provider_data",
+      "atMs": 32889,
+      "interval": "5m",
+      "elapsedMs": 1,
+      "candles": 200,
+      "offline": true
+    },
+    {
+      "event": "http_send",
+      "atMs": 32890,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "5m",
+        "limit": "3",
+        "startTime": "1793351100000",
+        "endTime": "1793351893123"
+      }
+    },
+    {
+      "event": "provider_data",
+      "atMs": 32891,
+      "interval": "5m",
+      "elapsedMs": 2,
+      "candles": 200,
+      "offline": true
+    },
+    {
+      "event": "first_data_frame",
+      "atMs": 32923,
+      "interval": "5m",
+      "elapsedMs": 34
+    },
+    {
+      "event": "http_headers",
+      "atMs": 33639,
+      "path": "/fapi/v3/klines",
+      "elapsedMs": 749,
+      "status": 200,
+      "persistent": true
+    },
+    {
+      "event": "request_complete",
+      "atMs": 33640,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "5m",
+        "limit": "3",
+        "startTime": "1793351100000",
+        "endTime": "1793351893123"
+      },
+      "elapsedMs": 750
+    },
+    {
+      "event": "select",
+      "atMs": 33924,
+      "symbol": "BTCUSDT",
+      "interval": "15m"
+    },
+    {
+      "event": "ws_start",
+      "atMs": 33925,
+      "streams": [
+        "btcusdt@kline_15m"
+      ]
+    },
+    {
+      "event": "request_start",
+      "atMs": 33928,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "15m",
+        "limit": "3",
+        "startTime": "1793349900000",
+        "endTime": "1793351894162"
+      }
+    },
+    {
+      "event": "provider_data",
+      "atMs": 33931,
+      "interval": "15m",
+      "elapsedMs": 7,
+      "candles": 200,
+      "offline": true
+    },
+    {
+      "event": "http_send",
+      "atMs": 33932,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "15m",
+        "limit": "3",
+        "startTime": "1793349900000",
+        "endTime": "1793351894162"
+      }
+    },
+    {
+      "event": "provider_data",
+      "atMs": 33938,
+      "interval": "15m",
+      "elapsedMs": 14,
+      "candles": 200,
+      "offline": true
+    },
+    {
+      "event": "first_data_frame",
+      "atMs": 33988,
+      "interval": "15m",
+      "elapsedMs": 64
+    },
+    {
+      "event": "http_headers",
+      "atMs": 34277,
+      "path": "/fapi/v3/klines",
+      "elapsedMs": 344,
+      "status": 200,
+      "persistent": true
+    },
+    {
+      "event": "request_complete",
+      "atMs": 34277,
+      "path": "/fapi/v3/klines",
+      "query": {
+        "symbol": "BTCUSDT",
+        "interval": "15m",
+        "limit": "3",
+        "startTime": "1793349900000",
+        "endTime": "1793351894162"
+      },
+      "elapsedMs": 349
+    },
+    {
+      "event": "done",
+      "atMs": 34990
+    },
+    {
+      "event": "ws_state",
+      "atMs": 35910,
+      "streams": [
+        "btcusdt@kline_15m"
+      ],
+      "connected": true,
+      "elapsedMs": 1985
+    }
+  ]
+}

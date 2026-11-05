@@ -1,0 +1,86 @@
+{
+  "recorded_at_utc": "2026-11-04T14:06:49.955933+00:00",
+  "prd": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+  "scope": "Futures asset contribution reference; public marks with complete signed positions and clearly labelled signed aggregate fallback",
+  "sources": [
+    {
+      "purpose": "Website asset contribution component",
+      "url": "https://static2.asterdexfx.com/assets/UserInfo-l_1AJ7RG.js",
+      "bytes": 429132,
+      "sha256": "2a0959f8186f000e4c4885e1697e13e21af88216c0810732e270311ba3b01a73"
+    },
+    {
+      "purpose": "Website equity helper",
+      "url": "https://static2.asterdexfx.com/assets/futuresCalculatePre-bCeRTqn1.js",
+      "bytes": 5536,
+      "sha256": "516ccb2a986df729433d12b358368ed74ec4d01044e7b15486e020b8f8501b96"
+    },
+    {
+      "purpose": "Website crossed position grouping/PnL",
+      "url": "https://static2.asterdexfx.com/assets/usePreference-hjmSVBL2.js",
+      "bytes": 23061,
+      "sha256": "87ed63cfe8101ff8b68308e7f30e750f661a02f2820dedc2623f17f4e240011a"
+    },
+    {
+      "purpose": "Website asset rates mapping",
+      "url": "https://static2.asterdexfx.com/assets/useAssets-DI2YoKbV.js",
+      "bytes": 6515,
+      "sha256": "fb9eb9b7bd4042d57c7feb0e7a170c8c55b2d0d196f7cf0eddc636e7aebe6381"
+    },
+    {
+      "purpose": "Anonymous public index response",
+      "url": "https://fapi.asterdex.com/fapi/v1/assetIndex",
+      "bytes": 13146,
+      "sha256": "c683a6cbbc0caa5babdb5c9f361135df6b3156f8c993e1c43ffb6faf7ed8163c"
+    },
+    {
+      "purpose": "Official V3 account fields",
+      "url": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3(Recommended)/EN/aster-finance-futures-api-v3.md",
+      "bytes": 243773,
+      "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4"
+    }
+  ],
+  "equations": {
+    "cross_equity": "asset.crossWalletBalance + crossedUnrealizedPnl",
+    "live_crossed_unrealized_pnl": "sum(signed position quantity * (public markPrice - entryPrice)) for all nonzero crossed positions with the same margin asset",
+    "snapshot_fallback": "exact asset.crossUnPnl from signed GET /fapi/v3/account when complete linear crossed positions/marks are unavailable; no partial live + old PnL mix",
+    "contribution_usd": "min(cross_equity * bidRate, cross_equity * askRate)",
+    "negative_equity": "Multiply first, then min. Negative equity uses the more negative ask-side result; do not clamp.",
+    "rates": "Absolute USD per unit of asset from assetIndex; not percentages, buffers or the valuation index."
+  },
+  "mapping": [
+    "Keep crossUnPnl separately from total unrealizedProfit; absent remains unknown and malformed signed decimal rejects the account snapshot.",
+    "Both nonnegative decimal string bidRate/askRate with bid<=ask are required. Invalid optional rates disable contribution but preserve an otherwise valid valuation index.",
+    "Require explicit marginAvailable=true; this is multi-asset eligibility, not evidence of current multi-asset mode.",
+    "No walletBalance/availableBalance/total UPL/asset peg substitution; missing values never become zero.",
+    "Live sum requires every relevant position explicitly crossed, known margin/quote units equal (linear contract), positive entry, valid positive mark. Unknown units/mode prevent partial summation; explicit isolated and zero positions are excluded.",
+    "An empty relevant position list preserves signed aggregate rather than assuming zero PnL.",
+    "Any applied account event invalidates contribution until a new signed snapshot; ACCOUNT_UPDATE lacks the full crossed aggregate. Complete marks do not override this guard."
+  ],
+  "public_transport": {
+    "snapshot": "GET /fapi/v3/premiumIndex without address/query/auth",
+    "stream": "!markPrice@arr@1s",
+    "implementation": "Existing MarkPricesRepository; no new HTTP/WebSocket clients in widgets.",
+    "scope": "Stable normalized wallet address plus sorted deduplicated supported account-wide crossed symbols. Visible eligible cards share one autoDispose family subscription; quantity/order changes do not replace it.",
+    "private_boundary": "Uses only supplied already-loaded account models. Never initializes authProvider/accountReadProvider, requests a signature, creates a wallet or sends private/financial API requests.",
+    "lifecycle": "No marks for unvalued modes/units/isolated/zero/ineligible/event-invalidated cards. Last consumer closes transport/timers; pause stops and resume requests public marks; wallet scope changes discard former cached data and late responses."
+  },
+  "freshness": {
+    "account": "Existing account stale flag or receipt age >=60s/negative marks value stale.",
+    "rates": "Reuse asset index controller:30s polling, receipt60s/source90s/future skew30s; paused or failed data stale.",
+    "marks": "Existing repository10s source/receipt freshness per symbol and online connection; disconnected/stale complete marks retain their numerical reference with stale notice, malformed/missing marks use signed fallback.",
+    "timestamps": "Expanded calculation shows account receipt, rate source time and oldest used mark time, all explicit UTC."
+  },
+  "ui": {
+    "entry": "Futures AsterAccountRows asset card; independent from wallet/margin USD valuation.",
+    "localization": "17 new messages per locale, English and Simplified Chinese.",
+    "states": "Value and live/snapshot source; unknown eligibility/equity/rates, ineligible, account events and stale explanations; expanded equity/rates/formula/time.",
+    "precision": "Decimal throughout, display with existing marketNumber; no binary floating arithmetic."
+  },
+  "nonclaims": [
+    "Contribution is a reference, not spendable order margin, withdrawal capacity, personal earnings or execution evidence.",
+    "No Swap, automatic assetExchange, collateral conversion, active multi-asset setting or full cross-product Portfolio total is implemented by this increment.",
+    "Public website source is implementation evidence, not a stable third-party compatibility guarantee.",
+    "Automated tests/build do not prove actual private API acceptance, wallet signing, native networking/layout or iOS compilation."
+  ]
+}

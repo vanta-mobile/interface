@@ -1,0 +1,64 @@
+{
+  "recorded_at_utc": "2026-11-03T10:39:14.831203+00:00",
+  "prd": "https://app.notion.com/p/409080d974e780e7afeed701ef37e67a",
+  "scope": "Futures live order and margin/liquidation/ADL notifications; notification center remains partial pending Spot and deposit/withdrawal sources.",
+  "automated_tests": 1224,
+  "new_tests": 60,
+  "format_dart_files": 401,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 820,
+    "zh": 820
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43220520,
+    "sha256": "3c33f8d51783fbd63d5375ac673479d5b383bb03eb8c24457b8820b1669e518e"
+  },
+  "native_testing": "Skipped at user request. No device tools, APK installation, actual mobile storage/force-kill or wallet event verification. See ../native-verification-pending.md.",
+  "ios": "Linux lacks macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "acceptance_evidence": {
+    "transport_and_risk_routing": [
+      "test/features/portfolio/aster_user_stream_test.dart",
+      "test/features/notifications/futures_notification_mapper_test.dart"
+    ],
+    "precision_validation_and_trade_dedup": [
+      "test/features/notifications/futures_notification_mapper_test.dart"
+    ],
+    "serialized_storage_restart_read_state_corruption_failure_and_disposal": [
+      "test/features/notifications/local_notification_repository_test.dart"
+    ],
+    "explicit_monitoring_no_extra_wallet_account_isolation_and_late_events": [
+      "test/features/notifications/notification_provider_test.dart"
+    ],
+    "bilingual_320_large_text_landscape_details_copyable_ids_and_metadata_retry": [
+      "test/features/notifications/notification_widget_test.dart"
+    ],
+    "storage_plugin_initialization_failure_does_not_break_charts": [
+      "test/features/trade/chart_loading_transition_test.dart",
+      "test/features/trade/chart_options_test.dart",
+      "test/features/trade/timeframe_switch_test.dart"
+    ]
+  },
+  "logs": [
+    "/tmp/vanta-notifications-all-tests-final.log",
+    "/tmp/vanta-notifications-analysis-final.log",
+    "/tmp/vanta-notifications-format-final.log",
+    "/tmp/vanta-notifications-build-final.log"
+  ],
+  "boundaries": [
+    "Only events received during explicitly authorized live monitoring are collected. Background pauses, expiry and disconnections may leave gaps; no system push or missed-event backfill.",
+    "Current wallet lists and already-open details are isolated. No local demo activity is represented as real notifications.",
+    "Local best-effort inbox/read state keeps at most 500 recent records and 4 MiB across wallets. Old entries may be evicted. Clearing app data or uninstall loses them; this is not complete exchange history or the durable financial request journal.",
+    "Initial read/corruption failures retain stored bytes and buffer live/read changes. Write failures preserve visible memory and expose safe retry. Accepted writes can finish after listeners are disposed.",
+    "Critical order events report actual order state and quantities, never infer full-position liquidation. Margin calls retain all supplied positions without invented risk ratios, countdowns or liquidation prices.",
+    "Public metadata supplies units; missing metadata is unknown/retryable. Margin-call cw has no asset field, so no currency is invented.",
+    "Spot executionReport, transfer history first-load baseline/state notifications and ACCOUNT_UPDATE transfer-history refresh remain unimplemented.",
+    "Aster enable-trading/signer acceptance, subaccounts, deposits/withdrawals/transfers, complete valuation, Chase, BBO and Scaled remain outstanding. BAPI statistics and TWAP skipped this phase at user request."
+  ],
+  "build_notes": "Build passed with the existing future-compatibility warning about KGP applied by Privy/Coinbase/package_info plugins."
+}

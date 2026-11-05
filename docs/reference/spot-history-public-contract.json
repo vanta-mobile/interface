@@ -1,0 +1,39 @@
+{
+  "observed_at_utc": "2026-11-02T15:36:07.025831+00:00",
+  "origin": "https://sapi.asterdex.com",
+  "public_responses": {
+    "/api/v3/time": {
+      "http_status": 200,
+      "server_time": 1793633766619
+    },
+    "/api/v3/exchangeInfo": {
+      "http_status": 200,
+      "server_time": 1793606212760,
+      "symbols": 79,
+      "with_base_and_quote": 79,
+      "sample": [
+        {
+          "symbol": "TESTUSDT",
+          "baseAsset": "TEST",
+          "quoteAsset": "USDT",
+          "status": "TRADING"
+        },
+        {
+          "symbol": "TESTUSD1",
+          "baseAsset": "TEST",
+          "quoteAsset": "USD1",
+          "status": "TRADING"
+        },
+        {
+          "symbol": "JCTUSDT",
+          "baseAsset": "JCT",
+          "quoteAsset": "USDT",
+          "status": "TRADING"
+        }
+      ]
+    }
+  },
+  "private_requests_sent": false,
+  "contract_source": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-spot-api-v3.md",
+  "contract_sha256": "9be32a9a356541301a36fc1ffc5fa60f04eea290200e749dabd02ab285fb98bf"
+}

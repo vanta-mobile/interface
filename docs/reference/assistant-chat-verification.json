@@ -1,0 +1,80 @@
+{
+  "date": "2026-11-04",
+  "increment": "AI assistant chat protocol/data layer; no App entry point yet",
+  "contract": "assistant-chat-public-contract.json",
+  "tests": {
+    "baseline_full": 2997,
+    "new": 81,
+    "feature_suite_passed": 81,
+    "full_passed": 3078,
+    "exit_code": 0,
+    "coverage": [
+      "UTF8/emoji byte splits, CRLF splits, multiline/tail/usage SSE, finish/truncation/DONE and upstream cancellation",
+      "Malformed/oversize JSON, runtime wrapper/key role/ref/origin, SSE line/frame/body/answer bounds and safe errors",
+      "Header stall, late response disposal, body cancellation, total/idle timeouts, close and cancelled operations",
+      "Same-request-id fallback, reasoning-only final retry, 4xx/quota no fallback, stop during stream/completion and partial retention",
+      "Immutable 12000character context without reasoning/failed partials, invalid input before network, public runtime production mapper"
+    ],
+    "note": "Full suite passed; final null-aware collection lint cleanup subsequently rechecked by81 feature tests and clean analysis/format. No production code changes after full suite began."
+  },
+  "format": {
+    "files": 708,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1419,
+    "zh": 1419,
+    "new_per_locale": 0,
+    "note": "No new user interface in this increment"
+  },
+  "android": {
+    "command": "flutter build apk --no-pub --release --target-platform android-arm64 --dart-define-from-file=config/privy.local.json",
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "exit_code": 0,
+    "bytes": 45056792,
+    "sha256": "aebf33e14b677fa65571ec93a6bcba434e1723345a199ced87934fb29017c8bb",
+    "installed": false,
+    "device_tools_used": false,
+    "packaging_boundary": "No entry point references assistant data layer yet. APK identical to CHANNEL baseline; no claim that assistant code is present in AOT or that chat is usable.",
+    "signing": "Existing local debug signing, not store distribution"
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "public_source_mapping": {
+    "runtime_mapper": "accepted",
+    "pinned_origin": "https://nltkngcwiuydkpmqrili.supabase.co",
+    "public_key_logged": false
+  },
+  "performed": {
+    "cached_anonymous_runtime_mapper": true,
+    "synthetic_http_and_sse": true,
+    "actual_auth_requests": false,
+    "actual_chat_requests": false,
+    "actual_personal_quota_requests": false,
+    "wallet_signature": false,
+    "private_financial_rpc": false,
+    "native_device_testing": false
+  },
+  "remaining": [
+    "Mobile current-wallet challenge/authentication, server user verification and wallet binding",
+    "Secure session/refresh/history persistence and Riverpod lifecycle guards",
+    "Bilingual native chat/Markdown/stop/clear/quota UI and navigation",
+    "Actual source challenge and response acceptance, backend same-ID deduplication/quota, native TLS/stream/persistence/layout and iOS",
+    "Other PRD gaps remain as tracked in prd-progress.md; overall goal incomplete"
+  ],
+  "logs": {
+    "feature": "/tmp/vanta-assistant-feature-clean.log",
+    "full": "/tmp/vanta-assistant-all-tests.log",
+    "analysis": "/tmp/vanta-assistant-analysis-clean.log",
+    "format": "/tmp/vanta-assistant-format-clean.log",
+    "build": "/tmp/vanta-assistant-build.log",
+    "public_mapping": "/tmp/vanta-assistant-public-mapping.json"
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "recorded_at_utc": "2026-11-05 07:34:01 UTC",
+  "increment": "Scaled PRD alignment: total quote/base input, four quantity distributions, Difference/Ratio, deterministic bounded random,2–110children, blank defaults and paginated complete review/results",
+  "contract": "scaled-order-alignment-public-contract.json",
+  "tests": {
+    "baseline_full": 3869,
+    "new_total": 97,
+    "new_domain": 52,
+    "new_provider": 6,
+    "new_signed_protocol": 24,
+    "new_widgets": 15,
+    "focused_total": 165,
+    "full_passed": 3966,
+    "exit_code": 0,
+    "coverage": [
+      "Both directions and units for Equal, increasing/decreasing Difference and Ratio; exact quantity-weighted price denominator, not average-price or equal-notional split.",
+      "110distincttickaligned children and IDs; LOT minimum offsets, base total conservation and largest fractional remainders, exact sub-floating-point quote remainder, no leverage multiplication or budget inflation.",
+      "Missing/invalid/insufficient/huge sizes, unsupported counts, too narrow/off-grid ranges, minima/maxima/notional/funds/eligibility/LIMIT/GTC requirements.",
+      "Pure seeded random on2/3/110children both units, bounds on actual rounded quantities,0%and10%boundary, invalid variance/seed, coarse-step rejection, repeated intent validation without resampling; peg tamper rejected.",
+      "Expanded controller queues preserve all IDs and unsent children on first unknown; GET-only recheck no continuation; weighted plan frozen across funds reads; old stop/route exit/config/expiry/auth/event/recovery regressions retained.",
+      "Actual signed MockClient HTTP and pre-POST host journal/restart for base Equal, quote Increasing, quote Decreasing Ratio and seeded Random, BUY/SELL and one-way/hedge: exact original base quantities, price, user=signer, signatures and original ID-only recovery.",
+      "EN/ZH320width text1.5, landscape and768tablet: blank low/high/total/count, quote default, Equal and hidden Difference, independent raw units, progressive weights/constant persistence, amount remainder, required dedicated review/cancel without optout.",
+      "Open dialog live locale changes preserve captured terms; Random seed/children stable through locale/review; invalid variance preserves inputs, explicit reshuffle sends no request.",
+      "All11pages of110preview/review, everyclientIDaccessible;110-result state retained with paged ten visible rows, actual last result accessible; unknown recheck stops unsent109children.",
+      "Full existing regression including confirmations, ordinary/conditional/trailing/BBO/attached/protection/close/quick, funding/subaccounts/history and durable recovery."
+    ]
+  },
+  "format": {
+    "files": 824,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1659,
+    "zh": 1659,
+    "new_per_locale": 27,
+    "updated_existing_per_locale": 2,
+    "message_keys_equal": true
+  },
+  "android": {
+    "command": "flutter build apk --release --target-platform android-arm64 --dart-define-from-file=config/privy.local.json",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "installed": false,
+    "device_tools_used": false,
+    "notices": "Existing third-party KGP/Built-in Kotlin notices; normal Release build passed. Local development signing, not production publication.",
+    "bytes": 45840644,
+    "sha256": "7e0bf8146afe72b60db5dbe8c4dad8760154d0ae7d595a8e8e485330f947cf96",
+    "aot_bytes": 15860616,
+    "packaged_probes": {
+      "en:scaledTotalAmount": true,
+      "en:scaledVarianceInvalid": true,
+      "en:scaledRandomHint": true,
+      "en:scaledAmountHint": true,
+      "en:scaledBaseRemainderHint": true,
+      "en:scaledIncreasing": true,
+      "en:scaledRatio": true,
+      "en:scaledUnallocatedQuote": true,
+      "zh:scaledTotalAmount": true,
+      "zh:scaledVarianceInvalid": true,
+      "zh:scaledRandomHint": true,
+      "zh:scaledAmountHint": true,
+      "zh:scaledBaseRemainderHint": true,
+      "zh:scaledIncreasing": true,
+      "zh:scaledRatio": true,
+      "zh:scaledUnallocatedQuote": true
+    }
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "performed": {
+    "synthetic_tests": true,
+    "anonymous_public_document_and_source_reads": true,
+    "actual_wallet_signature": false,
+    "actual_private_api": false,
+    "address_bearing_rpc": false,
+    "financial_actions": false,
+    "chat_requests": false,
+    "native_device_testing": false,
+    "local_privy_config_read_by_agent": false
+  },
+  "remaining": [
+    "Real Aster same-EOA trading authorization, order acceptance/fills/fees, large queues and actual wallet returns remain unverified.",
+    "Native storage, wallet/keyboard/layout/large-text/accessibility checks explicitly deferred by user; iOS build unavailable.",
+    "Sequential independent ordinary orders are not the official website's simultaneous/atomic strategy; partial success and many signatures explicitly disclosed.",
+    "Full Portfolio, Swap, Chase recovery/full strategy management and first navigation defaults remain incomplete. User-skipped historical statistics/Summary/TWAP remain skipped. Overall PRD goal remains active."
+  ],
+  "review": "New immutable plan/draft and pure planner extracted; widgets render/collect intent and provider owns random seed generation/execution. Domain and UI files below400lines; build methods reviewed below80. Added no dependency and no new financial endpoint.",
+  "logs": {
+    "focused": "/tmp/vanta-scaled-alignment-focused.log",
+    "domain": "/tmp/vanta-scaled-alignment-domain-second.log",
+    "paged_results": "/tmp/vanta-scaled-alignment-pager-tests.log",
+    "full": "/tmp/vanta-scaled-alignment-all-tests-final.log",
+    "format": "/tmp/vanta-scaled-alignment-format-final.log",
+    "analysis": "/tmp/vanta-scaled-alignment-analysis-final.log",
+    "build": "/tmp/vanta-scaled-alignment-build-final.log"
+  },
+  "verification_note": "Initial new domain test used an incorrect peg enum constructor, corrected to existing LiveOrderPeg.counterparty. Focused tests passed; helper extraction then required removing two unused imports and bracing two multiline loops/ifs. Result pagination added and validated before final full3966. AOT probe includes Dart Latin-1 encoding for English multiplication sign. Final full suite, analysis, format and normal Android Release all exit0.",
+  "source_sha256": {
+    "lib/core/strings.dart": "cca713837d67576cad46f46a17c194b6fb2abcb546272e310adb17c2e7fcc95e",
+    "lib/features/portfolio/application/scaled_order_provider.dart": "5244c50a444ae76965602502e6802ac34c28f4d017cdd3c8e68d603c2a288bbf",
+    "lib/features/portfolio/domain/scaled_order.dart": "f3fef73caf5b3acc13da6510d95231869b1224c7640482e2a2b285761be627ce",
+    "lib/features/portfolio/domain/scaled_order_plan.dart": "3bd9d3b46872c2d051a3c72465f54de4a1373537da95048b2190c02fc0f2e758",
+    "lib/features/portfolio/domain/scaled_order_planner.dart": "ff66c7c86bc364bdf2ac1bc79b1c6c055168f14b0e675d04662b56fc365636c2",
+    "lib/features/portfolio/presentation/scaled_order_details.dart": "1959183bb88c8ab3dd6edff718d46fcb926b134e2eb63282ac6d6506425cd2f3",
+    "lib/features/portfolio/presentation/scaled_order_form.dart": "02c2b86cfdd7bd1c177dbd0c7a50d3de4c8f15e264775fa0a2787efcb5dd6796",
+    "lib/features/portfolio/presentation/scaled_order_options.dart": "85e38ae27a5e0222368e955a49fd803d27d00244baa0ff627982c68625c2036b",
+    "lib/features/portfolio/presentation/scaled_order_review.dart": "cadc6d37db640899ef816e59ac140345fde8b8c714ff54beedb16cf1344794b4",
+    "lib/features/portfolio/presentation/scaled_order_screen.dart": "e89825d52592b5261559c0a59ee156f6850e462ae13fcd1d95411af82f463044",
+    "lib/features/portfolio/presentation/scaled_order_status.dart": "f518d0dba046173313db977ae18a267818a1dd6a314a4054c6aeb3d1699c530a",
+    "lib/l10n/app_en.arb": "29460a6e22dac30dc7092e1f99500a883de1afaa139af0dacd8e4db6e04916a4",
+    "lib/l10n/app_zh.arb": "733abb5df78d9e83fc930e71b5f2700c09f67a391aa7aa3223b0e1388f49f3ec",
+    "test/features/portfolio/scaled_order_alignment_test.dart": "3ba2f095789ee61d26b3a1456295d0367bfecdb93134774c3f9f7c401445a2f8",
+    "test/features/portfolio/scaled_order_alignment_widget_test.dart": "b3301fe308e43a7245b6e0037c1ed55d51105743b35b92e959bd30cd93619c0b",
+    "test/features/portfolio/scaled_order_protocol_test.dart": "9db93b6fc65ee786e12353e97fcf917aaa9359685239e4c1ccaa7da2f363ba86",
+    "test/features/portfolio/scaled_order_provider_test.dart": "385ef3acdf0c3e9dd45ec588ad180cfe1cbbbe606d2532ea9cafce6d05e84046",
+    "test/features/portfolio/scaled_order_test.dart": "6b4beec52fe82400f571409b25d6d68fea509c90dcbafbbac788188490979b4d",
+    "test/features/portfolio/scaled_order_widget_test.dart": "1edd0bc92f066c25922154a689306af977672bee819c0a5d74955f4083ae4345",
+    "test/support/scaled_order.dart": "d7bf392eba5c68820397ed0c3c6f4a0361575df88714d0fa7f857131a366fc3f",
+    "test/support/scaled_order_widget.dart": "49f655f112f099db4e1c3d0a83c7d43e0940f8fe83a9f5b1a13c42e293c66144"
+  }
+}

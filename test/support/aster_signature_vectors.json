@@ -1,0 +1,166 @@
+{
+  "generator": "ethers 6.16.0 TypedDataEncoder and Wallet, public key 1 test fixture",
+  "vectors": [
+    {
+      "name": "account",
+      "domain": {
+        "name": "AsterSignTransaction",
+        "version": "1",
+        "chainId": 1666,
+        "verifyingContract": "0x0000000000000000000000000000000000000000"
+      },
+      "types": {
+        "Message": [
+          {
+            "name": "msg",
+            "type": "string"
+          }
+        ],
+        "EIP712Domain": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "type": "string"
+          },
+          {
+            "name": "chainId",
+            "type": "uint256"
+          },
+          {
+            "name": "verifyingContract",
+            "type": "address"
+          }
+        ]
+      },
+      "message": {
+        "msg": "nonce=1762243200000001&user=0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf&signer=0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
+      },
+      "digest": "0x068ebc5e4f056a979c9284b603e10122a11878d623c78890db0dba9c35839664",
+      "signature": "0x15e21bcbb85eed86c6099ac7e775b0363aebf356dbe9fc6abbda37e4012235f20081ef650dbdc41722a9c2962d9232754d8280f51ba4159695f2828cd7d72f931b",
+      "address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+      "primaryType": "Message"
+    },
+    {
+      "name": "registration",
+      "domain": {
+        "name": "AsterSignTransaction",
+        "version": "1",
+        "chainId": 56,
+        "verifyingContract": "0x0000000000000000000000000000000000000000"
+      },
+      "types": {
+        "Message": [
+          {
+            "name": "msg",
+            "type": "string"
+          }
+        ],
+        "EIP712Domain": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "type": "string"
+          },
+          {
+            "name": "chainId",
+            "type": "uint256"
+          },
+          {
+            "name": "verifyingContract",
+            "type": "address"
+          }
+        ]
+      },
+      "message": {
+        "msg": "user=0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf&nonce=1762243200000002&agentName=Vanta&agentAddress=0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf&expired=1764835200000&signatureChainId=56&canSpotTrade=true&canPerpTrade=true&canWithdraw=false&ipWhitelist="
+      },
+      "digest": "0xae44458136fa69f50ecc70a91368909be73d099fff86350ae25d076e1733be0b",
+      "signature": "0xf20daf55e36ac48a97d0c24d2e431bd1c4c4525e95e1e5b821829e7ee0ac47b87d9c7159b555d9fc7ce096b7d81ba847dda2e8627289d116afe217046d9f1e431b",
+      "address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+      "primaryType": "Message"
+    },
+    {
+      "name": "withdrawal",
+      "domain": {
+        "name": "Aster",
+        "version": "1",
+        "chainId": 56,
+        "verifyingContract": "0x0000000000000000000000000000000000000000"
+      },
+      "types": {
+        "Action": [
+          {
+            "name": "type",
+            "type": "string"
+          },
+          {
+            "name": "destination",
+            "type": "address"
+          },
+          {
+            "name": "destination Chain",
+            "type": "string"
+          },
+          {
+            "name": "token",
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "type": "string"
+          },
+          {
+            "name": "fee",
+            "type": "string"
+          },
+          {
+            "name": "nonce",
+            "type": "uint256"
+          },
+          {
+            "name": "aster chain",
+            "type": "string"
+          }
+        ],
+        "EIP712Domain": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "type": "string"
+          },
+          {
+            "name": "chainId",
+            "type": "uint256"
+          },
+          {
+            "name": "verifyingContract",
+            "type": "address"
+          }
+        ]
+      },
+      "message": {
+        "type": "Withdraw",
+        "destination": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+        "destination Chain": "BSC",
+        "token": "USDT",
+        "amount": "1.000000000000000001",
+        "fee": "0.1",
+        "nonce": "1762243200000003",
+        "aster chain": "Mainnet"
+      },
+      "digest": "0x129eddb0a8fbce02b0a10886deafce2e44cdd49c17d157a4b569d9eb5469b398",
+      "signature": "0x6932ced568e346dd0870122fd50bcebeb72389fe13df5cb8d8843bef9cd98e3b6537dc1e1a526c0b8471d91909d1f1c9c62da690b9546a24bf209a305ba3f3c01b",
+      "address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+      "primaryType": "Action"
+    }
+  ]
+}

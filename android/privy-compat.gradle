@@ -1,0 +1,15 @@
+// Privy declares compileSdk 34 and Reown's Coinbase adapter declares 31.
+// Their AndroidX dependencies require newer APIs; match the host SDK without
+// editing the Pub cache or changing the minimum supported Android version.
+subprojects { subproject ->
+    if (subproject.name in ["privy_flutter", "coinbase_wallet_sdk"]) {
+        subproject.afterEvaluate {
+            subproject.android.compileSdk = 36
+            if (subproject.name == "coinbase_wallet_sdk") {
+                // Coinbase 1.0.10 points at a consumer rules file missing from
+                // its published Android source archive.
+                subproject.android.defaultConfig.consumerProguardFiles.clear()
+            }
+        }
+    }
+}

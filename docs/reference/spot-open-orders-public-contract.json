@@ -1,0 +1,68 @@
+{
+  "recorded_date": "2026-11-04",
+  "scope": "Spot current-open-orders baseline, exact financial display/filter counts and typed Spot execution-report reconciliation. Separate from Perp orders and Spot order history; read-only increment.",
+  "prd": {
+    "page": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+    "last_edited": "2026-11-02T11:42:11.267Z",
+    "section": "5、spot资金分布 / Spot → Open Orders",
+    "requirement": "Query current Spot orders, count under the same filter scope; a single-symbol count cannot be presented as all-account count. Public API alternative: GET /api/v3/openOrders.",
+    "revalidated": "Notion fetch this increment; page verification state unverified. Requirement evidence is explicit table text, not screenshot inference."
+  },
+  "official_source": {
+    "url": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-spot-api-v3.md",
+    "sha256": "9be32a9a356541301a36fc1ffc5fa60f04eea290200e749dabd02ab285fb98bf",
+    "sections": [
+      "Current open orders (USER_DATA)",
+      "Order status",
+      "Order types",
+      "User Data Streams / executionReport"
+    ],
+    "refresh": "Anonymous raw GitHub read this increment; no exchange account request."
+  },
+  "endpoint": {
+    "method": "GET",
+    "origin": "https://sapi.asterdex.com",
+    "path": "/api/v3/openOrders",
+    "weight": {
+      "with_symbol": 1,
+      "without_symbol": 40
+    },
+    "symbol": "Optional in official API. App deliberately omits symbol on explicit user read to obtain full Spot baseline; no inherited Perp current symbol, no automatic polling.",
+    "authentication": "V3 EIP-712 AsterSignTransaction v1, chain1666, exact nonce/user/signer query signed, signature appended last. Shared monotonic microsecond nonce. Current connected EOA or existing email wallet signs; no additional wallet. Actual API authorization remains unverified.",
+    "metadata": "Anonymous GET /api/v3/exchangeInfo for exact Spot baseAsset/quoteAsset only after nonempty signed snapshot. Public metadata failures retain orders and show unknown units; no symbol suffix parsing or Perp metadata fallback.",
+    "response": "Array of current active Spot orders; bounded10000 rows, strict exact string money/IDs/status/side/timestamps. Identical duplicates collapse, conflicting same-symbol/ID duplicates reject. Terminal/unrecognized status in purported active snapshot fails closed rather than inventing an empty list."
+  },
+  "presentation": {
+    "entry": "Spot account panel → Spot open orders. Opening screen does not sign or fetch private data. Signed-out read opens existing authentication; restored EOA reconnects same wallet.",
+    "fields": [
+      "Spot symbol",
+      "Buy/Sell",
+      "Order type/original type",
+      "Time-in-force if supplied",
+      "Creation/update UTC timestamps or unknown",
+      "Exact base filled/total and remaining",
+      "Quote-sized market original quote amount with base total/remaining unknown",
+      "Limit/average/trigger prices and cumulative quote amount",
+      "Copyable exact orderId/clientOrderId"
+    ],
+    "financial_policy": "Decimal throughout; no double money and no guessed average from incomplete data. Event O missing/zero remains unknown, never replaced with T/E. Missing units remain unknown. Quote-sized MARKET with zero base origQty does not acquire a fabricated base total.",
+    "filters": "Local case-insensitive symbol/orderId/clientOrderId search; displayed count uses exactly displayed rows, clear/empty/no-match independent states. Filter survives refresh/failure; clears on wallet identity change. No network query or wallet signature when filtering.",
+    "states": "Initial/no baseline, explicit loading/stop, complete-empty, nonempty, missing units, stale/partial event, safe retryable failure with retained rows. Thirty-second stale timer does not auto sign/read. English/Chinese catalogs and responsive ListView/safe-area/keyboard support.",
+    "boundaries": "No Perp positionSide, leverage, reduceOnly, margin or Long/Short derived for Spot. This increment adds no Spot order creation, cancellation or account mutation and does not substitute trade history for current orders."
+  },
+  "events": {
+    "path": "Existing separately authorized Spot /api/v3/listenKey → wss://sstream.asterdex.com/ws/<key>; no automatic new signature on screen entry. Reuse current in-memory lease and existing wallet/lifecycle handling.",
+    "transport": "Spot executionReport validated by existing Spot notification mapper, additionally mapped to SpotOpenOrderUpdate including f(timeInForce). Same event can feed notification inbox and Spot open orders; never enters Perp reconciliation.",
+    "baseline_required": "Events alone never prove a complete account list or establish an empty baseline. Only apply events received during a REST read plus applicable newer row updates and terminal tombstones.",
+    "ordering": "Symbol+orderId keys, event E and transaction T ordering, nondecreasing filled quantity, duplicate suppression and permanent terminal tombstones for scope. Compare server updateTime with T, not local receive time. Prior active events absent from a new full snapshot cannot resurrect rows.",
+    "failure": "Disconnect/reconnect/expiry/pause/configuration/unknown events mark snapshot stale. Missing-event gap requires another explicit complete signed read. Local controller preserves prior snapshot on failure; scope reset clears private data and event book.",
+    "capacity": "10000 per-wallet in-memory event keys; never silently evict financial tombstones. Capacity failure terminates live processing with safe localized failure; explicit signed reads still inspect baseline. Scope change resets book. Not a persisted event history or full missed-event replay."
+  },
+  "verification_boundary": "Only unit/Widget substitutes, mock HTTP/signers and existing loopback WebSocket harness. No device tools, APK install, live wallet/RPC/private/financial request. Android release build is not native acceptance; iOS unavailable on Linux.",
+  "remaining": [
+    "Real EOA/Privy signer eligibility, full Spot account response scope and real order lifecycle remain unverified.",
+    "Native wallet round-trips, layouts, reconnect/background and iOS are recorded in native-verification-pending.md.",
+    "Trading authorization, subaccount management/transfers, actual deposit/withdrawal, Chase recovery and complete Portfolio are still incomplete.",
+    "This increment closes a concrete Spot Open Orders PRD gap omitted from the previous top-level remaining list; overall PRD goal remains active."
+  ]
+}

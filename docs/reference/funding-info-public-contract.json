@@ -1,0 +1,126 @@
+{
+  "recorded_at_utc": "2026-11-03T13:56:25.346011+00:00",
+  "prd": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+  "official_document": "https://github.com/asterdex/api-docs/blob/master/demo/aster-deposit-withdrawal.md",
+  "document_sha256": "e6943bd414e9e09bc1592446dd1b39d67e2750bf6480a368da8cc5caec9ae39a",
+  "anonymous_public_reads": [
+    {
+      "market": "spot",
+      "operation": "deposit",
+      "url": "https://www.asterdex.com/bapi/futures/v1/public/future/aster/deposit/assets?chainIds=1%2C56%2C42161&networks=EVM&accountType=spot",
+      "response_sha256": "36c3524047f35816f1f40a91499480b48a795042947e1c6b126be586d2deb614",
+      "rows": 94,
+      "chain_ids": [
+        1,
+        56,
+        42161
+      ],
+      "captured_at_utc": "2026-11-03T13:45:03.556309+00:00",
+      "production_mapper_accepted": true
+    },
+    {
+      "market": "spot",
+      "operation": "withdraw",
+      "url": "https://www.asterdex.com/bapi/futures/v1/public/future/aster/withdraw/assets?chainIds=1%2C56%2C42161&networks=EVM&accountType=spot",
+      "response_sha256": "8ae248be61c84d72df052a1bc7b34e71db402bd6f743d61665f49c3d890f02a8",
+      "rows": 95,
+      "chain_ids": [
+        1,
+        56,
+        42161
+      ],
+      "captured_at_utc": "2026-11-03T13:45:03.914317+00:00",
+      "production_mapper_accepted": true
+    },
+    {
+      "market": "perp",
+      "operation": "deposit",
+      "url": "https://www.asterdex.com/bapi/futures/v1/public/future/aster/deposit/assets?chainIds=1%2C56%2C42161&networks=EVM&accountType=perp",
+      "response_sha256": "f77e584dfc2833edc65c0f2b9251d66243a1c6a0093c44eb3a8b4ff0293629a4",
+      "rows": 33,
+      "chain_ids": [
+        1,
+        56,
+        42161
+      ],
+      "captured_at_utc": "2026-11-03T13:21:45.075746+00:00",
+      "production_mapper_accepted": true
+    },
+    {
+      "market": "perp",
+      "operation": "withdraw",
+      "url": "https://www.asterdex.com/bapi/futures/v1/public/future/aster/withdraw/assets?chainIds=1%2C56%2C42161&networks=EVM&accountType=perp",
+      "response_sha256": "e49ac9377064b345cfe3218cdc944813661e957c2a17332e94ebdf7c6063b4e6",
+      "rows": 39,
+      "chain_ids": [
+        1,
+        56,
+        42161
+      ],
+      "captured_at_utc": "2026-11-03T13:21:46.156770+00:00",
+      "production_mapper_accepted": true
+    }
+  ],
+  "public_configuration": {
+    "method": "GET",
+    "origin": "https://www.asterdex.com",
+    "paths": [
+      "/bapi/futures/v1/public/future/aster/deposit/assets",
+      "/bapi/futures/v1/public/future/aster/withdraw/assets"
+    ],
+    "envelope": {
+      "code": "000000",
+      "success": true,
+      "data": "array"
+    },
+    "evm_chain_ids": [
+      1,
+      56,
+      42161
+    ],
+    "scope": "Documented EVM mainnets only; not all Aster networks.",
+    "validation": "Immutable assets; reject duplicate chain/asset, malformed fields, wrong network, invalid EVM address/native flag, zero address, decimals outside 0..255, >5000 rows. Unknown route type is retained without inventing execution support.",
+    "native_placeholder": "0xfdae1ba7c826abdc4c99903c8056f82a1a04a615",
+    "address_boundary": "Native placeholder is never displayed as a destination. ERC20 address is labeled token contract, not deposit destination. No vault payment address or deposit submission exposed.",
+    "lifecycle": "Anonymous initial read, manual refresh, five-minute stale marker, retained data on failure, auto-dispose with last route consumer. No invented public time endpoint."
+  },
+  "private_withdrawal_info": {
+    "method": "POST",
+    "origin": "https://fapi.asterdex.com",
+    "path": "/fapi/v3/aster/user-withdraw-info",
+    "request": "Explicit read only; server time first; nonce/user/signer query and signature appended last. Empty body; redirects disabled.",
+    "signature": "EIP712 AsterSignTransaction v1, chainId=1666; message.msg exact encoded query; funding nanosecond nonce (server milliseconds x 1000000), independent monotonic counter, 30-second lifetime.",
+    "signer": "Current connected EOA only as user/signer. No additional agent wallet. Acceptance by Aster and trading authorization remain unproven.",
+    "units": {
+      "usd": [
+        "userDailyLimit",
+        "userRemainingDailyLimit",
+        "totalDailyLimit",
+        "totalRemainingDailyLimit",
+        "balances.*.dailyLimit"
+      ],
+      "asset_quantities": [
+        "balances.*.spotTotalWithdrawAmount",
+        "balances.*.perpTotalWithdrawAmount",
+        "balances.*.chainBalances.*.spotMaxWithdrawAmount",
+        "balances.*.chainBalances.*.perpMaxWithdrawAmount",
+        "balances.*.chainBalances.*.chainLimit",
+        "balances.*.chainBalances.*.withdrawFee"
+      ]
+    },
+    "precision": "Documented string values parsed directly as Decimal; JSON numbers rejected, missing values unknown, negative reported amounts retained, negative fee rejected. No conversion through double or synthesized final Max.",
+    "resource_bounds": {
+      "assets": 1000,
+      "chains_per_asset": 100,
+      "monetary_string_characters": 160
+    },
+    "lifecycle": "No automatic signature. Stop/dispose/scope changes invalidate in-flight operations; 30-second expiry and Spot/Futures account events mark snapshots stale. Route retains snapshot between lazy controls and asset rows. Failed refresh preserves old snapshot; wallet changes clear it."
+  },
+  "not_implemented": [
+    "Actual deposit: wallet native/ERC20 balances, safe network switching, minimum/allowance/approval, exact smallest units, gas, depositFor submission, receipt and platform-credit reconciliation.",
+    "Actual withdrawal: verified master-only qualification, fresh final fee and limit checks, business signature plus API signature, confirmation/submission, unknown-outcome recovery and final reconciliation.",
+    "Public dynamic fee endpoint is not integrated; displayed fee is the signed withdrawal-info snapshot only.",
+    "Spot/Futures and main/subaccount transfer execution; enable-trading; complete Portfolio aggregation."
+  ],
+  "verification_boundary": "Public probes and substitute unit/widget tests only. No device tools, APK install, live private reads, approval, deposit, withdrawal or transfer submissions. iOS requires macOS/Xcode."
+}

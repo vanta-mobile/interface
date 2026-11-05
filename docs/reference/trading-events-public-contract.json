@@ -1,0 +1,103 @@
+{
+  "recorded_at_utc": "2026-11-04T02:08:28.743364+00:00",
+  "scope": "PRD event list/detail and RETAIL registration; CHANNEL affiliate/exclusive task extensions are not represented as implemented",
+  "prd": "https://app.notion.com/p/40d080d974e7801eb12dfab2b95d60cf",
+  "prd_last_edited_at": "2026-11-03T07:41:40.173Z",
+  "requirements": [
+    "Event list",
+    "Event detail; reference Phase4",
+    "Follow source fields and buttons with mobile design; points home completed in prior increment"
+  ],
+  "source_bundle": {
+    "url": "https://app.vanta.exchange/assets/Index-Wa2TmD6z.js",
+    "sha256": "80cdc4e0a63f07846c42760bf8279691af78bc5444e7ac043a6bef44e4482fce",
+    "bytes": 51170
+  },
+  "runtime_origin": "https://api.vanta.exchange/api/; resolved public config.js and GFt rewrite, see points-public-contract.json",
+  "public_observations": [
+    {
+      "url": "https://api.vanta.exchange/api/trading-events?type=RETAIL",
+      "bytes": 5286,
+      "sha256": "f0cc0fd1f742da6570130b7840e461f9bfeae1e04b9de9632cf47b0cef6966f8",
+      "http_status": 200,
+      "rows": 4,
+      "kind": "Anonymous public source; no address or credentials"
+    },
+    {
+      "url": "https://api.vanta.exchange/api/trading-events/11",
+      "bytes": 5508,
+      "sha256": "b0099697173b6ca6c758211334ad36d28b5a358f5ea7d44339423af0993575b4",
+      "http_status": 200,
+      "rows": null,
+      "kind": "Anonymous public source; no address or credentials"
+    },
+    {
+      "url": "https://api.vanta.exchange/api/trading-events/11/rankings/retail-volume?limit=30",
+      "bytes": 2860,
+      "sha256": "ce543e8b8ce0615655d14c1c0c1ede11210710247666f354aa81d8caa7258adc",
+      "http_status": 200,
+      "rows": 30,
+      "kind": "Anonymous public source; no address or credentials"
+    }
+  ],
+  "event_fields": [
+    "id",
+    "eventType",
+    "name",
+    "subtitle",
+    "rulesHtml",
+    "headerImageUrl",
+    "tasks",
+    "activityRules",
+    "coreRewardPool",
+    "startTime",
+    "endTime",
+    "status",
+    "orderlyBrokerId",
+    "whitelistTotalVolume",
+    "registrationCount",
+    "openForRegistrationAt"
+  ],
+  "event_mapping": "RETAIL only, validated immutable domain fields; unique positive int64 IDs, valid timezone/calendar/end>start, exact numeric token/Decimal threshold and volume, optional count/volume unknown instead of0. Preserve source order/status; four observed events are ENDED. No administrative fields or whitelist-address arrays exposed.",
+  "ui": "Points-page entry -> native event list with20/page -> independently fetched detail; header image/date/status/second countdown/id/broker/registration count/total USDC volume, tasks and verified progress, core reward rows, expandable activity rules, campaign rich text, personal registration/performance and top30 volume ranking10/page. Copyable wallet addresses; unknown personal ranks never inferred as30+ or0. Labels are en/zh; published source text stays source text.",
+  "rich_content": "html package parses bounded source into immutable native document blocks: headings/paragraphs/list items/structured tables/links/images. Script/style/iframe/forms/SVG never execute; HTTPS links only, no credentials/nonstandard ports. Task invalid URLs fail validation instead of substituting another action. Only published Supabase storage public trading-event-content images allowed, raster MIME and5MiB streamed bound, no redirects/credentials or automatic Riverpod retries. Native image failure supports manual retry; url_launcher opens exact configured website target with safe failure. No WebView or embedded executable HTML.",
+  "public_ranking": "GET rankings/retail-volume?limit=30; response eventId/eventType/rows with rank/address/volume. Require matching event/RETAIL, preserve returned order/ties, validate all bounded rows then cap30,10/page. Never fall back to another venue or recompute server ranks.",
+  "personal": {
+    "path": "GET /api/trading-events/{eventId}/participants/{lowercaseEvmAddress}",
+    "basis": "Source inspection only, including J callback; no live address-bearing endpoint requested. Synthetic fixtures validate registered, optional stats.ownVolume, optional registrationBlock.reason/conflictingEventName, and optional response eventId/address scope.",
+    "behavior": "Explicit disclosed wallet read only; no signature/auto address transmission on entry or foreground. Missing registration is unknown; unregistered stats not personal completed progress. ID/address/wallet-kind changes clear personal data; stale/error shown without zero coercion."
+  },
+  "registration": {
+    "path": "POST /api/trading-events/{id}/register",
+    "message": "Vanta Trading Event Registration\\nEvent ID: {id}\\nAddress: {lowercaseAddress}\\nTimestamp: {milliseconds}",
+    "body_fields": [
+      "address",
+      "timestamp",
+      "signature"
+    ],
+    "authorization": "Explicit native confirmation for currently authenticated signing-capable wallet. Connected EOA delegates personal_sign to its own active connection; embedded uses unique existing matching Privy wallet personal_sign with UTF8 hex. No replacement wallet, no chain switching/funds/order request.",
+    "preflight": "Fresh event and participant GET before signing and again afterward; check rules fingerprint, eligibility/status/end and address/event scope, already registered never re-submits; scope checked between awaits and immediately before POST. Rules fingerprint covers published names/broker/period/rich rules/tasks/rewards; change requires new review.",
+    "local_freshness_policy": "Signature age must be0..120000ms; this is local defensive policy, not a claimed official server TTL.",
+    "result": "One POST, no redirect/automatic retry; full request12second timeout. Any transport/non2xx result is unknown, no raw error;2xx is acknowledgement only until personal read verifies registered. Unknown/acknowledged states lock resubmission until explicit participant reconciliation. New screen/app sessions have no persisted registration log, but every new submission preflights registered status; no financial execution implied.",
+    "lifecycle": "Identity ID/address/wallet-kind/signing capability changes or disposal invalidate pre-send generations; native wallet background jump is allowed and checked on return. Late UI updates discarded; no automatic resubmit or future signed action. Public/personal readers reuse5minute stale/stop/background/disposal guards from points."
+  },
+  "scope_notes": [
+    "Source RETAIL shows normal ownVolume task/registration. CHANNEL-specific newUserTasks/dailyCheckIn/milestoneRewards and signed check-in/wallet-connect are not implemented in this increment; not falsely exposed as retail actions.",
+    "Vanta Orderly campaign trading opens source website; never redirects reward CTA to Aster app trading.",
+    "Event API does not prove Aster eligibility, rewards credited or live signing success.",
+    "Actual participant/block response, live registration/signature acceptance and device UI remain unverified."
+  ],
+  "dependencies": {
+    "html": "0.15.7 resolved from ^0.15.6; parse/sanitize published rules into native blocks without executing scripts",
+    "url_launcher": "6.3.3 promoted from existing transitive to direct for source task/rule website links; no unrelated package upgrades"
+  },
+  "no_live_actions": {
+    "device_tools_used": false,
+    "apk_installed": false,
+    "personal_network_reads": false,
+    "real_wallet_requests": false,
+    "post_requests": false,
+    "live_rpc": false,
+    "private_or_financial_calls": false
+  }
+}

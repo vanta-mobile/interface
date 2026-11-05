@@ -1,0 +1,79 @@
+{
+  "verified_at_utc": "2026-11-02T23:00:22.626670+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "apk": {
+    "bytes": 42564812,
+    "sha256": "65232c0c620ce425a7d092a55b6242817ff0b9d59f0c6294dca858ebf9ccc5f3",
+    "installed": true
+  },
+  "automated_tests": 539,
+  "new_tests": {
+    "mapper_domain": 6,
+    "signed_repository": 11,
+    "controller": 10,
+    "widget": 6
+  },
+  "format_dart_files": 256,
+  "format_changed_files": 0,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 519,
+    "zh": 519
+  },
+  "official_contract": "position-leverage-public-contract.json",
+  "unit_widget_checks": [
+    "Explicit two-signature context read, including zero-sized configuration; no read on page entry",
+    "Exact Decimal/int bracket boundaries, consecutive tiers, nonincreasing maximum leverage and documented 125 clamp",
+    "Incomplete or conflicting hedge rows, duplicate sides and wrong symbol rejected",
+    "Exact signed POST form bytes and fresh nonce; user and signer are the same current EOA",
+    "POST acknowledgement never proves requested leverage; separately signed GET determines observed result",
+    "Timeout or failed POST never automatically retried; GET-only recheck preserves uncertainty",
+    "Refused pre-submit signature sends no POST; refused result signature keeps unknown state",
+    "Late wallet approval cannot submit expired context; identity change prevents follow-up signature",
+    "Unknown operation blocks another symbol context or new write; one confirmed action at a time",
+    "New context revision, 30-second expiry and explicit invalidation defeat old confirmation",
+    "Controller rejects wrong context identity/symbol and discards late results after logout",
+    "Position risk snapshots marked historical; no automatic account refresh or wallet creation",
+    "Localized risk descriptions and error codes -2027, -2028 and -4028 without raw sensitive message",
+    "Dialog shows exact wallet/symbol/from/to; cancel sends no change",
+    "Input remains after failure, refresh, result query and lazy scroll rebuild",
+    "English 360 width / 2x and Chinese 844x390 landscape / 1.5x confirmation and results",
+    "Existing risk-screen regression scrolls to read action after new leverage entry"
+  ],
+  "native_checks": [
+    "Chinese current-symbol entry from position-risk screen opens independent leverage route",
+    "Chinese signed-out scope, symbol and login action readable",
+    "Leverage sign-in opens actual Privy email / EOA login; no login or wallet creation performed",
+    "English signed-out scope, symbol and login action readable",
+    "English landscape 2400x1080 symbol, shared hedge-setting scope, login button and read-only hint readable",
+    "Original Chinese locale, portrait accelerometer_rotation=0, user_rotation=0 and font_scale=1.0 restored and rechecked"
+  ],
+  "screenshots": [
+    "position-leverage-zh-android.png",
+    "position-leverage-zh-auth-android.png",
+    "position-leverage-en-android.png",
+    "position-leverage-en-landscape-android.png",
+    "position-leverage-restored-zh-android.png"
+  ],
+  "live_private_requests_sent": false,
+  "financial_actions_sent": false,
+  "signed_in_native_values_faked": false,
+  "unverified": [
+    "Real authorized EOA/Privy private request acceptance and leverage mutation",
+    "Signed-in native context, input, confirmation and verification values; controlled unit/widget fixtures only",
+    "iOS build requires macOS/Xcode unavailable on Linux"
+  ],
+  "remaining": [
+    "Real authorization acceptance and account gap recovery",
+    "Live order entry/quick-order configuration integration, margin and position modes",
+    "Close/reverse, margin changes, TP/SL, subaccounts, transfers, deposits, withdrawals and notifications",
+    "Private BAPI historical statistics and TWAP skipped per user instruction"
+  ],
+  "original_settings": {
+    "locale": "zh",
+    "accelerometer_rotation": "0",
+    "user_rotation": "0",
+    "font_scale": "1.0"
+  }
+}

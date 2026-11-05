@@ -1,0 +1,43 @@
+{
+  "verified_at": "2026-11-02T09:25:16.280037+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "build": "arm64 release",
+  "apk_mb": 41.9,
+  "apk_sha256": "054528d44128faa79d8f604dc6b853b8a923f1b9475bbfda5849d96ab3a70c3f",
+  "automated_tests": 172,
+  "analysis": "no issues",
+  "format": "no changes",
+  "native_checks": [
+    "Chinese signed-out Aster account panel",
+    "read button opens sign-in sheet",
+    "English switch preserves Portfolio page",
+    "separate demo tab",
+    "10,000 USDT explicitly local demo",
+    "active demo balance absent from Aster account panel"
+  ],
+  "screenshots": [
+    "aster-account-zh-android.png",
+    "aster-account-en-android.png",
+    "aster-account-login-android.png",
+    "aster-account-demo-android.png",
+    "aster-account-demo-active-android.png",
+    "aster-account-demo-isolated-android.png"
+  ],
+  "unverified": [
+    "real email OTP login",
+    "real EOA SIWE login",
+    "Aster acceptance of user == signer",
+    "wallet EIP-712 chainId 1666 compatibility",
+    "successful authenticated account read",
+    "iOS compilation"
+  ],
+  "not_implemented": [
+    "Aster trading authorization",
+    "sub-account switching",
+    "live order execution",
+    "fund transfers",
+    "private account streams"
+  ],
+  "test_data_boundary": "Automated successful account responses are fixtures; native screenshots use the signed-out app and clearly labeled local demo only."
+}

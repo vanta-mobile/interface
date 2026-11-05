@@ -1,0 +1,76 @@
+{
+  "recorded_at_utc": "2026-11-03T21:15:39.300973+00:00",
+  "scope": "Explicit whole-account Spot current-open-orders baseline, local symbol/reference filtering/counts, exact base/quote display, typed Spot executionReport race reconciliation and lifecycle states.",
+  "contract": "spot-open-orders-public-contract.json",
+  "automated_tests": 2390,
+  "new_tests": 81,
+  "format_dart_files": 587,
+  "localized_messages_per_language": {
+    "en": 1139,
+    "zh": 1139
+  },
+  "acceptance_evidence": {
+    "mapper": {
+      "tests": 39,
+      "file": "test/features/portfolio/spot_open_orders_mapper_test.dart",
+      "coverage": "Exact Decimal base/quote quantities/IDs/remaining; immutable baseline; identical versus conflicting duplicates; numeric money rejection; malformed status/quantity/side/identifiers/time; missing creation and units; quote-sized MARKET no guessed base; typed Spot event cumulative quote and actual O creation."
+    },
+    "event_book": {
+      "tests": 10,
+      "file": "test/features/portfolio/spot_open_orders_events_test.dart",
+      "coverage": "Partial updates preserve baseline/creation; FILLED/CANCELED/EXPIRED/REJECTED tombstones prevent resurrection; duplicates/out-of-order/decreasing fills; events during REST versus prior absent events; server timestamps versus local receive; symbol+ID isolation; capacity retains tombstones."
+    },
+    "signed_repository": {
+      "tests": 10,
+      "file": "test/features/portfolio/signed_spot_open_orders_repository_test.dart",
+      "coverage": "Mock HTTP/signatures only. Exact sapi GET, no symbol, chain1666/monotonic nonce/user/signer/bytes; Spot metadata; empty response skips metadata; metadata failure keeps unknown units; refusal/scope loss before send and late response; 302/403/429/503 safe no retries; malformed payload and scope loss during metadata rejected."
+    },
+    "controller": {
+      "tests": 13,
+      "file": "test/features/portfolio/spot_open_orders_provider_test.dart",
+      "coverage": "No automatic read; current EOA reconnect/no wallet creation; retained stale failure; dedup/stop/wrong-wallet; no baseline from events; event during read and terminal re-read protection; expiry no requests; actual Spot stream controller routes typed updates/disconnect; logout/address/signing-kind reset private state and event book."
+    },
+    "widget": {
+      "tests": 9,
+      "file": "test/features/portfolio/spot_open_orders_widget_test.dart",
+      "coverage": "EN/ZH320/text1.5, 844x390 landscape, 768x1024 tablet; explicit entry/read/authentication, exact refs, filter count, events, failure retention, logout, empty state, route loss, quote-sized unknown base/creation, missing Spot units. No devices."
+    },
+    "existing_loopback_stream": {
+      "file": "test/features/portfolio/aster_spot_user_stream_test.dart",
+      "updated_assertions": "Validated Spot execution report now produces its own Spot order update with exact cumulative quote and unknown O=0 creation, while Perp order/account payload remains absent. Existing loopback harness regression passed; no real socket to exchange."
+    },
+    "full_regression": "All2390 tests passed after final production edits, lint fixes and formatting. Existing internal transfer/order/recovery/auth/notifications/Spot/Perp panels included."
+  },
+  "analysis": "No issues found",
+  "format": "587 Dart files, zero changes",
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43941692,
+    "sha256": "b1e655db60039c123e79527c9dcff16cc1b6a0e823da2c5a4fa18fbf0f559e23"
+  },
+  "build_notes": "Existing third-party Kotlin migration notices, successful release build; no installation.",
+  "ios": "Linux has no macOS/Xcode; not built or natively verified.",
+  "native_testing": "Not performed at user request. No device tools/APK installation; see ../native-verification-pending.md.",
+  "real_wallet_requests_sent": false,
+  "live_rpc_requests_sent": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "device_tools_used": false,
+  "public_network_reads": "Notion Portfolio PRD and anonymous official raw GitHub Spot API Markdown only. No live exchange account or public exchange probe in this increment.",
+  "remaining": [
+    "Real current-wallet signer authorization, current orders/fills/termination/market quantities and native wallet behavior remain unverified.",
+    "Full list correctness across real stream gaps requires explicit signed baseline; no persisted event history or complete automatic replay.",
+    "No Spot order creation/cancellation added by this increment.",
+    "Enable-trading, subaccount management/transfers, actual deposit/withdrawal, Chase recovery and full Portfolio remain incomplete. Overall PRD goal active."
+  ],
+  "logs": {
+    "focused": "/tmp/vanta-spot-open-orders-focused-1.log",
+    "widget": "/tmp/vanta-spot-open-orders-widget-tests.log",
+    "all_tests": "/tmp/vanta-spot-open-orders-all-tests.log",
+    "analysis": "/tmp/vanta-spot-open-orders-analysis-clean.log",
+    "format": "/tmp/vanta-spot-open-orders-format-clean.log",
+    "build": "/tmp/vanta-spot-open-orders-build.log"
+  }
+}

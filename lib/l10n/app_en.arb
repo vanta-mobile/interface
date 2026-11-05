@@ -1,0 +1,2421 @@
+{
+  "@@locale": "en",
+  "demoOrdersTitle": "Local demo positions and orders",
+  "connectExternalWallet": "Connect EOA wallet",
+  "externalWallet": "External EOA wallet",
+  "embeddedWallet": "Privy embedded wallet",
+  "reconnectExternalWallet": "Reconnect wallet",
+  "externalWalletLoginHint": "Connect and sign in with your existing wallet. No extra wallet is created. Sign-in does not enable live trading.",
+  "walletConnectStep": "Confirm the connection in your wallet.",
+  "walletSignStep": "Sign in your wallet to verify your identity.",
+  "authWalletConfiguration": "External wallet sign-in is not available.",
+  "authWalletCancelled": "Wallet connection cancelled. You can retry.",
+  "authWalletRejected": "Wallet request rejected. You can retry.",
+  "authWalletUnavailable": "Wallet connection failed. Check your wallet app and network, then retry.",
+  "authWalletUnsupported": "Select Ethereum, BNB Chain, Arbitrum, or Base in your wallet.",
+  "authWalletChanged": "Wallet account or network changed. Reconnect and sign in again.",
+  "authWalletReconnect": "Your identity is restored. Reconnect the same EOA wallet before signing.",
+  "authWalletSignature": "Your wallet did not return a valid signature. Please retry.",
+  "quotesConnecting": "Connecting live quotes",
+  "quotesLive": "Live quotes",
+  "quotesPartial": "Some quotes are reconnecting",
+  "quotesOffline": "Quotes offline. Showing recent data",
+  "quotesUpdatedAt": "Updated",
+  "quotesSnapshotFailure": "Quote refresh failed. Available data is retained. Check your connection and retry.",
+  "quotesDataFailure": "Some quotes are invalid or missing. Showing the last valid values.",
+  "done": "Done",
+  "chartType": "Chart type",
+  "loadingChart": "Loading chart",
+  "more": "More",
+  "moreTimeframes": "All intervals",
+  "typeCandles": "Candles",
+  "typeHollowCandles": "Hollow candles",
+  "typeBars": "Bars",
+  "typeLine": "Line",
+  "typeLineWithMarkers": "Line with markers",
+  "typeStepLine": "Step line",
+  "typeArea": "Area",
+  "typeBaseline": "Baseline",
+  "typeColumns": "Columns",
+  "typeHighLow": "High-low",
+  "typeHeikinAshi": "Heikin Ashi",
+  "heikinAshiHint": "Heikin Ashi is derived; quotes and details use source prices",
+  "priceScale": "Price scale",
+  "scaleRegular": "Regular",
+  "scaleLogarithmic": "Logarithmic",
+  "scalePercentage": "Percentage",
+  "scaleIndexed": "Indexed to 100",
+  "relativeScaleHint": "Based on the first visible bar’s open",
+  "loadingHistory": "Loading history…",
+  "historyEnd": "No earlier history",
+  "indicatorParameters": "Indicator parameters",
+  "period": "Period",
+  "period1": "Period 1",
+  "period2": "Period 2",
+  "period3": "Period 3",
+  "period4": "Period 4",
+  "deviations": "Standard deviations",
+  "fastPeriod": "Fast period",
+  "slowPeriod": "Slow period",
+  "signalPeriod": "Signal period",
+  "smoothK": "K smoothing",
+  "smoothD": "D smoothing",
+  "invalidChartParameter": "Enter a valid value in range",
+  "invalidMacdPeriods": "Fast period must be smaller than slow period",
+  "resetDefaults": "Reset defaults",
+  "apply": "Apply",
+  "mainIndicators": "Main overlays",
+  "secondaryIndicators": "Lower indicator",
+  "volumeBars": "Volume",
+  "indicatorHint": "Overlays share the price pane. Show one lower indicator at a time, switch or hide it whenever you need.",
+  "exitFullscreen": "Exit fullscreen",
+  "marketDetails": "Market details",
+  "depth": "Depth",
+  "candles": "Candles",
+  "lineChart": "Line",
+  "sync": "Market cache",
+  "syncing": "History loading / gap repair",
+  "closedCandle": "Closed",
+  "formingCandle": "Forming",
+  "eventTime": "Event time",
+  "startTime": "Candle start",
+  "chartSource": "Aster Perpetuals · USDT",
+  "chartSourceShort": "Aster · USDT",
+  "marketSource": "Aster Perpetuals",
+  "poweredBy": "VANTA  /  POWERED BY ASTER",
+  "gap": "Candle gap detected. Backfilling",
+  "connect": "Connect wallet",
+  "loginTitle": "Sign in to Vanta",
+  "loginDescription": "Connect an existing EOA wallet, or sign in with an email code to use a Privy wallet.",
+  "emailAddress": "Email address",
+  "sendCode": "Send verification code",
+  "verificationCode": "6-digit verification code",
+  "verifyAndLogin": "Verify and sign in",
+  "resendCode": "Resend code",
+  "changeEmail": "Change email",
+  "logout": "Log out",
+  "copyAddress": "Copy wallet address",
+  "createWallet": "Create embedded wallet",
+  "tradingNotEnabled": "Wallet signed in. Use the separate live-order entry to review a real order; Aster authorization is required.",
+  "loginInProgress": "Processing sign-in…",
+  "walletInProgress": "Processing wallet session…",
+  "demoAccountHint": "Try trading with separate local demo funds. Your Privy wallet is unaffected.",
+  "authConfiguration": "Privy sign-in is not configured in this build. Contact the app provider.",
+  "authInvalidEmail": "Enter a valid email address.",
+  "authInvalidCode": "The code is invalid or expired. Check it or request a new code.",
+  "authNetwork": "Sign-in connection failed. Check your network and retry.",
+  "authRateLimited": "Too many requests. Try again shortly.",
+  "authSessionUnavailable": "Your session has expired. Sign in again.",
+  "authUnavailable": "Sign-in is unavailable. Please retry.",
+  "demo": "Demo account",
+  "perpetual": "Perpetual",
+  "perps": "Perps",
+  "markets": "Markets",
+  "portfolio": "Portfolio",
+  "points": "Points",
+  "trade": "Trade",
+  "chart": "Chart",
+  "data": "Data",
+  "change": "24h change",
+  "volume": "24h volume",
+  "high": "24h high",
+  "low": "24h low",
+  "mark": "Mark price",
+  "index": "Index price",
+  "funding": "Funding / countdown",
+  "book": "Order book",
+  "trades": "Recent trades",
+  "price": "Price",
+  "quantity": "Quantity",
+  "total": "Total",
+  "time": "Time",
+  "buy": "Buy / Long",
+  "sell": "Sell / Short",
+  "long": "Long",
+  "short": "Short",
+  "cross": "Cross",
+  "leverage": "Leverage",
+  "leverageHint": "Higher leverage increases the risk from price movements.",
+  "limit": "Limit",
+  "market": "Market",
+  "available": "Available",
+  "marketPrice": "Execute at current market price",
+  "orderValue": "Order value",
+  "margin": "Required margin",
+  "fees": "Estimated fee",
+  "reduceOnly": "Reduce only",
+  "positions": "Positions",
+  "orders": "Open orders",
+  "history": "History",
+  "pnl": "Unrealized PnL",
+  "noPositions": "No open positions",
+  "noPositionsHint": "Your next opportunity starts with your first trade.",
+  "noOrders": "No open orders",
+  "noHistory": "No trade history",
+  "walletTitle": "Your gateway to trading",
+  "walletHint": "Explore local demo trading or use the separate live-order entry with your wallet. Fund transfers are not enabled.",
+  "enterDemo": "Try demo account",
+  "demoBalance": "10,000 USDT demo funds · No real execution",
+  "demoActive": "Local demo · No real execution",
+  "review": "Review order",
+  "confirm": "Confirm demo order",
+  "cancel": "Cancel",
+  "close": "Close",
+  "entry": "Entry price",
+  "size": "Position size",
+  "invalidQuantity": "Enter a positive quantity aligned to the market quantity step.",
+  "invalidPrice": "Enter a positive price aligned to the market price tick.",
+  "insufficient": "Insufficient margin. Reduce quantity or adjust leverage.",
+  "reduceHint": "Reduce only requires a sufficient opposite position in the same market.",
+  "submitted": "Demo order submitted",
+  "closed": "Demo position closed",
+  "canceled": "Demo order canceled",
+  "filled": "Filled",
+  "pending": "Pending",
+  "canceledStatus": "Canceled",
+  "offline": "History · reconnecting",
+  "live": "Live market",
+  "retry": "Reconnect",
+  "snapshotHint": "Realtime disconnected. Showing recent history.",
+  "marketUnavailable": "Market unavailable. Please retry.",
+  "search": "Search markets",
+  "selectMarket": "Select market",
+  "favorites": "Favorites",
+  "allMarkets": "All perpetuals",
+  "lastPrice": "Last price",
+  "fundingRate": "Funding rate",
+  "volume24h": "24h volume",
+  "addFavorite": "Add to favorites",
+  "removeFavorite": "Remove from favorites",
+  "emptyFavorites": "No favorite markets yet",
+  "noMarketsFound": "No matching markets",
+  "clearSearch": "Clear search",
+  "equity": "Total equity",
+  "usedMargin": "Used margin",
+  "overview": "Account overview",
+  "portfolioHint": "Connect your account to start trading.",
+  "pointsTitle": "Every trade takes you further.",
+  "pointsHint": "Vanta Genesis rewards live trading and ecosystem participation. Demo trades do not earn points.",
+  "yourPoints": "Your Genesis points",
+  "comingSoon": "Coming soon",
+  "aiTitle": "A little insight for your next move.",
+  "aiHint": "Market analysis is planned for a future version. Explore live prices, charts and the order book on the trading page.",
+  "backToTrade": "Explore the market",
+  "language": "Language",
+  "settings": "Settings",
+  "indicators": "Indicators",
+  "none": "None",
+  "fullscreen": "Expand chart",
+  "chartHint": "Hold for details · Pinch to zoom",
+  "network": "Market connection",
+  "demoReset": "Leave demo account",
+  "demoExitHint": "Leaving clears this session’s local demo positions and orders.",
+  "minOrder": "Minimum size",
+  "feeHint": "Demo fee of 0.05%, for simulation only.",
+  "orderReviewHint": "This local demo order will not be sent to the exchange.",
+  "refresh": "Refresh market",
+  "account": "Account",
+  "bookWaiting": "Connecting to order book…",
+  "bookError": "Order book disconnected. Reconnecting.",
+  "noTrades": "Waiting for recent trades…",
+  "spot": "Spot",
+  "open": "O",
+  "candleHigh": "H",
+  "candleLow": "L",
+  "candleClose": "C",
+  "orderId": "Order ID",
+  "tapPrice": "Tap a book price to fill your order",
+  "followSystem": "Follow system",
+  "languageSaveFailed": "Language could not be saved. Please retry.",
+  "saveLanguage": "Save language",
+  "midPrice": "Mid",
+  "resendCountdown": "Resend code ({seconds}s)",
+  "@resendCountdown": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "languageChinese": "简体中文",
+  "languageEnglish": "English",
+  "asterAccountTitle": "Aster perpetual account",
+  "asterAccountTab": "Aster account",
+  "asterAccountScope": "Account data for the wallet below. Each refresh asks this wallet to sign a read request.",
+  "asterUsdtSummary": "USDT account summary",
+  "asterMarginBalance": "Margin balance",
+  "asterUsdtScope": "USDT only. Other assets retain their own units below; this is not the total value of Spot, staking, vaults, or sub-accounts.",
+  "accountSnapshotTime": "Snapshot received: {time}",
+  "accountSnapshotStale": "Previous snapshot. Sign to refresh before relying on these values.",
+  "accountSignInToRead": "Sign in to view account",
+  "accountReadWithWallet": "Sign to read Aster account",
+  "accountRefreshWithWallet": "Sign to refresh account",
+  "accountReadPreparing": "Preparing account request…",
+  "accountReadSigning": "Confirm the account read signature in your wallet.",
+  "accountReadLoading": "Reading account data from Aster…",
+  "accountReadNotice": "Read-only: no order, wallet creation, transfer, or trading authorization is submitted. Aster must accept this wallet as an authorized signer; signing alone does not grant access.",
+  "accountErrorCode": "Aster error code: {code}",
+  "accountAssetBalances": "Perpetual asset balances",
+  "accountSearchAsset": "Search assets",
+  "accountHideZero": "Hide zero balances",
+  "accountNoAssets": "No asset balances returned for this account.",
+  "accountNoMatchingAssets": "No assets match the current filters.",
+  "accountCollateralEligible": "Eligible as collateral in Multi-Assets mode",
+  "accountCollateralIneligible": "Not eligible as collateral in Multi-Assets mode",
+  "accountLivePositions": "Aster positions",
+  "accountNoPositions": "No open perpetual positions.",
+  "accountPositionMargin": "Position initial margin",
+  "accountWalletBalance": "Wallet balance",
+  "accountUnrealizedPnl": "Unrealized PnL",
+  "accountPositionDirection": "Direction",
+  "accountMarginMode": "Margin mode",
+  "accountDataInvalid": "Aster returned incomplete or invalid account data. Retry to refresh.",
+  "accountRateLimited": "Aster has limited account requests. Wait before trying again.",
+  "accountNetwork": "Account data could not be read. Check your connection and retry.",
+  "accountReadFailed": "Aster could not complete the account query. Retry or check the account permissions.",
+  "accountSignatureExpired": "The account signature expired. Retry and confirm the new wallet request promptly.",
+  "accountSignatureRejected": "Aster rejected the account signature. Check your wallet and account authorization.",
+  "accountPermissionRequired": "Aster has not accepted this wallet’s account access. Check its Aster API authorization; signing in to Vanta does not grant it.",
+  "@accountSnapshotTime": {
+    "description": "Local receipt time of the Aster account snapshot",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "@accountErrorCode": {
+    "description": "Numeric error code returned by Aster; no raw server payload",
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "accountUnitUnavailable": "(unit unavailable)",
+  "accountIsolatedMode": "Isolated",
+  "marketCategoryTop": "Top",
+  "marketCategoryRwa": "USD1-RWA",
+  "marketCategoryMeme": "Meme",
+  "marketCategoryAi": "AI",
+  "marketCategoryPreLaunch": "Pre-launch",
+  "marketCategoryStocks": "Stocks",
+  "marketCategoryEtf": "ETF",
+  "marketCategoryCommodities": "Commodities",
+  "marketCategorySemiconductors": "Semiconductors",
+  "marketNoCategoryResults": "No contracts in this category match your filters.",
+  "marketResultsCount": "{shown} of {total} perpetuals",
+  "marketCategories": "Market categories",
+  "@marketResultsCount": {
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "marketCategoryAll": "All categories",
+  "accountPerpetualTab": "Perpetual",
+  "accountSpotTab": "Spot",
+  "spotAccountTitle": "Aster spot account",
+  "spotBalanceScope": "Balances are asset quantities. Total = available + locked. Spot and perpetual balances are shown separately.",
+  "spotAssetBalances": "Spot asset balances",
+  "spotNoAssets": "No assets in this spot account.",
+  "spotTotalBalance": "Total balance",
+  "spotLockedBalance": "Locked balance",
+  "asterOpenOrdersTitle": "Aster open perpetual orders",
+  "asterOpenOrdersScope": "Live-account futures orders, separate from the demo orders above. Reading and cancellation require wallet signatures and Aster authorization.",
+  "openOrdersReadWithWallet": "Sign to read open orders",
+  "openOrdersRefreshWithWallet": "Sign to refresh open orders",
+  "openOrdersCurrentSymbol": "Hide other symbols",
+  "openOrdersCount": "Open orders ({count})",
+  "openOrdersEmpty": "No open perpetual orders in this account.",
+  "openOrdersNoCurrentSymbol": "No open orders for the current symbol.",
+  "openOrdersBuy": "Buy",
+  "openOrdersSell": "Sell",
+  "openOrdersLongSide": "Long side",
+  "openOrdersShortSide": "Short side",
+  "openOrdersOneWay": "One-way",
+  "openOrdersOrderType": "Order type",
+  "openOrdersStatus": "Status",
+  "openOrdersNew": "New",
+  "openOrdersPartiallyFilled": "Partially filled",
+  "openOrdersCreatedLocal": "Placed (local time)",
+  "openOrdersFilledTotal": "Filled / total",
+  "openOrdersRemaining": "Remaining",
+  "openOrdersClosePosition": "Close entire position",
+  "openOrdersOrderPrice": "Order price",
+  "openOrdersOrderValue": "Order value",
+  "openOrdersActivationPrice": "Activation price",
+  "openOrdersCallbackRate": "Callback rate",
+  "openOrdersTriggerPrice": "Trigger price",
+  "openOrdersMarkPrice": "Mark",
+  "openOrdersLastPrice": "Last",
+  "openOrdersUnknownTrigger": "Trigger basis unavailable",
+  "openOrdersReduceOnly": "Reduce only",
+  "openOrdersHidden": "Hidden",
+  "openOrdersLimit": "Limit",
+  "openOrdersMarket": "Market",
+  "openOrdersStopLimit": "Stop limit",
+  "openOrdersStopMarket": "Stop market",
+  "openOrdersTakeProfitLimit": "Take-profit limit",
+  "openOrdersTakeProfitMarket": "Take-profit market",
+  "openOrdersTrailingStop": "Trailing stop",
+  "openOrdersOtherType": "Other order type",
+  "openOrdersBbo": "BBO peg",
+  "@openOrdersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "accountDepositRequired": "Aster requires the main wallet linked to this account to complete a deposit before V3 private account or order queries can be used.",
+  "orderCancelTitle": "Cancel order",
+  "orderCancelKeep": "Keep order",
+  "orderCancelConfirm": "Sign cancellation",
+  "orderCancelConfirmHint": "Cancel only the unfilled remainder of this perpetual order. Filled positions remain. Your current wallet will sign the cancellation, then a separate status query. Aster authorization is required.",
+  "orderCancelSigning": "Confirm the cancellation signature in your wallet.",
+  "orderCancelSubmitting": "Submitting cancellation. The outcome is not confirmed yet.",
+  "orderCancelChecking": "Checking the final order status.",
+  "orderCancelCheckSigning": "Sign the status query in your wallet to verify the cancellation outcome.",
+  "orderCancelUnknown": "Cancellation outcome is unconfirmed. The order is retained until its status is verified. Check status before sending another cancellation.",
+  "orderCancelRecheck": "Sign and check status",
+  "orderCancelVerified": "Aster confirmed this order is cancelled. Any filled position remains; account balances need refreshing.",
+  "orderCancelFilled": "Aster reports this order is fully filled. It was not cancelled. Refresh positions and balances.",
+  "orderCancelExpired": "Aster reports this order has expired. Refresh positions and balances.",
+  "orderCancelRejected": "Aster reports this order was rejected. Refresh positions and balances.",
+  "orderCancelStillOpen": "Aster reports this order is still open. Review its current filled amount before retrying.",
+  "batchCancelAll": "Cancel all listed orders",
+  "batchCancelCurrent": "Cancel all current-symbol orders",
+  "batchCancelTitle": "Cancel all perpetual orders?",
+  "batchCancelHint": "Cancel all orders on the listed futures symbols when Aster processes each request, including orders added on other devices. Other symbols and Spot orders are outside this scope. Each symbol requires cancellation and status-query signatures. Filled positions remain.",
+  "batchCancelScopeCount": "Snapshot: {orders, plural, =1{1 order} other{{orders} orders}} across {symbols, plural, =1{1 symbol} other{{symbols} symbols}}",
+  "batchCancelConfirm": "Sign and cancel by symbol",
+  "batchCancelNotSubmitted": "Not submitted",
+  "batchCancelUnknown": "Outcome unconfirmed. Check status before retrying.",
+  "batchCancelNoOpen": "No open orders at last check",
+  "batchCancelRemaining": "{count} open orders remain",
+  "batchCancelRecheck": "Sign and check unconfirmed symbols",
+  "batchCancelStop": "Stop further submissions",
+  "batchCancelStopped": "Further submissions stopped. Check each symbol’s result.",
+  "batchCancelReadFirst": "Read your live open orders before cancelling all.",
+  "@batchCancelScopeCount": {
+    "placeholders": {
+      "orders": {
+        "type": "int"
+      },
+      "symbols": {
+        "type": "int"
+      }
+    }
+  },
+  "@batchCancelRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchCancelInProgress": "Processing; outcome not yet verified",
+  "historyTitle": "Spot history",
+  "historyOrders": "Order history",
+  "historyTrades": "Trade history",
+  "historyTransactions": "Transaction history",
+  "historyScope": "History for the selected Spot wallet. Orders, individual fills and balance changes are separate records.",
+  "historySymbolFilter": "Spot symbol (optional)",
+  "historyAssetFilter": "Asset (optional)",
+  "historyFilterHint": "Use the exact identifier; leave empty for all. Editing filters clears the previous results without signing.",
+  "historyWindowLabel": "Query window (UTC)",
+  "historyDay": "Last 24 hours",
+  "historyWeek": "Last 7 days",
+  "historyCustom": "Choose dates",
+  "historyRead": "Sign and read selected range",
+  "historyRefresh": "Sign and reread selected range",
+  "historyContinue": "Sign and check next time window",
+  "historyPartial": "The selected range is not fully checked. Each request covers at most seven days and 1,000 rows. Continue signing to read the remaining time windows.",
+  "historyTruncated": "At least one millisecond reached the API row limit. These results are incomplete; narrow the symbol or asset filter.",
+  "historyComplete": "Selected time range checked within the API’s retention limits.",
+  "historyEmpty": "No records were returned for the selected range and filters.",
+  "historyRetention": "The Spot orders API does not return orders created more than seven days ago.",
+  "historyNotAtomic": "Results may change between reads. Continuing checks preserves the first response time and merges records by their identifiers.",
+  "historyInvalidScope": "Enter an exact symbol or asset identifier of up to 50 letters, digits, dots, underscores or hyphens.",
+  "historyInvalidWindow": "Select a valid date range. Order history is limited to seven days.",
+  "historyLoaded": "Loaded records: {count}",
+  "historyPage": "Page {page} of {pages} loaded pages",
+  "historyPrev": "Previous",
+  "historyNext": "Next",
+  "historyCreatedUTC": "Created (UTC)",
+  "historyUpdatedUTC": "Updated (UTC)",
+  "historyExecutionUTC": "Executed (UTC)",
+  "historyEventUTC": "Time (UTC)",
+  "historyAveragePrice": "Average fill price",
+  "historyExecutedQuote": "Filled quote amount",
+  "historyTradeId": "Trade ID",
+  "historyTransactionId": "Transaction reference",
+  "historyCommission": "Commission / rebate",
+  "historyLiquidity": "Liquidity role",
+  "historyMaker": "Maker",
+  "historyTaker": "Taker",
+  "historyBalanceChange": "Balance change",
+  "historyTransactionType": "Transaction type",
+  "historyUnknownCode": "Other ({code})",
+  "historyFilled": "Filled",
+  "historyCanceled": "Cancelled",
+  "historyExpired": "Expired",
+  "historyRejected": "Rejected",
+  "historyPendingCancel": "Pending cancellation",
+  "historyDeposit": "Deposit",
+  "historyWithdraw": "Withdrawal",
+  "historyTransfer": "Transfer",
+  "historyTradeSource": "Trade debit",
+  "historyTradeTarget": "Trade credit",
+  "historyAirdrop": "Airdrop",
+  "historyDividend": "Dividend",
+  "historySwap": "Swap",
+  "historyRebate": "Commission rebate",
+  "@historyLoaded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@historyPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "pages": {
+        "type": "int"
+      }
+    }
+  },
+  "@historyUnknownCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "historyTradeQuantity": "Filled quantity",
+  "historyStop": "Stop waiting",
+  "historyReadStopped": "This read was stopped. You can try again.",
+  "positionRiskTitle": "Position risk",
+  "positionRiskScope": "Read positions for the connected wallet. A signed snapshot is the baseline; enabled account monitoring can update individual positions. Public mark prices update estimates separately. Read account balances separately. Closing requires its own confirmation and signatures; TP/SL is not available yet.",
+  "positionRiskRead": "Sign to read position risk",
+  "positionRiskRefresh": "Sign to refresh position risk",
+  "positionRiskCount": "Position records ({count})",
+  "positionRiskNoCurrent": "No position records for the selected symbol.",
+  "positionRiskBalanceOnly": "Negative isolated balance",
+  "positionRiskSide": "Position side",
+  "positionRiskNotional": "Signed notional",
+  "positionRiskLiquidation": "Liquidation price",
+  "positionRiskIsolatedWallet": "Isolated wallet balance",
+  "positionRiskIsolatedMargin": "Isolated margin",
+  "positionRiskUpdated": "Position update (UTC)",
+  "positionRiskLiquidationHint": "A missing or zero liquidation price is shown as —. This does not mean the position is free of liquidation risk.",
+  "positionRiskBalanceHint": "The position quantity is zero, but its isolated wallet balance is negative. This record remains visible for review.",
+  "@positionRiskCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "positionAdlTitle": "ADL queue",
+  "positionAdlScope": "Read ADL separately with your wallet. Levels range from 0 to 4, low to high, and the exchange updates them every 30 seconds. Four lit bars indicate the highest queue level. This is not a margin ratio or a liquidation countdown. Refresh positions and ADL to review matching snapshots.",
+  "positionAdlRead": "Sign to read ADL",
+  "positionAdlRefresh": "Sign to refresh ADL",
+  "positionAdlUnknown": "Unknown — read or refresh matching ADL data",
+  "positionAdlNotApplicable": "Not applicable to a zero-quantity balance record",
+  "positionAdlLevel": "Level {level} / 4",
+  "positionAdlHistorical": "Historical level {level} / 4 — refresh",
+  "positionAdlEmpty": "No ADL records returned. Missing positions remain unknown.",
+  "@positionAdlLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "@positionAdlHistorical": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "positionMarkReadFirst": "Read positions to start public mark prices.",
+  "positionMarkScope": "Estimates use the displayed position quantity and entry price with public mark prices. Fees and funding are excluded. Prices expire after 10 seconds; refreshing prices does not verify the complete position list, margin or liquidation prices.",
+  "positionMarkCoverage": "Fresh mark prices: {fresh} / {total} symbols",
+  "positionMarkSnapshot": "Snapshot mark price",
+  "positionMarkCurrent": "Current mark price",
+  "positionMarkHistorical": "Historical mark price",
+  "positionMarkTime": "Mark event (UTC)",
+  "positionEstimatedNotional": "Estimated signed notional",
+  "positionEstimatedPnl": "Estimated unrealized PnL",
+  "positionEstimateStale": "Historical estimate: positions or mark prices need refreshing.",
+  "positionSnapshotNotional": "Snapshot signed notional",
+  "positionSnapshotPnl": "Snapshot unrealized PnL",
+  "@positionMarkCoverage": {
+    "placeholders": {
+      "fresh": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "positionMarkUnavailable": "Some mark prices are unavailable or stale. Retained values are historical.",
+  "positionMarkRetry": "Retry public mark prices",
+  "accountChangeTitle": "Futures change monitor",
+  "@accountChangeTitle": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
+  },
+  "accountChangeScope": "Wallet-signed monitoring for this futures account. Validated events update individual orders, wallet balances and position quantities after a complete signed read. Events do not prove complete lists or recover missed updates. Totals, available funds, leverage, liquidation prices and ADL need signed verification; Spot needs a separate read. Starting or renewing needs one signature, with no automatic wallet prompts. The lease lasts up to 60 minutes. Stopping closes this device’s connection only.",
+  "@accountChangeScope": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
+  },
+  "accountChangeStopped": "Not monitoring",
+  "@accountChangeStopped": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
+  },
+  "accountChangeConnecting": "Connecting change monitor…",
+  "@accountChangeConnecting": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
+  },
+  "accountChangeConnected": "Change monitor connected · snapshots still need verification",
+  "@accountChangeConnected": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
+  },
+  "accountChangeDisconnected": "Disconnected · changes may have been missed",
+  "@accountChangeDisconnected": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
+  },
+  "accountChangePaused": "Paused in background · verify snapshots on return",
+  "@accountChangePaused": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
+  },
+  "accountChangeExpired": "Monitoring expired · sign again to continue",
+  "@accountChangeExpired": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
+  },
+  "accountChangeStart": "Sign to start monitoring",
+  "@accountChangeStart": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
+  },
+  "accountChangeRenew": "Sign to renew monitoring",
+  "@accountChangeRenew": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
+  },
+  "accountChangeReconnect": "Reconnect without signing",
+  "@accountChangeReconnect": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
+  },
+  "accountChangeStop": "Stop monitoring on this device",
+  "@accountChangeStop": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
+  },
+  "accountChangeRenewalDue": "Monitoring expires soon. Renew manually with your wallet to continue.",
+  "@accountChangeRenewalDue": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
+  },
+  "accountChangeExpiry": "Local monitoring deadline: {time}",
+  "@accountChangeExpiry": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "accountChangeLastEvent": "Latest event time: {time}. Read snapshots again to verify.",
+  "@accountChangeLastEvent": {
+    "description": "Futures private account change monitor; does not merge partial event payloads into snapshots.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "openOrdersCreationUnknown": "Unknown · read orders to verify",
+  "@openOrdersCreationUnknown": {
+    "description": "Authenticated futures order event synchronization and completeness boundaries."
+  },
+  "openOrdersUpdatedUTC": "Order updated (UTC)",
+  "@openOrdersUpdatedUTC": {
+    "description": "Authenticated futures order event synchronization and completeness boundaries."
+  },
+  "openOrdersEventTime": "Latest applied order event (UTC): {time}",
+  "@openOrdersEventTime": {
+    "description": "Authenticated futures order event synchronization and completeness boundaries.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "openOrdersEventScope": "Validated order events update this list, including partial fills and final removals. The REST timestamp remains the last complete read. Reconnect or missing events can leave the list incomplete; refresh with your wallet to verify.",
+  "@openOrdersEventScope": {
+    "description": "Authenticated futures order event synchronization and completeness boundaries."
+  },
+  "orderEventsCapacity": "Order event history is full. Sign out and reconnect your wallet, then read orders again to verify.",
+  "@orderEventsCapacity": {
+    "description": "Authenticated futures order event synchronization and completeness boundaries."
+  },
+  "orderCancelEventsDuringCheck": "Order events arrived during verification. The query may reflect an earlier state; review the updated order list before any further action.",
+  "@orderCancelEventsDuringCheck": {
+    "description": "Cancellation status query raced with private order events; do not claim final current state."
+  },
+  "accountEventsCapacity": "Account event history is full. Sign out and reconnect your wallet, then read balances and positions again to verify.",
+  "accountEventTime": "Last applied account event: {time} UTC",
+  "accountEventScope": "Individual records include event updates. Totals and fields missing from events show — until a signed read. Unchanged rows may be historical. Missing rows do not mean closed positions; verify complete lists after interruptions.",
+  "accountEventRowTime": "Record event time (UTC)",
+  "accountCrossWalletBalance": "Cross wallet balance",
+  "positionEventPnl": "Event unrealized PnL",
+  "positionEventFieldsHint": "Leverage, liquidation price, mark, notional and isolated margin are not provided by this event. Read positions to verify. Public mark estimates use the displayed quantity and entry price; they do not confirm the complete account.",
+  "@accountEventTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "positionAllocatedMargin": "Allocated isolated wallet",
+  "positionEstimatedCrossMargin": "Estimated cross position margin",
+  "positionEstimatedInitialMargin": "Estimated initial margin basis",
+  "positionEstimatedRoe": "Estimated ROE (%)",
+  "positionSnapshotRoe": "Snapshot ROE estimate (%)",
+  "positionReturnScope": "Linear contracts: initial margin basis = absolute quantity × mark price ÷ leverage; ROE = unrealized PnL ÷ that basis × 100. Isolated margin allocation uses its wallet balance, not the ROE basis. These estimates exclude fees and funding, are not account returns or available funds, and remain historical when position data or prices are stale. Unknown leverage or units shows —.",
+  "leverageSettings": "Futures leverage",
+  "leverageSettingsScope": "Set initial leverage for this symbol. In hedge mode both directions share the setting. Changing leverage affects margin requirements and risk.",
+  "leverageReadSettings": "Read leverage settings (2 signatures)",
+  "leverageSettingsReadHint": "Sign to read the leverage limits and symbol configuration. No change is submitted by reading.",
+  "leverageCurrentSetting": "Leverage at last read",
+  "leverageTarget": "Target leverage",
+  "leverageInputHint": "Enter a different whole number from 1 to {maximum}. Exposure may impose a lower limit; Aster validates the request.",
+  "@leverageInputHint": {
+    "placeholders": {
+      "maximum": {
+        "type": "int"
+      }
+    }
+  },
+  "leverageContextExpired": "Settings require a fresh read before changing leverage. Your input is preserved.",
+  "leverageInvalidTarget": "Enter a different whole-number leverage within the displayed limit.",
+  "leverageReviewChange": "Review leverage change",
+  "leverageConfirmTitle": "Change futures leverage?",
+  "leverageConfirmHint": "This changes the selected wallet’s leverage for the symbol below, including both hedge directions. Sign once to submit and again to query the result. Higher leverage increases risk.",
+  "leverageRequestedChange": "{previous}× → {target}×",
+  "@leverageRequestedChange": {
+    "placeholders": {
+      "previous": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "leverageSignChange": "Sign leverage change",
+  "leverageSubmitting": "Submitting leverage change…",
+  "leverageCheckSigning": "Sign to verify leverage",
+  "leverageChecking": "Querying leverage…",
+  "leverageVerified": "Query verified the requested leverage: {value}×.",
+  "@leverageVerified": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "leverageObservedDifferent": "Query shows {observed}×; requested {target}×. Refresh settings before reviewing another change.",
+  "@leverageObservedDifferent": {
+    "placeholders": {
+      "observed": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "leverageOutcomeUnknown": "The request may have reached Aster; the result is unverified. Query again to check the setting. No change is resubmitted by querying.",
+  "leverageRecheck": "Sign to query result",
+  "leverageResultScope": "This is a query snapshot. Read positions and balances again to verify margin and risk fields.",
+  "leverageExposureLimit": "The position exceeds the maximum allowed at this leverage. Choose a lower leverage and refresh settings.",
+  "leverageMarginInsufficient": "Insufficient margin for this leverage. Refresh balances and settings before trying again.",
+  "leverageNotAllowed": "Aster rejected this leverage. Refresh the symbol limits and current setting.",
+  "marginModeSettings": "Futures margin mode",
+  "marginModeSettingsScope": "Choose cross or isolated margin for this symbol. Both hedge directions share the setting. This changes real account configuration and margin risk.",
+  "marginModeCrossHint": "Cross margin shares eligible account collateral across cross positions.",
+  "marginModeIsolatedHint": "Isolated margin allocates collateral to each position. Changing mode does not switch single / multi-asset or one-way / hedge position mode.",
+  "marginModeReadSettings": "Read mode and open orders (2 signatures)",
+  "marginModeReadHint": "Sign to read this symbol’s configuration and open orders. Reading submits no changes. Settings expire after 30 seconds, including time spent on the second signature.",
+  "marginModeCurrentSetting": "Margin mode at last read",
+  "marginModeTarget": "Target margin mode",
+  "marginModeContextExpired": "Refresh mode and open orders before reviewing a change. Your selection is preserved.",
+  "marginModeChangeBlocked": "Choose a different mode. Close positions and cancel open orders before switching.",
+  "marginModeHasPosition": "This symbol has a position. Close it and refresh settings before switching margin mode.",
+  "marginModeOpenOrders": "This symbol has open orders. Cancel them and refresh settings before switching margin mode.",
+  "marginModeAlreadySet": "Aster reports that this mode is already set. The signed query below shows the observed mode.",
+  "marginModeConfirmTitle": "Change futures margin mode?",
+  "marginModeConfirmHint": "This changes the selected wallet’s configuration for the symbol below, including both hedge directions. Sign once to submit, then again to query the result. Aster validates positions, open orders and asset-mode restrictions.",
+  "marginModeSignChange": "Sign margin mode change",
+  "marginModeReviewChange": "Review mode change",
+  "marginModeSubmitting": "Submitting margin mode change…",
+  "marginModeCheckSigning": "Sign to verify margin mode",
+  "marginModeChecking": "Querying margin mode…",
+  "marginModeVerified": "Query verified the requested mode: {mode}.",
+  "@marginModeVerified": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "marginModeObservedDifferent": "Query shows {observed}; requested {target}. Refresh settings before reviewing another change.",
+  "@marginModeObservedDifferent": {
+    "placeholders": {
+      "observed": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "marginModeOutcomeUnknown": "The request may have reached Aster. Its result is unverified; sign to query again. Querying never resubmits the change.",
+  "symbolSettingsOtherPending": "Complete the pending futures setting on its settings page before starting another.",
+  "positionModeSettings": "Futures position mode",
+  "positionModeAllSymbols": "All futures symbols",
+  "positionModeSettingsScope": "Choose one-way or hedge mode for every futures symbol in this wallet’s account. This changes real account configuration.",
+  "positionModeOneWay": "One-way",
+  "positionModeHedge": "Hedge",
+  "positionModeOneWayHint": "One-way mode keeps a single net position per symbol.",
+  "positionModeHedgeHint": "Hedge mode separates long and short positions. Positions and open orders across all symbols must be cleared before switching. This action does not close positions, cancel orders or change margin or asset modes.",
+  "positionModeReadSettings": "Read mode, positions and orders (3 signatures)",
+  "positionModeReadHint": "Sign separately to read position mode, all futures positions and all open orders. Reading submits no changes. The 30-second validity starts at the first response and includes the remaining signatures.",
+  "positionModeCurrentSetting": "Position mode at last read",
+  "positionModeTarget": "Target position mode",
+  "positionModeContextExpired": "Refresh mode, positions and orders before reviewing a change. Your selection is preserved.",
+  "positionModeChangeBlocked": "Choose a different mode. Close all futures positions and cancel all open orders before switching.",
+  "positionModeHasPosition": "This account has futures positions. Close them and refresh settings before switching position mode.",
+  "positionModeOpenOrders": "This account has futures open orders. Cancel them and refresh settings before switching position mode.",
+  "positionModeAlreadySet": "Aster reports that this position mode is already set. The signed query below shows the observed mode.",
+  "positionModeConfirmTitle": "Change position mode for all futures symbols?",
+  "positionModeConfirmHint": "This changes position mode for ALL futures symbols in the wallet below. Sign to submit, then sign again to query the result. Aster validates all positions and open orders; this read is not an atomic lock against changes elsewhere.",
+  "positionModeSignChange": "Sign position mode change",
+  "positionModeReviewChange": "Review mode change",
+  "positionModeSubmitting": "Submitting position mode change…",
+  "positionModeCheckSigning": "Sign to verify position mode",
+  "positionModeChecking": "Querying position mode…",
+  "positionModeVerified": "Query verified the requested position mode: {mode}.",
+  "@positionModeVerified": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "positionModeObservedDifferent": "Query shows {observed}; requested {target}. Refresh settings before reviewing another change.",
+  "@positionModeObservedDifferent": {
+    "placeholders": {
+      "observed": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "positionModeOutcomeUnknown": "The request may have reached Aster. Its result is unverified; sign to query again. Querying never resubmits the change.",
+  "assetModeSettings": "Futures asset mode",
+  "assetModeAllSymbols": "All futures symbols",
+  "assetModeSettingsScope": "Choose single-asset or multi-assets margin for every futures symbol in this wallet’s account. This changes collateral and margin risk.",
+  "assetModeSingle": "Single-asset",
+  "assetModeMulti": "Multi-assets",
+  "assetModeSingleHint": "Single-asset mode uses each contract’s margin asset.",
+  "assetModeMultiHint": "Multi-assets mode shares eligible collateral across cross-margin positions. Isolated positions or retained isolated collateral must be handled first. Supported assets, valuations, balance requirements and final eligibility are determined by Aster.",
+  "assetModeReadSettings": "Read asset mode and positions (2 signatures)",
+  "assetModeReadHint": "Sign separately to read asset mode and all futures position configurations. Reading submits no changes. The 30-second validity starts at the first response and includes the second signature.",
+  "assetModeCurrentSetting": "Asset mode at last read",
+  "assetModeTarget": "Target asset mode",
+  "assetModeContextExpired": "Refresh asset mode and positions before reviewing a change. Your selection is preserved.",
+  "assetModeChangeBlocked": "Choose a different asset mode. Resolve isolated positions or collateral before enabling multi-assets mode.",
+  "assetModeIsolatedBlocker": "These symbols have isolated positions or retained isolated collateral. Review them before enabling multi-assets mode. No margin modes are changed automatically.",
+  "assetModeConfirmTitle": "Change asset mode for all futures symbols?",
+  "assetModeConfirmHint": "This changes collateral and margin risk for ALL futures symbols in the wallet below. Sign to submit, then sign again to query the result. Aster validates balances and restrictions; this read cannot lock changes elsewhere. Position, symbol margin and demo modes are not changed by this request.",
+  "assetModeSignChange": "Sign asset mode change",
+  "assetModeReviewChange": "Review asset mode change",
+  "assetModeSubmitting": "Submitting asset mode change…",
+  "assetModeCheckSigning": "Sign to verify asset mode",
+  "assetModeChecking": "Querying asset mode…",
+  "assetModeVerified": "Query verified the requested asset mode: {mode}.",
+  "@assetModeVerified": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "assetModeObservedDifferent": "Query shows {observed}; requested {target}. Refresh settings before reviewing another change.",
+  "@assetModeObservedDifferent": {
+    "placeholders": {
+      "observed": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "assetModeOutcomeUnknown": "The request may have reached Aster. Its result is unverified; sign to query again. Querying never resubmits the change.",
+  "liveOrderEntry": "Place a live futures order",
+  "liveOrderEntryHint": "The form above uses local demo funds. Live orders have a separate wallet confirmation.",
+  "liveOrderTitle": "Live futures order",
+  "liveOrderScope": "Use this wallet to place real ordinary, conditional or trailing orders. Limit orders use a supported execution policy. In one-way mode, buying or selling can reduce or reverse an existing position. Hedge mode operates on the selected long or short side. Aster checks fees, available margin and final eligibility.",
+  "liveOrderReadContext": "Read order settings (2 signatures)",
+  "liveOrderReadHint": "Read public trading rules and mark price, then sign separately for position mode and symbol configuration. Settings expire 30 seconds after the mark-price response. Reading places no order.",
+  "liveOrderSettingsBusy": "Finish the pending futures settings operation before placing an order.",
+  "liveOrderSubmitting": "Submitting the live order…",
+  "liveOrderMarkPrice": "Reference mark price",
+  "liveOrderContextExpired": "Refresh order settings before reviewing an order. Your input is preserved.",
+  "liveOrderQuantity": "Quantity ({asset})",
+  "@liveOrderQuantity": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "liveOrderQuantityBounds": "Minimum {minimum}; maximum {maximum}; step {step}",
+  "@liveOrderQuantityBounds": {
+    "placeholders": {
+      "minimum": {
+        "type": "String"
+      },
+      "maximum": {
+        "type": "String"
+      },
+      "step": {
+        "type": "String"
+      }
+    }
+  },
+  "liveOrderPrice": "Limit price ({asset})",
+  "@liveOrderPrice": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "liveOrderPriceTick": "Price increment: {tick}",
+  "@liveOrderPriceTick": {
+    "placeholders": {
+      "tick": {
+        "type": "String"
+      }
+    }
+  },
+  "liveOrderEstimatedNotional": "Reference notional",
+  "liveOrderReview": "Review live order",
+  "liveOrderClientId": "Client order reference",
+  "liveOrderVerifiedResult": "Signed query: {status}; executed quantity {executed}; order {orderId}.",
+  "@liveOrderVerifiedResult": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      },
+      "executed": {
+        "type": "String"
+      },
+      "orderId": {
+        "type": "String"
+      }
+    }
+  },
+  "liveOrderQueryScope": "This is the query snapshot. Only FILLED confirms the complete requested quantity; later changes need another account read.",
+  "liveOrderOutcomeUnknown": "The request may have reached Aster. Query this client reference to verify. Another order is blocked; querying never places it again.",
+  "liveOrderRecheck": "Sign to query this order",
+  "liveOrderConfirmTitle": "Place this live futures order?",
+  "liveOrderConfirmHint": "This submits a real order. Sign to place it, then sign separately to query its status. A market order can execute at a different price. Limit execution follows the policy shown below. No leverage or margin setting is changed.",
+  "liveOrderPolicy": "Limit execution policy",
+  "liveOrderConditional": "Conditional order",
+  "liveOrderPositionTriggers": "Position TP/SL",
+  "liveOrderStop": "Stop",
+  "liveOrderTakeProfit": "Take profit",
+  "liveOrderTriggerBasis": "Trigger price basis",
+  "liveOrderTriggerReference": "Reference price at read",
+  "liveOrderTriggerRises": "Triggers when the selected price rises to or above the trigger price.",
+  "liveOrderTriggerFalls": "Triggers when the selected price falls to or below the trigger price.",
+  "liveOrderTriggerProtect": "Trigger price protection",
+  "liveOrderProtectOn": "On",
+  "liveOrderProtectOff": "Off",
+  "liveOrderProtectHint": "When enabled, the mark/last price difference must also satisfy the symbol’s threshold at trigger time. This can delay or prevent triggering; it does not protect the execution price.",
+  "liveOrderProtectThreshold": "Allowed price difference at trigger: {percent}%.",
+  "@liveOrderProtectThreshold": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "liveOrderConditionalHint": "This submits one independent conditional order for the specified quantity. Triggering does not guarantee a fill. Separate TP and SL orders do not cancel each other automatically. Later position changes can affect execution; review active orders separately.",
+  "liveOrderConditionalEstimateHint": "Reference estimate only: conditional market orders use the trigger price, conditional limit orders use the limit price. Position, leverage and available funds can change before triggering. Fees, funding, depth slippage and execution-time checks are excluded; this is not realized PnL or guaranteed required margin.",
+  "liveOrderTypeUnavailable": "The latest symbol rules do not support this order type. Refresh the rules or choose a supported type.",
+  "liveOrderInvalidTrigger": "Enter a positive decimal trigger price.",
+  "liveOrderTriggerFilter": "Trigger price must satisfy the exchange price range and increment.",
+  "liveOrderProtectUnavailable": "The trigger-protection threshold is unavailable in the current symbol rules. Refresh or turn protection off before reviewing.",
+  "liveOrderTriggerReferenceUnavailable": "The selected trigger reference is unavailable. Refresh or explicitly choose another price basis; no price is substituted.",
+  "liveOrderTriggerImmediate": "The trigger price is already reached at this read. Adjust it according to the displayed direction and review again. Aster checks the actual price at submission.",
+  "liveOrderPolicyChoose": "Choose a supported policy",
+  "liveOrderPolicyGtc": "GTC",
+  "liveOrderPolicyIoc": "IOC",
+  "liveOrderPolicyPostOnly": "Post Only (GTX)",
+  "liveOrderPolicyHidden": "Hidden (HIDDEN)",
+  "liveOrderPolicyGtcHint": "GTC: any unfilled quantity remains open until filled or cancelled.",
+  "liveOrderPolicyIocHint": "IOC: fill immediately available quantity and cancel the remainder. A partial fill is possible.",
+  "liveOrderPolicyPostOnlyHint": "Post Only: the order must add liquidity. An order that would immediately take liquidity will not execute as an ordinary limit order. Placement and fills require exchange verification.",
+  "liveOrderPolicyHiddenHint": "Hidden: the order is not visible in the public order book. This does not guarantee maker execution, a fill or execution priority.",
+  "liveOrderTimeInForceUnavailable": "The selected limit policy is unavailable in the latest symbol rules. Choose a supported policy or use a market order, then review again.",
+  "liveOrderSide": "Direction",
+  "liveOrderType": "Order type",
+  "liveOrderSignSubmit": "Sign and place live order",
+  "liveOrderInvalidQuantity": "Enter a positive decimal quantity.",
+  "liveOrderInvalidPrice": "Enter a positive decimal limit price.",
+  "liveOrderQuantityFilter": "Quantity must satisfy the displayed minimum, maximum and increment for this order type.",
+  "liveOrderPriceFilter": "Limit price must satisfy the exchange price range and increment.",
+  "liveOrderPercentFilter": "Limit price is outside the permitted range for this side at the reference mark price. Refresh settings or adjust the price.",
+  "liveOrderNotionalFilter": "Order value is below the exchange minimum notional. Market orders use the reference mark price.",
+  "liveCloseTitle": "Close a live position",
+  "liveCloseScope": "Read this wallet’s current position before choosing an ordinary or trailing close. Position TP/SL supports fixed quantity or entire close at trigger. One-way fixed-quantity closes only reduce positions; hedge closes retain the original LONG/SHORT side. Percentage quantities round down to the order step; 100% can leave a remainder. Existing orders are not cancelled.",
+  "liveClosePositionChanged": "The selected position or its configuration is missing or changed. Refresh order settings and review again.",
+  "liveCloseTooLarge": "Close quantity cannot exceed the position quantity read for this side.",
+  "liveCloseLong": "Close long · sell",
+  "liveCloseShort": "Close short · buy",
+  "liveClosePositionAmount": "Position quantity at last read",
+  "liveCloseEstimatedPnl": "Estimated close PnL",
+  "liveCloseEstimateHint": "Estimate only: market closes use the read best bid for longs or best ask for shorts; limit closes use the entered price. Fees, funding and depth slippage are excluded. Missing book data shows —. This is not realized PnL.",
+  "liveCloseConfirmTitle": "Submit this position reduction?",
+  "liveCloseConfirmHint": "This submits a real reduction order. Sign to recheck the position first, then sign to place the order and separately to query it. A changed quantity, entry price or configuration stops submission. Market price can move; limit execution follows the policy shown below. The exchange validates concurrent activity.",
+  "liveCloseResultScope": "An order status does not prove that the entire position is closed. Sign separately to read the remaining position. This does not cancel other orders, and later activity can change the position again.",
+  "liveCloseReadRemaining": "Sign to read remaining positions",
+  "liveCloseRemaining": "Remaining quantity at this read",
+  "liveOrderReduceHint": "Only reduce an existing position; never intentionally open the opposite side. Aster checks the available reducible quantity, including concurrent orders.",
+  "liveOrderReduceHedge": "The reduceOnly parameter is unavailable in hedge mode. Use the position’s close action to reduce its LONG or SHORT side.",
+  "batchCloseAll": "Close all listed live positions",
+  "batchCloseCurrent": "Close all current-symbol live positions",
+  "batchCloseTitle": "Close these live positions at market?",
+  "batchCloseHint": "Only the listed wallet, symbols, sides and exact quantities are included. Submit an opposite MARKET order for each nonzero position, using reduce-only in one-way mode or the original side in hedge mode. Existing orders and Spot are excluded. Each position needs separate setting-read, position-recheck, order and query signatures, followed by a final position-read signature. Changed positions, invalid quantities, refused signatures or unknown results stop further submissions. No automatic resizing or order retry. Later activity can change positions again.",
+  "batchCloseReadFirst": "Read a fresh, complete live position snapshot before closing all. An unresolved trade or configuration change must be checked first.",
+  "batchCloseCount": "Confirmed scope: {count} positions",
+  "batchCloseConfirm": "Sign and close each position",
+  "batchCloseStopped": "Further submissions stopped. Unsubmitted positions require a fresh read and confirmation.",
+  "batchCloseRecheck": "Sign to query unconfirmed orders only",
+  "@batchCloseCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "liveOrderFundsReadHint": "Read public rules and mark price, then sign separately for position mode, symbol positions, asset mode and account funds (4 signatures). Read validity is 30 seconds from the mark-price response. No order is submitted.",
+  "liveOrderReadFunds": "Read asset mode and account funds before reviewing an opening order. Missing amounts are unknown, not zero.",
+  "liveOrderFundsChanged": "Account funds and the selected position or configuration do not agree. Refresh and review again.",
+  "liveOrderTradingDisabled": "The signed account response reports trading disabled. Check your Aster account before placing an opening order.",
+  "liveOrderAvailableUsdt": "Available USDT margin at read",
+  "liveOrderFundsScope": "This snapshot covers available USDT margin in this futures account. It is separate from wallet balance, withdrawal limits, demo funds and funds reserved after this read. Aster validates actual availability.",
+  "liveOrderFundsMultiHint": "Multi-assets mode: the USDT amount is not a combined collateral total. Other assets retain their own units; no conversion rates or collateral discounts are assumed.",
+  "liveOrderFundsAssets": "Available balances and collateral eligibility by asset",
+  "liveOrderCollateralUnknown": "Collateral eligibility not provided",
+  "liveOrderOpeningQuantity": "Reference new opening quantity",
+  "liveOrderOpeningMargin": "Estimated additional opening initial margin",
+  "liveOrderMarginEstimateHint": "Reference only: new opening quantity × entered limit price (or reference mark) ÷ read leverage. One-way orders first offset the read opposite position; hedge orders open the selected side. Valid reduce-only closes add no opening exposure. Fees, funding, existing orders, released margin, execution price and risk tiers can change actual requirements.",
+  "liveOrderFundsHistorical": "Historical funds snapshot. Refresh before reviewing another opening order.",
+  "liveOrderMarginAboveBalance": "The estimate exceeds the read USDT available balance. Review your funds; released margin and fees are excluded, and Aster makes the final check.",
+  "liveEntireClose": "Close entire position at trigger",
+  "liveEntireHint": "The exchange uses the position size at trigger time, which may differ from this snapshot. No fixed quantity or reduceOnly is sent. Independent TP/SL orders do not cancel each other.",
+  "liveEntireMarketOnly": "Entire close is available for conditional market orders only.",
+  "liveEntireEstimateHint": "Estimated using the reviewed position quantity and trigger price. Trigger-time size, execution price, fees and funding may change the result.",
+  "liveEntireQuantity": "Entire position size at trigger time",
+  "liveEntireQueryScope": "This query verifies this entire-close order and its reported execution only. A filled order does not prove the remaining position is zero; read positions again.",
+  "liveEntireInvalid": "Entire close requires a position-side conditional market order without quantity, limit price or reduceOnly.",
+  "triggerCalculator": "Calculate trigger price from PnL / ROI",
+  "triggerCalculationHint": "Uses the selected partial quantity, or the reviewed position quantity for entire close. ROI is an entry-price estimate with leverage, not account yield. Applying a candidate only updates the trigger field; it does not submit an order. Refreshing does not overwrite that field.",
+  "triggerCalculationQuantity": "Calculation quantity",
+  "triggerCalculationRoi": "Estimated ROI",
+  "triggerCalculationPnlLabel": "PnL target",
+  "triggerCalculationPnl": "PnL target ({asset}, signed)",
+  "@triggerCalculationPnl": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "triggerCalculationRoiTarget": "ROI target (%, signed)",
+  "triggerCalculationPrice": "Candidate trigger price",
+  "triggerCalculationRounding": "Rounded to the nearest exchange price step. Estimates reflect the rounded price, exclude fees and funding, and do not guarantee execution. For conditional limit orders, execution PnL uses the separate limit price.",
+  "triggerCalculationApply": "Use candidate trigger price",
+  "triggerCalculationPosition": "Read a nonzero position and choose a valid quantity and leverage first.",
+  "triggerCalculationInput": "Enter a signed decimal target without exponent notation.",
+  "triggerCalculationTick": "The exchange price step is unavailable; cannot calculate a candidate.",
+  "triggerCalculationBounds": "The calculated price is outside the supported positive price range.",
+  "liveTrailingInvalid": "Trailing stop requires a market order with fixed quantity, no fixed trigger or limit price, and no entire-close flag.",
+  "liveTrailingRateInvalid": "Enter a callback rate from 0.1% to 5%.",
+  "liveTrailingActivationInvalid": "Enter a positive decimal activation price, or leave it empty for the exchange default.",
+  "liveTrailingActivationFilter": "The activation price does not match the exchange price range or step.",
+  "liveTrailingImmediate": "A buy activation price must be below the selected latest price; a sell activation price must be above it.",
+  "liveTrailingHint": "The exchange tracks favorable price extremes, then submits market execution after the configured pullback. This uses a fixed quantity, not entire close. It does not continuously reprice a limit order.",
+  "liveTrailingRate": "Callback rate (%)",
+  "liveTrailingRateBounds": "0.1–5; entering 1 means 1%.",
+  "liveTrailingBasis": "Tracking price basis",
+  "liveTrailingActivation": "Activation price ({asset}, optional)",
+  "@liveTrailingActivation": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "liveTrailingDefault": "Leave empty to use the selected price basis at exchange placement time. This snapshot is not submitted as the activation price.",
+  "liveTrailingActivationDirection": "If specified: buy activation below the latest price; sell activation above it. The exchange rechecks at placement.",
+  "liveTrailingBuy": "After activation, a buy follows the lowest price and triggers on a rise by the callback percentage. Triggering does not guarantee an execution price.",
+  "liveTrailingSell": "After activation, a sell follows the highest price and triggers on a fall by the callback percentage. Triggering does not guarantee an execution price.",
+  "liveTrailingEstimateHint": "There is no fixed execution price. Notional and opening margin use the current mark only as a reference; closing PnL is unavailable. Actual size eligibility, margin and execution depend on exchange state. Fees, funding and slippage are excluded.",
+  "quickOrderInvalid": "Quick entry must be an ordinary market order without reduction, a fixed price or attached conditions.",
+  "quickOrderTitle": "Chart quick market entry",
+  "quickOrderHint": "Real wallet orders. Quantity is independent of the trade form. One-way orders can reduce or reverse an existing position. Quotes are references, not execution prices. This order has no attached TP/SL or user slippage setting.",
+  "quickOrderRead": "Read wallet and sizing inputs",
+  "quickOrderReadHint": "Explicitly sign four account/configuration reads, then three separate fee, risk-bracket and open-order reads for percentage sizing. No order is sent by reading. The first price snapshot expires in 30 seconds.",
+  "quickOrderIndependent": "Enter base-asset quantity, or choose a percentage. Starts empty; no default percentage.",
+  "quickOrderPercentSelected": "{percent}% selected. Buy and sell reference quantities are shown separately. Type a quantity to replace the percentage.",
+  "@quickOrderPercentSelected": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "quickOrderBuyQuantity": "Reference buy quantity",
+  "quickOrderSellQuantity": "Reference sell quantity",
+  "quickOrderSizingHint": "Percentages use the read-time USDT available margin, leverage, taker fee, risk brackets, existing positions, same-direction pending quantity and bid/ask, rounded down to the market step. They exclude released margin and other-asset collateral. These are reference budgets, not guaranteed maximum quantities; prices, orders and exchange limits can change.",
+  "quickOrderSizingFailure": "Percentage sizing is unavailable. Retry the read, or enter a quantity if the account context is valid. Inputs are preserved.",
+  "quickOrderBuy": "Market Buy / Long",
+  "quickOrderSell": "Market Sell / Short",
+  "quickOrderConfirmation": "Quick market order confirmation",
+  "quickOrderDoNotShow": "Do not show market order confirmation again",
+  "quickOrderConfirmPreference": "Confirm market entries",
+  "quickOrderPreferenceFailure": "Confirmation preference could not be read or saved. The last saved choice is retained; orders require review until a choice is saved successfully.",
+  "quickOrderChartTab": "Chart view",
+  "attachedOrderTitle": "Attach take profit / stop loss",
+  "attachedOrderTakeProfit": "Attached take profit",
+  "attachedOrderStopLoss": "Attached stop loss",
+  "attachedOrderTriggerPrice": "Trigger price (USDT)",
+  "attachedOrderBasis": "Trigger price basis",
+  "attachedOrderPriceProtect": "Trigger price protection",
+  "attachedOrderLifecycle": "Entry partial or full fills request placement of the exits. A partial or full exit fill requests cancellation of its peer. Each exit uses the full main-order quantity. Actual activation, quantity changes, cancellations and fills require exchange reports.",
+  "attachedOrderManageScope": "Creation and signed queries are supported. Editing and canceling the complete attached strategy in the app are not yet available.",
+  "attachedOrderInvalid": "Fill at least one TP/SL exit or turn attached protection off. It cannot be combined with reduce-only, entire close, quick entry or trailing orders.",
+  "attachedOrderIocUnavailable": "Attached strategies do not support IOC. Choose another supported time in force for the entry.",
+  "attachedOrderNoExposure": "Enter a positive main-order quantity to protect.",
+  "attachedOrderPriceDirection": "The attached TP/SL trigger is on the wrong side of the entry reference. Check the entry direction and trigger price.",
+  "attachedOrderPositionChanged": "The position or symbol configuration changed. Read again and review the attached exit quantity.",
+  "attachedOrderRejected": "The exchange returned a strategy rejection code. Query the original ID to check the outcome; do not submit it again.",
+  "attachedOrderStrategyType": "Linked strategy",
+  "attachedOrderExitQuantity": "Fixed quantity per exit",
+  "attachedOrderVerified": "Strategy and linked terms checked by query",
+  "attachedOrderStrategyId": "Strategy ID",
+  "attachedOrderStrategyStatus": "Exchange strategy status",
+  "attachedOrderLegStatus": "Leg {sequence} status",
+  "attachedOrderQueryScope": "These are exchange-reported strategy and leg statuses, not verified executed quantities, balances or remaining positions. An inactive leg may have no order ID. Check entry and exit execution separately.",
+  "attachedOrderRefresh": "Sign to query this strategy again",
+  "@attachedOrderLegStatus": {
+    "placeholders": {
+      "sequence": {
+        "type": "int"
+      }
+    }
+  },
+  "attachedOrderClientId": "Client strategy reference",
+  "attachedOrderConfirmHint": "This submits a real linked strategy. Review the full main-order protection quantity, each trigger and exit price. Entry partial or full fills drive placement; partial or full exit fills drive peer cancellation. Query exchange reports to check the actual outcome.",
+  "orderRecoveryTitle": "Pending order recovery",
+  "orderRecoveryScope": "Only pending futures orders or strategies saved for this wallet on this device appear here. Reconnect the same wallet and sign to query; recovery never submits an order. A missing result does not prove the original was not sent; its record stays pending. Check the outcome before placing new orders or changing settings. Clearing app data or uninstalling removes local records.",
+  "orderRecoveryStorage": "Pending records could not be read or saved. New live orders and configuration changes are paused. Records are not cleared automatically; retry storage access.",
+  "orderRecoveryPending": "This wallet has an order or strategy to check. Query its original reference first. New live orders and configuration changes are temporarily unavailable.",
+  "orderRecoveryConnect": "Sign in or reconnect the original wallet",
+  "orderRecoveryReload": "Retry local records",
+  "orderRecoveryEmpty": "No pending records for this wallet on this device. This does not mean the exchange has no open orders.",
+  "orderRecoveryQuery": "Sign to query the original reference",
+  "orderRecoveryCreated": "Recorded at",
+  "orderRecoveryVerified": "Original reference and terms checked. Execution and account state remain limited to what the query reports.",
+  "orderRecoveryActiveOperation": "An operation in this session is still active or unresolved. Use its original page to recheck.",
+  "notificationTitle": "Notifications",
+  "notificationScope": "Spot and perpetual events for the selected wallet. Enable live monitors explicitly below; deposit / withdrawal status changes are recorded when you sign to refresh their records. No demo activity is included.",
+  "notificationRetention": "Stored on this device: up to 500 recent events across wallets, subject to a 4 MiB limit. Older events may be removed. This is not a complete account history.",
+  "notificationDelivery": "Live events require connected authorized monitoring. Transfer history requires explicit signed refreshes. Background pauses, expiry and disconnections can leave gaps; no system push or complete missed-event backfill is provided.",
+  "notificationEmpty": "No recorded notifications for this wallet. An empty inbox does not prove there were no account events.",
+  "notificationSignIn": "Sign in to view this wallet’s notifications.",
+  "notificationStorageFailed": "Local notifications could not be loaded or saved. Visible changes remain in memory; retry to restore persistence. Existing stored data is not cleared.",
+  "notificationRetry": "Retry local storage",
+  "notificationMarkAllRead": "Mark all as read",
+  "notificationUnread": "Unread",
+  "notificationRead": "Read",
+  "notificationCritical": "Critical risk",
+  "notificationMarginTitle": "Position margin risk",
+  "notificationLiquidationTitle": "Liquidation order update",
+  "notificationAdlTitle": "ADL order update",
+  "notificationRiskScope": "This event does not prove the whole position was closed. Review actual fills and read remaining positions separately. Risk warnings may arrive during or after liquidation.",
+  "notificationMarginScope": "All risk positions reported in this event are listed below. The event supplies no risk percentage, liquidation price or countdown. Delivery before liquidation is not guaranteed.",
+  "notificationEventTime": "Event time (UTC)",
+  "notificationTransactionTime": "Transaction time (UTC)",
+  "notificationTradeTime": "Order trade time (UTC)",
+  "notificationLastQuantity": "Last filled quantity",
+  "notificationCumulativeQuantity": "Cumulative filled quantity",
+  "notificationOriginalQuantity": "Original order quantity",
+  "notificationLastPrice": "Last fill price",
+  "notificationRealizedPnl": "Reported realized PnL",
+  "notificationUnits": "Quantities use the base asset; prices use the quote asset. Units are shown only when verified from the relevant market directory. These figures describe this event, not current balances.",
+  "notificationMaintenanceMargin": "Maintenance margin required",
+  "notificationYes": "Yes",
+  "notificationNo": "No",
+  "notificationOrderTitle": "{status, select, NEW{Perpetual order created} PARTIALLY_FILLED{Perpetual order partially filled} FILLED{Perpetual order filled} CANCELED{Perpetual order canceled} EXPIRED{Perpetual order expired} REJECTED{Perpetual order rejected} other{Perpetual order updated}}",
+  "@notificationOrderTitle": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationStatus": "{status, select, NEW{New} PARTIALLY_FILLED{Partially filled} FILLED{Filled} CANCELED{Canceled} EXPIRED{Expired} REJECTED{Rejected} NEW_INSURANCE{Insurance fund liquidation order} NEW_ADL{ADL order created} other{Unknown}}",
+  "@notificationStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationExecution": "{execution, select, NEW{Execution: new} CANCELED{Execution: canceled} CALCULATED{Execution: liquidation calculation} EXPIRED{Execution: expired} TRADE{Execution: trade} AMENDMENT{Execution: amendment} REJECTED{Execution: rejected} other{Execution: unknown}}",
+  "@notificationExecution": {
+    "placeholders": {
+      "execution": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationOrderType": "{type, select, LIMIT{Limit} MARKET{Market} STOP{Stop limit} STOP_MARKET{Stop market} TAKE_PROFIT{Take-profit limit} TAKE_PROFIT_MARKET{Take-profit market} TRAILING_STOP_MARKET{Trailing stop market} LIQUIDATION{Liquidation} other{Unknown}}",
+  "@notificationOrderType": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationOriginalType": "Original order type",
+  "notificationUnitFailure": "Market units could not be loaded. Amounts remain visible with unknown units; retry the public market directory.",
+  "spotAccountChangeTitle": "Spot account monitoring",
+  "spotAccountChangeScope": "Sign with the current wallet to start or renew Spot monitoring for up to 60 minutes. It records live Spot order events and marks Spot snapshots as needing a signed refresh. No automatic signatures or historical backfill. Stopping disconnects this app; it does not invalidate a key shared by other clients.",
+  "spotAccountChangeStart": "Sign to monitor Spot events",
+  "spotAccountChangeRenew": "Sign to renew Spot monitoring",
+  "spotNotificationLastQuote": "Last filled quote amount",
+  "spotNotificationCumulativeQuote": "Cumulative filled quote amount",
+  "spotNotificationQuoteOrderQuantity": "Requested quote-asset budget",
+  "spotNotificationCreationTime": "Order created (UTC)",
+  "spotNotificationOrderTitle": "{status, select, NEW{Spot order created} PARTIALLY_FILLED{Spot order partially filled} FILLED{Spot order filled} CANCELED{Spot order canceled} EXPIRED{Spot order expired} REJECTED{Spot order rejected} other{Spot order updated}}",
+  "@spotNotificationOrderTitle": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "transferHistoryTitle": "Deposit / withdrawal records",
+  "transferHistoryScope": "Sign to read deposit / withdrawal records for both markets. The first read does not notify existing history; later refreshes notify newly observed transfers and status changes. Returned records may not include all history.",
+  "transferRefresh": "Sign to refresh records",
+  "transferRefreshNeeded": "Deposit / withdrawal records may have changed. Sign to refresh and confirm their status; balance changes alone do not prove completion.",
+  "transferBaselineCreated": "Initial baseline established. Existing records did not create notifications.",
+  "transferHistoryEmpty": "No matching records were returned. This does not prove there were no transfers.",
+  "transferRecordScope": "Status is reported by Aster. Record time is not completion time; no failure reason is supplied by this history response.",
+  "transferRecordId": "Transfer record ID",
+  "transferTypeLabel": "Transfer type",
+  "transferDeposit": "Deposit",
+  "transferWithdraw": "Withdrawal",
+  "transferSpotMarket": "Spot",
+  "transferPerpMarket": "Perpetuals",
+  "transferMarketLabel": "Market",
+  "transferAllMarkets": "All markets",
+  "transferNetwork": "Network",
+  "transferChainId": "Chain ID",
+  "transferNetworkEthereum": "Ethereum",
+  "transferNetworkBnb": "BNB Chain",
+  "transferNetworkArbitrum": "Arbitrum One",
+  "transferUnknownNetwork": "Unmapped network (chain ID {chainId})",
+  "transferHash": "Transaction hash",
+  "transferHashUnknown": "Not provided",
+  "transferRecordTime": "Record time (UTC)",
+  "transferReadTime": "Last read (UTC): {time}",
+  "transferStorageRequired": "Transfer tracking could not be loaded or saved. Retry local notification storage before refreshing. Existing records are retained.",
+  "transferTrackingFull": "Local transfer tracking has reached its limit. Existing observations are retained; this refresh was not recorded.",
+  "transferStatus": "{status, select, processing{Processing} success{Successful} failed{Failed} other{Unknown}}",
+  "transferTitle": "{type, select, deposit{{status, select, processing{Deposit processing} success{Deposit successful} failed{Deposit failed} other{Deposit update}}} withdraw{{status, select, processing{Withdrawal processing} success{Withdrawal successful} failed{Withdrawal failed} other{Withdrawal update}}} other{Transfer update}}",
+  "@transferUnknownNetwork": {
+    "placeholders": {
+      "chainId": {
+        "type": "String"
+      }
+    }
+  },
+  "@transferReadTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "@transferStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "@transferTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "transferObservedTime": "Observed at (UTC)",
+  "assetValueUsd": "{label} · USD estimate",
+  "assetValueBtc": "{label} · BTC estimate",
+  "assetValueUnavailable": "Some estimates are unavailable. Missing prices or balances are not treated as zero.",
+  "assetValueStale": "Estimate uses an older or incomplete account / price snapshot. Refresh before relying on it.",
+  "assetValueSpotScope": "Spot wallet estimate",
+  "assetValuePerpScope": "Perpetual wallet estimate",
+  "assetValueKnownSubtotal": "Known asset subtotal",
+  "assetValueWalletTotal": "Wallet asset value",
+  "assetValueBtcEstimate": "Approximate BTC equivalent",
+  "assetValueMissing": "{count} asset(s) have no USD price and are excluded from this subtotal.",
+  "assetValueScope": "Reference USD asset indices from Aster; BTC equivalents use the BTC/USD index. Stablecoins use their reported price. Wallet estimates exclude unrealized PnL and other accounts, products, collateral discounts and execution costs. BTC values are rounded for display.",
+  "assetIndexReadTime": "Price snapshot read (UTC): {time}",
+  "assetIndexLoading": "Refreshing reference prices…",
+  "assetIndexPaused": "Reference price updates are paused.",
+  "assetIndexFailed": "Reference prices could not be refreshed. Previous estimates may be stale.",
+  "assetIndexRefresh": "Refresh public reference prices",
+  "assetValueHideLow": "Hide assets worth 0.0001 BTC or less",
+  "assetValueHideLowScope": "Uses total Spot balance. Assets with missing or stale estimates remain visible.",
+  "@assetValueUsd": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "@assetValueBtc": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "@assetValueMissing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@assetIndexReadTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "subaccountManagement": "Sub-account management",
+  "subaccountListScope": "Sign with the connected wallet to view its linked accounts. Reading this list does not change the account used for trading.",
+  "subaccountConnectedWallet": "Connected signing wallet",
+  "subaccountRead": "Read linked accounts",
+  "subaccountRefresh": "Refresh linked accounts",
+  "subaccountStopWaiting": "Stop waiting",
+  "subaccountCount": "{count} sub-account(s)",
+  "subaccountNoChildren": "No sub-accounts were returned.",
+  "subaccountListBoundaries": "Account IDs and names are shown as returned. This list does not provide addresses or freeze status. Open account management for explicit creation, switching, freeze/unfreeze and transfers.",
+  "subaccountSearch": "Search by account name or ID",
+  "subaccountNoMatches": "No matching accounts.",
+  "subaccountParent": "Master account",
+  "subaccountChild": "Sub-account",
+  "subaccountUnnamed": "Unnamed account",
+  "subaccountId": "Account ID",
+  "subaccountCopyId": "Copy account ID",
+  "@subaccountCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fundingInfoTitle": "Deposit and withdrawal information",
+  "fundingInfoScope": "View supported assets and networks. Withdrawal limits require a wallet signature. Open an asset to review deposit or withdrawal submission separately.",
+  "fundingEvmScope": "Currently shows the three EVM mainnets in the funding documentation. This is not a complete directory of all Aster networks.",
+  "fundingAccount": "Account",
+  "fundingDeposit": "Deposit",
+  "fundingWithdraw": "Withdraw",
+  "fundingNetwork": "Network",
+  "fundingEthereum": "Ethereum · 1",
+  "fundingBnbChain": "BNB Chain · 56",
+  "fundingArbitrum": "Arbitrum · 42161",
+  "fundingCatalogLoading": "Reading public asset configuration…",
+  "fundingCatalogFailed": "Asset configuration is unavailable or invalid. Retry the public read.",
+  "fundingCatalogStale": "Configuration is older than five minutes or a refresh failed. Refresh before relying on it.",
+  "fundingCatalogTime": "Public configuration read (UTC): {time}",
+  "fundingCatalogRefresh": "Refresh public configuration",
+  "fundingAssetSearch": "Search asset name or symbol",
+  "fundingNoNetworkAssets": "No assets were returned for this account, operation and network.",
+  "fundingNativeAsset": "Native asset",
+  "fundingTokenAsset": "Token",
+  "fundingTokenContract": "Token contract · not a deposit destination",
+  "fundingWithdrawLimits": "Withdrawal limit snapshot",
+  "fundingWithdrawScope": "This read does not authorize a withdrawal. Limits and fees can change. Missing amounts remain unknown; the account balance is not used as a substitute.",
+  "fundingReadLimits": "Sign to read withdrawal limits",
+  "fundingRefreshLimits": "Sign to refresh withdrawal limits",
+  "fundingUserDailyUsd": "User daily limit",
+  "fundingUserRemainingUsd": "User remaining daily limit",
+  "fundingGlobalDailyUsd": "Platform daily limit",
+  "fundingGlobalRemainingUsd": "Platform remaining daily limit",
+  "fundingNoWithdrawBalances": "No non-zero asset withdrawal balances were returned. Missing entries are not treated as an approved zero allowance.",
+  "fundingAssetTotal": "Account withdrawable balance · reported",
+  "fundingChainMaximum": "Network withdrawable amount · reported",
+  "fundingChainLimit": "Network amount limit",
+  "fundingAssetDailyUsd": "Asset remaining daily USD limit",
+  "fundingSnapshotFee": "Withdrawal fee · snapshot",
+  "fundingLimitsUnavailable": "No matching signed limit for this asset or network. Read or refresh the limits.",
+  "fundingLimitUnits": "USD limits and asset amounts have different units. These fields are shown separately and do not form a final Max amount. Fees require a fresh check before submission.",
+  "@fundingCatalogTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingNoMatches": "No matching assets.",
+  "fundingFeeCheck": "Check latest withdrawal fee",
+  "fundingFeeTitle": "Withdrawal fee estimate",
+  "fundingFeeScope": "Public estimate for this account type, network and asset. This is the platform withdrawal fee, separate from wallet transaction gas. It does not authorize a withdrawal or guarantee the final fee. Refresh before submitting a withdrawal.",
+  "fundingFeeLoading": "Reading public fee estimate…",
+  "fundingFeeFailed": "The fee estimate is unavailable or invalid. Retry the public read.",
+  "fundingFeeStale": "The estimate is older than 30 seconds or a refresh failed. Read it again before relying on it.",
+  "fundingFeeAsset": "Estimated fee in asset units",
+  "fundingFeeUsd": "Estimated fee in USD",
+  "fundingFeeAssetPrice": "Asset reference price · USD per unit",
+  "fundingFeeTime": "Estimate received: {time}",
+  "fundingFeeRefresh": "Refresh fee estimate",
+  "@fundingFeeTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "depositPrecheckTitle": "Deposit wallet precheck",
+  "depositPrecheckScope": "Read public chain balances and token allowance for this wallet. Minimum deposit is a configuration snapshot. This precheck does not submit an approval or a deposit; platform limits and transaction gas still need verification.",
+  "depositReadWallet": "Read wallet balance and allowance",
+  "depositAssetBalance": "Wallet asset balance",
+  "depositNativeBalance": "Wallet native balance · gas reserve not deducted",
+  "depositAllowance": "Token allowance for the documented vault",
+  "depositSpenderScope": "Allowance spender only. Do not manually send funds to this address.",
+  "depositBlock": "Chain block number",
+  "depositMinimum": "Minimum deposit · configuration snapshot",
+  "depositAmount": "Deposit amount · precheck only",
+  "depositWalletMax": "Fill token wallet balance · Max",
+  "depositWalletMaxScope": "Fills only the token balance, without platform limits. Native currency is still required for gas.",
+  "depositNativeMaxUnavailable": "Native Max remains unavailable until final transaction fees and platform limits can be checked. Do not use the full native balance.",
+  "depositSmallestUnits": "Exact amount in the smallest token unit",
+  "depositNativeNoApproval": "Native currency does not need ERC20 allowance. Gas and platform limits remain unverified.",
+  "depositAllowanceEnough": "The read token allowance covers this amount. No approval or deposit has been submitted.",
+  "depositAllowanceNeeded": "The read token allowance does not cover this amount. Approval is required before a deposit; no approval has been submitted.",
+  "depositRpcInvalid": "The public chain response is incomplete or invalid. Retry the read.",
+  "depositRpcFailed": "The public chain provider could not complete the read. Retry.",
+  "depositRpcWrongChain": "The provider returned another network. No balance was accepted.",
+  "depositTokenDecimalsChanged": "On-chain token decimals differ from the selected configuration. Refresh the asset directory and reopen this page.",
+  "depositRpcReorg": "The chain block changed during the read. Refresh to obtain a consistent snapshot.",
+  "depositAmountInvalid": "Enter a positive amount within the supported unsigned 256-bit range.",
+  "depositAmountPrecision": "The amount has more decimal places than this asset supports.",
+  "depositMinimumUnknown": "The minimum deposit is unknown. Refresh the asset configuration before proceeding.",
+  "depositBelowMinimum": "The amount is below the configured minimum deposit.",
+  "depositReadRequired": "Read the current wallet balance before checking the amount.",
+  "depositReadStale": "The wallet snapshot is historical. Refresh before checking the amount.",
+  "depositBalanceInsufficient": "The amount exceeds the read wallet asset balance.",
+  "attachedEntryPricing": "Entry pricing",
+  "attachedEntryFixed": "Enter a limit price",
+  "attachedEntryCounterparty": "BBO · Opposite side, level {depth}",
+  "@attachedEntryCounterparty": {
+    "placeholders": {
+      "depth": {
+        "type": "int"
+      }
+    }
+  },
+  "attachedEntryQueue": "BBO · Same side, level {depth}",
+  "@attachedEntryQueue": {
+    "placeholders": {
+      "depth": {
+        "type": "int"
+      }
+    }
+  },
+  "attachedEntryPegTiming": "The entry takes the selected order-book level once: at placement for a limit entry, or at trigger for a conditional entry. It does not keep chasing the book.",
+  "attachedEntryPegEstimate": "Notional and margin estimates use Mark price (the trigger price for conditional entries), not the selected book level or an execution price. Aster checks TP/SL against its resolved entry price and may reject the strategy.",
+  "attachedEntryPegInvalid": "BBO entry pricing requires a limit or stop-limit entry with attached TP/SL and no entered limit price.",
+  "scaledTitle": "Scaled orders",
+  "scaledRule": "2–110 independent GTC limit orders, submitted from low to high price. Prices include both endpoints and are rounded down to distinct ticks. Quantities follow the selected distribution and valid quantity steps; review every child before signing.",
+  "scaledRisk": "Each order requires a fresh account check, a submission signature and a query signature. Orders are independent and may only partly succeed. A failure or unknown result stops the remaining orders. Stopping or leaving this page does not cancel orders already sent. Unsent orders are never resumed automatically.",
+  "scaledLow": "Lowest price",
+  "scaledHigh": "Highest price",
+  "scaledCount": "Number of orders",
+  "scaledPreview": "Order breakdown",
+  "scaledReview": "Review scaled orders",
+  "scaledConfirm": "Sign and submit these orders",
+  "scaledTotalQuantity": "Total quantity",
+  "scaledTotalNotional": "Total limit notional",
+  "scaledMarginReference": "Margin reference before netting",
+  "scaledMarginHint": "Reference = total limit notional ÷ leverage. It excludes position netting, existing orders, fees and released margin. It is not the final margin requirement or an executable allowance. Aster checks each order.",
+  "scaledPortion": "Share of total quantity (approx.)",
+  "scaledOrderNumber": "Order {number}",
+  "scaledCountInvalid": "Enter a whole number from 2 to 110.",
+  "scaledRangeInvalid": "Enter positive prices with the highest price above the lowest.",
+  "scaledRangeTooNarrow": "The price range has too few ticks for distinct child orders.",
+  "scaledQuantityTooSmall": "The total quantity cannot cover the minimum quantity of every child order.",
+  "scaledQuantityStep": "The total quantity cannot be split exactly into valid quantity steps. Adjust it without rounding away quantity.",
+  "scaledConfigurationChanged": "Account mode, leverage or order rules changed. Remaining orders were stopped; refresh and review a new plan.",
+  "scaledStopped": "Remaining orders stopped. Orders already sent stay active; check their results below.",
+  "scaledResults": "Scaled order results",
+  "scaledRefreshRequired": "Refresh the account and review the plan again before submitting.",
+  "@scaledOrderNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "depositGasTitle": "Next-step gas estimate",
+  "depositGasEstimate": "Estimate next step",
+  "depositGasScope": "Public simulation only: no wallet signature or transaction is sent. Estimates cover this step only. Approval, deposit, receipts and platform credit are separate steps. User/platform limits are still unknown.",
+  "depositGasDeposit": "Deposit transaction",
+  "depositGasApprove": "Approve the exact deposit amount",
+  "depositGasReset": "Reset the existing allowance to zero",
+  "depositGasResetHint": "A nonzero allowance is below the requested amount. Reset it first, then re-read and estimate exact approval, then deposit. No unlimited approval is prepared.",
+  "depositGasTarget": "Transaction target contract",
+  "depositGasValue": "Native token sent with this step",
+  "depositGasEstimatedUnits": "Estimated gas units",
+  "depositGasLimit": "Gas limit with reserve",
+  "depositGasPrice": "Quoted gas price (wei)",
+  "depositGasReserve": "Native fee reserve for this step",
+  "depositGasTotal": "Native value + fee reserve",
+  "depositGasReserveHint": "The gas limit rounds the simulation estimate up by 20%. Fee reserve = gas limit × quoted legacy gas price. It is not the actual fee or a guarantee of execution. Prices and chain state can change; re-estimate before sending. Later steps need separate reserves.",
+  "depositGasChangedAmount": "This estimate belongs to the amount shown below. The input changed; estimate again.",
+  "depositGasAmount": "Deposit amount used for this estimate",
+  "depositGasRouteUnsupported": "This deposit route cannot be encoded from the documented normal EVM deposit contract.",
+  "depositGasSimulationFailed": "The chain node rejected this step during simulation. No transaction was sent. Refresh balances, allowance and amount before retrying.",
+  "depositGasBalanceInsufficient": "Native balance cannot cover this step’s value and fee reserve. Keep native tokens for subsequent steps too.",
+  "depositGasPendingTransactions": "The wallet has pending transactions or its nonce changed. Wait for them to settle, then refresh and estimate again.",
+  "depositGasBlockLimit": "The padded gas limit exceeds this chain block’s gas limit. No transaction is prepared for sending.",
+  "depositApprovalPrepare": "Prepare this approval",
+  "depositApprovalScope": "Only this token approval will be sent. It costs native gas and does not deposit funds. Deposit submission requires a separate review, fresh reads and external verification of Aster availability and limits.",
+  "depositApprovalReview": "Review token approval",
+  "depositApprovalConfirm": "Confirm and open wallet",
+  "depositApprovalCancel": "Cancel",
+  "depositApprovalStorage": "The approval recovery record cannot be read or saved. New approvals are blocked. Retry storage recovery before continuing.",
+  "depositApprovalPending": "This wallet has an unresolved approval. Check that transaction before sending another one.",
+  "depositApprovalNotNeeded": "This amount needs no approval step. Deposit submission still requires verified platform limits and credit recovery.",
+  "depositApprovalChanged": "Chain state or fees changed. Prepare and review the step again; nothing was sent.",
+  "depositApprovalUnknown": "The wallet result is unknown. Do not repeat the approval. Use the original transaction hash from your wallet to check it.",
+  "depositApprovalMismatch": "This transaction does not match the saved wallet, chain or nonce. The saved record was kept.",
+  "depositApprovalRecovery": "Pending token approvals",
+  "depositApprovalOpenRecovery": "Review pending approvals",
+  "depositApprovalRecoveryScope": "Read-only chain checks never resend a transaction. A reported hash is not a receipt. Two observed confirmations are required here; later reorgs remain possible. No approval result proves a deposit or platform credit.",
+  "depositApprovalNoPending": "No pending approvals for this wallet.",
+  "depositApprovalHash": "Original transaction hash",
+  "depositApprovalHashHint": "Paste the original hash, or a speed-up/cancellation hash from your wallet. Only the same wallet, chain and nonce can resolve this saved step. Leave blank to check the saved hash.",
+  "depositApprovalCheck": "Check on-chain result",
+  "depositApprovalSent": "The wallet request finished. Check the saved transaction; no receipt or allowance change has been confirmed yet.",
+  "depositApprovalReceiptPending": "Chain confirmation is pending. Keep the saved record and check again; no transaction will be resent.",
+  "depositApprovalReceiptSucceeded": "The approval transaction succeeded on-chain. Re-read the current allowance and estimate the next step separately. No deposit was sent.",
+  "depositApprovalReceiptReverted": "The approval transaction reverted on-chain. Gas may have been spent. Re-read before preparing another step.",
+  "depositApprovalConfirmations": "Observed confirmations",
+  "depositApprovalGasFee": "Recorded execution gas fee",
+  "depositApprovalFeeScope": "This fee uses receipt gasUsed × effectiveGasPrice (or the reported legacy price). Additional network fees may be separate.",
+  "depositApprovalNonce": "Transaction nonce",
+  "depositApprovalPreparedAt": "Prepared at (UTC)",
+  "walletTransactionInvalid": "The wallet transaction details are invalid. Nothing was sent.",
+  "walletTransactionBusy": "Another wallet transaction request is still pending. Wait for it to finish.",
+  "walletTransactionWrongChain": "Reconnect the same wallet on the selected deposit network before sending this step.",
+  "walletTransactionPermission": "This wallet session has no transaction sending permission. Disconnect and reconnect the same wallet to grant it.",
+  "depositApprovalReceiptReplaced": "Another transaction consumed the saved nonce on-chain. The original approval is not confirmed. Re-read the current allowance before preparing anything else.",
+  "rebalanceTitle": "Rebalance collateral",
+  "rebalanceScope": "Use this when Multi-Assets Mode has a negative USDT wallet balance. Aster decides the asset conversion; this request has no amount or price parameter. Read the account before reviewing.",
+  "rebalanceRisk": "This can convert account assets and change collateral. Conversion rates, costs and eligibility are determined by Aster; no conversion quote is available here. It does not withdraw funds or switch asset mode.",
+  "rebalanceRead": "Read / check current account",
+  "rebalanceReadHint": "Each read asks for two account signatures. Confirmation reads the mode and balances again, then requests a separate API signature and two result checks. Nothing runs automatically.",
+  "rebalanceReview": "Review Rebalance",
+  "rebalanceConfirm": "Sign and request Rebalance",
+  "rebalanceCancel": "Cancel",
+  "rebalanceUsdt": "USDT wallet balance",
+  "rebalanceUnknownUsdt": "USDT wallet balance is unavailable. Rebalance and switching to Single-Asset Mode remain blocked until a complete read.",
+  "rebalanceNotNeeded": "The current read does not show negative USDT in Multi-Assets Mode. No Rebalance request is available.",
+  "rebalanceRequired": "Negative USDT must be handled before withdrawing or returning to Single-Asset Mode. Open Rebalance to review the current account; no action will run automatically.",
+  "rebalanceChanged": "The account, configuration or review expired or changed. Read and review again; no new request was sent.",
+  "rebalanceStale": "This account read is historical. Read again before reviewing.",
+  "rebalanceStorage": "The Rebalance recovery record cannot be read or saved. New Rebalance requests, order submissions and contract setting changes are blocked until storage recovers.",
+  "rebalancePending": "This wallet has an unresolved Rebalance. Check the current account; the request will never be resent automatically.",
+  "rebalanceUnknown": "The original request result is unknown. Current balances cannot prove that request completed. The API has no documented lookup by nonce, so the record and mutation block remain. Do not repeat the request.",
+  "rebalanceReplyPending": "The server response was saved. Read the current account to finish checking; this will not resend Rebalance.",
+  "rebalanceNoExchange": "The server returned an empty response: no asset exchange was reported. The current account is shown separately.",
+  "rebalanceReported": "The server reported an asset exchange. These are its returned balance and account reference, not a conversion quote or proof that all debt is cleared.",
+  "rebalancePermission": "A fresh nonnegative USDT balance alone is not withdrawal permission or proof that Single-Asset Mode is allowed. Other account and platform checks still apply.",
+  "rebalanceNonce": "Original request nonce",
+  "rebalanceAccountId": "Reported account ID",
+  "rebalanceReportedBalance": "Reported balance",
+  "rebalanceReportedTime": "Reported update time (UTC)",
+  "rebalanceCurrentMode": "Current asset mode",
+  "rebalanceReading": "Reading current mode and balances…",
+  "rebalanceSending": "Waiting for the signed request or account check…",
+  "rebalanceRecovery": "Review Rebalance recovery",
+  "liveOrderPricing": "Limit pricing",
+  "liveOrderPegHint": "Aster sets the price once from the selected best bid or ask: when placing a limit order, or when a conditional limit order triggers. It does not keep chasing the book. Notional, margin and closing PnL use Mark / trigger only as a reference; the resolved price and fill may differ.",
+  "liveOrderPegInvalid": "BBO requires a limit order with no manual price. It cannot be combined with a market, trailing, entire-close or attached-strategy order.",
+  "internalTransferTitle": "Spot ↔ Futures transfer",
+  "internalTransferScope": "Transfer the selected asset between your Aster Spot and Futures accounts using the current wallet.",
+  "internalTransferReadHint": "Read both accounts and asset mode with 3 wallet signatures. Changing asset or direction reads them again. A full transfer normally needs 10 signatures, including confirmation checks and balance refresh.",
+  "internalTransferRisk": "Moving collateral out of Futures can increase liquidation risk. Review the direction and amount before signing.",
+  "internalTransferDirection": "Direction",
+  "internalTransferToFutures": "Spot → Futures",
+  "internalTransferToSpot": "Futures → Spot",
+  "internalTransferAsset": "Asset",
+  "internalTransferAmount": "Transfer amount",
+  "internalTransferMax": "Max",
+  "internalTransferRead": "Read transfer limits",
+  "internalTransferReading": "Reading both accounts and asset mode…",
+  "internalTransferSending": "Waiting for signatures or the transfer result…",
+  "internalTransferChecking": "Transfer reported successful. Reading both account balances…",
+  "internalTransferMaximum": "Source transferable amount",
+  "internalTransferSpotFree": "Spot free amount",
+  "internalTransferFuturesWallet": "Futures wallet amount",
+  "internalTransferLimitHint": "The source limit is Spot free amount or the selected Futures asset’s maximum transferable amount. Max rounds down to the input step; Futures wallet amount is not a transfer limit.",
+  "internalTransferPrecisionHint": "Input precision follows the website policy: at most 8 decimal places, with a 2-place fallback. This is not the token’s on-chain precision.",
+  "internalTransferReview": "Review transfer",
+  "internalTransferConfirm": "Sign and transfer once",
+  "internalTransferStale": "Transfer data is stale. Read it again before reviewing.",
+  "internalTransferChanged": "The wallet, balances, limits or asset mode changed, or the review expired. Read again and review the transfer.",
+  "internalTransferAssetUnavailable": "The selected asset is not in the supported transfer list.",
+  "internalTransferPermission": "Transfer permission is unavailable: the source must allow withdrawals and the destination must allow deposits.",
+  "internalTransferMaximumUnknown": "The source transferable amount is missing. Transfer is unavailable until it can be read.",
+  "internalTransferInvalidAmount": "Enter a positive amount using ordinary decimal notation.",
+  "internalTransferPrecision": "The amount exceeds this asset’s supported input precision.",
+  "internalTransferTooLarge": "The amount exceeds the source transferable amount.",
+  "internalTransferStorage": "Transfer recovery storage is unavailable. Retry reading storage before submitting new orders, settings or transfers.",
+  "internalTransferPending": "A previous transfer needs review. New transfers, orders and account settings are blocked.",
+  "internalTransferUnknown": "The transfer outcome is unknown. The original client ID cannot be queried through a documented API. Balance changes do not prove completion. This record is retained and cannot be retried or cleared here; contact Aster with the original identifiers.",
+  "internalTransferReplyPending": "Aster reported SUCCESS. Read both accounts to finish refreshing balances; do not resubmit the transfer.",
+  "internalTransferReported": "Aster reported transfer SUCCESS; both account balances were read again. This internal transfer is not an on-chain transaction.",
+  "internalTransferClientId": "Original client transfer ID",
+  "internalTransferTransactionId": "Aster transfer ID",
+  "internalTransferEmpty": "No assets are currently available for transfer.",
+  "internalTransferBlocked": "Another pending request or account operation blocks new transfers. Review recovery notices before continuing.",
+  "spotOpenOrdersTitle": "Spot open orders",
+  "spotOpenOrdersScope": "Read all current Spot orders with the current wallet. Counts and filters use this Spot snapshot; a Perp symbol is not a Spot query scope. No automatic signatures.",
+  "spotOpenOrdersRead": "Read Spot open orders",
+  "spotOpenOrdersRefresh": "Refresh Spot open orders",
+  "spotOpenOrdersEmpty": "No open Spot orders in this account.",
+  "spotOpenOrdersNoMatch": "No Spot orders match this filter.",
+  "spotOpenOrdersFilter": "Filter by Spot symbol or order reference",
+  "spotOpenOrdersUnits": "Some Spot base/quote metadata could not be loaded. Amount units remain unknown until metadata is available.",
+  "spotOpenOrdersEvents": "Events update individual Spot orders after a signed baseline. Disconnection, missing events or stale data require another explicit read; events cannot prove a complete account list.",
+  "spotOpenOrdersQuantityUnknown": "Base total unknown · quote-sized market order",
+  "spotOpenOrdersQuoteQuantity": "Original quote amount",
+  "spotOpenOrdersCapacity": "Too many Spot order events to retain safely. Live updates stopped; read a fresh baseline to inspect current orders.",
+  "spotOpenOrdersPolicy": "Time in force",
+  "assetYieldUsdf": "APY up to {percent}%",
+  "@assetYieldUsdf": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "assetYieldAsbnb": "Reference APY {percent}%",
+  "@assetYieldAsbnb": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "assetYieldUsdfScope": "Aster published base + trading APY. Trading requirements apply; this is not your realized return and is not added to balances.",
+  "assetYieldAsbnbScope": "Lista published comprehensive APY for asBNB, including launchpool rewards. An estimate, not a guaranteed return or wallet balance.",
+  "assetYieldSourceDate": "Source date: {date}",
+  "@assetYieldSourceDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "assetYieldParts": "Base {base}% + trading {trade}%",
+  "@assetYieldParts": {
+    "placeholders": {
+      "base": {
+        "type": "String"
+      },
+      "trade": {
+        "type": "String"
+      }
+    }
+  },
+  "assetYieldUpdated": "Publisher updated (UTC): {time}",
+  "@assetYieldUpdated": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "assetYieldReadTime": "Read (UTC): {time}",
+  "@assetYieldReadTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "assetYieldStale": "Historical or unverified yield data. Refresh to check the latest published rate.",
+  "assetYieldPaused": "Yield updates paused while the app is inactive.",
+  "assetYieldInvalid": "The yield source returned missing or inconsistent data. Retry to check again.",
+  "assetYieldNetwork": "Could not reach the yield source. Check your connection and retry.",
+  "assetYieldFailed": "The yield source is unavailable. The previous quote is retained; retry to check again.",
+  "assetYieldLoading": "Reading public yield data…",
+  "assetYieldRefresh": "Refresh yield data",
+  "pointsProgramTitle": "Vanta Genesis Points",
+  "pointsProgramScope": "Published by Vanta for its Orderly broker program. These points are separate from Aster balances and trading; this app does not assume Aster activity qualifies for rewards.",
+  "pointsCurrentCampaign": "Current campaign",
+  "pointsCycleNumber": "Campaign {number}",
+  "@pointsCycleNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "pointsCycleId": "Campaign ID",
+  "pointsStatus": "Published status",
+  "pointsStatusDraft": "Draft",
+  "pointsStatusActive": "Active",
+  "pointsStatusEnded": "Ended",
+  "pointsStatusSettled": "Settled",
+  "pointsStatusUnknown": "Unknown",
+  "pointsPool": "Total points pool",
+  "pointsPeriodStart": "Start (UTC)",
+  "pointsPeriodEnd": "End (UTC)",
+  "pointsBroker": "Broker ID",
+  "pointsNoCurrentCampaign": "No current campaign is published.",
+  "pointsNotRead": "No verified data yet.",
+  "pointsLoading": "Reading points data…",
+  "pointsPaused": "Updates paused while the app is inactive.",
+  "pointsStale": "This is an older or incomplete snapshot. Refresh to check the current data.",
+  "pointsReadTime": "Read (UTC): {time}",
+  "@pointsReadTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "pointsDataInvalid": "The points service returned missing or inconsistent data. Previous data is retained.",
+  "pointsNetwork": "Could not connect to the points service. Check your connection and retry.",
+  "pointsRateLimited": "The points service is rate limiting requests. Try again later.",
+  "pointsUnavailable": "The points service is unavailable. Previous data is retained; try again later.",
+  "pointsWalletRequired": "Connect a wallet to read its published points. No personal score is assumed before a successful read.",
+  "pointsRefresh": "Refresh this section",
+  "pointsStop": "Stop waiting",
+  "pointsLeaderboard": "Points leaderboard",
+  "pointsLeaderboardScope": "Shows up to the first 100 returned rows, 20 per page, with ranks reported by the service. Absence does not establish a full ranking or zero points.",
+  "pointsSelectLeaderboard": "Leaderboard scope",
+  "pointsTotalLeaderboard": "Total points leaderboard",
+  "pointsNoRankings": "No ranking rows were returned for this scope.",
+  "pointsReturnedCount": "Showing {count} returned ranking row(s).",
+  "@pointsReturnedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pointsPrevious": "Previous",
+  "pointsNext": "Next",
+  "pointsPageNumber": "Page {page} of {pages}",
+  "@pointsPageNumber": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "pages": {
+        "type": "int"
+      }
+    }
+  },
+  "pointsRankNumber": "Rank #{number}",
+  "@pointsRankNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "pointsScore": "Points",
+  "pointsSettled": "Settled points",
+  "pointsSpecial": "Special points",
+  "pointsCurrentScore": "Current campaign points (as reported)",
+  "pointsMyPoints": "My points",
+  "pointsWalletReadScope": "Read sends this wallet address to Vanta’s points service without a signature. It does not change the active Aster account.",
+  "pointsConnectWallet": "Connect wallet",
+  "pointsMyTotal": "My total points",
+  "pointsRankUnknown": "Not found in the returned total leaderboard; the full rank is unknown.",
+  "pointsReadWallet": "Read my points and history",
+  "pointsSelectHistory": "Past points scope",
+  "pointsAccumulated": "Accumulated points",
+  "pointsSelectedHistory": "Points in selected scope",
+  "pointsNoHistory": "No campaign history was returned. Missing campaign rows remain unknown.",
+  "eventsTitle": "Trading events",
+  "eventsScope": "Vanta Orderly campaigns. Registration, trading volume and rewards belong to this program; Aster trades in this app are not assumed eligible.",
+  "eventsEmpty": "No published trading events.",
+  "eventsCount": "{count} published events",
+  "@eventsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventDetails": "Event details",
+  "eventRegistrationOpen": "Registration open",
+  "eventImageUnavailable": "Event image unavailable",
+  "eventLinkFailed": "Could not open this link. Please try again.",
+  "eventOwnVolume": "Your trading volume (USDC)",
+  "eventRankingScope": "Up to 30 returned participants, 10 per page. Ranks and USDC trading volumes come from Vanta; this is not the complete ranking.",
+  "eventMyParticipation": "My participation",
+  "eventPersonalScope": "Refresh sends this EVM wallet address to Vanta to check registration and performance, without signing.",
+  "eventRegistrationUnknownStatus": "Registration has not been checked.",
+  "eventRegistered": "Registration verified",
+  "eventNotRegistered": "Not registered at the last check",
+  "eventBlockedBlacklist": "This address is excluded by the campaign’s eligibility rules.",
+  "eventBlockedExclusive": "Already registered for an exclusive event: {name}",
+  "@eventBlockedExclusive": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "eventAnotherCampaign": "another event",
+  "eventBlocked": "Registration is unavailable for this address.",
+  "eventRegistrationReadFirst": "Refresh registration status before joining. Current campaign rules will be checked again before submission.",
+  "eventRegistrationConfirm": "Confirm registration",
+  "eventRegistrationSigningScope": "Sign a registration message with this wallet for Vanta. This does not transfer funds, place an order or guarantee rewards.",
+  "eventCancel": "Cancel",
+  "eventRegister": "Register now",
+  "eventChecking": "Checking current campaign and registration…",
+  "eventSigning": "Confirm the registration message in your wallet…",
+  "eventSending": "Submitting registration…",
+  "eventAcknowledged": "Vanta accepted the request. Refresh to verify registration; rewards are not confirmed.",
+  "eventRegistrationUnknown": "The registration result is unknown. Refresh registration status before trying again; this app will not resend automatically.",
+  "eventRegistrationChanged": "The wallet, campaign rules or registration eligibility changed. Refresh and review again.",
+  "eventWalletReconnect": "Reconnect this wallet before signing the registration message.",
+  "eventSignatureRejected": "The wallet declined the registration message.",
+  "eventSignatureUnavailable": "The wallet could not sign this registration message. Please reconnect and try again.",
+  "eventRegistrationCount": "Registered participants",
+  "eventTotalVolume": "Total event trading volume (USDC)",
+  "eventRewardPool": "Core reward pool",
+  "eventActivityRules": "Activity rules",
+  "eventCampaignRules": "Campaign rules",
+  "eventEnded": "Event ended",
+  "eventCountdown": "{stage}: {days}d {hours}:{minutes}:{seconds}",
+  "@eventCountdown": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      },
+      "days": {
+        "type": "String"
+      },
+      "hours": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      },
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "eventUntilEnd": "Time until end",
+  "eventUntilStart": "Time until start",
+  "eventRegistrationOpens": "Registration opens (UTC)",
+  "eventTasks": "Tasks",
+  "eventNoTasks": "No tasks published.",
+  "eventTaskTarget": "Published target",
+  "eventTaskProgress": "Verified progress",
+  "eventTaskUnknown": "Task progress has not been verified.",
+  "eventTaskCompleted": "Published target reached; rewards remain subject to campaign rules.",
+  "eventTaskPending": "Target not yet reached",
+  "eventOpenTrading": "Trade on Vanta website",
+  "eventTradingEligibility": "Registration and the active event period are required before trading for this campaign.",
+  "eventRankingVolume": "Trading volume (USDC)",
+  "eventIdLabel": "Event ID",
+  "eventMyRank": "My campaign rank",
+  "authorizationTitle": "Aster trading authorization",
+  "authorizationScope": "Use the connected wallet itself as the API signer. No additional wallet is created. Aster must accept this address and its permissions.",
+  "authorizationEnable": "Enable trading with this wallet",
+  "authorizationCheck": "Check signed API access",
+  "authorizationCheckScope": "Two wallet signatures read Futures and Spot accounts. This sends no orders. Read access and account trading status are separate from an agent permission grant.",
+  "authorizationReview": "Review authorization",
+  "authorizationGrant": "Signer: same wallet. Spot and Futures trading: allowed. Withdrawal: not granted. Valid for 30 days. No builder or fee grant.",
+  "authorizationConfirm": "Confirm and sign authorization",
+  "authorizationAcknowledged": "Aster acknowledged the request. Run the access check to confirm what this wallet can read and the reported trading status.",
+  "authorizationUnknown": "The authorization result is unknown. Check access before making another explicit request.",
+  "authorizationFuturesRead": "Futures signed API read",
+  "authorizationSpotRead": "Spot signed API read",
+  "authorizationReadAccepted": "Signed read accepted for this wallet",
+  "authorizationCanTrade": "Account reports canTrade = true. This does not prove order execution or all agent permissions.",
+  "authorizationCannotTrade": "Account reports canTrade = false",
+  "authorizationPermissionUnknown": "Account trading permission is unknown",
+  "authorizationSpotPermissionUnknown": "Spot read acceptance does not confirm permission to place Spot orders.",
+  "subaccountActions": "Manage subaccounts",
+  "subaccountActionsScope": "The connected wallet signs as the master. Aster checks account relationships and permissions. The directory does not provide child addresses or live freeze status. No wallet or private key is created.",
+  "subaccountCreate": "Create subaccount",
+  "subaccountCreateExternalOnly": "Only accounts signed in with an external EOA wallet can create subaccounts. Privy embedded wallets cannot create subaccounts.",
+  "subaccountFreeze": "Freeze subaccount",
+  "subaccountUnfreeze": "Unfreeze subaccount",
+  "subaccountTransfer": "Transfer between master and child",
+  "subaccountChildAddress": "Child wallet address",
+  "subaccountName": "Subaccount name",
+  "subaccountFrom": "Source wallet",
+  "subaccountTo": "Destination wallet",
+  "subaccountTransferDirection": "Market direction",
+  "subaccountMasterToChild": "Master → Child",
+  "subaccountChildToMaster": "Child → Master",
+  "subaccountTransferScope": "Only master/child addresses are supported. Aster validates the relationship, freeze status, available funds and asset precision at submission. Available child funds are not supplied by the directory.",
+  "subaccountActionPrepare": "Read qualification and prepare",
+  "subaccountActionReview": "Review account operation",
+  "subaccountActionConfirm": "Confirm and sign submission",
+  "subaccountReviewExpires": "This review expires after 45 seconds. Expiry requires preparing and signing again.",
+  "subaccountChildSignatureInstructions": "Use a wallet you already control. Copy this EIP-712 request and sign it with the child wallet using a trusted wallet tool, then paste only the resulting signature. The app verifies the child address before asking the master to sign. Never enter a private key or seed phrase.",
+  "subaccountCopyChallenge": "Copy child signing request",
+  "subaccountChildSignature": "Child signature (hex)",
+  "subaccountKnownAddresses": "Addresses from acknowledged creation requests",
+  "subaccountSwitch": "Switch wallet account",
+  "subaccountSwitchScope": "This signs out the current identity. Select the displayed child address in your wallet and complete a new sign-in. The active account changes only after the new address is verified; an account ID alone cannot switch signing authority.",
+  "subaccountMasterRequired": "Aster did not return a valid master-account directory for this wallet.",
+  "subaccountLimitReached": "This master already has ten subaccounts.",
+  "subaccountInputInvalid": "Check the child address, name, asset and positive amount (up to 18 decimal places). Master and child must differ.",
+  "subaccountChildSignatureInvalid": "The child signature does not match this address and signing request.",
+  "walletOperationHistory": "Saved account and funding requests",
+  "walletOperationReload": "Reload saved requests",
+  "walletOperationReference": "Request nonce",
+  "walletOperationStorage": "Saved request storage is unavailable. New submissions are blocked; retry loading storage.",
+  "walletOperationPending": "An earlier request from this wallet has an unknown result. Do not submit it again. Resolve it with Aster before another submission.",
+  "walletOperationUnknown": "The request may have been accepted. Its result is unknown and its unsigned terms remain saved. No automatic retry will be sent.",
+  "walletOperationAcknowledged": "Aster acknowledged this request. This is not a fresh status, balance or on-chain confirmation.",
+  "withdrawalSubmit": "Withdraw",
+  "withdrawalScope": "Withdraw to this wallet’s own registered address. A fresh signed master-account directory, withdrawal limits and fee estimate are required. Spot and Futures balances remain separate.",
+  "withdrawalPrepare": "Check limits and prepare withdrawal",
+  "withdrawalReview": "Review withdrawal",
+  "withdrawalFee": "Withdrawal fee (asset units)",
+  "withdrawalMarket": "Source account",
+  "withdrawalChain": "Destination chain ID",
+  "withdrawalReceiver": "Receiving address",
+  "withdrawalConfirmScope": "Confirmation refreshes qualification, limits and fees, then requests a business signature and an API signature. A changed fee requires a new review. Amount plus fee is checked conservatively against the reported limits. No request is resent after an unknown result.",
+  "withdrawalConfirm": "Confirm withdrawal and sign",
+  "withdrawalAcknowledged": "Aster returned a withdrawal request ID. Check history for completion; the returned signature digest is not a transaction hash.",
+  "withdrawalAmountInvalid": "Enter a positive amount within the selected token precision and a supported automatic withdrawal route.",
+  "withdrawalAssetChanged": "Asset availability, contract or precision changed. Reload the asset list and prepare again.",
+  "withdrawalFeeChanged": "The fee changed. Prepare a new review before signing.",
+  "withdrawalLimitsUnknown": "A required withdrawal limit or asset USD price is unavailable. Submission is blocked.",
+  "withdrawalLimitExceeded": "Amount plus fee exceeds a reported asset, chain or USD limit.",
+  "withdrawalRecovery": "Check withdrawal completion",
+  "withdrawalRecoveryScope": "Read signed history and match the exact returned request ID, account, chain, asset and amount. A request without a returned ID cannot be resolved from a balance change or a similar history row.",
+  "withdrawalOpenHistory": "Open and refresh signed history",
+  "withdrawalNotReconciled": "No exact matching completion record has been read.",
+  "withdrawalHistoryStale": "The matching history snapshot is historical; refresh to confirm current status.",
+  "withdrawalProcessing": "Aster reports this withdrawal is processing.",
+  "withdrawalCompleted": "Aster reports this withdrawal completed.",
+  "withdrawalFailed": "Aster reports this withdrawal failed.",
+  "depositSubmissionScope": "Submit depositFor from this wallet to its own Spot or Futures account. Each transaction is reviewed and signed separately. Approval is a separate step.",
+  "depositPlatformLimitsUnknown": "User and platform remaining deposit caps require Aster website login and are unavailable here. They are unknown, not unlimited. Verify current availability and caps on Aster before proceeding. Gas estimation does not prove platform credit.",
+  "depositLimitsAcknowledgement": "I checked current deposit availability and limits on Aster for this amount.",
+  "depositSubmissionPrepare": "Prepare deposit transaction",
+  "depositSubmissionReview": "Review deposit transaction",
+  "depositSubmissionConfirm": "Confirm deposit and open wallet",
+  "depositSubmissionSent": "Transaction response saved. Open recovery to check the chain and platform credit. A wallet response does not prove completion.",
+  "depositSubmissionRecovery": "Recover pending deposit",
+  "depositSubmissionRecoveryScope": "Check the original or matching replacement transaction and its canonical receipt. Chain success stays pending until signed Aster history matches the transaction hash, account, chain, asset and exact amount with SUCCESS. No automatic resend or deletion of unknown requests.",
+  "depositSubmissionStorage": "Deposit recovery storage is unavailable. New deposits are blocked; reload saved records.",
+  "depositSubmissionPending": "A deposit from this wallet still needs chain or platform confirmation.",
+  "depositSubmissionNoPending": "No pending deposit for this wallet.",
+  "depositSubmissionUnknown": "The wallet may have submitted the transaction. Keep the saved record and recover its status before another deposit.",
+  "depositSubmissionChanged": "Balance, allowance, transaction or Gas changed. Prepare and review again.",
+  "depositSubmissionApprovalNeeded": "ERC-20 allowance is insufficient. Complete and verify the separate approval step first.",
+  "depositSubmissionHashNeeded": "Read and bind a matching transaction hash before checking platform credit.",
+  "depositSubmissionChainPending": "A matching successful chain receipt with at least two observed confirmations is required.",
+  "depositSubmissionCreditPending": "Platform credit has not been confirmed by an exact SUCCESS record. The deposit remains saved.",
+  "depositSubmissionCheckChain": "Check chain receipt",
+  "depositSubmissionCheckCredit": "Sign and check platform credit",
+  "depositSubmissionChainSucceeded": "Chain transaction succeeded; platform credit is still unconfirmed.",
+  "depositSubmissionCredited": "Chain success and exact Aster SUCCESS deposit record were observed.",
+  "depositVerifiedMinimumScope": "The public catalog does not report a minimum. Enter the minimum in asset units after verifying it on Aster; enter 0 only if Aster explicitly reports no positive minimum. This is your external check, not a value read by the app.",
+  "depositVerifiedMinimum": "Minimum verified on Aster (asset units)",
+  "depositTransactionBusy": "Another approval or deposit wallet request is still active. Wait for it to finish before submitting.",
+  "subaccountSwitchEntered": "Switch to entered wallet address",
+  "authorizationWithdrawOption": "Also request withdrawal permission",
+  "authorizationWithdrawScope": "Aster requires a nonempty IP/CIDR whitelist for this permission. Only use verified wallet/API egress IPs; a mobile network IP may change. This grant does not submit a withdrawal.",
+  "authorizationIpWhitelist": "IP/CIDR whitelist (space separated)",
+  "authorizationWithdrawGrant": "Signer: same wallet. Spot trading, Futures trading and withdrawal: allowed. IP restricted as shown. Valid for 30 days. No builder or fee grant.",
+  "authorizationCanWithdraw": "Account reports canWithdraw = true; this does not confirm every agent/IP permission or a completed withdrawal.",
+  "authorizationCannotWithdraw": "Account reports canWithdraw = false",
+  "authorizationWithdrawUnknown": "Account withdrawal permission is unknown",
+  "authorizationIpInvalid": "Enter 1–16 valid literal IP addresses or CIDRs, separated by spaces. Withdrawal permission requires a nonempty whitelist.",
+  "assetMetadataTitle": "Asset details",
+  "assetMetadataRefresh": "Refresh asset names and icons",
+  "assetMetadataNamesFailed": "Asset names could not be refreshed. Asset identifiers remain available.",
+  "assetMetadataIconsFailed": "Asset icons could not be refreshed. Balances remain available.",
+  "assetMetadataStale": "Showing previously loaded asset details. Refresh to check for updates.",
+  "assetMetadataPaused": "Asset detail refresh is paused while the app is inactive.",
+  "assetMetadataEmpty": "No additional asset details are available.",
+  "assetMetadataNoIcon": "Asset icon unavailable",
+  "assetMetadataRetryIcon": "Reload asset icon",
+  "eventRetailTab": "Trading events",
+  "eventChannelTab": "Channel events",
+  "eventChannelName": "Channel",
+  "eventChannelRankingScope": "Channel ranking shows up to 10 entries; ranks outside this list remain unknown.",
+  "eventEngagementTitle": "Channel task progress",
+  "eventEngagementScope": "Manual refresh shares your current wallet address with the Vanta campaign service. Tasks belong to Vanta Orderly campaigns; Aster trades and deposits do not count.",
+  "eventEngagementVerified": "Task completion verified.",
+  "eventEngagementAcknowledged": "Request acknowledged; task completion is unverified. Refresh progress.",
+  "eventEngagementUnknown": "A previous task submission has an unknown result. Query its progress without submitting again.",
+  "eventEngagementReadFirst": "Refresh the event, participation and task progress before confirming an eligible task.",
+  "eventEngagementIneligible": "Task eligibility or event time changed. Refresh before trying again.",
+  "eventEngagementStorage": "Could not save or read the task journal. Submission stopped. Check device storage and refresh progress.",
+  "eventEngagementBusy": "Another campaign task is in progress. Please wait.",
+  "eventEngagementReconcileFailed": "Could not reconcile task progress. Pending status is preserved; retry the query.",
+  "eventDailyDate": "Task date (UTC)",
+  "eventDailyVolume": "Daily volume (USDC)",
+  "eventCheckedIn": "Checked in today",
+  "eventNotCheckedIn": "Not checked in today",
+  "eventCheckedDays": "Days checked in: {count}",
+  "eventDailyExpired": "Task date is stale. Refresh today’s progress.",
+  "eventTrackedMetric": "Tracked metric",
+  "eventMilestoneCurrent": "Cumulative metric progress",
+  "eventMilestoneUnlocked": "Task milestone reached",
+  "eventMilestoneRemaining": "Remaining to target",
+  "eventNewRegistration": "Complete campaign registration",
+  "eventNewWallet": "Wallet connection task",
+  "eventNewDeposit": "Net deposit task",
+  "eventDepositRequired": "Server deposit target",
+  "eventDepositCurrent": "Recorded net deposit",
+  "eventDepositRemaining": "Remaining net deposit",
+  "eventDepositChain": "Deposit chain ID",
+  "eventWebsiteDeposit": "Deposit on Vanta website",
+  "eventRewardNotCredit": "Task completion or a published reward does not prove a reward was paid.",
+  "eventCheckIn": "Confirm daily check-in",
+  "eventRecordWallet": "Confirm wallet connection task",
+  "eventEngagementSigningScope": "Sign and submit this Vanta campaign task message with your current wallet. No wallet is created or funds sent. Eligibility is checked again after signing.",
+  "@eventCheckedDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventNetworkVolume": "Network volume (USDC)",
+  "eventPersonalTotalVolume": "Own + network volume (USDC)",
+  "eventWhitelistCount": "Published allowlist count",
+  "eventUpcoming": "Upcoming",
+  "assistantTitle": "Vanta AI",
+  "assistantIntro": "Explore markets, compare scenarios, and understand risk. Include a symbol and timeframe for a more useful answer.",
+  "assistantScope": "AI responses may be inaccurate. This conversation does not place orders or attach your account balances.",
+  "assistantAuthorize": "Authorize with wallet",
+  "assistantRestore": "Restore saved session",
+  "assistantReady": "Wallet verified for AI",
+  "assistantAuthHint": "Authorize with your connected wallet, or restore a session saved on this device. A message signature requires your separate confirmation.",
+  "assistantReview": "Review sign-in message",
+  "assistantReviewHint": "Review the exact message below. Confirmation opens your current wallet to sign this AI login message. This does not authorize trading. The request expires after 5 minutes.",
+  "assistantSign": "Confirm and sign",
+  "assistantCancel": "Cancel",
+  "assistantStop": "Stop",
+  "assistantSend": "Send",
+  "assistantPrompt": "Ask Vanta AI…",
+  "assistantInputHint": "Up to 12,000 UTF-16 characters. Sending shares this prompt and recent completed messages with Vanta AI.",
+  "assistantGuide": "Try: compare BTC scenarios on the 4-hour chart, with risks and invalidation levels.",
+  "assistantEmpty": "Your conversation will appear here.",
+  "assistantYou": "You",
+  "assistantReply": "Vanta AI",
+  "assistantExplanation": "Returned explanation",
+  "assistantCopy": "Copy message",
+  "assistantCopied": "Copied",
+  "assistantCopyFailed": "Could not copy. Select the text to copy it manually.",
+  "assistantCopyAddress": "Copy wallet address",
+  "assistantRemoteImage": "Remote image hidden",
+  "assistantStreaming": "Receiving response…",
+  "assistantInterrupted": "Stopped or interrupted. Partial content is saved; nothing will resume automatically.",
+  "assistantTruncated": "Response reached its length limit.",
+  "assistantReplyFailed": "Response incomplete. Review partial content before sending another question.",
+  "assistantClear": "Clear conversation",
+  "assistantClearConfirm": "Clear this wallet’s conversation and draft on this device? This cannot be undone and does not delete server records.",
+  "assistantForget": "Forget saved AI session",
+  "assistantForgetConfirm": "Remove this wallet’s saved AI credentials from this device? Conversation history is retained. This does not revoke the server session.",
+  "assistantRetryHistory": "Read history again",
+  "assistantRetrySave": "Retry saving",
+  "assistantHistoryBlocked": "History could not be read safely. Read it again or explicitly clear it before sending.",
+  "assistantUsage": "Daily usage (UTC)",
+  "assistantReadUsage": "Read usage",
+  "assistantUsageUnknown": "Usage has not been read. Remaining quota is unknown.",
+  "assistantQuotaStale": "This usage snapshot is stale. Read again to check the current UTC day.",
+  "assistantUnknown": "Unknown",
+  "assistantPreparing": "Requesting sign-in message…",
+  "assistantSigning": "Waiting for wallet and verification…",
+  "assistantRestoring": "Checking saved session…",
+  "assistantLoadingHistory": "Reading saved conversation…",
+  "assistantReadingUsage": "Reading daily usage…",
+  "assistantClearing": "Updating local storage…",
+  "assistantWalletRequired": "Connect an EVM wallet to use Vanta AI.",
+  "assistantUnavailable": "Vanta AI is unavailable. Your input is preserved; try again later.",
+  "assistantAuthorization": "AI session could not be verified. Restore it or authorize again.",
+  "assistantBinding": "The server did not confirm this wallet’s link to the AI account.",
+  "assistantBusy": "Another AI request is still finishing. Please try again shortly.",
+  "assistantCancelled": "Request stopped.",
+  "assistantChallengeExpired": "The sign-in request expired. Request a new message.",
+  "assistantChallengeInvalid": "The sign-in message could not be verified. Nothing was signed.",
+  "assistantSessionChanged": "Wallet or session changed. Start this action again.",
+  "assistantConfiguration": "AI service configuration is unavailable. Please try again later.",
+  "assistantInvalidInput": "Enter a question of at most 12,000 UTF-16 characters.",
+  "assistantInvalidResponse": "The AI service returned an unreadable response. Your input is preserved.",
+  "assistantEmptyReply": "No answer was returned. Your question is preserved.",
+  "assistantQuotaExceeded": "The AI service reported that your daily quota is exhausted.",
+  "assistantTimeout": "The AI request timed out. Partial content and input are preserved.",
+  "assistantTooLarge": "The reply exceeded the supported size. Partial content is preserved.",
+  "assistantStorage": "Could not access this wallet’s saved AI data. Please retry.",
+  "assistantStorageCapacity": "Only the most recent conversation that fits device storage can be saved.",
+  "assistantNoSavedSession": "No AI session is saved for this wallet on this device. Authorize with your wallet first.",
+  "assistantClearFailed": "Could not clear this conversation. Please try again.",
+  "assistantLinkUnavailable": "This link could not be opened. Only HTTPS links are supported.",
+  "assistantLocalHistoryHint": "Recent conversation and draft are stored securely on this device for this wallet.",
+  "assistantCharacterCount": "{count} / 12,000 UTF-16 characters",
+  "@assistantCharacterCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assistantUsageValues": "Date {day} · Used {used} · Remaining {remaining}",
+  "@assistantUsageValues": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "used": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "String"
+      }
+    }
+  },
+  "collateralContribution": "Asset contribution (reference)",
+  "collateralCalculation": "Contribution calculation",
+  "collateralFormula": "Cross equity = cross wallet balance + crossed unrealized PnL. Contribution = min(equity × bid rate, equity × ask rate). Negative equity uses the more negative value.",
+  "collateralCrossEquity": "Cross equity",
+  "collateralBidRate": "Bid rate (USD per asset)",
+  "collateralAskRate": "Ask rate (USD per asset)",
+  "collateralScope": "Reference for assets eligible as multi-asset margin, using the signed account snapshot and public collateral rates. This does not confirm the active margin mode or represent order funds, withdrawal limits, or total portfolio value.",
+  "collateralEligibilityUnknown": "Collateral eligibility is unknown. Read the account again to check.",
+  "collateralEquityUnknown": "Cross wallet balance or crossed unrealized PnL is missing. Read the account again; missing values are not treated as zero.",
+  "collateralEventsNeedRead": "Account events changed this snapshot. Read the account again to verify cross equity.",
+  "collateralRatesUnknown": "Collateral bid/ask rates are unavailable. Refresh public asset prices to retry.",
+  "collateralStale": "Contribution uses a stale snapshot. Refresh account balances and public prices before relying on it.",
+  "collateralAccountTime": "Account snapshot (UTC): {time}",
+  "@collateralAccountTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "collateralRateTime": "Rate timestamp (UTC): {time}",
+  "@collateralRateTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "collateralLiveMarks": "Crossed PnL recomputed from public mark prices.",
+  "collateralSnapshotPnl": "Using signed crossed-PnL snapshot; complete live marks or position fields are unavailable.",
+  "collateralMarkTime": "Oldest mark timestamp (UTC): {time}",
+  "@collateralMarkTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "marginAdjustTitle": "Adjust isolated margin",
+  "marginAdjustScope": "Use the connected wallet to read and confirm one isolated position. Signing and final amounts remain subject to Aster permissions and validation.",
+  "marginAdjustRead": "Read margin and limits",
+  "marginAdjustReadHint": "Reads the account, position and risk tiers with separate signatures. Nothing is submitted until you confirm. Limits expire after 30 seconds.",
+  "marginAdjustAdd": "Add margin",
+  "marginAdjustRemove": "Remove margin",
+  "marginAdjustAmountLabel": "Margin amount",
+  "marginAdjustAmount": "Enter a positive amount within the current limit, with up to 8 decimal places.",
+  "marginAdjustMaximum": "Current maximum",
+  "marginAdjustMax": "Max (2 decimals)",
+  "marginAdjustWallet": "Current isolated wallet margin",
+  "marginAdjustNextWallet": "Isolated wallet margin after adjustment",
+  "marginAdjustLiquidation": "Estimated liquidation price after adjustment",
+  "marginAdjustPreviewHint": "Reference only, using the signed mark price and risk tiers. Quantity and entry price stay the same. Actual liquidation price is read again after confirmation.",
+  "marginAdjustReview": "Review adjustment",
+  "marginAdjustConfirm": "Sign and submit adjustment",
+  "marginAdjustConfirmHint": "Re-read limits, then sign and submit once. The result is checked by the original reference and exact terms; balances alone cannot prove success. Further signatures refresh the position, account and risk tiers.",
+  "marginAdjustReference": "Adjustment reference",
+  "marginAdjustHistory": "Margin adjustment records",
+  "marginAdjustHistoryEmpty": "No margin adjustment records for this wallet.",
+  "marginAdjustCheck": "Check original reference",
+  "marginAdjustVerified": "Exact adjustment found in Aster history.",
+  "marginAdjustUnknown": "Outcome unconfirmed. Keep the original reference and check again; do not resubmit.",
+  "marginAdjustRejected": "Aster explicitly rejected this adjustment. No successful adjustment is claimed.",
+  "marginAdjustStorage": "Margin records are unavailable or could not be saved. Submission is blocked; reload the records.",
+  "marginAdjustReload": "Reload saved records",
+  "marginAdjustExpired": "Margin information expired or changed. Read the limits again before confirming.",
+  "marginAdjustChanged": "The position, margin or risk tiers changed. Read again and review the new terms.",
+  "marginAdjustClosed": "This position is closed or has zero quantity. It cannot be adjusted.",
+  "marginAdjustUnsupported": "Only a nonzero isolated linear position with known units supports this adjustment.",
+  "marginAdjustInsufficient": "Aster reports insufficient available or isolated margin. Read the limits again.",
+  "marginAdjustSubmitting": "Submitting the confirmed adjustment once…",
+  "marginAdjustChecking": "Checking history, actual position and account…",
+  "marginAdjustStop": "Stop waiting",
+  "marginAdjustStopHint": "Leaving or stopping does not cancel a sent request. Saved pending records are recovered without resubmission.",
+  "marginAdjustActualLiquidation": "Latest actual liquidation price",
+  "marginAdjustRatio": "Isolated margin ratio",
+  "marginAdjustEquityRisk": "Margin equity is zero or negative; liquidation risk is elevated.",
+  "marginAdjustRatioHint": "Maintenance margin ÷ (isolated wallet margin + unrealized PnL), from the same account snapshot.",
+  "marginAdjustOverMaximum": "Amount exceeds the available limit.",
+  "attachedOrderAdvanced": "Advanced exit settings",
+  "attachedOrderInputMode": "Input mode",
+  "attachedOrderPnlMode": "PnL amount",
+  "attachedOrderPriceMode": "Trigger price",
+  "attachedOrderRoiMode": "Margin ROI (%)",
+  "attachedOrderPnlInput": "PnL amount ({asset})",
+  "attachedOrderExecution": "Exit execution",
+  "attachedOrderManualLimit": "Manual limit",
+  "attachedOrderAutomaticLimit": "Limit at trigger price",
+  "attachedOrderLimitPrice": "Exit limit price ({asset})",
+  "attachedOrderTriggerPreview": "Indicative trigger",
+  "attachedOrderGrossPnl": "Estimated gross PnL",
+  "attachedOrderGrossRoi": "Estimated gross ROI",
+  "attachedOrderRoundedPreview": "Converted trigger prices are rounded to the nearest price tick. Review the resulting price.",
+  "attachedOrderEstimateScope": "Estimates use the main-order quantity and indicative entry price, before fees and slippage. A limit exit may remain unfilled after triggering.",
+  "attachedOrderExitIssue": "{exit}: {reason}",
+  "attachedOrderCheckExits": "Review the highlighted attached TP/SL fields before continuing.",
+  "attachedOrderTargetSign": "Enter a positive take-profit or negative stop-loss amount / ROI. Zero is not a target.",
+  "attachedOrderPreviewUnavailable": "Enter a valid main-order quantity and price, and read the entry quote and leverage before converting.",
+  "attachedOrderLimitRequired": "Enter a positive exit limit price.",
+  "attachedOrderExecutionInvalid": "Review the attached exit execution and limit price.",
+  "attachedOrderLegacyLifecycle": "This saved strategy uses its original full-fill activation and peer-cancellation rules. Its original protected quantity is unchanged.",
+  "@attachedOrderPnlInput": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "@attachedOrderLimitPrice": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "@attachedOrderExitIssue": {
+    "placeholders": {
+      "exit": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "attachedOrderDirectionHint": "Trigger must be {relation} the indicative entry price {price} {asset}.",
+  "@attachedOrderDirectionHint": {
+    "placeholders": {
+      "relation": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "strategyExecutionTitle": "Strategy execution details",
+  "strategyExecutionScope": "Read actual order quantities and filled value separately from strategy terms. Each order has its own snapshot time. These records do not prove current balances or remaining positions.",
+  "strategyExecutionSignHint": "Sign to recheck the original strategy, then each child order with an exchange order ID. This may require several wallet confirmations. A failure stops further prompts; retry is manual.",
+  "strategyExecutionRead": "Sign to read executions",
+  "strategyExecutionCheckingStrategy": "Checking the original strategy…",
+  "strategyExecutionCheckingLeg": "Reading order {sequence}…",
+  "strategyExecutionStop": "Stop waiting",
+  "strategyExecutionStopped": "Reading stopped. Any previous snapshot is retained; no orders were canceled.",
+  "strategyExecutionSkipped": "Not read after an earlier failure. Read again to check this order.",
+  "strategyExecutionStale": "This snapshot may be out of date. Sign to read again.",
+  "strategyExecutionStrategyTime": "Strategy checked (UTC)",
+  "strategyExecutionOrderTime": "Order checked (UTC)",
+  "strategyExecutionEntry": "Main order",
+  "strategyExecutionStrategyLegStatus": "Status in strategy snapshot",
+  "strategyExecutionOrderStatus": "Status in order snapshot",
+  "strategyExecutionNoOrder": "The strategy has no ordinary order ID for this leg. Filled quantity and value are unknown.",
+  "strategyExecutionTriggered": "The order report shows triggering or execution. A trigger alone does not confirm a fill.",
+  "strategyExecutionTriggerUnconfirmed": "Triggering is not confirmed by this order snapshot.",
+  "strategyExecutionOriginalSize": "Current order quantity",
+  "strategyExecutionFilledSize": "Actual filled quantity",
+  "strategyExecutionFilledValue": "Actual filled value",
+  "strategyExecutionAveragePrice": "Reported average fill price",
+  "strategyExecutionTermsChanged": "The current quantity or price differs from the original strategy terms. Values above are from this order report; automatic replenishment is not inferred.",
+  "@strategyExecutionCheckingLeg": {
+    "placeholders": {
+      "sequence": {
+        "type": "int"
+      }
+    }
+  },
+  "liveAmountUnit": "Order size unit",
+  "liveAmountInput": "Order amount ({asset})",
+  "@liveAmountInput": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "liveAmountHint": "Enter order notional, not margin. The amount is not multiplied by leverage.",
+  "liveAmountInvalid": "Enter a positive order amount using decimal digits.",
+  "liveAmountBelowStep": "This amount converts to less than the minimum order quantity or one quantity step.",
+  "liveAmountReferenceUnavailable": "The required conversion price is unavailable. Refresh the order snapshot or enter a base-asset quantity.",
+  "liveAmountLimitReference": "entered limit price",
+  "liveAmountAskReference": "best ask snapshot",
+  "liveAmountBidReference": "best bid snapshot",
+  "liveAmountTriggerReference": "trigger price estimate",
+  "liveAmountBboReference": "indicative Mark, not an engine BBO price",
+  "liveAmountConversionPrice": "Conversion reference: {basis}",
+  "@liveAmountConversionPrice": {
+    "placeholders": {
+      "basis": {
+        "type": "String"
+      }
+    }
+  },
+  "liveAmountResolvedQuantity": "Base quantity to submit",
+  "liveAmountSnapshotTime": "Order snapshot (UTC)",
+  "liveAmountEstimateHint": "Quantity is rounded down to the applicable step and fixed for confirmation. Market, trigger and BBO prices may change; actual spending can exceed this estimate. This amount is not a spending cap.",
+  "futuresHistoryTitle": "Futures history",
+  "futuresHistoryScope": "Read this wallet’s futures orders, individual fills and income ledger separately. BUY/SELL alone does not identify opening or closing. Reading never submits or cancels an order.",
+  "futuresHistoryIncome": "Income ledger",
+  "futuresHistorySymbol": "Futures symbol (optional)",
+  "futuresHistoryTradeSymbol": "Futures symbol (required for fills)",
+  "futuresHistoryFilterHint": "Use the exact symbol, including delisted contracts. Orders and income allow all symbols; individual fills require one symbol. Editing clears the displayed results without signing.",
+  "futuresHistoryInvalidSymbol": "Enter an exact futures symbol. Individual fills require a symbol; spaces and query syntax are not accepted.",
+  "futuresHistoryInvalidType": "Choose a supported income type, or all types.",
+  "futuresHistoryInvalidWindow": "Select a valid UTC date range. Each signed request reads less than seven days; longer ranges are read in separate manual batches.",
+  "futuresHistoryCapacity": "This view reached 10,000 records. Earlier results remain; narrow the date range or symbol and read again. No records were silently discarded.",
+  "futuresHistoryRetention": "Aster omits canceled or expired orders with no fills once their creation is more than seven days old. Partly filled canceled orders keep their reported fills. API retention can limit older records.",
+  "futuresHistoryAllTypes": "All income types",
+  "futuresHistoryOriginalType": "Original order type",
+  "futuresHistoryExecuted": "Reported filled quantity",
+  "futuresHistoryPnlHint": "Reported realized PnL is separate from commission and income-ledger entries. These records are not summed into a net return or portfolio statistic.",
+  "futuresHistoryIncomeAmount": "Reported income change",
+  "futuresHistoryIncomeType": "{type, select, TRANSFER{Transfer} WITHDRAW{Withdrawal} DEPOSIT{Deposit} WELCOME_BONUS{Welcome bonus} REALIZED_PNL{Realized PnL} FUNDING_FEE{Funding fee} COMMISSION{Commission} INSURANCE_CLEAR{Insurance clearing} MARKET_MERCHANT_RETURN_REWARD{Market merchant return reward} REFERRAL_KICKBACK{Referral kickback} COMMISSION_REBATE{Commission rebate} MARKET_MAKER_REBATE{Market maker rebate} API_REBATE{API rebate} CONTEST_REWARD{Contest reward} CROSS_COLLATERAL_TRANSFER{Cross-collateral transfer} INTERNAL_TRANSFER{Internal transfer} AUTO_EXCHANGE{Automatic exchange} other{Unknown ({type})}}",
+  "@futuresHistoryIncomeType": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "orderConfirmLimit": "Confirm limit and Post Only entries",
+  "orderConfirmStopLimit": "Confirm conditional limit entries",
+  "orderConfirmStopMarket": "Confirm conditional market entries",
+  "orderConfirmTrailing": "Confirm trailing stop entries",
+  "orderConfirmLimitShared": "Limit and Post Only share this setting.",
+  "orderConfirmDoNotShow": "Do not show confirmation again for this order type",
+  "orderConfirmWalletHint": "This setting controls the app review. Wallet signatures and checks before submission still apply.",
+  "scaledTotalAmount": "Total order amount",
+  "scaledAmountInvalid": "Enter a positive total order amount.",
+  "scaledDistribution": "Quantity distribution",
+  "scaledEqual": "Equal",
+  "scaledIncreasing": "Increasing",
+  "scaledDecreasing": "Decreasing",
+  "scaledRandom": "Random",
+  "scaledConstant": "Distribution constant",
+  "scaledDifference": "Difference",
+  "scaledRatio": "Ratio",
+  "scaledDifferenceHint": "Quantity weights are 1:2:3… from low to high price for Increasing, reversed for Decreasing. Quantity steps may round the pattern.",
+  "scaledRatioHint": "Quantity weights are 1:2:4… from low to high price for Increasing, reversed for Decreasing. Every child must meet the minimum size; high counts may require a very large total.",
+  "scaledVariance": "Random variance",
+  "scaledVarianceInvalid": "Enter a variance from 0% to 10%.",
+  "scaledVarianceStep": "The quantity step cannot represent this random distribution within the selected variance. Increase the total, change the variance or reshuffle.",
+  "scaledRandomRequired": "Generate a random breakdown before reviewing.",
+  "scaledRandomHint": "Each quantity stays within the selected percentage of the mean quantity. This breakdown stays fixed until you edit its inputs or reshuffle; changing language never redraws it.",
+  "scaledReshuffle": "Reshuffle quantities",
+  "scaledUnallocatedQuote": "Unallocated order amount",
+  "scaledAmountHint": "Order amount is the sum of child limit price × quantity, without leverage multiplication. Quote input is rounded down to valid base quantities; the unallocated amount is shown. This excludes fees and is not a margin or final execution-cost limit.",
+  "scaledBaseRemainderHint": "The entered base quantity is conserved exactly. Remaining steps go to the largest fractional remainders, with ties assigned from low to high price.",
+  "scaledPreviousChildren": "Previous orders",
+  "scaledNextChildren": "Next orders",
+  "scaledChildType": "Child order type",
+  "scaledEnteredSize": "Entered total",
+  "scaledPage": "Orders {start}–{end} of {total}",
+  "@scaledPage": {
+    "placeholders": {
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "scaledCountRange": "2–110",
+  "assistantNavigation": "AI",
+  "orderModeLabel": "Order type",
+  "orderModeMore": "More order types",
+  "orderModeStopLimit": "TP/SL Limit",
+  "orderModeStopMarket": "TP/SL Market",
+  "orderModeChase": "Chase",
+  "orderModeTwap": "TWAP",
+  "orderModeChaseUnavailable": "Chase orders are not available yet.",
+  "orderModeTwapUnavailable": "Currently unavailable. TWAP is not included in this release."
+}

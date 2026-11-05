@@ -1,0 +1,121 @@
+{
+  "recorded_at_utc": "2026-11-05T06:41:11.552638+00:00",
+  "increment": "Per-opening-mode persistent confirmation preferences, shared Limit/Post Only and main market/quick entry, explicit opt-out/reset and localized reviews",
+  "contract": "order-confirmation-public-contract.json",
+  "tests": {
+    "baseline_full": 3819,
+    "new_total": 50,
+    "domain_storage_provider": 29,
+    "widgets": 21,
+    "full_passed": 3869,
+    "exit_code": 0,
+    "coverage": [
+      "Limit GTC/IOC/GTX/HIDDEN grouping, STOP/TAKE_PROFIT conditional groups across direction, market/quick same provider and independent trailing.",
+      "Actual LocalOrderConfirmationPreferences mapping via injectable SharedPreferencesAsync backend; legacy vanta.confirmMarketOrders false retained without disabling other modes, missing values true, independent keys survive repository reconstruction, corrupted boolean/write failures propagate.",
+      "Each mode default/read failure/restoration and failed save from disabled value; failure/loading prevents skipping. Saved state retained on failure; recovery by explicit successful choice.",
+      "Late read cannot overwrite explicit update; ordered same-mode writes, independent-mode writes/reads, failed queue then successful write, disposal discards delayed state.",
+      "EN/ZH all five actual opening form modes: default checkbox false, opt-out+cancel no save, reopening resets checkbox, confirm+opt-out exact current-mode save, later submit skips app review, re-enable returns review, locale change while dialog open updates controls without losing selection/intent.",
+      "Actual PostOnly selection uses shared limit preference and submits GTX; conditional-limit remains enabled independently.",
+      "Dedicated close review remains required even with market opt-out; no opening preference or opt-out checkbox on close.",
+      "Preference-save failure still sends already-confirmed original intent once; next attempt reviews; slow save plus changed account context prevents old submission; identity change while dialog open prevents saving/submitting.",
+      "Opt-out with unknown result disables submission/preferences; GET-only recheck uses same ID and does not resubmit.",
+      "Attached TP protection obeys parent limit/market setting and preserves original base qty/strategy type; main market opt-out actually propagates to chart quick entry, chart can re-enable same setting. Read failure defaults to review.",
+      "EN/ZH320width text1.5 and844x390landscape for all five confirmation dialogs;768x1024tablet setting/language changes preserve mode, no additional private reads.",
+      "Full existing unit/widget regression includes main order/quote sizing, conditional/trailing, BBO, close, attached TP/SL, quick entry, pending recovery and Futures/Spot history."
+    ],
+    "existing_regression_update": "Four attached TP/SL review scenarios now use default enabled preference rather than explicitly disabling market and expecting forced review; two new tests exercise explicitly disabled attached openings. Prior financial/recovery assertions retained."
+  },
+  "format": {
+    "files": 818,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1632,
+    "zh": 1632,
+    "message_keys_equal": true,
+    "new_per_locale": 7,
+    "updated_existing_per_locale": 2
+  },
+  "android": {
+    "command": "flutter build apk --release --target-platform android-arm64 --dart-define-from-file=config/privy.local.json",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45840644,
+    "sha256": "b38f874db639b5aa1d0fe54279b93e4b6b712ed522224d60ec24f18330a468d8",
+    "aot_bytes": 15860616,
+    "packaged_probes": {
+      "en:orderConfirmLimit": true,
+      "en:orderConfirmStopLimit": true,
+      "en:orderConfirmStopMarket": true,
+      "en:orderConfirmTrailing": true,
+      "en:orderConfirmDoNotShow": true,
+      "en:orderConfirmWalletHint": true,
+      "en:quickOrderPreferenceFailure": true,
+      "zh:orderConfirmLimit": true,
+      "zh:orderConfirmStopLimit": true,
+      "zh:orderConfirmStopMarket": true,
+      "zh:orderConfirmTrailing": true,
+      "zh:orderConfirmDoNotShow": true,
+      "zh:orderConfirmWalletHint": true,
+      "zh:quickOrderPreferenceFailure": true
+    },
+    "installed": false,
+    "device_tools_used": false,
+    "notices": "Existing third-party Built-in Kotlin migration notices; normal Release build passed; local development signing, not production publication."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux; no macOS/Xcode"
+  },
+  "performed": {
+    "synthetic_tests": true,
+    "actual_wallet_signature": false,
+    "actual_private_api": false,
+    "address_bearing_rpc": false,
+    "financial_actions": false,
+    "native_device_testing": false,
+    "local_privy_config_read_by_agent": false
+  },
+  "public_reads": "Cached Notion Futures PRD confirmation and first-visit sections inspected; local rwa-interface searched for relevant settings patterns (no reusable order-confirmation implementation found); normal Flutter build dependency resolution only. No real account/chat/financial/address-bearing request.",
+  "remaining": [
+    "Actual native SharedPreferences persistence/storage errors, existing wallet signatures/return, keyboard/layout/accessibility remain deferred by user.",
+    "Unimplemented Chase and user-deferred TWAP are not covered by these preferences; Scaled keeps its existing dedicated confirmation.",
+    "Scaled quote budget/distribution/count/first-visit defaults and overall first navigation/account defaults audit remain incomplete; custom slippage lacks execution contract.",
+    "Full Portfolio/Swap/private data auth, Chase recovery and full strategy list remain incomplete; overall PRD goal active."
+  ],
+  "review": "Provider owns async preference state and ordered writes; service owns local storage. Presentation controls extracted from main form (362lines); review account/financial terms extracted into cohesive widgets with build methods below80lines. No new dependency or financial transport change.",
+  "logs": {
+    "full": "/tmp/vanta-order-confirmation-all-tests-final.log",
+    "format": "/tmp/vanta-order-confirmation-format-clean.log",
+    "analysis": "/tmp/vanta-order-confirmation-analysis-final.log",
+    "build": "/tmp/vanta-order-confirmation-build-final.log",
+    "domain": "/tmp/vanta-order-confirmation-domain.log",
+    "widgets_before_final_full": "/tmp/vanta-order-confirmation-widgets-second.log",
+    "shared": "/tmp/vanta-order-confirmation-shared-final.log",
+    "existing_regression": "/tmp/vanta-order-confirmation-regression.log"
+  },
+  "verification_note": "Initial mode widget tests detected genuinely stale localized dialog labels; both main and quick dialog builders now resolve localization at rebuild. Initial attached tests used a nonexistent input key and an ordinary-order parameter accessor for a strategy; corrected to actual PnL input key and strategy accessor. Final full3869test log is authoritative after extraction and localization text updates.",
+  "source_sha256": {
+    "lib/features/portfolio/domain/order_confirmation.dart": "cc0cd6a24d0cbd9f46cf3edc3449ccae5826fc00f4fc6983ef716bfce0e5b86e",
+    "lib/features/portfolio/data/order_confirmation_preferences.dart": "d3f003a0e7fde44f7ae7ca5ea4576bb4b8568c4fbd48926d5544918c8eb76cf2",
+    "lib/features/portfolio/application/order_confirmation_provider.dart": "fc358bdb1fa6cf9f9103ee961b15709a04ce477176d2b70699957bc0fa5d0087",
+    "lib/features/portfolio/presentation/order_confirmation_control.dart": "9f05ea1d437d2c4ad783d782e81b09eee1a85c127015c967ccfa41af3c98b12b",
+    "lib/features/portfolio/presentation/live_order_form.dart": "da9775055e3bdda83e2028a9333e6f7ec9ba89676cfff0a4050a847cc5a79359",
+    "lib/features/portfolio/presentation/live_order_review.dart": "cae24c69adfabae5bc1cff5a0107918ca528464a1ccd0c066fc6efd8a1d0b97a",
+    "lib/features/portfolio/presentation/quick_order_review.dart": "73d7f7161dbe9255351b33d782db78f619a51266dce8b2cadecd4f87756f1efb",
+    "lib/l10n/app_en.arb": "9da1777b0349bb977c3f6c812362702ae139c5b57c3042e1e75a525e4d7d948d",
+    "lib/l10n/app_zh.arb": "76111354cb082f5c3f65a0755e6c801ba47a786f4d365118ed4520055f7eec85",
+    "test/features/portfolio/order_confirmation_modes_test.dart": "597720dc7cf7b68ce25ce50697133b540f6128fbbb49730985d1c7c8b3db7d4a",
+    "test/features/portfolio/order_confirmation_widget_test.dart": "7d56a8e884a4be911d474fae563dda8ad1576978f6cae8b733d2fc101a032a77",
+    "test/features/portfolio/order_confirmation_shared_widget_test.dart": "270ec449a0f1f053509d6feee2349ebab8d02b420d61673f6eb0c06a77b4cc4f",
+    "test/features/portfolio/order_confirmation_provider_test.dart": "15647d93d3546412cb418a93372eabc392c6c73bdbcb0c72bc6ad0b9d2b53694",
+    "test/features/portfolio/attached_order_widget_test.dart": "6b21edc850ea156aa6a9607fbdb48e69a34c6e316c4b33c81446a3875ac0009a",
+    "test/support/quick_order.dart": "420b790cb12ad23f8eb00abfd4e2f98069e95bfd0acebe1da5a3296277e45969",
+    "test/support/order_confirmation_widget.dart": "cbf061a62e1a4d8c266e8b1591196c550138d34a5fa25bad53b77a2478b9a7e6"
+  }
+}

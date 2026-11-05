@@ -1,0 +1,62 @@
+{
+  "recorded_at_utc": "2026-11-03T13:19:29.046820+00:00",
+  "prd": "https://app.notion.com/p/408080d974e7803f8710f5e688c0d103",
+  "contract": "subaccount-list-public-contract.json",
+  "scope": "Explicit signed sub-account directory, account-menu entry, names/copyable exact IDs/parent labels/search, safe read lifecycle. Does not create, select, freeze or transfer accounts.",
+  "automated_tests": 1402,
+  "new_tests": 39,
+  "format_dart_files": 447,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 893,
+    "zh": 893
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43351868,
+    "sha256": "ef5f47852f88d7a0237738f843e90d433760a254d4449317885b755ef9e8c818"
+  },
+  "native_testing": "Skipped at user request. No device tools, APK install, live wallet/directory reads or native clipboard/layout tests. See ../native-verification-pending.md.",
+  "ios": "Linux lacks macOS/Xcode; build and native flows unverified.",
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "acceptance_evidence": {
+    "opaque_64_bit_ids_immutable_names_parent_flags_duplicates_empty_resource_limits": [
+      "test/features/subaccounts/subaccount_list_mapper_test.dart"
+    ],
+    "exact_same_eoa_microsecond_nonce_get_bytes_rejection_scope_change_redirect_safe_errors": [
+      "test/features/subaccounts/signed_subaccount_list_repository_test.dart"
+    ],
+    "explicit_refresh_retry_stop_scope_changes_disposal_expiry_client_retention": [
+      "test/features/subaccounts/subaccount_list_provider_test.dart"
+    ],
+    "account_menu_entry_bilingual_320_large_text_landscape_clipboard_search_failed_refresh_empty_logout_no_selection": [
+      "test/features/subaccounts/subaccount_list_widget_test.dart"
+    ],
+    "same_address_wallet_kind_change_updates_auth_scope": [
+      "test/features/auth/auth_provider_test.dart"
+    ],
+    "asset_index_auto_disposed_transport_retained_through_delayed_read": [
+      "test/features/portfolio/asset_index_provider_test.dart"
+    ],
+    "existing_behavior_regression": "Full suite including account reads, orders/configuration, notifications, funding history, asset valuation, recovery, auth and charts."
+  },
+  "logs": {
+    "tests": "/tmp/vanta-subaccounts-all-tests.log",
+    "analysis": "/tmp/vanta-subaccounts-analysis-clean.log",
+    "format": "/tmp/vanta-subaccounts-format-clean.log",
+    "build": "/tmp/vanta-subaccounts-build.log",
+    "targeted": "/tmp/vanta-subaccounts-lifecycle-tests.log"
+  },
+  "boundaries": [
+    "List only documents accountId/name/parentAccount; no wallet address, status or switching authorization is inferred.",
+    "Current EOA is the only signer attempted; master-associated signer acceptance remains unverified. No agent or substitute wallet generated.",
+    "PRD ten-child limit belongs to creation. Existing lists over ten are not truncated; malformed or resource-overflow responses are safely rejected.",
+    "Read does not modify authenticated identity, demo account or active trading wallet. Stop waiting does not claim to dismiss an external wallet prompt.",
+    "Creation child custody preference and independent child signature, address mapping, switching authorization, freeze status verification and cross-account transfers remain incomplete.",
+    "Enable-trading self-EOA flow, actual funding/transfers, full Portfolio and Chase/BBO/Scaled remain incomplete; BAPI historical statistics/TWAP skipped at user request."
+  ],
+  "build_notes": "Passed with existing future KGP compatibility warning from third-party native plugins."
+}

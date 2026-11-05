@@ -1,0 +1,34 @@
+{
+  "verified_at_utc": "2026-11-02T19:57:36.555471+00:00",
+  "source": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+  "source_sha256": "531a4d4647631d3c162fc2b4f7f301930e72b4dbbec98f0f1148d4c81e51621c",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "prd_requirements": [
+    "symbol+orderId deduplication",
+    "partial fills remain; terminal orders removed",
+    "filtered count matches list",
+    "preserve original creation time, never replace it with update time",
+    "exact original/filled/remaining quantities with contract units"
+  ],
+  "checks": {
+    "raw_user_stream_path": true,
+    "order_event": true,
+    "sort_using_E": true,
+    "quantity_q": true,
+    "cumulative_filled_z": true,
+    "order_trade_time_T": true,
+    "original_type_ot": true,
+    "conditional_close_all_cp": true,
+    "partial_status": true,
+    "final_statuses": true,
+    "no_documented_creation_time_in_event": true
+  },
+  "private_live_requests_sent": false,
+  "boundaries": [
+    "Events update individual orders after an explicit complete REST baseline.",
+    "REST updateTime and event o.T compare per order; stream E orders events.",
+    "New order creation time stays unknown until signed REST proves it.",
+    "Unknown/future status (including NEW_INSURANCE and NEW_ADL) disconnects and requires recheck; no guessed terminal classification.",
+    "Whole-list completeness is not guaranteed by the event stream; gaps require explicit signed refresh."
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "verified_at_utc": "2026-11-02T20:19:01.008651+00:00",
+  "platform": "Android 12",
+  "package": "exchange.vanta.vanta",
+  "apk": {
+    "bytes": 42499192,
+    "sha256": "45425f17c5b46353f6adfb1462c7b37256eafb5061cab52ab885bdf8cc896100",
+    "installed_and_native_checked": true
+  },
+  "automated_tests": 434,
+  "new_unit_widget_tests": 31,
+  "final_related_widget_tests": 9,
+  "test_sequence_note": "Full suite passed before the final initiallyExpanded sheet change; nine related widget tests passed afterward on final code.",
+  "format_dart_files": 230,
+  "format_changed_files": 0,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 481,
+    "zh": 481
+  },
+  "official_contract": "open-orders-events-public-contract.json",
+  "native_checks": [
+    "Chinese real open-orders section exposes the shared account monitor entry",
+    "Monitor opens expanded and explains per-order merging versus stale balance and position snapshots",
+    "Sign-in opens actual Privy/EOA UI; no login or wallet creation performed",
+    "English expanded scope and action are readable",
+    "English landscape 2400x1080 sheet fits with accessible action",
+    "Original Chinese, accelerometer_rotation=0, user_rotation=0 and font_scale=1.0 restored"
+  ],
+  "screenshots": [
+    "open-orders-events-entry-zh-android.png",
+    "open-orders-events-zh-android.png",
+    "open-orders-events-login-android.png",
+    "open-orders-events-en-android.png",
+    "open-orders-events-landscape-android.png"
+  ],
+  "unit_widget_checks": [
+    "Strict validated ORDER_TRADE_UPDATE mapping and Decimal quantities",
+    "Symbol plus order ID deduplication; partial fill remains and terminal event removes",
+    "Per-order E ordering, o.T versus REST updateTime and nonregressing cumulative fills",
+    "Terminal records prevent delayed active events or stale snapshots resurrecting orders",
+    "Explicit full REST baseline required; events during reads reconcile with returned snapshots",
+    "Concurrent events survive single and batch cancellation query reconciliation",
+    "Newer events produce current-list review warning; unknown cancellation results retain GET-only retry",
+    "Creation time stays separate from update time; event-only creation time and unknown units labeled explicitly",
+    "Wallet scope reset and 10000-key capacity fail closed without evicting terminal protection",
+    "Unknown states including NEW_INSURANCE and NEW_ADL disconnect and require recheck",
+    "Chinese and English narrow, enlarged text and landscape layouts"
+  ],
+  "live_private_requests_sent": false,
+  "financial_actions_sent": false,
+  "signed_in_native_values_faked": false,
+  "unverified": [
+    "Real authorized EOA/Privy signing acceptance, listenKey and private events",
+    "Signed-in physical device order updates; controlled widget fixtures only",
+    "iOS build requires macOS/Xcode unavailable in this Linux environment"
+  ],
+  "remaining": [
+    "Balance and position quantity event merging and complete gap recovery",
+    "ROI, cross initial margin, close/reverse, margin changes and TP/SL",
+    "Real order entry, subaccounts, transfers, deposits, withdrawals and notification list",
+    "Other PRD requirements; private BAPI historical statistics and TWAP skipped per user instruction"
+  ]
+}

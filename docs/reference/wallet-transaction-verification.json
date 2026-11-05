@@ -1,0 +1,64 @@
+{
+  "recorded_at_utc": "2026-11-03T18:03:45.822344+00:00",
+  "scope": "EOA/Reown and existing Privy wallet transaction send transport. No funding submit UI or completed deposit flow.",
+  "contract": "wallet-transaction-public-contract.json",
+  "automated_tests": 1916,
+  "new_tests": 83,
+  "format_dart_files": 522,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 1024,
+    "zh": 1024
+  },
+  "acceptance_evidence": {
+    "domain_and_dispatch": {
+      "new_tests": 37,
+      "file": "test/features/auth/wallet_transaction_test.dart",
+      "coverage": "Three-chain exact immutable BigInt RPC payloads; invalid address/calldata/quantity/nonce bounds; safe structured 4001 vs ambiguous failures; malformed/zero/hash/signature responses, async modal failure containment and no retry."
+    },
+    "reown_adapter": {
+      "new_tests": 11,
+      "file": "test/features/auth/reown_wallet_connection_test.dart",
+      "coverage": "Exact original topic/chain/method and params; old permissions, chain mismatch, stale/scope and address failures before request; duplicate guard, account changes retain hash, structured vs string rejection and signature-shaped response."
+    },
+    "external_identity": {
+      "new_tests": 9,
+      "file": "test/features/auth/external_wallet_repository_test.dart",
+      "coverage": "Direct EOA delegation, no Privy fallback or new wallet; restored non-signing EOA, wrong address/caller/logout/disposal preflight, duplicate lock, returned hash after invalidation, known not-sent vs ambiguous errors."
+    },
+    "privy_native_channel": {
+      "new_tests": 26,
+      "file": "test/features/auth/privy_transaction_test.dart",
+      "coverage": "Exact native ethSendRpcRequest with transaction JSON string and existing walletAddress; no new wallet, missing/duplicate wallet and local scope preflight, code4001 vs RPC_REQUEST_FAILED, malformed native responses, logout/disposal/user/scope changes preserve hash, duplicate guard, same-user SDK refresh and transaction-only method boundary."
+    },
+    "full_regression": "All 1916 existing and new tests pass after final code changes, including previous auth, bilingual Widget and funding flows."
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43614012,
+    "sha256": "97c2a064e24741b7cf1381d82a9aad718b310dcc4dc45782c6bb47f5bb848e92"
+  },
+  "build_notes": "Successful build retains existing third-party Kotlin compatibility notices; not installed.",
+  "ios": "Linux lacks macOS/Xcode; no iOS build or native verification.",
+  "native_testing": "Not performed at user request. Only fake SDK/modal/MethodChannel and automated host tests; see ../native-verification-pending.md.",
+  "real_wallet_requests_sent": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "device_tools_used": false,
+  "remaining": [
+    "Funding confirmation and durable pre-dispatch journal, saving returned hashes under original wallet after scope loss.",
+    "Receipt/transaction binding, unknown-hash and nonce recovery, replacement/reorg handling and platform credit tracking.",
+    "Explicit safe chain switching, reauthorization of older Reown sessions, final fees/caps and native Max.",
+    "Privy native may normalize provider 4001 to RPC_REQUEST_FAILED; wrapped or textual refusal remains unknown.",
+    "No deposit, withdrawal or transfer workflow is complete. Full objective remains active."
+  ],
+  "logs": {
+    "focused": "/tmp/vanta-wallet-send-focused-final.log",
+    "all_tests": "/tmp/vanta-wallet-send-all-tests.log",
+    "analysis": "/tmp/vanta-wallet-send-analysis.log",
+    "format": "/tmp/vanta-wallet-send-format-clean.log",
+    "build": "/tmp/vanta-wallet-send-build.log"
+  }
+}

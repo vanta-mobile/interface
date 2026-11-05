@@ -1,0 +1,55 @@
+{
+  "recorded_at_utc": "2026-11-03T22:51:47.480235+00:00",
+  "scope": "Vanta points home public campaigns/rankings and explicit address-bearing personal reads; not retail events or AI",
+  "contract": "points-public-contract.json",
+  "automated_tests": 2560,
+  "new_tests": 92,
+  "test_breakdown": {
+    "mapper": 43,
+    "repository": 17,
+    "controller": 16,
+    "widget": 16
+  },
+  "format": "611 Dart files, zero changes after final formatting",
+  "analysis": "No issues found",
+  "localized_messages_per_language": {
+    "en": 1206,
+    "zh": 1206
+  },
+  "acceptance_evidence": {
+    "mapper": "Exact Decimal/raw numeric tokens/int64 IDs, strict zoned dates, source scope/status/order, current-null versus missing, no zero coercion, duplicate/bounded collections, per-cycle response match, exact returned ranks, EVM/Solana address keys, wallet history binding and immutable models",
+    "repository": "Mock HTTP only: six paths for five readers, fixed origin/GET/no credentials/body/query/signature, explicit wallet reads only, raw JSON precision, no redirects/retry, malformed/HTML/HTTP/timeout safe errors and invalid paths without network",
+    "controller": "Public display loads and shared dedup, explicit unsigned personal reads, five-minute expiry while refresh pending without polling, independent failure retention/retry, stop/background/disposal late response isolation, public-only foreground resume, ID/address/kind/logout clearing, no wallet creation, signing availability independence, wrong scope/time rejection and client lifetime",
+    "widget": "EN/ZH320 width/text1.5,844x390 landscape,768x1024tablet; long cycle dropdown and pagination, signed-out unknown values, explicit wallet read/history, copyable address, partial failure/retry, stop/loading, empty states, removed selected cycle/history unknown, app route disposal and personal state retained across long page scroll",
+    "packaged_aot": "APK lib/arm64-v8a/libapp.so inspected without running; contains points-page, points-read-wallet, PublicPointsRepository, api.vanta.exchange and Vanta Genesis Points"
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 44007228,
+    "sha256": "95cffcf7673a0df4d6c3accc2a76135ee1b178afda9931a7b9b0e39bf44b56ca"
+  },
+  "ios": "Linux has no macOS/Xcode; not built or natively verified",
+  "device_tools_used": false,
+  "personal_network_requests_sent": false,
+  "real_wallet_requests_sent": false,
+  "live_rpc_requests_sent": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "public_network_reads": "Anonymous Notion/current public site/runtime config/chunks and Vanta public cycles/rankings/retail events/detail. No personal wallet endpoint or chat request. See contract response hashes.",
+  "native_testing": "Deferred by user; see ../native-verification-pending.md",
+  "remaining": [
+    "Actual personal response and native phone networking/layout pending; personal schema source/fixture validated only",
+    "Retail event list/detail and signed actions, AI assistant not implemented",
+    "Overall PRD incomplete: enable-trading, subaccount management/main-sub transfers, actual external funding, Chase, full Portfolio and asset metadata/collateral/Swap"
+  ],
+  "logs": {
+    "feature": "/tmp/vanta-points-feature-tests.log",
+    "full": "/tmp/vanta-points-all-tests.log",
+    "analysis": "/tmp/vanta-points-analysis-clean.log",
+    "format": "/tmp/vanta-points-format-clean.log",
+    "build": "/tmp/vanta-points-build.log"
+  },
+  "log_note": "Final feature/full logs pass all92 new cases. Earlier exploratory failing logs are not acceptance evidence."
+}

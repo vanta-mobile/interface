@@ -1,0 +1,66 @@
+{
+  "recorded_at_utc": "2026-11-03T15:12:28.953087+00:00",
+  "prd": "https://app.notion.com/p/408080d974e780c1a02ee022e970ec64",
+  "contract": "deposit-wallet-public-contract.json",
+  "scope": "Read-only deposit wallet balances and token allowance on three documented EVM chains, exact minimum/amount/unit checks, retained inputs and scope-safe public reads. No approval/deposit submission.",
+  "automated_tests": 1609,
+  "new_tests": 78,
+  "format_dart_files": 490,
+  "analysis": "no issues",
+  "localized_messages_per_language": {
+    "en": 971,
+    "zh": 971
+  },
+  "android_release": {
+    "built": true,
+    "installed": false,
+    "target": "android-arm64",
+    "bytes": 43482940,
+    "sha256": "1145f4ddf991dd21f20520ac3bb41948c6b7ce0d1a9cc2038a0b78297856aed8"
+  },
+  "native_testing": "Skipped at user request. No device tools or APK install; actual wallet balances, RPC phone network, layout, copying, keyboard, resume/expiry and all financial execution remain unverified; see ../native-verification-pending.md.",
+  "ios": "Linux lacks macOS/Xcode; build and native flows unverified.",
+  "real_wallet_balances_read": false,
+  "private_live_requests_sent": false,
+  "financial_actions_sent": false,
+  "anonymous_live_evidence": "Only eth_chainId at three PublicNode origins; exact returns and SHA256 recorded in contract. Current public website component/hook/API sources read to confirm remaining private platform-cap dependencies.",
+  "production_decoder_regression": "Current production decoder/mapper accepted four saved public catalogs and three saved fee responses again, with exact values and original capture/hash evidence retained.",
+  "acceptance_evidence": {
+    "decimal_smallest_units_uint256_precision_minimum_balance_allowance_metadata_and_strict_lossless_json": {
+      "tests": 33,
+      "file": "test/features/funding/deposit_amount_test.dart"
+    },
+    "three_chains_fixed_block_rpc_ids_exact_words_reorg_decimals_scope_errors_whitelist_and_transport": {
+      "tests": 27,
+      "file": "test/features/funding/deposit_wallet_repository_test.dart"
+    },
+    "manual_non_signing_eoa_reads_expiry_retry_wallet_changes_stop_wrong_scope_and_transport_lifetime": {
+      "tests": 10,
+      "file": "test/features/funding/deposit_wallet_provider_test.dart"
+    },
+    "bilingual_320_large_text_landscape_inputs_offscreen_failure_max_wallet_reset_entries_native_signedout_stop_disposal": {
+      "tests": 8,
+      "file": "test/features/funding/deposit_wallet_widget_test.dart"
+    },
+    "existing_behavior_regression": "Full suite including original public fee/catalog, signed funding reads/history, auth/subaccounts, orders/configuration/recovery, account streams, notifications, valuation and charts."
+  },
+  "logs": {
+    "all_tests": "/tmp/vanta-deposit-wallet-all-tests.log",
+    "domain_repositories": "/tmp/vanta-deposit-wallet-domain-repository-tests.log",
+    "providers": "/tmp/vanta-deposit-wallet-provider-tests.log",
+    "widget": "/tmp/vanta-deposit-wallet-widget-tests.log",
+    "analysis": "/tmp/vanta-deposit-wallet-analysis.log",
+    "format": "/tmp/vanta-deposit-wallet-format-clean.log",
+    "build": "/tmp/vanta-deposit-wallet-build.log",
+    "catalog_mapper": "/tmp/vanta-deposit-wallet-public-map.log",
+    "fee_mapper": "/tmp/vanta-deposit-wallet-fee-map.log"
+  },
+  "boundaries": [
+    "Read-only public RPC permits restored wallet identities without signing capability; no extra wallet creation and no broadcast method allowed.",
+    "Token wallet Max is only the read token balance, not platform-deposit allowance. Native Max remains disabled until gas is estimated.",
+    "Unknown minimum, old/missing balance, wrong network/decimals or block reorganization do not produce qualifying amount output.",
+    "Private website BAPI residual/platform caps remain unavailable. Actual gas/chain switching/approval/deposit/broadcast recovery/receipt and account-credit reconciliation are still incomplete.",
+    "Enable-trading, actual withdrawal/transfers, complete subaccounts/Portfolio and Chase/BBO/Scaled remain incomplete. BAPI historical statistics/TWAP skipped at user request."
+  ],
+  "build_notes": "Release passed with existing third-party Kotlin migration/compatibility warnings; not installed."
+}
