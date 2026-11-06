@@ -1324,3 +1324,11 @@ Android 12 真机通过系统注入双触点 MotionEvent，对比修复前后“
 使用相同 Privy 应用/客户端公开配置及随机 PKCE challenge/state 重新验证 Google `oauth/init`：HTTP 200，并返回有效 OAuth 登录链接，之前 `vanta-privy://` 的 HTTP 401 白名单错误已消失。仅验证登录初始化，未提交 Google 账号凭证或完成授权；未记录授权链接、随机值或凭证。Android/iOS 声明结构校验及格式化通过；iOS 构建受 Linux/Xcode 环境限制。
 
 此次回调变更的最终验证：全仓静态分析无问题、Privy repository 的 19 项测试通过、Android debug APK 构建成功并安装到 Android 12 真机（包名 `exchange.vanta.app`）。
+
+### 开源许可证与双语 README（2026-11-06）
+
+参考 `/data/dodo/rwa-interface`，新增根目录 `LICENSE`，逐字采用相同的 GNU GPL v3.0 完整协议；第三方图表组件和字体的原许可证保留，并在 README 提供入口。根目录 `README.md` 默认英文，新增 `docs/zh/README.md` 简体中文版本，双向语言切换与相同章节结构保持对应。
+
+README 复用现有 Vanta 品牌标志，增加指向本仓库的 CI／原生性能徽章、Flutter 版本和许可证徽章，补充功能、平台支持、安装配置、常用命令、架构、仓库结构、质量检查和文档导航。内容按 Vanta 的实际 Makefile、SDK、工作流和功能边界编写，明确演示资金、实盘权限与待验收范围。本次仅修改许可证和文档，未调整应用语言默认值、界面、依赖或交易逻辑。
+
+验证：38 处本地 README 链接与图片引用有效，章节数量对应；中英文 shell 示例一致，全部 make 目标存在；`LICENSE` 与参考文件逐字节一致；`git diff --check` 通过。952 个 Dart 文件格式检查零改动，`dart analyze --fatal-infos` 无问题；现有本地化及主页面测试共 16 项通过。`flutter build apk --release --target-platform android-arm64 --no-pub` 构建通过，使用 CI 同款不带钱包配置的开发签名构建，未安装或发布。Linux 环境缺少 macOS／Xcode，未执行 iOS 构建；本次无原生界面改动，未新增设备视觉验收。
