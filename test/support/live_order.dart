@@ -29,6 +29,7 @@ Map<String, dynamic> liveExchangePayload() => {
       'baseAsset': 'BTC',
       'quoteAsset': 'USDT',
       'marginAsset': 'USDT',
+      'pricePrecision': 2,
       'orderTypes': [
         'LIMIT',
         'MARKET',

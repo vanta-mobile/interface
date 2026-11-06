@@ -1,8 +1,13 @@
+import 'package:vanta/features/portfolio/application/main_order_pricing_provider.dart';
 import 'package:vanta/features/portfolio/application/futures_history_provider.dart';
 import 'package:vanta/features/portfolio/domain/futures_history.dart';
 import 'package:vanta/features/portfolio/application/asset_metadata_provider.dart';
 
 import 'asset_metadata.dart';
+import 'main_order_capacity.dart';
+
+import 'package:vanta/features/portfolio/application/main_order_capacity_provider.dart';
+import 'package:vanta/features/portfolio/domain/main_order_capacity.dart';
 
 import 'package:vanta/features/points/application/points_provider.dart';
 import 'package:vanta/features/points/domain/points.dart';
@@ -197,6 +202,7 @@ ProviderContainer setup(
   Future<List<AsterInstrument>> Function()? instrumentsLoader,
   IdentityRepository? identityRepository,
   LiveOrderRepository? liveOrderRepository,
+  MainOrderCapacityRepository? mainOrderCapacityRepository,
   QuickOrderRepository? quickOrderRepository,
   OrderConfirmationPreferences? orderConfirmationPreferences,
   OrderRecoveryJournal? recoveryJournal,
@@ -303,6 +309,10 @@ ProviderContainer setup(
       if (monitorClock != null) accountChangeClockProvider.overrideWithValue(monitorClock),
       if (liveOrderRepository != null)
         liveOrderRepositoryProvider.overrideWithValue(liveOrderRepository),
+      mainOrderPricingProvider.overrideWith(fixtureBoundedPricing),
+      mainOrderCapacityRepositoryProvider.overrideWithValue(
+        mainOrderCapacityRepository ?? FixtureCapacityRepository(),
+      ),
       if (quickOrderRepository != null)
         quickOrderRepositoryProvider.overrideWithValue(quickOrderRepository),
       if (orderConfirmationPreferences != null)

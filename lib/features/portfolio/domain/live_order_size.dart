@@ -21,28 +21,7 @@ class LiveOrderSize {
     if (input == null || input <= Decimal.zero) {
       return const OrderSizeResolution(failure: 'liveAmountInvalid');
     }
-    final (Decimal? reference, OrderSizeReference basis) = switch (entry) {
-      LiveOrderDraft(trigger: final trigger?, market: true) => (
-        parseOrderDecimal(trigger.price),
-        OrderSizeReference.trigger,
-      ),
-      LiveOrderDraft(trailing: final trailing?) => (
-        trailing.basis == LiveOrderTriggerBasis.mark ? data.markPrice : data.lastPrice,
-        trailing.basis == LiveOrderTriggerBasis.mark
-            ? OrderSizeReference.mark
-            : OrderSizeReference.last,
-      ),
-      LiveOrderDraft(pegged: true, trigger: final trigger?) => (
-        parseOrderDecimal(trigger.price),
-        OrderSizeReference.trigger,
-      ),
-      LiveOrderDraft(pegged: true) => (data.markPrice, OrderSizeReference.bboMark),
-      LiveOrderDraft(market: false) => (parseOrderDecimal(entry.price), OrderSizeReference.limit),
-      _ => (
-        entry.buy ? data.ask : data.bid,
-        entry.buy ? OrderSizeReference.ask : OrderSizeReference.bid,
-      ),
-    };
+    final (reference, basis) = orderSizeReference(data, entry);
     if (reference == null || reference <= Decimal.zero) {
       return const OrderSizeResolution(failure: 'liveAmountReferenceUnavailable');
     }
@@ -71,7 +50,7 @@ class LiveOrderSize {
       input: input,
       reference: reference,
       basis: basis,
-      referenceAt: data.receivedAt,
+      referenceAt: orderSizeReferenceAt(data, basis),
       estimatedNotional: quantity * reference,
     );
   }
@@ -101,3 +80,41 @@ String? initialLiveLimitPrice(LiveOrderContext data) {
   final last = data.lastPrice;
   return last != null && last > Decimal.zero && data.rules.acceptsPrice(last) ? '$last' : null;
 }
+
+/// Conversion reference shared by manual and percentage inputs. It remains
+/// separate from the opening-cost execution/loss assumptions.
+(Decimal?, OrderSizeReference) orderSizeReference(LiveOrderContext data, LiveOrderDraft entry) =>
+    switch (entry) {
+      LiveOrderDraft(peg: final peg?) => (
+        data.referenceExecutionPrice(entry),
+        peg.usesAsk(entry.buy) ? OrderSizeReference.ask : OrderSizeReference.bid,
+      ),
+      LiveOrderDraft(trigger: final trigger?, market: true) => (
+        parseOrderDecimal(trigger.price),
+        OrderSizeReference.trigger,
+      ),
+      LiveOrderDraft(trailing: final trailing?) => (
+        trailing.basis == LiveOrderTriggerBasis.mark ? data.markPrice : data.lastPrice,
+        trailing.basis == LiveOrderTriggerBasis.mark
+            ? OrderSizeReference.mark
+            : OrderSizeReference.last,
+      ),
+      LiveOrderDraft(pegged: true, trigger: final trigger?) => (
+        parseOrderDecimal(trigger.price),
+        OrderSizeReference.trigger,
+      ),
+      LiveOrderDraft(pegged: true) => (data.markPrice, OrderSizeReference.bboMark),
+      LiveOrderDraft(market: false) => (parseOrderDecimal(entry.price), OrderSizeReference.limit),
+      _ => (
+        entry.buy ? data.ask : data.bid,
+        entry.buy ? OrderSizeReference.ask : OrderSizeReference.bid,
+      ),
+    };
+
+/// Label the actual quote receipt, without extending the private account lease.
+DateTime orderSizeReferenceAt(LiveOrderContext data, OrderSizeReference basis) => switch (basis) {
+  OrderSizeReference.ask || OrderSizeReference.bid => data.bookReceivedAt ?? data.receivedAt,
+  OrderSizeReference.mark || OrderSizeReference.bboMark => data.markReceivedAt ?? data.receivedAt,
+  OrderSizeReference.last => data.lastReceivedAt ?? data.receivedAt,
+  OrderSizeReference.limit || OrderSizeReference.trigger => data.receivedAt,
+};

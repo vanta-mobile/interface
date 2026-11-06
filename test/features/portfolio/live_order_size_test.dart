@@ -196,19 +196,19 @@ void main() {
       expect(value.basis, market ? OrderSizeReference.trigger : OrderSizeReference.limit);
     });
   }
-  test('BBO conversion labels indicative Mark and conditional trigger', () {
+  test('ordinary BBO conversion labels selected book, not Mark or trigger', () {
     final regular = resolve(
       '70',
       draft: liveDraft(price: '', peg: LiveOrderPeg.counterparty),
     );
     expect(regular.quantity, '100.15');
-    expect(regular.basis, OrderSizeReference.bboMark);
+    expect(regular.basis, OrderSizeReference.ask);
     final conditional = resolve(
       '70',
       draft: liveDraft(price: '', peg: LiveOrderPeg.queue, trigger: trigger),
     );
-    expect(conditional.quantity, '87.5');
-    expect(conditional.basis, OrderSizeReference.trigger);
+    expect(conditional.quantity, '101.44');
+    expect(conditional.basis, OrderSizeReference.bid);
   });
   for (final basis in LiveOrderTriggerBasis.values) {
     test('trailing uses chosen snapshot $basis', () {

@@ -11,7 +11,9 @@ class LiveOrderOpeningExposure {
     required this.positionQuantity,
     required this.buyOrderNotional,
     required this.sellOrderNotional,
-  }) : hedgeGrossNotional = null {
+    Decimal? positionNotional,
+  }) : hedgeGrossNotional = null,
+       _signedNotional = positionNotional ?? positionQuantity * markPrice {
     _validate();
   }
 
@@ -22,6 +24,7 @@ class LiveOrderOpeningExposure {
   }) : positionQuantity = Decimal.zero,
        buyOrderNotional = Decimal.zero,
        sellOrderNotional = Decimal.zero,
+       _signedNotional = Decimal.zero,
        hedgeGrossNotional = grossNotional {
     _validate();
   }
@@ -29,8 +32,9 @@ class LiveOrderOpeningExposure {
   final Decimal markPrice, positionQuantity, buyOrderNotional, sellOrderNotional;
   final int leverage;
   final Decimal? hedgeGrossNotional;
+  final Decimal _signedNotional;
   bool get hedge => hedgeGrossNotional != null;
-  Decimal get signedNotional => positionQuantity * markPrice;
+  Decimal get signedNotional => _signedNotional;
   Decimal get currentNotional =>
       hedgeGrossNotional ??
       _max((signedNotional + buyOrderNotional).abs(), (signedNotional - sellOrderNotional).abs());
@@ -40,6 +44,10 @@ class LiveOrderOpeningExposure {
         leverage <= 0 ||
         buyOrderNotional < Decimal.zero ||
         sellOrderNotional < Decimal.zero ||
+        positionQuantity == Decimal.zero && signedNotional != Decimal.zero ||
+        positionQuantity != Decimal.zero &&
+            (signedNotional == Decimal.zero ||
+                (signedNotional < Decimal.zero) != (positionQuantity < Decimal.zero)) ||
         hedgeGrossNotional != null && hedgeGrossNotional! < Decimal.zero) {
       throw ArgumentError('Invalid opening exposure');
     }
@@ -52,7 +60,11 @@ class LiveOrderOpeningExposure {
     return closes ? _max(quantity - positionQuantity.abs(), Decimal.zero) : quantity;
   }
 
-  Decimal notionalAfter({required bool buy, required Decimal quantity, required Decimal price}) {
+  Decimal reservedNotionalAfter({
+    required bool buy,
+    required Decimal quantity,
+    required Decimal price,
+  }) {
     if (quantity < Decimal.zero || price <= Decimal.zero) {
       throw ArgumentError('Invalid opening order');
     }
@@ -74,7 +86,7 @@ class LiveOrderOpeningExposure {
     required Decimal lossPrice,
   }) {
     if (lossPrice <= Decimal.zero) throw ArgumentError('Invalid opening price');
-    final after = notionalAfter(buy: buy, quantity: quantity, price: marginPrice);
+    final after = reservedNotionalAfter(buy: buy, quantity: quantity, price: marginPrice);
     final opened = openingQuantity(buy: buy, quantity: quantity);
     final increment = hedge ? quantity * marginPrice : _max(after - currentNotional, Decimal.zero);
     final lossPerUnit = _max(buy ? lossPrice - markPrice : markPrice - lossPrice, Decimal.zero);
@@ -82,7 +94,7 @@ class LiveOrderOpeningExposure {
       initialMargin: increment / Decimal.fromInt(leverage),
       openingLoss: opened * lossPerUnit,
       openingQuantity: opened,
-      notionalAfter: after,
+      reservedNotionalAfter: after,
     );
   }
 }
@@ -92,10 +104,10 @@ class LiveOrderOpeningCost {
     required this.initialMargin,
     required this.openingLoss,
     required this.openingQuantity,
-    required this.notionalAfter,
+    required this.reservedNotionalAfter,
   });
   final Rational initialMargin;
-  final Decimal openingLoss, openingQuantity, notionalAfter;
+  final Decimal openingLoss, openingQuantity, reservedNotionalAfter;
   Rational get total => initialMargin + openingLoss.toRational();
 }
 

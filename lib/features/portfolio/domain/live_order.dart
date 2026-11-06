@@ -35,6 +35,9 @@ class LiveOrderContext {
     this.funds,
     this.fundsFailure,
     this.lastPrice,
+    this.markReceivedAt,
+    this.bookReceivedAt,
+    this.lastReceivedAt,
   }) : positions = Map.unmodifiable(positions);
   final String address;
   final LiveOrderRules rules;
@@ -43,12 +46,28 @@ class LiveOrderContext {
   final int leverage;
   final Decimal markPrice;
   final DateTime receivedAt;
+  // Public quote receipts are separate from the signed account lease.
+  final DateTime? markReceivedAt, bookReceivedAt, lastReceivedAt;
   final Map<String, LiveOrderPosition> positions;
   final Decimal? bid, ask;
   final Decimal? lastPrice;
   final LiveOrderFunds? funds;
   final AccountReadFailure? fundsFailure;
   String get symbol => rules.symbol;
+
+  /// Public repricing may replace only prices; private/configuration facts and
+  /// the signed deadline must remain attached to exactly the original anchor.
+  bool sameAccountAnchor(LiveOrderContext other) =>
+      address == other.address &&
+      rules == other.rules &&
+      mode == other.mode &&
+      marginMode == other.marginMode &&
+      leverage == other.leverage &&
+      receivedAt == other.receivedAt &&
+      funds == other.funds &&
+      fundsFailure == other.fundsFailure &&
+      positions.length == other.positions.length &&
+      positions.entries.every((e) => other.positions[e.key] == e.value);
 
   Decimal closeFraction(
     String side,
@@ -101,6 +120,7 @@ class LiveOrderContext {
       draft,
       markPrice,
       exemptNotional: draft.reducing && mode == FuturesPositionMode.oneWay,
+      pegReference: draft.peg == null ? null : referenceExecutionPrice(draft),
     );
     if (invalid != null) return invalid;
     if (draft.trigger case final trigger?) {
@@ -131,9 +151,20 @@ class LiveOrderContext {
   Decimal? triggerReference(LiveOrderTrigger trigger) =>
       trigger.basis == LiveOrderTriggerBasis.mark ? markPrice : lastPrice;
 
-  /// BBO's actual level is resolved by the engine, not the displayed quote.
-  /// Mark / trigger price is only an indicative notional and margin reference.
+  /// Ordinary BBO previews use the selected current side of the book, including
+  /// conditional orders whose future engine price is still unknown. Deeper
+  /// compound pegs retain their separate indicative Mark/trigger reference.
   Decimal? referenceExecutionPrice(LiveOrderDraft draft) {
+    if (draft.peg case final peg?) {
+      if (!draft.validPegShape ||
+          bid == null ||
+          ask == null ||
+          bid! <= Decimal.zero ||
+          ask! < bid!) {
+        return null;
+      }
+      return peg.usesAsk(draft.buy) ? ask : bid;
+    }
     if (!draft.market && !draft.pegged) return parseOrderDecimal(draft.price);
     return draft.trigger == null ? markPrice : parseOrderDecimal(draft.trigger!.price);
   }
@@ -187,8 +218,18 @@ class LiveOrderIntent {
     required this.draft,
     required this.clientOrderId,
     required this.revision,
+    this.pricingContext,
   });
   final LiveOrderContext context;
+  final LiveOrderContext? pricingContext;
+  LiveOrderContext get executionContext {
+    final priced = pricingContext;
+    if (priced != null && !context.sameAccountAnchor(priced)) {
+      throw const AccountReadFailure('liveCapacityChanged');
+    }
+    return priced ?? context;
+  }
+
   final LiveOrderDraft draft;
   final String clientOrderId;
   final int revision;

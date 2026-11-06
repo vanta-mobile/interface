@@ -195,7 +195,21 @@ void main() {
         tester.widget<FilledButton>(find.byKey(const Key('live-order-review'))).onPressed,
         null,
       );
-      expect(find.text(messages(tester).liveAmountReferenceUnavailable), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('main-order-capacity-sell')),
+          matching: find.text(messages(tester).liveAmountReferenceUnavailable),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester.widget<FilledButton>(find.byKey(const Key('main-order-review-sell'))).onPressed,
+        null,
+      );
+      expect(
+        tester.widget<FilledButton>(find.byKey(const Key('main-order-review-buy'))).onPressed,
+        isNotNull,
+      );
       await visible(tester, 'live-order-quantity');
       expect(input(tester, 'live-order-quantity'), '160');
       repository.context = liveContext(bid: '80001', ask: '80002');

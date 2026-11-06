@@ -32,6 +32,7 @@ class LiveOrderRules {
     required Set<LiveOrderTimeInForce> timeInForce,
     required Set<String> orderTypes,
     this.triggerProtect,
+    this.pricePrecision,
   }) : timeInForce = Set.unmodifiable(timeInForce),
        orderTypes = Set.unmodifiable(orderTypes);
   final String symbol, baseAsset, quoteAsset;
@@ -41,6 +42,10 @@ class LiveOrderRules {
   final Set<LiveOrderTimeInForce> timeInForce;
   final Set<String> orderTypes;
   final Decimal? triggerProtect;
+
+  /// Exchange display precision, distinct from the executable price tick.
+  /// Absence prevents the website's buffered market-buy price calculation.
+  final int? pricePrecision;
   Decimal? get triggerProtectPercent =>
       triggerProtect == null ? null : triggerProtect! * Decimal.fromInt(100);
 
@@ -54,7 +59,12 @@ class LiveOrderRules {
           priceMaximum > Decimal.zero && price > priceMaximum ||
           priceTick > Decimal.zero && (price - priceMinimum) % priceTick != Decimal.zero);
 
-  String? validate(LiveOrderDraft draft, Decimal markPrice, {bool exemptNotional = false}) {
+  String? validate(
+    LiveOrderDraft draft,
+    Decimal markPrice, {
+    bool exemptNotional = false,
+    Decimal? pegReference,
+  }) {
     if (!draft.validPegShape) {
       return draft.peg == null ? 'attachedEntryPegInvalid' : 'liveOrderPegInvalid';
     }
@@ -71,7 +81,9 @@ class LiveOrderRules {
       if (!quantityRule(draft).accepts(quantity)) return 'liveOrderQuantityFilter';
     }
     final pegged = draft.pegged;
-    final price = pegged
+    final price = draft.peg != null && pegReference != null
+        ? pegReference
+        : pegged
         ? draft.trigger == null
               ? markPrice
               : parseOrderDecimal(draft.trigger!.price)

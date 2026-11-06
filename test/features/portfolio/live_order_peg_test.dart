@@ -43,7 +43,18 @@ void main() {
           expect(i.parameters['pegPriceType'], peg.wire);
           expect(i.parameters['reduceOnly'], hedge ? null : 'true');
           expect(i.parameters['positionSide'], hedge ? (buy ? 'SHORT' : 'LONG') : 'BOTH');
-          expect(i.context.estimatedClosePnl(i.draft), Decimal.parse(buy ? '-5' : '5'));
+          expect(
+            i.context.estimatedClosePnl(i.draft),
+            Decimal.parse(
+              peg == LiveOrderPeg.counterparty
+                  ? buy
+                        ? '-5.005'
+                        : '4.995'
+                  : buy
+                  ? '-4.995'
+                  : '5.005',
+            ),
+          );
           expect(mapLiveOrderQuery(liveQueryPayload(i), i).needsRecheck, false);
         });
       }
@@ -61,7 +72,7 @@ void main() {
         expect(i.parameters['type'], kind == LiveOrderTriggerKind.stop ? 'STOP' : 'TAKE_PROFIT');
         expect(i.parameters['stopPrice'], trigger.price);
         expect(i.parameters['price'], '0');
-        expect(i.context.referenceExecutionPrice(i.draft), Decimal.parse(trigger.price));
+        expect(i.context.referenceExecutionPrice(i.draft), null);
         final payload = liveQueryPayload(i)..['type'] = 'LIMIT';
         expect(mapLiveOrderQuery(payload, i).needsRecheck, false);
         payload['stopPrice'] = '1';
@@ -123,32 +134,31 @@ void main() {
       expect(() => decodeRecoveryRecord(row), throwsFormatException);
     }
   });
-  test(
-    'BBO reference uses Mark without guessing the actual book and preserves quantity filters',
-    () {
-      final i = liveIntent(peg: LiveOrderPeg.counterparty);
-      expect(i.context.referenceExecutionPrice(i.draft), Decimal.parse('80000'));
-      expect(i.context.estimatedOpeningMargin(i.draft), Decimal.parse('8'));
-      expect(
-        i.context.validate(liveDraft(peg: LiveOrderPeg.queue, price: '', quantity: '0.0001')),
-        'liveOrderQuantityFilter',
-      );
-      expect(
-        i.context.validate(liveDraft(peg: LiveOrderPeg.queue, price: '', quantity: '1e3')),
-        'liveOrderInvalidQuantity',
-      );
-      expect(
-        liveContext(orderTypes: {'LIMIT', 'MARKET'}).validate(
-          liveDraft(
-            peg: LiveOrderPeg.queue,
-            price: '',
-            trigger: const LiveOrderTrigger(kind: LiveOrderTriggerKind.stop, price: '80500'),
-          ),
+  test('BBO current book estimate preserves quantity filters', () {
+    final i = liveIntent(peg: LiveOrderPeg.counterparty);
+    final context = liveContext(bid: '79999', ask: '80001');
+    expect(context.referenceExecutionPrice(i.draft), Decimal.parse('80001'));
+    expect(context.estimatedOpeningMargin(i.draft), Decimal.parse('8.0001'));
+    expect(i.context.referenceExecutionPrice(i.draft), null);
+    expect(
+      i.context.validate(liveDraft(peg: LiveOrderPeg.queue, price: '', quantity: '0.0001')),
+      'liveOrderQuantityFilter',
+    );
+    expect(
+      i.context.validate(liveDraft(peg: LiveOrderPeg.queue, price: '', quantity: '1e3')),
+      'liveOrderInvalidQuantity',
+    );
+    expect(
+      liveContext(orderTypes: {'LIMIT', 'MARKET'}).validate(
+        liveDraft(
+          peg: LiveOrderPeg.queue,
+          price: '',
+          trigger: const LiveOrderTrigger(kind: LiveOrderTriggerKind.stop, price: '80500'),
         ),
-        'liveOrderTypeUnavailable',
-      );
-    },
-  );
+      ),
+      'liveOrderTypeUnavailable',
+    );
+  });
   for (final wrong in [null, '', 'QUEUE_1', 'COUNTERPARTY_3', 'unknown', 1]) {
     test('query rejects missing/changed/deeper peg $wrong', () {
       final i = liveIntent(peg: LiveOrderPeg.counterparty);

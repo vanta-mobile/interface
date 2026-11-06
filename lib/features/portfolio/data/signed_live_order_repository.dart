@@ -202,7 +202,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
         intent.draft.attachment != null && intent.clientOrderId.length > 28) {
       throw const AccountReadFailure('accountDataInvalid');
     }
-    final invalid = context.validate(intent.draft);
+    final invalid = intent.executionContext.validate(intent.draft);
     if (invalid != null) throw AccountReadFailure(invalid);
     if (intent.draft.reducing || intent.draft.attachment != null) {
       await _verifyPositionSnapshot(intent, isCurrent, canSubmit, onStep);

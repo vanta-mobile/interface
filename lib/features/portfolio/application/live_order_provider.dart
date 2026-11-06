@@ -37,6 +37,7 @@ final liveOrderProvider = NotifierProvider<LiveOrderController, LiveOrderState>(
 class LiveOrderController extends Notifier<LiveOrderState> {
   int _revision = 0, _staleRevision = 0;
   Timer? _expiry;
+  int? _readLease;
   final Random _random = Random.secure();
   DateTime get _now => ref.read(liveOrderClockProvider)();
 
@@ -92,7 +93,10 @@ class LiveOrderController extends Notifier<LiveOrderState> {
   /// Opening an external wallet backgrounds this app as part of signing.
   /// Active prompts retain their 30-second deadline and identity checks.
   void onLifecycleChanged() {
-    if (!state.busy) markStale();
+    final activity = ref.read(symbolSettingsActivityProvider);
+    // Capacity and quick-sizing reads hold the order lease while prompting the
+    // wallet. Preserve their original deadline across the expected app switch.
+    if (!state.busy && !(activity.busy && activity.owner == SymbolSetting.order)) markStale();
   }
 
   bool _identityCurrent(String id, String address, int revision) {
@@ -117,6 +121,7 @@ class LiveOrderController extends Notifier<LiveOrderState> {
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
     final lease = activity.acquire(SymbolSetting.order);
     if (lease == null) return;
+    _readLease = lease;
     final revision = ++_revision, staleRevision = _staleRevision;
     final previous = state.context;
     _expiry?.cancel();
@@ -154,10 +159,25 @@ class LiveOrderController extends Notifier<LiveOrderState> {
       }
     } finally {
       activity.finish(lease, unresolved: false);
+      if (_readLease == lease) _readLease = null;
     }
   }
 
-  LiveOrderIntent? prepare(String symbol, LiveOrderDraft draft) {
+  /// Cancels only a context read; an attempted order must use its own recovery.
+  void stopReading() {
+    if (!state.busy || state.intent != null || _readLease == null) return;
+    _revision++;
+    _expiry?.cancel();
+    ref.read(symbolSettingsActivityProvider.notifier).finish(_readLease!, unresolved: false);
+    _readLease = null;
+    state = LiveOrderState(context: state.context, stale: true);
+  }
+
+  LiveOrderIntent? prepare(
+    String symbol,
+    LiveOrderDraft draft, {
+    LiveOrderContext? pricingContext,
+  }) {
     final context = state.context, auth = ref.read(authProvider);
     if (context == null ||
         context.symbol != symbol ||
@@ -169,16 +189,24 @@ class LiveOrderController extends Notifier<LiveOrderState> {
         ref.read(symbolSettingsActivityProvider).recoveryBlocked ||
         auth.identity?.signingAvailable != true ||
         auth.identity?.walletAddress?.toLowerCase() != context.address.toLowerCase() ||
-        context.validate(draft) != null) {
+        pricingContext != null && !context.sameAccountAnchor(pricingContext) ||
+        (pricingContext ?? context).validate(draft) != null) {
       return null;
     }
     final id =
         'vanta-${_now.microsecondsSinceEpoch.toRadixString(36)}-'
         '${_random.nextInt(1 << 32).toRadixString(36)}';
-    return LiveOrderIntent(context: context, draft: draft, clientOrderId: id, revision: _revision);
+    return LiveOrderIntent(
+      context: context,
+      draft: draft,
+      clientOrderId: id,
+      revision: _revision,
+      pricingContext: pricingContext,
+    );
   }
 
-  Future<void> submit(LiveOrderIntent intent) => _run(intent, checkingOnly: false);
+  Future<void> submit(LiveOrderIntent intent, {bool Function()? submitGuard}) =>
+      _run(intent, checkingOnly: false, submitGuard: submitGuard);
   Future<void> recheck() async {
     final intent = state.intent;
     if (intent != null && (state.needsRecheck || state.result?.strategy != null)) {
@@ -186,7 +214,19 @@ class LiveOrderController extends Notifier<LiveOrderState> {
     }
   }
 
-  Future<void> _run(LiveOrderIntent intent, {required bool checkingOnly}) async {
+  Future<void> _run(
+    LiveOrderIntent intent, {
+    required bool checkingOnly,
+    bool Function()? submitGuard,
+  }) async {
+    bool allowed() {
+      try {
+        return submitGuard?.call() ?? true;
+      } catch (_) {
+        return false;
+      }
+    }
+
     final auth = ref.read(authProvider), identity = auth.identity;
     if (state.busy ||
         intent.revision != _revision ||
@@ -196,8 +236,9 @@ class LiveOrderController extends Notifier<LiveOrderState> {
       return;
     }
     if (!checkingOnly &&
-        (state.context != intent.context ||
-            intent.context.validate(intent.draft) != null ||
+        (!allowed() ||
+            state.context != intent.context ||
+            intent.executionContext.validate(intent.draft) != null ||
             !_fresh(intent.context))) {
       return;
     }
@@ -210,12 +251,14 @@ class LiveOrderController extends Notifier<LiveOrderState> {
       draft: intent.draft,
       clientOrderId: intent.clientOrderId,
       revision: revision,
+      pricingContext: intent.pricingContext,
     );
     bool current() => _identityCurrent(identity!.id, active.context.address, revision);
     final epoch = ref.read(symbolSettingsActivityProvider).epoch;
     final staleRevision = _staleRevision;
     bool canSubmit() =>
         current() &&
+        allowed() &&
         !state.stale &&
         staleRevision == _staleRevision &&
         ref.read(symbolSettingsActivityProvider).epoch == epoch &&

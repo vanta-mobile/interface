@@ -87,7 +87,7 @@ void main() {
       final identity = TestIdentityRepository()..restored = signingIdentity;
       addTearDown(identity.dispose);
       final repository = TestLiveOrderRepository()
-        ..context = scenario.close ? liveCloseContext() : liveContext()
+        ..context = scenario.close ? liveCloseContext() : liveContext(bid: '79999', ask: '80001')
         ..result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
       final container = setup(
         tester,

@@ -23,6 +23,7 @@ class MarkPricesRepository {
   final DateTime Function() _now;
   late final StreamController<MarkPrices> _output;
   final _quotes = <String, MarkPriceQuote>{};
+  final _symbolRevisions = <String, int>{};
   final _verified = <String>{}, _invalid = <String>{};
   StreamSubscription<Map<String, Object?>>? _subscription;
   Timer? _publishTimer, _freshnessTimer;
@@ -99,6 +100,7 @@ class MarkPricesRepository {
 
   void _onEvent(Map<String, Object?> event) {
     if (event['connected'] == true) {
+      if (_connected) return;
       _connected = true;
       _connecting = false;
       if (_hadConnection) unawaited(_refresh());
@@ -110,8 +112,9 @@ class MarkPricesRepository {
       _disconnect();
       return;
     }
-    if (event['e'] != 'markPriceUpdate' || !symbols.contains(event['s'])) return;
+    if (!_connected || event['e'] != 'markPriceUpdate' || !symbols.contains(event['s'])) return;
     final symbol = event['s']! as String;
+    _symbolRevisions.update(symbol, (n) => n + 1, ifAbsent: () => 1);
     try {
       final quote = mapMarkPrice(event, receivedAt: _now(), stream: true);
       if (!_acceptable(quote)) return;
@@ -139,7 +142,7 @@ class MarkPricesRepository {
     final revision = _revision;
     if (_disposed || !_active || _loadingRevision == revision) return;
     _loadingRevision = revision;
-    final baseline = Map.of(_quotes);
+    final baseline = Map.of(_symbolRevisions);
     try {
       final payload = await RequestScope.run(
         () => !_disposed && _active && revision == _revision,
@@ -157,7 +160,7 @@ class MarkPricesRepository {
       }
       for (final quote in parsed.values) {
         // A late REST response cannot replace a mark received during its request.
-        if (!identical(_quotes[quote.symbol], baseline[quote.symbol]) || !_acceptable(quote)) {
+        if (_symbolRevisions[quote.symbol] != baseline[quote.symbol] || !_acceptable(quote)) {
           continue;
         }
         _quotes[quote.symbol] = quote;

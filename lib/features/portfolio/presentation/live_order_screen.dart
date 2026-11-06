@@ -1,9 +1,11 @@
+import '../../../core/errors/error_text.dart';
 import 'order_recovery_notice.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme.dart';
+import '../application/main_order_refresh_provider.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
@@ -61,7 +63,8 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
   void _selectMode(LiveOrderEntryMode next) {
     if (!mounted) return;
     final live = ref.read(liveOrderProvider), activity = ref.read(symbolSettingsActivityProvider);
-    if (live.busy ||
+    if (ref.read(mainOrderRefreshProvider).loading ||
+        live.busy ||
         live.needsRecheck ||
         activity.owner != null ||
         activity.recoveryBlocked ||
@@ -74,6 +77,14 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
       if (next.inline) mode = next;
     });
     if (next == LiveOrderEntryMode.scaled) openScaledOrder(context, symbol);
+  }
+
+  Future<void> _refresh() async {
+    if (closingSide == null) {
+      await ref.read(mainOrderRefreshProvider.notifier).refresh(symbol);
+    } else {
+      await ref.read(liveOrderProvider.notifier).load(symbol, includeFunds: false);
+    }
   }
 
   @override
@@ -99,7 +110,7 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
     final l10n = AppLocalizations.of(context), state = ref.watch(liveOrderProvider);
     final auth = ref.watch(authProvider), identity = auth.identity;
     final settings = ref.watch(symbolSettingsActivityProvider);
-    final controller = ref.read(liveOrderProvider.notifier);
+    final refresh = ref.watch(mainOrderRefreshProvider);
     final data = state.context?.symbol == symbol ? state.context : null;
     return Scaffold(
       appBar: AppBar(
@@ -112,91 +123,122 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
         ),
       ),
       body: SafeArea(
-        child: ListView(
-          key: const Key('live-order-page'),
-          padding: const EdgeInsets.all(16),
-          children: [
-            const OrderRecoveryNotice(),
-            if (closingSide == null && !initialConditional)
-              LiveOrderModeSelector(
-                selected: mode,
-                remembered: remembered,
-                enabled:
-                    !state.busy &&
-                    !state.needsRecheck &&
-                    settings.owner == null &&
-                    !settings.recoveryBlocked &&
-                    !auth.busy,
-                onSelected: _selectMode,
-              ),
-            SelectableText(symbol, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            Text(closingSide == null ? l10n.liveOrderScope : l10n.liveCloseScope),
-            if (closingSide != null) SelectableText(closingSide!),
-            const SizedBox(height: 12),
-            if (identity?.walletAddress case final address?) SelectableText(address),
-            FilledButton.icon(
-              key: const Key('live-order-read'),
-              onPressed: state.busy || state.needsRecheck || settings.owner != null || auth.busy
-                  ? null
-                  : identity?.signingAvailable == true && identity?.walletAddress != null
-                  ? () => controller.load(symbol, includeFunds: closingSide == null)
-                  : () => showAccountSheet(context),
-              icon: const Icon(Icons.refresh),
-              label: Text(
-                identity == null
-                    ? l10n.accountSignInToRead
-                    : identity.walletAddress == null
-                    ? l10n.createWallet
-                    : !identity.signingAvailable
-                    ? l10n.reconnectExternalWallet
-                    : l10n.liveOrderReadContext,
-              ),
-            ),
-            Text(
-              closingSide == null ? l10n.liveOrderFundsReadHint : l10n.liveOrderReadHint,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            if (settings.owner != null && settings.owner != SymbolSetting.order)
-              Text(l10n.liveOrderSettingsBusy, style: const TextStyle(color: AppColors.warning)),
-            if (state.busy) ...[const SizedBox(height: 12), const LinearProgressIndicator()],
-            if (data != null) ...[
-              const SizedBox(height: 16),
-              ValueRow(l10n.liveOrderMarkPrice, data.markPrice.toString()),
-              ValueRow(l10n.leverageCurrentSetting, '${data.leverage}×'),
-              ValueRow(
-                l10n.accountMarginMode,
-                data.marginMode == PositionMarginMode.cross ? l10n.cross : l10n.accountIsolatedMode,
-              ),
-              ValueRow(
-                l10n.positionModeSettings,
-                data.mode == FuturesPositionMode.oneWay
-                    ? l10n.positionModeOneWay
-                    : l10n.positionModeHedge,
-              ),
-              if (state.stale)
-                Text(
-                  l10n.liveOrderContextExpired,
-                  style: const TextStyle(color: AppColors.warning),
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            key: const Key('live-order-page'),
+            padding: const EdgeInsets.all(16),
+            children: [
+              const OrderRecoveryNotice(),
+              if (closingSide == null && !initialConditional)
+                LiveOrderModeSelector(
+                  selected: mode,
+                  remembered: remembered,
+                  enabled:
+                      !refresh.loading &&
+                      !state.busy &&
+                      !state.needsRecheck &&
+                      settings.owner == null &&
+                      !settings.recoveryBlocked &&
+                      !auth.busy,
+                  onSelected: _selectMode,
                 ),
-              LiveOrderForm(
-                key: ValueKey((data.address, data.symbol, closingSide, initialConditional)),
-                data: data,
-                closingSide: closingSide,
-                initialConditional: initialConditional,
-                mode: closingSide == null && !initialConditional ? mode : null,
-                onModeChanged: (next) {
-                  setState(() {
-                    mode = next;
-                    if (next != LiveOrderEntryMode.limit && next != LiveOrderEntryMode.market) {
-                      remembered = next;
-                    }
-                  });
-                },
+              SelectableText(symbol, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 8),
+              Text(closingSide == null ? l10n.liveOrderScope : l10n.liveCloseScope),
+              if (closingSide != null) SelectableText(closingSide!),
+              const SizedBox(height: 12),
+              if (identity?.walletAddress case final address?) SelectableText(address),
+              FilledButton.icon(
+                key: const Key('live-order-read'),
+                onPressed:
+                    refresh.loading ||
+                        state.busy ||
+                        state.needsRecheck ||
+                        settings.owner != null ||
+                        auth.busy
+                    ? null
+                    : identity?.signingAvailable == true && identity?.walletAddress != null
+                    ? _refresh
+                    : () => showAccountSheet(context),
+                icon: refresh.loading
+                    ? const SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+                label: Text(
+                  identity == null
+                      ? l10n.accountSignInToRead
+                      : identity.walletAddress == null
+                      ? l10n.createWallet
+                      : !identity.signingAvailable
+                      ? l10n.reconnectExternalWallet
+                      : closingSide == null
+                      ? l10n.liveCapacityRefreshAccount
+                      : l10n.liveOrderReadContext,
+                ),
               ),
+              Text(
+                closingSide == null ? l10n.liveCapacityRefreshAccountHint : l10n.liveOrderReadHint,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              if (refresh.loading)
+                TextButton(
+                  key: const Key('live-order-read-stop'),
+                  onPressed: ref.read(mainOrderRefreshProvider.notifier).stop,
+                  child: Text(l10n.cancel),
+                ),
+              if (refresh.failure case final failure?)
+                Text(
+                  accountErrorText(context, failure),
+                  key: const Key('live-order-refresh-error'),
+                  style: const TextStyle(color: AppColors.negative),
+                ),
+              if (settings.owner != null && settings.owner != SymbolSetting.order)
+                Text(l10n.liveOrderSettingsBusy, style: const TextStyle(color: AppColors.warning)),
+              if (state.busy) ...[const SizedBox(height: 12), const LinearProgressIndicator()],
+              if (data != null) ...[
+                const SizedBox(height: 16),
+                ValueRow(l10n.liveOrderMarkPrice, data.markPrice.toString()),
+                ValueRow(l10n.leverageCurrentSetting, '${data.leverage}×'),
+                ValueRow(
+                  l10n.accountMarginMode,
+                  data.marginMode == PositionMarginMode.cross
+                      ? l10n.cross
+                      : l10n.accountIsolatedMode,
+                ),
+                ValueRow(
+                  l10n.positionModeSettings,
+                  data.mode == FuturesPositionMode.oneWay
+                      ? l10n.positionModeOneWay
+                      : l10n.positionModeHedge,
+                ),
+                if (state.stale)
+                  Text(
+                    l10n.liveOrderContextExpired,
+                    style: const TextStyle(color: AppColors.warning),
+                  ),
+                LiveOrderForm(
+                  key: ValueKey((data.address, data.symbol, closingSide, initialConditional)),
+                  data: data,
+                  closingSide: closingSide,
+                  initialConditional: initialConditional,
+                  mode: closingSide == null && !initialConditional ? mode : null,
+                  onModeChanged: (next) {
+                    setState(() {
+                      mode = next;
+                      if (next != LiveOrderEntryMode.limit && next != LiveOrderEntryMode.market) {
+                        remembered = next;
+                      }
+                    });
+                  },
+                ),
+              ],
+              const LiveOrderStatus(),
             ],
-            const LiveOrderStatus(),
-          ],
+          ),
         ),
       ),
     );

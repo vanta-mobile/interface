@@ -48,10 +48,12 @@ class LiveOrderSubmitControls extends ConsumerWidget {
     required this.draft,
     required this.enabled,
     required this.onSubmit,
+    this.pending = false,
   });
   final LiveOrderDraft draft;
   final bool enabled;
   final VoidCallback? onSubmit;
+  final bool pending;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final kind = orderConfirmationKind(draft), l10n = AppLocalizations.of(context);
@@ -62,8 +64,18 @@ class LiveOrderSubmitControls extends ConsumerWidget {
         if (!draft.reducing) OrderConfirmationControl(kind: kind, enabled: enabled),
         FilledButton(
           key: const Key('live-order-review'),
-          onPressed: onSubmit,
-          child: Text(canSkip ? l10n.liveOrderSignSubmit : l10n.liveOrderReview),
+          onPressed: enabled && !pending ? onSubmit : null,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (pending)
+                const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              Text(canSkip ? l10n.liveOrderSignSubmit : l10n.liveOrderReview),
+            ],
+          ),
         ),
       ],
     );

@@ -24,6 +24,8 @@ Future<void> reviewLiveOrder(
   WidgetRef ref,
   LiveOrderIntent intent, {
   OrderSizeResolution? sizing,
+  Future<void> Function()? onSubmit,
+  Widget? extraTerms,
 }) async {
   final controller = ref.read(liveOrderProvider.notifier);
   final kind = orderConfirmationKind(intent.draft);
@@ -31,7 +33,7 @@ Future<void> reviewLiveOrder(
   final identity = ref.read(authProvider).identity;
   // Reducing and entire-position close flows keep their dedicated review.
   if (!intent.draft.reducing && preference.canSkip) {
-    await controller.submit(intent);
+    await (onSubmit?.call() ?? controller.submit(intent));
     return;
   }
   var skipNext = false;
@@ -61,6 +63,7 @@ Future<void> reviewLiveOrder(
               if (!intent.draft.reducing) LiveOrderFundsPanel(data: intent.context),
               _LiveOrderAccountTerms(intent: intent),
               _LiveOrderFinancialTerms(intent: intent, sizing: sizing),
+              ?extraTerms,
               if (!intent.draft.reducing)
                 CheckboxListTile(
                   key: const Key('live-order-skip-confirmation'),
@@ -89,7 +92,7 @@ Future<void> reviewLiveOrder(
     return;
   }
   if (skipNext) await ref.read(orderConfirmationProvider(kind).notifier).select(false);
-  if (context.mounted) await controller.submit(intent);
+  if (context.mounted) await (onSubmit?.call() ?? controller.submit(intent));
 }
 
 class _LiveOrderAccountTerms extends StatelessWidget {

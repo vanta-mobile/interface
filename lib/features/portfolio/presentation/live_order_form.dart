@@ -7,6 +7,12 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../trade/presentation/widgets/primitives.dart';
 import '../application/live_order_provider.dart';
+import '../application/main_order_allocation_provider.dart';
+import '../application/main_order_capacity_provider.dart';
+import '../application/main_order_refresh_provider.dart';
+import '../application/main_order_capacity_preview_provider.dart';
+import '../application/main_order_pricing_provider.dart';
+import '../domain/account_snapshot.dart';
 import '../application/symbol_settings_activity.dart';
 import '../domain/live_order.dart';
 import '../domain/futures_position_mode.dart';
@@ -29,6 +35,12 @@ import 'live_order_price_inputs.dart';
 import '../domain/live_order_size.dart';
 import '../domain/live_order_entry_mode.dart';
 import 'live_order_size_field.dart';
+import 'main_order_capacity_panel.dart';
+import 'main_order_percentage_control.dart';
+import '../domain/main_order_capacity_preview.dart';
+import '../domain/main_order_allocation.dart';
+
+part 'live_order_allocation_binding.dart';
 
 class LiveOrderForm extends ConsumerStatefulWidget {
   const LiveOrderForm({
@@ -51,14 +63,14 @@ class LiveOrderForm extends ConsumerStatefulWidget {
 class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKeepAliveClientMixin {
   final quantity = TextEditingController(), price = TextEditingController();
   final quoteAmount = TextEditingController();
+  final _ratioInput = TextEditingController();
   OrderSizeUnit sizeUnit = OrderSizeUnit.quote;
   bool _limitSeeded = false, _limitEdited = false;
   LiveOrderSize get sizeInput => LiveOrderSize(
     unit: sizeUnit,
-    text: sizeUnit == OrderSizeUnit.base ? quantity.text : quoteAmount.text,
+    text: _allocationPercent == null ? _manualSizeInput.text : _ratioInput.text,
   );
-  OrderSizeResolution get sizing => sizeInput.resolve(
-    widget.data,
+  OrderSizeResolution get sizing => _resolveSize(
     rawDraft(attaching ? LiveOrderAttachment(entryPeg: market ? null : entryPeg) : null),
   );
   final triggerPrice = TextEditingController();
@@ -80,14 +92,18 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
   LiveOrderAttachment? get effectiveAttachment => !attaching
       ? null
       : LiveOrderAttachment(
-          takeProfit: attachment!.takeProfit?.resolve(widget.data, attachmentEntry).exit,
-          stopLoss: attachment!.stopLoss?.resolve(widget.data, attachmentEntry).exit,
+          takeProfit: attachment!.takeProfit
+              ?.resolve(_pricingContext ?? widget.data, attachmentEntry)
+              .exit,
+          stopLoss: attachment!.stopLoss
+              ?.resolve(_pricingContext ?? widget.data, attachmentEntry)
+              .exit,
           entryPeg: market ? null : entryPeg,
         );
   String? get attachmentFailure {
     if (!attaching) return null;
     for (final input in [?attachment!.takeProfit, ?attachment!.stopLoss]) {
-      if (input.resolve(widget.data, attachmentEntry).failure != null) {
+      if (input.resolve(_pricingContext ?? widget.data, attachmentEntry).failure != null) {
         return 'attachedOrderCheckExits';
       }
     }
@@ -140,6 +156,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
   void dispose() {
     quantity.dispose();
     quoteAmount.dispose();
+    _ratioInput.dispose();
     price.dispose();
     triggerPrice.dispose();
     trailingRate.dispose();
@@ -153,7 +170,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
   LiveOrderDraft get draft => buildDraft(effectiveAttachment);
   LiveOrderDraft buildDraft(LiveOrderAttachment? protection) {
     final entry = rawDraft(protection);
-    return entry.withQuantity(sizeInput.resolve(widget.data, entry).quantity);
+    return entry.withQuantity(_resolveSize(entry).quantity);
   }
 
   LiveOrderDraft rawDraft(LiveOrderAttachment? protection) => LiveOrderDraft(
@@ -205,6 +222,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
         if (previous != next) {
           quantity.clear();
           quoteAmount.clear();
+          _ratioInput.clear();
           sizeUnit = widget.closingSide == null ? OrderSizeUnit.quote : OrderSizeUnit.base;
           price.clear();
           _limitSeeded = _limitEdited = false;
@@ -225,12 +243,27 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
     );
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(liveOrderProvider);
+    final allocation = ref.watch(mainOrderAllocationProvider);
+    ref.watch(mainOrderCapacityProvider);
+    if (!reducing) ref.watch(mainOrderPricingProvider);
     ref.watch(symbolSettingsActivityProvider);
     final controller = ref.read(liveOrderProvider.notifier);
-    final contextData = widget.data;
+    final enabled =
+        !ref.watch(mainOrderRefreshProvider).loading &&
+        !state.busy &&
+        !state.needsRecheck &&
+        !allocation.preparing;
+    final contextData = _pricingContext ?? widget.data;
+    _syncRatioInput();
     final size = sizing;
-    final invalid = size.failure ?? attachmentFailure ?? contextData.validate(draft);
-    final intent = invalid == null ? controller.prepare(contextData.symbol, draft) : null;
+    final invalid =
+        size.failure ??
+        (!reducing && _pricingContext == null ? 'liveCapacityPriceUnavailable' : null) ??
+        attachmentFailure ??
+        contextData.validate(draft);
+    final intent = invalid == null
+        ? controller.prepare(contextData.symbol, draft, pricingContext: _pricingContext)
+        : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -245,14 +278,12 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
               ButtonSegment(value: false, label: Text(l10n.short)),
             ],
             selected: {buy},
-            onSelectionChanged: state.busy || state.needsRecheck
-                ? null
-                : (value) => setState(() => buy = value.first),
+            onSelectionChanged: !enabled ? null : (value) => setState(() => buy = value.first),
           ),
         LiveOrderReductionControls(
           data: contextData,
           draft: draft,
-          enabled: !state.busy && !state.needsRecheck,
+          enabled: enabled,
           onReduce: (value) => setState(() => reduceOnly = value),
           onFraction: (percent) => setState(() {
             sizeUnit = OrderSizeUnit.base;
@@ -271,7 +302,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
             showToggle: widget.mode == null,
             data: contextData,
             selected: trailing,
-            enabled: !state.busy && !state.needsRecheck,
+            enabled: enabled,
             rate: trailingRate,
             activation: trailingActivation,
             basis: trailingBasis,
@@ -293,7 +324,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
             data: contextData,
             draft: draft,
             price: triggerPrice,
-            enabled: !state.busy && !state.needsRecheck,
+            enabled: enabled,
             onEnabled: (value) => setState(() => conditional = value),
             onKind: (value) => setState(() => triggerKind = value),
             onBasis: (value) => setState(() => triggerBasis = value),
@@ -309,7 +340,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
               ButtonSegment(value: true, label: Text(l10n.market)),
             ],
             selected: {market},
-            onSelectionChanged: state.busy || state.needsRecheck || entireClose || trailing
+            onSelectionChanged: !enabled || entireClose || trailing
                 ? null
                 : (value) => setState(() => market = value.first),
           ),
@@ -317,19 +348,28 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
           LiveOrderEntireControls(
             selected: entireClose,
             market: market,
-            enabled: !state.busy && !state.needsRecheck,
+            enabled: enabled,
             onChanged: (value) => setState(() => entireClose = value),
           ),
         const SizedBox(height: 12),
+        if (!reducing)
+          MainOrderPercentageControl(
+            unit: sizeUnit,
+            manualCheck: draft.attachment?.entryPeg == null,
+          ),
         if (!entireClose)
           LiveOrderSizeField(
             data: contextData,
             draft: draft,
             unit: sizeUnit,
-            controller: sizeUnit == OrderSizeUnit.base ? quantity : quoteAmount,
-            enabled: !state.busy && !state.needsRecheck,
-            onUnit: (value) => setState(() => sizeUnit = value),
-            onInput: () => setState(() {}),
+            controller: _allocationPercent != null
+                ? _ratioInput
+                : sizeUnit == OrderSizeUnit.base
+                ? quantity
+                : quoteAmount,
+            enabled: enabled,
+            onUnit: _onSizeUnit,
+            onInput: _onSizeInput,
           ),
         LiveOrderPriceInputs(
           data: contextData,
@@ -339,7 +379,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
           fixedPolicy: widget.mode == LiveOrderEntryMode.postOnly,
           peg: peg,
           entryPeg: entryPeg,
-          enabled: !state.busy && !state.needsRecheck,
+          enabled: enabled,
           onPolicy: (value) {
             setState(() => timeInForce = value);
             widget.onModeChanged?.call(liveOrderEntryMode(draft));
@@ -351,7 +391,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
         LiveOrderAttachmentControls(
           key: ValueKey((contextData.address, attachmentGeneration, 'attachment')),
           allowed: !reducing && !trailing,
-          enabled: !state.busy && !state.needsRecheck,
+          enabled: enabled,
           data: contextData,
           entry: attachmentEntry,
           onChanged: (value) => setState(() => attachment = value),
@@ -375,14 +415,31 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
               ),
         const SizedBox(height: 12),
         if (widget.closingSide == null) LiveOrderCostPreview(data: contextData, draft: draft),
+        if (!reducing)
+          MainOrderCapacityPanel(
+            data: widget.data,
+            draft: draft,
+            unit: sizeUnit,
+            input: sizeInput.text,
+            percent: _allocationPercent,
+            showReview: true,
+            onReview: enabled && (_allocationPercent == null || _allocationPercent! > 0)
+                ? (direction) => _reviewAllocated(direction: direction)
+                : null,
+          ),
         LiveOrderSubmitControls(
           draft: draft,
-          enabled: !state.busy && !state.needsRecheck,
+          enabled: enabled,
+          pending: allocation.preparing || state.busy,
           onSubmit: intent == null
               ? null
+              : !reducing && draft.attachment?.entryPeg == null
+              ? _reviewAllocated
               : () => reviewLiveOrder(context, ref, intent, sizing: size),
         ),
       ],
     );
   }
+
+  void _render(VoidCallback change) => setState(change);
 }

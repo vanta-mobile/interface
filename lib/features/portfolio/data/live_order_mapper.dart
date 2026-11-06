@@ -27,6 +27,10 @@ LiveOrderRules mapLiveOrderRules(Object? payload, String symbol) {
       .toList();
   if (matches.length != 1) throw const FormatException('Missing symbol');
   final row = matches.single as Map<String, dynamic>;
+  final precision = row['pricePrecision'];
+  if (precision != null && (precision is! int || precision < 0 || precision > 80)) {
+    throw const FormatException('Invalid price precision');
+  }
   if (row['status'] != 'TRADING' ||
       row['contractType'] != 'PERPETUAL' ||
       row['baseAsset'] is! String ||
@@ -90,6 +94,7 @@ LiveOrderRules mapLiveOrderRules(Object? payload, String symbol) {
     priceMinimum: minimum,
     priceMaximum: maximum,
     priceTick: _amount(price['tickSize']),
+    pricePrecision: precision as int?,
     limitQuantity: quantity('LOT_SIZE'),
     marketQuantity: quantity('MARKET_LOT_SIZE'),
     minimumNotional: _amount(requiredFilter('MIN_NOTIONAL')['notional']),

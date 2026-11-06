@@ -6,4 +6,8 @@ enum LiveOrderPeg {
 
   const LiveOrderPeg(this.wire);
   final String wire;
+
+  /// Buy counterparty/sell queue read ask; buy queue/sell counterparty read bid.
+  /// This is a current preview, never the engine's future resolved limit.
+  bool usesAsk(bool buy) => buy == (this == counterparty);
 }

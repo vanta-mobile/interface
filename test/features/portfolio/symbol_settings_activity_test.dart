@@ -6,6 +6,7 @@ import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/portfolio/application/position_leverage_provider.dart';
 import 'package:vanta/features/portfolio/application/position_margin_mode_provider.dart';
 import 'package:vanta/features/portfolio/application/symbol_settings_activity.dart';
+import 'package:vanta/features/portfolio/application/order_recovery_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/position_margin_mode.dart';
 import 'package:vanta/features/portfolio/domain/position_leverage.dart';
@@ -61,6 +62,25 @@ void main() {
   tearDown(() async {
     container.dispose();
     await identity.dispose();
+  });
+
+  test('lazy wallet-scoped recovery rebuild resets the old identity lease', () async {
+    final controller = container.read(symbolSettingsActivityProvider.notifier);
+    final old = controller.acquire(SymbolSetting.order)!;
+    final epoch = container.read(symbolSettingsActivityProvider).epoch;
+    identity.events.add(null);
+    container.read(pendingWalletOrdersProvider);
+    expect(container.read(symbolSettingsActivityProvider).busy, false);
+    expect(container.read(symbolSettingsActivityProvider).owner, isNull);
+    expect(container.read(symbolSettingsActivityProvider).epoch, epoch + 1);
+    identity.restored = signingIdentity;
+    await container.read(authProvider.notifier).bootstrap();
+    final next = controller.acquire(SymbolSetting.leverage)!;
+    controller.finish(old, unresolved: false);
+    expect(container.read(symbolSettingsActivityProvider).owner, SymbolSetting.leverage);
+    expect(container.read(symbolSettingsActivityProvider).busy, true);
+    controller.finish(next, unresolved: false);
+    expect(container.read(symbolSettingsActivityProvider).owner, isNull);
   });
 
   test(

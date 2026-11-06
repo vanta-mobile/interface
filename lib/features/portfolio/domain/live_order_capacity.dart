@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:rational/rational.dart';
 
 import 'live_order_opening_cost.dart';
 import 'live_order_rules.dart';
@@ -44,7 +45,8 @@ class LiveOrderCapacity {
   }
 
   final LiveOrderOpeningExposure exposure;
-  final Decimal availableMargin, notionalCap, minimumNotional;
+  final Rational availableMargin;
+  final Decimal notionalCap, minimumNotional;
   final Decimal? remainingOpenableNotional;
   final OrderQuantityRule rule;
 
@@ -60,7 +62,8 @@ class LiveOrderCapacity {
     }
     // Never turn negative free margin into new spending. Zero-cost reductions
     // may still be possible, without budgeting released margin or future fills.
-    final budget = (availableMargin > Decimal.zero ? availableMargin : Decimal.zero).toRational();
+    final zero = Decimal.zero.toRational();
+    final budget = availableMargin > zero ? availableMargin : zero;
     // If a changed bracket is below current exposure, a non-increasing order
     // may still reduce it. No order may increase the existing excess.
     final riskCap = notionalCap > exposure.currentNotional ? notionalCap : exposure.currentNotional;
@@ -72,7 +75,7 @@ class LiveOrderCapacity {
         lossPrice: lossPrice,
       );
       return cost.total <= budget &&
-          cost.notionalAfter <= riskCap &&
+          cost.reservedNotionalAfter <= riskCap &&
           (remainingOpenableNotional == null ||
               cost.openingQuantity * marginPrice <= remainingOpenableNotional!);
     }

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_provider.dart';
+import '../../market/application/market_providers.dart' show quoteUpdatesActiveProvider;
 import 'order_recovery_provider.dart';
 import 'position_margin_storage_provider.dart';
 import 'rebalance_storage_provider.dart';
@@ -42,9 +43,25 @@ final symbolSettingsActivityProvider =
       SymbolSettingsActivityController.new,
     );
 
+/// A wallet prompt can background the app without ending its active order.
+/// Keep existing public/private connections; their expiry and event guards
+/// remain authoritative if the OS suspends delivery or the connection drops.
+final orderSessionActiveProvider = Provider.autoDispose<bool>((ref) {
+  final foreground = ref.watch(quoteUpdatesActiveProvider);
+  final operation = ref.watch(symbolSettingsActivityProvider);
+  return orderSessionActive(foreground, operation);
+});
+
+bool orderSessionActive(bool foreground, SymbolSettingsActivity operation) =>
+    foreground || operation.busy && operation.owner == SymbolSetting.order;
+
 class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> {
   int _token = 0;
-  bool get _recoveryBlocked {
+  SymbolSettingsActivity _operation = const SymbolSettingsActivity();
+  Object? _identityKey;
+  bool get _recoveryBlocked => _hasRecoveryBlock();
+
+  bool _hasRecoveryBlock({String? activeOrderId}) {
     final storage = ref.read(orderRecoverySnapshotProvider);
     final rebalances = ref.read(rebalanceStorageProvider);
     final transfers = ref.read(internalTransferStorageProvider);
@@ -60,30 +77,21 @@ class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> 
         ref.read(pendingRebalancesProvider).isNotEmpty ||
         !storage.ready ||
         storage.failure != null ||
-        ref.read(pendingWalletOrdersProvider).isNotEmpty;
+        ref.read(pendingWalletOrdersProvider).any((r) => r.query.clientOrderId != activeOrderId);
   }
+
+  /// The active order must persist its own recovery record before POST. That
+  /// record blocks other work, but must not invalidate the write which owns it.
+  /// Storage failures and every other pending operation still block the send.
+  bool canContinueOrder(String clientOrderId) =>
+      state.owner == SymbolSetting.order &&
+      state.busy &&
+      !state.unresolved &&
+      !_hasRecoveryBlock(activeOrderId: clientOrderId);
 
   @override
   SymbolSettingsActivity build() {
-    void updateRecovery() {
-      state = SymbolSettingsActivity(
-        owner: state.owner,
-        busy: state.busy,
-        unresolved: state.unresolved,
-        epoch: state.epoch,
-        recoveryBlocked: _recoveryBlocked,
-      );
-    }
-
-    ref.listen(positionMarginStorageProvider, (a, b) => updateRecovery());
-    ref.listen(currentPositionMarginsProvider, (a, b) => updateRecovery());
-    ref.listen(internalTransferStorageProvider, (a, b) => updateRecovery());
-    ref.listen(pendingInternalTransfersProvider, (a, b) => updateRecovery());
-    ref.listen(rebalanceStorageProvider, (a, b) => updateRecovery());
-    ref.listen(pendingRebalancesProvider, (a, b) => updateRecovery());
-    ref.listen(orderRecoverySnapshotProvider, (a, b) => updateRecovery());
-    ref.listen(pendingWalletOrdersProvider, (a, b) => updateRecovery());
-    ref.listen(
+    final identityKey = ref.watch(
       authProvider.select(
         (s) => (
           s.identity?.id,
@@ -92,13 +100,30 @@ class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> 
           s.identity?.signingAvailable,
         ),
       ),
-      (before, after) {
-        if (before == after) return;
-        _token++;
-        state = SymbolSettingsActivity(epoch: state.epoch + 1, recoveryBlocked: _recoveryBlocked);
-      },
     );
-    return SymbolSettingsActivity(recoveryBlocked: _recoveryBlocked);
+    if (_identityKey != null && _identityKey != identityKey) {
+      _token++;
+      _operation = SymbolSettingsActivity(epoch: _operation.epoch + 1);
+    }
+    _identityKey = identityKey;
+    // Derive recovery state during provider rebuilds. A wallet-scoped pending
+    // list can rebuild lazily while a widget renders after logout; writing this
+    // notifier from its listener would mutate state during widget build.
+    ref.watch(positionMarginStorageProvider);
+    ref.watch(currentPositionMarginsProvider);
+    ref.watch(internalTransferStorageProvider);
+    ref.watch(pendingInternalTransfersProvider);
+    ref.watch(rebalanceStorageProvider);
+    ref.watch(pendingRebalancesProvider);
+    ref.watch(orderRecoverySnapshotProvider);
+    ref.watch(pendingWalletOrdersProvider);
+    return SymbolSettingsActivity(
+      owner: _operation.owner,
+      busy: _operation.busy,
+      unresolved: _operation.unresolved,
+      epoch: _operation.epoch,
+      recoveryBlocked: _recoveryBlocked,
+    );
   }
 
   int? acquire(SymbolSetting owner, {bool checkingOnly = false}) {
@@ -125,7 +150,7 @@ class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> 
         state.unresolved && !checkingOnly) {
       return null;
     }
-    state = SymbolSettingsActivity(
+    state = _operation = SymbolSettingsActivity(
       owner: owner,
       busy: true,
       epoch: state.epoch,
@@ -136,7 +161,7 @@ class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> 
 
   void submitted(int token) {
     if (!ref.mounted || token != _token) return;
-    state = SymbolSettingsActivity(
+    state = _operation = SymbolSettingsActivity(
       owner: state.owner,
       busy: true,
       epoch: state.epoch + 1,
@@ -146,7 +171,7 @@ class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> 
 
   void finish(int token, {required bool unresolved}) {
     if (!ref.mounted || token != _token) return;
-    state = SymbolSettingsActivity(
+    state = _operation = SymbolSettingsActivity(
       owner: unresolved ? state.owner : null,
       unresolved: unresolved,
       epoch: state.epoch,

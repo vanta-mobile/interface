@@ -150,6 +150,10 @@ void main() {
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(repository.submits, 0);
+      // Loading directional capacity expands the form. Scroll again after the
+      // cancelled dialog rather than tapping the old bottom-edge coordinates.
+      await tester.ensureVisible(find.byKey(const Key('live-order-review')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('live-order-review')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('live-order-confirm')));

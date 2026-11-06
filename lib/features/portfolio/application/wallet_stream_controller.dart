@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_provider.dart';
-import '../../market/application/market_providers.dart';
+import '../../market/application/market_providers.dart' show quoteUpdatesActiveProvider;
 import '../domain/account_change_stream.dart';
 import '../domain/account_snapshot.dart';
+import 'symbol_settings_activity.dart';
 
 /// Explicit, wallet-scoped in-memory user-stream lease. No automatic signatures.
 abstract class WalletStreamController extends Notifier<AccountChangeState> {
@@ -17,7 +18,10 @@ abstract class WalletStreamController extends Notifier<AccountChangeState> {
   DateTime get now;
   void invalidateSnapshots();
   void applyEvent(String authorizedAddress, AccountChangeEvent event);
-  bool get _active => ref.read(quoteUpdatesActiveProvider);
+  bool get _active => orderSessionActive(
+    ref.read(quoteUpdatesActiveProvider),
+    ref.read(symbolSettingsActivityProvider),
+  );
 
   @override
   AccountChangeState build() {
@@ -35,7 +39,11 @@ abstract class WalletStreamController extends Notifier<AccountChangeState> {
         if (before != after) stop();
       },
     );
-    ref.listen(quoteUpdatesActiveProvider, (_, active) {
+    var wasActive = _active;
+    void updateActivity() {
+      final active = _active;
+      if (wasActive == active) return;
+      wasActive = active;
       if (state.expiresAt == null || state.connection == AccountChangeConnection.expired) return;
       if (!active) {
         _closeSocket();
@@ -44,7 +52,16 @@ abstract class WalletStreamController extends Notifier<AccountChangeState> {
       } else if (!state.busy) {
         reconnect();
       }
-    });
+    }
+
+    // Reconcile the inputs directly: an input listener can run before a derived
+    // provider invalidates its old cached value. Native pause/resume must take
+    // effect before another synchronous intent can use the old stream state.
+    ref.listen(quoteUpdatesActiveProvider, (_, _) => updateActivity());
+    ref.listen(
+      symbolSettingsActivityProvider.select((s) => (s.busy, s.owner)),
+      (_, _) => updateActivity(),
+    );
     ref.onDispose(() {
       _generation++;
       _closeSocket();

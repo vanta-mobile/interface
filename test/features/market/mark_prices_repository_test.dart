@@ -83,6 +83,53 @@ void main() {
     await service.dispose();
   });
 
+  test('malformed stream during REST bootstrap cannot be revived by its late response', () async {
+    final service = TestMarkService();
+    final repository = MarkPricesRepository(service, {
+      'BTCUSDT',
+      'ETHUSDT',
+    }, now: () => service.now);
+    final subscription = repository.events.listen((_) {});
+    service.controllers.single.add({'connected': true});
+    service.controllers.single.add(markEvent(price: 'NaN'));
+    await Future<void>.delayed(Duration.zero);
+    service.snapshots.single.complete([markPayload(), markPayload(symbol: 'ETHUSDT')]);
+    await Future<void>.delayed(Duration.zero);
+    expect(repository.state.invalid, {'BTCUSDT'});
+    expect(repository.state.quotes.containsKey('BTCUSDT'), false);
+    expect(repository.state.fresh, {'ETHUSDT'});
+    service.controllers.single.add(markEvent(time: service.serverNow + 1));
+    await Future<void>.delayed(Duration.zero);
+    expect(repository.state.invalid, isEmpty);
+    expect(repository.state.fresh, {'BTCUSDT', 'ETHUSDT'});
+    await subscription.cancel();
+    await repository.dispose();
+    await service.dispose();
+  });
+
+  test('events queued while disconnected never verify a reconnected session', () async {
+    final service = TestMarkService();
+    final repository = MarkPricesRepository(service, {'BTCUSDT'}, now: () => service.now);
+    final subscription = repository.events.listen((_) {});
+    service.controllers.single.add({'connected': true});
+    service.snapshots.single.complete([markPayload()]);
+    await Future<void>.delayed(Duration.zero);
+    final original = repository.state.quotes['BTCUSDT'];
+    service.controllers.single.add({'disconnected': true});
+    service.controllers.single.add(markEvent(time: service.serverNow + 1));
+    service.controllers.single.add({'connected': true});
+    await Future<void>.delayed(Duration.zero);
+    expect(repository.state.quotes['BTCUSDT'], same(original));
+    expect(repository.state.fresh, isEmpty);
+    expect(service.snapshots.length, 2);
+    service.snapshots.last.complete([markPayload(time: service.serverNow + 2)]);
+    await Future<void>.delayed(Duration.zero);
+    expect(repository.state.fresh, {'BTCUSDT'});
+    await subscription.cancel();
+    await repository.dispose();
+    await service.dispose();
+  });
+
   test('older, duplicate, delayed replay, implausible future and wrong event do not replace current mark', () async {
     final service = TestMarkService();
     final repository = MarkPricesRepository(service, {'BTCUSDT'}, now: () => service.now);
