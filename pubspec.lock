@@ -218,7 +218,7 @@ packages:
     source: hosted
     version: "0.6.2"
   eip55:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: eip55
       sha256: a81d6afe386ec965e584541fe8f19719bed8a7ae23a5f5061112e96c50e6521b

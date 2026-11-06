@@ -6,6 +6,7 @@ import '../domain/auth_session.dart';
 import '../domain/wallet_connection.dart';
 import '../domain/wallet_transaction.dart';
 import '../domain/wallet_message_signer.dart';
+import 'evm_account_address.dart';
 import 'wallet_configuration.dart';
 import 'wallet_preference_store.dart';
 import 'privy_configuration.dart';
@@ -220,7 +221,7 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
     if (_disposed) throw const AuthFailure('authWalletCancelled');
     final origin = walletConfiguration.relyingParty;
     if (origin == null) throw const AuthFailure('authWalletConfiguration');
-    _walletAddress(connection.address);
+    final walletAddress = _walletAddress(connection.address);
     if (!connection.isCurrent || !WalletConfiguration.chains.contains(connection.chainId)) {
       throw const AuthFailure('authWalletChanged');
     }
@@ -228,7 +229,7 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
       appDomain: origin.host,
       appUri: origin.toString(),
       chainId: connection.chainId,
-      walletAddress: connection.address,
+      walletAddress: walletAddress,
     );
     final message = switch (await _ready.siwe.generateMessage(params)) {
       Success<String>(:final value) => value,
@@ -430,10 +431,7 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
   }
 
   static String _walletAddress(String address) {
-    if (!RegExp(r'^0x[a-fA-F0-9]{40}$').hasMatch(address)) {
-      throw const AuthFailure('authUnavailable');
-    }
-    return address;
+    return canonicalEvmAddress(address) ?? (throw const AuthFailure('authUnavailable'));
   }
 }
 

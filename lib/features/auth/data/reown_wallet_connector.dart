@@ -7,6 +7,7 @@ import 'package:reown_appkit/reown_appkit.dart';
 import '../domain/auth_session.dart';
 import '../domain/wallet_connection.dart';
 import '../domain/wallet_transaction.dart';
+import 'evm_account_address.dart';
 import 'wallet_transaction_dispatch.dart';
 import 'wallet_configuration.dart';
 
@@ -48,14 +49,15 @@ class ReownWalletConnector implements WalletConnector {
       await modal.openModalView();
     }
     if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
-    final address = modal.session?.getAddress('eip155');
+    final sessionAddress = modal.session?.getAddress('eip155');
     final chain = modal.selectedChain?.chainId;
-    if (!modal.isConnected || address == null || chain == null) {
+    if (!modal.isConnected || sessionAddress == null || chain == null) {
       throw const AuthFailure('authWalletCancelled');
     }
+    final address = canonicalEvmAddress(sessionAddress);
     if (!chain.startsWith('eip155:') ||
         !WalletConfiguration.chains.contains(chain.substring(7)) ||
-        !RegExp(r'^0x[a-fA-F0-9]{40}$').hasMatch(address)) {
+        address == null) {
       throw const AuthFailure('authWalletUnsupported');
     }
     return ReownWalletConnection(modal, address, chain.substring(7));

@@ -1303,6 +1303,8 @@ Android 12 真机通过系统注入双触点 MotionEvent，对比修复前后“
 
 认证请求遵循 Widget → AuthController → IdentityRepository → Privy SDK。Google/X 通过 Privy OAuth 登录并沿用内嵌钱包初始化，外部钱包沿用 Reown/SIWE；Android PrivyRedirectActivity 与 iOS URL scheme 使用 `vanta`（OAuth 回调 `vanta://`）；钱包回调仍为 `vanta://wallet`。需在 Privy 项目中启用对应 OAuth 提供方及回调；本次没有执行真人邮箱验证、第三方账号授权、钱包签名或金融写入。
 
+外部钱包 SIWE 地址使用 EIP-55：WalletConnect 会话及 Privy 返回的地址先在认证边界校验并规范化，再用于消息、登录参数和身份模型。固定公开测试向量下，Privy `/siwe/authenticate` 对 checksum 地址返回 HTTP 200，对同一地址全小写返回 HTTP 422 `invalid_data`；该探测没有触及真实钱包。新增规范地址单元测试及小写 WalletConnect 地址回归，认证相关 156 项测试通过；Android debug APK 构建成功并覆盖安装到 Android 12 真机（保留应用数据）。全仓分析与全量测试受同时进行的 Explore/i18n 未完成改动阻断；未用真实用户钱包复验，Linux 未执行 iOS 构建。
+
 图标来源为 Figma 的 Reicon / Reicon Brands。X、钱包、返回、关闭使用本地 SVG；Google 使用 Reicon Brands 原始 SVG（https://brands.reicon.dev/data/logos/google/original.svg）渲染透明 3x 图片并转换为无损 WebP，以避免 Flutter SVG 不支持滤镜及 Figma 导出图丢失裁切的问题。原始 SVG 一并保留。已检查 pub.dev 的 `reicon_flutter` 1.0.1 与 `reicons` 2.0.0；二者没有 Brands 的 Google/X，故未添加不适用依赖。
 
 验证：格式化与 `git diff --check` 通过；`flutter analyze --no-pub` 全仓无问题；认证及主页面测试共 166 项通过，正常态最终调整后另外重跑相关 8 项 UI 测试通过。覆盖过期/无效码、重发失败与成功、冷却、输入保留、单字段粘贴/自动填充、返回/关闭、Google/X 重复提交与安全错误、OAuth SDK 映射、外部钱包与演示资金隔离，以及 360/390 宽、1.5 倍文字和 844×390 横屏键盘布局。`flutter build apk --debug --no-pub --dart-define-from-file=.env` 成功。Linux 环境无 macOS/Xcode，未执行 iOS 构建。

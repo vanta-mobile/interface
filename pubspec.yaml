@@ -15,6 +15,8 @@ dependencies:
   k_chart_plus: ^1.0.4
   # Offline recovery of wallet EIP-712 signatures; no keys are generated.
   web3dart: 3.0.3
+  # Privy SIWE requires WalletConnect accounts in EIP-55 checksum form.
+  eip55: 1.0.3
   decimal: ^3.2.6
   # Preserve repeating financial ratios until the final exchange-step floor.
   rational: ^2.2.3

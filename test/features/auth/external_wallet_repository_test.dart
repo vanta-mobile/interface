@@ -187,6 +187,19 @@ void main() {
     },
   );
 
+  test('EOA SIWE canonicalizes a lowercase WalletConnect address to EIP-55', () async {
+    const checksummed = '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf';
+    final lowercaseConnection = TestWalletConnection(address: checksummed.toLowerCase());
+    sdk.siwe.user.walletAddress = checksummed;
+    await repository.initialize();
+
+    final identity = await repository.loginWithWallet(lowercaseConnection);
+
+    expect(sdk.siwe.params?.walletAddress, checksummed);
+    expect(identity.walletAddress, checksummed);
+    await lowercaseConnection.dispose();
+  });
+
   test(
     'restart retains the EOA choice even when the Privy user also has an embedded wallet',
     () async {
@@ -331,13 +344,14 @@ class _Siwe implements LoginWithSiwe {
 
 class _User implements PrivyUser {
   int created = 0;
+  String walletAddress = '0x2222222222222222222222222222222222222222';
   @override
   String get id => 'user';
   @override
   List<LinkedAccounts> get linkedAccounts => [
     LinkedAccounts.fromJson({
       'type': 'wallet',
-      'address': '0x2222222222222222222222222222222222222222',
+      'address': walletAddress,
       'chainType': 'Ethereum',
       'chainId': '56',
     }),
