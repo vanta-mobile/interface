@@ -1,5 +1,13 @@
 ## 当前验收安排
 
+## 2026-11-06 iOS 仅支持 iPhone 与法国发行范围说明
+
+对照`/data/dodo/rwa-interface`最近的`38d2da6`（`fix(ios): target iPhone only and declare encryption exemption`），Xcode项目的Debug／Profile／Release均将`TARGETED_DEVICE_FAMILY`从`1,2`改为`1`，由Runner继承，仅声明iPhone原生支持。移除`Info.plist`的iPad专用方向配置，保留iPhone竖屏及左右横屏；未通过锁定方向实现设备限制，也未改动现有响应式界面。iPhone应用仍可能在iPad上以兼容模式运行，不声明iPad原生适配不等于禁止所有iPad安装。
+
+与参考项目保持一致，增加`ITSAppUsesNonExemptEncryption=false`，声明不使用非豁免加密。该字段不是地域限制，不会使法国商店自动不可用。法国不上架是本项目的发行要求，必须在App Store Connect的Pricing and Availability → App Availability中设置具体国家／地区并排除France；首次设置与修改已有范围的路径已写入[发布文档](ci.md#ios-设备支持与发行地区)。本次只修改仓库配置，没有操作App Store Connect，远端地区限制仍待发布方保存并核对。
+
+配置校验已通过：Info.plist可解析，加密字段为布尔false，三个构建配置均为设备族1，无iPad方向覆盖，保留原有iPhone方向。现有Python发布／构建工具48项测试中47项通过，1项macOS Keychain专项因Linux跳过；没有新增重复配置内容的测试。本次无Dart或UI变更；Linux无macOS／Xcode，不能构建或查看iOS原生布局。原工作区存在同时开发的主下单代码，初次格式检查发现其中1个文件需格式化，静态分析与Android构建因`MainOrderPercentageControl`尚未接收表单传入的`unit`／`manualCheck`参数失败；本轮未修改这些文件。使用已提交版本`f26b305`加本次iOS改动的隔离副本验证，853个Dart文件格式检查零改动，`dart analyze --fatal-infos`通过；Android Release构建尝试及重试均因SDK自带CMake Ninja执行`--version`时发生Segmentation fault失败，未修改全局SDK或项目Android配置，不能声称本轮Android构建通过。
+
 ## 2026-11-06 数字变化动画与数值格式化组件迁移
 
 从 `/data/dodo/rwa-interface` 迁入以下公共能力，保持原类名、方法参数和默认展示规则，无新增依赖：

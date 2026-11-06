@@ -48,6 +48,18 @@ Android 凭据从 Secrets 解码至 runner 临时目录并在 `always()` 步骤�
 
 GitHub Release 含 `vanta-android-arm64-v8a.apk`、`vanta-android-x86_64.apk`、`vanta-android.aab`、`vanta-android-mapping.txt`；启用 iOS 且构建成功时另附 `vanta-ios.ipa`。Dart 混淆符号和 iOS dSYM 单独保留为 `debug-symbols-*` Actions artifacts（30 天）；安装产物为 7 天。AAB 必须通过签名非 Debug、bundletool 结构、64 位 ELF 段及生成 APK 的 16 KB 对齐校验；bundletool 下载固定版本和 SHA256。
 
+## iOS 设备支持与发行地区
+
+iOS 的 Debug／Profile／Release 构建均使用 `TARGETED_DEVICE_FAMILY = 1`，仅声明 iPhone 原生支持，不提供 iPad 原生适配；保留 iPhone 竖屏和两个横屏方向。iPhone 应用仍可能在 iPad 上以兼容模式运行，设备族设置不等于禁止所有 iPad 安装。
+
+`Info.plist` 与参考项目保持一致，设置 `ITSAppUsesNonExemptEncryption = false`，声明不使用非豁免加密。这不是地区限制；如果以后变更加密能力，应重新核对声明。
+
+发行要求：**不在法国上架**。实际销售范围必须在 App Store Connect 设置，Xcode／Info.plist／IPA 导出配置和 TestFlight 上传都不会自动排除法国。本仓库当前没有修改商店地区的自动化。
+
+发布前进入 App Store Connect → Apps → Vanta → Pricing and Availability（定价与销售范围）→ App Availability。首次设置时点击 Set Up Availability，选择 Specific Countries or Regions，仅勾选所需地区并排除 France（法国）；已有地区设置时点击 Manage → Manage Availability，取消 France 并保存。确认页面的可用地区不含法国，之后调整范围时继续排除。本地源码配置和构建通过不代表该远端设置已生效。
+
+参考：[Apple：管理 App 的可用地区](https://developer.apple.com/help/app-store-connect/manage-your-apps-availability/manage-availability-for-your-app-on-the-app-store)。
+
 ## Google Play 内部测试
 
 首次配置：
