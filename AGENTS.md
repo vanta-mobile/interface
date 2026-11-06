@@ -6,14 +6,31 @@ Adapted from `/data/dodo/rwa-interface/.specify/memory/constitution.md` v1.1.1 a
 - Separate presentation, application/domain logic, and data access. Keep widgets responsible for rendering state and collecting intent.
 - Application data requests follow `Widget → Riverpod provider/notifier → repository → service`.
 - Never construct HTTP/WebSocket clients in widgets. Map transport payloads into validated immutable domain models at the data boundary.
-- Keep components within their owning feature; promote shared components only when there are real consumers. Review files beyond 400 lines and build methods beyond 80 lines for cohesive extraction.
+- Before creating a component, inspect existing components and reuse those that fit the actual behavior and design. Do not force reuse when it introduces unrelated behavior, excessive configuration, or coupling. Keep components within their owning feature; promote shared components only when there are real consumers.
+- Check file and build-method size while coding. Review files beyond 400 lines and build methods beyond 80 lines for cohesive extraction to improve token efficiency and reduce maintenance cost. Split along meaningful responsibilities; do not split solely to meet a line count.
+- Apply appropriate code design principles to keep implementations robust, maintainable, and performant. Keep abstractions proportional to the actual requirements.
 - Observe frequently changing state near the widgets that consume it.
 
 ## Design and accessibility
+- Follow the supplied design and explicit user requirements. Do not invent extra UI, status indicators, state displays, or interactions beyond that scope.
 - Use centralized semantic theme tokens for colors and typography. No literal colors in feature widgets; third-party chart adaptation is an allowed boundary.
 - Base responsive layouts on available constraints; support narrow windows, landscape, safe areas, keyboard, and enlarged text. Never lock orientation.
 - Keep user-visible strings in the localization catalog. Provide clear semantic labels and usable touch targets. Financial identifiers and order references must be copyable.
-- Handle loading, empty, success, partial/offline data, and recoverable errors. Preserve input after failures and display concrete safe failure reasons.
+- Handle loading, empty, success, partial/offline data, and recoverable errors within the agreed design and requirements. Preserve input after failures; follow the feedback rules below without inventing additional status displays.
+
+## Errors, loading, and refresh
+- Prefer the actual API-provided error message when displaying failures. If none is available, show the concrete known cause; use generic fallback copy only when the cause is genuinely unknown. Keep useful diagnostic detail while excluding secrets, credentials, raw sensitive payloads, and stack traces.
+- Prefer skeleton placeholders scoped to the section that is loading, without blocking or disturbing other content. Unless the feature has exceptionally strict real-time requirements, show loading placeholders only when that section has no data; preserve existing data during refreshes.
+- Every page that displays API data must support pull-to-refresh. Refresh all API-backed data the page depends on, and keep the refresh indicator active until all requests triggered by that refresh have settled, including failures. Await the complete refresh operation rather than ending the indicator after dispatching requests.
+- While a button-triggered operation is pending, disable the button and show a spinning loading indicator in it to prevent duplicate submissions. Consider a shared loading-button component when there are real reuse opportunities.
+
+## Numeric display
+- Consider `AnimatedNumberText` from `lib/core/motion/animated_number_text.dart` for all changing numeric displays, following the design and user requirements.
+- For every numeric display, consider the existing helpers in `lib/core/formatters/` and select the method appropriate to the value's units, precision, and context. Reuse suitable formatters instead of duplicating formatting logic in widgets.
+
+## Illustration and icon assets
+- Prefer downloading SVG illustrations and icons directly from the design source.
+- If the design has no vector asset, export a 3x PNG with `contentsOnly: true` and preserve the transparent background. Convert that PNG to lossless WebP using ImageMagick and use the resulting WebP asset in the app.
 
 ## Financial integrity
 - Use decimal arithmetic for order quantities, notionals, margin, and validation. Chart drawing coordinates may use doubles.
