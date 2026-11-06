@@ -2426,5 +2426,7 @@
   "enableTradingOpenWallet": "打开钱包签名",
   "enableTradingSign": "签名并开启交易",
   "enableTradingContinue": "继续",
-  "enableTradingWalletSetup": "设置钱包"
+  "enableTradingWalletSetup": "设置钱包",
+  "tradeNavigation": "交易",
+  "exploreNavigation": "探索"
 }

@@ -46,6 +46,7 @@ flutter:
   assets:
     - assets/branding/
     - assets/auth/
+    - assets/navigation/
   fonts:
     - family: Inter
       fonts:

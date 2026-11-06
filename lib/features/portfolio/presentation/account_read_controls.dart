@@ -46,9 +46,16 @@ class AccountReadControls extends ConsumerWidget {
               : identity == null || address == null || !canSign
               ? () => showAccountSheet(context)
               : onRead,
-          icon: Icon(
-            address == null || !canSign ? Icons.account_balance_wallet_outlined : Icons.refresh,
-          ),
+          icon: state.busy
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(
+                  address == null || !canSign
+                      ? Icons.account_balance_wallet_outlined
+                      : Icons.refresh,
+                ),
           label: Text(
             identity == null
                 ? l10n.accountSignInToRead

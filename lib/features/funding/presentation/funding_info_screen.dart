@@ -33,15 +33,20 @@ class FundingInfoEntry extends StatelessWidget {
 }
 
 class FundingInfoScreen extends ConsumerStatefulWidget {
-  const FundingInfoScreen({super.key, required this.initialMarket});
+  const FundingInfoScreen({
+    super.key,
+    required this.initialMarket,
+    this.initialOperation = FundingOperation.deposit,
+  });
   final TransferMarket initialMarket;
+  final FundingOperation initialOperation;
   @override
   ConsumerState<FundingInfoScreen> createState() => _FundingInfoScreenState();
 }
 
 class _FundingInfoScreenState extends ConsumerState<FundingInfoScreen> {
   late TransferMarket market = widget.initialMarket;
-  FundingOperation operation = FundingOperation.deposit;
+  late FundingOperation operation = widget.initialOperation;
   int chainId = 56;
   @override
   Widget build(BuildContext context) {

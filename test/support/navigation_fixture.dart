@@ -1,3 +1,4 @@
+import 'package:vanta/features/portfolio/domain/asset_valuation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,6 +38,7 @@ class NavigationFixture {
     WidgetTester tester, {
     String language = 'en',
     bool signedIn = true,
+    AssetIndexRepository? assetIndexRepository,
     double width = 390,
     double scale = 1,
     Future<List<AsterInstrument>> Function()? instrumentsLoader,
@@ -55,6 +57,7 @@ class NavigationFixture {
       quickOrderRepository: sizing,
       orderConfirmationPreferences: preferences,
       asterAccountRepository: account,
+      assetIndexRepository: assetIndexRepository,
       asterSpotRepository: spot,
       openOrdersRepository: openOrders,
       positionRiskRepository: positions,

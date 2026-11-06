@@ -27,8 +27,17 @@ void main() {
         fixture.container.read(symbolProvider.notifier).select('ETHUSDT');
         await tester.pumpAndSettle();
         for (final destination in ['markets', 'portfolio', 'assistant', 'points']) {
-          await tapNavigationControl(tester, 'navigation-$destination');
-          final navigation = find.byKey(Key('navigation-$destination'));
+          if (destination == 'assistant' || destination == 'points') {
+            await tapNavigationControl(tester, 'navigation-explore');
+            await tapNavigationControl(tester, 'explore-$destination');
+          } else {
+            await tapNavigationControl(tester, 'navigation-$destination');
+          }
+          final navigation = find.byKey(
+            Key(
+              'navigation-${destination == 'assistant' || destination == 'points' ? 'explore' : destination}',
+            ),
+          );
           expect(tester.getSize(navigation).height, greaterThanOrEqualTo(48));
           final semantics = tester.widget<Semantics>(
             find.ancestor(of: navigation, matching: find.byType(Semantics)).first,

@@ -6008,4 +6008,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get enableTradingWalletSetup => 'Wallet setup';
+
+  @override
+  String get tradeNavigation => 'Trade';
+
+  @override
+  String get exploreNavigation => 'Explore';
 }

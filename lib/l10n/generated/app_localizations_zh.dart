@@ -5561,4 +5561,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get enableTradingWalletSetup => '设置钱包';
+
+  @override
+  String get tradeNavigation => '交易';
+
+  @override
+  String get exploreNavigation => '探索';
 }

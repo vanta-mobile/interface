@@ -10502,6 +10502,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Wallet setup'**
   String get enableTradingWalletSetup;
+
+  /// No description provided for @tradeNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade'**
+  String get tradeNavigation;
+
+  /// No description provided for @exploreNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore'**
+  String get exploreNavigation;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

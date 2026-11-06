@@ -121,3 +121,8 @@ ThemeData vantaTheme() => ThemeData(
     behavior: SnackBarBehavior.floating,
   ),
 );
+
+/// Typography for primary navigation from the mobile design.
+abstract final class PortfolioTypography {
+  static const navigation = TextStyle(fontSize: 10, height: 16 / 10, fontWeight: FontWeight.w500);
+}

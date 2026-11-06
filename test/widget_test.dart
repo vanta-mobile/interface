@@ -57,9 +57,7 @@ void main() {
     await tester.tap(find.widgetWithText(CheckedPopupMenuItem<KChartType>, '折线图'));
     await tester.pumpAndSettle();
     expect(tester.widget<KChartWidget>(find.byType(KChartWidget)).isLine, true);
-    await tester.tap(find.byKey(const Key('navigation-portfolio')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('演示账户').first);
+    await tester.tap(find.byKey(const Key('navigation-explore')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('portfolio-connect-demo')));
     await tester.pumpAndSettle();

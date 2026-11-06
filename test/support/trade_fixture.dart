@@ -1,3 +1,5 @@
+import 'identity_repository.dart';
+
 import 'package:vanta/features/portfolio/application/main_order_pricing_provider.dart';
 import 'package:vanta/features/portfolio/application/futures_history_provider.dart';
 import 'package:vanta/features/portfolio/domain/futures_history.dart';
@@ -367,6 +369,12 @@ ProviderContainer setup(
         walletConnectorProvider.overrideWithValue(walletConnector),
         walletConfigurationProvider.overrideWithValue(const WalletConfiguration(projectId: 'test')),
       ],
+      if (identityRepository == null)
+        identityRepositoryProvider.overrideWith((ref) {
+          final repository = TestIdentityRepository();
+          ref.onDispose(repository.dispose);
+          return repository;
+        }),
       if (identityRepository != null) ...[
         identityRepositoryProvider.overrideWithValue(identityRepository),
         privyConfigurationProvider.overrideWithValue(

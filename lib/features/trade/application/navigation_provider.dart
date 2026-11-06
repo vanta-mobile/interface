@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum AppDestination { futures, markets, portfolio, assistant, points }
+enum AppDestination { futures, markets, explore, portfolio, assistant, points }
 
 enum FuturesWorkspaceTab { chart, trade }
 

@@ -2504,5 +2504,7 @@
   "enableTradingOpenWallet": "Open wallet to sign",
   "enableTradingSign": "Sign to enable trading",
   "enableTradingContinue": "Continue",
-  "enableTradingWalletSetup": "Wallet setup"
+  "enableTradingWalletSetup": "Wallet setup",
+  "tradeNavigation": "Trade",
+  "exploreNavigation": "Explore"
 }

@@ -48,12 +48,14 @@ class LiveOrderForm extends ConsumerStatefulWidget {
     required this.data,
     this.closingSide,
     this.initialConditional = false,
+    this.initialCloseMarket = true,
     this.mode,
     this.onModeChanged,
   });
   final LiveOrderContext data;
   final String? closingSide;
   final bool initialConditional;
+  final bool initialCloseMarket;
   final LiveOrderEntryMode? mode;
   final ValueChanged<LiveOrderEntryMode>? onModeChanged;
   @override
@@ -117,7 +119,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
   @override
   void initState() {
     super.initState();
-    market = widget.closingSide != null;
+    market = widget.closingSide != null && widget.initialCloseMarket;
     conditional = widget.initialConditional;
     sizeUnit = widget.closingSide == null ? OrderSizeUnit.quote : OrderSizeUnit.base;
     if (widget.mode case final mode?) _applyMode(mode);

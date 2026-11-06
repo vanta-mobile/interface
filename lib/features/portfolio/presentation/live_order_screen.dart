@@ -24,10 +24,11 @@ void openLiveOrder(BuildContext context, String symbol) =>
     Navigator.of(context)
         .push<void>(MaterialPageRoute(builder: (_) => LiveOrderScreen(symbol: symbol)));
 
-void openLiveClose(BuildContext context, String symbol, String side) => Navigator.of(context)
-    .push<void>(
+void openLiveClose(BuildContext context, String symbol, String side, {bool market = true}) =>
+    Navigator.of(context).push<void>(
       MaterialPageRoute(
-        builder: (_) => LiveOrderScreen(symbol: symbol, closingSide: side),
+        builder: (_) =>
+            LiveOrderScreen(symbol: symbol, closingSide: side, initialCloseMarket: market),
       ),
     );
 
@@ -45,10 +46,12 @@ class LiveOrderScreen extends ConsumerStatefulWidget {
     required this.symbol,
     this.closingSide,
     this.initialConditional = false,
+    this.initialCloseMarket = true,
   });
   final String symbol;
   final String? closingSide;
   final bool initialConditional;
+  final bool initialCloseMarket;
   @override
   ConsumerState<LiveOrderScreen> createState() => _LiveOrderScreenState();
 }
@@ -225,6 +228,7 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
                   data: data,
                   closingSide: closingSide,
                   initialConditional: initialConditional,
+                  initialCloseMarket: widget.initialCloseMarket,
                   mode: closingSide == null && !initialConditional ? mode : null,
                   onModeChanged: (next) {
                     setState(() {

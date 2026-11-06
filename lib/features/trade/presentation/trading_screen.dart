@@ -10,6 +10,7 @@ import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../points/presentation/points_page.dart';
 import '../../assistant/presentation/assistant_page.dart';
+import 'explore_page.dart';
 import '../application/providers.dart';
 import '../application/navigation_provider.dart';
 import '../application/trading_lifecycle_provider.dart';
@@ -71,6 +72,7 @@ class _TradingScreenState extends ConsumerState<TradingScreen> with WidgetsBindi
             onTrade: () => ref.read(appDestinationProvider.notifier).select(AppDestination.futures),
           ),
           AppDestination.portfolio => const PortfolioPage(),
+          AppDestination.explore => const ExplorePage(),
           AppDestination.assistant => const AssistantPage(),
           AppDestination.points => const PointsPage(),
         },
