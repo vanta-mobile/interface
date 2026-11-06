@@ -4,13 +4,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/strings.dart';
 import '../../../../core/theme.dart';
 import '../../../auth/presentation/identity_panel.dart';
+import '../../../auth/presentation/login_screen.dart';
 import '../../application/providers.dart';
 import 'primitives.dart';
 
-void showAccountSheet(BuildContext context) => showAppSheet<void>(context, const AccountSheet());
+void showAccountSheet(BuildContext context) =>
+    Navigator.of(context)
+        .push<void>(MaterialPageRoute(builder: (_) => const LoginScreen(account: AccountSheet())));
+
+void showDemoAccountSheet(BuildContext context) =>
+    showAppSheet<void>(context, const AccountSheet(demoOnly: true));
 
 class AccountSheet extends ConsumerWidget {
-  const AccountSheet({super.key});
+  const AccountSheet({this.demoOnly = false, super.key});
+  final bool demoOnly;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final account = ref.watch(accountProvider);
@@ -18,10 +25,12 @@ class AccountSheet extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const IdentityPanel(),
-        const SizedBox(height: 24),
-        const Divider(),
-        const SizedBox(height: 8),
+        if (!demoOnly) ...[
+          const IdentityPanel(),
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 8),
+        ],
         Align(
           alignment: Alignment.centerLeft,
           child: Image.asset('assets/branding/mark.webp', height: 40, width: 40),

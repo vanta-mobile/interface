@@ -33,6 +33,18 @@
             </intent-filter>
             <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
         </activity>
+        <activity
+            android:name="io.privy.sdk.oAuth.PrivyRedirectActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="vanta" />
+            </intent-filter>
+        </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
@@ -45,6 +57,9 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
+        </intent>
         <package android:name="io.metamask" />
         <package android:name="com.wallet.crypto.trustapp" />
         <package android:name="me.rainbow" />

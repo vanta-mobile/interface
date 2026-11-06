@@ -76,8 +76,10 @@ void main() {
     expect(store.value, 'en');
     await tester.tap(find.byKey(const Key('account-button')));
     await tester.pumpAndSettle();
-    expect(find.text('Sign in to Vanta'), findsOneWidget);
-    expect(find.text('Connect EOA wallet'), findsOneWidget);
+    final l10n = AppLocalizations.of(tester.element(find.byKey(const Key('login-email'))));
+    expect(l10n.localeName, 'en');
+    expect(find.text(l10n.authWelcome), findsOneWidget);
+    expect(find.text(l10n.authWalletContinue), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 

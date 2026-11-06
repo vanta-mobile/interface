@@ -158,6 +158,26 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
   });
 
   @override
+  Future<AuthIdentity> loginWithSocial(SocialLoginProvider provider) => _guard(() async {
+    switch (await _ready.oAuth.login(
+      provider: provider == SocialLoginProvider.google
+          ? OAuthProvider.google
+          : OAuthProvider.twitter,
+      appUrlScheme: 'vanta',
+    )) {
+      case Success<PrivyUser>(:final value):
+        if (_disposed) throw const AuthFailure('authSessionUnavailable');
+        _sessionGeneration++;
+        _externalInvalidated = false;
+        _user = value;
+        await _remember(WalletPreference(value.id, WalletKind.embedded, null));
+        return _identity(value);
+      case Failure<PrivyUser>(:final error):
+        throw failureFromPrivy(error.message);
+    }
+  });
+
+  @override
   Future<AuthIdentity> ensureWallet() => _guard(() async {
     final user = _user;
     if (user == null) throw const AuthFailure('authSessionUnavailable');
@@ -423,6 +443,8 @@ AuthFailure failureFromPrivy(String message) {
       ? 'authNetwork'
       : lower.contains('rate') || lower.contains('too many')
       ? 'authRateLimited'
+      : lower.contains('expired') && (lower.contains('code') || lower.contains('otp'))
+      ? 'authCodeExpired'
       : lower.contains('code') || lower.contains('otp') || lower.contains('expired')
       ? 'authInvalidCode'
       : lower.contains('client') || lower.contains('app id') || lower.contains('configuration')

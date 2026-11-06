@@ -10,6 +10,8 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flutter_riverpod: ^3.4.3
+  # Render the original Figma social and wallet SVG icons.
+  flutter_svg: ^2.3.2
   k_chart_plus: ^1.0.4
   # Offline recovery of wallet EIP-712 signatures; no keys are generated.
   web3dart: 3.0.3
@@ -41,6 +43,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/
+    - assets/auth/
   fonts:
     - family: Inter
       fonts:

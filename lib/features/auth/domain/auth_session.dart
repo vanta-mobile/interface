@@ -3,6 +3,8 @@ import 'wallet_transaction.dart';
 
 enum WalletKind { embedded, external }
 
+enum SocialLoginProvider { google, x }
+
 class AuthIdentity {
   const AuthIdentity({
     required this.id,
@@ -51,6 +53,7 @@ abstract interface class IdentityRepository {
   Future<AuthIdentity?> initialize();
   Future<void> sendCode(String email);
   Future<AuthIdentity> verifyCode(String email, String code);
+  Future<AuthIdentity> loginWithSocial(SocialLoginProvider provider);
   Future<AuthIdentity> ensureWallet();
   Future<AuthIdentity> loginWithWallet(WalletConnection connection);
   Future<String> signWalletRequest({

@@ -24,6 +24,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('test@example.com'), findsOneWidget);
     await tester.enterText(find.byKey(const Key('login-code')), '123456');
+    await tester.pump();
     repository.verifyFailure = const AuthFailure('authInvalidCode', reason: 'Code expired');
     await tester.tap(find.byKey(const Key('verify-email-code')));
     await tester.pumpAndSettle();

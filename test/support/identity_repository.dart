@@ -13,16 +13,33 @@ const identityWithWallet = AuthIdentity(
 
 class TestIdentityRepository implements IdentityRepository {
   AuthIdentity? restored;
-  AuthFailure? sendFailure, verifyFailure, walletFailure, logoutFailure;
-  Completer<void>? sendGate, verifyGate, walletGate;
-  int sent = 0, verified = 0, wallets = 0, logouts = 0;
+  AuthFailure? sendFailure, verifyFailure, walletFailure, logoutFailure, initializeFailure;
+  Completer<void>? sendGate, verifyGate, walletGate, initializeGate;
+  int sent = 0, verified = 0, wallets = 0, logouts = 0, initializations = 0;
+  SocialLoginProvider? socialProvider;
+  Completer<void>? socialGate;
+  AuthFailure? socialFailure;
+
+  @override
+  Future<AuthIdentity> loginWithSocial(SocialLoginProvider provider) async {
+    socialProvider = provider;
+    await socialGate?.future;
+    if (socialFailure case final failure?) throw failure;
+    return identityWithoutWallet;
+  }
+
   final events = StreamController<AuthIdentity?>.broadcast(sync: true);
 
   @override
   Stream<AuthIdentity?> get changes => events.stream;
 
   @override
-  Future<AuthIdentity?> initialize() async => restored;
+  Future<AuthIdentity?> initialize() async {
+    initializations++;
+    await initializeGate?.future;
+    if (initializeFailure case final failure?) throw failure;
+    return restored;
+  }
 
   @override
   Future<void> sendCode(String email) async {
@@ -88,6 +105,8 @@ class TestIdentityRepository implements IdentityRepository {
   }) async => throw const WalletTransactionNotSent('authWalletReconnect');
 
   Future<void> dispose() async {
+    if (initializeGate case final gate? when !gate.isCompleted) gate.complete();
+    if (socialGate case final gate? when !gate.isCompleted) gate.complete();
     if (externalGate case final gate? when !gate.isCompleted) gate.complete();
     if (sendGate case final gate? when !gate.isCompleted) gate.complete();
     if (verifyGate case final gate? when !gate.isCompleted) gate.complete();

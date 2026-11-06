@@ -48,6 +48,44 @@ void main() {
     expect(repository.wallets, 0);
   });
 
+  for (final provider in SocialLoginProvider.values) {
+    test('$provider signs in once and creates an embedded wallet', () async {
+      final controller = await start();
+      repository.socialGate = Completer<void>();
+      final pending = controller.loginWithSocial(provider);
+      await controller.loginWithSocial(provider);
+      expect(container.read(authProvider).busy, true);
+      expect(repository.socialProvider, provider);
+      repository.socialGate!.complete();
+      await pending;
+      expect(repository.wallets, 1);
+      expect(container.read(authProvider).identity?.walletKind, WalletKind.embedded);
+    });
+  }
+
+  test('expired code unlocks resend and failed resend retains its email', () async {
+    final controller = await start();
+    await controller.sendCode('test@example.com');
+    repository.verifyFailure = const AuthFailure('authCodeExpired');
+    await controller.verifyCode('482619');
+    expect(container.read(authProvider).resendAt, null);
+    repository.sendFailure = const AuthFailure('authNetwork');
+    await controller.sendCode('test@example.com');
+    expect(repository.sent, 2);
+    expect(container.read(authProvider).email, 'test@example.com');
+    expect(container.read(authProvider).phase, AuthPhase.awaitingCode);
+  });
+
+  test('social completion after disposal does not create a wallet', () async {
+    final controller = await start();
+    repository.socialGate = Completer<void>();
+    final pending = controller.loginWithSocial(SocialLoginProvider.google);
+    container.dispose();
+    repository.socialGate!.complete();
+    await pending;
+    expect(repository.wallets, 0);
+  });
+
   test('normalizes email and guards duplicate sends / resend cooldown', () async {
     final controller = await start();
     repository.sendGate = Completer<void>();

@@ -35,6 +35,7 @@ class AuthController extends Notifier<AuthSession> {
   StreamSubscription<AuthIdentity?>? _subscription;
   int _generation = 0;
   bool _loggingOut = false;
+  bool _refreshing = false;
   bool _isCurrent(int generation) => ref.mounted && generation == _generation;
 
   @override
@@ -79,6 +80,45 @@ class AuthController extends Notifier<AuthSession> {
           failure: const AuthFailure('authUnavailable'),
         );
       }
+    }
+  }
+
+  /// Reconcile an existing native session after returning to the app. Unlike
+  /// initial login, this never creates a wallet or toggles busy for the same
+  /// identity. SDK changes and explicit commands supersede a late result.
+  Future<void> refreshSession() async {
+    if (!ref.mounted || state.busy || state.identity == null || _refreshing) return;
+    _refreshing = true;
+    final generation = _generation;
+    final previous = state;
+    bool current() => _isCurrent(generation) && identical(state, previous);
+    try {
+      final identity = await ref.read(identityRepositoryProvider).initialize();
+      if (!current()) return;
+      if (identity == null) {
+        _generation++;
+        state = const AuthSession(
+          phase: AuthPhase.signedOut,
+          failure: AuthFailure('authSessionUnavailable'),
+        );
+      } else if (identity.id != previous.identity?.id ||
+          identity.email != previous.identity?.email ||
+          identity.walletAddress != previous.identity?.walletAddress ||
+          identity.walletKind != previous.identity?.walletKind ||
+          identity.signingAvailable != previous.identity?.signingAvailable) {
+        _generation++;
+        state = AuthSession(phase: AuthPhase.signedIn, identity: identity);
+      }
+    } catch (error) {
+      if (current()) {
+        state = AuthSession(
+          phase: previous.phase,
+          identity: previous.identity,
+          failure: error is AuthFailure ? error : const AuthFailure('authUnavailable'),
+        );
+      }
+    } finally {
+      _refreshing = false;
     }
   }
 
@@ -167,7 +207,6 @@ class AuthController extends Notifier<AuthSession> {
 
   Future<void> verifyCode(String input) async {
     if (state.busy || state.phase != AuthPhase.awaitingCode) return;
-    final generation = _generation;
     final code = input.trim();
     final previous = state;
     if (!RegExp(r'^\d{6}$').hasMatch(code)) {
@@ -179,6 +218,14 @@ class AuthController extends Notifier<AuthSession> {
       );
       return;
     }
+    await _login(
+      previous,
+      () => ref.read(identityRepositoryProvider).verifyCode(previous.email, code),
+    );
+  }
+
+  Future<void> _login(AuthSession previous, Future<AuthIdentity> Function() operation) async {
+    final generation = _generation;
     state = AuthSession(
       phase: previous.phase,
       email: previous.email,
@@ -186,7 +233,7 @@ class AuthController extends Notifier<AuthSession> {
       resendAt: previous.resendAt,
     );
     try {
-      final identity = await ref.read(identityRepositoryProvider).verifyCode(previous.email, code);
+      final identity = await operation();
       if (!_isCurrent(generation)) return;
       state = AuthSession(phase: AuthPhase.signedIn, identity: identity);
       await createWallet();
@@ -195,7 +242,7 @@ class AuthController extends Notifier<AuthSession> {
         state = AuthSession(
           phase: previous.phase,
           email: previous.email,
-          resendAt: previous.resendAt,
+          resendAt: failure.key == 'authCodeExpired' ? null : previous.resendAt,
           failure: failure,
         );
       }
@@ -214,6 +261,22 @@ class AuthController extends Notifier<AuthSession> {
   void changeEmail() {
     if (state.busy || state.identity != null) return;
     state = AuthSession(phase: AuthPhase.signedOut, email: state.email, resendAt: state.resendAt);
+  }
+
+  Future<void> loginWithSocial(SocialLoginProvider provider) async {
+    if (state.busy || state.identity != null) return;
+    final previous = state;
+    final generation = _generation;
+    await _login(previous, () async {
+      final repository = ref.read(identityRepositoryProvider);
+      if (previous.failure?.key == 'authConfiguration' ||
+          previous.phase == AuthPhase.initializing) {
+        await repository.initialize();
+        if (!_isCurrent(generation)) throw const AuthFailure('authSessionUnavailable');
+        _observe(repository);
+      }
+      return repository.loginWithSocial(provider);
+    });
   }
 
   Future<void> createWallet() async {

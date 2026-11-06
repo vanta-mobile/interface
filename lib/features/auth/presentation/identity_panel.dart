@@ -1,188 +1,41 @@
-import '../../subaccounts/presentation/subaccount_list_screen.dart';
-import '../../authorization/presentation/trading_authorization_screen.dart';
-
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/strings.dart';
-import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../subaccounts/presentation/subaccount_list_screen.dart';
+import '../../authorization/presentation/trading_authorization_screen.dart';
 import '../application/auth_provider.dart';
 import '../domain/auth_session.dart';
+import 'auth_controls.dart';
+import 'login_panel.dart';
 
-class IdentityPanel extends ConsumerStatefulWidget {
+class IdentityPanel extends ConsumerWidget {
   const IdentityPanel({super.key});
-  @override
-  ConsumerState<IdentityPanel> createState() => _IdentityPanelState();
-}
-
-class _IdentityPanelState extends ConsumerState<IdentityPanel> {
-  final email = TextEditingController();
-  final code = TextEditingController();
-  Timer? _countdown;
 
   @override
-  void initState() {
-    super.initState();
-    email.text = ref.read(authProvider).email;
-    _countdown = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted && ref.read(authProvider).phase == AuthPhase.awaitingCode) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _countdown?.cancel();
-    email.dispose();
-    code.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    ref.listen(authProvider.select((session) => session.identity?.id), (previous, next) {
-      code.clear();
-      if (next == null) email.clear();
-    });
+  Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authProvider);
-    final controller = ref.read(authProvider.notifier);
     final identity = session.identity;
-    final awaitingCode = session.phase == AuthPhase.awaitingCode;
-    final seconds = session.resendAt == null
-        ? 0
-        : session.resendAt!.difference(DateTime.now()).inSeconds.clamp(0, 60);
-    final configurationReady = ref.watch(privyConfigurationProvider).isConfigured;
+    if (identity == null) return const LoginPanel();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          tr(context, identity == null ? 'loginTitle' : 'account'),
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
+        Text(tr(context, 'account'), style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 12),
-        if (identity == null) ...[
-          Text(tr(context, 'loginDescription'), style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 16),
-          if (awaitingCode)
-            ..._codeFields(session, controller, seconds)
-          else
-            ..._emailFields(session, controller, configurationReady),
-        ] else
-          ..._walletFields(identity, session, controller),
-        if (session.busy) ...[
-          const SizedBox(height: 12),
-          const LinearProgressIndicator(),
-          const SizedBox(height: 8),
-          Text(
-            tr(context, switch (session.walletStep) {
-              WalletLoginStep.connecting => 'walletConnectStep',
-              WalletLoginStep.signing => 'walletSignStep',
-              null => identity == null ? 'loginInProgress' : 'walletInProgress',
-            }),
-          ),
-        ],
+        ..._walletFields(context, identity, session, ref.read(authProvider.notifier)),
         if (session.failure case final failure?) ...[
           const SizedBox(height: 12),
-          Text(
-            '${tr(context, failure.key)}${failure.reason == null ? '' : '\n${failure.reason}'}',
-            key: const Key('auth-error'),
-            style: const TextStyle(color: AppColors.negative),
-          ),
+          AuthFailureText(failure),
         ],
       ],
     );
   }
 
-  List<Widget> _codeFields(AuthSession session, AuthController controller, int seconds) => [
-    SelectableText(session.email),
-    const SizedBox(height: 12),
-    TextField(
-      key: const Key('login-code'),
-      controller: code,
-      enabled: !session.busy,
-      keyboardType: TextInputType.number,
-      autofillHints: const [AutofillHints.oneTimeCode],
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(6),
-      ],
-      decoration: InputDecoration(labelText: tr(context, 'verificationCode')),
-      onSubmitted: (_) => controller.verifyCode(code.text),
-    ),
-    const SizedBox(height: 12),
-    FilledButton(
-      key: const Key('verify-email-code'),
-      onPressed: session.busy ? null : () => controller.verifyCode(code.text),
-      child: Text(tr(context, 'verifyAndLogin')),
-    ),
-    Wrap(
-      alignment: WrapAlignment.spaceBetween,
-      children: [
-        TextButton(
-          onPressed: session.busy || seconds > 0 ? null : () => controller.sendCode(session.email),
-          child: Text(
-            seconds > 0
-                ? AppLocalizations.of(context).resendCountdown(seconds)
-                : tr(context, 'resendCode'),
-          ),
-        ),
-        TextButton(
-          onPressed: session.busy
-              ? null
-              : () {
-                  code.clear();
-                  controller.changeEmail();
-                },
-          child: Text(tr(context, 'changeEmail')),
-        ),
-      ],
-    ),
-  ];
-
-  List<Widget> _emailFields(
-    AuthSession session,
-    AuthController controller,
-    bool configurationReady,
-  ) => [
-    TextField(
-      key: const Key('login-email'),
-      controller: email,
-      enabled: !session.busy && configurationReady,
-      keyboardType: TextInputType.emailAddress,
-      textInputAction: TextInputAction.done,
-      autocorrect: false,
-      autofillHints: const [AutofillHints.email],
-      decoration: InputDecoration(labelText: tr(context, 'emailAddress')),
-      onSubmitted: (_) => controller.sendCode(email.text),
-    ),
-    const SizedBox(height: 12),
-    FilledButton(
-      key: const Key('send-email-code'),
-      onPressed: session.busy || !configurationReady ? null : () => controller.sendCode(email.text),
-      child: Text(tr(context, 'sendCode')),
-    ),
-    const SizedBox(height: 12),
-    OutlinedButton.icon(
-      key: const Key('connect-external-wallet'),
-      onPressed:
-          session.busy ||
-              !configurationReady ||
-              !ref.watch(walletConfigurationProvider).isConfigured
-          ? null
-          : () => controller.connectWallet(context),
-      icon: const Icon(Icons.account_balance_wallet_outlined),
-      label: Text(tr(context, 'connectExternalWallet')),
-    ),
-    Text(tr(context, 'externalWalletLoginHint'), style: Theme.of(context).textTheme.bodySmall),
-    if (!ref.watch(walletConfigurationProvider).isConfigured)
-      Text(tr(context, 'authWalletConfiguration'), style: Theme.of(context).textTheme.bodySmall),
-  ];
-
   List<Widget> _walletFields(
+    BuildContext context,
     AuthIdentity identity,
     AuthSession session,
     AuthController controller,

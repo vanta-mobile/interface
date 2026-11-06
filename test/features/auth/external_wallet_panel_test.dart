@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/auth/presentation/identity_panel.dart';
+import 'package:vanta/features/auth/presentation/auth_controls.dart';
 import 'package:vanta/features/trade/application/providers.dart';
 
 import '../../support/identity_repository.dart';
@@ -27,7 +28,13 @@ void main() {
     await tester.tap(button);
     await tester.pump();
     expect(container.read(authProvider).walletStep, WalletLoginStep.connecting);
-    expect(tester.widget<OutlinedButton>(button).onPressed, null);
+    expect(tester.widget<AuthActionButton>(button).busy, true);
+    expect(
+      tester
+          .widget<FilledButton>(find.descendant(of: button, matching: find.byType(FilledButton)))
+          .onPressed,
+      null,
+    );
     connector.gate!.complete();
     await tester.pump();
     expect(container.read(authProvider).walletStep, WalletLoginStep.signing);

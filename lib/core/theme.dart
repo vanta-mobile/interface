@@ -21,6 +21,43 @@ abstract final class AppColors {
   static const bitcoin = Color(0xFFF7931A);
   static const onAccent = Color(0xFF042B24);
   static const transparent = Color(0x00000000);
+  static const authBackground = Color(0xFF121215);
+  static const authText = Color(0xFFFFFFFF);
+  static const authSecondary = Color(0xFFE6E8E8);
+  static const authInput = Color(0xFF222834);
+  static const authLine = Color(0x24FFFFFF);
+  static const authButton = Color(0xFF3C4143);
+  static const authAccent = Color(0xFF00E4AB);
+  static const authOnAccent = Color(0xFF013220);
+  static const authError = Color(0xFFF5464B);
+}
+
+abstract final class AuthTypography {
+  static const brand = TextStyle(
+    fontSize: 32,
+    height: 40 / 32,
+    fontWeight: FontWeight.w700,
+    color: AppColors.authAccent,
+  );
+  static const heading = TextStyle(
+    fontSize: 18,
+    height: 26 / 18,
+    fontWeight: FontWeight.w700,
+    color: AppColors.authText,
+  );
+  static const body = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w500,
+    color: AppColors.authText,
+  );
+  static const caption = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w500,
+    color: AppColors.authSecondary,
+  );
+  static const button = TextStyle(fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w700);
 }
 
 ThemeData vantaTheme() => ThemeData(

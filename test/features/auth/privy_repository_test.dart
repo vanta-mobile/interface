@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:privy_flutter/privy_flutter.dart';
 import 'package:privy_flutter/src/modules/email/login_with_email.dart';
+import 'package:privy_flutter/src/modules/oauth/login_with_oauth.dart';
 import 'package:vanta/features/auth/data/privy_configuration.dart';
 import 'package:vanta/features/auth/data/privy_identity_repository.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
@@ -12,6 +13,46 @@ import '../../support/wallet_connection.dart';
 
 void main() {
   const configuration = PrivyConfiguration(appId: ' app-id ', clientId: ' client-id ');
+
+  for (final provider in SocialLoginProvider.values) {
+    test('$provider maps to Privy OAuth and selects the embedded identity', () async {
+      final sdk = _Sdk();
+      final preferences = MemoryWalletPreferences();
+      final repository = PrivyIdentityRepository(
+        configuration,
+        create: (_) => sdk,
+        preferences: preferences,
+      );
+      addTearDown(repository.dispose);
+      await repository.initialize();
+      final identity = await repository.loginWithSocial(provider);
+      expect(
+        sdk.oAuth.provider,
+        provider == SocialLoginProvider.google ? OAuthProvider.google : OAuthProvider.twitter,
+      );
+      expect(sdk.oAuth.scheme, 'vanta');
+      expect(identity.walletKind, WalletKind.embedded);
+      expect(preferences.value?.kind, WalletKind.embedded);
+      expect(sdk.oAuth.user.created, 0);
+    });
+  }
+
+  test('OAuth failures retain a safe SDK reason', () async {
+    final sdk = _Sdk()..oAuth.failure = const PrivyException('Network unavailable');
+    final repository = PrivyIdentityRepository(
+      configuration,
+      create: (_) => sdk,
+      preferences: MemoryWalletPreferences(),
+    );
+    addTearDown(repository.dispose);
+    await repository.initialize();
+    await expectLater(
+      repository.loginWithSocial(SocialLoginProvider.google),
+      throwsA(isA<AuthFailure>().having((e) => e.reason, 'reason', 'Network unavailable')),
+    );
+    expect(failureFromPrivy('Code expired').key, 'authCodeExpired');
+    expect(failureFromPrivy('Invalid code').key, 'authInvalidCode');
+  });
 
   test('personal messages use exact UTF8 hex and the existing embedded wallet', () async {
     final user = _User()..wallets = [_User.wallet];
@@ -315,12 +356,35 @@ class _Sdk implements Privy {
   AuthState state = const Unauthenticated();
   @override
   final _Email email = _Email();
+  @override
+  final _OAuth oAuth = _OAuth();
   bool loggedOut = false;
   @override
   Future<AuthState> getAuthState() async => state;
   @override
   Future<void> logout() async {
     loggedOut = true;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _OAuth implements LoginWithOAuth {
+  final user = _User();
+  OAuthProvider? provider;
+  String? scheme;
+  PrivyException? failure;
+
+  @override
+  Future<Result<PrivyUser>> login({
+    required OAuthProvider provider,
+    required String appUrlScheme,
+  }) async {
+    this.provider = provider;
+    scheme = appUrlScheme;
+    if (failure case final error?) return Failure(error);
+    return Success(user);
   }
 
   @override

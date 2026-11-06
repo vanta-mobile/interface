@@ -103,7 +103,7 @@ class _DemoPortfolio extends ConsumerWidget {
               if (!account.connected)
                 FilledButton(
                   key: const Key('portfolio-connect-demo'),
-                  onPressed: () => showAccountSheet(context),
+                  onPressed: () => showDemoAccountSheet(context),
                   child: Text(tr(context, 'connect')),
                 )
               else
