@@ -297,7 +297,7 @@ jobs:
         uses: r0adkll/upload-google-play@935ef9c68bb393a8e6116b1575626a7f5be3a7fb # v1.1.3
         with:
           serviceAccountJson: ${{ steps.google-play.outputs.credentials_path }}
-          packageName: exchange.vanta.vanta
+          packageName: exchange.vanta.app
           releaseFiles: build/release-assets/vanta-android.aab
           mappingFile: build/release-assets/vanta-android-mapping.txt
           releaseName: ${{ needs.detect-release.outputs.version }}

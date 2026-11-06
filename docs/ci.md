@@ -1,6 +1,6 @@
 # GitHub Actions
 
-工作流改编自 `/data/dodo/rwa-interface/.github/workflows`，Flutter 固定为当前项目已验证的 **3.47.4 stable / Dart 3.13.3**，应用标识为 `exchange.vanta.vanta`，钱包回跳为 `vanta://wallet`。
+工作流改编自 `/data/dodo/rwa-interface/.github/workflows`，Flutter 固定为当前项目已验证的 **3.47.4 stable / Dart 3.13.3**，应用标识为 `exchange.vanta.app`，钱包回跳为 `vanta://wallet`。
 
 ## 迁移范围
 
@@ -39,7 +39,7 @@ iOS CI 和 IPA 发布通过共用的 `ios-configuration.yml` 自动检测，无�
 | Secret | `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | 可选 Google Play 内部测试上传：服务账号密钥文件的完整原始 JSON 文本，不是 Base64。未填／只有空白时跳过；非空但格式不合法或上传失败时发布失败 |
 | Secret | `IOS_DISTRIBUTION_CERTIFICATE_BASE64` | 仅启用 iOS 发布时必填，含匹配私钥的 Apple Distribution `.p12` 的 Base64 |
 | Secret | `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD` | 仅启用 iOS 发布时必填，`.p12` 导出密码 |
-| Secret | `IOS_PROVISIONING_PROFILE_BASE64` | 仅启用 iOS 发布时必填，明确授权 `exchange.vanta.vanta` 的 App Store Connect distribution profile 的 Base64 |
+| Secret | `IOS_PROVISIONING_PROFILE_BASE64` | 仅启用 iOS 发布时必填，明确授权 `exchange.vanta.app` 的 App Store Connect distribution profile 的 Base64 |
 | Secret | `APP_STORE_CONNECT_KEY_ID`、`APP_STORE_CONNECT_ISSUER_ID`、`APP_STORE_CONNECT_PRIVATE_KEY_BASE64` | 可选 TestFlight 团队 API Key；最后一项为下载的 `.p8` 的 Base64。三项全部不配置时跳过上传，部分配置则失败 |
 
 发布缺少必填配置会明确失败，不会以调试签名替代正式发布。CI 的 Android 验证 APK 使用开发签名且无钱包配置，产物名明确标记 `development-signed`。本地未提供任何签名环境变量时仍可做开发签名构建；只提供部分变量会在 Gradle 配置阶段失败。
@@ -64,14 +64,14 @@ iOS 的 Debug／Profile／Release 构建均使用 `TARGETED_DEVICE_FAMILY = 1`�
 
 首次配置：
 
-1. 在 Play Console 创建包名为 `exchange.vanta.vanta` 的应用，启用 Play App Signing，并先手动上传一个正式签名 AAB，完成 Console 要求的应用／测试发布设置。现有 `ANDROID_*` Secrets 必须对应 Play 登记的上传密钥。
+1. 在 Play Console 创建包名为 `exchange.vanta.app` 的应用，启用 Play App Signing，并先手动上传一个正式签名 AAB，完成 Console 要求的应用／测试发布设置。现有 `ANDROID_*` Secrets 必须对应 Play 登记的上传密钥。
 2. 在 Google Cloud 项目启用 **Google Play Android Developer API**，创建服务账号并下载 JSON 密钥。在 Play Console 的 **用户和权限** 中邀请服务账号的 `client_email`，授权此应用的查看信息及向测试轨道发布版本权限。
 3. 将下载文件的完整 JSON 内容保存到仓库 **Settings → Secrets and variables → Actions → New repository secret**，名称为 `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`。不要提交 JSON 文件或将其放入编译用 `.env`。
 4. 在 Play Console 的 **测试 → 内部测试** 配置测试人员名单／Google 群组，并向测试人员提供加入测试的链接。
 
 配置后不需要额外开关。仅当 `Release Mobile` 判断需要发布**新 Tag**，且目标分支为 `main` 时，Android 构建、签名／结构／16 KB 校验及 artifact 保存成功后，才检查凭据并上传 `vanta-android.aab` 和 `vanta-android-mapping.txt`。手动触发仍遵守相同条件；非 main 预发布及仅工作流变更的重建不上传。可以在 main 使用 `1.0.1-rc.1+2` 这样的预发布版本。
 
-上传 Action 固定 commit，包名固定为 `exchange.vanta.vanta`，轨道固定为 `internal`（内部测试，不是内部应用分享），状态为 `completed`，`changesNotSentForReview=false`。上传被接受后仍需等待 Google 处理，首次版本或其他变更可能需要审核；不自动回退成草稿或绕过审核。若 Console 要求先手动完成应用设置，工作流会失败并保留已生成的 artifacts。
+上传 Action 固定 commit，包名固定为 `exchange.vanta.app`，轨道固定为 `internal`（内部测试，不是内部应用分享），状态为 `completed`，`changesNotSentForReview=false`。上传被接受后仍需等待 Google 处理，首次版本或其他变更可能需要审核；不自动回退成草稿或绕过审核。若 Console 要求先手动完成应用设置，工作流会失败并保留已生成的 artifacts。
 
 每次上传都必须使用高于既往上传值的 `versionCode`，即 `pubspec.yaml` 中 `+` 后的正整数；同时要更新 `+` 前的版本名以生成新 Tag。例如从 `1.0.0+1` 改为 `1.0.1+2`；只改成 `1.0.0+2` 会因 `v1.0.0` 已存在而跳过发布。Google Play 拒绝重复 versionCode；若上传已被接受、后续 GitHub Release 发布失败，重跑前先核对 Console，必要时递增版本重新发布。
 

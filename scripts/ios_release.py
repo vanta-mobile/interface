@@ -20,7 +20,7 @@ from uuid import UUID
 import zipfile
 
 
-BUNDLE_ID = "exchange.vanta.vanta"
+BUNDLE_ID = "exchange.vanta.app"
 TESTFLIGHT_SECRETS = (
     "APP_STORE_CONNECT_KEY_ID",
     "APP_STORE_CONNECT_ISSUER_ID",

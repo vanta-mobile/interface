@@ -18,7 +18,7 @@ if (hasReleaseSigning) {
 }
 
 android {
-    namespace = "exchange.vanta.vanta"
+    namespace = "exchange.vanta.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -28,7 +28,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "exchange.vanta.vanta"
+        applicationId = "exchange.vanta.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // privy_flutter 0.10.2 declares API 28 as its native minimum.
