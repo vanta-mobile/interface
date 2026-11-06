@@ -1,0 +1,92 @@
+{
+  "recorded_at_utc": "2026-11-05T10:38:25.851916+00:00",
+  "increment": "Main opening capacity kernel and public remaining-notional helper, not yet integrated into app state or UI",
+  "contract": "main-order-capacity-kernel-public-contract.json",
+  "contract_sha256": "6d4fa9e3503c5004bc5e53f70865418046fe5229220401f1002942daa6e39d4a",
+  "tests": {
+    "baseline_full": 4088,
+    "new": 83,
+    "focused_passed": 83,
+    "full_passed": 4171,
+    "exit_code": 0,
+    "coverage": [
+      "Flat linear cost and directional opening loss; one-way reduction/reversal and pending reservation; hedge gross risk.",
+      "Separate normalized-margin, account cap and symbol remaining cap; zero, personal-cap decrease, minimum offset, minimum notional, maxQty and 0..100 percentages.",
+      "Exact repeating ratios at a one-step boundary and BigInt indices beyond IEEE754; next-step infeasibility across 36 directional occupancy/price regimes.",
+      "PRD displayed-maximum 20 percent example is arithmetic-only; no fabricated account snapshot claimed.",
+      "Strict remaining-cap sentinel/decimal mapping; anonymous GET arguments/headers and no retries, error/redirect/rate-limit handling, local invalid scope with zero HTTP."
+    ]
+  },
+  "format": {
+    "files": 849,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "new_messages": 0,
+    "note": "No widget or user-visible text change; existing EN/ZH catalogs untouched."
+  },
+  "dependencies": {
+    "rational": "Existing locked 2.2.3 promoted from transitive to direct for exact financial result types. No version change."
+  },
+  "android": {
+    "command": "make env-check then make build-apk",
+    "configuration": "Existing .env validated without printing values; no replacement config, --no-pub or manual plugin registrant edit.",
+    "exit_code": 0,
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45840644,
+    "sha256": "1f5ac287b643dc34a59bc6d697cd4a31bb8aad5f5a54018c0de2b6787d0ec967",
+    "installed": false,
+    "published": false,
+    "device_tools_used": false,
+    "scope": "Normal Android dependency/build regression. New unused kernel is unit-compiled; AOT output is not proof of a completed UI or runtime wallet acceptance.",
+    "notices": "Existing third-party Built-in Kotlin/KGP migration notices; build succeeded."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux without macOS/Xcode; user deferred device testing."
+  },
+  "logs": {
+    "focused": "/tmp/vanta-main-capacity-focused-final.log",
+    "full": "/tmp/vanta-main-capacity-all-tests.log",
+    "format": "/tmp/vanta-main-capacity-format-final.log",
+    "analysis": "/tmp/vanta-main-capacity-analysis-final.log",
+    "environment": "/tmp/vanta-main-capacity-env-final.log",
+    "build": "/tmp/vanta-main-capacity-build-final.log"
+  },
+  "log_sha256": {
+    "focused": "7c24af978aede2547f18388901909fdb1bdfff9f3121346af89c064d2cdad010",
+    "full": "55bf5059d10aef9b6419aeb694f66abf336d3a956e278c467de63ca43376c631",
+    "format": "05f61ca4af54a9d17c4998c967a5e7afe94c011748f4e870ded6663cb7e108e1",
+    "analysis": "a3d6aa7e0382ccf9294f49af253f128b2a832eb11a410776dc0fb3b3f16eb96f",
+    "environment": "f6b7f91bc2e2c20a5903fa87cc131503d7aa364f148c4b883a47cf92d711d356",
+    "build": "cb7c10ed844a3939c619c5f6ead4ab29ea8a09a3003e0562aba944d343ececcb"
+  },
+  "source_sha256": {
+    "lib/features/portfolio/domain/live_order_opening_cost.dart": "2118362a797e7e92b8883e953c5f1ceb0632972e25f7cb48896e601a18d16087",
+    "lib/features/portfolio/domain/live_order_capacity.dart": "dfc0920ed0d372255e6267196281f654976c78a00471f79b13e37033dda8e9b8",
+    "lib/features/portfolio/data/openable_notional_mapper.dart": "a2fe06ecdd006cb64479d41e3101f9bda501dccc45759406b0325d88ddbcc712",
+    "lib/features/portfolio/data/aster_account_service.dart": "b92430e442651a045045849b3ed289188ab9f8d3e8dc0f099ac8c917f7e3a548",
+    "test/support/live_order_capacity.dart": "583bfec5bfd607024b507e9a7fb4c9a999fc9644fe33fc98c189d5c5b3f44918",
+    "test/features/portfolio/live_order_opening_cost_test.dart": "aae415c7addb6080b01f35e0756e148cd66f1780c77c37c431f57e17edea3f73",
+    "test/features/portfolio/live_order_capacity_test.dart": "39a5787b8a90881de0fe7e6b2b03281b03cd13daa1d9d986918477091c406d7a",
+    "test/features/portfolio/openable_notional_test.dart": "f11a557300e975bc116f3fe7c11a6b14c291743e9ed4944a1a43a34c5b9db849",
+    "pubspec.yaml": "52015c885e546d056f1f116f24c317add414ea594d2b4bba3ed8a4669c47fef6",
+    "pubspec.lock": "21b5ae73e585e28c82a93e6b8af06d786d58551fcde01f4acbabf316d51c468e"
+  },
+  "not_performed": [
+    "No device tool, APK installation or visual native verification.",
+    "No real signature, private/financial/chat request or address-bearing RPC.",
+    "No new wallet or external publish."
+  ],
+  "remaining_required_work": [
+    "Validated same-account/symbol/clock snapshot assembly with margin-mode and collateral normalization, risk bracket selection and authoritative order occupancy.",
+    "Repository/provider connection, event/price freshness and error states, main percentage slider and independent directional preview.",
+    "Fresh same-side limits at review/signing, frozen intent confirmation and full post-trade liquidation calculation."
+  ],
+  "goal_complete": false
+}

@@ -1,10 +1,12 @@
 # 原始 PRD 实现进度
 
-验收基准是 Notion「原始 vanta mobile PRD」及其子页面。本文记录功能边界，不能把自动测试中的成功响应当作真实钱包联调成功。整体需求仍在推进。
+验收基准是 Notion「原始 vanta mobile PRD」及其子页面。本文记录功能边界，不能把自动测试中的成功响应当作真实钱包联调成功。整体需求尚未完成，本轮结束后按用户要求暂停。
 
 验收安排：用户要求本阶段先不做真机实测，继续记录 [尚未完成的原生验收](native-verification-pending.md)。暂停真机验证不等于暂停功能开发；下表中的“尚无功能”仍是实现缺口，已实现但未做真实钱包／原生联调的能力保留待验收状态。历史截图不证明后续增量已验收。
 
-## 当前进度总览（2026-11-05）
+本轮停止安排：用户要求完成普通一档BBO额度复核后记录剩余事项并停止开发；未完成范围统一见 [未完成事项](remaining-work.md)。不以本轮完成代表整个PRD完成。
+
+## 当前进度总览（2026-11-06）
 
 | 本次关注项 | 状态 | 已完成 | 尚待处理 |
 | --- | --- | --- | --- |
@@ -13,15 +15,43 @@
 | 实际充值 | 已实现，待真实验收 | 确认、交易提交、回执恢复、平台到账核对 | 真实到账未验收；部分最低额及平台剩余额度仍需外部核实 |
 | 实际提现 | 已实现，待真实验收 | 确认、双签名提交、按 withdrawId 查询恢复 | nonce 单位文档冲突；无 ID 的未知请求缺查询协议；真实到账未验收 |
 | Scaled 分段委托 | 已完成自动验证 | 2–110 笔、四种分布、基础币／计价币输入、分页预览／确认／结果 | 真实签名、撮合及原生恢复未验收 |
-| 首屏导航／快捷面板初值 | 已完成自动验证 | 首访 K 线／BTCUSDT、会话内页签保留、公开合约单位、真实账户设置及未知占位；新增33项 | 开仓比例滑杆及部分设置初值仍待补；本轮真机未验收 |
+| 首屏导航／快捷面板初值 | 已完成自动验证 | 首访 K 线／BTCUSDT、会话内页签保留、公开合约单位、真实账户设置及未知占位；主开仓滑杆0%／空输入已补齐 | 部分设置初值仍待补；本轮真机未验收 |
 | Privy／EOA 登录与多语言 | 已接入，待真实验收 | 邮箱登录、外部钱包直签、中英文与响应式自动测试 | 真实登录／回跳待验收；Reown 自带弹窗仍为英文 |
-| 实盘下单模式入口 | 已完成本轮自动验证 | 限价／市价直接切换，更多默认收起／记忆限价止盈止损，列齐九种模式；六种普通模式＋独立Scaled可用，Post Only固定GTX | Chase缺恢复协议，TWAP本阶段跳过；开仓比例滑杆／部分默认设置及真实／原生仍待验收 |
-| 完整策略管理／Chase | 尚未完成 | 已有附加 TP/SL 创建、恢复与逐腿详情 | 完整列表、编辑、整体撤销待做；Chase 缺原编号恢复及订单关联协议 |
+| 主下单比例／手动金额与双侧额度 | 输入及提交流程已完成自动验证 | 0%／空输入、双侧额度与数量、比例及手动新读额度、确认冻结和原编号恢复；现接入实时定价及签名后动态复核 | 双侧成交后强平预估已接入；自动激活Trailing缺固定假设，未知挂单预留及复合深档BBO新额度仍待做；真实接受未验收 |
+| 实时额度重算 | 有期限账户内的应用接线已完成自动验证 | 相关合约Mark／Last与当前盘口、双侧额度／比例／手动／附加退出共用定价、确认与签名后动态复核；扩大行情范围等待／取消；新增40项，专项74项通过 | 账户事实仍受原30秒期限限制；显式完整刷新及重连后快照恢复已补齐；账户事件增量合并和自动重读仍待补，尚非完整常驻实时账户；真实／原生未验收 |
+| 双侧成交后强平价预估 | 已接入，验证见本轮记录 | 独立买／卖全额成交投影、加减仓／反向、全仓／逐仓／双向与多抵押精确求解；实际合约吃单费率、缺失显示 — | 自动激活Trailing无固定入场；真实算法／抵押分摊及手机未验收 |
+| 主下单显式完整刷新 | 已完成自动验证 | 开仓读取按钮／下拉统一刷新上下文、资金、全账户额度和新收报价；有效监听重连后再读取；取消／失败／重试保留输入 | 本轮增加费率后最多十次独立签名；尚无账户事件完整增量合并或自动重连重读；真实／原生未验收 |
+| 主下单钱包回跳衔接 | 已完成自动验证（新增37项） | 签名期间保留有效公开／私有连接；回前台后的会话核对延后到操作结束，同身份保留额度与确认；真实事件、断线及原超时仍拦截 | 实际OS网络暂停、钱包／Privy／Reown返回顺序仍待真机；不等于完整账户同步或自动签名重读 |
+| 普通一档BBO新额度 | 已实现，自动验证与构建见本轮记录 | 当前对应买一／卖一参与比例／手动数量、双侧额度／成本／强平假设、点击新读及签名后／日志落盘后复核；已定价的一档LIMIT挂单计入占用 | 真实引擎定价／触发／手机未验收；复合深档BBO、开关默认值和Post Only选档约束另列未完成 |
+| 实盘下单模式入口 | 已完成本轮自动验证 | 限价／市价直接切换，更多默认收起／记忆限价止盈止损，列齐九种模式；六种普通模式＋独立Scaled可用，Post Only固定GTX | Chase缺恢复协议，TWAP本阶段跳过；部分默认设置及真实／原生仍待验收 |
+| 完整策略管理／Chase | 尚未完成 | 已有附加 TP/SL 创建、恢复与逐腿详情 | 完整列表待做；编辑／整体撤销入口待产品确认；Chase恢复及订单关联协议待核实 |
 | 完整 Portfolio／Swap | 尚未实现 | 已有 Spot／Futures 钱包估值与独立 Rebalance | 跨产品余额和独立 Swap 依赖私有 BAPI 鉴权与结果查询协议 |
 | 历史统计／Summary／TWAP | 按用户要求本阶段跳过 | 已记录依赖与边界 | 等待第三方可用的 Aster BAPI 鉴权协议；不包含已接入的订单／成交／资金流水历史 |
 | 真机／iOS | 按要求暂不做真机实测 | 未实测项持续记录于原生验收清单 | 真实钱包／资金及手机布局未验收；iOS 构建需 macOS／Xcode |
 
-最新完整验证：本轮模式入口新增49项（领域18、Widget31），专项156项／全量4088项通过；842个Dart文件格式零改动、静态分析无问题，`make env-check`／`make build-apk` Android arm64 Release通过，中英文各1669条消息。APK未安装；见 [来源与边界](reference/order-mode-entry-public-contract.json) 与 [验证记录](reference/order-mode-entry-verification.json)。列齐九种模式不表示Chase／TWAP已实现。
+当前增量（普通一档BBO新额度）：COUNTERPARTY_1／QUEUE_1按买卖方向选择当前ask／bid，覆盖手动与比例输入、双侧成本／最大数量及当前盘口成交后的强平假设；不以0或Mark／触发价替代缺失盘口。普通开仓主确认和双侧按钮共用点击后的签名新读、数量冻结及签名后／日志落盘后动态复核；wire仍为price=0和原peg。已签名返回正价的一档LIMIT挂单按剩余量×引擎定价计入占用，继续核对报告保证金；零价、未知／深档及未触发订单预留保持阻止。见[来源与边界](reference/main-order-bbo-capacity-public-contract.json)与[验证记录](reference/main-order-bbo-capacity-verification.json)。复合深档仍保留独立旧路径；本轮结束后按用户要求停止，剩余开发／协议／跳过及待实测统一见[清单](remaining-work.md)。
+
+最终验证：新增三个专项测试文件共64项，另更新既有盘口／过滤器断言；固定源码副本专项260项／全量4928项通过，952个Dart文件格式零改动、静态分析无问题，中英文各1719条。Android arm64 Release构建通过，APK未安装；BBO增量源码与固定副本一致；其后独立登录改动不包含在全量／APK证明内。无真实钱包／私有／资金／带地址RPC或设备操作，iOS因Linux缺macOS／Xcode未构建。详见[验证记录](reference/main-order-bbo-capacity-verification.json)。 本功能已完成并记录剩余工作，按用户要求停止后续开发。
+
+历史增量（钱包回跳衔接，新增37项）：修复主下单启用私有监听后回跳提前失效，以及回前台恢复身份导致额度清空的问题。保留有效公开／私有连接，延后会话核对，同身份不触发busy或创建钱包；真实事件／断线／过期／切身份与原有30秒账户／10秒报价保护继续执行。恢复锁已改为派生状态，避免登出后页面构建期间写入，旧身份迟到操作不能释放新租约。见[实现与边界](reference/main-order-wallet-lifecycle-contract.json)及[验证记录](reference/main-order-wallet-lifecycle-verification.json)。账户事件完整合并、自动签名重读和移动BBO额度仍未完成；真实钱包／原生继续待验收。 固定副本全量4861项／专项226项、格式与静态分析及Android Release构建通过；后续并行改动后的当前工作区另核对核心56项和格式／分析通过，未声称后续改动已跑全量。
+
+历史增量（双侧强平预估，新增40项）：买／卖独立投影全额成交后的数量、入场、PnL及抵押，按风险区间精确求强平Mark；支持单／双向、全仓／逐仓与多抵押，缺失依据显示 —。增加实际合约吃单费率读取，额度最多六次／完整刷新最多十次。公式与会计边界见[合同](reference/main-order-liquidation-public-contract.json)，生产仓库／预览／Widget、全量验证及Android构建见[记录](reference/main-order-liquidation-verification.json)。真实算法与原生未验收；自动激活Trailing、账户事件完整合并／自动重读及移动BBO新额度等缺口继续保留。
+
+历史增量（显式完整刷新）：主开仓读取按钮及下拉刷新现顺序恢复有效监听连接、完整交易上下文／资金、全账户额度和本次新收公开报价；最多九次独立签名，不提交订单。支持完整等待、取消、失败重试、输入保留、重复操作拦截及身份隔离；过期／停止监听不自动请求授权。新增18项（应用14、Widget4），专项55项／全量4719项通过，907文件格式零改动、静态分析无问题，中英文各1693条。构建及完整证据见[验证](reference/main-order-account-refresh-verification.json)，来源与边界见[合同](reference/main-order-account-refresh-public-contract.json)。当前为用户显式触发的完整读取；账户事件增量合并及自动重连重读、下单后强平估算和移动BBO新额度检查仍未完成。无真实钱包／私有／资金或原生验收。
+
+历史增量（实时定价接线）：共享公开定价已用于双侧额度、比例／手动输入、附加退出及最终提交检查；冻结基础币数量、退出条款和原编号，报价更新不延长30秒账户期限。相关行情首次就绪等待不重复签名，取消／失败／离线及时结束；输入保留，Mark迟到REST及断线排队事件已修复。新增40项、专项74项／全量4701项通过，904文件格式／静态分析及Android arm64 Release构建通过，完整验证及构建见[记录](reference/main-order-live-pricing-verification.json)，来源见[合同](reference/main-order-live-pricing-public-contract.json)。尚缺完整账户事件同步／重连重读、下单后强平估算及移动BBO新额度检查，无真实钱包／资金请求或原生验收。
+
+历史增量（实时额度前置，以下为接线前状态）：精确公开报价仓库与全账户重算核心完成自动验证，**尚未接入主下单UI／输入／确认／签名后复核**。签名openOrders及leverageBrackets已改为全账户读取，仍最多五次签名；openOrders官方权重由1升为40，仅显式请求。核心逐笔取Mark／Last较小浮盈亏，重新计算相关持仓与固定LIMIT挂单占用、全仓／逐仓预算和多资产bid／ask折算，保持Rational及原账户期限。新增110项（报价56、重算35、风险15、签名仓库4），专项172项／全量4661项通过；897个Dart文件格式零改动、静态分析无问题，make env-check／Android arm64 Release构建通过，中英文仍各1691条。APK未安装，无真实钱包或资金请求。见[来源及边界](reference/main-order-revaluation-public-contract.json)、[验证](reference/main-order-revaluation-verification.json)。下一步为聚合相关合约订阅和应用接线，不能把这组核心测试当作实时额度或完整PRD完成。
+
+上一增量（手动金额）：六种inline开仓模式的手动基础币／计价币输入接入双侧按钮和主确认入口的新额度复核。无需先读额度即可按各侧过滤器展示数量与启用按钮，缺失成本／上限保持未知；点击才签名新读，确认冻结同方向／模式／数量，额度下降显示最新上限并保留输入，额度上升不扩单。钱包返回及发送前失效保护、原编号只查询继续适用。修复主确认未使用enabled状态，读取中按钮禁用并显示加载；两种输入的测试复用同一生产表单fixture。手动新增54项（Widget31、应用6、实际签名仓库＋合成HTTP17），专项134项／完整4551项通过；885个Dart文件格式零改动，静态分析无问题，中英文各1691条消息。现有.env的make env-check／make build-apk通过，Android arm64 Release已构建且包内新增双语文案已核对；见[本轮验证](reference/main-order-manual-capacity-verification.json)，来源及边界见[合同](reference/main-order-manual-capacity-public-contract.json)。没有真实私有／资金请求或设备操作；持续行情重算、下单后强平估算及移动BBO新额度检查仍待补齐。
+
+上一轮增量（比例）：主开仓滑杆默认0%／输入空，显式读取额度后分别按买卖最大基础数量计算比例，精确向下对齐步长；USDT／基础币切换保留同一比例数量，手动编辑退出比例并独立保留原始输入。比例方向按钮点击后最多五次签名新读额度，额度下降拒绝原数量，上升不放大；确认保留点击方向、委托类型与数量，并在钱包返回及发送前复核失效条件。实际签名仓库联动测试发现并修复自身恢复日志误触发阻塞的问题，其他未决与存储错误仍阻止提交。未知结果仅查原编号，确认受理后比例归零。该轮尚缺的手动输入及行情接线现由后续增量补齐；完整账户同步与下单后强平预估仍未完成，不能把30秒快照称为持续同步。见[来源与边界](reference/main-order-allocation-public-contract.json)。
+
+上一轮完整验证（比例）：比例下单新增60项（应用层31、Widget19、真实签名仓库与合成HTTP联动10），专项76项／全量4497项通过；全量包含独立数值组件增量的61项。883个Dart文件格式零改动，静态分析无问题，中英文各1689条消息；使用现有.env执行make env-check／make build-apk通过，Android arm64 Release已构建，包内双语文案已核对。APK未安装，未做真实钱包或资金操作。见[验证记录](reference/main-order-allocation-verification.json)。此前签名快照／参考面板的专项323项、全量4376项与构建仍见[历史记录](reference/main-order-capacity-snapshot-verification.json)。
+
+上一完整验证：主下单额度计算层新增83项，专项83项／全量4171项通过；849个Dart文件格式零改动、静态分析无问题，`make env-check`／`make build-apk` Android arm64 Release通过。该历史验证只覆盖domain计算与公开读取辅助方法，不覆盖后续快照／Provider／面板增量。APK未安装，见 [来源与边界](reference/main-order-capacity-kernel-public-contract.json) 与 [验证记录](reference/main-order-capacity-kernel-verification.json)。
+
+上一完整验证（模式入口）：新增49项（领域18、Widget31），专项156项／全量4088项通过；842个Dart文件格式零改动、静态分析无问题，`make env-check`／`make build-apk` Android arm64 Release通过，中英文各1669条消息。APK未安装；见 [来源与边界](reference/order-mode-entry-public-contract.json) 与 [验证记录](reference/order-mode-entry-verification.json)。列齐九种模式不表示Chase／TWAP已实现。
 
 上一完整验证：Privy子账户创建限制新增40项，专项121项／全量4039项通过；837个Dart文件格式检查零改动、静态分析无问题，`make env-check`及`make build-apk`通过，中英文各1661条消息。APK未安装；见 [来源与边界](reference/subaccount-creation-access-public-contract.json) 与 [验证记录](reference/subaccount-creation-access-verification.json)。
 
@@ -29,7 +59,7 @@
 
 “已接入”按各行明确范围理解，不表示整个模块完全符合 PRD；真实钱包／资金执行和真机验收仍未完成。此前补齐 Scaled 总金额／基础币独立输入、等量／递增／递减／随机分布、Difference／Ratio、固定随机方案、2–110 笔及首次空输入。预览／专用确认／结果均分页保留完整方案；沿用逐笔签名、失败停止和原编号恢复。新增97项，完整3966项测试、824个 Dart 文件格式检查、静态分析及Android arm64 Release构建通过，中英文各1659条消息。APK未安装，见 [来源与边界](reference/scaled-order-alignment-public-contract.json) 与 [验证记录](reference/scaled-order-alignment-verification.json)。
 
-此前确认偏好、合约历史、金额输入、附加TP/SL及逐腿详情均包含在本轮完整回归中。首屏导航已完成本轮对齐；完整策略列表、开仓比例滑杆及部分设置初值仍未完整对齐；Chase恢复协议仍缺。
+此前确认偏好、合约历史、金额输入、附加TP/SL及逐腿详情均包含在本轮完整回归中。首屏导航、主开仓0%滑杆及比例提交已接入；完整策略列表、双侧强平预估已接入；完整账户实时同步与部分设置初值仍未完整对齐；Chase恢复协议仍缺。
 “本阶段跳过”仅适用于用户明确指定的历史统计／Summary／TWAP，不扩大到完整 Portfolio、Swap 或合约历史。
 
 | 模块 | 当前进度 | 剩余工作／边界 |
@@ -41,7 +71,7 @@
 | 实际提现 | 已接入确认、双签名提交和 withdrawId 历史核对 | nonce 文档单位冲突；无 ID 的未知请求无法自动核对；真实到账待验收 |
 | Spot ↔ Futures 划转 | 已接入双向划转与双方余额刷新 | 未提供 clientTranId 查询协议，未知结果保留阻塞；真实执行待验收 |
 | 合约交易／仓位／配置 | 普通下单、撤单、平仓、条件单、Trailing、一档 BBO、Scaled 已接入 | Chase 恢复协议、完整策略列表／编辑／整体撤销仍未补齐；真实执行待验收；Scaled 本轮进度见下行 |
-| 主下单表单单位／首访默认值 | 金额输入已接入：基础币／USDT 独立输入、精确换算／步长向下取整、Last 限价预填、条件／Trailing 默认 Mark；新增63项及完整回归通过 | 金额不是保证金或支出上限；真实／原生待验收。已实现模式确认偏好及Scaled初值已补齐；首屏导航已由本轮对齐，开仓比例滑杆及部分设置初值仍待补齐；自定义滑点缺明确执行约束 |
+| 主下单表单单位／首访默认值 | 金额输入已接入：基础币／USDT 独立输入、精确换算／步长向下取整、Last 限价预填、条件／Trailing 默认 Mark；新增63项及完整回归通过 | 金额不是保证金或支出上限；真实／原生待验收。已实现模式确认偏好及Scaled初值已补齐；首屏导航、主开仓0%滑杆及比例提交已接入，双侧强平预估已接入；账户事件实时同步及部分设置初值仍待补齐；自定义滑点缺明确执行约束 |
 | 下单确认偏好 | 五类已实现开仓模式已接入独立持久化、默认确认／不再显示／重新开启；限价与Post Only、市价与快捷单分别共用；新增50项及完整回归通过 | 真实／原生存储及钱包待验收；Chase尚无功能，TWAP本阶段跳过；Scaled保留专用确认；不省略钱包签名或提交复核 |
 | Scaled 分段委托 | 已接入2–110笔、基础币／计价币总额、四种分布、等差／等比、0%–10%固定随机方案、首次空输入和完整分页预览／确认／结果；新增97项及完整回归通过 | 客户端逐笔独立提交，非原子策略；可能部分成功且多次签名；基础币总量精确保留、计价币尾差展示；真实／原生待验收 |
 | 开仓附加 TP/SL | 已补齐全主单数量、PnL／价格／ROI、默认 Mark、独立市价／手动限价／自动限价退出、部分／全部成交联动与 schema4 恢复 | 完整策略列表／管理仍未补齐；真实激活、分批数量增补及互撤待验收；逐腿实际成交详情见下行 |
@@ -59,12 +89,12 @@
 | AI 助手 | 已接入真实页面／导航、钱包挑战独立确认、流式聊天／停止／复制、安全历史／草稿、显式恢复及 UTC 用量 | 真实挑战格式、认证／聊天／扣额与原生安全存储仍待验收；不自动附带账户数据或执行交易 |
 | 多语言／响应式 | 中英文及窄屏／横屏／平板自动测试已实现 | Reown 自带弹窗仍为英文；后续增量真机布局待验收 |
 | Portfolio 历史统计／Futures Summary／TWAP | 按用户要求本阶段跳过 | 等待第三方可用的 Aster BAPI 鉴权协议 |
-| 自动验证／构建 | 最新完整基线：4088项测试、842个 Dart 文件格式、静态分析及Android arm64 Release构建通过；包含模式入口、Privy限制及此前导航／Scaled；中英文各1669条消息 | APK未安装、不启动设备；真实钱包／资金及原生仍待验收；iOS需macOS／Xcode |
+| 自动验证／构建 | BBO额度增量固定副本：专项260项／全量4928项、952文件格式及静态分析通过，中英文各1719条，Android arm64 Release构建成功；BBO增量源码与固定副本一致；后续独立登录改动未包含在全量／APK证明内；当前工作区另核对BBO核心64项及格式／静态分析通过 | APK未安装，无设备／真实钱包或资金验收；iOS需macOS／Xcode；本轮后按用户要求停止开发 |
 
-## 当前未完成项（2026-11-05 核对）
+## 当前未完成项（2026-11-06 核对）
 
-- **实盘模式入口已接入，执行与剩余设置仍按范围跟踪**：限价／市价直接切换，更多默认收起并记忆限价止盈止损。六种普通模式复用原确认／签名／恢复，Scaled独立；Post Only固定GTX，不支持时禁止确认，须明确选择另一模式。Chase／TWAP带双语原因禁用，不转成普通单。刷新／取消／语言保留当前选择，身份变化重置；忙碌／未知／设置锁与离页的旧回调不能改模式或打开Scaled，列表回收入口不丢失菜单选择。新增49项、专项156／全量4088及Android Release通过；见 [合同](reference/order-mode-entry-public-contract.json) 与 [验证](reference/order-mode-entry-verification.json)。开仓比例滑杆、BBO关闭时预设控件及自定义滑点仍未完整对齐；真实／原生未验收。
-- **首屏导航／快捷面板已完成本轮自动验证，真实／原生待验收**：首访 Futures／K 线／BTCUSDT，已明确选择的 symbol 不被重置。底部导航返回和语言切换保留本次页签／交易对；新会话恢复初值，不承诺订单草稿持久化。快捷数量空、无比例，公开匹配合约元数据提供基础币单位，签名规则优先，缺失显示 —。账户设置及余额未读取时为 —，明确读取后展示实际值，不写入新户预设；盘口加载／失败不显示残留旧交易对报价。新增33项、专项69项／全量3999项及Android Release通过，见 [合同](reference/futures-navigation-public-contract.json) 与 [验证](reference/futures-navigation-verification.json)。开仓比例滑杆／部分设置初值仍未完整对齐。
+- **实盘模式入口已接入，执行与剩余设置仍按范围跟踪**：限价／市价直接切换，更多默认收起并记忆限价止盈止损。六种普通模式复用原确认／签名／恢复，Scaled独立；Post Only固定GTX，不支持时禁止确认，须明确选择另一模式。Chase／TWAP带双语原因禁用，不转成普通单。刷新／取消／语言保留当前选择，身份变化重置；忙碌／未知／设置锁与离页的旧回调不能改模式或打开Scaled，列表回收入口不丢失菜单选择。新增49项、专项156／全量4088及Android Release通过；见 [合同](reference/order-mode-entry-public-contract.json) 与 [验证](reference/order-mode-entry-verification.json)。比例流程已接入有期限行情重算，双侧强平预估已接入，仍缺完整账户同步，BBO关闭时预设控件及自定义滑点仍未完整对齐；真实／原生未验收。
+- **首屏导航／快捷面板已完成本轮自动验证，真实／原生待验收**：首访 Futures／K 线／BTCUSDT，已明确选择的 symbol 不被重置。底部导航返回和语言切换保留本次页签／交易对；新会话恢复初值，不承诺订单草稿持久化。快捷数量空、无比例，公开匹配合约元数据提供基础币单位，签名规则优先，缺失显示 —。账户设置及余额未读取时为 —，明确读取后展示实际值，不写入新户预设；盘口加载／失败不显示残留旧交易对报价。新增33项、专项69项／全量3999项及Android Release通过，见 [合同](reference/futures-navigation-public-contract.json) 与 [验证](reference/futures-navigation-verification.json)。主开仓比例已接入；双侧强平预估已接入；完整账户实时同步及部分设置初值仍未完整对齐。
 - **Privy 子账户创建限制已完成自动验证，真实／原生待验收**：本轮重读[账户 PRD](https://app.notion.com/p/408080d974e7803f8710f5e688c0d103)（编辑于2026-11-05T07:56:29.767Z），明确“只有通过eoa钱包登录的账户，可以创建子账户”“通过privy托管钱包登录的用户，不允许创建子账户”。已按当前登录钱包类型禁用创建入口、展示双语原因，并在应用层准备／确认及仓库准备／提交时拦截；身份类型或签名能力变化会使旧状态失效。新增40项（协议16、控制器16、Widget8），专项121项／全量4039项、837文件格式检查、静态分析及Android arm64 Release通过，中英文各1661条。独立切换地址输入避免禁用创建后阻碍切换；同地址外部→托管／签名能力变化清空输入和子签名、旧确认失效，切回不能复活旧回调。真实／原生仍未验收；见 [合同](reference/subaccount-creation-access-public-contract.json) 与 [验证](reference/subaccount-creation-access-verification.json)。不因此禁用 Privy 的列表、切换、冻结／解冻和划转；其操作资格仍由 Aster 核验。
 
 - **Scaled 分布／总金额／初值本轮已补齐，真实／原生待验收**：最低／最高价、总金额、子单数首次均空，默认计价币／等量，隐藏的常数默认Difference。公开产品文档确认最多110笔、四种分布及随机偏差≤10%；官网公开源码确认等差1:2:3…、等比1:2:4…及按价格加权的计价币换算。Vanta以Decimal／有理数对齐LOT偏移／步长，基础币精确保留总量、计价币不超过输入且展示尾差，不照搬官网浮点／隐性上调。随机方案在明确选择／重新分配时捕获seed，验证最终数量偏差，切语言／确认／提交／恢复不重抽。每页10笔可遍历全部110笔，结果自动跟随当前子单；独立LIMIT/GTC原编号日志／签名／查询、部分成功与停止边界保留，不宣称原子或同时执行。新增97项、专项165项／全量3966项、格式824文件／分析／Android Release通过，未安装；见 [合同](reference/scaled-order-alignment-public-contract.json) 与 [验证](reference/scaled-order-alignment-verification.json)。完整策略管理及部分设置仍未完成。
@@ -72,12 +102,12 @@
 
 - **已实现模式确认偏好本轮已补齐，真实／原生待验收**：五类开仓模式独立保存，限价与Post Only共用、市价与快捷单共用；附加保护随主模式，默认开启／不再显示未勾选，取消不保存，显式重新开启可恢复确认。失败／加载不能跳过，原钱包签名、快照与数量冻结、未知原编号恢复继续执行。新增50项、完整3869项及格式／分析／Android Release通过，未安装。Chase未实现、TWAP跳过、Scaled保留独立确认；见 [合同](reference/order-confirmation-public-contract.json) 与 [验证](reference/order-confirmation-verification.json)。
 - **逐腿成交详情本轮已接入，真实／原生仍未验收**：先核对原策略，再按实际子单编号显式查询；区分策略状态与普通订单状态，撤单保留实际已成交数量／金额，缺少编号／字段保持未知。当前数量／价格变化只提示差异，不推断自动增补或另一腿已撤销；首个拒签／失败停止后续提示并保留此前成功数据。页面不自动签名、不写入或完成未决日志；退出／切身份丢弃迟到结果。新增88项、完整3617项、格式、分析及 Android Release 已通过；完整策略列表仍未实现，真实／原生继续待验收。见 [合同](reference/strategy-execution-public-contract.json) 与 [验证](reference/strategy-execution-verification.json)。
-- **主表单金额输入及部分初值本轮已接入**：基础币／USDT 原始输入独立保留，限价按手填价、普通市价按买ask／卖bid换算基础币并向下对齐数量步长，不乘杠杆；缺所需报价不回退其他价格。首次有效 Last 只预填一次，编辑／清空后刷新不覆盖，条件／Trailing 默认 Mark。确认固定基础币数量；附件 PnL／ROI 与全量保护用该数量，日志／签名／恢复均保留原数量。新增63项、完整3680项、格式／分析及 Android Release 通过，首次回归暴露的旧默认值断言已处理。已实现模式确认偏好本轮已补齐；Scaled分布／总金额／首访已由本轮补齐，首屏导航已由本轮对齐，开仓比例滑杆及部分设置初值仍待补齐；自定义滑点缺可执行的公开参数合同。真实／原生待验收，见 [合同](reference/order-amount-public-contract.json) 与 [验证](reference/order-amount-verification.json)。此类剩余开发缺口不属于真机延期或用户跳过的统计范围。
+- **主表单金额输入及部分初值本轮已接入**：基础币／USDT 原始输入独立保留，限价按手填价、普通市价按买ask／卖bid换算基础币并向下对齐数量步长，不乘杠杆；缺所需报价不回退其他价格。首次有效 Last 只预填一次，编辑／清空后刷新不覆盖，条件／Trailing 默认 Mark。确认固定基础币数量；附件 PnL／ROI 与全量保护用该数量，日志／签名／恢复均保留原数量。新增63项、完整3680项、格式／分析及 Android Release 通过，首次回归暴露的旧默认值断言已处理。已实现模式确认偏好本轮已补齐；Scaled分布／总金额／首访已由本轮补齐，首屏导航、主开仓0%滑杆及比例提交已接入，双侧强平预估已接入；账户事件实时同步及部分设置初值仍待补齐；自定义滑点缺可执行的公开参数合同。真实／原生待验收，见 [合同](reference/order-amount-public-contract.json) 与 [验证](reference/order-amount-verification.json)。此类剩余开发缺口不属于真机延期或用户跳过的统计范围。
 - **附加 TP/SL 本轮已对齐字段、数量和联动**：两腿独立 PnL／价格／ROI、默认 PnL／Mark、全部空输入、专业模式关闭及市价退出；可独立使用手动／自动限价。原始输入保留，修改主单后重新换算／校验；精确有理数换算后对齐价格步长，手填价格不自动修改。新策略保护本次主单全量，新增开仓保证金仍按净新增敞口估算。新联动使用 `PARTIALLY_FILLED_OR_FILLED`，旧记录保留原净保护量／`FILLED`；schema4 读旧版，未知只查原编号。新增82项、全量3528项及 Android Release 通过；逐腿实际成交详情已由本轮增量补齐；完整策略列表和真实／原生验收仍未完成，见 [合同](reference/attached-exit-alignment-public-contract.json) 与 [验证](reference/attached-exit-alignment-verification.json)。
 - **合约历史已接入，真实／原生待验收**：独立官方V3订单／逐笔成交／资金流水、显式签名、UTC范围／精确交易对／流水类型筛选与手动继续已实现；撤单保留实际成交数量／金额，费用与盈亏分币种，流水按类型＋编号去重。满额时间范围细分、单毫秒截断、总计10000条及失败保留均有明确边界。新增139项、完整3819项、格式／分析及Android Release通过，未安装或发送真实私有请求。不是用户跳过的统计模块；见 [合同](reference/futures-history-public-contract.json) 与 [验证](reference/futures-history-verification.json)。
 
 - **逐仓保证金增减已接入**：最新 Futures PRD 明确新增 `add/remove margin`，覆盖此前“入口待产品确认”的判断。非零线性逐仓入口、原 symbol／positionSide、默认追加／空输入、切方向保留数量和两位向下 Max；Decimal／有理数额度与风险档位强平预估、同账户快照保证金率、独立确认和一次 POST、发送前持久化及精确原 `clientTranId` 历史核对均已接入。未知只查询，明确拒绝保留安全理由并重读 Max；成功刷新主账户／仓位并关闭调整页，刷新失败保留部分成功状态。新增98项（保证金专项97项及子账户枚举隔离回归1项），全量3446项、格式及分析通过；Android Release 构建通过、未安装，中英文各1547条消息；真实／原生未验收，见 [合同](reference/position-margin-adjustment-public-contract.json) 与 [验证记录](reference/position-margin-adjustment-verification.json)。
-- **功能尚未完成或尚未对齐**：完整跨产品 Portfolio 总值、Swap，以及完整策略列表、开仓比例滑杆／部分设置初值。Privy 子账户创建限制本轮已补齐并完成自动验证，真实／原生待验收。主表单基础币／USDT 金额输入本轮已接入，真实／原生待验收。附加策略逐腿实际成交详情本轮已接入，真实／原生待验收。抵押贡献本轮已接入并通过自动验证，真实／原生验收仍待完成。AI 助手已补齐页面与应用状态层，真实认证／聊天及原生验收待完成。交易授权、子账户管理及充提现已接入，真实接受／资金执行仍未验收，详见下项。积分主页、RETAIL／CHANNEL 活动列表／详情及报名、频道任务进度／签到／钱包连接任务已接入；真实个人接口／签名和手机仍待验收，原 PRD 子页面未视为用户要求跳过。
+- **功能尚未完成或尚未对齐**：完整跨产品Portfolio总值、Swap、完整策略列表、完整账户事件同步／自动重读、复合深档BBO新额度及部分设置／开关初值。普通一档BBO新额度、本阶段有期限行情重算与双侧强平预估已接入；未完成范围与协议／验收分项统一见[未完成事项](remaining-work.md)。Privy 子账户创建限制本轮已补齐并完成自动验证，真实／原生待验收。主表单基础币／USDT 金额输入本轮已接入，真实／原生待验收。附加策略逐腿实际成交详情本轮已接入，真实／原生待验收。抵押贡献本轮已接入并通过自动验证，真实／原生验收仍待完成。AI 助手已补齐页面与应用状态层，真实认证／聊天及原生验收待完成。交易授权、子账户管理及充提现已接入，真实接受／资金执行仍未验收，详见下项。积分主页、RETAIL／CHANNEL 活动列表／详情及报名、频道任务进度／签到／钱包连接任务已接入；真实个人接口／签名和手机仍待验收，原 PRD 子页面未视为用户要求跳过。
 - **抵押贡献已接入**：全仓权益分别乘公开 bidRate／askRate 后取较小值，保留负权益；完整线性全仓仓位和公开标记价可用时重算浮盈亏，否则明确回退到签名快照。不把资产估值、总余额或缺失浮盈亏当作贡献值；账户事件到来后要求重新读取。公开行情订阅按已有账户快照隔离并跨卡共享，不初始化认证／私有读取；后台暂停、离屏释放。新增 80 项、全量 3348 项测试、静态分析及 Android Release 通过；真实／原生未验收，见 [合同](reference/asset-collateral-public-contract.json) 和 [验证记录](reference/asset-collateral-verification.json)。
 - **Swap 协议核查**：官网 USDT→USDF、BNB／slisBNB→asBNB 使用独立私有 `swapAsset`；额度依赖私有 `swapBalance` 和 `getMaxWithdrawAmount`。此前已确认没有移动端 BAPI 鉴权后端，所查 21 份官方开放 API 文档未找到等价 V3 协议。还缺结果编号／未知请求核对合同和权威换算／额度单位；不能用 Rebalance、APY 或美元指数代替。反向为官网引导先提现再钱包赎回，并非对称账户 Swap。只匿名读取公开 JS，未访问私有端点；详见 [协议核查](reference/swap-protocol-review.json)，功能仍保留未完成。
 - **本轮优先项已接入代码**：同一 EOA 的 enable-trading、独立 API 权限读取／可选 IP 限制提现授权；子账户创建／最多 10 个／双钱包签名、重新登录切换、冻结／解冻及主子双向四市场划转；充值独立确认／发送前日志／回执与平台到账核对、提现双签名／提交／原编号历史核对。无额外钱包。子钱包需已有独立控制地址和外部签名；缺失的充值最低额及私有平台剩余额度需用户在 Aster 核实；未知且无平台编号的请求不能自动恢复或重发。不是已实测资金闭环。见 [实现边界](implementation.md#2026-11-04-交易授权子账户管理与实际充提) 和 [合同](reference/account-funding-operations-public-contract.json)。
@@ -105,7 +135,7 @@
 - **本阶段按用户要求跳过**：依赖 Aster 私有 BAPI 的 Portfolio 历史统计／曲线／日历、Futures Summary 和 TWAP；不以模拟结果代替。
 - **仅记录待验收**：真实验证码、钱包回跳／拒签／切账户、真实私有接口及交易事件、手机存储／强杀恢复、原生布局与 iOS 构建。完整项目见 [原生待验收清单](native-verification-pending.md)，本阶段不启动设备工具或安装 APK。
 
-最近完整验证的代码增量为模式入口，见 `reference/order-mode-entry-verification.json`；此前Privy子账户限制见 `reference/subaccount-creation-access-verification.json`；此前首屏导航见 `reference/futures-navigation-verification.json`，Scaled对齐见 `reference/scaled-order-alignment-verification.json`。交易授权／子账户／实际充提原增量证据见 `reference/account-funding-operations-verification.json`。下方历史记录仅描述对应增量当时的范围，当前状态以顶部表格及本清单为准。
+本轮普通BBO额度的验证见 `reference/main-order-bbo-capacity-verification.json`；模式入口历史验证见 `reference/order-mode-entry-verification.json`；此前Privy子账户限制见 `reference/subaccount-creation-access-verification.json`；此前首屏导航见 `reference/futures-navigation-verification.json`，Scaled对齐见 `reference/scaled-order-alignment-verification.json`。交易授权／子账户／实际充提原增量证据见 `reference/account-funding-operations-verification.json`。下方历史记录仅描述对应增量当时的范围，当前状态以顶部表格及本清单为准。
 
 ## 增量记录
 

@@ -1,0 +1,94 @@
+{
+  "recorded_at_utc": "2026-11-06T05:22:39.900510+00:00",
+  "increment": "Exact public order reference quotes, full-account sizing facts and standalone revaluation kernel; application integration remains incomplete",
+  "prd": {
+    "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+    "title": "Futures trading",
+    "page_last_edited_at": "2026-11-06T02:43:32.434Z",
+    "source": "Notion fetch reread this increment",
+    "sections": [
+      "3.2 step2: all related prices, min(Mark PnL, Last PnL), initial and maintenance margins, collateral conversion",
+      "3.2 step3: independent buy/sell opening references"
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+      "local_cache": "/tmp/vanta-bbo-api-docs/V3(Recommended)/EN/aster-finance-futures-api-v3.md",
+      "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4",
+      "access": "Previously cached official document/anonymous website source inspected locally; no fresh HTTP parity claim"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/futuresCalculatePre-DjYtFMnM.js",
+      "local_cache": "/tmp/vanta-main-sizing-futuresCalculatePre-DjYtFMnM.js",
+      "sha256": "4936eeb96f82192560f324f2ca9125c6fdf9c94f9b109447cbf66e31e90584af",
+      "access": "Previously cached official document/anonymous website source inspected locally; no fresh HTTP parity claim"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/useStreamMarkPrice-DK-y4bCO.js",
+      "local_cache": "/tmp/vanta-main-sizing-useStreamMarkPrice-DK-y4bCO.js",
+      "sha256": "b8c0d2ffa47b0d92bfdf6b3929bd0abd70ba19cb6203e4c241ca8f397f35969b",
+      "access": "Previously cached official document/anonymous website source inspected locally; no fresh HTTP parity claim"
+    }
+  ],
+  "public_price_contract": {
+    "rest": [
+      "GET /fapi/v3/time",
+      "GET /fapi/v3/ticker/bookTicker?symbol",
+      "GET /fapi/v3/trades?symbol&limit=1"
+    ],
+    "streams": [
+      "<selected-symbol>@bookTicker",
+      "<selected-symbol>@aggTrade"
+    ],
+    "exactness": "Map decimal strings directly to Decimal. Reject doubles, exponent notation, nonpositive prices/sizes, crossed book, invalid symbols/time/IDs. No chart depth doubles enter money calculations.",
+    "time_and_replay": "Use exchange transaction T for stream freshness, not event E. Compare receipt age and calibrated transaction age against ten seconds, allow at most ten seconds future skew. Clock-request RTT contributes to the conservative expiry bound. Reject slow/backward/invalid clock calibration. Aggregate l shares the raw REST trade-id watermark; duplicate/replayed messages cannot renew receipt freshness.",
+    "race_and_lifecycle": "Separate book/trade bootstrap failures; 250ms stream coalescing, one-second expiry publication. Quote identity and channel revision prevent late REST from replacing or healing subsequent stream events, including malformed events. Offline clears verified freshness; reconnect calibrates clock and obtains new public snapshots. Late old-session responses are ignored. No listener means no requests; last cancellation, pause and disposal release transport/timers."
+  },
+  "signed_fact_read_change": {
+    "prompts_maximum": 5,
+    "reads": [
+      "GET /fapi/v3/multiAssetsMargin",
+      "GET /fapi/v3/positionSide/dual",
+      "GET /fapi/v3/accountWithJoinMargin",
+      "GET /fapi/v3/openOrders (omit symbol)",
+      "GET /fapi/v3/leverageBrackets (omit symbol)"
+    ],
+    "scope": "Current symbol orders remain isolated for the existing signed preview. MainOrderAccountFacts retains the complete account order list and validated tiers for the selected symbol plus every occupied cross symbol.",
+    "weight_change": "Official openOrders request weight changes from 1 (symbol) to 40 (all symbols). One explicit read, no polling. leverageBrackets weight remains 1.",
+    "risk_validation": "Unscoped array required; duplicate/missing symbols rejected. Requested risk rows validate contiguous notional intervals, leverage, nondecreasing maintenance ratios and exact cumulative continuity through existing strict margin-tier mapper.",
+    "safety": "Same EOA user/signer, no wallet creation. Existing identity, cancellation and original 30-second account-context deadline remain. No new write requests. Five separate reads are not an atomic exchange snapshot."
+  },
+  "revaluation_kernel": {
+    "inputs": "Validated signed snapshot with account-wide marketFacts; per-symbol exact fresh marks and reference Last, selected bid/ask, current asset indices and explicit now. It has no transport or widget side effects.",
+    "pnl": "For each related nonzero cross position compute min(q*(Mark-entry),q*(Last-entry)) independently, then sum by margin asset. Exclude isolated PnL from shared budgets.",
+    "exposure": "Reprice signed notional q*Mark. One-way reservation=max(abs(N+opening buy pending notional),abs(N-opening sell pending notional)); hedge adds both held legs and their opening orders. Fixed LIMIT pending notional=remainingQty*price. Closing legs reserve no new opening amount.",
+    "single_cross": "crossWallet + freshly recomputed cross PnL - cross initial margin - isolated extra pending margin. Initial/extra margin divisions remain Rational.",
+    "single_isolated": "min(single-cross budget, crossWallet - freshly computed cross maintenance - isolated extra pending margin). Maintenance is abs(notional)*tier.rate-tier.cumulative, with exact tier boundary selection.",
+    "multi_cross": "[sum min((crossWallet+newCrossPnl)*bidRate,(crossWallet+newCrossPnl)*askRate) - sum newCrossInitialMargin*askRate] / target askRate. Include only marginAvailable assets. Preserve negative collateral; require complete fresh valid rates. Active isolated exposure is unsupported.",
+    "identity": "Return a separate MainOrderRevaluation referring to the original snapshot. The repriced LiveOrderContext retains the original receivedAt, rules/configuration/funds/position identity; prices cannot renew the signed deadline or mutate any approved quantity.",
+    "unknowns": "Missing/stale/offline/invalid required quotes, unknown pending reservations, missing account order configuration, missing/out-of-range risk tiers or invalid indices reject the entire valuation. Zero is not an unknown placeholder."
+  },
+  "verified_examples": [
+    "PRD single-cross long 1 at 100 gives 90; at Mark=Last=120 gives 108 with wallet 100 and leverage 10",
+    "Selected isolated flat position plus related cross long at 120 gives min(108,99.4)=99.4",
+    "Independent signed PnL minimum for long/short; both hedge legs; unselected cross losses; opposite-side pending exposure; isolated extra pending margin; exact repeating divisions; tier-floor transitions; positive/negative multi collateral"
+  ],
+  "not_yet_implemented": [
+    "Riverpod subscriptions for the complete related-symbol scope and collateral indices feeding this kernel",
+    "Capacity panel, percentage/manual conversion, attached-exit pricing and directional buttons consuming the same live valuation",
+    "Fresh selected-side review and post-wallet/send guards recomputing frozen base quantity from current live valuation while preserving signed account anchor identity",
+    "Authenticated account/order/configuration event merge or invalidation and reconnect re-snapshots for this full sizing state; current account events already invalidate bounded preflight facts",
+    "Independent post-trade liquidation preview",
+    "Verified pending conditional/MARKET/moving-BBO reservation contracts and moving-BBO new capacity coverage"
+  ],
+  "boundaries": [
+    "This increment does not claim a live UI or submit-guard integration. Current production capacity preview/submission continues using the previously verified bounded snapshot path.",
+    "The public exact-reference repository currently handles one selected symbol, not an all-position aggregate socket.",
+    "The kernel recomputes from complete position/order facts; it deliberately does not reuse signed availableBalance, crossUnPnl or initialMargin as if updated by new public prices.",
+    "Signed account/orders/configuration responses are not atomic; real endpoint scope/permissions/last-place parity still require authorized acceptance.",
+    "Negative budget remains negative in the valuation; capacity arithmetic is responsible for a known-zero maximum.",
+    "No real wallet/private/funds requests, address RPC, installation, device tooling, commit or push in this increment. iOS requires macOS/Xcode; native tests remain deferred by user."
+  ],
+  "goal_complete": false
+}

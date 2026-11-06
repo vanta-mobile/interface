@@ -1,0 +1,147 @@
+{
+  "recorded_at_utc": "2026-11-06T10:24:29.426944+00:00",
+  "increment": "Ordinary level-one BBO current-book capacity, frozen allocation and resolved pending LIMIT reservations",
+  "contract": "main-order-bbo-capacity-public-contract.json",
+  "contract_sha256": "28c1d9c815af5a1a6991d1493571573e2ea8c9a0fee377f855e4abcff2bf602c",
+  "verification_checkout": "/tmp/vanta-main-order-bbo-verify-xcvjsd91",
+  "source_tree": {
+    "folders": [
+      "lib",
+      "test",
+      "tool",
+      "integration_test",
+      "test_driver",
+      "scripts"
+    ],
+    "files": 970,
+    "sha256": "b38b76f7825dbca3c7e987bbd392ff27a16a50718d3d79c9e24cf03e18eda4ec",
+    "manifest": "/tmp/vanta-main-order-bbo-source-hashes.json",
+    "workspace_changes_since_snapshot": [
+      "lib/features/auth/data/privy_identity_repository.dart",
+      "test/features/auth/privy_repository_test.dart"
+    ],
+    "workspace_new_files_since_snapshot": []
+  },
+  "source_sha256": {
+    "lib/features/portfolio/domain/live_order_peg.dart": "de71430757848122b3c73a6798ddb7316f0211404070285ff89232b73260b9d7",
+    "lib/features/portfolio/domain/live_order.dart": "0dc27fca7ce25c5c2922f819efddac7f3b61d5051b1a0c42746bdf6ae30a59f2",
+    "lib/features/portfolio/domain/live_order_rules.dart": "5a0f24953e0dc3416c2130ef5fcbcc9e758dacbcb0f14712fa44c1a03c65e079",
+    "lib/features/portfolio/domain/live_order_size.dart": "ec0631947e35fea95a6ec4f871ab07fd369d4e2b3e8e4679f4fd17fb223d7086",
+    "lib/features/portfolio/domain/main_order_price_assumption.dart": "c668f67a7bccfcaf21c893ddac609ee0afaf72fe13d35a74c9ab50abe188419d",
+    "lib/features/portfolio/domain/main_order_capacity_preview.dart": "797b0b1f260d1cd8659850ddd8946f73ea8fd4dd1f246e07ede1b1db8d074a6f",
+    "lib/features/portfolio/domain/main_order_post_trade.dart": "292ca07438476b882ac3c37f17a48714977e97b9d984357a2535c070810c76e4",
+    "lib/features/portfolio/domain/main_order_pending_exposure.dart": "036ac46b583efddeb351d51c8c5d26feb10e1a63f5252a6220929a2a37e228d9",
+    "lib/features/portfolio/presentation/live_order_form.dart": "e2f1897c71930db4a716359b14a5e18362b94cf147ed09f91eeb0600f2c74c07",
+    "lib/features/portfolio/application/main_order_allocation_provider.dart": "af5d58b337b8d7d69a7e60244dc5e19bb2b7b06c615d9115a6f910dc9e709332",
+    "lib/features/portfolio/application/main_order_pricing_provider.dart": "72ac531fde226a4334720a7093415888bcb1a59201afd1f80af60b1c4a9f83af",
+    "lib/l10n/app_en.arb": "748c2ae94bad91576e81be510d5a26cb7b251e1762f10f0ba9246c1eff144702",
+    "lib/l10n/app_zh.arb": "de7892840ff21ec805317b3d70bba97389598402f34652b9d2029cf6f65d4b13",
+    "test/features/portfolio/main_order_bbo_test.dart": "840dc5e9693d37becc6e565b6d94b678255da6cdfe6a1938dd5f43cbc1e2963e",
+    "test/features/portfolio/main_order_bbo_submission_test.dart": "6be1be6cd0cbce2de1063d6b41186ac8fb1597e69fd13fd64ca5c7df0cac60d5",
+    "test/features/portfolio/main_order_bbo_widget_test.dart": "1f7bda9dabe3be540527f26556beb2c703d8c82e9d8398267047d1748309a172",
+    "test/features/portfolio/main_order_price_assumption_test.dart": "87ba6af7bdc83f74ae882d35407e21d559b11964889db7d3cff9f87c9b6ace1d",
+    "test/features/portfolio/main_order_capacity_panel_test.dart": "22d9b656abf441d16cd7968fe424a69a6b7776c1a395f5ce473ffbad61697ba0",
+    "test/features/portfolio/main_order_capacity_snapshot_test.dart": "051c24271ee28946ef85d7c37f3c1a57ac495a0727b2030824d4395afa22bd9d",
+    "test/features/portfolio/main_order_capacity_preview_test.dart": "33d675c74520ec0cadfc976f2e1d64c0e60f62c604110ce9c5b3e6c07c8757eb",
+    "test/features/portfolio/live_order_peg_test.dart": "25eeaca1a7927626af50c18ab208b93187145a69563c867eb6c7bf9ca63c6c77",
+    "test/features/portfolio/live_order_peg_widget_test.dart": "3dc084885fbdee119b4a564b5acfe35788bc9e26dd2da0bb50a0ce2bc1b4597d",
+    "test/features/portfolio/live_order_size_test.dart": "3260fc5ab3394bb6a2080090e53971b47658df71e59098bf74dd987fa2ba3a99"
+  },
+  "tests": {
+    "new_test_files_cases": 64,
+    "new_domain": 30,
+    "new_signed_repository_synthetic_http": 19,
+    "new_widget": 15,
+    "existing_price_assumption_net_added": 2,
+    "focused_passed": 260,
+    "full_passed": 4928,
+    "scope": "Production domain/pricing/allocation/form/signed submission/recovery with synthetic wallet/HTTP and controlled feeds. Also retains dedicated close/compound BBO regression; no real wallet or exchange acceptance."
+  },
+  "format": {
+    "files": 952,
+    "changed": 0,
+    "command": "dart format --output=none --set-exit-if-changed lib test integration_test test_driver"
+  },
+  "analysis": {
+    "command": "dart analyze --fatal-infos",
+    "result": "No issues found"
+  },
+  "localization": {
+    "en": 1719,
+    "zh": 1719
+  },
+  "android": {
+    "command": "make build-apk (includes environment validation)",
+    "artifact": "build/app/outputs/flutter-apk/app-bbo-capacity-release.apk",
+    "bytes": 46259005,
+    "sha256": "b91bfc9cc8c933c394ced72cb9b8b925ca70794419b0008d13561fcd812215b1",
+    "target": "android-arm64 release",
+    "installed": false,
+    "published": false
+  },
+  "ios": {
+    "built": false,
+    "environment": "Linux",
+    "reason": "macOS/Xcode unavailable; user deferred device verification"
+  },
+  "logs": {
+    "full": "/tmp/vanta-main-order-bbo-isolated-full-final.log",
+    "focused": "/tmp/vanta-main-order-bbo-isolated-focused-final.log",
+    "format": "/tmp/vanta-main-order-bbo-isolated-format-final.log",
+    "analysis": "/tmp/vanta-main-order-bbo-isolated-analysis-final.log",
+    "build": "/tmp/vanta-main-order-bbo-isolated-build.log"
+  },
+  "log_sha256": {
+    "full": "595fa021ed05ba73ca3794701d3a1ff495ccdc4760a35bb2ea8d3f997ae6f210",
+    "focused": "1774e238d964d4614a6381e343b3a11d5651050ef43dc95a48b109faf3b12f3e",
+    "format": "9deda90740def2ff20e7ebf853d9082e9c6491d6e71689671fa35f1a57d044f0",
+    "analysis": "13320ab15c7c2ff1f68b0bfdeb6612e803d45fe9c6547f537d183cc04a7834ce",
+    "build": "e90ee17c41a68bb30daabc3f93efb9e9b6641d4337f18e1ee82570666b44651f"
+  },
+  "superseded_runs": [
+    {
+      "log": "/tmp/vanta-main-order-bbo-initial.log",
+      "reason": "Old ordinary BBO close PnL and conditional reference assertions still expected Mark/trigger; updated to current selected book or unavailable without book."
+    },
+    {
+      "log": "/tmp/vanta-main-order-bbo-domain.log",
+      "reason": "Related-symbol test incorrectly passed all-symbol orders into selected-symbol assembly; fixed test to match production selected/full split."
+    },
+    {
+      "log": "/tmp/vanta-main-order-bbo-isolated-full.log",
+      "reason": "4923 passed, three old widget assertions/fixtures failed because ordinary BBO was now supported and needed book data. Updated panel assertions and opening fixture; legacy22 passed, then complete final rerun4928 passed."
+    }
+  ],
+  "boundaries": [
+    "Conditional BBO future engine price and fills remain unknown; current-book margin/liquidation is only a hypothesis, not a spending cap.",
+    "Deeper compound BBO capacity, BBO switch/default/Post Only selector alignment and complete account-event merge/automatic re-read remain open.",
+    "Zero/unknown/deeper peg and untriggered conditional/pending market opening reservations remain fail-closed.",
+    "Actual Aster EOA signer authorization, financial execution and native lifecycle/storage/UI remain unverified.",
+    "Full PRD remaining scope and explicit skipped modules are recorded in docs/remaining-work.md."
+  ],
+  "real_wallet_requests": false,
+  "real_private_requests": false,
+  "real_funds_requests": false,
+  "address_rpc_requests": false,
+  "native_device_tools": false,
+  "git_commit_or_push_by_this_increment": false,
+  "goal_complete": false,
+  "user_requested_stop_after_increment": true,
+  "current_workspace_followup": {
+    "core_tests_passed": 64,
+    "format_files": 952,
+    "format_changed": 0,
+    "analysis": "No issues found",
+    "scope": "Current BBO increment files match frozen full-suite/APK source. Independent later Privy repository changes are excluded from the full/APK claim.",
+    "logs": {
+      "core": "/tmp/vanta-main-order-bbo-current-core.log",
+      "format": "/tmp/vanta-main-order-bbo-current-format.log",
+      "analysis": "/tmp/vanta-main-order-bbo-current-analysis.log"
+    },
+    "log_sha256": {
+      "core": "a6c87986da646ddc4ac51449f9d2564f937eb6393028abde9565f7a3cbb08a06",
+      "format": "34051a967efdd59207fb285cc39cb934e96e5fabb28b1358a27d322795b8b91e",
+      "analysis": "dd59d09fbc342124016fe556b92356f7e73cf9266486e1535e562c53297b613b"
+    }
+  }
+}

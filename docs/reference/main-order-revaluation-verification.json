@@ -1,0 +1,127 @@
+{
+  "recorded_at_utc": "2026-11-06T05:27:54.487952+00:00",
+  "increment": "Exact order quote transport, complete signed account order/risk facts and standalone capacity revaluation kernel (UI and submission integration pending)",
+  "contract": "main-order-revaluation-public-contract.json",
+  "contract_sha256": "81b616ee642067e6f96d8f6f3a8e231e273bab80a6942b90295a09d0852a4587",
+  "tests": {
+    "new": 110,
+    "public_quote_mapper": 31,
+    "public_quote_repository": 25,
+    "revaluation_kernel": 35,
+    "unscoped_risk_mapper": 15,
+    "additional_actual_signed_repository_mock_http": 4,
+    "focused_passed": 172,
+    "focused_files": 6,
+    "focused_cases_by_file": {
+      "order_reference_price_mapper_test.dart": 31,
+      "order_reference_prices_repository_test.dart": 25,
+      "main_order_revaluation_test.dart": 35,
+      "main_order_risk_mapper_test.dart": 15,
+      "main_order_capacity_snapshot_test.dart": 36,
+      "signed_main_order_capacity_repository_test.dart": 30
+    },
+    "focused_skipped": [],
+    "full_passed": 4661,
+    "previous_full_baseline": 4551,
+    "exit_code": 0,
+    "first_focused_failure": "Hedge fixture reused one orderId for two different orders, so the existing open-orders mapper correctly deduplicated them. Assigned independent IDs; hedge gross and PnL expectations passed. No production formula changed to accommodate that assertion.",
+    "scope": "All new financial/transport tests are controlled domain/repository tests, with synthetic HTTP/socket/signatures. The full suite also covers all existing widget/submission behavior. No new realtime UI integration or native acceptance is claimed."
+  },
+  "format": {
+    "command": "dart format --output=none --set-exit-if-changed lib test integration_test test_driver",
+    "files": 897,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "command": "dart analyze --fatal-infos",
+    "result": "No issues found",
+    "exit_code": 0,
+    "initial_lints": "Two if/else branches in the new test helper lacked braces; fixed and reran analysis. Relevant focused tests reran after the brace-only edit."
+  },
+  "localization": {
+    "en": 1691,
+    "zh": 1691
+  },
+  "android": {
+    "command": "make build-apk (includes environment validation); make env-check also run separately",
+    "exit_code": 0,
+    "configuration": "Existing .env checked with values omitted; standard Makefile and original workspace, no alternate SDK/configuration/workspace.",
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45971716,
+    "sha256": "f2b6bf81f3c74d57e58b1490a064ccce87dd15899f0827a5dd6dc6ee8ff9d06c",
+    "installed": false,
+    "published": false,
+    "notices": "Existing third-party KGP/Built-in Kotlin migration notice; build succeeded.",
+    "boundary": "Build includes the unscoped signed-reader change. Standalone revaluation is not connected to app consumers yet; compilation/tests do not prove a live sizing UI."
+  },
+  "ios": {
+    "built": false,
+    "environment": "Linux",
+    "reason": "Linux without macOS/Xcode; user deferred native-device verification."
+  },
+  "logs": {
+    "focused": "/tmp/vanta-revalue-focused-final.log",
+    "focused_machine": "/tmp/vanta-revalue-focused-machine.jsonl",
+    "full": "/tmp/vanta-revalue-full-final.log",
+    "format": "/tmp/vanta-revalue-format-final2.log",
+    "analysis": "/tmp/vanta-revalue-analysis-final2.log",
+    "build": "/tmp/vanta-revalue-build-final.log",
+    "environment": "/tmp/vanta-revalue-env-final.log",
+    "initial_focused_with_fixture_error": "/tmp/vanta-revalue-focused-initial.log",
+    "initial_analysis_with_test_lints": "/tmp/vanta-revalue-analysis-final.log"
+  },
+  "log_sha256": {
+    "focused": "38bafc3f8ad4f54f71bc34b3e9ee8a5f5a6ac2e0fa69ebfa54d032183e0cd56f",
+    "focused_machine": "8349fc22c5fce85ef2ed262e8f0857ec3e704fdd6147c18d1758672e631489ef",
+    "full": "c761a3429d88f23319057cd531ed185454590864143f87f8708e93c032c14dec",
+    "format": "c914d1ed268390f9d6f1a0220443374198fde3914bbfb43af601f9bf577f72d0",
+    "analysis": "dd59d09fbc342124016fe556b92356f7e73cf9266486e1535e562c53297b613b",
+    "build": "82ab7a1d5dac47217ea037dcaa1e249a80aa4f22cbb605d7409823e58db8ad88",
+    "environment": "f6b7f91bc2e2c20a5903fa87cc131503d7aa364f148c4b883a47cf92d711d356",
+    "initial_focused_with_fixture_error": "19857c8b0fbe7bea7632e92b3b4a3b307f5ad8fa73b66818b917e3ada70357ca",
+    "initial_analysis_with_test_lints": "9bcb8303323986a1792ebaebb8b317f83ead19ccc9960908fb42aacee46b38b4"
+  },
+  "source_sha256": {
+    "lib/features/market/domain/order_reference_prices.dart": "7bc36621e12d24eb1e72820c11ba5154093bd921d34b175df0ee18ae2acf5e27",
+    "lib/features/market/data/order_reference_price_mapper.dart": "c490fd659be0f448bc598dd2401ba092fe4c98223bb47fb962d74198deb2f8e5",
+    "lib/features/market/data/order_reference_prices_repository.dart": "740787d31eb1b30743ab97f5d453c0793ea0ad2d0650754289fe1a52b6f3d649",
+    "lib/features/portfolio/domain/main_order_account_facts.dart": "2380f11a0a7302fb185368cb97a527f2456bf05c78929690d109603fc0b168b8",
+    "lib/features/portfolio/domain/main_order_revaluation.dart": "39a9b2925545991bc0bdabd6841f52004c534833e33b2ae0211c25f325ca8b92",
+    "lib/features/portfolio/domain/main_order_capacity.dart": "6099cad8ac73ed7a8c89310ae30dc67fc1acd857d58c457b1ac8e82add47ea96",
+    "lib/features/portfolio/domain/main_order_pending_exposure.dart": "1a979409e7343c55a1fac64288ce917f360403a7a115c943e319670462c8bd1b",
+    "lib/features/portfolio/domain/main_order_margin_budget.dart": "f094872cce6c86389ccc6cd5ed4b72bf51e811f8136de6d59af9bbb382e74c48",
+    "lib/features/portfolio/data/main_order_risk_mapper.dart": "eed388c70e11cf22960148a4049754a5400d30d4a8eccfefef0f1c2642be4a77",
+    "lib/features/portfolio/data/main_order_capacity_mapper.dart": "98d3a32d464cf1125e33fd29620f73d41e39f9780689e4d23982b3881c3ed3c3",
+    "lib/features/portfolio/data/signed_main_order_capacity_repository.dart": "5bd75c357657da03c6dcc3ba07d02a7f683a26f411e9334ddfdf2696e8f8d76a",
+    "test/support/order_reference_prices.dart": "b2322e8498be6168af12645e610c4670c91f54b3a046e28a15a290c33a07110c",
+    "test/support/main_order_revaluation.dart": "d22bd97b457c68c9df8973d9c5251a15c61edd66dd6a23684889f95d27e8f366",
+    "test/features/market/order_reference_price_mapper_test.dart": "ac5cc72b786a4f31dce704e67ddf716cb97f3ea47ca93fc7fe7fe2826b5cb1ed",
+    "test/features/market/order_reference_prices_repository_test.dart": "ceff26a73d58e634eb7a02e78093015e832142f7f83799476d326c727b3f0d2b",
+    "test/features/portfolio/main_order_revaluation_test.dart": "69b920a1256f7915b721d0e2b8213d7156ee722319add8d4b49b8f592caf9cc7",
+    "test/features/portfolio/main_order_risk_mapper_test.dart": "91e0e3bbf8ab4490584834d0e2e5aa2f3aceeaec7348c94e1f547ffcf8da4c82",
+    "test/features/portfolio/signed_main_order_capacity_repository_test.dart": "f51ba5ca9b224d15fb96ac099004db2f7d935a8eebef8035e76cf5265fb9eb7d"
+  },
+  "source_tree": {
+    "directories": [
+      "lib",
+      "test",
+      "integration_test",
+      "test_driver"
+    ],
+    "dart_files": 897,
+    "sha256": "99f0573d56d30a100d5a336fb2cf452369f6df61c5787c26801d9ede0e619d25"
+  },
+  "native_device_test_performed": false,
+  "real_wallet_private_funds_chat_or_address_rpc_requests": false,
+  "git_commit_or_push": false,
+  "remaining_required_work": [
+    "Riverpod subscriptions for the complete related-symbol scope and collateral indices feeding this kernel",
+    "Capacity panel, percentage/manual conversion, attached-exit pricing and directional buttons consuming the same live valuation",
+    "Fresh selected-side review and post-wallet/send guards recomputing frozen base quantity from current live valuation while preserving signed account anchor identity",
+    "Authenticated account/order/configuration event merge or invalidation and reconnect re-snapshots for this full sizing state; current account events already invalidate bounded preflight facts",
+    "Independent post-trade liquidation preview",
+    "Verified pending conditional/MARKET/moving-BBO reservation contracts and moving-BBO new capacity coverage"
+  ],
+  "goal_complete": false
+}

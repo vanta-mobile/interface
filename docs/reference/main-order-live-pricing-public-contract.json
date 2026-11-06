@@ -1,0 +1,62 @@
+{
+  "recorded_at_utc": "2026-11-06T06:10:38.855321+00:00",
+  "increment": "Live main-order pricing and capacity integration within original signed account lease",
+  "prd": {
+    "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+    "title": "Futures trading",
+    "page_last_edited_at": "2026-11-06T02:43:32.434Z",
+    "source": "Continuation of prior recorded Notion inspection; this increment uses the cached official sources and existing contract, without claiming a new remote reread",
+    "sections": [
+      "3.2 step2: all related prices, min(Mark PnL, Last PnL), initial and maintenance margins, collateral conversion",
+      "3.2 step3: independent buy/sell opening references"
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+      "local_cache": "/tmp/vanta-bbo-api-docs/V3(Recommended)/EN/aster-finance-futures-api-v3.md",
+      "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4",
+      "access": "Previously cached official document/anonymous website source inspected locally; no fresh HTTP parity claim"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/futuresCalculatePre-DjYtFMnM.js",
+      "local_cache": "/tmp/vanta-main-sizing-futuresCalculatePre-DjYtFMnM.js",
+      "sha256": "4936eeb96f82192560f324f2ca9125c6fdf9c94f9b109447cbf66e31e90584af",
+      "access": "Previously cached official document/anonymous website source inspected locally; no fresh HTTP parity claim"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/useStreamMarkPrice-DK-y4bCO.js",
+      "local_cache": "/tmp/vanta-main-sizing-useStreamMarkPrice-DK-y4bCO.js",
+      "sha256": "b8c0d2ffa47b0d92bfdf6b3929bd0abd70ba19cb6203e4c241ca8f397f35969b",
+      "access": "Previously cached official document/anonymous website source inspected locally; no fresh HTTP parity claim"
+    }
+  ],
+  "previous_contract": "main-order-revaluation-public-contract.json",
+  "application": {
+    "scope": "Selected contract Mark, exact book and Last before signed capacity; after an explicit signed capacity read, Mark for all related occupied positions and Last for all related nonzero cross positions. Other contracts subscribe aggTrade only, not unnecessary books.",
+    "account_read": "Existing five explicit signatures unchanged; no provider starts a signed request or creates a wallet. All-account openOrders weight remains 40.",
+    "pricing": "One public pricing boundary supplies manual conversion, buy/sell capacity previews, percentage input, attached exit resolution, review validation and final send guards. Revalue the recorded full-account facts; retain Decimal/Rational arithmetic.",
+    "bootstrap_wait": "A fresh signed account may add price subscriptions. Wait for initial public snapshots without repeating signed reads; stop promptly on cancellation, form changes, concrete source failure/offline, expired account lease or disposal. Loading/cancel controls remain available during the wait.",
+    "freeze": "Freeze original base quantity, direction, order terms, signed account facts and client ID at click/review. Subsequent prices revalidate the same quantity and exit terms; rising capacity cannot expand an approved order.",
+    "input": "Manual raw input is preserved on price changes and errors. Percentage display updates only with valid fresh prices; during reads/signing or unavailable quotes preserve prior display and disable unsafe actions.",
+    "quote_times": "Individual Mark/book/Last receipt timestamps label conversion references separately from private account receivedAt. Quote updates do not extend the original 30-second signed deadline.",
+    "wallet": "Keep public sources active while an existing order operation holds the expected external-wallet lease. OS suspension may still stop delivery: ten-second receipt expiry and original signed deadline are checked synchronously after wallet return and before POST, without relying on a periodic emission.",
+    "anchor": "Only price fields and quote timestamps may differ between a pricing context and the signed account anchor. Reject substituted wallet/configuration/funds/position/lease facts.",
+    "journal": "Existing before-POST persistence and final canSubmit guard remain. Unknown outcome recovery queries the original identifier only, without a second submission."
+  },
+  "transport_hardening": {
+    "mark_rest_race": "Per-symbol event revisions prevent late REST from reviving a malformed update received during bootstrap; unmodified symbols may complete independently.",
+    "disconnected_marks": "Ignore mark events until connected, and ignore duplicate connected notifications. Queued offline events cannot verify a new session.",
+    "exact_quote_repository": "Last-only mode skips the book bootstrap, channel and updates for related non-selected contracts. Existing clock calibration, transport/session isolation, channel revisions and replay protections remain."
+  },
+  "verification_scope": "Controlled public feeds and synthetic HTTP with actual production pricing/allocation/preview and signed submission repository; no real private, wallet, funds or address RPC requests. Legacy form fixtures explicitly supply bounded pricing; dedicated new tests cover the production pricing boundary.",
+  "remaining": [
+    "Full account/order/configuration event synchronization and full signed account re-snapshot after reconnect; existing events invalidate bounded facts rather than merging a continuously fresh complete account",
+    "Post-trade independent buy/sell liquidation estimate",
+    "Verified pending conditional/MARKET/moving-BBO reservation contracts and moving-BBO new capacity coverage",
+    "Other PRD gaps tracked in docs/prd-progress.md; this increment does not complete the overall PRD",
+    "Real EOA/Privy permissions, wallet returns, accepted order/funds execution and native visual/storage/lifecycle acceptance; device testing deferred by user",
+    "iOS build and native verification on macOS/Xcode"
+  ],
+  "goal_complete": false
+}

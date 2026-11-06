@@ -1,0 +1,38 @@
+{
+  "recorded_at_utc": "2026-11-06T03:40:01.280Z",
+  "increment": "Main-order percentage input, directional review, frozen submission and recovery-aware wallet-return guard",
+  "prd": {
+    "id": "409080d974e780188a4fedfdcf29e655",
+    "title": "Futures trading",
+    "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655?pvs=204",
+    "readAt": "2026-11-06T02:43:32.434Z",
+    "source": "Notion fetch",
+    "section": "3.2 step3 and 3.4",
+    "size": 172819
+  },
+  "implemented": [
+    "Initial zero-percent slider with blank input, disabled until an explicit validated capacity read. Exact 0–100 integer percentages floor each side independently to the exchange quantity lattice; no minimum uplift.",
+    "Separate buy/sell quantities and base/quote display; selected-side input preserves exact base quantity when switching units. User editing leaves percentage mode and retains separate raw manual inputs. Editing never triggers private reads.",
+    "Maxima follow the selected base/quote unit; directional buttons retain disabled placeholders and show their own estimated base quantity or quote amount. Known zero capacity remains distinct from missing data.",
+    "Click captures direction, order type, exact quantity and form terms before at most five fresh signed capacity reads. Reduced capacity rejects the captured size; increased capacity never enlarges it. Standard mode-specific confirmation preferences still apply.",
+    "Confirmation and the actual signed repository POST guard recheck identity, selected symbol, form revision, account context, capacity snapshot, expiry, settings and recovery state. Expected wallet switching retains the original 30-second deadline.",
+    "Current order persistence is exempt only for the active order lease and its own client ID. All storage readiness/failures and other pending order, margin, rebalance and internal-transfer records still block sending.",
+    "Accepted original-ID query resets percentage to zero and blanks its display. Rejected signatures retain intent. Unknown results retain inputs and block another placement; only the original client ID is queried, never resent.",
+    "Slider has an independent accessible subtree during dialog/form transitions. EN/ZH widget tests exercise narrow portrait, landscape, tablet and enlarged text without disabling semantics."
+  ],
+  "remaining_required_work": [
+    "Live public-price and account-event recomputation: current previews use a bounded signed/preflight price snapshot, not a continuous market feed. Account/settings/expiry changes invalidate rather than silently using stale facts.",
+    "Post-trade independent liquidation estimates across applicable account, margin and position modes; no use of pre-order liquidationPrice as a post-trade value.",
+    "Fresh directional-capacity guards and usable dual action buttons for manual sizing; manual submit retains its existing preflight/confirmation checks and does not use the new percentage guard.",
+    "Verified reserved-notional and moving-price assumptions for conditional, pending-market and BBO orders; unsupported capacity remains unknown.",
+    "Latest directional maximum in a dedicated over-capacity error; current safe error preserves input and panel exposes the latest available maximum.",
+    "Full strategy list/edit/cancel, Chase recovery, full cross-product Portfolio and Swap remain unfinished; only historical statistics/Summary/TWAP are user-deferred."
+  ],
+  "boundaries": [
+    "Available budget, prices, leverage and filters remain references and do not guarantee exchange acceptance, a fill price, spending cap or execution. Fees and future margin release are not credited by this opening-cost kernel.",
+    "Account and orders are separate signed responses, not an atomic exchange snapshot. Post-wallet guard rejects observed changes/expiry; it is not a new complete account read after each signature.",
+    "Reference snapshot tests and MockClient requests prove client behavior, not actual EOA/API signer authorization, balances, fills, on-chain execution or real native behavior.",
+    "No real wallet prompt, private/funding/chat request, address-bearing RPC, device tools, APK install or external publication in this increment. iOS unavailable on Linux."
+  ],
+  "goal_complete": false
+}

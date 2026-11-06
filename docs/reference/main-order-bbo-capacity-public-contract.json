@@ -1,0 +1,58 @@
+{
+  "recorded_date": "2026-11-06",
+  "scope": "Ordinary level-one BBO main opening capacity, input conversion, refreshed review, live send guards, hypothetical post-trade entry and resolved pending LIMIT exposure",
+  "prd": {
+    "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+    "edited_at": "2026-11-06T06:17:16.064Z",
+    "source": "Full cached Notion fetch read this increment; no truncation warning. §3.2 step1/step3, BBO current book selection and independent side quantity/cost/max/liquidation, click recheck and frozen confirmation."
+  },
+  "official_document": {
+    "url": "https://raw.githubusercontent.com/asterdex/api-docs/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+    "cache": "/tmp/vanta-main-order-bbo-api-latest.md",
+    "sha256": "352e71f6328e07721faf47922eaef67604ccbfdd12cbcedf2cfae1fd2634d3fa",
+    "sections": [
+      "New Order pegPriceType: COUNTERPARTY_1 / QUEUE_1, engine resolves at placement for LIMIT, at trigger for STOP/TAKE_PROFIT.",
+      "Modify Order notes: ordinary BBO sets price once; continuously re-pegged limits use separate Chase service.",
+      "-5035 INVALID_PEG_PRICE: requires wire price0.",
+      "Place Strategy Order: deeper compound pegs have separate leg contract."
+    ],
+    "access": "Anonymous document read only; no private/wallet/funds/address RPC request."
+  },
+  "pricing": {
+    "counterparty": {
+      "buy": "current ask",
+      "sell": "current bid"
+    },
+    "queue": {
+      "buy": "current bid",
+      "sell": "current ask"
+    },
+    "quote_validation": "Both positive noncrossed bid/ask required. Main production pricing also checks connection/freshness, symbol and receipt age <10s; never Mark, trigger, zero or opposite-side fallback.",
+    "cost": "Existing exact limit branches with the selected current BBO as hypothetical limit: buy margin=loss=selected; sell margin=max(selected,bid,Mark), loss=selected. Decimal/Rational, no market-buy buffer applied to BBO LIMIT.",
+    "conversion": "Selected BBO for ordinary quote/base inputs, both ordinary and conditional. Floor exact rational quantity on LOT minimum-offset/step, no leverage multiplier. Book receipt labels conversion, quotes never renew account lease.",
+    "notional": "Selected current BBO * fixed base quantity; minimum-notional validation uses that same reference.",
+    "post_trade": "Hypothetical full fill at selected current BBO; uses existing independent liquidation solver, fee/position/margin facts. Conditional trigger-time BBO is unknown, current projection is not a forecast or spending cap.",
+    "supersedes": "Ordinary-only Mark/trigger estimate in ordinary-bbo-public-contract.json and live_order_size prior path. Compound depth pegs keep their existing indicative estimate and are outside this capacity increment."
+  },
+  "application": {
+    "entry": "Ordinary opening BBO side buttons and main review share mainOrderAllocationProvider. Manual intent may preview without limits, click explicitly re-reads signed capacity; percentage reads independent side maxima.",
+    "lease": "Original private account30s / current quote10s; no refresh by quote alone. No automatic wallet creation or authenticated reread.",
+    "freeze": "Capture clicked direction/mode/quantity/peg/trigger and original client ID before refreshed limits. Increased maxima never enlarge order; decreased maxima retain raw inputs and show current side limit.",
+    "guards": "Current live revaluation before confirm, after wallet signature and after recovery journal I/O. Identity, form, operation lock, private event/disconnect/expiry and deadlines retain existing invalidation.",
+    "wire": "Draft price empty, POST price=0 and exact pegPriceType. Never send preview bid/ask as fixed price. Query validates actual engine-resolved price with exact original peg and terms.",
+    "recovery": "Persist public original intent before one POST. Unknown timeout, failed/mismatched query remain pending; recovery only GETs original clientOrderId, no resize/replay."
+  },
+  "pending_exposure": {
+    "supported": "Signed positive price, active ordinary LIMIT, recognized QUEUE_1 or COUNTERPARTY_1. RemainingQty * engine-resolved price; fixed price remains stable when public book/Mark changes.",
+    "account_modes": "Existing one-way net exposure or gross both hedge legs; related-symbol revaluation keeps same rules. Signed initial margin corroboration and existing rounding quantum remain.",
+    "unknown": "Zero price, unknown/deeper pegs, untriggered STOP/TAKE_PROFIT, pending market/trailing reservations remain blocked. Explicit closing orders and exhausted remainder retain existing exemption, never manufacture opening capacity."
+  },
+  "ui": "Reuse existing BBO dropdown, side panel, percentage/manual inputs, confirmation and latest-maximum error; EN/ZH hint now states current bid/ask projection. No new native actions or controls.",
+  "boundaries": [
+    "Only ordinary level-one main opening BBO joins the new capacity flow; deeper compound BBO needs its own depth implementation.",
+    "BBO switch/default and Post Only selector constraint remain separately recorded UI alignment work.",
+    "Complete account-event merge/automatic re-snapshot remains open.",
+    "Actual direct-EOA signer acceptance, pricing/trigger/matching and native lifecycle/storage/UI unverified.",
+    "Remaining full-PRD scope recorded in docs/remaining-work.md. User requested stop after this increment and its verification."
+  ]
+}

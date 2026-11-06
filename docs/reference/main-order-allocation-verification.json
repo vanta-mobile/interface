@@ -1,0 +1,125 @@
+{
+  "recorded_at_utc": "2026-11-06T03:47:58.340623+00:00",
+  "increment": "Main-order percentage review/submission, accessible dialog transitions and own-journal recovery guard",
+  "contract": "main-order-allocation-public-contract.json",
+  "contract_sha256": "c73a923db4d7fdbc4cce93de9e554aed5d466c93ebc5849226eedcf6f6777bfc",
+  "tests": {
+    "new_percentage_tests": 60,
+    "application": 31,
+    "widget": 19,
+    "actual_signed_repository_mock_http": 10,
+    "focused_passed": 76,
+    "full_passed": 4497,
+    "previous_signed_capacity_baseline": 4376,
+    "separate_numeric_component_increment": 61,
+    "exit_code": 0,
+    "coverage": [
+      "Zero-percent blank initial state; explicit capacity read; separate buy/sell exact quantity and base/quote display; manual edit and independent raw unit inputs.",
+      "Same-side fresh read on click; reduced maximum refuses captured quantity; increased maximum never increases it; same type/direction/quantity confirmation.",
+      "Form/auth/symbol/context/clock/settings/recovery/capacity changes before confirmation or after the wallet prompt block placement.",
+      "Production signed repository and MockClient prove no POST after wallet-return invalidation; accepted buy/sell requests sign exact frozen quantity with user=signer and GET the original client ID.",
+      "Own pre-POST journal record is exempt only during the active order write; unrelated pending records, failed storage and changes during journal I/O still block POST.",
+      "Unknown POST is retained in the actual memory recovery journal; recovery only GETs its original ID, sends no second POST, and clears percentage only after a matching signed query.",
+      "EN/ZH narrow portrait/landscape/tablet with enlarged text, cancel/expiry/unknown outcomes and accessibility semantics enabled. Six original semantics-geometry failures resolved by a dedicated slider boundary."
+    ]
+  },
+  "format": {
+    "command": "dart format --output=none --set-exit-if-changed lib test integration_test test_driver",
+    "files": 883,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "command": "dart analyze --fatal-infos",
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en_messages": 1689,
+    "zh_messages": 1689,
+    "new_messages": 8
+  },
+  "android": {
+    "command": "make env-check then make build-apk",
+    "exit_code": 0,
+    "configuration": "Existing .env validated; no values printed, replacement configuration, --no-pub build, manual registrant edit or alternate workspace.",
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45971716,
+    "sha256": "a8e0805b87f146a092f2a1ad63a40729127671c2475aabf760ae0d625f22c1aa",
+    "package_phrase_checks": [
+      "Order percentage:",
+      "下单比例：",
+      "Refreshing limits for the selected direction",
+      "确认开多",
+      "Manual amount"
+    ],
+    "installed": false,
+    "published": false,
+    "notices": "Existing third-party Built-in Kotlin/KGP migration notices; build succeeded."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux without macOS/Xcode; native-device verification is user-deferred."
+  },
+  "logs": {
+    "focused": "/tmp/vanta-allocation-focused-final.log",
+    "full": "/tmp/vanta-main-allocation-full-final.log",
+    "format": "/tmp/vanta-main-allocation-format-final.log",
+    "analysis": "/tmp/vanta-main-allocation-analysis-final.log",
+    "environment": "/tmp/vanta-main-allocation-env-final.log",
+    "build": "/tmp/vanta-main-allocation-build-final.log"
+  },
+  "log_sha256": {
+    "focused": "fe32493c86e80ca837a8363d11601f95b269a5f1e14c1545e70dab1f42b1e8ef",
+    "full": "6e792b441e356f25b48eef5abdaf2965a0624460ff0ae29a406f4096112cdd50",
+    "format": "ec54b7a8798d4d55315b2cbf6ffbf97fa47f4b3ba9a668bc683b58691f180f85",
+    "analysis": "dd59d09fbc342124016fe556b92356f7e73cf9266486e1535e562c53297b613b",
+    "environment": "f6b7f91bc2e2c20a5903fa87cc131503d7aa364f148c4b883a47cf92d711d356",
+    "build": "2ab4fa63c9330c918d9692ea9a23bb0b9f23282e09ab645d24c00f691f048784"
+  },
+  "source_sha256": {
+    "lib/features/portfolio/application/main_order_allocation_provider.dart": "4b17cedb3e826b01c345292e03f4113357b09e0260387cc0ddb189234f291b51",
+    "lib/features/portfolio/application/live_order_provider.dart": "f9da794de28b8082cb33b652568559481ddb768e9ad4f1228688502bd7f3b28b",
+    "lib/features/portfolio/application/symbol_settings_activity.dart": "d1352f4cb95452112d9e64d41d486055f438bc98f9993727d26f862a938c2ccd",
+    "lib/features/portfolio/domain/main_order_allocation.dart": "973e52afb0696b737f2db405f35eec59dd26e3fd17b6135fd55200cb80d26c15",
+    "lib/features/portfolio/domain/main_order_capacity_preview.dart": "75310bb11b9d6f0ed55fdfc4c472e35984696a8b9b1f846f3ca2180719c7d5a5",
+    "lib/features/portfolio/domain/live_order_draft.dart": "42c7c979865eae79f8de1957f0ff0ececcebb85e34e18d40378d49b99b3f731d",
+    "lib/features/portfolio/domain/live_order_size.dart": "82d320fe19d39ca1460f9033b77f9bd8426cd64f4651b3959ffef89f95d07720",
+    "lib/features/portfolio/presentation/live_order_allocation_binding.dart": "32200f6879a47c2baea2dd71031bf95b6fea98477a9dfb0b06cf2c37bac7e0ec",
+    "lib/features/portfolio/presentation/live_order_form.dart": "a5f00ab92fdb7740d8a8846e7b09c57cc666ee55b15641a7c73671788786c543",
+    "lib/features/portfolio/presentation/live_order_review.dart": "17d0dee9b9a216c8554254ffeaeab7450216a35d487ccbe981d3e0b215ede9ed",
+    "lib/features/portfolio/presentation/main_order_percentage_control.dart": "406c8944356cdd7df3bd99830d9993aa6d05eba074e22b6b01e2bf5baa6cfa59",
+    "lib/features/portfolio/presentation/main_order_capacity_panel.dart": "16f6a565a9cb9b943b347ddb64eec6791ac4dc119b46283b108cfc801e8d8fd8",
+    "lib/core/strings.dart": "a99ec4806629f3b51df27ea24ede643c5ae00b5cd8dd12cc8a57b0c7be3d4ed0",
+    "lib/l10n/app_en.arb": "b5bf3f895deb801c14586125874bd3ef6acb9e57065a10fbd30c8427162d5358",
+    "lib/l10n/app_zh.arb": "5a6743006de14c8a84621c0415d9ead210a217a754233ca803c6fdac051e00d6",
+    "lib/l10n/generated/app_localizations.dart": "943d661a2580d686a7bf4c5ca666b6c13bfe867696e239369c4d2f9a1c400777",
+    "lib/l10n/generated/app_localizations_en.dart": "050c56d7d29754ab32b7e5a70c3f8dbd381b3c69e39a4c42198e49b850e1db22",
+    "lib/l10n/generated/app_localizations_zh.dart": "fd5887be307ee662d55b2e1dbc771dfa60a4f404d8476b14c803027af5ae03c0",
+    "test/features/portfolio/main_order_allocation_provider_test.dart": "a8cf946c04b0b15f5126d7e7e80111364accb94f4eacf940eef0889ff1c5b4bb",
+    "test/features/portfolio/main_order_allocation_widget_test.dart": "27751a72cdeb262e8c223969aa2b17381e95c5fb057d0c076e090d4b9798c9e9",
+    "test/features/portfolio/main_order_allocation_submission_test.dart": "e0476fe281e78cb942d57c5a3ffffb9cc0ae20c4b29e8dd1f791ff808447abab",
+    "test/features/portfolio/main_order_capacity_panel_test.dart": "3b37c159229cd0632d380e417aca7120748923f79a922ef3caae475b37e05990"
+  },
+  "source_tree": {
+    "directories": [
+      "lib",
+      "test",
+      "integration_test",
+      "test_driver"
+    ],
+    "dart_files": 883,
+    "sha256": "b5130ffb03f7f47bf0ffd03e6a290faf308f62aea85a47d06451393fb49c22db"
+  },
+  "native_device_test_performed": false,
+  "real_wallet_private_funds_chat_or_address_rpc_requests": false,
+  "remaining_required_work": [
+    "Live public-price and account-event recomputation: current previews use a bounded signed/preflight price snapshot, not a continuous market feed. Account/settings/expiry changes invalidate rather than silently using stale facts.",
+    "Post-trade independent liquidation estimates across applicable account, margin and position modes; no use of pre-order liquidationPrice as a post-trade value.",
+    "Fresh directional-capacity guards and usable dual action buttons for manual sizing; manual submit retains its existing preflight/confirmation checks and does not use the new percentage guard.",
+    "Verified reserved-notional and moving-price assumptions for conditional, pending-market and BBO orders; unsupported capacity remains unknown.",
+    "Latest directional maximum in a dedicated over-capacity error; current safe error preserves input and panel exposes the latest available maximum.",
+    "Full strategy list/edit/cancel, Chase recovery, full cross-product Portfolio and Swap remain unfinished; only historical statistics/Summary/TWAP are user-deferred."
+  ],
+  "goal_complete": false
+}

@@ -1,0 +1,181 @@
+{
+  "recorded_at_utc": "2026-11-06T09:34:10.198787+00:00",
+  "increment": "Wallet-return lifecycle, existing private connection continuity and recovery-lock identity isolation",
+  "contract": "main-order-wallet-lifecycle-contract.json",
+  "contract_sha256": "4dc65ceccb5805e8475a2ab350535df75aa0892ec3b4deb63e81f74b472fa511",
+  "verification_checkout": "/tmp/vanta-wallet-lifecycle-verify-hq49lfbl",
+  "tests": {
+    "new_this_increment": 37,
+    "auth_session": 10,
+    "lifecycle_application": 9,
+    "private_connections": 6,
+    "signed_submission_added": 9,
+    "widget_observer": 2,
+    "recovery_identity_isolation_added": 1,
+    "focused_passed": 226,
+    "full_passed": 4861,
+    "scope": "Controlled native lifecycle, production Riverpod controllers and signed order repository with synthetic signatures/HTTP; no real platform acceptance. Full snapshot includes other current transport/error/refresh/login increments."
+  },
+  "format": {
+    "files": 949,
+    "changed": 0,
+    "command": "dart format --output=none --set-exit-if-changed lib test integration_test test_driver"
+  },
+  "analysis": {
+    "command": "dart analyze --fatal-infos",
+    "result": "No issues found"
+  },
+  "localization": {
+    "en": 1716,
+    "zh": 1716
+  },
+  "android": {
+    "command": "make build-apk (includes environment validation)",
+    "artifact": "build/app/outputs/flutter-apk/app-wallet-lifecycle-release.apk",
+    "bytes": 46259920,
+    "sha256": "015822f6451813b29c33fb8c68dbe30aaaeee11bba513863d5a30faf1201cc49",
+    "installed": false,
+    "published": false
+  },
+  "ios": {
+    "built": false,
+    "environment": "Linux",
+    "reason": "macOS/Xcode unavailable; device testing explicitly deferred"
+  },
+  "logs": {
+    "focused": "/tmp/vanta-wallet-lifecycle-isolated-focused-final.log",
+    "full": "/tmp/vanta-wallet-lifecycle-isolated-full5.log",
+    "format": "/tmp/vanta-wallet-lifecycle-isolated-format-final2.log",
+    "analysis": "/tmp/vanta-wallet-lifecycle-isolated-analysis-final2.log",
+    "build": "/tmp/vanta-wallet-lifecycle-isolated-build.log"
+  },
+  "log_sha256": {
+    "focused": "dff44dd6a134d839353760debb6f815db449ced81386aba1263b7cc803f1af8a",
+    "full": "42967948d2e3c2660845815974ac1da2951b42080dc9628d707dcbb07c44196c",
+    "format": "46ddae074233369787e4b4fa2b9baf9b708768ad4b5e7af0d1530ac2e7eb02d7",
+    "analysis": "66385b431074b8bb0cd620e770577fe81aae4c6c33d09d4bd242b76b2beae002",
+    "build": "a3fecf20ed8271115c4aefce99dcc75b2cfaa15e83cc6a078da3babb7fe95b7c"
+  },
+  "source_tree": {
+    "folders": [
+      "lib",
+      "test",
+      "tool",
+      "integration_test",
+      "test_driver",
+      "scripts"
+    ],
+    "files": 977,
+    "sha256": "b990b1aca14dd7c30c4322758fd4cc4ea392fc3a1b1b8f1808a1e27848352afd",
+    "manifest": "/tmp/vanta-wallet-lifecycle-source-hashes.json",
+    "workspace_changes_since_snapshot": [
+      "lib/core/errors/error_text.dart",
+      "lib/features/auth/presentation/email_code_form.dart",
+      "lib/features/auth/presentation/verification_code_input.dart",
+      "lib/features/funding/data/withdrawal_repository.dart",
+      "lib/features/market/data/market_quotes_repository.dart",
+      "lib/features/points/application/points_provider.dart",
+      "lib/features/portfolio/data/signed_futures_position_mode_repository.dart",
+      "lib/features/portfolio/data/signed_position_leverage_repository.dart",
+      "lib/features/portfolio/data/signed_position_margin_mode_repository.dart",
+      "lib/features/portfolio/data/signed_position_margin_repository.dart",
+      "lib/features/subaccounts/data/subaccount_management_repository.dart",
+      "lib/l10n/app_en.arb",
+      "lib/l10n/app_zh.arb",
+      "lib/l10n/generated/app_localizations.dart",
+      "lib/l10n/generated/app_localizations_en.dart",
+      "lib/l10n/generated/app_localizations_zh.dart",
+      "test/core/errors/error_text_test.dart",
+      "test/features/auth/login_screen_test.dart",
+      "test/features/funding/withdrawal_repository_test.dart",
+      "test/features/market/market_quotes_repository_test.dart",
+      "test/features/subaccounts/subaccount_management_repository_test.dart"
+    ]
+  },
+  "source_sha256": {
+    "lib/features/portfolio/application/symbol_settings_activity.dart": "31dc4d57bfb95576780f87f05e66462d24bcb491f9b2d8ac432a376cf89b8860",
+    "lib/features/portfolio/application/wallet_stream_controller.dart": "6cab91c80f23e466635d73f16b2473581b198a29fb1292f5347d93e55577b6ec",
+    "lib/features/portfolio/application/main_order_pricing_provider.dart": "72ac531fde226a4334720a7093415888bcb1a59201afd1f80af60b1c4a9f83af",
+    "lib/features/auth/application/auth_provider.dart": "cccc544e660cfa1ae85bb484d195de4eefba12a7086c91e2e0800e52c605900f",
+    "lib/features/trade/application/trading_lifecycle_provider.dart": "aa50d345758cff58edd116864e2900b4ca3bcfea4820244bc0cfe5fc69c4efb1",
+    "lib/features/trade/presentation/trading_screen.dart": "4185bfb85578b61c5d5e027f42702454dbe807883515d1cf71ba9062517f0ea2",
+    "test/features/auth/auth_session_refresh_test.dart": "b3b61c9be236ab385ff8ab6a78bdd5849639c9525424c921553ca5b1f1a3f587",
+    "test/features/trade/trading_lifecycle_provider_test.dart": "a74350990738c464f7c059a2ae5bd54db7e6c022f142bc55e2af72a43413d420",
+    "test/features/trade/trading_lifecycle_widget_test.dart": "f04c89ce49c5c5cbce125376cd0cea028a05b576a9470b6661781b673cf712de",
+    "test/features/portfolio/wallet_stream_order_session_test.dart": "58db093126ad2ac6b7b21e9fb09aebbf6e5b156d211c4975b51334e323cd7090",
+    "test/features/portfolio/main_order_live_submission_test.dart": "6537e3efdcbfe39e76c17d368d805226e6205af00354d9c69448cd595541f94e",
+    "test/features/portfolio/symbol_settings_activity_test.dart": "7db7a6fd3b1bc067985b55efee890fb5daf6a02f86db8415faa6f22f032e5921",
+    "test/support/identity_repository.dart": "8aa3dc135b35a61d176bd76e0642c9732df1346ebd0dd2c0e8ad45956aa2a0e8",
+    "test/support/main_order_live_pricing.dart": "00dca56322269d45e9421af5c5420d04e76414347c31d0097da8f515026dadf3",
+    "test/core/localization_test.dart": "86146d9314839fac5ada08157faa1eb152ecaec7e2db92ec9261082d53629071",
+    "test/features/points/points_provider_test.dart": "180d593a76b8212f30a8ba9ef2e4023f8e36914493761c143f5689ea26a4aff9",
+    "test/features/portfolio/account_read_provider_test.dart": "3f6f0770b876564244886bb1562dfb2f4f66339e79f132ff728747ec278bc9fd",
+    "test/features/portfolio/open_orders_provider_test.dart": "3695adfe74bd4f75b2d348abc8c7749d342b1bb72e0f1e951c3ab6fc5e5435e7",
+    "test/features/portfolio/position_risk_provider_test.dart": "2874492ae96b9f8bd6e061e2e8139cf5482e7af11f9051a5dc199dc4b7fe7d8b",
+    "test/features/portfolio/position_adl_provider_test.dart": "260ec7ff963d082aef2a83b2715c4d57391f18d094692378b422eacb91cc5062",
+    "test/features/portfolio/spot_account_provider_test.dart": "8d38179025fa44c07d7f96bbd17af0c21a68237823d17ce785e29be228438ae4"
+  },
+  "superseded_runs": [
+    {
+      "log": "/tmp/vanta-wallet-lifecycle-focused1.log",
+      "reason": "Test fixture must await initial auth before explicit monitor authorization; derived activity cache exposed missed reconnect."
+    },
+    {
+      "log": "/tmp/vanta-wallet-lifecycle-stream4.log",
+      "reason": "Direct input observation still read old derived gate; fixed by evaluating the shared predicate from current inputs."
+    },
+    {
+      "log": "/tmp/vanta-wallet-lifecycle-isolated-full.log",
+      "reason": "Failed old login assertions, duplicate-refresh deadlocks and recovery-list notifier mutation during widget build; interrupted after identifying failures."
+    },
+    {
+      "log": "/tmp/vanta-wallet-lifecycle-isolated-full2.log",
+      "reason": "Concurrent points-test edits introduced cross-scenario undefined variables; interrupted and corrected."
+    },
+    {
+      "log": "/tmp/vanta-wallet-lifecycle-isolated-full3.log",
+      "reason": "Old asset-metadata refresh test blocked on its own unreleased gate; old demo portfolio test captured before layout correction. Interrupted and incorporated current fixes."
+    },
+    {
+      "log": "/tmp/vanta-wallet-lifecycle-isolated-full4.log",
+      "reason": "4857 passed, three failures from old history duplicate-wait and funding business-error type assertions. Updated test contracts and verified all 30 followups, then reran complete suite."
+    }
+  ],
+  "additional_regression": {
+    "layout_and_asset_metadata_passed": 22,
+    "layout_log": "/tmp/vanta-wallet-lifecycle-layout-check2.log",
+    "market_and_funding_followup_passed": 30,
+    "followup_log": "/tmp/vanta-wallet-lifecycle-followup.log"
+  },
+  "boundaries": [
+    "No complete account-event merge or automatic authenticated full re-snapshot.",
+    "Existing serialized-operation gate does not cover every funding or subaccount workflow.",
+    "OS suspension and native wallet/Privy/Reown delivery order unverified; preserved socket is not evidence of uninterrupted delivery.",
+    "Actual trading authorization and platform acceptance unverified.",
+    "Moving BBO/new unknown pending-order reservations, strategy management/Chase, complete Portfolio/Swap remain open; previously deferred statistics/Summary/TWAP remain deferred."
+  ],
+  "real_wallet_requests": false,
+  "real_private_requests": false,
+  "real_funds_requests": false,
+  "address_rpc_requests": false,
+  "native_device_tools": false,
+  "git_commit_or_push": false,
+  "goal_complete": false,
+  "current_workspace_followup": {
+    "core_focused_passed": 56,
+    "format_files": 949,
+    "format_changed": 0,
+    "analysis": "No issues found",
+    "logs": {
+      "focused": "/tmp/vanta-wallet-lifecycle-current-focused.log",
+      "format": "/tmp/vanta-wallet-lifecycle-current-format.log",
+      "analysis": "/tmp/vanta-wallet-lifecycle-current-analysis.log"
+    },
+    "log_sha256": {
+      "focused": "eaa9e04cfa359c83dc51a2f53bc7478905c03e3c289ffbb243ae050aa3813295",
+      "format": "01e5a913e13bba1de5480cc04f1fd6d97b7d2c7ea9bcc94c4e4fe2cde25cdc98",
+      "analysis": "dd59d09fbc342124016fe556b92356f7e73cf9266486e1535e562c53297b613b"
+    },
+    "scope": "Current workspace has later parallel error/login/market changes; they are not included in the full-suite or APK claim. Core lifecycle/auth/activity files match the frozen verification source hashes."
+  }
+}

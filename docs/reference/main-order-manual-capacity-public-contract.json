@@ -1,0 +1,54 @@
+{
+  "recorded_at_utc": "2026-11-06T04:21:53Z",
+  "increment": "Fresh directional capacity review for manual main-order sizing",
+  "prd": {
+    "id": "409080d974e780188a4fedfdcf29e655",
+    "title": "Futures trading",
+    "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655?pvs=204",
+    "source": "Notion fetch during this increment",
+    "section": "3.2 step3 and 3.4",
+    "requirements": [
+      "输入一笔开仓订单后，分别预估买卖两侧；同一输入可能只满足一侧。",
+      "超过上限时提示该方向最新最大可下金额，并保留原输入。",
+      "点击买卖按钮时重新核对该侧数量和最新额度；确认页保持相同交易对、方向、订单类型与数量。"
+    ]
+  },
+  "implemented": [
+    "Manual base/quote sizing now uses the shared fresh capacity preparation, frozen confirmation, submit guard and original-ID recovery for non-pegged LIMIT, Post Only, MARKET, STOP/TAKE_PROFIT limit/market and TRAILING_STOP_MARKET opening orders. Reducing flows remain on their dedicated path.",
+    "Without a previous capacity read, manual input can produce an independently validated per-side quantity preview and enable the corresponding review action. It does not invent a maximum or cost. Only an explicit review or read starts private requests.",
+    "Both manual directional buttons and the existing main review action capture the selected side and exact resolved base quantity before refreshing capacity. At most five signatures re-read account facts; larger capacity never enlarges that captured quantity.",
+    "A fresh over-capacity result carries the selected-side latest maximum and context into a localized error. Base/quote units follow the form; quote maxima remain approximate. Raw entered strings survive failure, cancellation, wallet rejection and accepted placement; percentage placement retains its existing zero-reset behavior.",
+    "Side-specific filters can enable only one action for a shared input. Pre-wallet and after-wallet guards reject observed identity, symbol, context, form, capacity, clock, settings and recovery changes. Unknown submission retains the original ID and never issues a second POST.",
+    "Review actions disable during preparation, with a spinner on the clicked directional action and main review control. Main review now respects its enabled flag while capacity is being read. Text labels remain available while pending.",
+    "Shared production-form test fixture serves manual and percentage widget tests. Legacy retry test scrolls the expanded form before tapping again; missing-price coverage explicitly checks that only the affected direction is disabled."
+  ],
+  "tests": {
+    "new_manual_widget": 31,
+    "new_manual_after_wallet_application": 6,
+    "new_manual_actual_repository_mock_http": 17,
+    "focused_files": 6,
+    "focused_passed": 134,
+    "production_signed_repository_tests_in_focused": 27,
+    "coverage": [
+      "Six inline modes in both directions; raw base input; independent MARKET quote conversion; no prerequisite explicit capacity read.",
+      "Latest maxima in EN/ZH and both units; retry after exceeded capacity; growing limits do not resize; only-one-side-valid input.",
+      "Manual main review uses the same guard; cancel during read; loading controls; wallet rejection; separate raw base/quote strings; skip-confirmation; unknown original-ID query.",
+      "EN/ZH narrow portrait, landscape and tablet with 1.5x text; semantics remain enabled.",
+      "After-wallet form/clock/symbol/stale/capacity invalidation; exact real repository POST and signed query terms in six modes and both directions; journal persistence and GET-only unknown recovery."
+    ]
+  },
+  "remaining_required_work": [
+    "Continuous public-price/account-event recomputation and reconnection snapshots; current sizing still uses bounded preflight and signed facts.",
+    "Independent post-trade liquidation estimates in applicable account/margin/position modes.",
+    "Verified reservation amounts for pending conditional, MARKET and moving BBO orders. Unknown inputs continue to block capacity calculation.",
+    "Moving BBO has no verified pricing contract for the new capacity guard. Its existing dedicated preflight/signing path remains; this increment does not claim full capacity coverage for it.",
+    "Other PRD gaps and product/protocol scope clarifications remain in docs/prd-progress.md; only historical statistics/Summary/TWAP are user-deferred."
+  ],
+  "boundaries": [
+    "Capacity and cost are estimates, not guarantees of API authorization, order acceptance, fill price or spending cap. No fees or future released margin are credited by the opening-cost kernel.",
+    "The five signed reads are not an atomic snapshot; guards protect against observed changes and expiry, not unobserved exchange state after the last response.",
+    "Tests use synthetic responses. No real private/funds/chat request, wallet signature or address-bearing RPC is performed for this increment.",
+    "User deferred device verification; no device tools, app install or publication. Linux lacks macOS/Xcode for iOS builds."
+  ],
+  "goal_complete": false
+}

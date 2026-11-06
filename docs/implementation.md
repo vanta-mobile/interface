@@ -1,3 +1,27 @@
+## 2026-11-06 本地提交核验
+
+用户在要求停止开发后，进一步明确授权先提交代码。本次只整理并提交现有改动，不恢复功能开发、不推送或发布；此前“不提交”的描述保留其历史增量语境。
+
+本地提交按本地化、登录界面／会话恢复、应用标识、主下单额度与钱包回跳、进度文档分组。主下单提交为 `ac81142`，登录为 `fbecbac`，应用标识为 `7d48d6b`，本地化为 `3c8807d`。应用标识变更为exchange.vanta.app，需要同步签名／钱包服务／商店应用配置，旧标识安装不能原位升级；未执行远端配置或上架。
+
+补核当前最终工作区：登录／本地化158项通过，952文件格式零改动，静态分析无问题；Python发布脚本48项中47项通过、1项macOS专用Keychain测试在Linux跳过。Android arm64 Release重新构建成功，未安装；APK 46259057 bytes，SHA256 `c05bc6fe701e66cef6272167b77515bf504421b9394f17f1ff578e814615e191`。本次未重跑全量；此前固定源码副本全量4928／专项260仍按[原记录](reference/main-order-bbo-capacity-verification.json)限定范围理解。该副本之后的Privy回调调整由本次158项及新构建覆盖，不能将其称作已重跑完整全量。无设备或真实钱包／资金操作，iOS仍未构建。
+
+日志：/tmp/vanta-precommit-auth.log、/tmp/vanta-precommit-format.log、/tmp/vanta-precommit-analysis.log、/tmp/vanta-precommit-scripts.log、/tmp/vanta-precommit-build.log。
+
+## 2026-11-06 普通一档BBO额度复核与停止安排
+
+普通开仓BBO现共用主下单双侧额度／比例／手动输入、点击签名新读、冻结确认及最终发送保护。COUNTERPARTY_1买ask／卖bid，QUEUE_1买bid／卖ask；要求正数且不交叉的盘口，生产定价沿用连接／交易对／10秒接收期限校验，报价不更新原30秒账户期限。计价币换算精确向下对齐LOT步长；本单金额和最小名义金额使用对应当前盘口。普通限价成本分支将当前盘口作为假设委托价：买侧margin=loss=所选价，卖侧margin=max(Mark,bid,所选价)、loss=所选价。买／卖强平投影使用该侧当前盘口和既有费率／仓位／档位；条件BBO触发时的未来盘口未知，不承诺未来成本、强平或成交价。
+
+手动输入在未读额度时可预览合法数量；双侧按钮与主确认都在点击后读取最新额度。确认前、钱包签名后和日志I/O后都按当前定价复核冻结基础币数量。额度增大不扩单，额度降低拒绝并保留输入；POST仍提交price=0及原peg，预览盘口不变成手填限价。未知结果、查询失败或peg不匹配都保留原日志和编号，只做GET查询恢复。
+
+官方V3进一步说明普通BBO在挂单／触发时一次定价，持续追价属于Chase。因此已签名返回正数price、type=LIMIT、且peg是QUEUE_1／COUNTERPARTY_1的挂单可按remainingQty×已定价计算预留；单向净敞口／双向两腿、相关合约重估和报告保证金末位容差继续适用。零价、未知／深档peg、未触发条件及pending市价预留继续阻止额度使用，不从当前盘口或聚合保证金倒推。复合十档BBO没有混入一档估算；其新额度接线仍列未完成。
+
+复用原BBO下拉、输入／双侧面板／确认与错误反馈，无新增钱包或设备操作。中英文提示由原Mark／触发价参考改为所选当前盘口假设，保留引擎定价差异说明。既有大表单的状态和提交流程已在allocation binding中分层，本轮只修改两处路由判断；领域计算没有移入Widget。来源与详细边界见[合同](reference/main-order-bbo-capacity-public-contract.json)，验证及构建结果见[记录](reference/main-order-bbo-capacity-verification.json)。
+
+最终验证：新增三个专项测试文件共64项，另更新既有盘口／过滤器断言；固定源码副本专项260项／全量4928项通过，952个Dart文件格式零改动、静态分析无问题，中英文各1719条。Android arm64 Release构建通过，APK未安装；BBO增量源码与固定副本一致；其后独立登录改动不包含在全量／APK证明内；当前工作区另核对BBO核心64项及格式／静态分析通过。无真实钱包／私有／资金／带地址RPC或设备操作，iOS因Linux缺macOS／Xcode未构建。详见[验证记录](reference/main-order-bbo-capacity-verification.json)。
+
+用户要求本功能完成后记录未完成工作并停止；本轮完成和验证后暂停整体需求推进，完整剩余范围、协议缺口、用户明确跳过及真实／原生待验收事项已统一记录在[未完成事项](remaining-work.md)，不将整个PRD标记完成。未经继续指示不转做账户同步或其他功能，不提交／推送或发布。
+
 ## 当前验收安排
 
 ## 2026-11-06 接口错误详情与主页刷新
@@ -14,6 +38,22 @@
 
 make build-apk（含公开配置检查）成功，Android arm64 Release APK 为 46,259,005 bytes，SHA-256 `f593a4bb4db1d1fe26527de245007b0a2c9e20ba21174107b415a28f1ba5afb4`；构建日志 /tmp/vanta-errors-android-build.log。既有插件的 KGP 迁移警告未阻塞当前构建。本轮只使用替身传输与本地测试，不发真实钱包／私有／资金／带地址 RPC 请求，不安装 APK或调用设备工具。Linux 无 macOS／Xcode，iOS 构建及原生视觉验收继续按[待验收清单](native-verification-pending.md)保留。
 
+## 2026-11-06 钱包签名回跳与私有监听连续性
+
+修复启用账户监听后，主下单打开外部钱包导致私有流暂停／重连、订单事实被提前标为陈旧的问题。公共报价与 Futures／Spot 私有连接共用“前台或正在执行 order 操作”的连续性规则。签名期间只保留已明确授权且尚有效的连接，不增加监听授权；后台结束 order 操作后立即暂停，普通后台与非 order 操作继续暂停。真实事件、断线、监听过期和身份／签名能力变化仍使相应事实失效；操作取消不重放金融请求。
+
+TradingScreen 的原生生命周期编排移入应用层 TradingLifecycle。回前台后合并会话核对意图，等待已串行化的设置／订单操作结束及应用恢复前台，再调用 AuthController.refreshSession。会话核对不设置 auth.busy，相同身份不发布新状态，也不创建钱包；避免额度读取完成后又因登录恢复清空快照和确认结果。真实身份改变／登出仍由SDK事件立即处理，迟到会话读取不能恢复旧身份。此等待只覆盖 symbolSettingsActivity 管理的操作，不宣称所有资金／子账户流程已统一持有该租约。
+
+私有流直接观察连续性规则的两个输入并即时核对，避免在输入监听中读取尚未失效的派生Provider缓存，造成普通恢复时遗漏重连。保持原30秒账户和10秒报价期限；钱包回跳不会延长它们，也不能证明OS未暂停网络。本轮不补齐完整账户事件合并或自动签名重读，断线后的完整快照仍由用户显式刷新。AuthController超过400行已复核：会话命令仍由同一身份状态控制，页面生命周期职责已抽出，没有为行数拆散同一认证状态机。
+
+新增37项回归：会话核对10、生命周期应用9、Futures／Spot连接6、真实签名仓库配合合成HTTP提交9、页面观察者双语Widget2、延迟恢复列表与旧身份租约隔离1。覆盖私有监听下回跳后只发送一次、数量不变、读取额度后确认仍有效，以及账户事件／断线／过期／登出／切钱包／失去签名能力／两类期限阻止POST；同身份无busy通知、SDK事件抢先、迟到／销毁与普通前后台恢复均有断言。来源、实现边界见[合同](reference/main-order-wallet-lifecycle-contract.json)，具体命令、全量与构建证据见[验证](reference/main-order-wallet-lifecycle-verification.json)。初轮暴露派生状态缓存顺序问题后修正实现，保留原恢复断言；签名仓库测试先显式等待测试登录恢复，再启用监听。隔离副本漏复制本地k_chart_plus路径依赖的问题已修正。
+
+全量回归还暴露了恢复锁在登出后懒刷新时从listener写入Notifier，导致页面build期间修改状态的问题。恢复锁改为在Provider build中派生，并单独保存操作所有者／token；身份键也在build核对，旧钱包的迟到finish不能释放新钱包租约。原有订单日志自记录例外与其他未决拦截继续验证。另将七个既有测试与并行增量对齐：五类账户重复刷新等待同一请求后再断言、积分等待合并请求、登录页使用当前英文本地化文案。并行刷新测试的跨用例变量误替换已修正；未放宽原错误／隔离／请求次数断言。完整工作区其他并行增量保留，另修正机械格式／lint。
+
+最终固定副本949文件格式零改动、静态分析无问题，专项226项、行情／资金后续30项及全量4861项通过；测试期间源文件manifest未变。Android arm64 Release成功，APK 46,259,920 bytes，SHA256 `015822f6451813b29c33fb8c68dbe30aaaeee11bba513863d5a30faf1201cc49`。基线包含当时工作区其他错误／刷新／登录增量；之后并行修改未纳入该全量／APK声称。当前工作区另复跑本轮核心56项及静态分析通过，格式检查949文件零改动；本轮认证／生命周期／恢复锁源文件哈希与固定副本一致。更多日志、文件边界和历史失败见本轮验证记录。
+
+无真实钱包／私有／资金／带地址RPC请求，无设备工具、安装、提交或推送。Android仅构建；Linux没有macOS／Xcode，iOS未构建。手机系统暂停网络、实际钱包返回、真实事件与签名先后顺序按用户要求仅记录于[原生待验收](native-verification-pending.md)。整体PRD目标仍未完成。
+
 ## 2026-11-06 接口传输生命周期与行情数据分层
 
 按本轮要求先补充根目录 `AGENTS.md` 的通用接口规范，再治理请求取消、连接池／限流复用、公开行情订阅共享和行情数据边界。保留既有 Riverpod 及 feature 目录结构，未新增依赖。页面收集意图，Provider／Controller 编排状态与依赖，Repository／Mapper 校验传输数据；交易对目录和盘口不再由 Provider 直接请求／解析。
@@ -26,6 +66,74 @@ make build-apk（含公开配置检查）成功，Android arm64 Release APK 为 
 
 新增29项传输／共享订阅／盘口／目录／账户仓库生命周期回归，覆盖请求前失效、响应头／体期间取消、超时、原生本机HTTP中止、共享连接隔离、独立decoder、同源冷却／权重队列取消、订阅重连／迟到消费者／最终释放、畸形数据及传输错误原因保留。初轮发现请求具体类型与订阅顺序兼容问题，均已修正，原断言通过。最终927个Dart文件格式检查零改动、静态分析无问题，全量4785项通过；随后补充目录错误分类／模型不可变性3项，最终接口与行情专项155项全部通过。原有订单／划转／提现的未知结果、持久化恢复及不重提测试随全量通过。Android arm64 Release构建通过，APK 46,233,860 bytes，SHA-256 `2e3e7cd0190168842c1e6246b433d9296c7a3ae1c7ee2a64ea8bc566990f48ac`。本轮只使用替身接口及本机回环HTTP／WebSocket；不发真实钱包／私有／资金请求，不启动设备或安装APK。Linux无macOS／Xcode，iOS及手机真实网络生命周期继续待验收。
 
+## 2026-11-06 主下单双侧成交后强平价预估
+
+按正式 Futures PRD §3.2 step3，买卖两侧分别假设本单全额成交，将数量和预计入场合并到对应仓位后计算强平Mark。没有输入、全部平仓、缺失依据或无有效正数边界显示 —，不复用下单前liquidationPrice。PRD使用上一增量的完整读取缓存，本轮匿名重新读取官方强平规则；官网公开计算缓存、具体公式及边界见[合同](reference/main-order-liquidation-public-contract.json)。
+
+额度读取增加当前symbol的commissionRate（官方权重20），核对symbol与[0,1)实际吃单费率；缺失或拒签不按零处理。额度最多六次签名，完整账户刷新最多十次，双语提示同步更新，观察Provider不签名。原30秒账户／10秒报价时限、确认冻结数量和原编号恢复继续适用。
+
+投影、风险求解、预览适配分层。Rational保留加仓加权入场、减仓已实现PnL与逐仓钱包分摊；反向开仓先释放旧仓再建立新入场。全仓扣整笔假设吃单费，包含同币种其他合约的Mark浮盈亏和维持保证金，双向保留另一腿。额度的min(Mark,Last)与新crossMarkPnl分开。逐仓只用目标腿钱包；部分减仓按绝对数量释放抵押，不足覆盖的亏损留给剩余仓位，反向新腿分配数量／杠杆及开仓损失。费用按官网钱包投影记入全仓，不重复扣逐仓。公开JS的short带符号除法与反向分支有歧义，本实现采用明确对称会计，不能宣称逐字复制或已通过真实平台核验。
+
+多抵押仅使用marginAvailable资产，正权益按bid、负债按ask，维持保证金按ask；候选强平价格下重新核对目标币种权益符号，其他合约价格与抵押汇率固定为当前值。合并各腿floor／cap对应的价格边界，在每个区间和权益分支精确求equity(P)=maintenance(P)，候选须落回同一档位及符号分支；连续档位缺失或超过最高cap不外推。双向多边界取离当前Mark最近的有限正数。仅显示时按symbol精度舍入并复用共享fixed格式化、既有ValueRow和响应式堆叠。
+
+限价假设输入价，市价使用既有方向假定价，条件市价使用触发价，Trailing使用明确激活价；均非成交保证。自动激活Trailing没有固定未来入场假设，显示 —。没有向确认页增加额外字段。生产签名仓库配合合成HTTP直接流入双侧预览，测试覆盖会计／风险方程、档位边界／高精度／负抵押及双语放大横屏／320窄屏Widget；数量、全量验证和构建见[记录](reference/main-order-liquidation-verification.json)。
+
+首次数值测试漏计既有市价系数，将101修正为101.05；数值JSON经精确解码可合法成为费率，已增加该路径并用非法字符串验证拒绝。共享网络层同时更新导致首轮全量失败，首次构建还遇到并行Flutter生成插件注册混入integration_test。最终采用包含当前网络改动的隔离源码副本，顺序全量测试和构建；顺手修复报价探测脚本已移除的instruments调用及两个dispose的override注解，未运行真实探测。
+
+本轮新增40项（会计／风险25、双语Widget4、签名仓库新增11），专项155项通过；隔离全量4785项通过。之后工作区新增市场目录的异常传播调整及3项测试，纳入隔离副本后专项158项、927文件格式零改动及静态分析再次通过；不将新增3项描述为已重跑完整全量。源码树和构建证据分别记录，Android产物见本轮验证。中英文各1694条。
+
+真实平台抵押分摊、费用、部分成交、资金费、舍入与风险算法仍待验收。完整账户事件合并／自动重读、移动BBO新额度／未知挂单预留、策略管理／Chase及Portfolio／Swap继续保留。无真实钱包／私有／资金／带地址RPC请求、APK安装或Git提交推送。Linux无macOS／Xcode，iOS未构建；用户要求本阶段只记录[真机待测项](native-verification-pending.md)。
+
+## 历史增量：2026-11-06 主下单显式完整刷新与重连后快照恢复
+
+本轮重读正式 Futures trading PRD，页面编辑时间为2026-11-06T06:17:16.064Z。当前§3.2 step2已注明为讨论／参考材料；step3仍要求双侧使用相同当前事实并随余额、持仓、挂单及Mark变化更新。实现来源和范围见[合同](reference/main-order-account-refresh-public-contract.json)，自动验证与构建见[记录](reference/main-order-account-refresh-verification.json)。
+
+新增MainOrderRefreshController，主开仓读取按钮与下拉刷新共用Widget→Riverpod应用层的完整操作，不因观察而签名。已授权且仍有效的监听断开时，先恢复连接（最多12秒），再依次读取完整下单上下文／资金（四次签名）、全账户额度（最多五次签名），刷新抵押指数并等待本次操作开始后新收到的Mark、相关Last及当前盘口。仍新鲜但早于本次操作的缓存报价不能结束完整刷新。停止或过期的监听不自动请求授权；正在进行监听钱包授权时禁止重叠提示。此流程最多九次独立签名，不提交订单；减仓页保留原上下文读取。
+
+刷新期间禁用比例变动、重复刷新、确认及发送，提供取消、加载与安全错误。取消释放本次上下文读取租约和等待；即使钱包返回尚未完成也可结束刷新，迟到响应不能更新旧作用域。取消不撤回钱包提示或已尝试的订单。原始手动输入保持，切钱包／symbol停止旧操作；账户事实事件仍会使读取结果失效。刷新建立新的30秒上下文期限，行情更新不能延长它。
+
+新增18项测试（应用14、Widget4），专项55项及全量4719项通过；907个Dart文件格式零改动，静态分析无问题，中英文各1693条。覆盖读取顺序、有效监听恢复／失败、授权提示互斥、账户过期、重复请求、各阶段取消、报价接收屏障、symbol变化、读取中事件以及双语放大横屏／窄屏失败重试与输入保留。测试初期的时钟、流交付、懒加载滚动定位和容器定时器清理问题已修正，原断言通过；未跳过测试。Android产物与哈希见验证记录。
+
+此增量只补齐显式完整刷新及重连后的用户发起快照读取。完整账户事件增量合并和自动重连重读尚未实现；主下单仍使用有期限签名事实，不能称为常驻完整账户。钱包回跳的真实生命周期、下单后双侧强平估算、未知挂单预留及移动BBO新额度检查仍待处理。本轮不发真实钱包／私有／资金或带地址RPC请求，不安装APK或调用设备工具，不提交／推送。Linux无macOS／Xcode，iOS构建及全部真实／原生验收按[清单](native-verification-pending.md)保留。
+
+## 历史增量：2026-11-06 主下单实时定价接线与签名后复核
+
+主下单现已通过共享 MainOrderPricing 接入实时公开行情，覆盖双侧额度、比例展示、手动换算、附加 TP/SL 定价和提交复核。账户仍是显式签名读取的事实锚点；只在原30秒期限内按最新价格重算，不能称为完整常驻实时账户。沿用此前缓存的 Futures PRD §3.2／§3.4 和官方来源，本轮未声称再次远程读取。来源与边界见[合同](reference/main-order-live-pricing-public-contract.json)，自动验证及构建见[记录](reference/main-order-live-pricing-verification.json)。
+
+未读额度前只订阅当前合约的 Mark／book／Last；显式读到完整账户后，为相关非零仓位聚合 Mark，为非零全仓补 Last。其他合约只订阅 aggTrade，跳过多余盘口请求。多资产复用抵押指数；不会因观察 Provider 自动请求签名，仍最多五次显式签名，openOrders全账户权重40。新账户事实扩大行情范围时，应用等待初始公开快照而不重复私有读取；读取及等待期间保留加载和取消，表单改变、取消、离线、明确失败、原期限到期或销毁均停止。比例数值在有效行情变化时更新，读取／签名期间冻结；缺价保留旧输入并禁止不安全操作。手动原始字符串不随行情修改。
+
+点击时冻结基础币数量与退出条款，新额度增长不扩单。确认使用新估值，钱包返回、写入日志后及真正POST前按当前行情重新检查同一数量、触发及附加保护条件；失效不发送。原账户地址／配置／资金／仓位／期限不能被价格视图替换，原client ID和未知仅查询恢复机制保留。外部钱包预期切换期间，有效order租约保留公开订阅；OS暂停仍可能停止接收，回跳同步检查10秒报价时效和原30秒账户期限，不依赖下一次定时发布。行情各自的Mark／盘口／Last接收时间独立标示，不再用账户时间冒充新报价时间。
+
+共新增40项测试：生产定价／应用26、真实签名仓库配合合成HTTP6、双语及放大横屏Widget5、Last-only报价仓库1、Mark竞态回归2；专项五文件74项通过。完整4701项通过；904个Dart文件格式零改动，静态分析无问题。现有.env的make build-apk（包含配置检查）成功，Android arm64 Release APK为46037252字节，SHA256 `c9856cad72777a76ae6169030e07f6ef2c54b979dcc3f45865ff2fb35a862212`，未安装；中英文仍各1691条。另修复共享Mark仓库的两处边界：逐合约事件修订号阻止迟到REST恢复后来的非法行情，未连接期间忽略排队事件，重复connected不触发额外重读。最初3个Widget失败来自runAsync中建立的流没有在真实异步区交付后续事件，补齐等待后原断言通过；附加PnL测试按fixture的0.1价格步长核对103，而非未对齐的103.01。历史表单fixture显式隔离有期限定价，新增用例使用生产Provider与受控行情边界，不将合成成功响应当作真实接受。
+
+仍待实现完整账户／订单／配置事件同步与重连后完整账户重读；现有事件使事实失效，不会自动合并或重新签名。下单后双侧强平估算、未知条件／市价／移动BBO开仓预留、移动BBO新额度检查，以及进度表中的完整策略／Portfolio／Swap等缺口继续保留。本轮无真实钱包／私有／资金请求或带地址RPC，无设备工具、APK安装、Git提交或推送。Linux无macOS／Xcode，iOS构建未验收；真机项目按用户要求只记录于[待验收清单](native-verification-pending.md)。
+
+## 历史增量：2026-11-06 实时额度前置：精确行情、全账户事实与重算核心
+
+以下为接线前的历史验证，当前状态以上方最新增量为准。本轮重新读取 Futures PRD §3.2 step2／step3，补齐实时重算所需的数据与领域计算。**仍未接入主下单页面、比例／手动换算和提交复核，不能把本轮称为实时额度功能完成。** 当前生产预览和提交继续使用此前已验证的有期限签名快照。后续接线需要将原账户锚点与实时价格视图分开，保持确认数量和原30秒期限；不能直接替换 live.context 来绕过原身份／恢复／配置保护。
+
+新增精确公开报价仓库，面向单个合约订阅 bookTicker／aggTrade，连接后先校准服务器时间，再独立并行读取 bookTicker 与一条最近成交。所有金融价格直接映射 Decimal，不使用图表盘口 double。流以交易时间T判断时效，不以事件时间E延长；REST原始trade id与aggregate的最后原始成交l共用水位，重复事件不能更新新鲜度。收包与交易年龄均须小于10秒；时钟请求往返耗时计入保守过期上界，格式异常／倒退／耗时达到10秒均不读取报价。两类快照独立失败和恢复，250ms合并流更新、1秒发布过期状态。比较报价对象及频道修订号，迟到REST不能覆盖新流或“治愈”后来的非法事件。断线取消已核实时效，重连重新校时和取快照；离开最后消费者、暂停及dispose释放socket／timer并丢弃迟到响应。当前仓库仍是单合约组件，尚非全相关仓位共用的聚合订阅。
+
+现有签名仓库的openOrders及leverageBrackets改为不传symbol，仍最多五次EOA签名。保留完整账户挂单和当前合约＋所有非零全仓合约的完整风险档位；旧面板使用的当前合约订单仍独立筛选。风险数组严格校验缺失／重复symbol、档位连续性、维持率和累计速算扣除额。官方openOrders权重由单合约1变为全账户40，只在显式读取时请求，不增加轮询。五份私有响应不是原子账户快照，仍需后续账户事件和提交保护；没有创建钱包或增加写请求。
+
+独立MainOrderRevaluation引用原签名快照，按全部相关仓位逐笔计算min(q×(Mark−entry), q×(Last−entry))，分别处理多空后按保证金币种汇总。按q×Mark重新定价敞口；单向比较带符号持仓加买挂单／减卖挂单的绝对值，双向保留两腿及开仓挂单。全仓初始占用与逐仓额外挂单占用均用Rational除以杠杆；逐仓预算取共享可用值与钱包减全仓维持保证金／逐仓额外挂单占用的较小者。维持保证金按当前名义金额精确选档并减cum。多资产只汇总marginAvailable=true，负权益仍取bid／ask乘积较小值，初始占用按ask折算后再除目标ask，缺率不部分求和。逐仓浮盈亏不进入共享预算；未知条件／市价／移动BBO开仓预留仍拒绝。估值不沿用旧availableBalance、crossUnPnl或initialMargin来冒充实时预算，也不延长原签名期限。
+
+新增110项自动测试：报价mapper31、报价仓库25、重算核心35、全账户风险mapper15、实际签名仓库／合成HTTP新增4。专项6文件172项、全量4661项通过；897个Dart文件格式零改动，静态分析无问题，中英文仍各1691条。PRD的100价90额度、120价108额度、相关全仓上涨时逐仓99.40，以及未选中合约、多空较小浮盈亏、反向挂单／逐仓额外占用、双向两腿、无限小数、档位边界和负抵押均有数值断言。首轮hedge断言失败来自测试两笔挂单复用同一orderId而被正常去重，已改为独立编号；两个测试括号lint已修正，未跳过测试。现有.env的make env-check与make build-apk通过，Android arm64 Release已生成。详情见[来源及边界](reference/main-order-revaluation-public-contract.json)和[验证](reference/main-order-revaluation-verification.json)。
+
+剩余必做：按完整相关合约集合复用公开订阅和抵押指数；让额度面板、比例输入、手动换算及附加退出价格使用同一估值；点击复核、确认冻结及钱包返回／发送前重新计算时保持原基础币数量；账户／订单／配置事件处理和重连账户快照；下单后双侧强平估算及移动BBO额度检查。没有真实钱包／私有／资金请求、带地址RPC、设备工具、APK安装、提交或推送；Linux无macOS／Xcode，iOS构建未验收。整体PRD目标仍未完成。
+
+## 2026-11-06 主下单手动金额：双侧按钮与最新额度复核
+
+重新读取 Futures PRD §3.2 step3／§3.4，确认手动输入也要按方向重新核对最新额度，超限显示该侧最新最大可下金额并保留输入。普通限价、Post Only、市价、限价／市价条件单及跟踪开仓现已共用比例流程的额度读取、冻结确认、钱包返回后复核与原编号恢复。减仓继续走原有独立流程；移动 BBO 缺可核实价格依据，仍不宣称接入新的额度复核。
+
+未先点「读取额度」时，手动输入会按基础币／计价币分别解析两侧数量，按各侧过滤条件启用按钮；缺失的上限与成本仍显示未知。点击某一方向或原主确认入口才读取最多五次签名额度，冻结点击时解析出的基础数量，不因新上限增大而扩单。额度下降时，结构化失败携带该侧最新上限和单位，双语提示保留输入；上限曾被超过的按钮允许再显式读取核对，不因旧额度拒绝重试。手动基础币／计价币原始字符串独立保留；取消、拒签、失败及受理后均不改写原字符串。比例模式仍仅在原编号核对确认受理后归零。
+
+确认与签名后沿用身份、交易对、草稿、账户快照、期限、配置和恢复日志复核；未知只查询原编号，不重发。读取期间两个方向与主确认入口均禁用，点击方向及主按钮显示加载指示并保留文案。本轮发现主确认控件虽收到 disabled 状态却没有用于 onPressed，已修复并新增先失败后通过的回归。表单与双侧卡片可同时显示对应的换算失败，缺价侧禁用、有效侧保留；旧用例改为核对具体方向。读取额度展开页面后，取消确认的重试测试重新滚动到按钮，避免点击屏幕边缘。
+
+测试复用独立的 MainOrderFormFixture，覆盖两个真实消费者（比例与手动表单）。新增54项：手动 Widget31、签名后失效应用逻辑6、实际签名仓库配合合成 HTTP17。六文件专项134项通过；实际仓库测试共27项，覆盖六种 inline 模式／两方向的精确请求与原编号查询，以及手动未知结果的真实日志保留和只读恢复。中英文各1691条消息，放大文字的窄屏／横屏／平板均有 Widget 覆盖。全量4551项通过，885个Dart文件格式零改动，dart analyze --fatal-infos无问题；使用现有.env执行make env-check／make build-apk通过，Android arm64 Release已构建，包内新增双语文案已核对。验证记录见[本轮验证记录](reference/main-order-manual-capacity-verification.json)。
+
+本轮没有访问真实私有接口、签名或资金操作，没有启动设备工具或安装 APK；Linux 无 macOS／Xcode，iOS 未构建。签名读取不是原子快照，额度／成本不能保证交易所受理或成交；当前预览仍基于有期限的账户与价格快照。持续行情重算、下单后双侧强平价及未知类型挂单预留仍未完成，移动 BBO 继续缺可靠价格合同。来源、边界见[合同](reference/main-order-manual-capacity-public-contract.json)，原生待验收见[清单](native-verification-pending.md)。
+
 ## 2026-11-06 iOS 仅支持 iPhone 与法国发行范围说明
 
 对照`/data/dodo/rwa-interface`最近的`38d2da6`（`fix(ios): target iPhone only and declare encryption exemption`），Xcode项目的Debug／Profile／Release均将`TARGETED_DEVICE_FAMILY`从`1,2`改为`1`，由Runner继承，仅声明iPhone原生支持。移除`Info.plist`的iPad专用方向配置，保留iPhone竖屏及左右横屏；未通过锁定方向实现设备限制，也未改动现有响应式界面。iPhone应用仍可能在iPad上以兼容模式运行，不声明iPad原生适配不等于禁止所有iPad安装。
@@ -33,6 +141,20 @@ make build-apk（含公开配置检查）成功，Android arm64 Release APK 为 
 与参考项目保持一致，增加`ITSAppUsesNonExemptEncryption=false`，声明不使用非豁免加密。该字段不是地域限制，不会使法国商店自动不可用。法国不上架是本项目的发行要求，必须在App Store Connect的Pricing and Availability → App Availability中设置具体国家／地区并排除France；首次设置与修改已有范围的路径已写入[发布文档](ci.md#ios-设备支持与发行地区)。本次只修改仓库配置，没有操作App Store Connect，远端地区限制仍待发布方保存并核对。
 
 配置校验已通过：Info.plist可解析，加密字段为布尔false，三个构建配置均为设备族1，无iPad方向覆盖，保留原有iPhone方向。现有Python发布／构建工具48项测试中47项通过，1项macOS Keychain专项因Linux跳过；没有新增重复配置内容的测试。本次无Dart或UI变更；Linux无macOS／Xcode，不能构建或查看iOS原生布局。原工作区存在同时开发的主下单代码，初次格式检查发现其中1个文件需格式化，静态分析与Android构建因`MainOrderPercentageControl`尚未接收表单传入的`unit`／`manualCheck`参数失败；本轮未修改这些文件。使用已提交版本`f26b305`加本次iOS改动的隔离副本验证，853个Dart文件格式检查零改动，`dart analyze --fatal-infos`通过；Android Release构建尝试及重试均因SDK自带CMake Ninja执行`--version`时发生Segmentation fault失败，未修改全局SDK或项目Android配置，不能声称本轮Android构建通过。
+
+## 2026-11-06 主下单比例输入与冻结提交
+
+复核[Futures PRD](https://app.notion.com/p/409080d974e780188a4fedfdcf29e655) §3.2 step3／§3.4，接入主开仓0%滑杆与首次空输入。显式读取额度后才能选择比例，两侧按各自最大基础数量精确向下取整，不将微小比例抬高至最小数量。选中方向的基础币／USDT输入按同一基础数量展示，切单位不往返换算损失步长；手动编辑退出比例模式并保留两种手动原始输入。最大额度按当前单位展示，买卖按钮保留不可用状态与第二行数量／参考金额。费用、未来释放保证金和成交结果不包含在成本预估中。
+
+比例按钮先捕获方向、模式和数量，再最多五次独立钱包签名刷新额度。额度降低拒绝原数量，额度上升不自动放大；取消、失败和拒签保留比例。沿用委托模式确认偏好，确认页增加冻结额度／成本说明，冻结同交易对、方向、类型与数量。应用层持有表单修订与身份范围，钱包返回及实际POST发送前继续检查原30秒期限、账户／额度快照、设置与未决状态；不因钱包回跳延长期限。当前确认通过后是按已有快照作失效检查，不宣称每次签名后又完成全账户新读。
+
+真实签名仓库与合成HTTP联动测试发现：发送前保存自己的原编号恢复记录会触发全局恢复锁，原比例guard因而误拒绝所有有日志的正常提交。现仅在当前order lease执行期间，豁免本次clientOrderId对应的记录；其他未决订单、保证金／Rebalance／内部划转，以及存储未就绪或失败均继续拦截。日记写入期间失效同样不能POST。未知结果保留输入和日志、阻止新单，只查询原编号；签名查询确认受理后比例归零、输入空，不把受理当作成交。
+
+表单接线独立于领域／应用计算，数量控制器适配提取到`live_order_allocation_binding.dart`；新比例控件与双侧面板独立成文件。既有表单仍超过400行，已复核新增部分仅适配状态和意图，不在Widget中计算预算或访问HTTP。确认关闭时的6项语义树断言失败由滑杆独立Semantics边界修复，未关闭无障碍语义或跳过失败场景；按钮不因忙碌／归零而消失。
+
+比例增量新增60项（应用31、Widget19、签名仓库／HTTP10），专项76项与当前工作区全量4497项通过；全量也包含独立数值组件增量61项。883个Dart文件格式零改动，`dart analyze --fatal-infos`无问题，中英文各1689条消息。现有`.env`执行`make env-check`／`make build-apk`通过，Android arm64 Release APK为45,971,716字节，SHA256 `a8e0805b87f146a092f2a1ad63a40729127671c2475aabf760ae0d625f22c1aa`；包内双语比例／额度文案已核对，未安装。详见[边界](reference/main-order-allocation-public-contract.json)、[验证](reference/main-order-allocation-verification.json)及[原生待测](native-verification-pending.md)。
+
+整体比例需求仍未完成：持续公开行情重算、下单后双侧强平估算、手动输入的最新额度检查与双侧按钮，以及条件／移动BBO等挂单预留合同仍待补。当前按界限明确的签名／价格快照计算，账户或设置变化会失效；不能把它称为实时完整预览。完整策略管理、Chase、跨产品Portfolio与Swap继续跟踪，只有历史统计／Summary／TWAP按用户要求本阶段跳过。没有真实钱包签名、私有／资金／聊天请求、带地址RPC、设备工具或APK安装；Linux无macOS／Xcode，iOS构建未验收。
 
 ## 2026-11-06 数字变化动画与数值格式化组件迁移
 
@@ -61,6 +183,22 @@ AnimatedNumberText(
 
 已在Android 15 x64模拟器用独立预览检查静止／滚动状态、放大文字和横屏，截图位于本地`build/verification/numeric-components/`；预览程序不接入账户或网络，验收后已卸载，未安装主应用。最终全项目`dart analyze --fatal-infos`通过。原工作目录Android构建遇到生成的插件注册代码引用未参与Release编译的integration_test；使用隔离工作区快照重新生成构建文件后，`make build-apk`通过，未修改原生配置。arm64 Release APK存于本地`build/verification/numeric-components/app-release.apk`，SHA256为`b21b46359680d82a532b928f60c2f078db277d18e52c50c92e24b63c1788507b`。Linux无macOS／Xcode，iOS构建未验证。
 
+## 2026-11-06 主下单双侧额度：签名快照与参考面板
+
+本轮已把独立额度读取接入主下单表单的开仓路径。点击“读取额度”最多需要五次独立钱包签名，读取资产模式、持仓模式、完整账户、当前合约挂单及风险档位，再结合公开合约剩余额度；仅观察Provider、修改输入或切换委托类型不会发请求。面板按同一组账户事实分别展示买卖方向最大基础数量、手动输入换算数量、参考名义额和开仓成本，附快照时间。首次与未知值显示“—”，已成功计算的零额度显示0；空输入不产生虚构的数量、名义额或成本。失败保留输入和旧快照但隐藏失效数值，提供显式重试和取消。中英文各1681条消息，窄屏／横屏／平板与放大文字有Widget覆盖。
+
+新增严格完整账户模型，保留零仓位的杠杆／保证金配置及挂单占用；小数JSON先精确归一化，不经过double。与原下单快照比较地址、时效、资产／持仓模式、当前合约仓位、杠杆、保证金方式和单位。单资产全仓使用对应保证金币种available，逐仓使用min(available, crossWallet−跨仓维持保证金−逐仓挂单保证金)，包括零仓位挂单；多资产全仓按bid／ask保守估值减初始保证金，再用目标资产askRate归一化，保持Rational，不以USDT账户汇总或wallet替代，不允许缺价部分求和。个人风险上限和匿名合约级剩余额度保持独立。
+
+确定的普通LIMIT挂单按未成交数量×限价计算。reduceOnly、closePosition及双向平仓腿不增加开仓预留；独立计算的保证金与账户openOrderInitialMargin交叉核对，允许最多一个报告末位quantum，scale=max(报告scale,8)。这是尚待真实联调的实现容差，不能据此从汇总保证金倒推出未知挂单。条件单、待成交MARKET、移动BBO等缺权威预留金额时返回未知，仍是完整额度功能的缺口。
+
+价格规则依据已缓存官网futuresCalculatePre与constants：市价买为floor((ask或Mark)×1.0005, pricePrecision)，市价卖为bid或Mark；限价买使用输入价，限价卖保证金价取max(bid,Mark,输入价)，限价开仓损失仍用输入价。全部使用Decimal，声明的pricePrecision与可执行tick分开，缺失时不猜测。该缓冲只用于参考成本，不是可执行滑点限制；条件／跟踪单使用当前假设，不预测触发时价格。面板只校验入场过滤条件；另一方向不会复用当前方向的附加退出条款来声称完整策略可提交。
+
+共享order lease与交易设置、未决写入及恢复互斥。账户、钱包类型／签名资格、认证忙碌、交易对、原快照和失效事件都会作废迟到结果；取消／失效释放只读锁，旧finally不能释放新操作的token。每一步以及钱包签名后发送前复核身份及原始30秒期限。读取期间预期的钱包应用切换保留原期限，空闲后台切换仍使快照失效；期限不会因多次签名而延长。
+
+这是完整比例下单需求的中间实现。当前面板不绑定提交，不改变既有手动下单／确认流程，也不以参考额度保证受理或成交。主滑杆0%／空输入、双侧比例数量绑定、实时行情重算、点击方向的新额度复核、冻结同方向／模式／数量、钱包签名后额度保护以及下单后强平估算仍未完成；手续费和未来释放保证金也不在本成本中。普通挂单以外的预留金额缺口继续保留。新增面板已独立成文件，未在既有表单中扩展计算／传输逻辑；表单仍需后续按交互职责整理。
+
+本轮相对计算核4171项基线新增205项测试，专项323项及全量4376项通过，868个Dart文件格式零改动，静态分析无问题；使用现有.env执行make env-check及make build-apk通过。Android arm64 Release APK为45971716字节，SHA256 `9baec24bdf1c292ca4fd7a834515731d745acb66b98adfddf6ee18b3bc7da5a6`。未请求真实钱包签名、私有／资金／聊天接口或带地址RPC，未启动设备工具／安装APK；Linux无macOS／Xcode，iOS构建未验证。来源和明确未完成项见[边界记录](reference/main-order-capacity-snapshot-public-contract.json)，自动验证及产物来源见[验证记录](reference/main-order-capacity-snapshot-verification.json)。整体PRD目标继续推进。
+
 ## 2026-11-05 README 精简与 Actions 失败修复
 
 README 仅保留项目简介、本地运行、检查构建和文档入口，移除参考项目来源、逐轮进度及历史验收流水账。
@@ -71,9 +209,23 @@ README 仅保留项目简介、本地运行、检查构建和文档入口，移�
 
 本次没有 UI 变更，未安装 APK 或进行真机操作。当前为 Linux，无 macOS／Xcode，未重新构建 iOS；上述旧 CI 中 Android Release 与 iOS 未签名归档均已成功，Release Mobile 因质量检查失败跳过。本地通过不代表远程工作流已经重跑成功。
 
+## 2026-11-05 主下单比例与双侧额度：计算层增量
+
+依据[Futures PRD](https://app.notion.com/p/409080d974e780188a4fedfdcf29e655) §3.2 step3／§3.4，新增独立domain计算层。单向模式显式接收有符号仓位和买卖挂单名义占用，计算两方向中较大的待单预留敞口；增量初始保证金取新增预留量除以杠杆，不把它当作已成交仓位。反向下单仅对越过原仓位的新开数量计算开仓损失，双向开仓不借用反方向仓位。假设执行价、开仓损失价格和金额展示换算价分别传入，不猜测缺失报价或官网市场缓冲常数。
+
+最大数量在交易所minimum+k×step上用BigInt二分求解，同时约束已归一化的可用保证金、个人风险档位上限、合约剩余开仓额度、maxQty和最小名义金额。原有超档位敞口只允许不再增加；负预算在核内按零可花费预算处理，不作为交易所允许负权益下单的证据，真实账户归一化仍待实现。0%–100%按各自最大基础数量精确向下取整，零和低于最小步长的比例不抬高到最小数量。Decimal保留金融量，Rational保留循环除法；既有锁定的rational 2.2.3提升为直接依赖，无版本更新。
+
+新增匿名`remainingOpenableNotionalValue` GET辅助方法，只传symbol／leverage；mapper校验字符串，精确`-1`为无合约级限制，`0`为已知零，缺失／错误不能当成任一情况。该额度不是个人最大可开量。本轮没有provider或widget调用它，也没有接入新的签名流程。
+
+本次是完整主表单需求的一个实现阶段。仍需组装同账户／合约／时效下的签名仓位、资金、挂单及风险档位，按全仓／逐仓／多资产归一化预算，并确认权威的挂单名义占用与订单类型价格假设。官方V3账户／仓位示例未文档化官网的bidNotional／askNotional字段，不能缺失时填零。滑杆0%且输入空、双侧数量／金额／成本／强平预览、事件刷新、失败保留和确认／钱包提示后新额度复核均尚未接线；已有快捷单参考预算与主下单行为保持当前实现。
+
+新增83项领域／映射／合成HTTP测试，专项83项、全量4171项通过；覆盖线性成本、多空／反向／挂单／双向、零额度、三种上限约束、非零minimum偏移、最小名义额、全部整数比例、循环小数边界及超过双精度整数范围。PRD20%图示只证明双侧算术，不伪造其缺失账户快照。849个Dart文件格式零改动，静态分析无问题；现有.env执行`make env-check`／`make build-apk`通过。Android arm64 APK为45840644字节，SHA256 `1f5ac287b643dc34a59bc6d697cd4a31bb8aad5f5a54018c0de2b6787d0ec967`，未安装。见 [来源与边界](reference/main-order-capacity-kernel-public-contract.json) 与 [验证记录](reference/main-order-capacity-kernel-verification.json)。
+
+无新增UI／文案，未使用设备工具或发送真实签名、私有／资金／聊天请求、带地址RPC；Linux无macOS／Xcode，iOS未构建。用户要求的真机暂缓继续生效，整体PRD目标未完成。
+
 ## 2026-11-05 Google Play 内部测试自动上传
 
-`Release Mobile` 在 main 新版本的 Android AAB 正式签名、结构／16 KB 校验及 artifacts 保存成功后，按 `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` Secret 自动启用 Google Play 上传。未填／只有空白时明确跳过；非 main 预发布、既有 Tag 或仅发布工作流重建不上传。固定包名 `exchange.vanta.vanta`、轨道 `internal`、状态 `completed`，一并上传 R8 mapping，Action 固定到 v1.1.3 对应 commit。配置错误或上传失败使 Android 发布失败并阻止 GitHub Release；已保存的安装产物仍可下载。
+`Release Mobile` 在 main 新版本的 Android AAB 正式签名、结构／16 KB 校验及 artifacts 保存成功后，按 `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` Secret 自动启用 Google Play 上传。未填／只有空白时明确跳过；非 main 预发布、既有 Tag 或仅发布工作流重建不上传。固定包名 `exchange.vanta.app`、轨道 `internal`、状态 `completed`，一并上传 R8 mapping，Action 固定到 v1.1.3 对应 commit。配置错误或上传失败使 Android 发布失败并阻止 GitHub Release；已保存的安装产物仍可下载。
 
 新增标准库脚本校验原始服务账号 JSON 的类型、必填字段、Google OAuth endpoint 及 PEM 边界，不输出凭据值；不在本地验证真实密钥／权限。目录 `0700`／文件 `0600` 仅位于 runner 临时目录，成功、失败均由 `always()` 清理，不进入应用、仓库或 artifacts。README 及 `docs/ci.md` 记录 Play Console 首包／签名设置、API／服务账号授权、测试人员名单、Secret 配置及版本规则：versionCode 递增，版本名前缀也需变化以触发新的 Tag。Google 接受上传不代表处理／审核或测试人员安装已完成。
 
@@ -734,7 +886,7 @@ Spot／Futures 余额卡按原资产代码读取匿名官方名称与 PNG 图标
 ## Privy 原生身份接入
 
 - 根据用户要求参考 `/data/dodo/rwa-interface`，固定 `privy_flutter 0.10.2`。邮箱验证码登录、验证码校验、60 秒重发间隔、启动与返回前台恢复已有身份、Ethereum 内嵌钱包创建／重试、地址复制和退出均经 `IdentityPanel → AuthController → IdentityRepository → Privy SDK`。SDK 用户、令牌及签名对象不进入 Widget 或 domain。
-- `PRIVY_APP_ID` / `PRIVY_CLIENT_ID` 由 Dart 编译参数读取。`config/privy.example.json` 提供空模板；`config/privy.local.json` 忽略提交，仅复用参考项目两个公开标识。生产环境需要正确登记 `exchange.vanta.vanta` 和相应 iOS Bundle ID；不使用服务端 App Secret。
+- `PRIVY_APP_ID` / `PRIVY_CLIENT_ID` 由 Dart 编译参数读取。`config/privy.example.json` 提供空模板；`config/privy.local.json` 忽略提交，仅复用参考项目两个公开标识。生产环境需要正确登记 `exchange.vanta.app` 和相应 iOS Bundle ID；不使用服务端 App Secret。
 - 邮箱登录仅在身份没有内嵌 Ethereum 钱包时创建，已有钱包直接恢复；外部 EOA 登录不会走创建分支。钱包创建失败保留登录身份并允许单独重试；退出失败保留身份和安全原因。SDK 明确发出会话失效时立即清除身份并拒绝迟到的钱包结果。请求中阻止重复点击，校验失败保留邮箱和验证码；错误只展示安全的简短原因，屏蔽验证码、令牌和原始载荷。地址在数据边界校验为 20 字节 Ethereum 地址。
 - 登录不代表 Aster 交易授权，不读取或展示私钥。界面说明需使用独立实盘入口且须具备 Aster 权限；本地 10,000 USDT 演示账户独立管理，身份变化会退出演示。Aster 账户读取和独立确认的逐笔撤单请求已实现，真实授权成功尚未实测；enable-trading 授权、子账户切换、充提、开仓附加 TP/SL 与联动／编辑、Chase／BBO／Scaled 和远程通知仍未实现；TWAP 及 BAPI 历史统计按用户要求暂跳过。这些能力需要对应的账户／交易协议和服务接入，不以演示数据代替。
 - Android Privy 插件的 compileSdk 经 `android/privy-compat.gradle` 对齐 36，避免其 AndroidX 依赖与插件默认 34 冲突；不修改 Pub 缓存。Android minSdk 28、iOS deployment target 17。未使用 OAuth／passkey，不添加不适用的回调和 Activity 补丁。
@@ -1142,3 +1294,33 @@ Android 12 真机与 Chrome 已观察真实盘口数量及红绿背景条变化�
 `test/chart_gestures_test.dart` 覆盖同时落指、先横移、先纵移、先长按和全屏，逐项验证张开放大、合拢缩小、页面不跟随滚动、抬指后比例保留、无误触惯性，以及取消后下一次双指手势可继续使用。价格图、数据合并、指标算法与深度图渲染未更改。
 
 Android 12 真机通过系统注入双触点 MotionEvent，对比修复前后“先横移再双指张开”：旧包蜡烛宽度不变，修复包明显变宽，合拢后缩回。Chrome 移动触控通过 CDP 双触点同样确认张开/合拢，页面无运行错误。截图为 `docs/reference/pinch-android-{before,expanded,contracted}.png` 与 `pinch-web-{before,expanded,contracted}.png`。同时保留触控缩放后切回鼠标拖动的兼容性测试。
+
+### 连接钱包与邮箱验证码 UI（2026-11-06）
+
+按 Figma `KwkJk0YdUWLbotIj6159aU` 的 `237:13621`（登录方式）、`237:13669`（验证码正常态）和 `237:13720`（验证码过期态）实现原生全屏登录页。保留现有账户入口；本地演示账户入口位于资产页的“演示账户”标签，登录页不混入演示余额或操作。登录成功后显示现有账户管理内容。
+
+新增认证语义颜色、字体及中英文文案；登录页支持邮箱、Google、X 和外部 EOA 钱包。六格验证码由一个原生 TextField 驱动，支持数字过滤、粘贴、删除、系统一次性验证码自动填充与键盘提交。正常态包含“验证并继续”、重发冷却文字和垃圾邮件提示；过期态保留输入、显示红框及 API 的安全错误原因，以“重新发送”作为主按钮。失败保留邮箱和验证码，重发成功才清空旧码；服务器明确返回过期时解除旧冷却。沿用现有 60 秒重发限制，设计中的 30 秒是倒计时的一个时刻。异步按钮禁用并显示旋转指示，返回验证码上一步保留邮箱；页面可滚动并适应安全区、键盘、窄屏、横屏和放大文字。
+
+认证请求遵循 Widget → AuthController → IdentityRepository → Privy SDK。Google/X 通过 Privy OAuth 登录并沿用内嵌钱包初始化，外部钱包沿用 Reown/SIWE；Android PrivyRedirectActivity 与 iOS URL scheme 使用 `vanta`（OAuth 回调 `vanta://`）；钱包回调仍为 `vanta://wallet`。需在 Privy 项目中启用对应 OAuth 提供方及回调；本次没有执行真人邮箱验证、第三方账号授权、钱包签名或金融写入。
+
+图标来源为 Figma 的 Reicon / Reicon Brands。X、钱包、返回、关闭使用本地 SVG；Google 使用 Reicon Brands 原始 SVG（https://brands.reicon.dev/data/logos/google/original.svg）渲染透明 3x 图片并转换为无损 WebP，以避免 Flutter SVG 不支持滤镜及 Figma 导出图丢失裁切的问题。原始 SVG 一并保留。已检查 pub.dev 的 `reicon_flutter` 1.0.1 与 `reicons` 2.0.0；二者没有 Brands 的 Google/X，故未添加不适用依赖。
+
+验证：格式化与 `git diff --check` 通过；`flutter analyze --no-pub` 全仓无问题；认证及主页面测试共 166 项通过，正常态最终调整后另外重跑相关 8 项 UI 测试通过。覆盖过期/无效码、重发失败与成功、冷却、输入保留、单字段粘贴/自动填充、返回/关闭、Google/X 重复提交与安全错误、OAuth SDK 映射、外部钱包与演示资金隔离，以及 360/390 宽、1.5 倍文字和 844×390 横屏键盘布局。`flutter build apk --debug --no-pub --dart-define-from-file=.env` 成功。Linux 环境无 macOS/Xcode，未执行 iOS 构建。
+
+原生视觉验收：Android 12 真机 M2007J17C 分别核对登录方式、验证码正常态和过期态，截图为 `docs/reference/wallet-auth-login-android.png`、`wallet-auth-code-android.png`、`wallet-auth-expired-android.png`。截图使用独立、未跟踪的 UI fixture，仅注入测试认证仓库并自动填入示例邮箱/验证码，没有发送邮件或调用真实 OAuth。Google、X、钱包、返回/关闭图标均已检查本地资源、调用位置和实际显示比例；正常态倒计时使用实时剩余秒数。
+
+### Google OAuth 浏览器错误排查（2026-11-06）
+
+`privy_flutter` 0.10.2 / Android Privy 0.15.0 在 OAuth 初始化或浏览器启动失败时统一返回 `Failed to launch OAuth browser`，不能据此认定是浏览器插件故障。核对当前编译配置，按 SDK 相同 `oauth/init` 合约及随机 PKCE challenge/state 进行诊断，服务端明确返回 HTTP 401：`Redirect URL scheme is not allowed`；请求中的 `redirect_to` 为 `vanta-privy://`。没有完成 Google 授权或建立用户会话，也未记录请求标识、随机值或授权链接。当前项目需由管理员在 Privy Allowed URL schemes 中添加 `vanta-privy`，本地 Android/iOS 与 Dart 回调已一致。外部后台配置尚未修改。
+
+同时补全 Android `<queries>` 的 `android.support.customtabs.action.CustomTabsService` 声明，与参考项目保持一致；真机已安装 Chrome 和 Edge Custom Tabs 服务，现有 OAuth RedirectActivity 已正确注册。新旧包名同时安装会使同一回调匹配两份应用；最终验收应使用目标包 `exchange.vanta.app` 并避免选择旧应用。
+
+包名同步验收：Android namespace/applicationId 和 Kotlin MainActivity 路径、iOS Runner/RunnerTests Bundle ID、Google Play 工作流及 iOS 发布脚本已统一为 `exchange.vanta.app`；APK manifest 已确认实际包名为 `exchange.vanta.app`，Android 12 真机安装及冷启动成功。发布脚本测试 48 项（1 项因环境跳过）、主页面 widget 测试 12 项、全仓静态分析及 Android debug 构建通过；历史验证 JSON 保留原标识。Linux 无 Xcode，未运行 iOS 原生构建。
+
+### OAuth 回调改为 vanta://（2026-11-06）
+
+按用户要求将 Privy OAuth `appUrlScheme` 改为 `vanta`，SDK 实际发送 `redirect_to: vanta://`；Android PrivyRedirectActivity 同步接收 `vanta`，iOS 复用现有单一 `vanta` URL scheme，移除重复的 OAuth 专用声明。原有钱包入口仍按 `vanta://wallet` 的 host 匹配。
+
+使用相同 Privy 应用/客户端公开配置及随机 PKCE challenge/state 重新验证 Google `oauth/init`：HTTP 200，并返回有效 OAuth 登录链接，之前 `vanta-privy://` 的 HTTP 401 白名单错误已消失。仅验证登录初始化，未提交 Google 账号凭证或完成授权；未记录授权链接、随机值或凭证。Android/iOS 声明结构校验及格式化通过；iOS 构建受 Linux/Xcode 环境限制。
+
+此次回调变更的最终验证：全仓静态分析无问题、Privy repository 的 19 项测试通过、Android debug APK 构建成功并安装到 Android 12 真机（包名 `exchange.vanta.app`）。

@@ -1,0 +1,121 @@
+{
+  "recorded_at_utc": "2026-11-06T04:31:29.362321+00:00",
+  "increment": "Manual main-order fresh directional capacity review, localized latest maximum, pending controls and original-ID recovery",
+  "contract": "main-order-manual-capacity-public-contract.json",
+  "contract_sha256": "ecce7c6bdd947a2e443426b7bc7808b1c84adbd7fdeed2dcff483f405105596d",
+  "tests": {
+    "new": 54,
+    "manual_widget": 31,
+    "manual_after_wallet_application": 6,
+    "manual_actual_signed_repository_mock_http": 17,
+    "focused_passed": 134,
+    "focused_files": 6,
+    "signed_repository_in_focused_passed": 27,
+    "full_passed": 4551,
+    "previous_full_baseline": 4497,
+    "exit_code": 0,
+    "pending_regression": "Before the fix, the main review button remained enabled during capacity preparation. The new assertion failed, then passed after honoring enabled/pending and adding button spinners.",
+    "initial_full_failures": "Two existing widget tests failed: retry tapped the old bottom-edge coordinates after the form expanded, and a global missing-price finder became ambiguous with the new directional preview. Retry now scrolls again; missing-price coverage checks the affected side and the independent usable side. No test skipped."
+  },
+  "format": {
+    "command": "dart format --output=none --set-exit-if-changed lib test integration_test test_driver",
+    "files": 885,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "command": "dart analyze --fatal-infos",
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "command": "flutter gen-l10n",
+    "en_messages": 1691,
+    "zh_messages": 1691,
+    "new_since_percentage": 2,
+    "exit_code": 0
+  },
+  "android": {
+    "command": "make env-check then make build-apk",
+    "exit_code": 0,
+    "configuration": "Existing .env validated without printing values. Default project Makefile, no SDK/configuration workaround or alternate workspace.",
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45971716,
+    "sha256": "8b881892f4deffeefc29549e8a8571bb8c0d6443b8aee96fc85349df2dedcf8e",
+    "package_phrase_checks": {
+      "Review checks the selected side": true,
+      "确认前会最多请求五次钱包签名核对所选方向的最新额度。": true,
+      "Adjust the amount and try again.": true,
+      "请调整输入后重试。": true
+    },
+    "installed": false,
+    "published": false,
+    "notices": "Existing third-party KGP/Built-in Kotlin migration notice; build succeeded."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux without macOS/Xcode; user deferred native-device verification."
+  },
+  "logs": {
+    "focused": "/tmp/vanta-manual-focused-final.log",
+    "full": "/tmp/vanta-manual-full-final.log",
+    "format": "/tmp/vanta-manual-format-final.log",
+    "analysis": "/tmp/vanta-manual-analysis-final.log",
+    "environment": "/tmp/vanta-manual-env-final.log",
+    "build": "/tmp/vanta-manual-build-final.log",
+    "localization": "/tmp/vanta-manual-localization.log",
+    "pending_regression_before_fix": "/tmp/vanta-manual-pending-before.log",
+    "initial_full_with_legacy_failures": "/tmp/vanta-manual-full-initial.log"
+  },
+  "log_sha256": {
+    "focused": "79dadcc6b05bf59e0f8766b017cbda125bba61656fe0e97d3f4a82f1857eb5de",
+    "full": "ff47ce2608f117583379bc608a0b46e32fa070d7e85821346ab02eb930aa19b3",
+    "format": "20150109083d583438082a42a050ca6dc0d91cfac9ff3ac9501d730d91d576d6",
+    "analysis": "dd59d09fbc342124016fe556b92356f7e73cf9266486e1535e562c53297b613b",
+    "environment": "f6b7f91bc2e2c20a5903fa87cc131503d7aa364f148c4b883a47cf92d711d356",
+    "build": "ace11ea8e3080851f0908a8db7420a384feac7ef31f203a583128de9171ac8fe",
+    "localization": "97362974d3ec503ef18e205dbcc7d8e1ca57e5426c80a4966c6608571fa88609",
+    "pending_regression_before_fix": "579564b71fb2981a9608e66a239a83c66de14897871ddfa667d61a09dd2069f1",
+    "initial_full_with_legacy_failures": "c2f20b84fd69edbc78bc03e5b03dad2b1758878aa2071de7a00c94d2e576f8e1"
+  },
+  "source_sha256": {
+    "lib/features/portfolio/application/main_order_allocation_provider.dart": "85ad15cd4e032cb260bf1633c397a79b0da04dc17bfde8dec0be601d4b43ba4f",
+    "lib/features/portfolio/application/main_order_capacity_preview_provider.dart": "019d6fd2e40aac026656a4d4eea99e56127f0ecd9aa96d6d3796e5066ca7e331",
+    "lib/features/portfolio/domain/main_order_allocation.dart": "0c89f3ab4864aeaa8888e76e3dcace62fd92bcb2043f4d1e8549af8f5aab6cef",
+    "lib/features/portfolio/domain/main_order_capacity_preview.dart": "a5ac1766a9097fdcfeac9a36bdaf5179952165ad845372ca5dedec0651280bd2",
+    "lib/features/portfolio/presentation/live_order_allocation_binding.dart": "0d74493d2544414b17f958b261222ee87eadf9a94007c3d53a5ebdcdbfd47525",
+    "lib/features/portfolio/presentation/live_order_form.dart": "923d15a53534596d8fafc8038755382aeef07d38712baba47cc01b31f50c471a",
+    "lib/features/portfolio/presentation/main_order_capacity_panel.dart": "88c2f411e94c0a0e70f90ee3bdd60859e9c64f727d215d3971b85d443a515de1",
+    "lib/features/portfolio/presentation/main_order_percentage_control.dart": "e0b076a9d32123f46e6cbe4d419ec1be6acd87290dcdc57021fb151c55e740fb",
+    "lib/features/portfolio/presentation/order_confirmation_control.dart": "cffe6b60d56ab9773a4e36edb035cf158e47b1198d368a648f70654989d2bef3",
+    "lib/l10n/app_en.arb": "29f76c9723a20ef7305630826fa22b2050a2cf34c08e9cf0e313efb047a5dba4",
+    "lib/l10n/app_zh.arb": "9a2b9ebadaba98c297747a1b61c704d541b24cd6a3749422a9a1d5ca96c9e465",
+    "test/support/main_order_form.dart": "21ac314e6f2f89cc6254dffbd4d157c408fed88076c20b80f25a37645b7f902f",
+    "test/features/portfolio/main_order_manual_widget_test.dart": "5ddb01e48f961d359cedd2150d273fb53446071ead3122adc0ad21be1f3656e9",
+    "test/features/portfolio/main_order_allocation_provider_test.dart": "e92bbd1fd93dc2e1885478d87df30e933de46693d307811c1e56fac43f60d097",
+    "test/features/portfolio/main_order_allocation_submission_test.dart": "02b757e632a56ccc32b9ad373644b67da80134e855a17f747248c011a6bc9840",
+    "test/features/portfolio/main_order_allocation_widget_test.dart": "f196844545b8b57961a412492f7d4ceca07b5a00288e61dceb81bee44a49c79c",
+    "test/features/portfolio/live_order_widget_test.dart": "873b9b9098baa132c0e9377528789b6d9f6611de5b9d33b6df99c098be5821b2",
+    "test/features/portfolio/live_order_size_widget_test.dart": "cce8c1ae4c76a9b8b6b2b1e936a0bb89886853415bffa94f38fa461a43a76b02"
+  },
+  "source_tree": {
+    "directories": [
+      "lib",
+      "test",
+      "integration_test",
+      "test_driver"
+    ],
+    "dart_files": 885,
+    "sha256": "4ddc3f73ee38a4db212fa35c3e7545d3db512e0f2ce015af72749bea7c7e7c23"
+  },
+  "native_device_test_performed": false,
+  "real_wallet_private_funds_chat_or_address_rpc_requests": false,
+  "remaining_required_work": [
+    "Continuous public-price/account-event recomputation and reconnection snapshots; current sizing still uses bounded preflight and signed facts.",
+    "Independent post-trade liquidation estimates in applicable account/margin/position modes.",
+    "Verified reservation amounts for pending conditional, MARKET and moving BBO orders. Unknown inputs continue to block capacity calculation.",
+    "Moving BBO has no verified pricing contract for the new capacity guard. Its existing dedicated preflight/signing path remains; this increment does not claim full capacity coverage for it.",
+    "Other PRD gaps and product/protocol scope clarifications remain in docs/prd-progress.md; only historical statistics/Summary/TWAP are user-deferred."
+  ],
+  "goal_complete": false
+}

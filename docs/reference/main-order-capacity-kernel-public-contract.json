@@ -1,0 +1,78 @@
+{
+  "recorded_at_utc": "2026-11-05T10:35:09.923539+00:00",
+  "increment": "Main opening directional cost/capacity calculation kernel and anonymous symbol cap transport; integration incomplete",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "prd_sections": [
+    "3.2 step3 directional quantity, cost, maximum and pre-confirmation recheck",
+    "3.4 initial slider 0 percent with blank quantity"
+  ],
+  "prd_fetch_reported_as_of_utc": "2026-11-05T07:06:39.541Z (fetch snapshot time, not asserted page edit time)",
+  "public_sources": [
+    {
+      "url": "https://static2.asterdexfx.com/assets/getOrderCost-DxqUhphF.js",
+      "local_cache": "/tmp/vanta-main-sizing-getOrderCost-DxqUhphF.js",
+      "sha256": "bfaa473849bd1cf163bbb68d14fb9f7cac3a8fe7d10a62aef149b53a1ae8a912"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/useJMColumn-B_CkMNR9.js",
+      "local_cache": "/tmp/vanta-main-sizing-useJMColumn-B_CkMNR9.js",
+      "sha256": "9f82a94df58306bf022e3277e6cda443be23c8e6b2714c05c05bdbb256bfcb3f"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/useOrderFormData-DK3A6wo4.js",
+      "local_cache": "/tmp/vanta-main-sizing-useOrderFormData-DK3A6wo4.js",
+      "sha256": "37b8211f9cd29648ccc3728532b0019fd796b429aa7d08d13012fb7d8af6eec0"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/useStreamMarkPrice-DK-y4bCO.js",
+      "local_cache": "/tmp/vanta-main-sizing-useStreamMarkPrice-DK-y4bCO.js",
+      "sha256": "b8c0d2ffa47b0d92bfdf6b3929bd0abd70ba19cb6203e4c241ca8f397f35969b"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/futuresCalculatePre-DjYtFMnM.js",
+      "local_cache": "/tmp/vanta-main-sizing-futuresCalculatePre-DjYtFMnM.js",
+      "sha256": "4936eeb96f82192560f324f2ca9125c6fdf9c94f9b109447cbf66e31e90584af"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/_-_locale_.trade.pro._tradeType._symbol-1Y12OOsm.js",
+      "local_cache": "/tmp/vanta-main-sizing-_-_locale_.trade.pro._tradeType._symbol-1Y12OOsm.js",
+      "sha256": "fa2432cdb911105d93de09b4a8c2c618989339a851ef11ce50ccfba2333536f5"
+    }
+  ],
+  "official_protocol": {
+    "url": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#remaining-openable-notional-value",
+    "cached_file": "/tmp/vanta-bbo-api-docs/V3(Recommended)/EN/aster-finance-futures-api-v3.md",
+    "cache_sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4",
+    "method": "GET",
+    "path": "/fapi/v3/remainingOpenableNotionalValue",
+    "parameters": [
+      "symbol",
+      "leverage"
+    ],
+    "scope": "anonymous symbol-level open-interest cap; never a personal maximum",
+    "sentinel": "Exact string -1 means no contract cap; string 0 is a known zero. Missing, malformed or failed response is neither."
+  },
+  "implemented": [
+    "Immutable explicit one-way signed position and bid/ask pending-notional inputs; hedge gross-risk inputs. No inferred zero for absent pending data.",
+    "Decimal notionals and opening losses; Rational initial margin division. Pending one-way reserved exposure is the larger of two directions; added margin is nonnegative incremental reservation divided by leverage. It is not an actual post-fill position.",
+    "One-way opening loss applies only beyond the existing opposite position. Hedge opening never receives opposite-position credit.",
+    "Exact BigInt binary search over minimum+k*step; separate normalized-margin, personal leverage cap, contract opening cap, maxQty and minimum-notional constraints. No future released-margin or fee/rebate credit.",
+    "Independent buy/sell maxima and quote display conversion; integer percentages 0..100 floor independently, never round a tiny allocation up to minimum.",
+    "Public cap service helper and strict mapper retain symbol/leverage/time, exact sentinel and safe failures. No provider/widget calls the helper in this increment."
+  ],
+  "unfinished_required_integration": [
+    "Signed coherent account, positions, pending orders and all required risk brackets; margin normalization for cross/isolated and multi-asset collateral, including negative equity policy.",
+    "Authoritative pending notionals and order-type price assumptions. Official V3 account/position examples do not document the frontend bidNotional/askNotional fields; do not read absent fields as zero or copy an undocumented market buffer.",
+    "Live price/event invalidation and fresh directional capacity recheck before confirmation and after wallet prompts.",
+    "Main slider UI, initial zero with blank inputs, two-sided quantity/notional/cost/liquidation previews, preservation and frozen same-side confirmation.",
+    "Full post-trade liquidation estimator, full strategy management, Chase recovery, Portfolio across products and Swap remain outstanding. User-deferred historical statistics/Summary/TWAP remain deferred."
+  ],
+  "boundaries": [
+    "This is staged domain/transport work, not a completed main-order slider or actual personal maximum in the app.",
+    "Caller must supply normalized available margin and actual account-specific risk limits. A supplied negative budget is clamped to zero in the kernel; this is not evidence for Aster negative-equity acceptance.",
+    "Fees, execution slippage, actual fills and liquidation are not outputs of this cost kernel. Order-type assumed and loss prices and quote conversion are separate required inputs.",
+    "The public website uses JavaScript Number and rounded inverse leverage; this kernel intentionally preserves exact ratios. Last-place native/website parity is not proven.",
+    "Current quick-order reference sizing and main-order submission are unchanged. No new wallet, automatic signature, private request, funds action, device tool, APK install or address-bearing RPC."
+  ],
+  "next_action": "Assemble validated signed capacity inputs through repository/provider; resolve required pending-notional and order-price semantics, then connect dual-side slider/previews and confirmation checks without claiming incomplete cases as full capacity."
+}

@@ -1,0 +1,229 @@
+{
+  "recorded_at_utc": "2026-11-06T07:54:48.182681+00:00",
+  "increment": "Independent post-fill buy/sell liquidation preview using signed fee and exact risk equation",
+  "contract": "main-order-liquidation-public-contract.json",
+  "contract_sha256": "a29e8433428734853071eaf5a514649f91f39c1c6243e363692a5aa89c45f0af",
+  "verification_checkout": "/tmp/vanta-liquidation-verify-c8iudo_n",
+  "tests": {
+    "new_this_increment": 40,
+    "accounting_and_risk": 25,
+    "widget": 4,
+    "signed_repository_added": 11,
+    "focused_before_market_followup": 155,
+    "focused_latest_passed": 158,
+    "full_baseline_passed": 4785,
+    "full_baseline_exit_code": 0,
+    "focused_latest_exit_code": 0,
+    "full_command": "flutter test --no-pub --reporter expanded",
+    "focused_latest_files": [
+      "test/features/portfolio/main_order_liquidation_test.dart",
+      "test/features/portfolio/main_order_liquidation_widget_test.dart",
+      "test/features/portfolio/signed_main_order_capacity_repository_test.dart",
+      "test/features/portfolio/main_order_revaluation_test.dart",
+      "test/features/portfolio/main_order_live_pricing_test.dart",
+      "test/features/portfolio/main_order_live_submission_test.dart",
+      "test/features/portfolio/main_order_refresh_provider_test.dart",
+      "test/features/portfolio/main_order_refresh_widget_test.dart",
+      "test/features/market/market_catalog_repository_test.dart"
+    ],
+    "scope": "Production account/signature HTTP repositories through valuation and two-sided preview, with synthetic HTTP/signatures; controlled production providers and Flutter layout Widget tests on the host. No real acceptance. Full baseline also includes concurrent network/market work.",
+    "after_full_baseline": {
+      "source_changes": [
+        "lib/features/market/data/market_catalog_repository.dart",
+        "test/features/market/market_catalog_repository_test.dart"
+      ],
+      "new_market_catalog_tests": 3,
+      "verification": "Included in latest 158-test focused regression and rebuilt Android artifact; full suite was not repeated after these two changes."
+    }
+  },
+  "format": {
+    "command": "dart format --output=none --set-exit-if-changed lib test integration_test test_driver",
+    "files": 927,
+    "changed": 0,
+    "exit_code": 0,
+    "tool_formatted_separately": true
+  },
+  "analysis": {
+    "command": "dart analyze --fatal-infos",
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en": 1694,
+    "zh": 1694
+  },
+  "android": {
+    "command": "make build-apk (includes environment validation)",
+    "exit_code": 0,
+    "configuration": "Existing .env copied into isolated verification tree; no values recorded",
+    "isolated_apk": "/tmp/vanta-liquidation-verify-c8iudo_n/build/app/outputs/flutter-apk/app-release.apk",
+    "artifact": "build/app/outputs/flutter-apk/app-main-order-liquidation-release.apk",
+    "bytes": 46233860,
+    "sha256": "9822d94fd5e86f881cfd5eaa211c10971555a6a7f6dbc7f7a00b4310d208c6b7",
+    "artifact_copy_matches": true,
+    "installed": false,
+    "published": false,
+    "notices": "Existing Kotlin Gradle Plugin migration notice; build succeeded"
+  },
+  "ios": {
+    "built": false,
+    "environment": "Linux",
+    "reason": "macOS/Xcode unavailable; device testing explicitly deferred by user"
+  },
+  "logs": {
+    "focused": "/tmp/vanta-liquidation-isolated-focused-final.log",
+    "full_baseline": "/tmp/vanta-liquidation-isolated-full2.log",
+    "format": "/tmp/vanta-liquidation-isolated-format-final.log",
+    "analysis": "/tmp/vanta-liquidation-isolated-analysis-final.log",
+    "build": "/tmp/vanta-liquidation-isolated-build-final.log"
+  },
+  "log_sha256": {
+    "focused": "6381aefd493d5fa9c853f99915bf1cdffee94e9bfe24c1cda88ed427cbc30c98",
+    "full_baseline": "6f8040849007f90a2b3be04c3e1d02d87cc9ed4c282c7c49581d55e765c53697",
+    "format": "4c2480a661f6352924e0cf051bc289d40c56745b559f1fb32af5fde1dc3fb0a7",
+    "analysis": "dc97ae00edd93f9c0d1e42866b37bf70d70879c56b58ec2f34c3babdd21c3da4",
+    "build": "e7dbf4302494a665b4584c72e02ab48bda9c32fa10633691c7eb42a40bd766c0"
+  },
+  "superseded_runs": [
+    {
+      "log": "/tmp/vanta-liquidation-core1.log",
+      "reason": "Market-price test initially omitted existing Web buy coefficient; corrected exact expected value to 101.05."
+    },
+    {
+      "log": "/tmp/vanta-liquidation-focused1.log",
+      "reason": "Original numeric JSON rate is preserved by exact financial decoder, so accept it and verify precision; genuinely invalid strings still rejected."
+    },
+    {
+      "log": "/tmp/vanta-liquidation-full-final.log",
+      "reason": "Concurrent shared network work was still changing; captured earlier unsupported contentLength and other pre-fix failures. Failed; superseded by isolated full baseline."
+    },
+    {
+      "log": "/tmp/vanta-liquidation-build-final.log",
+      "reason": "Concurrent Flutter commands rewrote plugin registration to include integration_test during release build. Failed; isolated sequential validation avoids the generated-directory conflict."
+    },
+    {
+      "log": "/tmp/vanta-liquidation-isolated-full.log",
+      "reason": "4781 passed, 3 cancellation callback timing assertions failed; existing workspace fix awaits the actual abort Future and adds post-response cancellation protection; final isolated full baseline passes."
+    }
+  ],
+  "source_tree": {
+    "folders": [
+      "lib",
+      "test",
+      "tool",
+      "integration_test",
+      "test_driver"
+    ],
+    "hash_algorithm": "sha256 of newline-joined sorted relative_path + space + sha256(file_bytes), ending newline",
+    "full_baseline_files": 927,
+    "full_baseline_sha256": "cf8db7f563d90207e407eff1a2b8e92e744a1a5ceafb530ddcd91e1c4af5d63a",
+    "final_files": 928,
+    "final_sha256": "04d3cdf5f64207ff7a0fe884f13c31f68d6c45ae3934373aace2a68dac112ca2",
+    "workspace_matches_final_snapshot": true
+  },
+  "source_sha256": {
+    "lib/core/strings.dart": "a99ec4806629f3b51df27ea24ede643c5ae00b5cd8dd12cc8a57b0c7be3d4ed0",
+    "lib/features/market/data/mark_prices_repository.dart": "27338d49f60edebbe6763c96436632baf21663db0286231e3fec99d3a5eeeda9",
+    "lib/features/market/data/order_reference_price_mapper.dart": "c490fd659be0f448bc598dd2401ba092fe4c98223bb47fb962d74198deb2f8e5",
+    "lib/features/market/data/order_reference_prices_repository.dart": "93e5158996f54efd2d62a746d2fa0f555d8a065b8d71e1ca05fcdc7f44cab850",
+    "lib/features/market/domain/order_reference_prices.dart": "7bc36621e12d24eb1e72820c11ba5154093bd921d34b175df0ee18ae2acf5e27",
+    "lib/features/portfolio/application/live_order_provider.dart": "5f145e6c7b1360e4c21fd16337a40adf47976519c8d7559209ec1991f7c30c06",
+    "lib/features/portfolio/application/main_order_allocation_provider.dart": "af5d58b337b8d7d69a7e60244dc5e19bb2b7b06c615d9115a6f910dc9e709332",
+    "lib/features/portfolio/application/main_order_capacity_preview_provider.dart": "bb63548600f8a7df174ec8ab78f2c1f611c0f06452335303a9b90cdc65c4f0e9",
+    "lib/features/portfolio/application/main_order_capacity_provider.dart": "21c3216d48000d70ece30a9d2004795455e9f871c420a96ebe74f68011cc4c73",
+    "lib/features/portfolio/application/main_order_pricing_provider.dart": "9c3ea14b7e7509218ea379e47ba24a457937343eae7baed6ffec6ad5ff90b681",
+    "lib/features/portfolio/application/main_order_pricing_wait.dart": "4216079761e1cebd29ef3985ea800cb8415fb57479a92d3d5c997901eb38b340",
+    "lib/features/portfolio/application/symbol_settings_activity.dart": "d1352f4cb95452112d9e64d41d486055f438bc98f9993727d26f862a938c2ccd",
+    "lib/features/portfolio/data/capacity_account_mapper.dart": "3ac47e8753f66835f797301304778994701765c9db4e3ac8fd2502cec6d4fabd",
+    "lib/features/portfolio/data/live_order_mapper.dart": "7749c7d3136231e72237971a9abdaad3e1fee7d08594f71165adbb60fd82c1e8",
+    "lib/features/portfolio/data/main_order_capacity_mapper.dart": "98d3a32d464cf1125e33fd29620f73d41e39f9780689e4d23982b3881c3ed3c3",
+    "lib/features/portfolio/data/main_order_risk_mapper.dart": "eed388c70e11cf22960148a4049754a5400d30d4a8eccfefef0f1c2642be4a77",
+    "lib/features/portfolio/data/signed_live_order_repository.dart": "e64a5237f228c71a89dcae985093b28885cafcb37f2c30a4be6f15e2c9193940",
+    "lib/features/portfolio/data/signed_main_order_capacity_repository.dart": "f69a55ff9133215d6cbae747c0e01a9f12184b92a3d5c68ade8e5137cd17ffdc",
+    "lib/features/portfolio/domain/live_order.dart": "2ac1480d031a3c749cb60f0ddf1ba8401006d9687d1a7a1a22d8393ff0932aed",
+    "lib/features/portfolio/domain/live_order_capacity.dart": "d47d5cba20baf5fe20ff40f0219ce33327334414c80fa31d3444f142f27e6f79",
+    "lib/features/portfolio/domain/live_order_draft.dart": "42c7c979865eae79f8de1957f0ff0ececcebb85e34e18d40378d49b99b3f731d",
+    "lib/features/portfolio/domain/live_order_opening_cost.dart": "29b1bd453d75d614c8da8c638c38f5c07f3218d9ae749865597721d1229cb842",
+    "lib/features/portfolio/domain/live_order_rules.dart": "722aeeb342aa8b7692912a1f01dba9b83aca2f6c194d1d6984a9780c8bd80ea1",
+    "lib/features/portfolio/domain/live_order_size.dart": "935f797f287fad39fa4064aca0c1ddc99b54be1d15c880b48477aabc7f590117",
+    "lib/features/portfolio/domain/main_order_account_facts.dart": "06d4a88e69b477d5a2ca56dab8cb2616bc68808cc8c8b7d138e6fa539188d135",
+    "lib/features/portfolio/domain/main_order_allocation.dart": "637009e6abcd053446743793a521c5328398bf60e42985a380d7e828b9f92b4f",
+    "lib/features/portfolio/domain/main_order_capacity.dart": "6099cad8ac73ed7a8c89310ae30dc67fc1acd857d58c457b1ac8e82add47ea96",
+    "lib/features/portfolio/domain/main_order_capacity_preview.dart": "57f58cce94e750e34163f70745452396eef4da84205cf929f25cf34b4a69370a",
+    "lib/features/portfolio/domain/main_order_margin_budget.dart": "f094872cce6c86389ccc6cd5ed4b72bf51e811f8136de6d59af9bbb382e74c48",
+    "lib/features/portfolio/domain/main_order_pending_exposure.dart": "1a979409e7343c55a1fac64288ce917f360403a7a115c943e319670462c8bd1b",
+    "lib/features/portfolio/domain/main_order_price_assumption.dart": "593174913bb993804cf152449da2598f1f5f5f8020864d2a92a959ff872b5d9c",
+    "lib/features/portfolio/domain/main_order_pricing.dart": "4f9acf0d263286f0489b9fb7b15742c22feb6af79db6c7c1526c4dc53dbc422a",
+    "lib/features/portfolio/domain/main_order_revaluation.dart": "c140ce7dfb8cc94bd96425bd9438bbb959ee9d71cf99e947403d210ceec36dfb",
+    "lib/features/portfolio/presentation/live_order_allocation_binding.dart": "21d9e76adc2f15c7b1d51a253b965de3867f376b467c81f507b84e7fd96d42ee",
+    "lib/features/portfolio/presentation/live_order_form.dart": "b19e45231b6e2eab4a3eb201454611b2ae4714f2023588950a7237df74d19b75",
+    "lib/features/portfolio/presentation/live_order_review.dart": "17d0dee9b9a216c8554254ffeaeab7450216a35d487ccbe981d3e0b215ede9ed",
+    "lib/features/portfolio/presentation/main_order_capacity_panel.dart": "a86d2f9596f2f90f459f6726e7b9ef6567a7de88bba96d0ac9b481109938fa19",
+    "lib/features/portfolio/presentation/main_order_percentage_control.dart": "f4f0dac418001ca458bbc0f0c451175aeb40d179709fa61512c98ed738323d8b",
+    "lib/features/portfolio/presentation/order_confirmation_control.dart": "cffe6b60d56ab9773a4e36edb035cf158e47b1198d368a648f70654989d2bef3",
+    "lib/l10n/generated/app_localizations.dart": "75405c6cfb3d83e7f96ca46845b870e9a8650d4be524d2c6188033144f71a548",
+    "lib/l10n/generated/app_localizations_en.dart": "609d62f5bf448512997a73a36bd967f4252f4531993b0a15843a2ad717d7f433",
+    "lib/l10n/generated/app_localizations_zh.dart": "e2f7947b44608391403642778b2738d9a79287c599c19ee5e63cd0e6110f2ac8",
+    "test/features/market/mark_prices_repository_test.dart": "730e364b024262fa8a17f8fccd995ada28f9514b5e06c75c2503e840d851fca3",
+    "test/features/market/order_reference_price_mapper_test.dart": "ac5cc72b786a4f31dce704e67ddf716cb97f3ea47ca93fc7fe7fe2826b5cb1ed",
+    "test/features/market/order_reference_prices_repository_test.dart": "d32bf252bc7125880d1846a126e0cba86a608889da40ddee225e51591334ec36",
+    "test/features/portfolio/capacity_account_mapper_test.dart": "ea78fbd3d814c56bf2a1a10d3cfef9d1b14478734eea9deb10b0489a75d5561c",
+    "test/features/portfolio/live_order_capacity_test.dart": "e14e0831ccf86dea1f3ed8c645c4b85be57dc529c1242a04430f7de28b5c0b10",
+    "test/features/portfolio/live_order_opening_cost_test.dart": "8c85c5ec05c44376006d5e7f1b57ec91af10cbb916ec3153830db26b990eebd4",
+    "test/features/portfolio/live_order_size_widget_test.dart": "cce8c1ae4c76a9b8b6b2b1e936a0bb89886853415bffa94f38fa461a43a76b02",
+    "test/features/portfolio/live_order_widget_test.dart": "873b9b9098baa132c0e9377528789b6d9f6611de5b9d33b6df99c098be5821b2",
+    "test/features/portfolio/main_order_allocation_provider_test.dart": "615add8dc92f87b29bcff6b718663ca5a187431a1f4a77b3e778498489bb84ba",
+    "test/features/portfolio/main_order_allocation_submission_test.dart": "02a55ce79e9f9a8d69ae2ca11aabc1f575e844e51c62361e62b0c9bdc353bbe7",
+    "test/features/portfolio/main_order_allocation_widget_test.dart": "f196844545b8b57961a412492f7d4ceca07b5a00288e61dceb81bee44a49c79c",
+    "test/features/portfolio/main_order_capacity_panel_test.dart": "d56af93cac7b66648a9d50a607a65f008fb8e32307a0397e22f78db234f95778",
+    "test/features/portfolio/main_order_capacity_preview_test.dart": "aba7d5449e970a3b8ee476c45bc7cb327b2caf154a8dc64a748df9a3587e8018",
+    "test/features/portfolio/main_order_capacity_provider_test.dart": "b8d92ccd266be7a04a34eb87dd1189cf10d42cfe40e9b65ef11f64b040b37bb7",
+    "test/features/portfolio/main_order_capacity_snapshot_test.dart": "1a5774e8f2ddf23f87f04c63541ba727aba538f32f255244f416b125dd45a511",
+    "test/features/portfolio/main_order_live_pricing_test.dart": "0ff4bbaba5a8c1eb23c0a9d85ef5d80edc6caa94a74679ac08ced0d39b296294",
+    "test/features/portfolio/main_order_live_submission_test.dart": "77bc4f0f0c720c14981e605176f702e60df88093c5a973f59244727f1da23c60",
+    "test/features/portfolio/main_order_live_widget_test.dart": "f14af5bb4fec987c2282a279566a71e40682f3bc66cda5b527220009bff62e5a",
+    "test/features/portfolio/main_order_manual_widget_test.dart": "5ddb01e48f961d359cedd2150d273fb53446071ead3122adc0ad21be1f3656e9",
+    "test/features/portfolio/main_order_price_assumption_test.dart": "53b3b1da04954ade2cb5ce8ea943c67def28c036230c8884e642ce3dff738c38",
+    "test/features/portfolio/main_order_revaluation_test.dart": "69b920a1256f7915b721d0e2b8213d7156ee722319add8d4b49b8f592caf9cc7",
+    "test/features/portfolio/main_order_risk_mapper_test.dart": "91e0e3bbf8ab4490584834d0e2e5aa2f3aceeaec7348c94e1f547ffcf8da4c82",
+    "test/features/portfolio/openable_notional_test.dart": "f11a557300e975bc116f3fe7c11a6b14c291743e9ed4944a1a43a34c5b9db849",
+    "test/features/portfolio/signed_main_order_capacity_repository_test.dart": "e5a6b1d04b1ddc3a6ba8d4246f6a575f111c5bed97dd0cf16f03bccdfd4f403d",
+    "test/support/live_order.dart": "174d5c27e436472eecb135fb0ea0570a6f29e47cd839301bc2aaab26d32cf179",
+    "test/support/live_order_capacity.dart": "b43ac457f0212e33060326c1bbfa16fe692c6ee93ed3862ad9591bd1749c3b92",
+    "test/support/main_order_capacity.dart": "0b987c3662cd75649a1da2f2c23fb974328d02223c648207f2e2a4a6ad92548a",
+    "test/support/main_order_form.dart": "aeed608586723f2601370447578cdc76746c2b5dbb707daa49c4dfdf7dd8bb60",
+    "test/support/main_order_live_pricing.dart": "695ba5df81d59a3d51448c5dc5d3cd70301b62f4bcd9b08e465c3b66bfaf2275",
+    "test/support/main_order_revaluation.dart": "30f80b8bcd0c7574977c2344cf2e681e56b81b9a3c64d2b3c7883aaec7cb12ba",
+    "test/support/order_reference_prices.dart": "ece30399754aa32b8b17d7fa8ae13e99011242fab41ba0c2217e8cb31ca85667",
+    "test/support/trade_fixture.dart": "c0b6f23d7829616f4f3f62cf52921a254850e7f8c0f05e70a383fa0734ca836a",
+    "lib/features/portfolio/application/main_order_refresh_provider.dart": "7a9893e6231685d1f764268513e758d337b7b7aa72455fe9653cc6b4b9135926",
+    "lib/features/portfolio/presentation/live_order_screen.dart": "e8dabfdf5afe9acb42665d0fc58daa9a786ac0c7c5bd21dcfb613ed7418d0728",
+    "lib/l10n/app_en.arb": "40f813727beb1252447aea665e60797848afd17e28f5f7adab81be3e549a1bbb",
+    "lib/l10n/app_zh.arb": "c78de113a327ad47791c8f07772a3b5baf1a430df43b0ea7febbabbd1f866111",
+    "test/features/portfolio/main_order_refresh_provider_test.dart": "bef65f856bd49f583828bb2c28b1974efcbcab1f718ec99d54a9c9af6dd8acbc",
+    "test/features/portfolio/main_order_refresh_widget_test.dart": "50f1eae35651ee7c1de162f8e4cdf67f6265a930b666a9ed1c318310588b8939",
+    "lib/features/portfolio/domain/main_order_liquidation.dart": "3fdcfbe141abb38706459aa4787328b531769326800ba1640f77f4cfe29b2df4",
+    "lib/features/portfolio/domain/main_order_liquidation_solver.dart": "9b6225d89532955c412c675b0356e4b32547cc94e36eaf2453d61cb6570436dd",
+    "lib/features/portfolio/domain/main_order_post_trade.dart": "d9940751dff027a75ffb4d23c5e94cbe5054cd43c80de15d282c3bd9be101dab",
+    "test/features/portfolio/main_order_liquidation_test.dart": "bbf95a47131e3a924511de9a9d1e2d8e855e6a69b671bf6d40c911c006824f9e",
+    "test/features/portfolio/main_order_liquidation_widget_test.dart": "b28332f45cf593aa33f9e7146c93a39676002429519a78fbe50d62ba4f79e6ca",
+    "tool/quote_probe.dart": "7c3d7c1fc5cb2d055853d7a38b1bd610a81be6eeb90ef3f5d1c3f81cac0d4939",
+    "test/support/mark_prices.dart": "f11d94d2f98bf99a93c994890796c4df5289b89bb1d33d9e2eb5e50e1658dd1a",
+    "lib/features/market/data/market_catalog_repository.dart": "e57dc1013c06a8883c7a8edfa812345806faf4ba539652e795f02ba3511329fc",
+    "test/features/market/market_catalog_repository_test.dart": "be630eb983060b82a3d0cc7fb7a5b0e51f4cf535eada493a91b33a68eab51271"
+  },
+  "boundaries": [
+    "Automatic trailing activation has no fixed future entry hypothesis; shows —",
+    "Real Aster fee/collateral/allocation/risk-tier agreement, partial fill timing and lifecycle/native acceptance not tested",
+    "Full account-event merge and automatic full re-snapshot still pending; original bounded account lease remains",
+    "Moving-BBO capacity/pending-order reservation contracts, strategy management/Chase, complete Portfolio/Swap and other PRD gaps",
+    "User-deferred historical statistics/Summary/TWAP and all device verification; iOS requires macOS/Xcode"
+  ],
+  "real_wallet_requests": false,
+  "real_private_requests": false,
+  "real_funds_requests": false,
+  "address_rpc_requests": false,
+  "native_device_tools": false,
+  "git_commit_or_push": false,
+  "goal_complete": false
+}

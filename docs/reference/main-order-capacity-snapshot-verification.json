@@ -1,0 +1,124 @@
+{
+  "recorded_at_utc": "2026-11-06T02:37:03.169054+00:00",
+  "increment": "Main-order signed capacity snapshot, exact current-price assumptions, and explicit EN/ZH directional reference panel",
+  "contract": "main-order-capacity-snapshot-public-contract.json",
+  "contract_sha256": "4d2fc0c05178051beffa73097aee82e03458cfd95951385b5f06529ad11742b5",
+  "tests": {
+    "baseline_kernel_full": 4171,
+    "new_since_kernel": 205,
+    "focused_passed": 323,
+    "full_passed": 4376,
+    "exit_code": 0,
+    "coverage": [
+      "Complete zero-position account mapping; exact fractional JSON; missing/conflicting fields, duplicate symbols/assets and collateral units.",
+      "Selected-asset single/cross/isolated and exact multi-asset budgets; signed equity, missing/stale rates and ineligible/zero assets.",
+      "Ordinary fixed-LIMIT unfilled reservation; hedge closing/reduce-only; independent reported margin corroboration, unknown conditional/market/peg reservations.",
+      "Exact signed GET sequence, early stop, signer rejection, unchanged byte signatures/nonces and after-prompt identity/deadline checks using synthetic HTTP only.",
+      "No implicit reads; active lease, settings/recovery exclusion, idle/active lifecycle, auth/symbol/context/expiry changes, cancel/new-read races, timestamp and address mismatch, disposal and safe errors.",
+      "Signed-notional consistency and exact repeating Rational budget at a quantity-step boundary.",
+      "Market-buy 0.0005 reference and declared precision separate from tick, sell/limit branches, missing books/precision, conditional/trailing references and moving-peg failure.",
+      "Independent manual base/quote previews, blank/zero/invalid/over-capacity, selected-side exits not reused as opposite strategy eligibility.",
+      "Production form integration; explicit read/cancel/retry with preserved inputs, stale/unknown/zero, no POST, EN/ZH 320px/landscape/tablet at 1.5x text."
+    ]
+  },
+  "format": {
+    "command": "dart format --output=none --set-exit-if-changed lib test integration_test test_driver",
+    "files": 868,
+    "changed": 0,
+    "exit_code": 0
+  },
+  "analysis": {
+    "command": "flutter analyze",
+    "result": "No issues found",
+    "exit_code": 0
+  },
+  "localization": {
+    "en_messages": 1681,
+    "zh_messages": 1681,
+    "new_since_order_modes": 12
+  },
+  "android": {
+    "command": "make env-check then make build-apk",
+    "exit_code": 0,
+    "configuration": "Existing .env validated; no values printed, replacement config, --no-pub or manual registrant edit.",
+    "apk": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 45971716,
+    "sha256": "9baec24bdf1c292ca4fd7a834515731d745acb66b98adfddf6ee18b3bc7da5a6",
+    "installed": false,
+    "published": false,
+    "notices": "Existing third-party Built-in Kotlin/KGP migration notices; successful build."
+  },
+  "ios": {
+    "built": false,
+    "reason": "Linux without macOS/Xcode; user deferred native device verification."
+  },
+  "logs": {
+    "focused": "/tmp/vanta-capacity-panel-focused-final.log",
+    "full": "/tmp/vanta-capacity-panel-all-tests.log",
+    "format": "/tmp/vanta-capacity-panel-format-final.log",
+    "analysis": "/tmp/vanta-capacity-panel-analysis-final.log",
+    "environment": "/tmp/vanta-capacity-panel-env-final.log",
+    "build": "/tmp/vanta-capacity-panel-build-final.log"
+  },
+  "log_sha256": {
+    "focused": "a694b3e4ad65ffbd55fe3777e8cac42e1f5cfe8cd9d33593c4b5a5e39eca4e3f",
+    "full": "885f047f189e42955478bc10e2f68633c204e79f01915b94f0f087c8a7afc73f",
+    "format": "b4ca17fb8781369c8119a7ab2329b76fd78e06c15bc84a5e39f78272da156a44",
+    "analysis": "e6f425d4f9d6ae2122f37d4f6aeaf718146fc4ac65897be4f8bc907a75ee7bb4",
+    "environment": "f6b7f91bc2e2c20a5903fa87cc131503d7aa364f148c4b883a47cf92d711d356",
+    "build": "6604a7f28891de6f84c72a14cea3d47f0ce18202417b8709b6b449b5cd4aa3f7"
+  },
+  "source_sha256": {
+    "lib/core/strings.dart": "14ee33eb8d437e5ea5eb5cc5fea221b6814073c77f9d3b3b60c3b4189de104cd",
+    "lib/features/portfolio/application/live_order_provider.dart": "ee405de65997dc7525affcfc89fb3bd9db71d21fe15e9b2f409305d982416af3",
+    "lib/features/portfolio/application/main_order_capacity_preview_provider.dart": "bc5adcecf9f13d350f1823cdf0ea02818a223f8e330772e3b614cdf42aa9f029",
+    "lib/features/portfolio/application/main_order_capacity_provider.dart": "3fa435772eb9ddb327e397b10b533cd2ce126fe7ec8109ef159937cdd413cdf2",
+    "lib/features/portfolio/data/capacity_account_mapper.dart": "3ac47e8753f66835f797301304778994701765c9db4e3ac8fd2502cec6d4fabd",
+    "lib/features/portfolio/data/live_order_mapper.dart": "7749c7d3136231e72237971a9abdaad3e1fee7d08594f71165adbb60fd82c1e8",
+    "lib/features/portfolio/data/main_order_capacity_mapper.dart": "23ff820f9ab9a5ab7494293d84442acefcdcdee351d3a465445cb2009a9ea78a",
+    "lib/features/portfolio/data/signed_main_order_capacity_repository.dart": "b23e6f01ec7a7938342260436e6ba438fa493cc3cb352455acae8cc0e1c93032",
+    "lib/features/portfolio/domain/live_order_capacity.dart": "d47d5cba20baf5fe20ff40f0219ce33327334414c80fa31d3444f142f27e6f79",
+    "lib/features/portfolio/domain/live_order_draft.dart": "42c7c979865eae79f8de1957f0ff0ececcebb85e34e18d40378d49b99b3f731d",
+    "lib/features/portfolio/domain/live_order_opening_cost.dart": "29b1bd453d75d614c8da8c638c38f5c07f3218d9ae749865597721d1229cb842",
+    "lib/features/portfolio/domain/live_order_rules.dart": "722aeeb342aa8b7692912a1f01dba9b83aca2f6c194d1d6984a9780c8bd80ea1",
+    "lib/features/portfolio/domain/main_order_capacity.dart": "e61cc3a3dfb5472acd9a20c87680e6469502ee3ea21c5821a377c59cc2da8b00",
+    "lib/features/portfolio/domain/main_order_capacity_preview.dart": "70476d6480c5713f63156bcaecdf16aa6fa122d32f629b3a12caf3a3b274adfb",
+    "lib/features/portfolio/domain/main_order_margin_budget.dart": "5c254b91b4a1df15763ff9a5970b479d78d05206571366da7e97a5c583c985ed",
+    "lib/features/portfolio/domain/main_order_pending_exposure.dart": "41b29625ddcc96f4a89e4e338d2a14ee7b90d1044d3784361679b55e6cae7a2e",
+    "lib/features/portfolio/domain/main_order_price_assumption.dart": "593174913bb993804cf152449da2598f1f5f5f8020864d2a92a959ff872b5d9c",
+    "lib/features/portfolio/presentation/live_order_form.dart": "6ed2c3f9a36e4fbd2a2a66c2e90fd420bb081f0facf94bf1c6d0cf47a40be962",
+    "lib/features/portfolio/presentation/main_order_capacity_panel.dart": "3e690206556dff3daa0fc98ec93c2465ef88e19ca3aa666043ebad57e06e4581",
+    "lib/l10n/app_en.arb": "bb6fff24aaf68aad09226e621c664c3380b97e002ac5ed8f979ac280f2103e97",
+    "lib/l10n/app_zh.arb": "f6c1f77d82ac085d22ffef358bd92307e8843b4997a8e29dcb0ee79a5ca7aaef",
+    "lib/l10n/generated/app_localizations.dart": "5a1bbba6dbe2706c7e5ed182a4d5bc88402160f377344560e19ebdabdb191dd4",
+    "lib/l10n/generated/app_localizations_en.dart": "f2ef076cf0586de7f85b44ca8a8f85432ecad4dff26c1b9336c0af5dcd504080",
+    "lib/l10n/generated/app_localizations_zh.dart": "999fa048c29a73e46457380f59fc5c617d23b5ae35216dbb17f16f740fe9ddb8",
+    "test/features/portfolio/capacity_account_mapper_test.dart": "ea78fbd3d814c56bf2a1a10d3cfef9d1b14478734eea9deb10b0489a75d5561c",
+    "test/features/portfolio/live_order_capacity_test.dart": "e14e0831ccf86dea1f3ed8c645c4b85be57dc529c1242a04430f7de28b5c0b10",
+    "test/features/portfolio/live_order_opening_cost_test.dart": "8c85c5ec05c44376006d5e7f1b57ec91af10cbb916ec3153830db26b990eebd4",
+    "test/features/portfolio/main_order_capacity_panel_test.dart": "3b37c159229cd0632d380e417aca7120748923f79a922ef3caae475b37e05990",
+    "test/features/portfolio/main_order_capacity_preview_test.dart": "cbc8267c1af3545ec0e19482d8649cc0337cae19d0a9d7aadaa13b6304fa18ea",
+    "test/features/portfolio/main_order_capacity_provider_test.dart": "b8d92ccd266be7a04a34eb87dd1189cf10d42cfe40e9b65ef11f64b040b37bb7",
+    "test/features/portfolio/main_order_capacity_snapshot_test.dart": "1a5774e8f2ddf23f87f04c63541ba727aba538f32f255244f416b125dd45a511",
+    "test/features/portfolio/main_order_price_assumption_test.dart": "53b3b1da04954ade2cb5ce8ea943c67def28c036230c8884e642ce3dff738c38",
+    "test/features/portfolio/openable_notional_test.dart": "f11a557300e975bc116f3fe7c11a6b14c291743e9ed4944a1a43a34c5b9db849",
+    "test/features/portfolio/signed_main_order_capacity_repository_test.dart": "fea7dfd2c4556fec9860c68bd32d9c69be267a593933a763d0cbc1cdfc8a012f",
+    "test/support/live_order.dart": "174d5c27e436472eecb135fb0ea0570a6f29e47cd839301bc2aaab26d32cf179",
+    "test/support/live_order_capacity.dart": "b43ac457f0212e33060326c1bbfa16fe692c6ee93ed3862ad9591bd1749c3b92",
+    "test/support/main_order_capacity.dart": "79898817fe1a2ec16828bc6cc4f05138bbbadfa3422b84a08f1325d66d367d67"
+  },
+  "not_performed": [
+    "No real signature/private/funds/chat request or address-bearing RPC.",
+    "No device tool or APK installation.",
+    "No external publication."
+  ],
+  "remaining_required_work": [
+    "Initial 0-percent main slider with blank quantities; independently scaled buy/sell amounts and maximum-based selections bound to input.",
+    "Market event/price and lifecycle invalidation/recomputation for a full sizing workflow, including reproducible price assumptions and margins.",
+    "Fresh same-side capacity check on click, frozen same-side/type/quantity review, after-wallet checks and accepted/unknown-result input handling.",
+    "Post-trade liquidation estimates across supported margin/position/asset modes.",
+    "Verified reservation and pricing contract for conditional/market/moving-peg pending orders; retain these as explicit functional gaps.",
+    "Full strategy management, Chase recovery, cross-product Portfolio and Swap remain outside this unfinished increment. Only historical statistics/Summary/TWAP are user-deferred."
+  ],
+  "goal_complete": false
+}

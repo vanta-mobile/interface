@@ -1,0 +1,37 @@
+{
+  "increment": "Explicit full main-order account and quote refresh after stale state or user-stream reconnect",
+  "prd": {
+    "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655?pvs=204",
+    "title": "Futures trading",
+    "path": "Dodo 项目管理 / Project Pool / Vanta mobile / 正式vanta mobile PRD / 完整PRD",
+    "page_last_edited_at": "2026-11-06T06:17:16.064Z",
+    "verification": {
+      "state": "unverified"
+    },
+    "source": "Notion fetch reread this increment; returned content through closing page tag, with no explicit truncation/unknown-block markers",
+    "sections": [
+      "3.2 step3: both sides share current account/market facts and update after balance, position, order and mark changes",
+      "3.2 step2 refresh guidance (current page labels this section reference/discussion material, not a separate Vanta design requirement)"
+    ],
+    "refresh_guidance": "<b>刷新规则</b>　首次进入时加载余额、仓位、有效委托、杠杆和风险档位。订阅参与计算的全部相关合约行情；收到价格变化时更新估值、浮盈亏和占用。余额变动、挂单、撤单、成交或配置变化时更新对应记录，再执行当前模式的公式。多资产另随抵押资产估值变化重算。断线重连后重新取得快照。[余额与仓位事件](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#event-balance-and-position-update) · [订单事件](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#event-order-update) · [账户配置事件](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#event-account-configuration-update-previous-leverage-update)\n"
+  },
+  "behavior": {
+    "entry": "Reuse the opening screen read button as Refresh trading account and limits; add pull-to-refresh through the same application controller. No read/signature merely from observing a provider.",
+    "monitoring": "An already authorized, still valid disconnected monitor reconnects and reaches connected before starting signed snapshots. Failure or twelve-second timeout aborts private reads. A stopped/expired monitor is not silently authorized; existing bounded reads remain possible without claiming live coverage. Pending monitor authorization blocks overlapping wallet prompts.",
+    "account": "Sequentially read full current order context with funds (four signatures), then all-account main capacity (up to five signatures). Both must match the current wallet, symbol, account/configuration identity and original context deadline. Nine separate wallet signatures maximum for the complete refresh, no order submission.",
+    "public": "Reconnect observed public quotes, refresh multi-asset collateral indices, then wait for valid Mark, selected book/Last and related cross Last receipts from this refresh. A cached still-fresh pre-gesture quote cannot complete it. Snapshot expansion must finish without repeating private reads.",
+    "lifecycle": "Read/refresh state disables duplicate actions, percentage selection, review and submission. Cancellation invalidates generation and the active read predicate, releases only the owned read lease, cancels quote wait promptly and discards late results. It does not retract a wallet prompt or cancel an already attempted order.",
+    "ui": "Refresh indicator awaits the complete account/capacity/public-pricing operation including handled failures. Existing raw order inputs remain. Loading icon and cancel remain available; safe failure is visible and retryable. Account identity changes clear old input through the existing form behavior.",
+    "validity": "Refreshing creates a new signed context and its own original thirty-second lease; public repricing cannot extend it. Events received while reading invalidate those facts rather than being ignored."
+  },
+  "verification_scope": "New provider/widget tests use production refresh, pricing, capacity, allocation and form code with controlled repositories and public streams. Existing actual signed repository tests remain in full regression. No real private, funds, wallet or address RPC requests.",
+  "remaining": [
+    "Incremental complete sizing-account event merge; current events invalidate bounded facts",
+    "Automatic full re-snapshot on reconnect still needs a reusable authentication design; current full refresh requires an explicit gesture and separate EOA signatures",
+    "Post-trade independent buy/sell liquidation estimates",
+    "Moving-BBO new capacity coverage and pending-order reservation contracts",
+    "Other open PRD requirements tracked in docs/prd-progress.md",
+    "User-deferred native/real-wallet acceptance and iOS build on macOS/Xcode"
+  ],
+  "goal_complete": false
+}

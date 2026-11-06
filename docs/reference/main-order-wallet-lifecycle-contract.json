@@ -1,0 +1,61 @@
+{
+  "increment": "Main order wallet-return lifecycle and existing private stream continuity",
+  "requirements": [
+    {
+      "source": "docs/reference/main-order-live-pricing-public-contract.json",
+      "basis": "Retain original signed account deadline and frozen quantity across expected wallet prompts; current quotes and identity still guard final POST."
+    },
+    {
+      "source": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+      "basis": "Previously cached Futures PRD section 3.2 shared current order facts; page not reread in this lifecycle-only increment."
+    },
+    {
+      "source": "AGENTS.md",
+      "basis": "Widget -> Riverpod application orchestration; financial unknown outcomes must not be replayed."
+    }
+  ],
+  "behavior": {
+    "gate": "foreground OR (SymbolSettingsActivity.busy AND owner == order)",
+    "private_scope": [
+      "Existing Futures listener lease",
+      "Existing independent Spot listener lease"
+    ],
+    "no_new_authorization": true,
+    "ordinary_background": "Pause and invalidate when no busy order; releasing the order in background also pauses.",
+    "real_events": "Existing event, disconnect, expiry, identity and signing-capability invalidation is retained.",
+    "resume": "Coalesce native session reads; defer while serialized operation or authentication is busy, or app is inactive/backgrounded. Reconcile in a microtask once foreground and idle.",
+    "auth": "Same session produces no busy transition or identity state notification; refresh never creates a wallet. Actual SDK identity events remain immediate and supersede older reads.",
+    "deadline_seconds": {
+      "account": 30,
+      "quotes": 10
+    },
+    "submission": "Freeze original quantity and client ID; run existing post-signature and pre-POST guards. Never replay financial writes.",
+    "recovery_state": "Recovery blocking and identity scope are derived during provider build; operation owner/busy/epoch persist across recovery rebuilds. Identity changes invalidate old tokens, so late finish cannot release a new wallet operation."
+  },
+  "production_files": [
+    "lib/features/portfolio/application/symbol_settings_activity.dart",
+    "lib/features/portfolio/application/wallet_stream_controller.dart",
+    "lib/features/portfolio/application/main_order_pricing_provider.dart",
+    "lib/features/auth/application/auth_provider.dart",
+    "lib/features/trade/application/trading_lifecycle_provider.dart",
+    "lib/features/trade/presentation/trading_screen.dart"
+  ],
+  "tests": {
+    "auth_session_refresh_test.dart": 10,
+    "trading_lifecycle_provider_test.dart": 9,
+    "wallet_stream_order_session_test.dart": 6,
+    "main_order_live_submission_test.dart_added": 9,
+    "trading_lifecycle_widget_test.dart": 2,
+    "symbol_settings_activity_test.dart_added": 1
+  },
+  "remaining": [
+    "No complete account-event merge or automatic authenticated full re-snapshot.",
+    "Existing serialized-operation gate does not cover every funding or subaccount workflow.",
+    "OS suspension and native wallet/Privy/Reown delivery order unverified; preserved socket is not evidence of uninterrupted delivery.",
+    "Actual trading authorization and platform acceptance unverified.",
+    "Moving BBO/new unknown pending-order reservations, strategy management/Chase, complete Portfolio/Swap remain open; previously deferred statistics/Summary/TWAP remain deferred."
+  ],
+  "external_write_requests": false,
+  "device_testing": false,
+  "goal_complete": false
+}

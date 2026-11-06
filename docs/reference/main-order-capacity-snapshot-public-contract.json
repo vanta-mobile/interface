@@ -1,0 +1,71 @@
+{
+  "recorded_at_utc": "2026-11-06T02:30:16.159427+00:00",
+  "increment": "Validated signed main-order capacity snapshots and explicit directional reference panel; percentage order integration remains incomplete",
+  "prd": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655",
+  "prd_sections": [
+    "3.2 step3: independent directional capacity, cost and validation",
+    "3.4: zero-percent slider and blank initial input (slider still outstanding)"
+  ],
+  "reference_note": "Previously cached anonymous official documents and website bundles inspected locally; no new remote fetch asserted in this increment.",
+  "public_sources": [
+    {
+      "url": "https://static2.asterdexfx.com/assets/futuresCalculatePre-DjYtFMnM.js",
+      "local_cache": "/tmp/vanta-main-sizing-futuresCalculatePre-DjYtFMnM.js",
+      "sha256": "4936eeb96f82192560f324f2ca9125c6fdf9c94f9b109447cbf66e31e90584af"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/constants-Bmsm34-g.js",
+      "local_cache": "/tmp/vanta-main-sizing-constants-Bmsm34-g.js",
+      "sha256": "016123eaa82e44833b2283336b5529136fdb7c4df4dfa1801e09ab08a4b6036d"
+    }
+  ],
+  "official_protocol": {
+    "url": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+    "cache": "/tmp/vanta-bbo-api-docs/V3(Recommended)/EN/aster-finance-futures-api-v3.md",
+    "sha256": "31b0c8bd2dba5f4334eb15c5add79a90f8a96ad738d27d7bb70c5cac1763abf4",
+    "signed_reads": [
+      "GET /fapi/v3/multiAssetsMargin",
+      "GET /fapi/v3/positionSide/dual",
+      "GET /fapi/v3/accountWithJoinMargin",
+      "GET /fapi/v3/openOrders?symbol",
+      "GET /fapi/v3/leverageBrackets?symbol"
+    ],
+    "public_reads": [
+      "exchangeInfo contract units",
+      "assetIndex (multi-asset only)",
+      "remainingOpenableNotionalValue (symbol/leverage only)",
+      "server time for signing"
+    ]
+  },
+  "implemented": [
+    "Strict immutable account mapping retains zero-quantity position configuration and order margin. Required fields, collateral units, signed quantity/notional consistency, duplicates and exact JSON numbers are validated at the data boundary.",
+    "Single-asset cross budget uses selected margin-asset available balance. Isolated budget is min(asset available, cross wallet minus cross maintenance and isolated pending-order margin); zero-quantity reservations count.",
+    "Multi-asset cross budget: [sum min((crossWallet+crossPnl)*bidRate,(crossWallet+crossPnl)*askRate) - sum initialMargin*askRate] / target askRate. Exact Rational division; no partial sums or invented rates. Actual isolated exposure is rejected in multi mode.",
+    "Fresh account configuration and selected position quantity/entry/margin/leverage/units are compared to original order context. Personal max is bounded by leverage bracket and account maxNotional; contract cap remains separate.",
+    "Pending ordinary fixed LIMIT reservation uses remaining quantity, with reduce-only/close/hedge-closing legs excluded. Independently calculated reservation is checked against account order margin with at most one last-place reporting quantum (max(reported scale,8)). This tolerance is an implementation choice, not verified exchange parity.",
+    "Explicit repository read requests at most five independent EOA signatures. Mode/account/unknown pending failures stop early. Each signed request retains exact bytes/nonces and checks identity and the original 30-second deadline after prompting and before sending.",
+    "Provider is read-free on watch; shared order lease excludes settings, unknown operations and recovery. Auth/symbol/context/stale changes invalidate responses and release read leases. Cancel cannot overwrite newer results or release a newer operation token.",
+    "Expected wallet app switches during an active order-lease read retain the original deadline; idle backgrounding still invalidates the live context.",
+    "Website-reference prices use exact decimals: market buy=floor((ask or Mark)*1.0005, declared pricePrecision); market sell=bid or Mark; limit buy=entered; limit sell=max(bid,Mark,entered). Market loss uses assumption, limit loss uses entered. pricePrecision is not tick size; absence is not inferred from tick.",
+    "MainOrderCapacityPanel is connected to the production LiveOrderForm for opening flows. Explicit read/cancel, current snapshot timestamp, separate base maxima, side-specific manual quantity/notional/cost, known-zero versus unknown, safe failure and stale placeholders; EN/ZH and responsive layouts. Editing input never requests a signature or overwrites input.",
+    "Panel validates entry filters only; opposite-side attached exits resolved for the selected direction are not presented as a newly valid strategy. Existing full selected-draft validation and signing remain in the original submit flow."
+  ],
+  "boundaries": [
+    "Panel values are references only. It does not bind a submission, set percentage quantities, cap spending, guarantee fill/acceptance, or estimate liquidation.",
+    "Untriggered conditional, pending MARKET, moving BBO/compound peg opening reservations lack a verified reserved-notional contract. These return unknown, never zero. New moving-peg order-price assumptions are likewise unavailable.",
+    "Negative free budget is clamped to zero for capacity arithmetic; this does not prove exchange acceptance for negative equity. No future released margin, rebates or future fills are credited.",
+    "Account and orders are separate signed responses, not an atomic exchange snapshot; scope/configuration/expiry and independent margin corroboration detect inconsistencies without guaranteeing atomicity.",
+    "pricePrecision is optional for backward-compatible rule mapping, but a market-buy assumption requires it. Website formulas are current-cost references for conditional/trailing entries, not predictions of eventual trigger execution.",
+    "Existing manual-order submission and confirmation still use their existing checks. The new panel is not their pre-confirmation or post-wallet capacity guard.",
+    "No real signature/private/funds/chat request, address-bearing RPC, device tool, APK install or external publish was performed. iOS build unavailable on Linux."
+  ],
+  "remaining_required_work": [
+    "Initial 0-percent main slider with blank quantities; independently scaled buy/sell amounts and maximum-based selections bound to input.",
+    "Market event/price and lifecycle invalidation/recomputation for a full sizing workflow, including reproducible price assumptions and margins.",
+    "Fresh same-side capacity check on click, frozen same-side/type/quantity review, after-wallet checks and accepted/unknown-result input handling.",
+    "Post-trade liquidation estimates across supported margin/position/asset modes.",
+    "Verified reservation and pricing contract for conditional/market/moving-peg pending orders; retain these as explicit functional gaps.",
+    "Full strategy management, Chase recovery, cross-product Portfolio and Swap remain outside this unfinished increment. Only historical statistics/Summary/TWAP are user-deferred."
+  ],
+  "goal_complete": false
+}

@@ -1,0 +1,66 @@
+{
+  "recorded_at_utc": "2026-11-06T07:29:00.929927+00:00",
+  "increment": "Independent post-fill buy/sell liquidation preview with signed symbol fee and exact piecewise risk solver",
+  "prd": {
+    "url": "https://app.notion.com/p/409080d974e780188a4fedfdcf29e655?pvs=204",
+    "title": "Futures trading",
+    "path": "Dodo 项目管理 / Project Pool / Vanta mobile / 正式vanta mobile PRD / 完整PRD",
+    "page_last_edited_at": "2026-11-06T06:17:16.064Z",
+    "verification": {
+      "state": "unverified"
+    },
+    "source": "Current-turn cached full Notion fetch from preceding refresh increment; not fetched remotely again for this increment",
+    "sections": [
+      "3.2 step3: independent post-fill buy/sell liquidationPrice from the shared account and current prices; absent quantity or no valid positive estimate displays —"
+    ],
+    "refresh_guidance": "<b>刷新规则</b>　首次进入时加载余额、仓位、有效委托、杠杆和风险档位。订阅参与计算的全部相关合约行情；收到价格变化时更新估值、浮盈亏和占用。余额变动、挂单、撤单、成交或配置变化时更新对应记录，再执行当前模式的公式。多资产另随抵押资产估值变化重算。断线重连后重新取得快照。[余额与仓位事件](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#event-balance-and-position-update) · [订单事件](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#event-order-update) · [账户配置事件](https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md#event-account-configuration-update-previous-leverage-update)\n"
+  },
+  "public_sources": [
+    {
+      "url": "https://docs.asterdex.com/trading/perpetuals/fees-and-specs/liquidations.md",
+      "access": "Anonymous GET this increment; margin equity vs maintenance, Mark triggering, cross hedge shared price and isolated separate legs"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/useJMColumn-B_CkMNR9.js",
+      "access": "Previously downloaded public cache; Ke/qe and nt/lt single/multi collateral risk formulas and vt hypothetical fill assembly"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/useStreamMarkPrice-DK-y4bCO.js",
+      "access": "Previously downloaded public cache; ve entry merge and ye hypothetical wallet changes"
+    },
+    {
+      "url": "https://static2.asterdexfx.com/assets/futuresCalculatePre-DjYtFMnM.js",
+      "access": "Previously downloaded public cache; T entry-price branches and increment/opening-loss formulas"
+    },
+    {
+      "url": "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/aster-finance-futures-api-v3.md",
+      "access": "Previously downloaded official cache; commissionRate and account-wide leverageBrackets; actual fee fetched only through explicit app action, no real private call in this increment"
+    }
+  ],
+  "source_cache_sha256": {
+    "/tmp/vanta-main-order-liquidations.md": "6154371c1a5d16718bae386ba7a0336147e560e4ebc32a346374af9d874758da",
+    "/tmp/vanta-main-sizing-useJMColumn-B_CkMNR9.js": "9f82a94df58306bf022e3277e6cda443be23c8e6b2714c05c05bdbb256bfcb3f",
+    "/tmp/vanta-main-sizing-useStreamMarkPrice-DK-y4bCO.js": "b8c0d2ffa47b0d92bfdf6b3929bd0abd70ba19cb6203e4c241ca8f397f35969b",
+    "/tmp/vanta-main-sizing-futuresCalculatePre-DjYtFMnM.js": "4936eeb96f82192560f324f2ca9125c6fdf9c94f9b109447cbf66e31e90584af"
+  },
+  "behavior": {
+    "reads": "Append symbol-scoped commissionRate to the five existing signed capacity GETs, after public cap validation. Exact financial JSON accepts original numeric tokens or decimal strings; require matching symbol and rate in [0,1). Refusal, identity change, timeout, missing/invalid fee fail without fake zero. Capacity read up to six signatures; full account refresh up to ten. No signing triggered by observation. Official commissionRate request weight is 20; all-account openOrders remains weight 40. No polling is added.",
+    "fill": "Separate buy and sell full-fill assumptions, no mutation of original account, quantity or order intent. Same-side weighted signed entry value, partial reduction realizes only the closed amount, exact close has no residual estimate, reverse starts new entry at assumed fill. Taker fee applies to whole fill in cross-wallet projection.",
+    "price": "Entered limit; market uses the existing direction-specific MainOrderPriceAssumption including public Web buy factor; conditional market uses trigger; trailing uses explicit activation. Automatic trailing has no fixed future execution price and displays —. These are hypotheses, not fill constraints.",
+    "isolated": "Use only target leg isolated wallet, plus incremental opening cost. Partial reduce releases proportional wallet for either sign and charges any loss not covered by released collateral to the remainder. Reversal releases the old leg before new remainder margin plus adverse opening loss allocation and any uncovered old loss. This derives explicit sign-safe accounting rather than copying public JS signed division/reversal expressions, which are ambiguous for shorts and leverage; real platform agreement remains unverified. Fees follow the public wallet projection into cross balance, rather than silently deducting a second time from isolated wallet.",
+    "cross": "Shared margin-asset cross wallet after realized PnL/fee, Mark-only PnL and maintenance of other contracts; target hedge keeps unchanged opposite leg. Sizing continues using min(Mark,Last); liquidation does not reuse that conservative sizing PnL.",
+    "multi": "Eligible marginAvailable assets only; equity uses bid for assets/ask for liabilities, maintenance uses ask. Recompute target collateral sign at the solved price. Other asset equity/maintenance and current FX held fixed; missing or stale rates yield no estimate.",
+    "solver": "Rational quantities, signed entry values and wallet allocations. Merge all active legs risk floor/cap price boundaries; solve equity(P)=maintenance(P) exactly in every interval and collateral-sign branch, validate positive candidate in same tiers and select nearest Mark boundary. Require continuous risk schedules starting at zero; never extrapolate above published caps or round intermediate values.",
+    "presentation": "Existing directional panels gain the PRD post-fill liquidation row. Blank/zero/invalid/oversized inputs or absent fresh complete facts display —. Rounded once for display at symbol price precision and shared fixed formatter. Labels and assumptions EN/ZH. No new submit/review fields beyond requested PRD panel.",
+    "validity": "Original 30s signed account lease and 10s public quote checks preserved by production pricing provider. Account/identity/configuration changes invalidate; observation/signing does not extend lease. Existing frozen confirmation/submission and original-ID recovery unchanged."
+  },
+  "verification_scope": "Production fee repository + synthetic signed HTTP end-to-end through valuation and two-sided preview; unit accounting/risk equations plus production provider/widget rows. Host-only tests, no device/wallet/private/funds/address-RPC requests. Concurrent shared network changes separately noted in verification.",
+  "remaining": [
+    "Automatic trailing activation has no fixed future entry hypothesis; shows —",
+    "Real Aster fee/collateral/allocation/risk-tier agreement, partial fill timing and lifecycle/native acceptance not tested",
+    "Full account-event merge and automatic full re-snapshot still pending; original bounded account lease remains",
+    "Moving-BBO capacity/pending-order reservation contracts, strategy management/Chase, complete Portfolio/Swap and other PRD gaps",
+    "User-deferred historical statistics/Summary/TWAP and all device verification; iOS requires macOS/Xcode"
+  ],
+  "goal_complete": false
+}
