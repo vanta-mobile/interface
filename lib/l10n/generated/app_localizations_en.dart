@@ -5955,4 +5955,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String authResendCountdown(int seconds) {
     return 'Resend code in ${seconds}s';
   }
+
+  @override
+  String get enableTradingTitle => 'Enable trading';
+
+  @override
+  String get enableTradingHeading => 'One more signature';
+
+  @override
+  String get enableTradingWalletHint =>
+      'Confirm the signature in your wallet. Check your wallet app or browser extensions if nothing pops up.';
+
+  @override
+  String get enableTradingEmbeddedHint =>
+      'Confirm one more signature with your connected wallet to enable trading.';
+
+  @override
+  String get enableTradingWalletConnected => 'Wallet connected';
+
+  @override
+  String get enableTradingUseAnother => 'Use another wallet';
+
+  @override
+  String get enableTradingStep => '2';
+
+  @override
+  String get enableTradingSignHint => 'Sign in your wallet to continue.';
+
+  @override
+  String get enableTradingEmbeddedSignHint => 'Sign to continue.';
+
+  @override
+  String get enableTradingScope =>
+      'This signature enables gas-free Spot and Futures trading for 30 days. Withdrawal access is not granted.';
+
+  @override
+  String get enableTradingReturnHint =>
+      'If nothing opens, check your wallet app and return here after signing.';
+
+  @override
+  String get enableTradingEmbeddedReturnHint =>
+      'Your connected embedded wallet will sign this trading authorization.';
+
+  @override
+  String get enableTradingOpenWallet => 'Open wallet to sign';
+
+  @override
+  String get enableTradingSign => 'Sign to enable trading';
+
+  @override
+  String get enableTradingContinue => 'Continue';
+
+  @override
+  String get enableTradingWalletSetup => 'Wallet setup';
 }

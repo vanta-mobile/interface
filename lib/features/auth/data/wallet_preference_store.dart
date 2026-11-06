@@ -6,10 +6,11 @@ import '../domain/auth_session.dart';
 
 /// Only public identity metadata is persisted here, never tokens or keys.
 class WalletPreference {
-  const WalletPreference(this.userId, this.kind, this.address);
+  const WalletPreference(this.userId, this.kind, this.address, {this.walletName});
   final String userId;
   final WalletKind kind;
   final String? address;
+  final String? walletName;
 }
 
 abstract interface class WalletPreferenceStore {
@@ -18,7 +19,10 @@ abstract interface class WalletPreferenceStore {
 }
 
 class LocalWalletPreferenceStore implements WalletPreferenceStore {
-  late final _preferences = SharedPreferencesAsync();
+  LocalWalletPreferenceStore({SharedPreferencesAsync? preferences})
+    : _providedPreferences = preferences;
+  final SharedPreferencesAsync? _providedPreferences;
+  late final _preferences = _providedPreferences ?? SharedPreferencesAsync();
   static const _key = 'vanta.primaryWallet';
 
   @override
@@ -31,7 +35,13 @@ class LocalWalletPreferenceStore implements WalletPreferenceStore {
       final kind = WalletKind.values.where((kind) => kind.name == data['kind']).firstOrNull;
       final address = data['address'];
       if (kind == null || (address != null && address is! String)) return null;
-      return WalletPreference(data['userId'] as String, kind, address as String?);
+      final name = data['walletName'];
+      return WalletPreference(
+        data['userId'] as String,
+        kind,
+        address as String?,
+        walletName: name is String && name.trim().isNotEmpty ? name.trim() : null,
+      );
     } on FormatException {
       return null;
     }
@@ -44,6 +54,7 @@ class LocalWalletPreferenceStore implements WalletPreferenceStore {
       'userId': preference.userId,
       'kind': preference.kind.name,
       'address': preference.address,
+      'walletName': preference.walletName,
     }),
   );
 }

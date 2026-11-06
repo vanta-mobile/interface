@@ -12,18 +12,23 @@ class AuthActionButton extends StatelessWidget {
     this.asset,
     this.primary = false,
     this.busy = false,
+    this.outlined = false,
     super.key,
   });
   final String label;
   final VoidCallback? onPressed;
   final String? asset;
-  final bool primary, busy;
+  final bool primary, busy, outlined;
 
   @override
   Widget build(BuildContext context) => FilledButton(
     onPressed: busy ? null : onPressed,
     style: FilledButton.styleFrom(
-      backgroundColor: primary ? AppColors.authAccent : AppColors.authButton,
+      backgroundColor: primary
+          ? AppColors.authAccent
+          : outlined
+          ? AppColors.authCard
+          : AppColors.authButton,
       foregroundColor: primary ? AppColors.authOnAccent : AppColors.authText,
       disabledBackgroundColor: primary
           ? AppColors.authAccent.withValues(alpha: .45)
@@ -33,6 +38,7 @@ class AuthActionButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
       textStyle: AuthTypography.button,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      side: outlined ? const BorderSide(color: AppColors.authLine) : null,
     ),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.center,

@@ -1,21 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../authorization/presentation/enable_trading_screen.dart';
 import '../application/auth_provider.dart';
 import '../domain/auth_session.dart';
 import 'login_panel.dart';
+import 'auth_page_header.dart';
 
-class LoginScreen extends ConsumerWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({required this.account, super.key});
   final Widget account;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  bool _enableTrading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(authProvider, (previous, next) {
+      if (next.identity == null) {
+        if (_enableTrading) setState(() => _enableTrading = false);
+      } else if (previous?.identity == null && previous?.phase != AuthPhase.initializing) {
+        setState(() => _enableTrading = true);
+      }
+    });
     final session = ref.watch(authProvider);
+    if (_enableTrading && session.identity != null) return const EnableTradingScreen();
     final awaitingCode = session.phase == AuthPhase.awaitingCode;
     final signedIn = session.identity != null;
     final l10n = AppLocalizations.of(context);
@@ -46,7 +62,7 @@ class LoginScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _LoginHeader(
+                    AuthPageHeader(
                       title: signedIn
                           ? l10n.account
                           : awaitingCode
@@ -58,7 +74,7 @@ class LoginScreen extends ConsumerWidget {
                       child: SingleChildScrollView(
                         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                         padding: const EdgeInsets.only(left: 16, right: 24, top: 12, bottom: 24),
-                        child: signedIn ? account : const LoginPanel(),
+                        child: signedIn ? widget.account : const LoginPanel(),
                       ),
                     ),
                   ],
@@ -67,47 +83,6 @@ class LoginScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _LoginHeader extends StatelessWidget {
-  const _LoginHeader({required this.title, required this.onBack});
-  final String title;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, right: 4, top: 3),
-      child: Row(
-        children: [
-          IconButton(
-            key: const Key('auth-back'),
-            tooltip: l10n.authBack,
-            onPressed: onBack,
-            icon: SvgPicture.asset(
-              'assets/auth/back.svg',
-              width: 18,
-              height: 14,
-              excludeFromSemantics: true,
-            ),
-          ),
-          Expanded(child: Text(title, style: AuthTypography.heading)),
-          IconButton(
-            key: const Key('auth-close'),
-            tooltip: l10n.authClose,
-            onPressed: () => Navigator.of(context).pop(),
-            icon: SvgPicture.asset(
-              'assets/auth/close.svg',
-              width: 24,
-              height: 24,
-              excludeFromSemantics: true,
-            ),
-          ),
-        ],
       ),
     );
   }

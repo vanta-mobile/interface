@@ -105,6 +105,7 @@ class AuthController extends Notifier<AuthSession> {
           identity.email != previous.identity?.email ||
           identity.walletAddress != previous.identity?.walletAddress ||
           identity.walletKind != previous.identity?.walletKind ||
+          identity.walletName != previous.identity?.walletName ||
           identity.signingAvailable != previous.identity?.signingAvailable) {
         _generation++;
         state = AuthSession(phase: AuthPhase.signedIn, identity: identity);
@@ -136,6 +137,7 @@ class AuthController extends Notifier<AuthSession> {
             (identity.id != state.identity?.id ||
                 identity.walletAddress != state.identity?.walletAddress ||
                 identity.walletKind != state.identity?.walletKind ||
+                identity.walletName != state.identity?.walletName ||
                 identity.signingAvailable != state.identity?.signingAvailable)) {
           _generation++;
           state = AuthSession(phase: AuthPhase.signedIn, identity: identity);

@@ -27,6 +27,7 @@ abstract final class AppColors {
   static const authInput = Color(0xFF222834);
   static const authLine = Color(0x24FFFFFF);
   static const authButton = Color(0xFF3C4143);
+  static const authCard = Color(0xFF232526);
   static const authAccent = Color(0xFF00E4AB);
   static const authOnAccent = Color(0xFF013220);
   static const authError = Color(0xFFF5464B);

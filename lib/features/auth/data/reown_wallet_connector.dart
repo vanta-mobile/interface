@@ -105,6 +105,12 @@ class ReownWalletConnection implements WalletConnection {
   final String address;
   @override
   final String chainId;
+  @override
+  String? get walletName {
+    final name = modal.session?.connectedWalletName?.trim();
+    return name == null || name.isEmpty ? null : name;
+  }
+
   final _invalidations = StreamController<void>.broadcast(sync: true);
   bool _invalid = false, _closed = false;
 

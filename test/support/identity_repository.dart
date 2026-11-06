@@ -76,6 +76,7 @@ class TestIdentityRepository implements IdentityRepository {
       id: 'external-user',
       walletAddress: connection.address,
       walletKind: WalletKind.external,
+      walletName: connection.walletName,
       signingAvailable: true,
     );
   }

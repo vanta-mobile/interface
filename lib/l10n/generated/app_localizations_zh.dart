@@ -5513,4 +5513,52 @@ class AppLocalizationsZh extends AppLocalizations {
   String authResendCountdown(int seconds) {
     return '$seconds 秒后可重新发送';
   }
+
+  @override
+  String get enableTradingTitle => '开启交易';
+
+  @override
+  String get enableTradingHeading => '还差一次签名';
+
+  @override
+  String get enableTradingWalletHint => '请在钱包中确认签名。如果没有弹出提示，请检查钱包 App 或浏览器扩展。';
+
+  @override
+  String get enableTradingEmbeddedHint => '使用已连接的钱包再确认一次签名，即可开启交易。';
+
+  @override
+  String get enableTradingWalletConnected => '钱包已连接';
+
+  @override
+  String get enableTradingUseAnother => '使用其他钱包';
+
+  @override
+  String get enableTradingStep => '2';
+
+  @override
+  String get enableTradingSignHint => '在钱包中签名以继续。';
+
+  @override
+  String get enableTradingEmbeddedSignHint => '签名以继续。';
+
+  @override
+  String get enableTradingScope => '此签名将授权 30 天的免 Gas 现货及合约交易，不授予提现权限。';
+
+  @override
+  String get enableTradingReturnHint => '如果没有打开钱包，请检查钱包 App，完成签名后返回这里。';
+
+  @override
+  String get enableTradingEmbeddedReturnHint => '已连接的内置钱包将签署本次交易授权。';
+
+  @override
+  String get enableTradingOpenWallet => '打开钱包签名';
+
+  @override
+  String get enableTradingSign => '签名并开启交易';
+
+  @override
+  String get enableTradingContinue => '继续';
+
+  @override
+  String get enableTradingWalletSetup => '设置钱包';
 }

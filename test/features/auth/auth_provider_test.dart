@@ -41,6 +41,20 @@ void main() {
     expect(repository.wallets, 0);
   });
 
+  test('wallet display name changes update an otherwise unchanged identity', () async {
+    repository.restored = identityWithWallet;
+    await start();
+    repository.events.add(
+      AuthIdentity(
+        id: identityWithWallet.id,
+        email: identityWithWallet.email,
+        walletAddress: identityWithWallet.walletAddress,
+        walletName: 'MetaMask',
+      ),
+    );
+    expect(container.read(authProvider).identity?.walletName, 'MetaMask');
+  });
+
   test('restores the existing identity without recreating its wallet', () async {
     repository.restored = identityWithWallet;
     await start();

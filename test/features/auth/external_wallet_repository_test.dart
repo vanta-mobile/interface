@@ -35,6 +35,31 @@ void main() {
     await connection.dispose();
   });
 
+  test('wallet name is retained on login and restored for the same user and address', () async {
+    final named = TestWalletConnection(walletName: 'MetaMask');
+    addTearDown(named.dispose);
+    await repository.initialize();
+    final identity = await repository.loginWithWallet(named);
+    expect(identity.walletName, 'MetaMask');
+    expect(preferences.value?.walletName, 'MetaMask');
+    sdk.state = Authenticated(sdk.siwe.user);
+    final restored = build();
+    addTearDown(restored.dispose);
+    expect((await restored.initialize())?.walletName, 'MetaMask');
+    expect((await restored.initialize())?.signingAvailable, false);
+  });
+
+  test('a stored wallet name belonging to another user is not displayed', () async {
+    preferences.value = WalletPreference(
+      'other-user',
+      WalletKind.external,
+      connection.address,
+      walletName: 'Other wallet',
+    );
+    sdk.state = Authenticated(sdk.siwe.user);
+    expect((await repository.initialize())?.walletName, isNull);
+  });
+
   test(
     'EOA personal message delegates to the connected wallet without an embedded fallback',
     () async {

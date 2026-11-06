@@ -2488,5 +2488,21 @@
   "authVerifyContinue": "Verify and continue",
   "authSpamHint": "Check your spam folder if the email hasn’t arrived.",
   "authResendCountdown": "Resend code in {seconds}s",
-  "@authResendCountdown": {"placeholders": {"seconds": {"type": "int"}}}
+  "@authResendCountdown": {"placeholders": {"seconds": {"type": "int"}}},
+  "enableTradingTitle": "Enable trading",
+  "enableTradingHeading": "One more signature",
+  "enableTradingWalletHint": "Confirm the signature in your wallet. Check your wallet app or browser extensions if nothing pops up.",
+  "enableTradingEmbeddedHint": "Confirm one more signature with your connected wallet to enable trading.",
+  "enableTradingWalletConnected": "Wallet connected",
+  "enableTradingUseAnother": "Use another wallet",
+  "enableTradingStep": "2",
+  "enableTradingSignHint": "Sign in your wallet to continue.",
+  "enableTradingEmbeddedSignHint": "Sign to continue.",
+  "enableTradingScope": "This signature enables gas-free Spot and Futures trading for 30 days. Withdrawal access is not granted.",
+  "enableTradingReturnHint": "If nothing opens, check your wallet app and return here after signing.",
+  "enableTradingEmbeddedReturnHint": "Your connected embedded wallet will sign this trading authorization.",
+  "enableTradingOpenWallet": "Open wallet to sign",
+  "enableTradingSign": "Sign to enable trading",
+  "enableTradingContinue": "Continue",
+  "enableTradingWalletSetup": "Wallet setup"
 }

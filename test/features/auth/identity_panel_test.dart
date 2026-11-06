@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
-import 'package:vanta/features/auth/presentation/identity_panel.dart';
 import 'package:vanta/features/trade/application/providers.dart';
 
 import '../../support/identity_repository.dart';
@@ -36,17 +35,11 @@ void main() {
     repository.verifyFailure = null;
     await tester.tap(find.byKey(const Key('verify-email-code')));
     await tester.pumpAndSettle();
-    expect(
-      find.descendant(
-        of: find.byType(IdentityPanel),
-        matching: find.text(identityWithWallet.walletAddress!),
-      ),
-      findsOneWidget,
-    );
-    expect(find.byKey(const Key('trading-authorization-entry')), findsOneWidget);
+    expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
+    expect(find.textContaining('0x1111…1111'), findsOneWidget);
     expect(container.read(accountProvider).connected, false);
     expect(container.read(accountProvider).balance.toString(), '10000');
-    await tester.tap(find.byKey(const Key('logout-identity')));
+    await tester.tap(find.byKey(const Key('enable-trading-switch')));
     await tester.pumpAndSettle();
     expect(container.read(authProvider).identity, null);
     expect(find.byKey(const Key('login-email')), findsOneWidget);

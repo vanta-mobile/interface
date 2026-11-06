@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
-import 'package:vanta/features/auth/presentation/identity_panel.dart';
 import 'package:vanta/features/auth/presentation/auth_controls.dart';
 import 'package:vanta/features/trade/application/providers.dart';
 
@@ -40,10 +39,8 @@ void main() {
     expect(container.read(authProvider).walletStep, WalletLoginStep.signing);
     repository.externalGate!.complete();
     await tester.pumpAndSettle();
-    expect(
-      find.descendant(of: find.byType(IdentityPanel), matching: find.text(connection.address)),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
+    expect(find.byKey(const Key('enable-trading-wallet')), findsOneWidget);
     expect(find.byKey(const Key('create-wallet')), findsNothing);
     expect(repository.wallets, 0);
     expect(connector.connects, 1);

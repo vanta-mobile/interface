@@ -10,11 +10,12 @@ class AuthIdentity {
     required this.id,
     this.email,
     this.walletAddress,
+    this.walletName,
     this.walletKind = WalletKind.embedded,
     this.signingAvailable = false,
   });
   final String id;
-  final String? email, walletAddress;
+  final String? email, walletAddress, walletName;
   final WalletKind walletKind;
   final bool signingAvailable;
 }

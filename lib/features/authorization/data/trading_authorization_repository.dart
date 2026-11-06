@@ -1,4 +1,5 @@
 import '../../../core/network/request_scope.dart';
+import '../../../core/errors/api_error_details.dart';
 import '../../../core/data/aster_signature_verifier.dart';
 import '../../portfolio/data/aster_account_mapper.dart';
 import '../../portfolio/data/aster_spot_mapper.dart';
@@ -97,7 +98,7 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
         return TradingAuthorizationResult.unknown;
       }
     } on AuthFailure catch (e) {
-      throw AccountReadFailure(e.key);
+      throw AccountReadFailure(e.key, details: ApiErrorDetails(message: e.reason));
     }
   });
 

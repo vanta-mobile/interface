@@ -36,6 +36,7 @@ final tradingAuthorizationProvider =
 class TradingAuthorizationController extends Notifier<TradingAuthorizationState> {
   int _generation = 0;
   bool _working = false;
+  bool _submitting = false;
   @override
   TradingAuthorizationState build() {
     ref.watch(tradingAuthorizationRepositoryProvider);
@@ -52,7 +53,13 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
       (a, b) {
         if (a != b) {
           _generation++;
-          state = const TradingAuthorizationState();
+          final sameWallet = a != null && a.$1 == b.$1 && a.$2 == b.$2 && a.$3 == b.$3;
+          state = sameWallet
+              ? TradingAuthorizationState(
+                  result: state.result ?? (_submitting ? TradingAuthorizationResult.unknown : null),
+                  check: state.check,
+                )
+              : const TradingAuthorizationState();
         }
       },
     );
@@ -67,7 +74,12 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
       ref.read(authProvider).identity?.walletAddress == i.walletAddress;
   void prepare({bool canWithdraw = false, String ipWhitelist = ''}) {
     final auth = ref.read(authProvider), identity = auth.identity;
-    if (_working || auth.busy || identity?.walletAddress == null) return;
+    if (_working ||
+        auth.busy ||
+        identity?.walletAddress == null ||
+        state.result == TradingAuthorizationResult.unknown) {
+      return;
+    }
     if (!identity!.signingAvailable) {
       state = const TradingAuthorizationState(failure: 'authWalletReconnect');
       return;
@@ -90,12 +102,25 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
   }
 
   void cancel() {
-    if (!_working) state = const TradingAuthorizationState();
+    if (!_working && state.result != TradingAuthorizationResult.unknown) {
+      state = const TradingAuthorizationState();
+    }
+  }
+
+  /// The onboarding page itself reviews the default trading-only grant.
+  /// An uncertain dispatched write must be checked, never submitted again.
+  Future<void> enableTrading() async {
+    if (_working || state.result != null) return;
+    prepare();
+    if (state.review case final review?) await confirm(review);
   }
 
   void stop() {
     _generation++;
-    state = const TradingAuthorizationState();
+    state = TradingAuthorizationState(
+      result: state.result ?? (_submitting ? TradingAuthorizationResult.unknown : null),
+      check: state.check,
+    );
   }
 
   Future<void> confirm(TradingAuthorizationReview review) async {
@@ -103,6 +128,7 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
     final g = ++_generation;
     if (!_current(review.identity, g)) return;
     _working = true;
+    _submitting = true;
     state = const TradingAuthorizationState(busy: true);
     try {
       final result = await ref
@@ -117,6 +143,7 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
         );
       }
     } finally {
+      _submitting = false;
       _working = false;
     }
   }
@@ -125,7 +152,11 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
     final auth = ref.read(authProvider), identity = auth.identity;
     if (_working || auth.busy || identity?.walletAddress == null) return;
     if (!identity!.signingAvailable) {
-      state = const TradingAuthorizationState(failure: 'authWalletReconnect');
+      state = TradingAuthorizationState(
+        result: state.result,
+        check: state.check,
+        failure: 'authWalletReconnect',
+      );
       return;
     }
     final g = ++_generation, previous = state;

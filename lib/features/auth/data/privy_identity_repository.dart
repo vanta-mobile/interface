@@ -269,7 +269,14 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
       _user = null;
       _walletEvents.add(null);
     });
-    await _remember(WalletPreference(user.id, WalletKind.external, connection.address));
+    await _remember(
+      WalletPreference(
+        user.id,
+        WalletKind.external,
+        connection.address,
+        walletName: connection.walletName,
+      ),
+    );
     if (!connection.isCurrent || _externalInvalidated) throw const AuthFailure('authWalletChanged');
     return _identity(user);
   });
@@ -415,18 +422,24 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
         ? null
         : selectedExternal ?? externalWallets.firstOrNull;
     final address = external?.address ?? user.embeddedEthereumWallets.firstOrNull?.address;
+    final connection =
+        _connection?.isCurrent == true &&
+            _connection?.address.toLowerCase() == external?.address.toLowerCase()
+        ? _connection
+        : null;
     return AuthIdentity(
       id: user.id,
       email: user.linkedAccounts.whereType<EmailAccount>().firstOrNull?.emailAddress,
       walletAddress: address == null ? null : _walletAddress(address),
       walletKind: external == null ? WalletKind.embedded : WalletKind.external,
+      walletName: external == null
+          ? null
+          : connection?.walletName ??
+                (selectedExternal == external ? preference?.walletName : null),
       signingAvailable:
           !_disposed &&
           !_externalInvalidated &&
-          (external == null
-              ? address != null
-              : (_connection?.isCurrent == true &&
-                    _connection?.address.toLowerCase() == external.address.toLowerCase())),
+          (external == null ? address != null : connection != null),
     );
   }
 

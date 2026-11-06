@@ -23,6 +23,14 @@ void main() {
     await modal.dispose();
   });
 
+  test('wallet display name comes from the connected peer rather than app metadata', () {
+    expect(connection.walletName, 'MetaMask');
+    modal.walletName = '  Trust Wallet  ';
+    expect(connection.walletName, 'Trust Wallet');
+    modal.walletName = '   ';
+    expect(connection.walletName, isNull);
+  });
+
   test('transaction RPC preserves exact reviewed fields and original chain', () async {
     final tx = walletTransaction();
     modal.result = '0x${'a' * 64}';
@@ -170,6 +178,7 @@ void main() {
 }
 
 class _Modal extends ChangeNotifier implements ReownAppKitModal {
+  String walletName = 'MetaMask';
   List<String> methods = ['eth_sendTransaction'];
   String approvedChain = '56';
   bool get observesSession => hasListeners;
@@ -195,7 +204,15 @@ class _Modal extends ChangeNotifier implements ReownAppKitModal {
       acknowledged: true,
       controller: 'key',
       self: metadata,
-      peer: metadata,
+      peer: ConnectionMetadata(
+        publicKey: 'wallet-key',
+        metadata: PairingMetadata(
+          name: walletName,
+          description: 'Connected wallet',
+          url: 'https://example.com/wallet',
+          icons: [],
+        ),
+      ),
       namespaces: {
         'eip155': Namespace(
           accounts: ['eip155:$approvedChain:$address'],

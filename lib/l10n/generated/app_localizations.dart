@@ -10406,6 +10406,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resend code in {seconds}s'**
   String authResendCountdown(int seconds);
+
+  /// No description provided for @enableTradingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable trading'**
+  String get enableTradingTitle;
+
+  /// No description provided for @enableTradingHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'One more signature'**
+  String get enableTradingHeading;
+
+  /// No description provided for @enableTradingWalletHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the signature in your wallet. Check your wallet app or browser extensions if nothing pops up.'**
+  String get enableTradingWalletHint;
+
+  /// No description provided for @enableTradingEmbeddedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm one more signature with your connected wallet to enable trading.'**
+  String get enableTradingEmbeddedHint;
+
+  /// No description provided for @enableTradingWalletConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet connected'**
+  String get enableTradingWalletConnected;
+
+  /// No description provided for @enableTradingUseAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Use another wallet'**
+  String get enableTradingUseAnother;
+
+  /// No description provided for @enableTradingStep.
+  ///
+  /// In en, this message translates to:
+  /// **'2'**
+  String get enableTradingStep;
+
+  /// No description provided for @enableTradingSignHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in your wallet to continue.'**
+  String get enableTradingSignHint;
+
+  /// No description provided for @enableTradingEmbeddedSignHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign to continue.'**
+  String get enableTradingEmbeddedSignHint;
+
+  /// No description provided for @enableTradingScope.
+  ///
+  /// In en, this message translates to:
+  /// **'This signature enables gas-free Spot and Futures trading for 30 days. Withdrawal access is not granted.'**
+  String get enableTradingScope;
+
+  /// No description provided for @enableTradingReturnHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If nothing opens, check your wallet app and return here after signing.'**
+  String get enableTradingReturnHint;
+
+  /// No description provided for @enableTradingEmbeddedReturnHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your connected embedded wallet will sign this trading authorization.'**
+  String get enableTradingEmbeddedReturnHint;
+
+  /// No description provided for @enableTradingOpenWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Open wallet to sign'**
+  String get enableTradingOpenWallet;
+
+  /// No description provided for @enableTradingSign.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign to enable trading'**
+  String get enableTradingSign;
+
+  /// No description provided for @enableTradingContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get enableTradingContinue;
+
+  /// No description provided for @enableTradingWalletSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet setup'**
+  String get enableTradingWalletSetup;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

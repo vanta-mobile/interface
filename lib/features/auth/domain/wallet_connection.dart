@@ -4,6 +4,9 @@ import 'wallet_transaction.dart';
 abstract interface class WalletConnection {
   String get address;
   String get chainId;
+
+  /// Public display metadata from the connected wallet, never signer identity.
+  String? get walletName;
   bool get isCurrent;
   Stream<void> get invalidations;
   Future<String> signPersonalMessage(String message);

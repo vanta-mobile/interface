@@ -20,9 +20,12 @@ class TestWalletConnection implements WalletConnection {
   final String address;
   @override
   final String chainId;
+  @override
+  final String? walletName;
   TestWalletConnection({
     this.address = '0x2222222222222222222222222222222222222222',
     this.chainId = '56',
+    this.walletName,
   });
   bool current = true;
   int disconnected = 0, personalSigns = 0, typedSigns = 0;
