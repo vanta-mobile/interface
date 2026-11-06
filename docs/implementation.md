@@ -1,5 +1,32 @@
 ## 当前验收安排
 
+## 2026-11-06 数字变化动画与数值格式化组件迁移
+
+从 `/data/dodo/rwa-interface` 迁入以下公共能力，保持原类名、方法参数和默认展示规则，无新增依赖：
+
+- `lib/core/motion/animated_number_text.dart`：`AnimatedNumberText`、`NumberTrend`、`compareFormattedAmounts`。只滚动变化的字符，默认700ms，使用等宽数字并在结束后恢复普通Text；支持自定义方向、比较值、时长、跳过首次变化、自动换行及系统减少动态效果设置。列表应按业务实体设置Key。
+- `lib/core/formatters/token_amount_formatter.dart`：自适应小数、千分位、USD、固定USD位数、百分比、K/M/B/T、代币单位、最小单位BigInt换算、固定输入精度及USD求和；保留源项目逗号分组与小数点规则。小于1的非零值从首个非零小数位起保留最多六位，展示舍入采用绝对值四舍五入。百分比输入本身为百分点，不自动乘100。
+- `lib/core/formatters/decimal_text_input_formatter.dart`：无符号十进制输入限制，拒绝非法字符与会覆盖未编辑尾数的溢出插入，粘贴时截断超出小数位并保持光标有效。
+- `lib/core/domain/decimal_value.dart`：格式化器依赖的不可变精确小数字符串模型，保留资产、单位和scale校验。传入普通十进制字符串，不接受科学计数法、NaN或Infinity。展示与求和使用字符串／BigInt，不经过double；现有订单金融计算继续使用decimal包。
+
+迁移时修复格式化值比较的边界：统一K/M/B/T倍率后比较，保证`1000K`与`1M`相等、负零与零相等且超出double精度的变化方向正确；同时识别USD输出的`$-1.20`和compact输出的`-$1.2K`。显示文本相同而comparisonValue更新时保留最新比较基准。滚动期间对读屏提供一个完整新数值，隐藏各轮的旧／新字符。
+
+使用示例：
+
+```dart
+import 'package:vanta/core/domain/decimal_value.dart';
+import 'package:vanta/core/formatters/token_amount_formatter.dart';
+import 'package:vanta/core/motion/animated_number_text.dart';
+
+AnimatedNumberText(
+  TokenAmountFormatter.formatUsdFixed(DecimalValue('182.45')),
+);
+```
+
+本次提供可直接导入的组件与工具，没有将现有业务页面的格式规则批量替换；固定金融输入格式`formatFixed`遇到非零超限小数仍拒绝，不会静默舍入订单数量。原组件与工具测试已同步迁入`test/core`，并增加跨后缀倍率、USD负号、读屏、零时长、比较基准更新及窄屏放大文字回归覆盖。55项专项单元／Widget测试通过，8个新增Dart文件格式检查零改动，新增文件静态分析无问题。
+
+已在Android 15 x64模拟器用独立预览检查静止／滚动状态、放大文字和横屏，截图位于本地`build/verification/numeric-components/`；预览程序不接入账户或网络，验收后已卸载，未安装主应用。最终全项目`dart analyze --fatal-infos`通过。原工作目录Android构建遇到生成的插件注册代码引用未参与Release编译的integration_test；使用隔离工作区快照重新生成构建文件后，`make build-apk`通过，未修改原生配置。arm64 Release APK存于本地`build/verification/numeric-components/app-release.apk`，SHA256为`b21b46359680d82a532b928f60c2f078db277d18e52c50c92e24b63c1788507b`。Linux无macOS／Xcode，iOS构建未验证。
+
 ## 2026-11-05 README 精简与 Actions 失败修复
 
 README 仅保留项目简介、本地运行、检查构建和文档入口，移除参考项目来源、逐轮进度及历史验收流水账。
