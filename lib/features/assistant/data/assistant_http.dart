@@ -1,3 +1,6 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/errors/api_error_parser.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -15,7 +18,7 @@ class AssistantHttp {
     this.requestTimeout = const Duration(seconds: 20),
     this.chatTimeout = const Duration(minutes: 5),
     this.idleTimeout = const Duration(minutes: 2),
-  }) : _client = client ?? createMarketHttpClient(),
+  }) : _client = createMarketHttpClient(client: client, timeout: chatTimeout),
        now = now ?? DateTime.now;
   final http.Client _client;
   final DateTime Function() now;
@@ -105,7 +108,10 @@ class AssistantHttp {
       rethrow;
     } catch (_) {
       lease.check();
-      throw const AssistantFailure('assistantUnavailable');
+      throw const AssistantFailure(
+        'assistantUnavailable',
+        details: ApiErrorDetails(cause: ApiErrorCause.connection),
+      );
     } finally {
       _release(lease);
     }
@@ -194,7 +200,10 @@ class AssistantHttp {
       rethrow;
     } catch (_) {
       lease.check();
-      throw const AssistantFailure('assistantUnavailable');
+      throw const AssistantFailure(
+        'assistantUnavailable',
+        details: ApiErrorDetails(cause: ApiErrorCause.connection),
+      );
     } finally {
       _release(lease);
     }
@@ -299,8 +308,7 @@ class AssistantHttp {
       /* Raw server diagnostics never escape this data boundary. */
     }
     lease.check();
-    final quotaExceeded =
-        response.statusCode == 429 || (value is Map && value['code'] == 'daily_quota_exceeded');
+    final quotaExceeded = value is Map && value['code'] == 'daily_quota_exceeded';
     AssistantQuota? quota;
     if (value is Map && quotaExceeded) {
       int? count(String key) =>
@@ -323,11 +331,14 @@ class AssistantHttp {
     throw AssistantFailure(
       quotaExceeded
           ? 'assistantQuotaExceeded'
+          : response.statusCode == 429
+          ? 'assistantRateLimited'
           : response.statusCode == 401 || response.statusCode == 403
           ? 'assistantAuthorization'
           : 'assistantUnavailable',
       status: response.statusCode,
       quota: quota,
+      details: apiErrorDetails(value, status: response.statusCode),
     );
   }
 
@@ -359,7 +370,14 @@ class _RequestLease {
   bool _disposed = false;
   String reason = 'assistantCancelled';
   void check() {
-    if (stopped.isCompleted) throw AssistantFailure(reason);
+    if (stopped.isCompleted) {
+      throw AssistantFailure(
+        reason,
+        details: ApiErrorDetails(
+          cause: reason == 'assistantTimeout' ? ApiErrorCause.timeout : ApiErrorCause.cancelled,
+        ),
+      );
+    }
   }
 
   void touch() {

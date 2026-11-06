@@ -6,6 +6,7 @@ import '../../portfolio/presentation/aster_open_orders_panel.dart';
 import '../../portfolio/presentation/live_order_screen.dart';
 import '../../portfolio/presentation/quick_order_panel.dart';
 import '../application/navigation_provider.dart';
+import '../application/page_refresh_provider.dart';
 import '../application/providers.dart';
 import 'widgets/candle_chart.dart';
 import 'widgets/market_header.dart';
@@ -20,29 +21,37 @@ class FuturesWorkspace extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final chart = ref.watch(futuresWorkspaceTabProvider) == FuturesWorkspaceTab.chart;
     return LayoutBuilder(
-      builder: (context, constraints) => SingleChildScrollView(
-        key: const Key('futures-workspace'),
-        padding: EdgeInsets.all(constraints.maxWidth >= 1000 ? 16 : 8),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1480),
-            child: Column(
-              children: [
-                const MarketHeader(),
-                const SizedBox(height: 8),
-                const FuturesWorkspaceTabs(),
-                const SizedBox(height: 8),
-                Visibility(
-                  visible: chart,
-                  maintainState: true,
-                  child: const Column(
-                    children: [CandleChart(), SizedBox(height: 8), QuickOrderPanel()],
+      builder: (context, constraints) => RefreshIndicator(
+        onRefresh: ref.read(pageRefreshProvider).futures,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          key: const Key('futures-workspace'),
+          padding: EdgeInsets.all(constraints.maxWidth >= 1000 ? 16 : 8),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1480),
+              child: Column(
+                children: [
+                  const MarketHeader(),
+                  const SizedBox(height: 8),
+                  const FuturesWorkspaceTabs(),
+                  const SizedBox(height: 8),
+                  Visibility(
+                    visible: chart,
+                    maintainState: true,
+                    child: const Column(
+                      children: [CandleChart(), SizedBox(height: 8), QuickOrderPanel()],
+                    ),
                   ),
-                ),
-                Visibility(visible: !chart, maintainState: true, child: const DemoTradeWorkspace()),
-                const SizedBox(height: 8),
-                const FuturesAccountSections(),
-              ],
+                  Visibility(
+                    visible: !chart,
+                    maintainState: true,
+                    child: const DemoTradeWorkspace(),
+                  ),
+                  const SizedBox(height: 8),
+                  const FuturesAccountSections(),
+                ],
+              ),
             ),
           ),
         ),

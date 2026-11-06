@@ -1,3 +1,6 @@
+import '../../../core/errors/api_error_parser.dart';
+import '../../../core/network/request_scope.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -16,7 +19,7 @@ class VantaEventRegistrationRepository implements EventRegistrationRepository {
     http.Client? client,
     DateTime Function()? now,
     this.timeout = const Duration(seconds: 12),
-  }) : _client = client ?? createMarketHttpClient(),
+  }) : _client = createMarketHttpClient(client: client, timeout: timeout),
        now = now ?? DateTime.now;
   final PointsRepository points;
   final WalletMessageSigner Function() signer;
@@ -29,7 +32,7 @@ class VantaEventRegistrationRepository implements EventRegistrationRepository {
     EventRegistrationApproval approval, {
     required bool Function() isCurrent,
     required void Function(EventRegistrationPhase) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     final id = approval.event.id, address = approval.identity.walletAddress;
     if (address == null || !isPointsEvmAddress(address) || !approval.identity.signingAvailable) {
       throw const EventRegistrationFailure('pointsWalletRequired');
@@ -89,7 +92,11 @@ class VantaEventRegistrationRepository implements EventRegistrationRepository {
         await _client.send(request),
       ))().timeout(timeout);
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw const EventRegistrationFailure('eventRegistrationUnknown', mayHaveSent: true);
+        throw EventRegistrationFailure(
+          'eventRegistrationUnknown',
+          mayHaveSent: true,
+          details: apiErrorDetails(decodeErrorPayload(response.body), status: response.statusCode),
+        );
       }
     } on EventRegistrationFailure {
       rethrow;
@@ -110,5 +117,5 @@ class VantaEventRegistrationRepository implements EventRegistrationRepository {
       /* Keep acknowledgement separate from verification. */
     }
     return EventRegistrationPhase.acknowledged;
-  }
+  });
 }

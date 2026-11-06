@@ -64,10 +64,11 @@ void main() {
     repository.gates[names] = Completer();
     await t.pump();
     expect(state().loading, true);
-    await refresh();
+    final duplicate = refresh();
     expect(repository.calls.length, 1);
     repository.gates.remove(names)!.complete(snapshot(names));
     await t.pump();
+    await duplicate;
     expect(state().snapshot, isNotNull);
   });
   check('failed refresh keeps previous names and marks them stale, no timer retries', (t) async {

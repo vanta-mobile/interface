@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/position_leverage.dart';
 import 'aster_account_service.dart';
@@ -26,7 +27,7 @@ class SignedPositionLeverageRepository implements PositionLeverageRepository {
     required String symbol,
     required bool Function() isCurrent,
     required void Function(LeverageStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       validateLeverageSymbol(symbol);
       void progress(AccountReadStep step) => onStep(switch (step) {
@@ -63,7 +64,7 @@ class SignedPositionLeverageRepository implements PositionLeverageRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 
   @override
   Future<LeverageResult> change({
@@ -71,7 +72,7 @@ class SignedPositionLeverageRepository implements PositionLeverageRepository {
     required bool Function() isCurrent,
     required bool Function() canSubmit,
     required void Function(LeverageStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     final context = intent.context;
     try {
       validateLeverageSymbol(context.symbol);
@@ -104,12 +105,16 @@ class SignedPositionLeverageRepository implements PositionLeverageRepository {
       );
     } on AccountReadFailure catch (failure) {
       if (!submitted || !isCurrent()) rethrow;
-      submitFailure = AccountReadFailure(switch (failure.code) {
-        -2027 => 'leverageExposureLimit',
-        -2028 => 'leverageMarginInsufficient',
-        -4028 => 'leverageNotAllowed',
-        _ => failure.key,
-      }, code: failure.code);
+      submitFailure = AccountReadFailure(
+        switch (failure.code) {
+          -2027 => 'leverageExposureLimit',
+          -2028 => 'leverageMarginInsufficient',
+          -4028 => 'leverageNotAllowed',
+          _ => failure.key,
+        },
+        code: failure.code,
+        details: failure.details,
+      );
     }
     final result = await recheck(intent: intent, isCurrent: isCurrent, onStep: onStep);
     return LeverageResult(
@@ -117,14 +122,14 @@ class SignedPositionLeverageRepository implements PositionLeverageRepository {
       checkedAt: result.checkedAt,
       failure: result.failure ?? (result.observed == intent.target ? null : submitFailure),
     );
-  }
+  });
 
   @override
   Future<LeverageResult> recheck({
     required LeverageIntent intent,
     required bool Function() isCurrent,
     required void Function(LeverageStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       validateLeverageSymbol(intent.context.symbol);
       final payload = await _request(service.positionRisk).read(
@@ -145,5 +150,5 @@ class SignedPositionLeverageRepository implements PositionLeverageRepository {
       if (!isCurrent()) rethrow;
       return LeverageResult(failure: failure);
     }
-  }
+  });
 }

@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../../portfolio/domain/account_snapshot.dart';
 import '../domain/deposit_wallet.dart';
 import '../domain/funding_catalog.dart';
@@ -12,7 +13,7 @@ class RpcDepositWalletRepository implements DepositWalletRepository {
     required String address,
     required DepositWalletQuery query,
     required bool Function() isCurrent,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     void current() {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
     }
@@ -98,5 +99,5 @@ class RpcDepositWalletRepository implements DepositWalletRepository {
     } on FormatException {
       throw const AccountReadFailure('depositRpcInvalid');
     }
-  }
+  });
 }

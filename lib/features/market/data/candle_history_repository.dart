@@ -1,3 +1,5 @@
+import '../../../core/network/request_scope.dart';
+
 import 'dart:async';
 
 import '../domain/candle_series.dart';
@@ -9,7 +11,7 @@ class HistoryCancelled implements Exception {
 }
 
 /// Bounds outstanding history across rapid chart switches. Drops obsolete work
-/// before it reaches the service; already-started responses stay in their cache.
+/// before it reaches the service; already-started obsolete HTTP requests are aborted.
 class CandleHistoryRepository {
   CandleHistoryRepository(this.service);
   final AsterService service;
@@ -48,7 +50,9 @@ class CandleHistoryRepository {
 
   Future<void> _run(_HistoryRequest request) async {
     try {
-      request.result.complete(await request.run());
+      request.result.complete(
+        await RequestScope.run(() => !_disposed && !request.cancelled(), request.run),
+      );
     } on Object catch (error, stack) {
       request.result.completeError(error, stack);
     } finally {

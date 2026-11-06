@@ -1,9 +1,10 @@
+import '../../../core/errors/error_text.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
@@ -128,7 +129,7 @@ class ScaledItemResult extends StatelessWidget {
           if (result?.orderId case final id?) SelectableText(id),
           if (failure != null)
             Text(
-              '${tr(context, failure.key)}${failure.code == null ? '' : '\n${l10n.accountErrorCode(failure.code!)}'}',
+              accountErrorText(context, failure),
               style: const TextStyle(color: AppColors.negative),
             ),
         ],

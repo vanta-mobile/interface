@@ -11,6 +11,15 @@ Adapted from `/data/dodo/rwa-interface/.specify/memory/constitution.md` v1.1.1 a
 - Apply appropriate code design principles to keep implementations robust, maintainable, and performant. Keep abstractions proportional to the actual requirements.
 - Observe frequently changing state near the widgets that consume it.
 
+## API integration and transport lifecycle
+- Route API intents through Riverpod controllers/providers and feature repositories. Providers compose dependencies and expose domain state; parse and validate HTTP/WebSocket payloads in data-layer mappers/repositories, including public market data. Do not expose mutable transport maps as application state.
+- Inject backend-scoped HTTP connection pools and rate-limit budgets through Riverpod. A feature service owns its request lifetime, not an injected shared pool; disposing or cancelling one feature must not close another feature's connections or cancel its requests. Keep credentials, signed query bytes and custom numeric decoders request/service scoped.
+- Make in-flight HTTP requests abortable. Timeouts, operation cancellation, account/symbol changes and disposal must stop the applicable transport as well as prevent late state writes. Propagate cancellation through preflight requests, response bodies, retries and backoff; retain identity/revision guards around wallet signing and asynchronous results.
+- Cancellation or timeout after a financial write was dispatched means its outcome may be unknown. Preserve existing recovery journals and verify server state before retrying. Never automatically replay orders, transfers, withdrawals or other signed writes.
+- Share equivalent public WebSocket subscriptions with reference-counted ownership. Replay current connection state to late subscribers, retain feature-specific freshness/validation rules, and close the underlying subscription when its last consumer leaves. Never share private account streams or credential state across identities.
+- Centralize transport mechanics (connection reuse, bounded response reads, cancellation and host rate-limit cooldowns) without coupling unrelated API contracts. Respect Retry-After; restrict automatic retries to explicitly safe reads, and ensure cancellation interrupts queued/backoff work.
+- Verify transport changes with tests for cancellation before headers and during response bodies, timeout/disposal, isolation between consumers, shared subscription reconnection/teardown, malformed payloads and financial unknown-outcome recovery. Record scope and actual verification in docs/implementation.md.
+
 ## Design and accessibility
 - Follow the supplied design and explicit user requirements. Do not invent extra UI, status indicators, state displays, or interactions beyond that scope.
 - Use centralized semantic theme tokens for colors and typography. No literal colors in feature widgets; third-party chart adaptation is an allowed boundary.
@@ -20,6 +29,7 @@ Adapted from `/data/dodo/rwa-interface/.specify/memory/constitution.md` v1.1.1 a
 
 ## Errors, loading, and refresh
 - Prefer the actual API-provided error message when displaying failures. If none is available, show the concrete known cause; use generic fallback copy only when the cause is genuinely unknown. Keep useful diagnostic detail while excluding secrets, credentials, raw sensitive payloads, and stack traces.
+- Carry typed error details (safe server message, HTTP status, known transport cause and existing business code) from the data boundary through Riverpod state to the existing error UI. Keep stable localization/recovery keys for behavior; never infer financial success or retry safety from display text. Treat explicit business failure envelopes as errors even on HTTP 200. A temporary HTTP 429 is not evidence that a daily quota is exhausted.
 - Prefer skeleton placeholders scoped to the section that is loading, without blocking or disturbing other content. Unless the feature has exceptionally strict real-time requirements, show loading placeholders only when that section has no data; preserve existing data during refreshes.
 - Every page that displays API data must support pull-to-refresh. Refresh all API-backed data the page depends on, and keep the refresh indicator active until all requests triggered by that refresh have settled, including failures. Await the complete refresh operation rather than ending the indicator after dispatching requests.
 - While a button-triggered operation is pending, disable the button and show a spinning loading indicator in it to prevent duplicate submissions. Consider a shared loading-button component when there are real reuse opportunities.

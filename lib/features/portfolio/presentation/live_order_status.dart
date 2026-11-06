@@ -1,7 +1,8 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../application/live_order_provider.dart';
@@ -84,7 +85,7 @@ class LiveOrderStatus extends ConsumerWidget {
         ],
         if (failure != null)
           Text(
-            '${tr(context, failure.key)}${failure.code == null ? '' : ' ${l10n.accountErrorCode(failure.code!)}'}',
+            accountErrorText(context, failure),
             key: const Key('live-order-error'),
             style: const TextStyle(color: AppColors.negative),
           ),

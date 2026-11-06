@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -121,7 +123,15 @@ class _ParticipantContent extends ConsumerWidget {
           EventRegistrationPhase.unknown => l10n.eventRegistrationUnknown,
           _ => '',
         }),
-        if (action.failureKey case final key?) Text(eventActionFailure(key, l10n)),
+        if (action.failureKey case final key?)
+          Text(
+            apiErrorText(
+              context,
+              key,
+              action.errorDetails,
+              fallbackText: eventActionFailure(key, l10n),
+            ),
+          ),
         PointsStatus(
           state: state,
           onRefresh: controller.reconcile,

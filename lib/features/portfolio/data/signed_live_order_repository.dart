@@ -1,3 +1,5 @@
+import '../../../core/network/request_scope.dart';
+
 import 'package:decimal/decimal.dart';
 
 import '../domain/account_snapshot.dart';
@@ -46,7 +48,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
     required bool Function() isCurrent,
     required void Function(LiveOrderStep) onStep,
     bool includeFunds = true,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       validatePositionSymbol(symbol);
       onStep(LiveOrderStep.preparing);
@@ -185,7 +187,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 
   @override
   Future<LiveOrderResult> submit({
@@ -193,7 +195,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
     required bool Function() isCurrent,
     required bool Function() canSubmit,
     required void Function(LiveOrderStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
     final context = intent.context;
     if (!RegExp(r'^[.A-Z:/a-z0-9_-]{1,36}$').hasMatch(intent.clientOrderId) ||
@@ -247,7 +249,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
           : checked;
     }
     return recheck(intent: intent, isCurrent: isCurrent, onStep: onStep);
-  }
+  });
 
   Future<void> _verifyPositionSnapshot(
     LiveOrderIntent intent,
@@ -300,7 +302,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
     required LiveOrderIntent intent,
     required bool Function() isCurrent,
     required void Function(LiveOrderStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     return SignedOrderQueryRepository(
       service,
       sign,
@@ -308,5 +310,5 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
       now,
       journal: journal,
     ).query(OrderQuery.capture(intent), isCurrent: isCurrent, onStep: onStep);
-  }
+  });
 }

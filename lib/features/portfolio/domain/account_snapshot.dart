@@ -1,5 +1,9 @@
-class AccountReadFailure implements Exception {
-  const AccountReadFailure(this.key, {this.code});
+import '../../../core/errors/api_error_details.dart';
+
+class AccountReadFailure implements Exception, DetailedApiFailure {
+  const AccountReadFailure(this.key, {this.code, this.details});
+  @override
+  final ApiErrorDetails? details;
   final String key;
   final int? code;
 }

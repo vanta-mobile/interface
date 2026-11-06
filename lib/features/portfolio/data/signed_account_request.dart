@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/aster_signature.dart';
 export '../domain/aster_signature.dart';
 import '../../auth/domain/auth_session.dart';
@@ -51,7 +52,7 @@ class SignedAccountRequest {
     required bool Function() isCurrent,
     required void Function(AccountReadStep) onStep,
     Map<String, String> parameters = const {},
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     void check() {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
     }
@@ -96,5 +97,5 @@ class SignedAccountRequest {
     } catch (_) {
       throw const AccountReadFailure('accountReadFailed');
     }
-  }
+  });
 }

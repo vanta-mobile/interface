@@ -1,3 +1,4 @@
+import '../../../core/errors/error_text.dart';
 import '../application/futures_history_provider.dart';
 
 import 'package:flutter/material.dart';
@@ -65,7 +66,7 @@ class AccountChangePanel extends ConsumerWidget {
         ],
         if (state.failure case final failure?)
           Text(
-            '${tr(context, failure.key)}${failure.code == null ? '' : '\n${l10n.accountErrorCode(failure.code!)}'}',
+            accountErrorText(context, failure),
             style: const TextStyle(color: AppColors.negative),
           ),
         if (state.renewalDue && state.connection != AccountChangeConnection.expired)

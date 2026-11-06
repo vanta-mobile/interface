@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_details.dart';
+
 import 'package:decimal/decimal.dart';
 
 import 'trading_event.dart';
@@ -16,9 +18,11 @@ class PointsLoadState<T> {
     this.stale = false,
     this.active = true,
     this.failureKey,
+    this.errorDetails,
   });
   final PointsSnapshot<T>? snapshot;
   final bool loading, stale, active;
+  final ApiErrorDetails? errorDetails;
   final String? failureKey;
 }
 
@@ -124,7 +128,9 @@ abstract interface class PointsRepository {
   Future<PointsSnapshot<EventParticipant>> eventParticipant(int id, String address);
 }
 
-class PointsFailure implements Exception {
-  const PointsFailure(this.key);
+class PointsFailure implements Exception, DetailedApiFailure {
+  const PointsFailure(this.key, {this.details});
+  @override
+  final ApiErrorDetails? details;
   final String key;
 }

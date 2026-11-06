@@ -1,3 +1,6 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/network/network_providers.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/application/wallet_operation_provider.dart';
@@ -15,10 +18,10 @@ import '../domain/withdrawal.dart';
 
 final withdrawalClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final withdrawalRepositoryProvider = Provider<WithdrawalRepository>((ref) {
-  final futures = AsterAccountService(),
-      spot = AsterSpotService(),
-      catalog = FundingCatalogService(),
-      fees = FundingFeeService();
+  final futures = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease()),
+      spot = AsterSpotService(client: ref.watch(backendHttpPoolProvider).lease()),
+      catalog = FundingCatalogService(client: ref.watch(backendHttpPoolProvider).lease()),
+      fees = FundingFeeService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(() {
     futures.close();
     spot.close();
@@ -94,7 +97,10 @@ class WithdrawalController extends Notifier<WithdrawalState> {
       if (_current(i, g)) state = WithdrawalState(review: r);
     } catch (e) {
       if (_current(i!, g)) {
-        state = WithdrawalState(failure: e is AccountReadFailure ? e.key : 'accountReadFailed');
+        state = WithdrawalState(
+          errorDetails: errorDetailsOf(e),
+          failure: e is AccountReadFailure ? e.key : 'accountReadFailed',
+        );
       }
     } finally {
       _working = false;
@@ -114,7 +120,10 @@ class WithdrawalController extends Notifier<WithdrawalState> {
       if (_current(review.identity, g)) state = WithdrawalState(result: r);
     } catch (e) {
       if (_current(review.identity, g)) {
-        state = WithdrawalState(failure: e is AccountReadFailure ? e.key : 'accountReadFailed');
+        state = WithdrawalState(
+          errorDetails: errorDetailsOf(e),
+          failure: e is AccountReadFailure ? e.key : 'accountReadFailed',
+        );
       }
     } finally {
       _working = false;

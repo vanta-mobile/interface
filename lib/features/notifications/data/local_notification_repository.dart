@@ -1,3 +1,5 @@
+import '../../../core/network/request_scope.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -78,7 +80,7 @@ class LocalNotificationRepository implements NotificationRepository {
     List<TransferRecord> records,
     DateTime observedAt, {
     required bool Function() isCurrent,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     final incoming = List<TransferRecord>.unmodifiable(records);
     var initial = false;
     await _queue(() async {
@@ -118,7 +120,7 @@ class LocalNotificationRepository implements NotificationRepository {
       await _save();
     });
     return initial;
-  }
+  });
 
   @override
   Future<void> add(String address, AccountNotification event) => _queue(() async {

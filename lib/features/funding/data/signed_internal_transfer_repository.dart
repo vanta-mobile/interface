@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../../portfolio/data/aster_account_service.dart';
 import '../../portfolio/data/aster_spot_service.dart';
 import '../../portfolio/data/aster_read_service.dart';
@@ -40,7 +41,7 @@ class SignedInternalTransferRepository implements InternalTransferRepository {
     required String asset,
     required InternalTransferDirection direction,
     required bool Function() isCurrent,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     final started = now().toUtc();
     void check() {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
@@ -83,7 +84,7 @@ class SignedInternalTransferRepository implements InternalTransferRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 
   @override
   Future<InternalTransferReply> submit({
@@ -91,7 +92,7 @@ class SignedInternalTransferRepository implements InternalTransferRepository {
     required bool Function() canSubmit,
     required Future<void> Function(int nonce) beforeSend,
     required void Function() onDispatch,
-  }) async {
+  }) => RequestScope.run(canSubmit, () async {
     final c = review.context;
     void check() {
       if (!canSubmit() || !_fresh(c)) throw const AccountReadFailure('internalTransferChanged');
@@ -153,5 +154,5 @@ class SignedInternalTransferRepository implements InternalTransferRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 }

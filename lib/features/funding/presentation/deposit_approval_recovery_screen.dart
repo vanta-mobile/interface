@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -64,7 +66,15 @@ class DepositApprovalRecoveryScreen extends ConsumerWidget {
             for (final record in records)
               DepositApprovalRecoveryCard(key: ValueKey(record.key), record: record),
             if (state.failure case final key?)
-              Text(depositMessage(context, key), style: const TextStyle(color: AppColors.warning)),
+              Text(
+                apiErrorText(
+                  context,
+                  key,
+                  state.errorDetails,
+                  fallbackText: depositMessage(context, key),
+                ),
+                style: const TextStyle(color: AppColors.warning),
+              ),
             if (state.busy) ...[
               const LinearProgressIndicator(),
               TextButton(

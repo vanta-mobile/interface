@@ -18,7 +18,12 @@ extension AssistantAuthActions on AssistantController {
     } catch (error) {
       if (_alive(generation)) {
         _set(
-          _view.copyWith(phase: AssistantPhase.idle, challenge: null, failureKey: _failure(error)),
+          _view.copyWith(
+            phase: AssistantPhase.idle,
+            challenge: null,
+            errorDetails: error is AssistantFailure ? error.details : null,
+            failureKey: _failure(error),
+          ),
         );
       }
     }
@@ -51,7 +56,12 @@ extension AssistantAuthActions on AssistantController {
       if (_alive(generation)) {
         _allowWalletBackground = false;
         _set(
-          _view.copyWith(phase: AssistantPhase.idle, challenge: null, failureKey: _failure(error)),
+          _view.copyWith(
+            phase: AssistantPhase.idle,
+            challenge: null,
+            errorDetails: error is AssistantFailure ? error.details : null,
+            failureKey: _failure(error),
+          ),
         );
       }
     }
@@ -82,7 +92,12 @@ extension AssistantAuthActions on AssistantController {
     } catch (error) {
       if (_alive(generation)) {
         _set(
-          _view.copyWith(phase: AssistantPhase.idle, challenge: null, failureKey: _failure(error)),
+          _view.copyWith(
+            phase: AssistantPhase.idle,
+            challenge: null,
+            errorDetails: error is AssistantFailure ? error.details : null,
+            failureKey: _failure(error),
+          ),
         );
       }
     }
@@ -158,7 +173,12 @@ extension AssistantAuthActions on AssistantController {
     } catch (error) {
       if (_alive(generation)) {
         _set(
-          _view.copyWith(phase: AssistantPhase.idle, quotaStale: true, failureKey: _failure(error)),
+          _view.copyWith(
+            phase: AssistantPhase.idle,
+            quotaStale: true,
+            errorDetails: error is AssistantFailure ? error.details : null,
+            failureKey: _failure(error),
+          ),
         );
       }
     }

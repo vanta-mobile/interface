@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +20,7 @@ import 'symbol_settings_activity.dart';
 
 final rebalanceClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final rebalanceRepositoryProvider = Provider<RebalanceRepository>((ref) {
-  final service = AsterAccountService();
+  final service = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return SignedRebalanceRepository(
     service,

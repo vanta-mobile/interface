@@ -44,11 +44,11 @@ void main() {
     expect(old?.orders.length, 2);
     orders.gate = Completer<void>();
     final pending = controller.refresh();
-    await controller.refresh();
+    final duplicate = controller.refresh();
     expect(orders.calls, 2);
     orders.failure = const AccountReadFailure('accountNetwork');
     orders.gate!.complete();
-    await pending;
+    await Future.wait([pending, duplicate]);
     expect(container.read(openOrdersReadProvider).account, same(old));
     expect(container.read(openOrdersReadProvider).stale, true);
     expect(container.read(openOrdersReadProvider).failure?.key, 'accountNetwork');

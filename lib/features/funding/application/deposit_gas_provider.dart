@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +14,7 @@ import '../domain/deposit_quote_validation.dart';
 
 final depositGasClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final depositGasRepositoryProvider = Provider.autoDispose<DepositGasRepository>((ref) {
-  final service = DepositRpcService();
+  final service = DepositRpcService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return RpcDepositGasRepository(service, now: ref.watch(depositGasClockProvider));
 });

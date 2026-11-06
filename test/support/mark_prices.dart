@@ -43,6 +43,7 @@ class TestMarkService extends AsterService {
     return gate.future;
   }
 
+  @override
   Future<void> dispose() async {
     for (final controller in controllers) {
       await controller.close();

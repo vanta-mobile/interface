@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../../portfolio/domain/account_snapshot.dart';
 import '../../auth/domain/wallet_transaction.dart';
 import '../domain/deposit_approval.dart';
@@ -20,7 +21,7 @@ class RpcDepositApprovalReceiptRepository implements DepositApprovalReceiptRepos
     BigInt baseBlock,
     String hash, {
     required bool Function() isCurrent,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     void current() {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
     }
@@ -139,5 +140,5 @@ class RpcDepositApprovalReceiptRepository implements DepositApprovalReceiptRepos
     } on FormatException {
       throw const AccountReadFailure('depositRpcInvalid');
     }
-  }
+  });
 }

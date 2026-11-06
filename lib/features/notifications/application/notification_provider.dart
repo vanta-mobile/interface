@@ -1,3 +1,4 @@
+import '../../../core/network/network_providers.dart';
 import '../../portfolio/data/aster_spot_service.dart';
 import '../../portfolio/domain/spot_history.dart';
 
@@ -55,7 +56,7 @@ final unreadNotificationsProvider = Provider<int>(
 );
 
 final notificationUnitsRepositoryProvider = Provider<NotificationUnitsRepository>((ref) {
-  final service = AsterAccountService();
+  final service = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return AsterNotificationUnitsRepository(service);
 });
@@ -64,7 +65,7 @@ final notificationUnitsProvider = FutureProvider<Map<String, AsterContractUnits>
 );
 
 final spotNotificationUnitsRepositoryProvider = Provider<SpotNotificationUnitsRepository>((ref) {
-  final service = AsterSpotService();
+  final service = AsterSpotService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return AsterSpotNotificationUnitsRepository(service);
 });

@@ -65,11 +65,16 @@ void main() {
     final old = container.read(depositWalletProvider(query)).account;
     repository.gate = Completer();
     final pending = controller.refresh();
-    await controller.refresh();
+    final duplicate = controller.refresh();
+    var duplicateDone = false;
+    duplicate.then((_) => duplicateDone = true);
+    expect(duplicateDone, isFalse);
     expect(repository.calls.length, 2);
     repository.failure = const FormatException();
     repository.gate!.complete();
     await pending;
+    await duplicate;
+    expect(duplicateDone, isTrue);
     expect(container.read(depositWalletProvider(query)).account, same(old));
     expect(container.read(depositWalletProvider(query)).stale, true);
     expect(container.read(depositWalletProvider(query)).failure!.key, 'depositRpcFailed');

@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 
 import 'attached_entry_pricing.dart';
@@ -6,7 +8,6 @@ import 'live_order_pricing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
@@ -179,7 +180,7 @@ class _RecoveryResult extends StatelessWidget {
         ],
         if (failure != null)
           Text(
-            '${tr(context, failure.key)}${failure.code == null ? '' : ' ${l10n.accountErrorCode(failure.code!)}'}',
+            accountErrorText(context, failure),
             style: const TextStyle(color: AppColors.negative),
           ),
       ],

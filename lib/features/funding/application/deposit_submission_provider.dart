@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/network/network_providers.dart';
 import 'funding_transaction_activity.dart';
 
 import 'dart:async';
@@ -69,7 +71,7 @@ final pendingDepositSubmissionsProvider = Provider<List<DepositSubmissionRecord>
 final depositSubmissionReceiptRepositoryProvider = Provider<DepositSubmissionReceiptRepository>((
   ref,
 ) {
-  final service = DepositRpcService();
+  final service = DepositRpcService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return RpcDepositSubmissionReceiptRepository(
     RpcDepositApprovalReceiptRepository(service, now: ref.watch(depositGasClockProvider)),
@@ -101,6 +103,7 @@ class DepositSubmissionState {
     this.receipt,
     this.credited = false,
     this.failure,
+    this.errorDetails,
   });
   final DepositSubmissionStep step;
   final DepositSubmissionReview? review;
@@ -108,6 +111,7 @@ class DepositSubmissionState {
   final bool credited;
   final DepositApprovalReceipt? receipt;
   final String? failure;
+  final ApiErrorDetails? errorDetails;
   bool get busy =>
       step == DepositSubmissionStep.preparing ||
       step == DepositSubmissionStep.sending ||
@@ -252,7 +256,12 @@ class DepositSubmissionController extends Notifier<DepositSubmissionState>
       state = DepositSubmissionState(step: DepositSubmissionStep.reviewing, review: review);
       return review;
     } catch (error) {
-      if (current()) state = DepositSubmissionState(failure: _failure(error));
+      if (current()) {
+        state = DepositSubmissionState(
+          failure: _failure(error),
+          errorDetails: errorDetailsOf(error),
+        );
+      }
       return null;
     } finally {
       _working = false;
@@ -372,7 +381,13 @@ class DepositSubmissionController extends Notifier<DepositSubmissionState>
       } else if (dispatched && error is! AccountReadFailure) {
         failure = 'depositSubmissionUnknown';
       }
-      if (current()) state = DepositSubmissionState(record: record, failure: failure);
+      if (current()) {
+        state = DepositSubmissionState(
+          record: record,
+          failure: failure,
+          errorDetails: errorDetailsOf(error),
+        );
+      }
     } finally {
       _working = false;
       activity.release(owner);

@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_parser.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -19,7 +21,7 @@ import 'trading_event_mapper.dart';
 /// specify this origin and /api prefix. Never carries Aster/Privy credentials.
 class PointsService extends AsterReadService {
   PointsService({http.Client? client, Duration timeout = const Duration(seconds: 12)})
-    : this._(client ?? createMarketHttpClient(), timeout);
+    : this._(createMarketHttpClient(client: client, timeout: timeout), timeout);
   PointsService._(http.Client client, Duration timeout)
     : _taskClient = client,
       super(
@@ -92,13 +94,20 @@ class PointsService extends AsterReadService {
             response.headers['content-type']?.split(';').first.trim().toLowerCase() !=
                 'application/json' ||
             (response.contentLength ?? 0) > 2097152) {
-          await response.stream.listen(null).cancel();
+          final errorBody = await response.stream.take(64).fold<List<int>>(<int>[], (bytes, chunk) {
+            if (bytes.length + chunk.length <= 65536) bytes.addAll(chunk);
+            return bytes;
+          });
           throw PointsFailure(
             response.statusCode == 429 || response.statusCode == 418
                 ? 'pointsRateLimited'
                 : response.statusCode == 200
                 ? 'pointsDataInvalid'
                 : 'pointsUnavailable',
+            details: apiErrorDetails(
+              decodeErrorPayload(utf8.decode(errorBody, allowMalformed: true)),
+              status: response.statusCode,
+            ),
           );
         }
         final bytes = BytesBuilder(copy: false);
@@ -159,7 +168,7 @@ class PublicPointsRepository implements PointsRepository {
         'accountNetwork' => 'pointsNetwork',
         'accountRateLimited' => 'pointsRateLimited',
         _ => 'pointsUnavailable',
-      });
+      }, details: error.details);
     }
   }
 

@@ -1,3 +1,5 @@
+import '../../../core/network/request_scope.dart';
+
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../domain/account_change_stream.dart';
@@ -52,7 +54,7 @@ class SignedAccountChangeRepository implements AccountChangeRepository {
     required String address,
     required bool Function() isCurrent,
     required void Function(AccountReadStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     clear();
     final generation = _generation;
     final started = _now();
@@ -72,7 +74,7 @@ class SignedAccountChangeRepository implements AccountChangeRepository {
     _key = data['listenKey'] as String;
     _expiresAt = expiresAt;
     return expiresAt;
-  }
+  });
 
   @override
   Stream<AccountChangeEvent> connect() {

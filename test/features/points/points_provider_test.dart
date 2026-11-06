@@ -91,10 +91,16 @@ void main() {
     listeners.add(container.listen(currentPointsCampaignProvider, (_, _) {}));
     listeners.add(container.listen(currentPointsCampaignProvider, (_, _) {}));
     await tester.pump();
-    await container.read(currentPointsCampaignProvider.notifier).refresh();
+    var completed = false;
+    final refresh = container.read(currentPointsCampaignProvider.notifier).refresh()
+      ..then((_) => completed = true);
+    await tester.pump();
+    expect(completed, false);
     expect(repository.calls, ['current']);
     repository.gates.remove('current')!.complete();
+    await refresh;
     await tester.pump();
+    expect(completed, true);
     expect(container.read(currentPointsCampaignProvider).snapshot!.value!.number, 17);
   });
   scenario('failures remain independent and preserve prior data; explicit retry recovers', (

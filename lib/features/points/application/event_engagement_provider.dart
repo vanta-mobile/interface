@@ -1,3 +1,6 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/network/network_providers.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_provider.dart';
@@ -16,6 +19,7 @@ final eventEngagementJournalProvider = Provider<EventEngagementJournal>(
 );
 final eventEngagementRepositoryProvider = Provider<EventEngagementRepository>((ref) {
   final repository = VantaEventEngagementRepository(
+    client: ref.watch(backendHttpPoolProvider).lease(),
     points: ref.watch(pointsRepositoryProvider),
     journal: ref.watch(eventEngagementJournalProvider),
     now: ref.watch(pointsClockProvider),
@@ -134,6 +138,7 @@ class EventEngagementController extends Notifier<EventEngagementState> {
             ? EventRegistrationPhase.unknown
             : EventRegistrationPhase.idle,
         action: approval.action,
+        errorDetails: errorDetailsOf(error),
         failureKey:
             const {
               'authWalletReconnect',

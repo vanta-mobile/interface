@@ -47,11 +47,11 @@ void main() {
       expect(old?.symbols.length, 1);
       positions.gate = Completer<void>();
       final pending = controller.refresh();
-      await controller.refresh();
+      final duplicate = controller.refresh();
       expect(positions.calls, 2);
       positions.failure = const AccountReadFailure('accountNetwork');
       positions.gate!.complete();
-      await pending;
+      await Future.wait([pending, duplicate]);
       expect(container.read(positionAdlProvider).account, same(old));
       expect(container.read(positionAdlProvider).stale, true);
       expect(container.read(positionAdlProvider).failure?.key, 'accountNetwork');

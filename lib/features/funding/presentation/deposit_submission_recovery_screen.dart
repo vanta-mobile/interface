@@ -1,6 +1,9 @@
 import 'deposit_messages.dart';
 
 import 'package:flutter/material.dart';
+
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme.dart';
@@ -73,7 +76,12 @@ class DepositSubmissionRecoveryScreen extends ConsumerWidget {
             ],
             if (s.failure case final failure?)
               Text(
-                depositMessage(context, failure),
+                apiErrorText(
+                  context,
+                  failure,
+                  s.errorDetails,
+                  fallbackText: depositMessage(context, failure),
+                ),
                 style: const TextStyle(color: AppColors.warning),
               ),
             if (s.receipt case final receipt?) ...[

@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/aster_account.dart';
 import 'aster_account_mapper.dart';
 import 'aster_account_service.dart';
@@ -26,7 +27,7 @@ class SignedAccountRepository implements AsterAccountRepository {
     required String address,
     required bool Function() isCurrent,
     required void Function(AccountReadStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       final payload = await _request.read(address: address, isCurrent: isCurrent, onStep: onStep);
       final receivedAt = now();
@@ -43,5 +44,5 @@ class SignedAccountRepository implements AsterAccountRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 }

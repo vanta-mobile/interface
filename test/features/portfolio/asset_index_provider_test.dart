@@ -78,11 +78,12 @@ void main() {
     await tester.pump();
     expect(repository.calls, 1);
     expect(container.read(assetIndexProvider).loading, true);
-    await container.read(assetIndexProvider.notifier).refresh();
+    final duplicate = container.read(assetIndexProvider.notifier).refresh();
     expect(repository.calls, 1);
     repository.gate!.complete(assetIndexFixture(now));
     repository.gate = null;
     await tester.pump();
+    await duplicate;
     expect(container.read(assetIndexProvider).loading, false);
     await advance(tester, 29);
     expect(repository.calls, 1);

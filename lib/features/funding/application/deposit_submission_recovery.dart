@@ -56,7 +56,13 @@ mixin _DepositSubmissionRecovery on Notifier<DepositSubmissionState> {
       }
       if (current()) state = DepositSubmissionState(record: record, receipt: receipt);
     } catch (error) {
-      if (current()) state = DepositSubmissionState(record: record, failure: _failure(error));
+      if (current()) {
+        state = DepositSubmissionState(
+          record: record,
+          failure: _failure(error),
+          errorDetails: errorDetailsOf(error),
+        );
+      }
     } finally {
       _working = false;
     }
@@ -136,7 +142,13 @@ mixin _DepositSubmissionRecovery on Notifier<DepositSubmissionState> {
         state = DepositSubmissionState(record: record, receipt: receipt, credited: true);
       }
     } catch (e) {
-      if (current()) state = DepositSubmissionState(record: record, failure: _failure(e));
+      if (current()) {
+        state = DepositSubmissionState(
+          record: record,
+          failure: _failure(e),
+          errorDetails: errorDetailsOf(e),
+        );
+      }
     } finally {
       _working = false;
     }

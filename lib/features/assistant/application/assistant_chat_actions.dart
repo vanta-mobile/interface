@@ -105,6 +105,7 @@ extension AssistantChatActions on AssistantController {
       _set(
         _view.copyWith(
           phase: AssistantPhase.idle,
+          errorDetails: error is AssistantFailure ? error.details : null,
           failureKey: _failure(error),
           draft: _view.draft.isEmpty ? prompt : _view.draft,
           messages: _view.messages.map(

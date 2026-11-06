@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_provider.dart';
@@ -10,7 +12,7 @@ import 'account_read_provider.dart';
 import 'wallet_account_controller.dart';
 
 final asterOpenOrdersRepositoryProvider = Provider<AsterOpenOrdersRepository>((ref) {
-  final service = AsterAccountService();
+  final service = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return SignedOpenOrdersRepository(
     service,

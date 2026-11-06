@@ -10106,6 +10106,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Currently unavailable. TWAP is not included in this release.'**
   String get orderModeTwapUnavailable;
+
+  /// No description provided for @apiRequestTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The request timed out.'**
+  String get apiRequestTimeout;
+
+  /// No description provided for @apiConnectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to connect to the server. Check your network connection.'**
+  String get apiConnectionFailed;
+
+  /// No description provided for @apiRequestCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'The request was cancelled.'**
+  String get apiRequestCancelled;
+
+  /// No description provided for @apiInvalidResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'The server returned an invalid response.'**
+  String get apiInvalidResponse;
+
+  /// No description provided for @assistantRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many requests. Please wait before trying again.'**
+  String get assistantRateLimited;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -1,9 +1,10 @@
+import '../../../core/errors/error_text.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
@@ -135,7 +136,10 @@ class ScaledReadControls extends ConsumerWidget {
         Text(l10n.liveOrderFundsReadHint),
         if (live.busy) const LinearProgressIndicator(),
         if (live.failure case final failure?)
-          Text(tr(context, failure.key), style: const TextStyle(color: AppColors.negative)),
+          Text(
+            accountErrorText(context, failure),
+            style: const TextStyle(color: AppColors.negative),
+          ),
       ],
     );
   }

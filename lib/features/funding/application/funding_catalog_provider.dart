@@ -1,3 +1,6 @@
+import '../../../core/network/request_scope.dart';
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +10,7 @@ import '../data/funding_catalog_repository.dart';
 import '../domain/funding_catalog.dart';
 
 final fundingCatalogRepositoryProvider = Provider.autoDispose<FundingCatalogRepository>((ref) {
-  final service = FundingCatalogService();
+  final service = FundingCatalogService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return AsterFundingCatalogRepository(service);
 });
@@ -34,12 +37,25 @@ class FundingCatalogController extends Notifier<FundingCatalogState> {
     return const FundingCatalogState();
   }
 
-  Future<void> refresh() async {
+  Future<void>? _refreshTask;
+  Future<void> refresh() {
+    if (state.loading && _refreshTask != null) return _refreshTask!;
+    final task = _refresh();
+    _refreshTask = task;
+    return task.whenComplete(() {
+      if (identical(_refreshTask, task)) _refreshTask = null;
+    });
+  }
+
+  Future<void> _refresh() async {
     if (!ref.mounted || state.loading) return;
     final generation = ++_generation;
     state = FundingCatalogState(catalog: state.catalog, loading: true, stale: state.stale);
     try {
-      final catalog = await ref.read(fundingCatalogRepositoryProvider).read(query);
+      final catalog = await RequestScope.run(
+        () => ref.mounted && generation == _generation,
+        () => ref.read(fundingCatalogRepositoryProvider).read(query),
+      );
       if (!ref.mounted || generation != _generation) return;
       if (catalog.query != query) throw const FormatException();
       state = FundingCatalogState(catalog: catalog);
@@ -51,6 +67,7 @@ class FundingCatalogController extends Notifier<FundingCatalogState> {
             loading: state.loading,
             stale: true,
             failureKey: state.failureKey,
+            errorDetails: state.errorDetails,
           );
         }
       });
@@ -59,6 +76,7 @@ class FundingCatalogController extends Notifier<FundingCatalogState> {
       state = FundingCatalogState(
         catalog: state.catalog,
         stale: state.catalog != null,
+        errorDetails: error is AccountReadFailure ? error.details : null,
         failureKey: error is AccountReadFailure ? error.key : 'fundingCatalogFailed',
       );
     }

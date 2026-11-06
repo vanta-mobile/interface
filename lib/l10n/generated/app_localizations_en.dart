@@ -5785,4 +5785,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get orderModeTwapUnavailable =>
       'Currently unavailable. TWAP is not included in this release.';
+
+  @override
+  String get apiRequestTimeout => 'The request timed out.';
+
+  @override
+  String get apiConnectionFailed =>
+      'Unable to connect to the server. Check your network connection.';
+
+  @override
+  String get apiRequestCancelled => 'The request was cancelled.';
+
+  @override
+  String get apiInvalidResponse => 'The server returned an invalid response.';
+
+  @override
+  String get assistantRateLimited => 'Too many requests. Please wait before trying again.';
 }

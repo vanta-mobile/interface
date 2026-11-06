@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/aster_account.dart';
 import '../domain/position_risk.dart';
 import 'aster_account_service.dart';
@@ -26,7 +27,7 @@ class SignedPositionRiskRepository implements PositionRiskRepository {
     required String address,
     required bool Function() isCurrent,
     required void Function(AccountReadStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     final payload = await _request.read(address: address, isCurrent: isCurrent, onStep: onStep);
     try {
       final receivedAt = now();
@@ -42,5 +43,5 @@ class SignedPositionRiskRepository implements PositionRiskRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 }

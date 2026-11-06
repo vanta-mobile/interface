@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,7 +48,8 @@ class EventEngagementPanel extends ConsumerWidget {
         if (action.phase == EventRegistrationPhase.acknowledged)
           Text(l10n.eventEngagementAcknowledged),
         if (action.phase == EventRegistrationPhase.unknown) Text(l10n.eventEngagementUnknown),
-        if (action.failureKey case final key?) Text(_failure(key, l10n)),
+        if (action.failureKey case final key?)
+          Text(apiErrorText(context, key, action.errorDetails, fallbackText: _failure(key, l10n))),
         for (final task in event.tasks.where(
           (t) => const {'newUserTasks', 'dailyCheckIn', 'milestoneRewards'}.contains(t.metric),
         ))

@@ -7,7 +7,7 @@ import '../domain/points.dart';
 import 'event_document_mapper.dart';
 
 class EventMediaService {
-  EventMediaService({http.Client? client}) : _client = client ?? createMarketHttpClient();
+  EventMediaService({http.Client? client}) : _client = createMarketHttpClient(client: client);
   final http.Client _client;
   Future<Uint8List> read(Uri uri) async {
     if (eventLink(uri.toString(), image: true) != uri) {

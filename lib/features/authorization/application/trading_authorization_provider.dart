@@ -1,3 +1,6 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/network/network_providers.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_provider.dart';
@@ -11,7 +14,8 @@ import '../domain/trading_authorization.dart';
 
 final tradingAuthorizationClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final tradingAuthorizationRepositoryProvider = Provider<TradingAuthorizationRepository>((ref) {
-  final futures = AsterAccountService(), spot = AsterSpotService();
+  final futures = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease()),
+      spot = AsterSpotService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(() {
     futures.close();
     spot.close();
@@ -108,6 +112,7 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
     } catch (e) {
       if (_current(review.identity, g)) {
         state = TradingAuthorizationState(
+          errorDetails: errorDetailsOf(e),
           failure: e is AccountReadFailure ? e.key : 'accountReadFailed',
         );
       }
@@ -138,6 +143,7 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
         state = TradingAuthorizationState(
           result: previous.result,
           check: previous.check,
+          errorDetails: errorDetailsOf(e),
           failure: e is AccountReadFailure ? e.key : 'accountReadFailed',
         );
       }

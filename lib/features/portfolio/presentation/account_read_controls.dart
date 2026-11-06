@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -72,7 +74,7 @@ class AccountReadControls extends ConsumerWidget {
         if (state.failure case final failure?) ...[
           const SizedBox(height: 12),
           Text(
-            '${tr(context, failure.key)}${failure.code == null ? '' : '\n${l10n.accountErrorCode(failure.code!)}'}',
+            accountErrorText(context, failure),
             key: const Key('account-read-error'),
             style: const TextStyle(color: AppColors.negative),
           ),

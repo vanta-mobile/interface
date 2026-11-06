@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../../../core/data/aster_signature_verifier.dart';
 import '../../portfolio/data/aster_account_mapper.dart';
 import '../../portfolio/data/aster_spot_mapper.dart';
@@ -29,7 +30,7 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
   Future<TradingAuthorizationResult> enable({
     required TradingAuthorizationReview review,
     required bool Function() isCurrent,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     void current() {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
       final age = now().difference(review.preparedAt);
@@ -98,13 +99,13 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
     } on AuthFailure catch (e) {
       throw AccountReadFailure(e.key);
     }
-  }
+  });
 
   @override
   Future<TradingAuthorizationCheck> check({
     required String address,
     required bool Function() isCurrent,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     bool futuresAccepted = false, spotAccepted = false;
     bool? canTrade, canWithdraw;
     String? futuresFailure, spotFailure;
@@ -159,5 +160,5 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
       futuresFailure: futuresFailure,
       spotFailure: spotFailure,
     );
-  }
+  });
 }

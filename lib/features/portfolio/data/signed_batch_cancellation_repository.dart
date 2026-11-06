@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/aster_open_orders.dart';
 import '../domain/aster_account.dart' show AsterContractUnits;
@@ -19,7 +20,7 @@ class SignedBatchCancellationRepository implements BatchOrderCancellationReposit
     required Iterable<AsterOpenOrder> originalOrders,
     required bool Function() isCurrent,
     required void Function(OrderCancelStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     var submitted = false;
     AccountReadFailure? cancelFailure;
     try {
@@ -56,7 +57,7 @@ class SignedBatchCancellationRepository implements BatchOrderCancellationReposit
       snapshot: checked.snapshot,
       failure: checked.failure ?? (checked.snapshot?.orders.isEmpty == true ? null : cancelFailure),
     );
-  }
+  });
 
   @override
   Future<BatchSymbolCancellation> recheckSymbol({
@@ -65,7 +66,7 @@ class SignedBatchCancellationRepository implements BatchOrderCancellationReposit
     required Iterable<AsterOpenOrder> originalOrders,
     required bool Function() isCurrent,
     required void Function(OrderCancelStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       final payload = await _request(service.openOrders).read(
         address: address,
@@ -110,7 +111,7 @@ class SignedBatchCancellationRepository implements BatchOrderCancellationReposit
         failure: const AccountReadFailure('accountReadFailed'),
       );
     }
-  }
+  });
 
   SignedAccountRequest _request(
     Future<Object?> Function({required String query, required String signature}) send,

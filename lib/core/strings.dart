@@ -7,6 +7,7 @@ import '../l10n/generated/app_localizations.dart';
 String tr(BuildContext context, String key) {
   final messages = AppLocalizations.of(context);
   return switch (key) {
+    'assistantRateLimited' => messages.assistantRateLimited,
     'marginAdjustOverMaximum' => messages.marginAdjustOverMaximum,
     'marginAdjustTitle' => messages.marginAdjustTitle,
     'marginAdjustScope' => messages.marginAdjustScope,

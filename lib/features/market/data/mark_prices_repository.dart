@@ -1,3 +1,5 @@
+import '../../../core/network/request_scope.dart';
+
 import 'dart:async';
 
 import '../domain/mark_prices.dart';
@@ -139,7 +141,10 @@ class MarkPricesRepository {
     _loadingRevision = revision;
     final baseline = Map.of(_quotes);
     try {
-      final payload = await service.request('/fapi/v3/premiumIndex');
+      final payload = await RequestScope.run(
+        () => !_disposed && _active && revision == _revision,
+        () => service.request('/fapi/v3/premiumIndex'),
+      );
       if (_disposed || !_active || revision != _revision) return;
       if (payload is! List) throw const FormatException();
       final seen = <String>{};

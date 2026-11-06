@@ -1,3 +1,6 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/network/request_scope.dart';
+
 import 'package:decimal/decimal.dart';
 
 import '../../../core/data/aster_signature_verifier.dart';
@@ -51,7 +54,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
     required DepositWalletQuery query,
     required String amount,
     required bool Function() isCurrent,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     void current() {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
     }
@@ -125,13 +128,13 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
     } on FormatException {
       throw const AccountReadFailure('withdrawalAmountInvalid');
     }
-  }
+  });
 
   @override
   Future<WalletOperationRecord> submit(
     WithdrawalReview review, {
     required bool Function() isCurrent,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     void current() {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
     }
@@ -234,7 +237,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
       return record.reported(id);
     } catch (e) {
       if (saved && !sent && record != null) await journal.removeNotSent(record.key);
-      if (sent) throw const AccountReadFailure('walletOperationUnknown');
+      if (sent) throw AccountReadFailure('walletOperationUnknown', details: errorDetailsOf(e));
       if (e is AuthFailure) throw AccountReadFailure(e.key);
       if (e is WalletOperationPending) throw const AccountReadFailure('walletOperationPending');
       if (e is WalletOperationStorageFailure) {
@@ -242,7 +245,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
       }
       rethrow;
     }
-  }
+  });
 }
 
 void validateWithdrawalReview(WithdrawalReview r, DateTime now) {

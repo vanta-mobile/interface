@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/network/network_providers.dart';
 import 'funding_transaction_activity.dart';
 import 'deposit_submission_provider.dart';
 
@@ -58,7 +60,7 @@ final pendingDepositApprovalsProvider = Provider<List<DepositApprovalRecord>>((r
       .toList(growable: false);
 });
 final depositApprovalReceiptRepositoryProvider = Provider<DepositApprovalReceiptRepository>((ref) {
-  final service = DepositRpcService();
+  final service = DepositRpcService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return RpcDepositApprovalReceiptRepository(service, now: ref.watch(depositGasClockProvider));
 });
@@ -81,12 +83,14 @@ class DepositApprovalState {
     this.record,
     this.receipt,
     this.failure,
+    this.errorDetails,
   });
   final DepositApprovalStep step;
   final DepositApprovalReview? review;
   final DepositApprovalRecord? record;
   final DepositApprovalReceipt? receipt;
   final String? failure;
+  final ApiErrorDetails? errorDetails;
   bool get busy =>
       step == DepositApprovalStep.preparing ||
       step == DepositApprovalStep.sending ||
@@ -194,7 +198,9 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
       state = DepositApprovalState(step: DepositApprovalStep.reviewing, review: review);
       return review;
     } catch (error) {
-      if (current()) state = DepositApprovalState(failure: _failure(error));
+      if (current()) {
+        state = DepositApprovalState(failure: _failure(error), errorDetails: errorDetailsOf(error));
+      }
       return null;
     } finally {
       _working = false;
@@ -312,7 +318,13 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
       } else if (dispatched && error is! AccountReadFailure) {
         failure = 'depositApprovalUnknown';
       }
-      if (current()) state = DepositApprovalState(record: record, failure: failure);
+      if (current()) {
+        state = DepositApprovalState(
+          record: record,
+          failure: failure,
+          errorDetails: errorDetailsOf(error),
+        );
+      }
     } finally {
       _working = false;
       activity.release(owner);
@@ -362,7 +374,13 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
       if (receipt.status != DepositReceiptStatus.pending) await journal.complete(record.key);
       if (current()) state = DepositApprovalState(record: record, receipt: receipt);
     } catch (error) {
-      if (current()) state = DepositApprovalState(record: record, failure: _failure(error));
+      if (current()) {
+        state = DepositApprovalState(
+          record: record,
+          failure: _failure(error),
+          errorDetails: errorDetailsOf(error),
+        );
+      }
     } finally {
       _working = false;
     }

@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../../portfolio/domain/account_snapshot.dart';
 import '../domain/deposit_transaction.dart';
 import '../domain/deposit_wallet.dart';
@@ -14,7 +15,7 @@ class RpcDepositGasRepository implements DepositGasRepository {
     required DepositWalletQuery query,
     required String amount,
     required bool Function() isCurrent,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     void current() {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
     }
@@ -103,5 +104,5 @@ class RpcDepositGasRepository implements DepositGasRepository {
     } on FormatException {
       throw const AccountReadFailure('depositRpcInvalid');
     }
-  }
+  });
 }

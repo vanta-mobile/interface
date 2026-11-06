@@ -1,3 +1,6 @@
+import '../../../core/network/request_scope.dart';
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -11,7 +14,7 @@ import '../domain/asset_metadata.dart';
 
 final assetMetadataClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final assetMetadataServiceProvider = Provider.autoDispose<AssetMetadataService>((ref) {
-  final s = AssetMetadataService();
+  final s = AssetMetadataService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(s.close);
   return s;
 });
@@ -92,7 +95,17 @@ class AssetMetadataController extends Notifier<AssetMetadataState> {
     });
   }
 
-  Future<void> refresh() async {
+  Future<void>? _refreshTask;
+  Future<void> refresh() {
+    if (state.loading && _refreshTask != null) return _refreshTask!;
+    final task = _refresh();
+    _refreshTask = task;
+    return task.whenComplete(() {
+      if (identical(_refreshTask, task)) _refreshTask = null;
+    });
+  }
+
+  Future<void> _refresh() async {
     if (!ref.mounted || !_active || state.loading) return;
     final generation = ++_generation, snapshot = state.snapshot;
     state = AssetMetadataState(
@@ -102,7 +115,10 @@ class AssetMetadataController extends Notifier<AssetMetadataState> {
       stale: state.stale,
     );
     try {
-      final value = await ref.read(assetMetadataRepositoryProvider).read(source);
+      final value = await RequestScope.run(
+        () => ref.mounted && generation == _generation && _active,
+        () => ref.read(assetMetadataRepositoryProvider).read(source),
+      );
       if (!ref.mounted || generation != _generation || !_active) return;
       if (value.source != source || !value.freshAt(_now)) {
         throw const AccountReadFailure('accountDataInvalid');

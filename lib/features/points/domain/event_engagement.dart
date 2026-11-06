@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_details.dart';
+
 import 'package:decimal/decimal.dart';
 
 import '../../auth/domain/auth_session.dart';
@@ -122,9 +124,11 @@ class EventEngagementState {
     this.phase = EventRegistrationPhase.idle,
     this.action,
     this.failureKey,
+    this.errorDetails,
   });
   final EventRegistrationPhase phase;
   final EventEngagementAction? action;
+  final ApiErrorDetails? errorDetails;
   final String? failureKey;
   bool get busy => const {
     EventRegistrationPhase.checking,

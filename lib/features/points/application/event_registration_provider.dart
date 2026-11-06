@@ -1,3 +1,6 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/network/network_providers.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_provider.dart';
@@ -13,6 +16,7 @@ final eventRegistrationRepositoryProvider = Provider.autoDispose<EventRegistrati
   ref,
 ) {
   final repository = VantaEventRegistrationRepository(
+    client: ref.watch(backendHttpPoolProvider).lease(),
     points: ref.watch(pointsRepositoryProvider),
     now: ref.watch(pointsClockProvider),
     signer: () {
@@ -130,6 +134,7 @@ class EventRegistrationController extends Notifier<EventRegistrationState> {
         phase: error is EventRegistrationFailure && error.mayHaveSent
             ? EventRegistrationPhase.unknown
             : EventRegistrationPhase.idle,
+        errorDetails: errorDetailsOf(error),
         failureKey:
             const {
               'authWalletReconnect',

@@ -1,3 +1,5 @@
+import 'package:vanta/features/market/data/market_catalog_repository.dart';
+
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -78,7 +80,7 @@ void main() {
       });
       addTearDown(client.close);
       final service = AsterService(client);
-      final result = await service.instruments();
+      final result = await MarketCatalogRepository(service).read();
       expect(
         requests,
         unorderedEquals([
@@ -126,7 +128,7 @@ void main() {
         },
       );
       addTearDown(client.close);
-      final result = await AsterService(client).instruments();
+      final result = await MarketCatalogRepository(AsterService(client)).read();
       expect(result.map((row) => row.symbol), [
         'COINAUSDT',
         'COINBUSDT',
@@ -153,7 +155,7 @@ void main() {
         },
       );
       addTearDown(client.close);
-      final result = await AsterService(client).instruments();
+      final result = await MarketCatalogRepository(AsterService(client)).read();
       expect(result.single.symbol, '币安人生USDT');
       expect(result.single.descriptor.aliases, ['BIANRENSHENG', '币安']);
     });

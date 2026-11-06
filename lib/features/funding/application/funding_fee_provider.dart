@@ -1,3 +1,6 @@
+import '../../../core/network/request_scope.dart';
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +10,7 @@ import '../data/funding_fee_repository.dart';
 import '../domain/funding_fee.dart';
 
 final fundingFeeRepositoryProvider = Provider.autoDispose<FundingFeeRepository>((ref) {
-  final service = FundingFeeService();
+  final service = FundingFeeService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return AsterFundingFeeRepository(service);
 });
@@ -33,12 +36,25 @@ class FundingFeeController extends Notifier<FundingFeeState> {
     return const FundingFeeState();
   }
 
-  Future<void> refresh() async {
+  Future<void>? _refreshTask;
+  Future<void> refresh() {
+    if (state.loading && _refreshTask != null) return _refreshTask!;
+    final task = _refresh();
+    _refreshTask = task;
+    return task.whenComplete(() {
+      if (identical(_refreshTask, task)) _refreshTask = null;
+    });
+  }
+
+  Future<void> _refresh() async {
     if (!ref.mounted || state.loading) return;
     final generation = ++_generation;
     state = FundingFeeState(quote: state.quote, loading: true, stale: state.stale);
     try {
-      final quote = await ref.read(fundingFeeRepositoryProvider).read(query);
+      final quote = await RequestScope.run(
+        () => ref.mounted && generation == _generation,
+        () => ref.read(fundingFeeRepositoryProvider).read(query),
+      );
       if (!ref.mounted || generation != _generation) return;
       if (quote.query != query) throw const FormatException();
       state = FundingFeeState(quote: quote);
@@ -50,6 +66,7 @@ class FundingFeeController extends Notifier<FundingFeeState> {
             loading: state.loading,
             stale: true,
             failureKey: state.failureKey,
+            errorDetails: state.errorDetails,
           );
         }
       });
@@ -58,6 +75,7 @@ class FundingFeeController extends Notifier<FundingFeeState> {
       state = FundingFeeState(
         quote: state.quote,
         stale: state.quote != null,
+        errorDetails: error is AccountReadFailure ? error.details : null,
         failureKey: error is AccountReadFailure ? error.key : 'fundingFeeFailed',
       );
     }

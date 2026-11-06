@@ -1,3 +1,4 @@
+import '../../../core/errors/api_error_details.dart';
 import '../../../core/domain/wallet_operation.dart';
 import '../../auth/domain/auth_session.dart';
 import '../../portfolio/domain/aster_signature.dart';
@@ -31,9 +32,16 @@ abstract interface class SubaccountManagementRepository {
 }
 
 class SubaccountManagementState {
-  const SubaccountManagementState({this.busy = false, this.review, this.result, this.failure});
+  const SubaccountManagementState({
+    this.busy = false,
+    this.review,
+    this.result,
+    this.failure,
+    this.errorDetails,
+  });
   final bool busy;
   final SubaccountManagementReview? review;
   final WalletOperationRecord? result;
+  final ApiErrorDetails? errorDetails;
   final String? failure;
 }

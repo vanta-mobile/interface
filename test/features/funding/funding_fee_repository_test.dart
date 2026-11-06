@@ -100,13 +100,18 @@ void main() {
   test('business envelope failure is rejected even with HTTP 200', () async {
     final service = FundingFeeService(
       client: MockClient(
-        (_) async => http.Response('{"code":"100001","success":false,"data":{}}', 200),
+        (_) async => http.Response(
+          '{"code":"100001","success":false,"message":"Fee unavailable","data":{}}',
+          200,
+        ),
       ),
     );
     addTearDown(service.close);
     await expectLater(
       AsterFundingFeeRepository(service).read(fundingFeeQuery),
-      throwsFormatException,
+      throwsA(
+        isA<AccountReadFailure>().having((e) => e.details?.message, 'reason', 'Fee unavailable'),
+      ),
     );
   });
   test('timeout is safe and no response content is exposed', () async {

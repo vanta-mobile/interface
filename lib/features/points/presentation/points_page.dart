@@ -10,35 +10,39 @@ import 'points_status.dart';
 import 'wallet_points_panel.dart';
 import 'trading_events_page.dart';
 
-class PointsPage extends StatelessWidget {
+class PointsPage extends ConsumerWidget {
   const PointsPage({super.key});
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return SingleChildScrollView(
-      key: const Key('points-page'),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(l10n.pointsProgramTitle, style: Theme.of(context).textTheme.headlineMedium),
-          const SizedBox(height: 8),
-          Text(l10n.pointsProgramScope),
-          OutlinedButton.icon(
-            key: const Key('points-open-events'),
-            onPressed: () =>
-                Navigator.of(context)
-                    .push(MaterialPageRoute<void>(builder: (_) => const TradingEventsPage())),
-            icon: const Icon(Icons.celebration_outlined),
-            label: Text(l10n.eventsTitle),
-          ),
-          const SizedBox(height: 16),
-          const _CurrentCampaign(),
-          const SizedBox(height: 16),
-          const WalletPointsPanel(),
-          const SizedBox(height: 16),
-          const PointsLeaderboardPanel(),
-        ],
+    return RefreshIndicator(
+      onRefresh: ref.watch(pointsPageRefreshProvider),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        key: const Key('points-page'),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.pointsProgramTitle, style: Theme.of(context).textTheme.headlineMedium),
+            const SizedBox(height: 8),
+            Text(l10n.pointsProgramScope),
+            OutlinedButton.icon(
+              key: const Key('points-open-events'),
+              onPressed: () =>
+                  Navigator.of(context)
+                      .push(MaterialPageRoute<void>(builder: (_) => const TradingEventsPage())),
+              icon: const Icon(Icons.celebration_outlined),
+              label: Text(l10n.eventsTitle),
+            ),
+            const SizedBox(height: 16),
+            const _CurrentCampaign(),
+            const SizedBox(height: 16),
+            const WalletPointsPanel(),
+            const SizedBox(height: 16),
+            const PointsLeaderboardPanel(),
+          ],
+        ),
       ),
     );
   }

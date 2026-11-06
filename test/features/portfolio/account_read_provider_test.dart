@@ -45,13 +45,13 @@ void main() {
     expect(previous, same(accounts.result));
     accounts.gate = Completer<void>();
     final pending = controller.refresh();
-    await controller.refresh();
+    final duplicate = controller.refresh();
     expect(accounts.calls, 2);
     expect(container.read(accountReadProvider).busy, true);
     expect(container.read(accountReadProvider).stale, true);
     accounts.failure = const AccountReadFailure('accountNetwork');
     accounts.gate!.complete();
-    await pending;
+    await Future.wait([pending, duplicate]);
     expect(container.read(accountReadProvider).account, same(previous));
     expect(container.read(accountReadProvider).failure?.key, 'accountNetwork');
     expect(container.read(accountReadProvider).stale, true);

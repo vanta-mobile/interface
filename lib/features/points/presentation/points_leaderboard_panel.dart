@@ -15,11 +15,11 @@ class PointsLeaderboardPanel extends ConsumerStatefulWidget {
 }
 
 class _PointsLeaderboardPanelState extends ConsumerState<PointsLeaderboardPanel> {
-  int? campaign;
   int page = 0;
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final campaign = ref.watch(selectedPointsCampaignProvider);
     final state = ref.watch(pointsLeaderboardProvider(campaign));
     final controller = ref.read(pointsLeaderboardProvider(campaign).notifier);
     final rows = state.snapshot?.value.rows ?? const <PointsRanking>[];
@@ -36,7 +36,7 @@ class _PointsLeaderboardPanelState extends ConsumerState<PointsLeaderboardPanel>
             campaign: campaign,
             onChanged: (value) {
               setState(() {
-                campaign = value == 0 ? null : value;
+                ref.read(selectedPointsCampaignProvider.notifier).select(value == 0 ? null : value);
                 page = 0;
               });
             },

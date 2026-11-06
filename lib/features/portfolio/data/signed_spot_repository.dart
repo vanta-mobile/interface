@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/aster_spot_account.dart';
 import 'aster_spot_mapper.dart';
@@ -25,12 +26,12 @@ class SignedSpotRepository implements AsterSpotAccountRepository {
     required String address,
     required bool Function() isCurrent,
     required void Function(AccountReadStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     final payload = await _request.read(address: address, isCurrent: isCurrent, onStep: onStep);
     try {
       return mapAsterSpotAccount(payload, address: address, receivedAt: now());
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 }

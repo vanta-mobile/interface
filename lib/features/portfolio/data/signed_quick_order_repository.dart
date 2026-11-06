@@ -1,3 +1,5 @@
+import '../../../core/network/request_scope.dart';
+
 import 'package:decimal/decimal.dart';
 
 import '../domain/account_snapshot.dart';
@@ -19,7 +21,7 @@ class SignedQuickOrderRepository implements QuickOrderRepository {
     required LiveOrderContext context,
     required bool Function() isCurrent,
     required void Function(AccountReadStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     Future<Object?> read(
       Future<Object?> Function({required String query, required String signature}) send,
     ) =>
@@ -64,5 +66,5 @@ class SignedQuickOrderRepository implements QuickOrderRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 }

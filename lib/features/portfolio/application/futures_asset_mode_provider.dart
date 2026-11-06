@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +18,7 @@ import 'symbol_settings_activity.dart';
 
 final futuresAssetModeClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final futuresAssetModeRepositoryProvider = Provider<FuturesAssetModeRepository>((ref) {
-  final service = AsterAccountService();
+  final service = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return SignedFuturesAssetModeRepository(
     service,

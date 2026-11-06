@@ -1,8 +1,9 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/widgets/primitives.dart';
@@ -35,7 +36,7 @@ class PositionMarginStatus extends ConsumerWidget {
         ],
         if (failure != null)
           Text(
-            '${tr(context, failure.key)}${failure.code == null ? '' : '\n${l.accountErrorCode(failure.code!)}'}',
+            accountErrorText(context, failure),
             key: const Key('margin-adjust-error'),
             style: const TextStyle(color: AppColors.negative),
           ),

@@ -80,12 +80,17 @@ void main() {
       final previous = container.read(subaccountListProvider).account;
       repository.gate = Completer();
       final pending = controller.refresh();
-      await controller.refresh();
+      final duplicate = controller.refresh();
+      var duplicateDone = false;
+      duplicate.then((_) => duplicateDone = true);
+      expect(duplicateDone, isFalse);
       expect(repository.calls, 2);
       expect(container.read(subaccountListProvider).busy, true);
       repository.failure = const AccountReadFailure('accountNetwork');
       repository.gate!.complete();
       await pending;
+      await duplicate;
+      expect(duplicateDone, isTrue);
       expect(container.read(subaccountListProvider).account, same(previous));
       expect(container.read(subaccountListProvider).stale, true);
       expect(container.read(subaccountListProvider).failure?.key, 'accountNetwork');

@@ -5355,4 +5355,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get orderModeTwapUnavailable => '暂不可用，分时委托不在本阶段支持范围内。';
+
+  @override
+  String get apiRequestTimeout => '请求超时。';
+
+  @override
+  String get apiConnectionFailed => '无法连接服务器，请检查网络连接。';
+
+  @override
+  String get apiRequestCancelled => '请求已取消。';
+
+  @override
+  String get apiInvalidResponse => '服务器返回的数据格式无效。';
+
+  @override
+  String get assistantRateLimited => '请求过于频繁，请稍后重试。';
 }

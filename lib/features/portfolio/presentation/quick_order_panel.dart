@@ -1,3 +1,4 @@
+import '../../../core/errors/error_text.dart';
 import 'order_recovery_notice.dart';
 
 import 'package:flutter/material.dart';
@@ -80,7 +81,10 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
               disabled: disabled,
             ),
             if (state.failure case final failure?) ...[
-              Text(tr(context, failure.key), style: const TextStyle(color: AppColors.negative)),
+              Text(
+                accountErrorText(context, failure),
+                style: const TextStyle(color: AppColors.negative),
+              ),
               Text(l10n.quickOrderSizingFailure),
             ],
             _QuickOrderButtons(

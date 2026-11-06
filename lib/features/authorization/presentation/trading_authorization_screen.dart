@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -125,7 +127,10 @@ class _TradingAuthorizationScreenState extends ConsumerState<TradingAuthorizatio
                 style: const TextStyle(color: AppColors.warning),
               ),
             if (s.failure case final key?)
-              Text(tr(context, key), style: const TextStyle(color: AppColors.negative)),
+              Text(
+                apiErrorText(context, key, s.errorDetails),
+                style: const TextStyle(color: AppColors.negative),
+              ),
             if (s.check case final check?) _AuthorizationAccessCheck(check: check),
           ],
         ),

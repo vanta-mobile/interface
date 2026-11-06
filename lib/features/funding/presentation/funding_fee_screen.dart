@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -57,7 +59,14 @@ class FundingFeeScreen extends ConsumerWidget {
             if (state.loading) ...[const LinearProgressIndicator(), Text(l10n.fundingFeeLoading)],
             if (state.failureKey case final key?)
               Text(
-                key == 'fundingFeeFailed' ? l10n.fundingFeeFailed : tr(context, key),
+                apiErrorText(
+                  context,
+                  key,
+                  state.errorDetails,
+                  fallbackText: key == 'fundingFeeFailed'
+                      ? l10n.fundingFeeFailed
+                      : tr(context, key),
+                ),
                 style: const TextStyle(color: AppColors.negative),
               ),
             if (state.stale)

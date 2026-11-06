@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_details.dart';
+
 import 'package:decimal/decimal.dart';
 
 import 'transfer_history.dart';
@@ -60,8 +62,10 @@ class FundingCatalogState {
     this.loading = false,
     this.stale = false,
     this.failureKey,
+    this.errorDetails,
   });
   final FundingCatalog? catalog;
   final bool loading, stale;
+  final ApiErrorDetails? errorDetails;
   final String? failureKey;
 }

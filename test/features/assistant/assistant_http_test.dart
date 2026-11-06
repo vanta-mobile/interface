@@ -96,7 +96,7 @@ void main() {
           expect(
             error.key,
             status == 429
-                ? 'assistantQuotaExceeded'
+                ? 'assistantRateLimited'
                 : [401, 403].contains(status)
                 ? 'assistantAuthorization'
                 : 'assistantUnavailable',

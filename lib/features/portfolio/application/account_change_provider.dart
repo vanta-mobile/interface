@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +20,7 @@ import 'position_risk_provider.dart';
 
 final accountChangeClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final accountChangeRepositoryProvider = Provider<AccountChangeRepository>((ref) {
-  final service = AsterAccountService();
+  final service = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease());
   final repository = SignedAccountChangeRepository(
     service,
     ref.watch(identityRepositoryProvider).signWalletRequest,

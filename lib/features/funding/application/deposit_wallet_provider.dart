@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +11,7 @@ import '../data/deposit_wallet_repository.dart';
 import '../domain/deposit_wallet.dart';
 
 final depositWalletRepositoryProvider = Provider.autoDispose<DepositWalletRepository>((ref) {
-  final service = DepositRpcService();
+  final service = DepositRpcService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return RpcDepositWalletRepository(service);
 });

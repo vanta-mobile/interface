@@ -6,7 +6,7 @@ import 'package:vanta/features/market/data/market_quote_mapper.dart';
 void main() {
   test('market summaries preserve raw decimal funding and quote volume', () {
     final quote = mapMarketQuote(
-      const AsterInstrument(
+      AsterInstrument(
         symbol: 'BTCUSDT',
         base: 'BTC',
         ticker: {
@@ -25,7 +25,7 @@ void main() {
   });
   test('missing, invalid and negative unsigned values differ from a real zero', () {
     final quote = mapMarketQuote(
-      const AsterInstrument(
+      AsterInstrument(
         symbol: 'BTCUSDT',
         base: 'BTC',
         ticker: {

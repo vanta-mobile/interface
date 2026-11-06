@@ -42,7 +42,17 @@ abstract class WalletAccountController<T extends WalletAccountSnapshot>
     return AccountSnapshotState<T>();
   }
 
-  Future<void> refresh() async {
+  Future<void>? _refreshTask;
+  Future<void> refresh() {
+    if (state.busy && _refreshTask != null) return _refreshTask!;
+    final task = _refresh();
+    _refreshTask = task;
+    return task.whenComplete(() {
+      if (identical(_refreshTask, task)) _refreshTask = null;
+    });
+  }
+
+  Future<void> _refresh() async {
     if (state.busy) return;
     final identity = ref.read(authProvider).identity;
     final address = identity?.walletAddress;

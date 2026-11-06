@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/aster_account.dart';
 import '../domain/futures_history.dart';
 import 'aster_account_service.dart';
@@ -21,7 +22,7 @@ class SignedFuturesHistoryRepository implements FuturesHistoryRepository {
     required FuturesHistoryQuery query,
     required bool Function() isCurrent,
     required void Function(AccountReadStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     if (!query.validSymbol) throw const AccountReadFailure('futuresHistoryInvalidSymbol');
     if (!query.validIncomeType) throw const AccountReadFailure('futuresHistoryInvalidType');
     if (!query.window.fitsRequest) throw const AccountReadFailure('futuresHistoryInvalidWindow');
@@ -68,5 +69,5 @@ class SignedFuturesHistoryRepository implements FuturesHistoryRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 }

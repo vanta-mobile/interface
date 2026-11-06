@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_details.dart';
+
 import 'dart:io';
 
 import '../../auth/domain/auth_session.dart';
@@ -55,11 +57,13 @@ class TradingAuthorizationState {
     this.result,
     this.check,
     this.failure,
+    this.errorDetails,
   });
   final bool busy;
   final TradingAuthorizationReview? review;
   final TradingAuthorizationResult? result;
   final TradingAuthorizationCheck? check;
+  final ApiErrorDetails? errorDetails;
   final String? failure;
 }
 

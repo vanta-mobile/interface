@@ -1,3 +1,4 @@
+import '../../../core/errors/api_error_details.dart';
 import 'assistant.dart';
 import 'assistant_session.dart';
 
@@ -30,6 +31,7 @@ class AssistantViewState {
     this.quotaReadAt,
     this.quotaStale = true,
     this.failureKey,
+    this.errorDetails,
     this.storageFailureKey,
   }) : messages = List.unmodifiable(messages);
   final List<AssistantMessage> messages;
@@ -40,6 +42,7 @@ class AssistantViewState {
   final AssistantChallenge? challenge;
   final AssistantQuota? quota;
   final DateTime? quotaReadAt;
+  final ApiErrorDetails? errorDetails;
   final String? failureKey, storageFailureKey;
   bool get busy => phase != AssistantPhase.idle && phase != AssistantPhase.review;
   bool get canSend =>
@@ -63,6 +66,7 @@ class AssistantViewState {
     Object? quotaReadAt = _keep,
     bool? quotaStale,
     Object? failureKey = _keep,
+    Object? errorDetails = _keep,
     Object? storageFailureKey = _keep,
   }) => AssistantViewState(
     messages: messages ?? this.messages,
@@ -77,6 +81,9 @@ class AssistantViewState {
     quotaReadAt: identical(quotaReadAt, _keep) ? this.quotaReadAt : quotaReadAt as DateTime?,
     quotaStale: quotaStale ?? this.quotaStale,
     failureKey: identical(failureKey, _keep) ? this.failureKey : failureKey as String?,
+    errorDetails: identical(errorDetails, _keep)
+        ? (identical(failureKey, _keep) ? this.errorDetails : null)
+        : errorDetails as ApiErrorDetails?,
     storageFailureKey: identical(storageFailureKey, _keep)
         ? this.storageFailureKey
         : storageFailureKey as String?,

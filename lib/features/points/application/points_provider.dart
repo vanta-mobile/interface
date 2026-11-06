@@ -1,3 +1,7 @@
+import '../../../core/network/refresh_batch.dart';
+import '../../../core/network/request_scope.dart';
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +14,7 @@ import '../domain/points.dart';
 
 final pointsClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final pointsRepositoryProvider = Provider.autoDispose<PointsRepository>((ref) {
-  final service = PointsService();
+  final service = PointsService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return PublicPointsRepository(service, now: ref.watch(pointsClockProvider));
 });
@@ -70,6 +74,7 @@ abstract class PointsLoadController<T> extends Notifier<PointsLoadState<T>> {
         stale: state.snapshot != null,
         active: active,
         failureKey: state.failureKey,
+        errorDetails: state.errorDetails,
       );
       if (active && !walletScoped) unawaited(refresh());
     });
@@ -83,7 +88,17 @@ abstract class PointsLoadController<T> extends Notifier<PointsLoadState<T>> {
     return PointsLoadState(active: _active);
   }
 
-  Future<void> refresh() async {
+  Future<void>? _refreshTask;
+  Future<void> refresh() {
+    if (state.loading && _refreshTask != null) return _refreshTask!;
+    final task = _refresh();
+    _refreshTask = task;
+    return task.whenComplete(() {
+      if (identical(_refreshTask, task)) _refreshTask = null;
+    });
+  }
+
+  Future<void> _refresh() async {
     if (!ref.mounted || !_active || state.loading) return;
     final scope = walletScoped ? _scope(ref.read(authProvider).identity) : null;
     if (walletScoped && scope == null) {
@@ -96,6 +111,7 @@ abstract class PointsLoadController<T> extends Notifier<PointsLoadState<T>> {
       loading: true,
       stale: state.stale,
       failureKey: state.failureKey,
+      errorDetails: state.errorDetails,
     );
     bool current() =>
         ref.mounted &&
@@ -103,7 +119,10 @@ abstract class PointsLoadController<T> extends Notifier<PointsLoadState<T>> {
         generation == _generation &&
         (!walletScoped || scope == _scope(ref.read(authProvider).identity));
     try {
-      final snapshot = await read(ref.read(pointsRepositoryProvider), scope?.address);
+      final snapshot = await RequestScope.run(
+        current,
+        () => read(ref.read(pointsRepositoryProvider), scope?.address),
+      );
       if (!current()) return;
       if (snapshot.receivedAt.isAfter(_now.add(const Duration(seconds: 30)))) {
         throw const PointsFailure('pointsDataInvalid');
@@ -120,6 +139,7 @@ abstract class PointsLoadController<T> extends Notifier<PointsLoadState<T>> {
               stale: true,
               active: state.active,
               failureKey: state.failureKey,
+              errorDetails: state.errorDetails,
             );
           }
         });
@@ -130,6 +150,7 @@ abstract class PointsLoadController<T> extends Notifier<PointsLoadState<T>> {
       state = PointsLoadState(
         snapshot: state.snapshot,
         stale: state.snapshot != null,
+        errorDetails: error is PointsFailure ? error.details : null,
         failureKey: switch (key) {
           'pointsDataInvalid' || 'pointsNetwork' || 'pointsRateLimited' => key,
           _ => 'pointsUnavailable',
@@ -203,3 +224,24 @@ class WalletPointsHistoryController extends PointsLoadController<WalletPointsHis
     return snapshot;
   }
 }
+
+final selectedPointsCampaignProvider = NotifierProvider.autoDispose<SelectedPointsCampaign, int?>(
+  SelectedPointsCampaign.new,
+);
+
+class SelectedPointsCampaign extends Notifier<int?> {
+  @override
+  int? build() => null;
+  void select(int? campaign) => state = campaign;
+}
+
+final pointsPageRefreshProvider = Provider.autoDispose<Future<void> Function()>((ref) {
+  final batch = RefreshBatch();
+  return () => batch.run([
+    ref.read(currentPointsCampaignProvider.notifier).refresh,
+    ref.read(pointsCampaignsProvider.notifier).refresh,
+    ref.read(pointsLeaderboardProvider(ref.read(selectedPointsCampaignProvider)).notifier).refresh,
+    if (ref.read(walletPointsProvider).snapshot != null)
+      ref.read(walletPointsProvider.notifier).refresh,
+  ]);
+});

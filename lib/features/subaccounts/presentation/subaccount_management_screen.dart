@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -207,7 +209,10 @@ class _SubaccountManagementScreenState extends ConsumerState<SubaccountManagemen
               TextButton(onPressed: controller.stop, child: Text(l.subaccountStopWaiting)),
             ],
             if (s.failure case final failure?)
-              Text(tr(context, failure), style: const TextStyle(color: AppColors.negative)),
+              Text(
+                apiErrorText(context, failure, s.errorDetails),
+                style: const TextStyle(color: AppColors.negative),
+              ),
             if (s.result != null) Text(l.walletOperationAcknowledged),
             if (known.isNotEmpty) ...[
               const Divider(),

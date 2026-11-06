@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/futures_asset_mode.dart';
 import 'aster_account_service.dart';
@@ -28,7 +29,7 @@ class SignedFuturesAssetModeRepository implements FuturesAssetModeRepository {
     required String address,
     required bool Function() isCurrent,
     required void Function(AssetModeStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       void progress(AccountReadStep step) => onStep(switch (step) {
         AccountReadStep.signing => AssetModeStep.signingContext,
@@ -64,7 +65,7 @@ class SignedFuturesAssetModeRepository implements FuturesAssetModeRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 
   @override
   Future<AssetModeResult> change({
@@ -72,7 +73,7 @@ class SignedFuturesAssetModeRepository implements FuturesAssetModeRepository {
     required bool Function() isCurrent,
     required bool Function() canSubmit,
     required void Function(AssetModeStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     if (intent.context.blocks(intent.target) || intent.target == intent.context.current) {
       throw const AccountReadFailure('assetModeChangeBlocked');
     }
@@ -107,14 +108,14 @@ class SignedFuturesAssetModeRepository implements FuturesAssetModeRepository {
       checkedAt: result.checkedAt,
       failure: result.failure ?? (result.observed == intent.target ? null : submitFailure),
     );
-  }
+  });
 
   @override
   Future<AssetModeResult> recheck({
     required AssetModeIntent intent,
     required bool Function() isCurrent,
     required void Function(AssetModeStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       final payload = await _request(service.assetMode).read(
         address: intent.context.address,
@@ -130,5 +131,5 @@ class SignedFuturesAssetModeRepository implements FuturesAssetModeRepository {
       if (!isCurrent()) rethrow;
       return AssetModeResult(failure: failure);
     }
-  }
+  });
 }

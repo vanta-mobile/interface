@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -52,7 +54,12 @@ class DepositGasPanel extends ConsumerWidget {
         ],
         if (state.failure case final error?)
           Text(
-            depositMessage(context, error.key),
+            apiErrorText(
+              context,
+              error.key,
+              error.details,
+              fallbackText: depositMessage(context, error.key),
+            ),
             style: const TextStyle(color: AppColors.negative),
           ),
         if (quote != null) ...[

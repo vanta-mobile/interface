@@ -53,11 +53,11 @@ void main() {
       spots.gate = Completer<void>();
       final controller = container.read(spotAccountReadProvider.notifier);
       final pending = controller.refresh();
-      await controller.refresh();
+      final duplicate = controller.refresh();
       expect(spots.calls, 2);
       spots.failure = const AccountReadFailure('accountNetwork');
       spots.gate!.complete();
-      await pending;
+      await Future.wait([pending, duplicate]);
       expect(container.read(spotAccountReadProvider).account, same(previous));
       expect(container.read(spotAccountReadProvider).stale, true);
       expect(container.read(spotAccountReadProvider).failure?.key, 'accountNetwork');

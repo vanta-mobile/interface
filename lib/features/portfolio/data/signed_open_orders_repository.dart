@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/aster_account.dart';
 import '../domain/aster_open_orders.dart';
 import 'aster_account_service.dart';
@@ -26,7 +27,7 @@ class SignedOpenOrdersRepository implements AsterOpenOrdersRepository {
     required String address,
     required bool Function() isCurrent,
     required void Function(AccountReadStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     final payload = await _request.read(address: address, isCurrent: isCurrent, onStep: onStep);
     try {
       final snapshotTime = now();
@@ -44,5 +45,5 @@ class SignedOpenOrdersRepository implements AsterOpenOrdersRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 }

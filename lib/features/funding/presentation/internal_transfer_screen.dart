@@ -1,7 +1,8 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
@@ -83,7 +84,10 @@ class _ReadControls extends ConsumerWidget {
           ),
         ],
         if (state.failure case final key?)
-          Text(tr(context, key), style: const TextStyle(color: AppColors.warning)),
+          Text(
+            apiErrorText(context, key, state.errorDetails),
+            style: const TextStyle(color: AppColors.warning),
+          ),
       ],
     );
   }

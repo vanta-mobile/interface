@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,18 +9,28 @@ import '../../../core/market_failure.dart';
 import '../domain/market.dart';
 import '../domain/market_quotes.dart';
 import '../data/aster_service.dart';
+import '../data/market_catalog_repository.dart';
+import '../data/order_book_repository.dart';
 import '../data/market_quotes_repository.dart';
 import '../data/market_http_client.dart';
 import 'market_sync.dart';
 import 'market_sessions.dart';
 
 final asterServiceProvider = Provider<AsterService>((ref) {
-  final client = createMarketHttpClient();
+  final client = createMarketHttpClient(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(client.close);
-  return AsterService(client);
+  final service = AsterService(client);
+  ref.onDispose(() => unawaited(service.dispose()));
+  return service;
 });
+final marketCatalogRepositoryProvider = Provider<MarketCatalogRepository>(
+  (ref) => MarketCatalogRepository(ref.watch(asterServiceProvider)),
+);
+final orderBookRepositoryProvider = Provider<OrderBookRepository>(
+  (ref) => OrderBookRepository(ref.watch(asterServiceProvider)),
+);
 final instrumentsProvider = FutureProvider<List<AsterInstrument>>(
-  (ref) => ref.watch(asterServiceProvider).instruments(),
+  (ref) => ref.watch(marketCatalogRepositoryProvider).read(),
 );
 final quoteUpdatesActiveProvider = NotifierProvider<QuoteUpdatesActive, bool>(
   QuoteUpdatesActive.new,
@@ -145,63 +157,7 @@ class ChartHistoryController extends Notifier<void> {
   Future<void> loadOlder() async => ref.read(marketSyncProvider)?.loadOlder();
 }
 
-final asterBookProvider = StreamProvider.autoDispose<OrderBook>((ref) async* {
-  final symbol = ref.watch(symbolProvider).toLowerCase();
-  final service = ref.watch(asterServiceProvider);
-  List<BookLevel> bids = [], asks = [];
-  final trades = <MarketTrade>[];
-  var lastEmission = 0;
-  var depthConnected = false;
-  await for (final event in service.bookStream(symbol)) {
-    if (event['connected'] == true) {
-      if (event['channel'] == 'depth') depthConnected = true;
-      continue;
-    }
-    if (event['disconnected'] == true) {
-      if (event['channel'] == 'depth') depthConnected = false;
-      yield OrderBook(
-        asks: asks,
-        bids: bids,
-        trades: List.unmodifiable(trades),
-        connected: depthConnected,
-      );
-      continue;
-    }
-    if (event['e'] == 'depthUpdate') {
-      List<BookLevel> levels(Object? raw, bool reverse) =>
-          ((raw as List<dynamic>)
-              .map((r) {
-                final row = r as List<dynamic>;
-                return BookLevel(AsterService.numeric(row[0]), AsterService.numeric(row[1]));
-              })
-              .where((l) => l.quantity > 0)
-              .toList()
-            ..sort((a, b) => reverse ? b.price.compareTo(a.price) : a.price.compareTo(b.price)));
-      bids = levels(event['b'], true);
-      asks = levels(event['a'], false);
-    } else if (event['e'] == 'aggTrade') {
-      trades.insert(
-        0,
-        MarketTrade(
-          price: AsterService.numeric(event['p']),
-          quantity: AsterService.numeric(event['q']),
-          buy: event['m'] == false,
-          time: (event['T'] as num).toInt(),
-        ),
-      );
-      if (trades.length > 30) trades.removeLast();
-    } else {
-      continue;
-    }
-    final now = DateTime.now().millisecondsSinceEpoch;
-    if (now - lastEmission >= 250) {
-      lastEmission = now;
-      yield OrderBook(
-        asks: asks,
-        bids: bids,
-        trades: List.unmodifiable(trades),
-        connected: depthConnected,
-      );
-    }
-  }
+final asterBookProvider = StreamProvider.autoDispose<OrderBook>(retry: (_, _) => null, (ref) {
+  final symbol = ref.watch(symbolProvider);
+  return ref.watch(orderBookRepositoryProvider).watch(symbol);
 });

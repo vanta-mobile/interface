@@ -42,9 +42,14 @@ void main() {
     listen(first);
     listen(const FundingFeeQuery(market: TransferMarket.perp, chainId: 56, asset: 'USDT'));
     await tester.pump();
-    await container.read(fundingFeeProvider(first).notifier).refresh();
+    final duplicate = container.read(fundingFeeProvider(first).notifier).refresh();
+    var duplicateDone = false;
+    duplicate.then((_) => duplicateDone = true);
+    expect(duplicateDone, isFalse);
     expect(repository.calls, [first]);
     repository.gates[first]!.complete(fundingFeeFixture(first));
+    await duplicate;
+    expect(duplicateDone, isTrue);
     await tester.pump();
     expect(container.read(fundingFeeProvider(first)).quote!.query, first);
   });

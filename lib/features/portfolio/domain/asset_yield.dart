@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_details.dart';
+
 import 'package:decimal/decimal.dart';
 
 enum YieldAsset {
@@ -53,10 +55,12 @@ class AssetYieldState {
     this.loading = false,
     this.active = true,
     this.failureKey,
+    this.errorDetails,
   });
   final DateTime checkedAt;
   final AssetYieldQuote? quote;
   final bool loading, active;
+  final ApiErrorDetails? errorDetails;
   final String? failureKey;
   bool get stale => quote != null && (!active || failureKey != null || !quote!.freshAt(checkedAt));
 }

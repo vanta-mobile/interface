@@ -1,3 +1,6 @@
+import '../../../core/network/request_scope.dart';
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +12,8 @@ import '../domain/asset_yield.dart';
 
 final assetYieldClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final assetYieldRepositoryProvider = Provider.autoDispose<AssetYieldRepository>((ref) {
-  final aster = AsterYieldService(), lista = ListaYieldService();
+  final aster = AsterYieldService(client: ref.watch(backendHttpPoolProvider).lease()),
+      lista = ListaYieldService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(aster.close);
   ref.onDispose(lista.close);
   return PublicAssetYieldRepository(aster, lista, now: ref.watch(assetYieldClockProvider));
@@ -46,7 +50,17 @@ class AssetYieldController extends Notifier<AssetYieldState> {
     return AssetYieldState(checkedAt: _now, active: _active);
   }
 
-  Future<void> refresh() async {
+  Future<void>? _refreshTask;
+  Future<void> refresh() {
+    if (state.loading && _refreshTask != null) return _refreshTask!;
+    final task = _performRefresh();
+    _refreshTask = task;
+    return task.whenComplete(() {
+      if (identical(_refreshTask, task)) _refreshTask = null;
+    });
+  }
+
+  Future<void> _performRefresh() async {
     if (!ref.mounted || !_active || state.loading) return;
     final generation = ++_generation;
     _refresh?.cancel();
@@ -58,7 +72,10 @@ class AssetYieldController extends Notifier<AssetYieldState> {
     );
     bool current() => ref.mounted && generation == _generation && _active;
     try {
-      final quote = await ref.read(assetYieldRepositoryProvider).read(asset);
+      final quote = await RequestScope.run(
+        current,
+        () => ref.read(assetYieldRepositoryProvider).read(asset),
+      );
       if (!current()) return;
       if (quote.asset != asset) throw const AccountReadFailure('accountDataInvalid');
       state = AssetYieldState(checkedAt: _now, quote: quote);
@@ -68,6 +85,7 @@ class AssetYieldController extends Notifier<AssetYieldState> {
       state = AssetYieldState(
         checkedAt: _now,
         quote: state.quote,
+        errorDetails: error is AccountReadFailure ? error.details : null,
         failureKey: switch (key) {
           'accountDataInvalid' || 'accountNetwork' || 'accountRateLimited' => key,
           _ => 'assetYieldFailed',

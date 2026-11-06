@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -50,12 +52,20 @@ class AssetYieldBadge extends ConsumerWidget {
           Text(l10n.assetYieldStale, style: const TextStyle(color: AppColors.warning)),
         if (!state.active) Text(l10n.assetYieldPaused),
         if (state.failureKey case final key?)
-          Text(switch (key) {
-            'accountDataInvalid' => l10n.assetYieldInvalid,
-            'accountNetwork' => l10n.assetYieldNetwork,
-            'accountRateLimited' => l10n.accountRateLimited,
-            _ => l10n.assetYieldFailed,
-          }, style: const TextStyle(color: AppColors.warning)),
+          Text(
+            apiErrorText(
+              context,
+              key,
+              state.errorDetails,
+              fallbackText: switch (key) {
+                'accountDataInvalid' => l10n.assetYieldInvalid,
+                'accountNetwork' => l10n.assetYieldNetwork,
+                'accountRateLimited' => l10n.accountRateLimited,
+                _ => l10n.assetYieldFailed,
+              },
+            ),
+            style: const TextStyle(color: AppColors.warning),
+          ),
         if (state.loading) ...[const LinearProgressIndicator(), Text(l10n.assetYieldLoading)],
         const SizedBox(height: 8),
       ],

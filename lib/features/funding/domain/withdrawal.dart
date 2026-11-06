@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_details.dart';
+
 import 'package:decimal/decimal.dart';
 
 import '../../../core/domain/wallet_operation.dart';
@@ -37,9 +39,16 @@ abstract interface class WithdrawalRepository {
 }
 
 class WithdrawalState {
-  const WithdrawalState({this.busy = false, this.review, this.result, this.failure});
+  const WithdrawalState({
+    this.busy = false,
+    this.review,
+    this.result,
+    this.failure,
+    this.errorDetails,
+  });
   final bool busy;
   final WithdrawalReview? review;
   final WalletOperationRecord? result;
+  final ApiErrorDetails? errorDetails;
   final String? failure;
 }

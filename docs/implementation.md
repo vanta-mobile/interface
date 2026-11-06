@@ -1,5 +1,31 @@
 ## 当前验收安排
 
+## 2026-11-06 接口错误详情与主页刷新
+
+提交验收：按用户指示仅暂存本轮接口规范、传输、错误处理与刷新改动，保留登录、主下单及原生／发布配置等其他工作区改动。以暂存树独立导出验证：878 个 Dart 文件格式检查零改动，静态分析无问题，完整 4,198 项测试通过；源码与暂存内容核对一致。此提交副本的 Android Release 重建在 jni 的 CMake 配置阶段被已安装 Android SDK Ninja 的 --version 段错误阻断，并非 Dart 编译错误；保留此前完整工作区构建通过的证据，不将该 APK 冒称为此独立提交产物。隔离验证日志：/tmp/vanta-api-commit-tests.log、/tmp/vanta-api-commit-analysis2.log、/tmp/vanta-api-commit-format.log、/tmp/vanta-api-commit-build.log。
+
+新增 ApiErrorDetails 与公共错误解析／展示规则：只从接口的 msg、message、error_description、error/message 等错误字段提取说明，保留 HTTP 状态、原有数字业务码与已知传输原因，不直接显示异常 toString、响应全文或堆栈。对凭据键值、Bearer／JWT、签名、长密钥及 URL 脱敏，拒绝原始 JSON、HTML、SQL、私钥／助记词和超长内容。接口未给原因时使用中英文本地化的超时／网络／取消／响应无效说明，再退回既有通用提示。HTTP 200 的显式 success:false 同样作为业务错误处理；协议解析失败仍不伪装成服务端原因。
+
+账户通用传输、行情、AI 助手、积分／活动、充值 RPC 的安全错误详情，经相应 Riverpod 状态接入原有错误展示位置；资产名称／图标目录在传输边界保留安全原因，页面继续使用既有降级展示；账户配置拒绝码重映射时保留详情。充值授权／提交／核查、提现、子账户等金融操作继续遵守原有日志、明确拒绝与未知结果规则，显示详情不会改变成功判断或自动重提；待核查文案与具体原因同时保留。助手临时 HTTP 429 与明确 daily_quota_exceeded 分开，不把临时限流显示为每日额度已耗尽。未来接口的详情传播规则补入 AGENTS.md。
+
+合约、行情、资产、积分主页接入下拉刷新；缺失的交易对目录、图表／ticker、报价、已显示的资产来源与当前积分榜按各主页依赖刷新。保留现有数据，重复刷新等待当前请求，单节失败也等待其他节结束。图表刷新会等待正在进行的历史加载及其排队后续请求；行情列表在后台恢复时等待旧作用域结算及新快照，旧请求不能吞掉新作用域的刷新；资金、账户、积分控制器的刷新 Future 也等待其正在执行的请求。钱包相关主页只重新读取已有账户／积分快照的数据，避免首次浏览或未读取时自动触发签名；账户与挂单签名按顺序执行。已有实时 WebSocket 继续其订阅生命周期；本轮没有把下拉操作改成公共／私有流重建，也没有宣称完成所有独立子页面的刷新改造。
+
+验证：948 个 Dart 文件格式检查零改动，dart analyze --fatal-infos 无问题，git diff --check 通过。完整单元／Widget 回归 4,861 项通过；行情恢复作用域随后补充 1 项回归，最终该文件 7 项通过（不将新增项计入上述全量数量）。错误详情／敏感信息过滤、HTTP 200 业务失败、AI 临时限流／日额度、刷新等待、充值未知结果及提现／子账户超时原因等专项通过；初轮回归中的旧异常类型与重复刷新立即返回断言已按新行为修正，未跳过用例。命令及结果保存在 /tmp/vanta-errors-final-full-tests2.log、/tmp/vanta-errors-quotes-refresh.log、/tmp/vanta-errors-final-focused.log、/tmp/vanta-errors-final-recheck.log、/tmp/vanta-errors-acceptance-analysis2.log 和 /tmp/vanta-errors-acceptance-format2.log。
+
+make build-apk（含公开配置检查）成功，Android arm64 Release APK 为 46,259,005 bytes，SHA-256 `f593a4bb4db1d1fe26527de245007b0a2c9e20ba21174107b415a28f1ba5afb4`；构建日志 /tmp/vanta-errors-android-build.log。既有插件的 KGP 迁移警告未阻塞当前构建。本轮只使用替身传输与本地测试，不发真实钱包／私有／资金／带地址 RPC 请求，不安装 APK或调用设备工具。Linux 无 macOS／Xcode，iOS 构建及原生视觉验收继续按[待验收清单](native-verification-pending.md)保留。
+
+## 2026-11-06 接口传输生命周期与行情数据分层
+
+按本轮要求先补充根目录 `AGENTS.md` 的通用接口规范，再治理请求取消、连接池／限流复用、公开行情订阅共享和行情数据边界。保留既有 Riverpod 及 feature 目录结构，未新增依赖。页面收集意图，Provider／Controller 编排状态与依赖，Repository／Mapper 校验传输数据；交易对目录和盘口不再由 Provider 直接请求／解析。
+
+新增容器级 `BackendHttpPool`，按 origin 复用原生 HTTP 连接及主机预算。合约／现货账户、订单、充提、子账户、授权、积分／活动、资产元数据／收益率、RPC 和 AI 的自有 HTTP 调用均注入服务独立的 lease；Privy／Reown 自行管理其 SDK 传输。服务关闭只关闭本 lease 并中止本服务请求，不关闭其他服务的共享连接。签名 query／form 字节、凭证、nonce 以及精确数值 decoder 仍按原作用域隔离。沿用公开行情每分钟1000权重的客户端预算，聚合已编码的 K线／全市场ticker／现货全账户挂单权重；其他路径使用默认权重1，不声称已完整覆盖交易所所有端点的计费权重。429／418 的 Retry-After（秒或HTTP日期）成为同源所有 lease 的冷却时间；预算等待可取消，传输池不重试签名写操作。
+
+`ManagedHttpClient` 将普通／流式请求包装为可中止请求，限制流式响应大小（通用上限16MiB，原有更小的业务上限继续生效），超时覆盖队列、响应头和响应体。显式取消、服务释放及操作作用域失效会向原生客户端传递 abort，并取消迟到响应体；成功响应不会触发 abort。既有仓库以 `isCurrent`／revision 判断有效性，通过 `RequestScope` 贯穿签名前预读、签名后HTTP及后续元数据读取；仅在有网络工作时以25ms间隔观察该谓词，完成后清理计时器。原有显式取消信号继续直接传递；钱包弹窗本身不能由HTTP取消关闭。下单／划转／提现等发送后中止仍保留原持久化记录和未知结果核查，不把中止解释成服务端撤回，不自动重提。
+
+公开行情按等价订阅集合共享底层 WebSocket，订阅顺序不变；迟到消费者取得当前连接状态，不重播旧tick为新报价。最后一名消费者离开即断开底层订阅；断线／重连通知共同分发，价格新鲜度、合约范围及验证仍由各业务仓库独立维护。私有账户流未合并。`MarketCatalogRepository` 接管四项公开目录请求和合约筛选，`AsterInstrument` 移入domain并复制为不可变ticker映射；`OrderBookRepository`／Mapper接管深度与成交，拒绝畸形、非有限、非正价格／成交数量及非法方向／时间，保留盘口零数量过滤、排序与节流。
+
+新增29项传输／共享订阅／盘口／目录／账户仓库生命周期回归，覆盖请求前失效、响应头／体期间取消、超时、原生本机HTTP中止、共享连接隔离、独立decoder、同源冷却／权重队列取消、订阅重连／迟到消费者／最终释放、畸形数据及传输错误原因保留。初轮发现请求具体类型与订阅顺序兼容问题，均已修正，原断言通过。最终927个Dart文件格式检查零改动、静态分析无问题，全量4785项通过；随后补充目录错误分类／模型不可变性3项，最终接口与行情专项155项全部通过。原有订单／划转／提现的未知结果、持久化恢复及不重提测试随全量通过。Android arm64 Release构建通过，APK 46,233,860 bytes，SHA-256 `2e3e7cd0190168842c1e6246b433d9296c7a3ae1c7ee2a64ea8bc566990f48ac`。本轮只使用替身接口及本机回环HTTP／WebSocket；不发真实钱包／私有／资金请求，不启动设备或安装APK。Linux无macOS／Xcode，iOS及手机真实网络生命周期继续待验收。
+
 ## 2026-11-06 iOS 仅支持 iPhone 与法国发行范围说明
 
 对照`/data/dodo/rwa-interface`最近的`38d2da6`（`fix(ios): target iPhone only and declare encryption exemption`），Xcode项目的Debug／Profile／Release均将`TARGETED_DEVICE_FAMILY`从`1,2`改为`1`，由Runner继承，仅声明iPhone原生支持。移除`Info.plist`的iPad专用方向配置，保留iPhone竖屏及左右横屏；未通过锁定方向实现设备限制，也未改动现有响应式界面。iPhone应用仍可能在iPad上以兼容模式运行，不声明iPad原生适配不等于禁止所有iPad安装。

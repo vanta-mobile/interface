@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,7 +30,10 @@ final assistantVaultProvider = Provider<AssistantVault>(
   (_) => AssistantVault(NativeAssistantSecureStore()),
 );
 final assistantHttpProvider = Provider.autoDispose<AssistantHttp>((ref) {
-  final service = AssistantHttp(now: ref.watch(assistantClockProvider));
+  final service = AssistantHttp(
+    client: ref.watch(backendHttpPoolProvider).lease(),
+    now: ref.watch(assistantClockProvider),
+  );
   ref.onDispose(service.close);
   return service;
 });

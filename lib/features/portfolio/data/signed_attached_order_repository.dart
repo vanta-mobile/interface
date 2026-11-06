@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/attached_order.dart';
 import '../domain/live_order.dart';
@@ -26,7 +27,7 @@ class SignedAttachedOrderRepository {
     required bool Function() isCurrent,
     required bool Function() canSubmit,
     required void Function(LiveOrderStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     var submitted = false;
     AccountReadFailure? postFailure;
     try {
@@ -62,13 +63,13 @@ class SignedAttachedOrderRepository {
     return result.needsRecheck && postFailure != null
         ? LiveOrderResult(failure: postFailure)
         : result;
-  }
+  });
 
   Future<LiveOrderResult> recheck({
     required LiveOrderIntent intent,
     required bool Function() isCurrent,
     required void Function(LiveOrderStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     return SignedOrderQueryRepository(
       service,
       sign,
@@ -76,5 +77,5 @@ class SignedAttachedOrderRepository {
       now,
       journal: journal,
     ).query(OrderQuery.capture(intent), isCurrent: isCurrent, onStep: onStep);
-  }
+  });
 }

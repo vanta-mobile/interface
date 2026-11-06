@@ -4,6 +4,8 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/errors/api_error_parser.dart';
 import '../../market/data/market_http_client.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/asset_metadata.dart';
@@ -11,7 +13,7 @@ import '../domain/asset_metadata.dart';
 /// Anonymous catalog and image transport only. No wallet or account data.
 class AssetMetadataService {
   AssetMetadataService({http.Client? client, this.timeout = const Duration(seconds: 12)})
-    : _client = client ?? createMarketHttpClient();
+    : _client = createMarketHttpClient(client: client, timeout: timeout);
   final http.Client _client;
   final Duration timeout;
   bool _closed = false;
@@ -32,8 +34,25 @@ class AssetMetadataService {
       return await (() async {
         if (_closed) throw const AccountReadFailure('accountNetwork');
         final response = await _client.send(transport);
-        if (response.statusCode != 200 ||
-            response.headers['content-type']?.split(';').first.trim().toLowerCase() != type ||
+        if (response.statusCode != 200) {
+          final bytes = BytesBuilder(copy: false);
+          if (type == 'application/json' && (response.contentLength ?? 0) <= 65536) {
+            await for (final chunk in response.stream) {
+              if (bytes.length + chunk.length > 65536) break;
+              bytes.add(chunk);
+            }
+          } else {
+            await response.stream.listen(null).cancel();
+          }
+          throw AccountReadFailure(
+            response.statusCode == 429 ? 'accountRateLimited' : 'accountReadFailed',
+            details: apiErrorDetails(
+              decodeErrorPayload(utf8.decode(bytes.takeBytes(), allowMalformed: true)),
+              status: response.statusCode,
+            ),
+          );
+        }
+        if (response.headers['content-type']?.split(';').first.trim().toLowerCase() != type ||
             (response.contentLength ?? 0) > limit) {
           await response.stream.listen(null).cancel();
           throw const AccountReadFailure('accountDataInvalid');
@@ -51,13 +70,24 @@ class AssetMetadataService {
         timeout,
         onTimeout: () {
           if (!abort.isCompleted) abort.complete();
-          throw const AccountReadFailure('accountNetwork');
+          throw const AccountReadFailure(
+            'accountNetwork',
+            details: ApiErrorDetails(cause: ApiErrorCause.timeout),
+          );
         },
       );
     } on AccountReadFailure {
       rethrow;
+    } on http.RequestAbortedException {
+      throw const AccountReadFailure(
+        'accountNetwork',
+        details: ApiErrorDetails(cause: ApiErrorCause.cancelled),
+      );
     } catch (_) {
-      throw const AccountReadFailure('accountNetwork');
+      throw const AccountReadFailure(
+        'accountNetwork',
+        details: ApiErrorDetails(cause: ApiErrorCause.connection),
+      );
     } finally {
       _aborts.remove(abort);
     }
@@ -81,7 +111,11 @@ class AssetMetadataService {
     }
     final bytes = await _read(request, 2097152, 'application/json');
     try {
-      return jsonDecode(utf8.decode(bytes));
+      final data = jsonDecode(utf8.decode(bytes));
+      if (data is Map && data['success'] == false) {
+        throw AccountReadFailure('accountReadFailed', details: apiErrorDetails(data, status: 200));
+      }
+      return data;
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }

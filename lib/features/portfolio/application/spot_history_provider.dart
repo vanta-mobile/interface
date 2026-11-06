@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +12,7 @@ import '../domain/spot_history.dart';
 import 'account_read_provider.dart';
 
 final spotHistoryRepositoryProvider = Provider<SpotHistoryRepository>((ref) {
-  final service = AsterSpotService();
+  final service = AsterSpotService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return SignedSpotHistoryRepository(
     service,

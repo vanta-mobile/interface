@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_details.dart';
+
 import 'dart:async';
 
 enum AssistantRole { user, assistant }
@@ -32,8 +34,10 @@ class AssistantMessage {
   );
 }
 
-class AssistantFailure implements Exception {
-  const AssistantFailure(this.key, {this.status, this.quota});
+class AssistantFailure implements Exception, DetailedApiFailure {
+  const AssistantFailure(this.key, {this.status, this.quota, this.details});
+  @override
+  final ApiErrorDetails? details;
   final String key;
   final int? status;
   final AssistantQuota? quota;

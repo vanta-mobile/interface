@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -62,7 +64,15 @@ class DepositApprovalPanel extends ConsumerWidget {
           ),
         ],
         if (state.failure case final key?)
-          Text(depositMessage(context, key), style: const TextStyle(color: AppColors.warning)),
+          Text(
+            apiErrorText(
+              context,
+              key,
+              state.errorDetails,
+              fallbackText: depositMessage(context, key),
+            ),
+            style: const TextStyle(color: AppColors.warning),
+          ),
         if (state.record != null && !state.busy && state.failure == null)
           Text(l10n.depositApprovalSent),
       ],

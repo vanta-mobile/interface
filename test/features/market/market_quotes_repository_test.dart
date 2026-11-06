@@ -54,6 +54,33 @@ Map<String, Map<String, Object?>> snapshot(String price) => {
 };
 
 void main() {
+  test('refresh waits for resumed scope snapshot when previous scope is still settling', () async {
+    final service = QuoteService();
+    final repository = MarketQuotesRepository(service, instruments);
+    final subscription = repository.events.listen((_) {});
+    addTearDown(() async {
+      await subscription.cancel();
+      await repository.dispose();
+      await service.close();
+    });
+    service.events.add({'connected': true});
+    await Future<void>.delayed(Duration.zero);
+    expect(service.snapshots, hasLength(1));
+    await repository.setActive(false);
+    await repository.setActive(true);
+    service.events.add({'connected': true});
+    await Future<void>.delayed(Duration.zero);
+    var completed = false;
+    final refresh = repository.refresh().then((_) => completed = true);
+    service.snapshots.first.complete(snapshot('90'));
+    await Future<void>.delayed(Duration.zero);
+    expect(service.snapshots, hasLength(2));
+    expect(completed, false);
+    service.snapshots.last.complete(snapshot('150'));
+    await refresh;
+    expect(repository.state.quotes.first.price, Decimal.fromInt(150));
+    expect(completed, true);
+  });
   test('merges deltas by symbol with Decimal precision and batches list updates', () async {
     final service = QuoteService();
     final repository = MarketQuotesRepository(service, instruments);

@@ -1,6 +1,7 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 
-import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/widgets/primitives.dart';
@@ -20,7 +21,7 @@ class LiveOrderFundsPanel extends StatelessWidget {
         if (funds == null) Text(l10n.liveOrderReadFunds),
         if (data.fundsFailure case final failure?)
           Text(
-            '${tr(context, failure.key)}${failure.code == null ? '' : '\n${l10n.accountErrorCode(failure.code!)}'}',
+            accountErrorText(context, failure),
             style: const TextStyle(color: AppColors.negative),
           ),
         if (funds != null) ...[

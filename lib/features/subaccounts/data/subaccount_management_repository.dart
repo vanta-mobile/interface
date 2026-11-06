@@ -1,3 +1,6 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/network/request_scope.dart';
+
 import 'package:decimal/decimal.dart';
 
 import '../../../core/data/aster_signature_verifier.dart';
@@ -58,7 +61,7 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
     required WalletOperationKind kind,
     required Map<String, String> terms,
     required bool Function() isCurrent,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
     if (kind == WalletOperationKind.createSubaccount && !canCreateSubaccount(identity)) {
       throw const AccountReadFailure('subaccountCreateExternalOnly');
@@ -98,7 +101,7 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
     } on FormatException {
       throw const AccountReadFailure('subaccountInputInvalid');
     }
-  }
+  });
 
   void _validate(WalletOperationRecord r) {
     final t = r.terms;
@@ -161,7 +164,7 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
     SubaccountManagementReview review, {
     String childSignature = '',
     required bool Function() isCurrent,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     final r = review.record;
     void current() {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
@@ -230,7 +233,7 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
       if (saved && !sent) {
         await journal.removeNotSent(r.key);
       }
-      if (sent) throw const AccountReadFailure('walletOperationUnknown');
+      if (sent) throw AccountReadFailure('walletOperationUnknown', details: errorDetailsOf(e));
       if (e is AuthFailure) throw AccountReadFailure(e.key);
       if (e is WalletOperationPending) throw const AccountReadFailure('walletOperationPending');
       if (e is WalletOperationStorageFailure) {
@@ -239,5 +242,5 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
       if (e is FormatException) throw const AccountReadFailure('subaccountInputInvalid');
       rethrow;
     }
-  }
+  });
 }

@@ -1,88 +1,63 @@
+import '../../../core/errors/api_error_parser.dart';
+export '../domain/aster_instrument.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:decimal/decimal.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../../core/market_failure.dart';
 import '../domain/market.dart';
-import '../domain/market_descriptor.dart';
 import 'aster_stream.dart';
-import 'market_descriptor_mapper.dart';
-
-class AsterInstrument {
-  const AsterInstrument({
-    required this.symbol,
-    required this.base,
-    required this.ticker,
-    this.precision = const MarketPrecision(),
-    this.descriptor = const MarketDescriptor.empty(),
-  });
-  final String symbol, base;
-  final Map<String, Object?> ticker;
-  final MarketPrecision precision;
-  final MarketDescriptor descriptor;
-}
+import 'shared_market_streams.dart';
 
 class AsterService {
   AsterService(this.client, {WebSocketChannel Function(Uri)? connect})
-    : _connect = connect ?? WebSocketChannel.connect;
+    : _connect = connect ?? WebSocketChannel.connect {
+    _streams = SharedMarketStreams(
+      (channels) => AsterMarketStream(_streamUri, channels, _connect).events,
+    );
+  }
   final http.Client client;
   final WebSocketChannel Function(Uri) _connect;
   static final _streamUri = Uri.parse('wss://fstream.asterdex.com/stream');
+  late final SharedMarketStreams _streams;
+  Future<void> dispose() => _streams.dispose();
   int _serverOffset = 0;
-  final _weights = <(int, int)>[];
-  int _blockedUntil = 0;
-  Future<void> _reserve(int weight) async {
-    while (true) {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      _weights.removeWhere((entry) => entry.$1 <= now - 60000);
-      final used = _weights.fold(0, (sum, e) => sum + e.$2);
-      if (now >= _blockedUntil && used + weight <= 1000) {
-        _weights.add((now, weight));
-        return;
-      }
-      final budgetWait = used + weight > 1000 ? _weights.first.$1 + 60001 - now : 0;
-      final blockWait = _blockedUntil - now;
-      await Future<void>.delayed(
-        Duration(milliseconds: (budgetWait > blockWait ? budgetWait : blockWait).clamp(1, 60000)),
-      );
-    }
-  }
-
   int get serverNow => DateTime.now().millisecondsSinceEpoch + _serverOffset;
   Future<Object?> request(String path, [Map<String, String>? query]) async {
     for (var attempt = 0; attempt < 3; attempt++) {
-      final limit = int.tryParse(query?['limit'] ?? '') ?? 0;
-      await _reserve(
-        path.endsWith('/klines')
-            ? (limit < 100
-                  ? 1
-                  : limit < 500
-                  ? 2
-                  : limit <= 1000
-                  ? 5
-                  : 10)
-            : path.endsWith('/ticker/24hr') && query?['symbol'] == null
-            ? 40
-            : 1,
-      );
       final response = await client
           .get(Uri.https('fapi.asterdex.com', path, query))
           .timeout(const Duration(seconds: 12));
       if (response.statusCode == 429 || response.statusCode == 418) {
-        final wait = (int.tryParse(response.headers['retry-after'] ?? '') ?? 5).clamp(1, 86400);
-        _blockedUntil = DateTime.now().millisecondsSinceEpoch + wait * 1000;
-        if (attempt == 2) throw MarketFailure('Aster HTTP ${response.statusCode}: rate limit');
-        await Future<void>.delayed(Duration(seconds: wait));
+        if (attempt == 2) {
+          throw MarketFailure(
+            'Aster HTTP ${response.statusCode}: rate limit',
+            details: apiErrorDetails(
+              decodeErrorPayload(response.body),
+              status: response.statusCode,
+            ),
+          );
+        }
         continue;
       }
       if (response.statusCode != 200) {
-        throw MarketFailure('Aster HTTP ${response.statusCode}');
+        throw MarketFailure(
+          'Aster HTTP ${response.statusCode}',
+          details: apiErrorDetails(decodeErrorPayload(response.body), status: response.statusCode),
+        );
       }
       try {
-        return jsonDecode(utf8.decode(response.bodyBytes));
+        final payload = jsonDecode(utf8.decode(response.bodyBytes));
+        if (payload is Map && payload['code'] is int && (payload['code'] as int) < 0) {
+          throw MarketFailure(
+            'Aster error ${payload['code']}',
+            details: apiErrorDetails(payload, status: response.statusCode),
+          );
+        }
+        return payload;
       } on FormatException {
         throw const MarketFailure('Invalid Aster response');
       }
@@ -90,71 +65,8 @@ class AsterService {
     throw const MarketFailure('Aster rate limit');
   }
 
-  Future<List<AsterInstrument>> instruments() async {
-    final results = await Future.wait([
-      request('/fapi/v3/exchangeInfo'),
-      request('/fapi/v3/ticker/24hr'),
-      request('/fapi/v3/time'),
-      request('/fapi/v3/premiumIndex'),
-    ]);
-    _serverOffset =
-        ((results[2] as Map<String, dynamic>)['serverTime'] as num).toInt() -
-        DateTime.now().millisecondsSinceEpoch;
-    final premiums = {
-      for (final raw in results[3] as List<dynamic>)
-        (raw as Map<String, dynamic>)['symbol'] as String: raw,
-    };
-    final info = results[0] as Map<String, dynamic>;
-    final tickers = {
-      for (final raw in results[1] as List<dynamic>)
-        (raw as Map<String, dynamic>)['symbol'] as String: raw,
-    };
-    final instruments = <AsterInstrument>[];
-    final seen = <String>{};
-    for (final item in info['symbols'] as List<dynamic>) {
-      final data = item as Map<String, dynamic>;
-      final ticker = tickers[data['symbol']];
-      if (data['status'] != 'TRADING' ||
-          data['contractType'] != 'PERPETUAL' ||
-          data['quoteAsset'] != 'USDT' ||
-          ticker == null ||
-          !seen.add(data['symbol'] as String)) {
-        continue;
-      }
-      instruments.add(
-        AsterInstrument(
-          symbol: data['symbol'] as String,
-          base: data['baseAsset'] as String,
-          ticker: {...ticker, ...?premiums[data['symbol']]},
-          precision: MarketPrecision.fromExchange(data),
-          descriptor: mapMarketDescriptor(data),
-        ),
-      );
-    }
-    Decimal? volume(AsterInstrument instrument) {
-      final value = Decimal.tryParse('${instrument.ticker['quoteVolume']}');
-      return value != null && value >= Decimal.zero ? value : null;
-    }
-
-    instruments.sort((a, b) {
-      final av = volume(a), bv = volume(b);
-      final order = av == null
-          ? (bv == null ? 0 : 1)
-          : bv == null
-          ? -1
-          : bv.compareTo(av);
-      return order == 0 ? a.symbol.compareTo(b.symbol) : order;
-    });
-    final first =
-        instruments.where((e) => ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'].contains(e.symbol)).toList()
-          ..sort(
-            (a, b) => [
-              'BTCUSDT',
-              'ETHUSDT',
-              'SOLUSDT',
-            ].indexOf(a.symbol).compareTo(['BTCUSDT', 'ETHUSDT', 'SOLUSDT'].indexOf(b.symbol)),
-          );
-    return List.unmodifiable([...first, ...instruments.where((e) => !first.contains(e))]);
+  void calibrateClock(int serverTime) {
+    _serverOffset = serverTime - DateTime.now().millisecondsSinceEpoch;
   }
 
   Future<List<Candle>> history(
@@ -197,7 +109,7 @@ class AsterService {
         ArgumentError.value(streams.length, 'streams', 'Aster supports 1–200 streams'),
       );
     }
-    return AsterMarketStream(_streamUri, streams, _connect).events;
+    return _streams.stream(streams);
   }
 
   Stream<Map<String, Object?>> bookStream(String symbol) {

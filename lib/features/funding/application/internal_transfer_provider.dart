@@ -1,3 +1,6 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 import 'dart:math';
 
@@ -22,9 +25,9 @@ import 'withdraw_info_provider.dart';
 
 final internalTransferClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final internalTransferRepositoryProvider = Provider<InternalTransferRepository>((ref) {
-  final futures = AsterAccountService(),
-      spot = AsterSpotService(),
-      catalog = InternalTransferCatalogService();
+  final futures = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease()),
+      spot = AsterSpotService(client: ref.watch(backendHttpPoolProvider).lease()),
+      catalog = InternalTransferCatalogService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(() {
     futures.close();
     spot.close();
@@ -92,6 +95,7 @@ class InternalTransferController extends Notifier<InternalTransferState> {
     InternalTransferReview? review,
     InternalTransferRecord? record,
     String? failure,
+    ApiErrorDetails? errorDetails,
     InternalTransferStep step = InternalTransferStep.idle,
     bool stale = true,
     String? amount,
@@ -106,6 +110,7 @@ class InternalTransferController extends Notifier<InternalTransferState> {
       review: review,
       record: record ?? state.record,
       failure: failure,
+      errorDetails: errorDetails,
       step: step,
       stale: stale,
     );
@@ -230,7 +235,9 @@ class InternalTransferController extends Notifier<InternalTransferState> {
       );
       _arm(c);
     } catch (error) {
-      if (current()) _publish(context: previous, failure: _failure(error));
+      if (current()) {
+        _publish(context: previous, errorDetails: errorDetailsOf(error), failure: _failure(error));
+      }
     } finally {
       _working = false;
     }
@@ -365,7 +372,9 @@ class InternalTransferController extends Notifier<InternalTransferState> {
           failure = 'internalTransferStorage';
         }
       }
-      if (current()) _publish(context: state.context, failure: failure);
+      if (current()) {
+        _publish(context: state.context, errorDetails: errorDetailsOf(error), failure: failure);
+      }
     } finally {
       _working = false;
       activity.finish(

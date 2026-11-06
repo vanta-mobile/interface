@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme.dart';
@@ -38,13 +40,21 @@ class PointsStatus<T> extends StatelessWidget {
         if (!state.active) Text(l10n.pointsPaused),
         if (state.stale) Text(l10n.pointsStale, style: const TextStyle(color: AppColors.warning)),
         if (state.failureKey case final key?)
-          Text(switch (key) {
-            'pointsDataInvalid' => l10n.pointsDataInvalid,
-            'pointsNetwork' => l10n.pointsNetwork,
-            'pointsRateLimited' => l10n.pointsRateLimited,
-            'pointsWalletRequired' => l10n.pointsWalletRequired,
-            _ => l10n.pointsUnavailable,
-          }, style: const TextStyle(color: AppColors.warning)),
+          Text(
+            apiErrorText(
+              context,
+              key,
+              state.errorDetails,
+              fallbackText: switch (key) {
+                'pointsDataInvalid' => l10n.pointsDataInvalid,
+                'pointsNetwork' => l10n.pointsNetwork,
+                'pointsRateLimited' => l10n.pointsRateLimited,
+                'pointsWalletRequired' => l10n.pointsWalletRequired,
+                _ => l10n.pointsUnavailable,
+              },
+            ),
+            style: const TextStyle(color: AppColors.warning),
+          ),
         Wrap(
           spacing: 8,
           children: [

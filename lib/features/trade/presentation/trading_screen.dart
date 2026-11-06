@@ -1,3 +1,5 @@
+import '../application/page_refresh_provider.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -140,21 +142,25 @@ class _LanguageSheet extends ConsumerWidget {
   );
 }
 
-class _MarketsPage extends StatelessWidget {
+class _MarketsPage extends ConsumerWidget {
   const _MarketsPage({required this.onTrade});
   final VoidCallback onTrade;
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.all(20),
-    children: [
-      Text(
-        tr(context, 'markets'),
-        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
-      ),
-      const SizedBox(height: 20),
-      MarketSheet(embedded: true, onSelect: onTrade),
-      const SizedBox(height: 24),
-      FilledButton(onPressed: onTrade, child: Text(tr(context, 'backToTrade'))),
-    ],
+  Widget build(BuildContext context, WidgetRef ref) => RefreshIndicator(
+    onRefresh: ref.read(pageRefreshProvider).markets,
+    child: ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(20),
+      children: [
+        Text(
+          tr(context, 'markets'),
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 20),
+        MarketSheet(embedded: true, onSelect: onTrade),
+        const SizedBox(height: 24),
+        FilledButton(onPressed: onTrade, child: Text(tr(context, 'backToTrade'))),
+      ],
+    ),
   );
 }

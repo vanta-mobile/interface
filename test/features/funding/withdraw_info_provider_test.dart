@@ -59,11 +59,16 @@ void main() {
     final prior = container.read(withdrawInfoProvider).account;
     repository.gate = Completer();
     final pending = controller.refresh();
-    await controller.refresh();
+    final duplicate = controller.refresh();
+    var duplicateDone = false;
+    duplicate.then((_) => duplicateDone = true);
+    expect(duplicateDone, isFalse);
     expect(repository.calls, 2);
     repository.failure = const AccountReadFailure('accountNetwork');
     repository.gate!.complete();
     await pending;
+    await duplicate;
+    expect(duplicateDone, isTrue);
     expect(container.read(withdrawInfoProvider).account, same(prior));
     expect(container.read(withdrawInfoProvider).stale, true);
     repository.failure = null;

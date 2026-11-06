@@ -1,3 +1,7 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/market_failure.dart';
+import '../../../core/network/request_scope.dart';
+
 import 'dart:async';
 
 import 'package:decimal/decimal.dart';
@@ -29,6 +33,7 @@ class MarketQuotesRepository {
   late final StreamController<MarketQuotes> _output;
   StreamSubscription<Map<String, Object?>>? _subscription;
   Timer? _publishTimer, _freshnessTimer;
+  ApiErrorDetails? _errorDetails;
   bool _active, _disposed = false, _connected = false, _connecting = true;
   bool _refreshing = false, _refreshAgain = false;
   DateTime? _tickerAt, _fundingAt, _updatedAt;
@@ -54,6 +59,7 @@ class MarketQuotesRepository {
           : QuoteConnection.connecting,
       updatedAt: _updatedAt,
       failure: _failure,
+      errorDetails: _errorDetails,
       refreshing: _refreshing,
     );
   }
@@ -187,7 +193,18 @@ class MarketQuotesRepository {
     );
   }
 
-  Future<void> _refresh() async {
+  Future<void>? _refreshTask;
+  int? _refreshEpoch;
+  Future<void> refresh() {
+    if (_refreshTask case final pending?) {
+      if (_refreshEpoch != _epoch) _refreshAgain = true;
+      return pending;
+    }
+    return _refreshTask = _runRefresh().whenComplete(() => _refreshTask = null);
+  }
+
+  Future<void> _refresh() => refresh();
+  Future<void> _runRefresh() async {
     if (_disposed || !_active) return;
     if (_refreshing) {
       _refreshAgain = true;
@@ -195,11 +212,15 @@ class MarketQuotesRepository {
     }
     _refreshing = true;
     _refreshAgain = false;
+    _refreshEpoch = _epoch;
     _publish();
     final epoch = _epoch;
     final versions = Map.of(_versions);
     try {
-      final snapshot = await service.refreshTickers();
+      final snapshot = await RequestScope.run(
+        () => !_disposed && _active && epoch == _epoch,
+        () => service.refreshTickers(),
+      );
       if (_disposed || epoch != _epoch || !_active) return;
       var any = false;
       var invalid = _quotes.keys.any((symbol) => !snapshot.containsKey(symbol));
@@ -224,16 +245,20 @@ class MarketQuotesRepository {
           any = true;
         }
       }
+      _errorDetails = null;
       _failure = invalid ? QuoteFailure.data : null;
       if (any) _updatedAt = _now();
-    } catch (_) {
-      if (!_disposed && epoch == _epoch) _failure = QuoteFailure.snapshot;
+    } catch (error) {
+      if (!_disposed && epoch == _epoch) {
+        _failure = QuoteFailure.snapshot;
+        _errorDetails = error is MarketFailure ? error.details : null;
+      }
     } finally {
       _refreshing = false;
       _publish();
       if (_refreshAgain && !_disposed && _active) {
         _refreshAgain = false;
-        unawaited(_refresh());
+        await _runRefresh();
       }
     }
   }

@@ -86,12 +86,13 @@ void main() {
   spotTest('stop discards late read and busy repeated refresh cannot prompt twice', (tester) async {
     repository.gate = Completer();
     final pending = controller().refresh();
-    await controller().refresh();
+    final duplicate = controller().refresh();
     expect(repository.calls, 1);
     controller().stopRead();
     expect(repository.current!(), false);
     repository.gate!.complete();
     await pending;
+    await duplicate;
     expect(c.read(spotOpenOrdersProvider).account, null);
   });
   spotTest('wrong wallet response does not leak another account', (tester) async {

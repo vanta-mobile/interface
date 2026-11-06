@@ -23,7 +23,7 @@ void main() {
       service.gate = Completer<void>();
       final pending = sync.loadOlder();
       await Future<void>.delayed(Duration.zero);
-      await sync.loadOlder();
+      final duplicate = sync.loadOlder();
       expect(service.requests, hasLength(2));
       expect(service.requests.last.end, original.candles.first.time - 1);
       expect(service.requests.last.start, null);
@@ -31,6 +31,7 @@ void main() {
       expect(sync.market('BTCUSDT')!.price, original.price);
       service.gate!.complete();
       await pending;
+      await duplicate;
       var market = sync.market('BTCUSDT')!;
       expect(market.candles, hasLength(400));
       expect(market.candles.map((c) => c.time).toSet(), hasLength(400));

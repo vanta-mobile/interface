@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:vanta/core/data/wallet_operation_journal.dart';
+import 'package:vanta/core/errors/api_error_details.dart';
 import 'package:vanta/core/domain/wallet_operation.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/funding/data/withdrawal_repository.dart';
@@ -226,7 +227,11 @@ void main() {
     postFailure = TimeoutException('fixture');
     await expectLater(
       repo.submit(r, isCurrent: () => current),
-      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'walletOperationUnknown')),
+      throwsA(
+        isA<AccountReadFailure>()
+            .having((e) => e.key, 'key', 'walletOperationUnknown')
+            .having((e) => e.details?.cause, 'cause', ApiErrorCause.timeout),
+      ),
     );
     expect(journal.snapshot.records.single.acknowledged, false);
     await expectLater(

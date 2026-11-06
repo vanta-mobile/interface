@@ -1,3 +1,4 @@
+import '../../../core/errors/error_text.dart';
 import 'deposit_messages.dart';
 
 import 'package:flutter/material.dart';
@@ -103,7 +104,10 @@ class _DepositSubmissionPanelState extends ConsumerState<DepositSubmissionPanel>
           TextButton(onPressed: controller.stop, child: Text(l.subaccountStopWaiting)),
         ],
         if (s.failure case final key?)
-          Text(depositMessage(context, key), style: const TextStyle(color: AppColors.warning)),
+          Text(
+            apiErrorText(context, key, s.errorDetails, fallbackText: depositMessage(context, key)),
+            style: const TextStyle(color: AppColors.warning),
+          ),
         if (s.record != null && !s.busy && s.failure == null) Text(l.depositSubmissionSent),
       ],
     );

@@ -64,7 +64,17 @@ void main() {
   }
   test('catalog rejects business failures, redirects and malformed JSON without prices or empty success', () async {
     for (final (response, failure) in [
-      (http.Response('{"code":"100001","success":false,"data":[]}', 200), isA<FormatException>()),
+      (
+        http.Response(
+          '{"code":"100001","success":false,"message":"Catalog unavailable","data":[]}',
+          200,
+        ),
+        isA<AccountReadFailure>().having(
+          (e) => e.details?.message,
+          'reason',
+          'Catalog unavailable',
+        ),
+      ),
       (
         http.Response('{}', 302),
         isA<AccountReadFailure>().having((e) => e.key, 'key', 'accountReadFailed'),

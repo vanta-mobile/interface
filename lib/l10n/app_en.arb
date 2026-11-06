@@ -2417,5 +2417,10 @@
   "orderModeChase": "Chase",
   "orderModeTwap": "TWAP",
   "orderModeChaseUnavailable": "Chase orders are not available yet.",
-  "orderModeTwapUnavailable": "Currently unavailable. TWAP is not included in this release."
+  "orderModeTwapUnavailable": "Currently unavailable. TWAP is not included in this release.",
+  "apiRequestTimeout": "The request timed out.",
+  "apiConnectionFailed": "Unable to connect to the server. Check your network connection.",
+  "apiRequestCancelled": "The request was cancelled.",
+  "apiInvalidResponse": "The server returned an invalid response.",
+  "assistantRateLimited": "Too many requests. Please wait before trying again."
 }

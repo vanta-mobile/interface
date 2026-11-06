@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/spot_history.dart';
 import 'aster_spot_service.dart';
@@ -23,7 +24,7 @@ class SignedSpotHistoryRepository implements SpotHistoryRepository {
     required SpotHistoryQuery query,
     required bool Function() isCurrent,
     required void Function(AccountReadStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     if (!query.validScope) throw const AccountReadFailure('historyInvalidScope');
     if (!query.window.fitsRequest) throw const AccountReadFailure('historyInvalidWindow');
     final request = SignedAccountRequest(
@@ -67,5 +68,5 @@ class SignedSpotHistoryRepository implements SpotHistoryRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 }

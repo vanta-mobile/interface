@@ -1,3 +1,4 @@
+import '../../../core/errors/error_text.dart';
 import '../../portfolio/presentation/rebalance_entry.dart';
 
 import 'package:flutter/material.dart';
@@ -196,7 +197,14 @@ class _CatalogStatus extends StatelessWidget {
         if (state.loading) ...[const LinearProgressIndicator(), Text(l10n.fundingCatalogLoading)],
         if (state.failureKey case final key?)
           Text(
-            key == 'fundingCatalogFailed' ? l10n.fundingCatalogFailed : tr(context, key),
+            apiErrorText(
+              context,
+              key,
+              state.errorDetails,
+              fallbackText: key == 'fundingCatalogFailed'
+                  ? l10n.fundingCatalogFailed
+                  : tr(context, key),
+            ),
             style: const TextStyle(color: AppColors.negative),
           ),
         if (state.stale)

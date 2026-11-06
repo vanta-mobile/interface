@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/position_adl.dart';
 import 'aster_account_service.dart';
 import 'position_adl_mapper.dart';
@@ -23,12 +24,12 @@ class SignedPositionAdlRepository implements PositionAdlRepository {
     required String address,
     required bool Function() isCurrent,
     required void Function(AccountReadStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     final payload = await _request.read(address: address, isCurrent: isCurrent, onStep: onStep);
     try {
       return mapPositionAdl(payload, address: address, receivedAt: now());
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 }

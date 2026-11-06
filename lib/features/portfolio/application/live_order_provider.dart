@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 import 'dart:math';
 
@@ -17,7 +19,7 @@ import 'order_recovery_provider.dart';
 
 final liveOrderClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final liveOrderRepositoryProvider = Provider<LiveOrderRepository>((ref) {
-  final service = AsterAccountService();
+  final service = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return SignedLiveOrderRepository(
     service,

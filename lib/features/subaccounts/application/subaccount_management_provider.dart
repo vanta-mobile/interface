@@ -1,3 +1,6 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/network/network_providers.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/application/wallet_operation_provider.dart';
@@ -12,7 +15,7 @@ import '../domain/subaccount_management.dart';
 
 final subaccountManagementClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final subaccountManagementRepositoryProvider = Provider<SubaccountManagementRepository>((ref) {
-  final service = AsterAccountService();
+  final service = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return AsterSubaccountManagementRepository(
     service,
@@ -94,7 +97,9 @@ class SubaccountManagementController extends Notifier<SubaccountManagementState>
           .prepare(identity: i, kind: kind, terms: terms, isCurrent: () => _current(i, g));
       if (_current(i, g)) state = SubaccountManagementState(review: review);
     } catch (e) {
-      if (_current(i, g)) state = SubaccountManagementState(failure: _failure(e));
+      if (_current(i, g)) {
+        state = SubaccountManagementState(errorDetails: errorDetailsOf(e), failure: _failure(e));
+      }
     } finally {
       _working = false;
     }
@@ -122,7 +127,11 @@ class SubaccountManagementController extends Notifier<SubaccountManagementState>
       if (_current(review.identity, g)) state = SubaccountManagementState(result: result);
     } catch (e) {
       if (_current(review.identity, g)) {
-        state = SubaccountManagementState(review: review, failure: _failure(e));
+        state = SubaccountManagementState(
+          review: review,
+          errorDetails: errorDetailsOf(e),
+          failure: _failure(e),
+        );
       }
     } finally {
       _working = false;

@@ -78,9 +78,14 @@ void main() {
     watch(YieldAsset.usdf);
     await tester.pump();
     expect(state().loading, true);
-    await container.read(assetYieldProvider(YieldAsset.usdf).notifier).refresh();
+    final duplicate = container.read(assetYieldProvider(YieldAsset.usdf).notifier).refresh();
+    var duplicateDone = false;
+    duplicate.then((_) => duplicateDone = true);
+    expect(duplicateDone, isFalse);
     expect(repository.calls.length, 1);
     repository.gates.remove(YieldAsset.usdf)!.complete(assetYieldFixture(YieldAsset.usdf, now));
+    await duplicate;
+    expect(duplicateDone, isTrue);
     await tester.pump();
     await advance(tester, const Duration(minutes: 4, seconds: 59));
     expect(repository.calls.length, 1);

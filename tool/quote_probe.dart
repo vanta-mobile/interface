@@ -4,13 +4,14 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:vanta/features/market/data/aster_service.dart';
+import 'package:vanta/features/market/data/market_catalog_repository.dart';
 import 'package:vanta/features/market/data/market_quotes_repository.dart';
 import 'package:vanta/features/market/domain/market_quotes.dart';
 
 Future<void> main() async {
   final client = http.Client();
   final service = AsterService(client);
-  final instruments = await service.instruments();
+  final instruments = await MarketCatalogRepository(service).read();
   final repository = MarketQuotesRepository(service, instruments);
   final records = <Map<String, Object?>>[];
   final done = Completer<void>();

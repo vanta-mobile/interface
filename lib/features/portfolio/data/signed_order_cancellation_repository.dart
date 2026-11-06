@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/aster_open_orders.dart';
 import '../domain/order_cancellation.dart';
@@ -17,7 +18,7 @@ class SignedOrderCancellationRepository implements OrderCancellationRepository {
     required AsterOpenOrder order,
     required bool Function() isCurrent,
     required void Function(OrderCancelStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     var submitted = false;
     AccountReadFailure? cancelFailure;
     try {
@@ -50,7 +51,7 @@ class SignedOrderCancellationRepository implements OrderCancellationRepository {
       resolution: checked.resolution,
       failure: checked.failure ?? (checked.resolution?.terminal == true ? null : cancelFailure),
     );
-  }
+  });
 
   @override
   Future<OrderCancellationResult> recheck({
@@ -58,7 +59,7 @@ class SignedOrderCancellationRepository implements OrderCancellationRepository {
     required AsterOpenOrder order,
     required bool Function() isCurrent,
     required void Function(OrderCancelStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       final payload = await _request(service.queryOrder).read(
         address: address,
@@ -109,7 +110,7 @@ class SignedOrderCancellationRepository implements OrderCancellationRepository {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
       return const OrderCancellationResult(failure: AccountReadFailure('accountReadFailed'));
     }
-  }
+  });
 
   SignedAccountRequest _request(
     Future<Object?> Function({required String query, required String signature}) send,

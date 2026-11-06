@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 import 'dart:math';
 
@@ -24,7 +26,10 @@ final positionMarginReferenceProvider = Provider<String Function()>(
   },
 );
 final positionMarginRepositoryProvider = Provider<PositionMarginRepository>((ref) {
-  final service = AsterAccountService(decodeResponse: decodePositionMarginJson);
+  final service = AsterAccountService(
+    client: ref.watch(backendHttpPoolProvider).lease(),
+    decodeResponse: decodePositionMarginJson,
+  );
   ref.onDispose(service.close);
   return SignedPositionMarginRepository(
     service,

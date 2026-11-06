@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_details.dart';
+
 import 'package:decimal/decimal.dart';
 
 import 'transfer_history.dart';
@@ -37,8 +39,15 @@ abstract interface class FundingFeeRepository {
 }
 
 class FundingFeeState {
-  const FundingFeeState({this.quote, this.loading = false, this.stale = false, this.failureKey});
+  const FundingFeeState({
+    this.quote,
+    this.loading = false,
+    this.stale = false,
+    this.failureKey,
+    this.errorDetails,
+  });
   final FundingFeeQuote? quote;
   final bool loading, stale;
+  final ApiErrorDetails? errorDetails;
   final String? failureKey;
 }

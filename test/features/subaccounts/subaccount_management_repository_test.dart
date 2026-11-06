@@ -1,4 +1,7 @@
 import 'dart:async';
+
+import 'package:vanta/core/errors/api_error_details.dart';
+
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -311,7 +314,11 @@ void main() {
     postFailure = TimeoutException('fixture');
     await expectLater(
       repo.submit(r, isCurrent: () => true),
-      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'walletOperationUnknown')),
+      throwsA(
+        isA<AccountReadFailure>()
+            .having((e) => e.key, 'key', 'walletOperationUnknown')
+            .having((e) => e.details?.cause, 'cause', ApiErrorCause.timeout),
+      ),
     );
     expect(journal.snapshot.records.single.acknowledged, false);
     await expectLater(

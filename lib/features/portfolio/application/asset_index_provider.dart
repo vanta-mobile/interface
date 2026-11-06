@@ -1,3 +1,6 @@
+import '../../../core/network/request_scope.dart';
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +12,7 @@ import '../domain/asset_valuation.dart';
 
 final assetIndexClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final assetIndexRepositoryProvider = Provider.autoDispose<AssetIndexRepository>((ref) {
-  final service = AsterAccountService();
+  final service = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return AsterAssetIndexRepository(service, now: ref.watch(assetIndexClockProvider));
 });
@@ -45,7 +48,17 @@ class AssetIndexController extends Notifier<AssetIndexState> {
     return AssetIndexState(checkedAt: _now, active: _active);
   }
 
-  Future<void> refresh() async {
+  Future<void>? _refreshTask;
+  Future<void> refresh() {
+    if (state.loading && _refreshTask != null) return _refreshTask!;
+    final task = _refresh();
+    _refreshTask = task;
+    return task.whenComplete(() {
+      if (identical(_refreshTask, task)) _refreshTask = null;
+    });
+  }
+
+  Future<void> _refresh() async {
     if (!ref.mounted || !_active || state.loading) return;
     final generation = ++_generation;
     _refreshTimer?.cancel();
@@ -58,7 +71,10 @@ class AssetIndexController extends Notifier<AssetIndexState> {
     );
     bool current() => ref.mounted && generation == _generation && _active;
     try {
-      final snapshot = await ref.read(assetIndexRepositoryProvider).read();
+      final snapshot = await RequestScope.run(
+        current,
+        () => ref.read(assetIndexRepositoryProvider).read(),
+      );
       if (!current()) return;
       state = AssetIndexState(checkedAt: _now, snapshot: snapshot);
     } catch (_) {

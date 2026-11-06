@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,7 +57,7 @@ final pendingWalletOrdersProvider = Provider<List<OrderRecoveryRecord>>((ref) {
       .toList(growable: false);
 });
 final orderRecoveryRepositoryProvider = Provider<OrderRecoveryRepository>((ref) {
-  final service = AsterAccountService();
+  final service = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return SignedOrderQueryRepository(
     service,

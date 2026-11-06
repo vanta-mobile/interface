@@ -273,7 +273,13 @@ class AssistantController extends Notifier<AssistantViewState> {
       _set(AssistantViewState(active: _view.active, scopeVersion: scopeVersion + 1));
     } catch (error) {
       if (_alive(generation)) {
-        _set(_view.copyWith(phase: AssistantPhase.idle, failureKey: _failure(error)));
+        _set(
+          _view.copyWith(
+            phase: AssistantPhase.idle,
+            errorDetails: error is AssistantFailure ? error.details : null,
+            failureKey: _failure(error),
+          ),
+        );
         if (_session != null && _view.historyReady) _attachWriter(_session!);
       }
     }

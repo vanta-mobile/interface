@@ -1,3 +1,5 @@
+import '../../../../core/market_failure.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -59,11 +61,11 @@ class MarketSheet extends ConsumerWidget {
   ) {
     return instruments.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => Center(
+      error: (error, _) => Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(tr(context, 'marketUnavailable')),
+            Text(error is MarketFailure ? error.displayMessage : tr(context, 'marketUnavailable')),
             TextButton(
               onPressed: () {
                 ref.invalidate(instrumentsProvider);

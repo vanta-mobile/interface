@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/spot_history.dart';
 import '../domain/spot_open_orders.dart';
 import '../domain/account_snapshot.dart';
@@ -27,7 +28,7 @@ class SignedSpotOpenOrdersRepository implements SpotOpenOrdersRepository {
     required String address,
     required bool Function() isCurrent,
     required void Function(AccountReadStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     final payload = await _request.read(address: address, isCurrent: isCurrent, onStep: onStep);
     try {
       final receivedAt = now().toUtc();
@@ -44,5 +45,5 @@ class SignedSpotOpenOrdersRepository implements SpotOpenOrdersRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 }

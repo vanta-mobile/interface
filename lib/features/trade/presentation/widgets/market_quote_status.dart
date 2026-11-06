@@ -1,3 +1,5 @@
+import '../../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -44,11 +46,12 @@ class MarketQuoteStatus extends StatelessWidget {
         ),
         if (quotes.failure != null)
           MutedText(
-            tr(
+            apiErrorText(
               context,
               quotes.failure == QuoteFailure.snapshot
                   ? 'quotesSnapshotFailure'
                   : 'quotesDataFailure',
+              quotes.errorDetails,
             ),
             color: AppColors.warning,
           ),

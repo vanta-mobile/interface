@@ -25,7 +25,7 @@ String quantityLabel(WidgetTester tester) =>
 AppLocalizations messages(WidgetTester tester) =>
     AppLocalizations.of(tester.element(find.byType(QuickOrderPanel)));
 
-const publicBtc = AsterInstrument(symbol: 'BTCUSDT', base: 'PUBLICBTC', ticker: {});
+final publicBtc = AsterInstrument(symbol: 'BTCUSDT', base: 'PUBLICBTC', ticker: {});
 
 void main() {
   for (final language in ['en', 'zh']) {

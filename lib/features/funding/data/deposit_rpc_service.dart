@@ -1,3 +1,6 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/errors/api_error_parser.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -15,7 +18,7 @@ const depositRpcOrigins = {
 /// Read-only JSON-RPC transport. No signing or broadcasting method is exposed.
 class DepositRpcService {
   DepositRpcService({http.Client? client, this.timeout = const Duration(seconds: 12)})
-    : _client = client ?? createMarketHttpClient();
+    : _client = createMarketHttpClient(client: client, timeout: timeout);
   final http.Client _client;
   final Duration timeout;
   int _id = 0;
@@ -44,8 +47,18 @@ class DepositRpcService {
           ..body = jsonEncode({'jsonrpc': '2.0', 'id': id, 'method': method, 'params': params});
         return http.Response.fromStream(await _client.send(request));
       })().timeout(timeout);
-      if (response.statusCode == 429) throw const AccountReadFailure('accountRateLimited');
-      if (response.statusCode != 200) throw const AccountReadFailure('depositRpcFailed');
+      if (response.statusCode == 429) {
+        throw AccountReadFailure(
+          'accountRateLimited',
+          details: apiErrorDetails(decodeErrorPayload(response.body), status: response.statusCode),
+        );
+      }
+      if (response.statusCode != 200) {
+        throw AccountReadFailure(
+          'depositRpcFailed',
+          details: apiErrorDetails(decodeErrorPayload(response.body), status: response.statusCode),
+        );
+      }
       if (response.bodyBytes.length > 131072) throw const FormatException();
       final payload = jsonDecode(utf8.decode(response.bodyBytes));
       if (payload is! Map<String, dynamic> ||
@@ -57,6 +70,7 @@ class DepositRpcService {
       if (payload.containsKey('error')) {
         throw AccountReadFailure(
           method == 'eth_estimateGas' ? 'depositGasSimulationFailed' : 'depositRpcInvalid',
+          details: apiErrorDetails(payload['error'], status: response.statusCode),
         );
       }
       return payload['result'];
@@ -65,9 +79,20 @@ class DepositRpcService {
     } on FormatException {
       throw const AccountReadFailure('depositRpcInvalid');
     } on TimeoutException {
-      throw const AccountReadFailure('accountNetwork');
+      throw const AccountReadFailure(
+        'accountNetwork',
+        details: ApiErrorDetails(cause: ApiErrorCause.timeout),
+      );
+    } on http.RequestAbortedException {
+      throw const AccountReadFailure(
+        'accountNetwork',
+        details: ApiErrorDetails(cause: ApiErrorCause.cancelled),
+      );
     } catch (_) {
-      throw const AccountReadFailure('accountNetwork');
+      throw const AccountReadFailure(
+        'accountNetwork',
+        details: ApiErrorDetails(cause: ApiErrorCause.connection),
+      );
     }
   }
 

@@ -1,3 +1,5 @@
+import '../../../core/network/request_scope.dart';
+
 import 'package:decimal/decimal.dart';
 
 import '../../../core/domain/wallet_operation.dart';
@@ -36,7 +38,7 @@ class SignedPositionMarginRepository implements PositionMarginRepository {
     required String side,
     required bool Function() isCurrent,
     required void Function(MarginAdjustmentStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       validatePositionSymbol(symbol);
       if (!{'BOTH', 'LONG', 'SHORT'}.contains(side)) throw const FormatException();
@@ -105,7 +107,7 @@ class SignedPositionMarginRepository implements PositionMarginRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 
   @override
   Future<MarginAdjustmentResult> change({
@@ -113,7 +115,7 @@ class SignedPositionMarginRepository implements PositionMarginRepository {
     required bool Function() isCurrent,
     required bool Function() canSubmit,
     required void Function(MarginAdjustmentStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     final c = intent.context, p = c.position;
     bool freshEnough(PositionMarginContext context) {
       final age = now().difference(context.receivedAt);
@@ -177,13 +179,17 @@ class SignedPositionMarginRepository implements PositionMarginRepository {
         } on AccountReadFailure catch (e) {
           // Only documented explicit rejections prove this request did not run.
           if ({-1021, -1022, -2014, -2015, -4049, -4050, -4051, -4054, -4055}.contains(e.code)) {
-            rejection = AccountReadFailure(switch (e.code) {
-              -4049 => 'marginAdjustUnsupported',
-              -4050 || -4051 => 'marginAdjustInsufficient',
-              -4054 => 'marginAdjustClosed',
-              -4055 => 'marginAdjustAmount',
-              _ => e.key,
-            }, code: e.code);
+            rejection = AccountReadFailure(
+              switch (e.code) {
+                -4049 => 'marginAdjustUnsupported',
+                -4050 || -4051 => 'marginAdjustInsufficient',
+                -4054 => 'marginAdjustClosed',
+                -4055 => 'marginAdjustAmount',
+                _ => e.key,
+              },
+              code: e.code,
+              details: e.details,
+            );
             try {
               await journal.report(record.key, 'rejected:${e.code}');
             } catch (_) {
@@ -249,14 +255,14 @@ class SignedPositionMarginRepository implements PositionMarginRepository {
       );
     }
     return check(record: record, isCurrent: isCurrent, onStep: onStep);
-  }
+  });
 
   @override
   Future<MarginAdjustmentResult> check({
     required WalletOperationRecord record,
     required bool Function() isCurrent,
     required void Function(MarginAdjustmentStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     DateTime? matched;
     PositionRisk? position;
     PositionMarginContext? context;
@@ -370,5 +376,5 @@ class SignedPositionMarginRepository implements PositionMarginRepository {
       failure:
           failure ?? (matched == null ? const AccountReadFailure('marginAdjustUnknown') : null),
     );
-  }
+  });
 }

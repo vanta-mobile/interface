@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/futures_position_mode.dart';
 import 'aster_account_service.dart';
@@ -25,7 +26,7 @@ class SignedFuturesPositionModeRepository implements FuturesPositionModeReposito
     required String address,
     required bool Function() isCurrent,
     required void Function(PositionModeStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       void progress(AccountReadStep step) => onStep(switch (step) {
         AccountReadStep.signing => PositionModeStep.signingContext,
@@ -62,7 +63,7 @@ class SignedFuturesPositionModeRepository implements FuturesPositionModeReposito
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 
   @override
   Future<PositionModeResult> change({
@@ -70,7 +71,7 @@ class SignedFuturesPositionModeRepository implements FuturesPositionModeReposito
     required bool Function() isCurrent,
     required bool Function() canSubmit,
     required void Function(PositionModeStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     if (intent.context.blocked || intent.target == intent.context.current) {
       throw const AccountReadFailure('positionModeChangeBlocked');
     }
@@ -99,12 +100,16 @@ class SignedFuturesPositionModeRepository implements FuturesPositionModeReposito
       );
     } on AccountReadFailure catch (failure) {
       if (!submitted || !isCurrent()) rethrow;
-      submitFailure = AccountReadFailure(switch (failure.code) {
-        -4059 => 'positionModeAlreadySet',
-        -4067 => 'positionModeOpenOrders',
-        -4068 => 'positionModeHasPosition',
-        _ => failure.key,
-      }, code: failure.code);
+      submitFailure = AccountReadFailure(
+        switch (failure.code) {
+          -4059 => 'positionModeAlreadySet',
+          -4067 => 'positionModeOpenOrders',
+          -4068 => 'positionModeHasPosition',
+          _ => failure.key,
+        },
+        code: failure.code,
+        details: failure.details,
+      );
     }
     final result = await recheck(intent: intent, isCurrent: isCurrent, onStep: onStep);
     return PositionModeResult(
@@ -112,14 +117,14 @@ class SignedFuturesPositionModeRepository implements FuturesPositionModeReposito
       checkedAt: result.checkedAt,
       failure: result.failure ?? (result.observed == intent.target ? null : submitFailure),
     );
-  }
+  });
 
   @override
   Future<PositionModeResult> recheck({
     required PositionModeIntent intent,
     required bool Function() isCurrent,
     required void Function(PositionModeStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       final payload = await _request(service.positionMode).read(
         address: intent.context.address,
@@ -137,5 +142,5 @@ class SignedFuturesPositionModeRepository implements FuturesPositionModeReposito
       if (!isCurrent()) rethrow;
       return PositionModeResult(failure: failure);
     }
-  }
+  });
 }

@@ -14,6 +14,28 @@ import '../../support/asset_metadata.dart';
 void main() {
   const jsonType = {'content-type': 'application/json'};
   const pngType = {'content-type': 'image/png'};
+  for (final status in [200, 429, 500]) {
+    test('catalog HTTP $status preserves explicit business failure reason', () async {
+      final service = AssetMetadataService(
+        client: MockClient(
+          (_) async => http.Response(
+            '{"success":false,"code":"UNAVAILABLE","message":"Catalog unavailable. token=hidden"}',
+            status,
+            headers: jsonType,
+          ),
+        ),
+      );
+      addTearDown(service.close);
+      await expectLater(
+        service.catalog(AssetMetadataSource.names),
+        throwsA(
+          isA<AccountReadFailure>()
+              .having((e) => e.details?.message, 'safe reason', 'Catalog unavailable. token=•••')
+              .having((e) => e.details?.status, 'HTTP status', status),
+        ),
+      );
+    });
+  }
   test(
     'fixed anonymous catalog GET/readonly POST have no wallet/auth fields, map independently',
     () async {

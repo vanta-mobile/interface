@@ -1,3 +1,6 @@
+import '../../../core/errors/api_error_parser.dart';
+import '../../../core/network/request_scope.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -19,7 +22,7 @@ class VantaEventEngagementRepository implements EventEngagementRepository {
     http.Client? client,
     DateTime Function()? now,
     this.timeout = const Duration(seconds: 12),
-  }) : _client = client ?? createMarketHttpClient(),
+  }) : _client = createMarketHttpClient(client: client, timeout: timeout),
        now = now ?? DateTime.now;
   final PointsRepository points;
   final WalletMessageSigner Function() signer;
@@ -40,7 +43,7 @@ class VantaEventEngagementRepository implements EventEngagementRepository {
     EventEngagementApproval approval, {
     required bool Function() isCurrent,
     required void Function(EventRegistrationPhase) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     if (_busy || _closed) throw const EventRegistrationFailure('eventEngagementBusy');
     _busy = true;
     try {
@@ -48,13 +51,13 @@ class VantaEventEngagementRepository implements EventEngagementRepository {
     } finally {
       _busy = false;
     }
-  }
+  });
 
   Future<EventRegistrationPhase> _submit(
     EventEngagementApproval approval, {
     required bool Function() isCurrent,
     required void Function(EventRegistrationPhase) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     final address = approval.identity.walletAddress, id = approval.event.id;
     if (address == null || !isPointsEvmAddress(address) || !approval.identity.signingAvailable) {
       throw const AuthFailure('authWalletReconnect');
@@ -184,11 +187,10 @@ class VantaEventEngagementRepository implements EventEngagementRepository {
               'timestamp': timestamp,
               'signature': signature,
             });
-      final status =
+      final response =
           await (() async {
             final response = await _client.send(request);
-            await response.stream.listen(null).cancel();
-            return response.statusCode;
+            return http.Response.fromStream(response);
           })().timeout(
             timeout,
             onTimeout: () {
@@ -196,9 +198,15 @@ class VantaEventEngagementRepository implements EventEngagementRepository {
               throw const EventRegistrationFailure('eventEngagementUnknown', mayHaveSent: true);
             },
           );
-      if (status < 200 || status >= 300) {
-        throw const EventRegistrationFailure('eventEngagementUnknown', mayHaveSent: true);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw EventRegistrationFailure(
+          'eventEngagementUnknown',
+          mayHaveSent: true,
+          details: apiErrorDetails(decodeErrorPayload(response.body), status: response.statusCode),
+        );
       }
+    } on EventRegistrationFailure {
+      rethrow;
     } catch (_) {
       throw const EventRegistrationFailure('eventEngagementUnknown', mayHaveSent: true);
     } finally {
@@ -209,7 +217,7 @@ class VantaEventEngagementRepository implements EventEngagementRepository {
       if (await reconcile(eventId: id, address: address)) return EventRegistrationPhase.verified;
     } catch (_) {}
     return EventRegistrationPhase.acknowledged;
-  }
+  });
 
   @override
   Future<bool> reconcile({required int eventId, required String address}) async {

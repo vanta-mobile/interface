@@ -1,3 +1,5 @@
+import '../../../core/network/request_scope.dart';
+
 import 'dart:async';
 
 import 'package:decimal/decimal.dart';
@@ -38,6 +40,7 @@ class MarketSync {
   StreamSubscription<Map<String, Object?>>? _subscription;
   Timer? _publish, _retry, _reconcile;
   Future<void>? _loading;
+  Future<void>? _olderLoading;
   final _older = <int, Candle>{};
   bool historyLoading = false, historyExhausted = false;
   String? historyFailure;
@@ -96,9 +99,30 @@ class MarketSync {
     if (!_disposed && _active && generation == _generation) _connect();
   }
 
+  Future<void> refresh() async {
+    if (_disposed || !_active) return;
+    await Future.wait([_refreshHistory(), _refreshTicker()]);
+  }
+
+  Future<void> _refreshHistory() async {
+    await _olderLoading;
+    if (_disposed || !_active) return;
+    _needsRefresh = true;
+    // Join an active history request without scheduling an unawaited retry.
+    if (_loading == null) retry();
+    while (_loading != null) {
+      final pending = _loading!;
+      await pending;
+      if (_disposed || !_active) return;
+    }
+  }
+
   Future<void> _refreshTicker() async {
     try {
-      final tickers = await service.refreshTickers(symbol: instrument.symbol);
+      final tickers = await RequestScope.run(
+        () => !_disposed && _active,
+        () => service.refreshTickers(symbol: instrument.symbol),
+      );
       if (_disposed || !_active) return;
       _ticker = tickers[instrument.symbol] ?? _ticker;
       _changed = true;
@@ -152,7 +176,7 @@ class MarketSync {
         if (initialized && series.missingRange != null) retry();
       }
     } on MarketFailure catch (error) {
-      failure = error.message;
+      failure = error.displayMessage;
       _needsRefresh = true;
       _changed = true;
     }
@@ -222,7 +246,7 @@ class MarketSync {
     } on Object catch (error) {
       if (!_disposed) {
         _needsRefresh = true;
-        failure = error is MarketFailure ? error.message : 'Aster connection unavailable';
+        failure = error is MarketFailure ? error.displayMessage : 'Aster connection unavailable';
       }
     }
   }
@@ -263,6 +287,17 @@ class MarketSync {
 
   /// Only invoked by an explicit browse action in the selected chart.
   Future<void> loadOlder() async {
+    if (_olderLoading case final pending?) return pending;
+    final task = _loadOlder();
+    _olderLoading = task;
+    try {
+      await task;
+    } finally {
+      if (identical(_olderLoading, task)) _olderLoading = null;
+    }
+  }
+
+  Future<void> _loadOlder() async {
     if (_disposed || !_active || !initialized || historyLoading || historyExhausted) return;
     final candles = market(instrument.symbol)!.candles;
     final end = candles.first.time - 1;
@@ -288,7 +323,9 @@ class MarketSync {
       // A switch cancels queued work without exposing an error on another chart.
     } on Object catch (error) {
       if (!_disposed) {
-        historyFailure = error is MarketFailure ? error.message : 'Aster connection unavailable';
+        historyFailure = error is MarketFailure
+            ? error.displayMessage
+            : 'Aster connection unavailable';
       }
     } finally {
       historyLoading = false;

@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_provider.dart';
@@ -9,7 +11,7 @@ import '../data/signed_transfer_history_repository.dart';
 import '../domain/transfer_history.dart';
 
 final transferHistoryRepositoryProvider = Provider<TransferHistoryRepository>((ref) {
-  final service = AsterAccountService();
+  final service = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
   return SignedTransferHistoryRepository(
     service,

@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/aster_account.dart';
 import '../domain/strategy_execution.dart';
 import '../domain/order_recovery.dart';
@@ -21,7 +22,7 @@ class SignedStrategyExecutionRepository implements StrategyExecutionRepository {
     StrategyExecutionQuery query, {
     required bool Function() isCurrent,
     required void Function(AccountReadStep step, int? sequence) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     if (query.order.draft.attachment == null ||
         !RegExp(r'^[1-9]\d{0,30}$').hasMatch(query.strategyId)) {
       throw const AccountReadFailure('accountDataInvalid');
@@ -130,5 +131,5 @@ class SignedStrategyExecutionRepository implements StrategyExecutionRepository {
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 }

@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_details.dart';
+
 import 'dart:convert';
 
 import '../../auth/domain/auth_session.dart';
@@ -60,8 +62,13 @@ class EventRegistrationApproval {
 enum EventRegistrationPhase { idle, checking, signing, sending, verified, acknowledged, unknown }
 
 class EventRegistrationState {
-  const EventRegistrationState({this.phase = EventRegistrationPhase.idle, this.failureKey});
+  const EventRegistrationState({
+    this.phase = EventRegistrationPhase.idle,
+    this.failureKey,
+    this.errorDetails,
+  });
   final EventRegistrationPhase phase;
+  final ApiErrorDetails? errorDetails;
   final String? failureKey;
   bool get busy => const {
     EventRegistrationPhase.checking,
@@ -70,8 +77,10 @@ class EventRegistrationState {
   }.contains(phase);
 }
 
-class EventRegistrationFailure implements Exception {
-  const EventRegistrationFailure(this.key, {this.mayHaveSent = false});
+class EventRegistrationFailure implements Exception, DetailedApiFailure {
+  const EventRegistrationFailure(this.key, {this.mayHaveSent = false, this.details});
+  @override
+  final ApiErrorDetails? details;
   final String key;
   final bool mayHaveSent;
 }

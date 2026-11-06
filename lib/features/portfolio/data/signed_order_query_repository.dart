@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/live_order.dart';
 import '../domain/order_query.dart';
@@ -20,7 +21,7 @@ class SignedOrderQueryRepository implements OrderRecoveryRepository {
     OrderQuery query, {
     required bool Function() isCurrent,
     required void Function(LiveOrderStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     final strategy = query.draft.attachment;
     Future<Object?> read(
       Future<Object?> Function({required String query, required String signature}) send,
@@ -65,5 +66,5 @@ class SignedOrderQueryRepository implements OrderRecoveryRepository {
       if (!isCurrent()) rethrow;
       return LiveOrderResult(failure: failure);
     }
-  }
+  });
 }

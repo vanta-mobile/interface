@@ -1,3 +1,4 @@
+import '../../../core/errors/api_error_details.dart';
 import 'market_quote.dart';
 
 enum QuoteConnection { connecting, live, partial, offline }
@@ -11,6 +12,7 @@ class MarketQuotes {
     this.connection = QuoteConnection.connecting,
     this.updatedAt,
     this.failure,
+    this.errorDetails,
     this.refreshing = false,
   }) : quotes = List.unmodifiable(quotes);
 
@@ -18,5 +20,6 @@ class MarketQuotes {
   final QuoteConnection connection;
   final DateTime? updatedAt;
   final QuoteFailure? failure;
+  final ApiErrorDetails? errorDetails;
   final bool refreshing;
 }

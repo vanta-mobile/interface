@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -44,7 +46,12 @@ class DepositWalletPanel extends ConsumerWidget {
         ],
         if (state.failure case final failure?)
           Text(
-            depositMessage(context, failure.key),
+            apiErrorText(
+              context,
+              failure.key,
+              failure.details,
+              fallbackText: depositMessage(context, failure.key),
+            ),
             style: const TextStyle(color: AppColors.negative),
           ),
         AccountSnapshotStatus(state: state),

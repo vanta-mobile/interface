@@ -58,7 +58,10 @@ void main() {
     expect(getState().query.scope, 'BNBUSDT');
     repository.gate = Completer<void>();
     final pending = controller.refresh();
-    await controller.refresh();
+    final duplicate = controller.refresh();
+    var duplicateDone = false;
+    duplicate.then((_) => duplicateDone = true);
+    expect(duplicateDone, isFalse);
     controller.setScope('BTCUSDT');
     controller.selectKind(SpotHistoryKind.trades);
     expect(repository.queries.length, 1);
@@ -66,6 +69,8 @@ void main() {
     expect(getState().query.scope, 'BNBUSDT');
     repository.gate!.complete();
     await pending;
+    await duplicate;
+    expect(duplicateDone, isTrue);
     expect(getState().account!.records.length, 1);
     expect(getState().pending, isEmpty);
     controller.selectKind(SpotHistoryKind.transactions);

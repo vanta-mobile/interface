@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/position_margin_mode.dart';
 import 'aster_account_service.dart';
@@ -27,7 +28,7 @@ class SignedPositionMarginModeRepository implements PositionMarginModeRepository
     required String symbol,
     required bool Function() isCurrent,
     required void Function(MarginModeStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       validatePositionSymbol(symbol);
       void progress(AccountReadStep step) => onStep(switch (step) {
@@ -67,7 +68,7 @@ class SignedPositionMarginModeRepository implements PositionMarginModeRepository
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 
   @override
   Future<MarginModeResult> change({
@@ -75,7 +76,7 @@ class SignedPositionMarginModeRepository implements PositionMarginModeRepository
     required bool Function() isCurrent,
     required bool Function() canSubmit,
     required void Function(MarginModeStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       validatePositionSymbol(intent.context.symbol);
     } on FormatException {
@@ -107,12 +108,16 @@ class SignedPositionMarginModeRepository implements PositionMarginModeRepository
       );
     } on AccountReadFailure catch (failure) {
       if (!submitted || !isCurrent()) rethrow;
-      submitFailure = AccountReadFailure(switch (failure.code) {
-        -4046 => 'marginModeAlreadySet',
-        -4047 => 'marginModeOpenOrders',
-        -4048 => 'marginModeHasPosition',
-        _ => failure.key,
-      }, code: failure.code);
+      submitFailure = AccountReadFailure(
+        switch (failure.code) {
+          -4046 => 'marginModeAlreadySet',
+          -4047 => 'marginModeOpenOrders',
+          -4048 => 'marginModeHasPosition',
+          _ => failure.key,
+        },
+        code: failure.code,
+        details: failure.details,
+      );
     }
     final result = await recheck(intent: intent, isCurrent: isCurrent, onStep: onStep);
     return MarginModeResult(
@@ -120,14 +125,14 @@ class SignedPositionMarginModeRepository implements PositionMarginModeRepository
       checkedAt: result.checkedAt,
       failure: result.failure ?? (result.observed == intent.target ? null : submitFailure),
     );
-  }
+  });
 
   @override
   Future<MarginModeResult> recheck({
     required MarginModeIntent intent,
     required bool Function() isCurrent,
     required void Function(MarginModeStep) onStep,
-  }) async {
+  }) => RequestScope.run(isCurrent, () async {
     try {
       validatePositionSymbol(intent.context.symbol);
       final payload = await _request(service.positionRisk).read(
@@ -148,5 +153,5 @@ class SignedPositionMarginModeRepository implements PositionMarginModeRepository
       if (!isCurrent()) rethrow;
       return MarginModeResult(failure: failure);
     }
-  }
+  });
 }

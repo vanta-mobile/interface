@@ -44,9 +44,14 @@ void main() {
     listen(deposit);
     listen(FundingCatalogQuery(deposit.market, deposit.operation));
     await tester.pump();
-    await container.read(fundingCatalogProvider(deposit).notifier).refresh();
+    final duplicate = container.read(fundingCatalogProvider(deposit).notifier).refresh();
+    var duplicateDone = false;
+    duplicate.then((_) => duplicateDone = true);
+    expect(duplicateDone, isFalse);
     expect(repository.calls, [deposit]);
     repository.gates[deposit]!.complete(catalog(deposit));
+    await duplicate;
+    expect(duplicateDone, isTrue);
     await tester.pump();
     expect(container.read(fundingCatalogProvider(deposit)).catalog!.query, deposit);
   });

@@ -1,3 +1,5 @@
+import '../../../core/network/network_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +17,7 @@ import 'wallet_stream_controller.dart';
 import 'spot_open_orders_provider.dart';
 
 final spotAccountChangeRepositoryProvider = Provider<AccountChangeRepository>((ref) {
-  final service = AsterSpotService();
+  final service = AsterSpotService(client: ref.watch(backendHttpPoolProvider).lease());
   final repository = SignedAccountChangeRepository.spot(
     service,
     ref.watch(identityRepositoryProvider).signWalletRequest,

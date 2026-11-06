@@ -1,3 +1,4 @@
+import '../../../core/network/request_scope.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/asset_rebalance.dart';
 import 'aster_account_mapper.dart';
@@ -24,35 +25,34 @@ class SignedRebalanceRepository implements RebalanceRepository {
   }
 
   @override
-  Future<RebalanceContext> read({
-    required String address,
-    required bool Function() isCurrent,
-  }) async {
-    SignedAccountRequest request(
-      Future<Object?> Function({required String query, required String signature}) send,
-    ) => SignedAccountRequest(
-      serverTime: service.serverTime,
-      send: send,
-      sign: sign,
-      nonces: nonces,
-      signatureLifetime: const Duration(seconds: 30),
-    );
-    try {
-      final mode = mapFuturesAssetMode(
-        await request(service.assetMode)
-            .read(address: address, isCurrent: isCurrent, onStep: (_) {}),
-      );
-      final receivedAt = now().toUtc();
-      final account = mapAsterAccount(
-        await request(service.account).read(address: address, isCurrent: isCurrent, onStep: (_) {}),
-        address: address,
-        receivedAt: now().toUtc(),
-      );
-      return RebalanceContext(mode: mode, account: account, receivedAt: receivedAt);
-    } on FormatException {
-      throw const AccountReadFailure('accountDataInvalid');
-    }
-  }
+  Future<RebalanceContext> read({required String address, required bool Function() isCurrent}) =>
+      RequestScope.run(isCurrent, () async {
+        SignedAccountRequest request(
+          Future<Object?> Function({required String query, required String signature}) send,
+        ) => SignedAccountRequest(
+          serverTime: service.serverTime,
+          send: send,
+          sign: sign,
+          nonces: nonces,
+          signatureLifetime: const Duration(seconds: 30),
+        );
+        try {
+          final mode = mapFuturesAssetMode(
+            await request(service.assetMode)
+                .read(address: address, isCurrent: isCurrent, onStep: (_) {}),
+          );
+          final receivedAt = now().toUtc();
+          final account = mapAsterAccount(
+            await request(service.account)
+                .read(address: address, isCurrent: isCurrent, onStep: (_) {}),
+            address: address,
+            receivedAt: now().toUtc(),
+          );
+          return RebalanceContext(mode: mode, account: account, receivedAt: receivedAt);
+        } on FormatException {
+          throw const AccountReadFailure('accountDataInvalid');
+        }
+      });
 
   @override
   Future<RebalanceReply> submit({
@@ -60,7 +60,7 @@ class SignedRebalanceRepository implements RebalanceRepository {
     required bool Function() canSubmit,
     required Future<void> Function(int nonce) beforeSend,
     required void Function() onDispatch,
-  }) async {
+  }) => RequestScope.run(canSubmit, () async {
     void check() {
       if (!canSubmit() || !_fresh(context)) throw const AccountReadFailure('rebalanceChanged');
     }
@@ -117,5 +117,5 @@ class SignedRebalanceRepository implements RebalanceRepository {
     } catch (_) {
       throw const AccountReadFailure('accountDataInvalid');
     }
-  }
+  });
 }

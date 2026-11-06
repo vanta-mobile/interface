@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -116,7 +118,10 @@ class _WithdrawalScreenState extends ConsumerState<WithdrawalScreen> {
               TextButton(onPressed: controller.stop, child: Text(l.subaccountStopWaiting)),
             ],
             if (s.failure case final key?)
-              Text(tr(context, key), style: const TextStyle(color: AppColors.negative)),
+              Text(
+                apiErrorText(context, key, s.errorDetails),
+                style: const TextStyle(color: AppColors.negative),
+              ),
             if (s.result case final result?
                 when result.terms['asset'] == q.asset.asset &&
                     result.terms['market'] == q.market.name &&

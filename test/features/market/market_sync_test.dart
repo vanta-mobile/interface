@@ -39,6 +39,15 @@ class FakeAster extends AsterService {
   int active = 0, maximum = 0, currentMinute = 199;
   bool listening = false;
   int latency = 1;
+  Completer<void>? historyGate, tickerGate;
+  int tickerRequests = 0;
+  @override
+  Future<Map<String, Map<String, Object?>>> refreshTickers({String? symbol}) async {
+    tickerRequests++;
+    await tickerGate?.future;
+    return {};
+  }
+
   @override
   int get serverNow => currentMinute * 60000 + 30000;
   @override
@@ -61,6 +70,7 @@ class FakeAster extends AsterService {
     expect(listening, true, reason: 'Realtime subscription must start before REST');
     requests.add((symbol: symbol, start: start, limit: limit));
     maximum = math.max(maximum, ++active);
+    await historyGate?.future;
     await Future<void>.delayed(Duration(milliseconds: latency));
     active--;
     final first = start == null ? 0 : math.max(0, start ~/ 60000);
@@ -89,6 +99,33 @@ Future<void> until(bool Function() done) async {
 }
 
 void main() {
+  test(
+    'page refresh joins active history and waits for ticker without scheduling another load',
+    () async {
+      final service = FakeAster()
+        ..historyGate = Completer<void>()
+        ..tickerGate = Completer<void>();
+      final sync = MarketSync(service, instruments()[88], '1m');
+      addTearDown(() async {
+        await sync.dispose();
+        await service.events.close();
+        service.client.close();
+      });
+      sync.start();
+      await until(() => service.requests.isNotEmpty);
+      var completed = false;
+      final refresh = sync.refresh().then((_) => completed = true);
+      await until(() => service.tickerRequests == 1);
+      service.historyGate!.complete();
+      await until(() => sync.overview.repairing == 0);
+      expect(completed, false);
+      expect(service.requests, hasLength(1));
+      service.tickerGate!.complete();
+      await refresh;
+      expect(completed, true);
+      expect(service.requests, hasLength(1));
+    },
+  );
   test(
     'loads only its chart, preserves live updates, and paginates a long reconnect gap',
     () async {

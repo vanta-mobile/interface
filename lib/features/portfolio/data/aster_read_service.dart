@@ -1,3 +1,6 @@
+import '../../../core/errors/api_error_details.dart';
+import '../../../core/errors/api_error_parser.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -18,7 +21,7 @@ class AsterReadService {
     http.Client? client,
     this.timeout = const Duration(seconds: 12),
     Object? Function(String)? decodeResponse,
-  }) : _client = client ?? createMarketHttpClient(),
+  }) : _client = createMarketHttpClient(client: client, timeout: timeout),
        _decodeResponse = decodeResponse ?? jsonDecode;
   final Uri origin;
   final String? timePath;
@@ -48,10 +51,10 @@ class AsterReadService {
         return http.Response.fromStream(await _client.send(request));
       })().timeout(timeout);
       if (response.statusCode >= 300 && response.statusCode < 400) {
-        throw const AccountReadFailure('accountReadFailed');
-      }
-      if (response.statusCode == 429 || response.statusCode == 418) {
-        throw const AccountReadFailure('accountRateLimited');
+        throw AccountReadFailure(
+          'accountReadFailed',
+          details: ApiErrorDetails(status: response.statusCode),
+        );
       }
       Object? data;
       try {
@@ -61,23 +64,48 @@ class AsterReadService {
             : _decodeResponse(source);
       } on FormatException {
         throw AccountReadFailure(
-          response.statusCode == 200 ? 'accountDataInvalid' : 'accountReadFailed',
+          response.statusCode == 429 || response.statusCode == 418
+              ? 'accountRateLimited'
+              : response.statusCode == 200
+              ? 'accountDataInvalid'
+              : 'accountReadFailed',
+          details: ApiErrorDetails(
+            status: response.statusCode,
+            cause: response.statusCode == 200 ? ApiErrorCause.invalidResponse : null,
+          ),
         );
       }
       final code = data is Map<String, dynamic> ? data['code'] : null;
-      if ((code is int && code < 0) || response.statusCode < 200 || response.statusCode >= 300) {
+      if ((code is int && code < 0) ||
+          (data is Map && data['success'] == false) ||
+          response.statusCode < 200 ||
+          response.statusCode >= 300) {
         throw AccountReadFailure(
-          _failureKey(code, response.statusCode),
+          response.statusCode == 429 || response.statusCode == 418
+              ? 'accountRateLimited'
+              : _failureKey(code, response.statusCode),
           code: code is int ? code : null,
+          details: apiErrorDetails(data, status: response.statusCode),
         );
       }
       return data;
     } on AccountReadFailure {
       rethrow;
     } on TimeoutException {
-      throw const AccountReadFailure('accountNetwork');
+      throw const AccountReadFailure(
+        'accountNetwork',
+        details: ApiErrorDetails(cause: ApiErrorCause.timeout),
+      );
+    } on http.RequestAbortedException {
+      throw const AccountReadFailure(
+        'accountNetwork',
+        details: ApiErrorDetails(cause: ApiErrorCause.cancelled),
+      );
     } catch (_) {
-      throw const AccountReadFailure('accountNetwork');
+      throw const AccountReadFailure(
+        'accountNetwork',
+        details: ApiErrorDetails(cause: ApiErrorCause.connection),
+      );
     }
   }
 

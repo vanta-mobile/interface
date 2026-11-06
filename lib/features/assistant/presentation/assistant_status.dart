@@ -1,3 +1,5 @@
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,10 +25,11 @@ class AssistantStatus extends ConsumerWidget {
   const AssistantStatus({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final (failure, storage, ready, authenticated, busy, active, phase) = ref.watch(
+    final (failure, details, storage, ready, authenticated, busy, active, phase) = ref.watch(
       assistantProvider.select(
         (s) => (
           s.failureKey,
+          s.errorDetails,
           s.storageFailureKey,
           s.historyReady,
           s.authenticated,
@@ -50,7 +53,7 @@ class AssistantStatus extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (phaseKey != null) Text(tr(context, phaseKey), semanticsLabel: tr(context, phaseKey)),
-        if (failure != null) AssistantNotice(text: tr(context, failure)),
+        if (failure != null) AssistantNotice(text: apiErrorText(context, failure, details)),
         if (storage != null) ...[
           AssistantNotice(text: tr(context, storage)),
           if (ready)

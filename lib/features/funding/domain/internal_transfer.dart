@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_details.dart';
+
 import 'dart:convert';
 
 import 'package:decimal/decimal.dart';
@@ -202,6 +204,7 @@ class InternalTransferState {
     this.review,
     this.record,
     this.failure,
+    this.errorDetails,
     this.step = InternalTransferStep.idle,
     this.stale = true,
   });
@@ -210,6 +213,7 @@ class InternalTransferState {
   final InternalTransferContext? context;
   final InternalTransferReview? review;
   final InternalTransferRecord? record;
+  final ApiErrorDetails? errorDetails;
   final String? failure;
   final InternalTransferStep step;
   final bool stale;
