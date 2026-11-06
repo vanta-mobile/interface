@@ -3761,7 +3761,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveOrderPegHint =>
-      'Aster sets the price once from the selected best bid or ask: when placing a limit order, or when a conditional limit order triggers. It does not keep chasing the book. Notional, margin and closing PnL use Mark / trigger only as a reference; the resolved price and fill may differ.';
+      'Aster sets the price once from the selected best bid or ask: when placing a limit order, or when a conditional limit order triggers. It does not keep chasing the book. Estimates use the selected current bid or ask; the engine price and fill may differ, especially at a future trigger.';
 
   @override
   String get liveOrderPegInvalid =>
@@ -5787,6 +5787,98 @@ class AppLocalizationsEn extends AppLocalizations {
       'Currently unavailable. TWAP is not included in this release.';
 
   @override
+  String get liveCapacityChanged =>
+      'Account settings, positions or reserved margin changed. Refresh the order data before calculating capacity.';
+
+  @override
+  String get liveCapacityPriceUnavailable =>
+      'A reliable price reference for this order is unavailable. Refresh market data or review the pricing mode.';
+
+  @override
+  String get liveCapacityTitle => 'Directional capacity reference';
+
+  @override
+  String liveAllocationPercent(int percent) {
+    return 'Order percentage: $percent%';
+  }
+
+  @override
+  String get liveAllocationManual => 'Manual amount';
+
+  @override
+  String get liveAllocationManualHint =>
+      'Review checks the selected side’s latest capacity with up to six wallet signatures. Your entered amount is preserved and the quantity you click stays fixed.';
+
+  @override
+  String liveAllocationMaximumChanged(String direction, String maximum, String asset) {
+    return '$direction: the latest maximum is $maximum $asset. Adjust the amount and try again.';
+  }
+
+  @override
+  String get liveAllocationHint =>
+      'Read capacity before choosing a percentage. Each side uses its own maximum. Review refreshes limits with up to six wallet signatures and freezes the quantity you clicked.';
+
+  @override
+  String get liveAllocationChecking => 'Refreshing limits for the selected direction…';
+
+  @override
+  String get liveAllocationChanged =>
+      'Order inputs, account data or capacity changed. Review the current values and try again.';
+
+  @override
+  String get liveAllocationFrozen =>
+      'This direction, order type and quantity are frozen for confirmation. Changed or expired data blocks submission.';
+
+  @override
+  String get liveAllocationReviewBuy => 'Review long';
+
+  @override
+  String get liveAllocationReviewSell => 'Review short';
+
+  @override
+  String get liveCapacityRead => 'Read capacity';
+
+  @override
+  String get liveCapacityReadHint =>
+      'Reading your latest account and order limits requires up to six wallet signatures. No order is placed.';
+
+  @override
+  String get liveCapacityMaximum => 'Maximum quantity reference';
+
+  @override
+  String get liveCapacityCost => 'Opening cost reference';
+
+  @override
+  String get liveCapacityAboveMaximum =>
+      'The quantity exceeds this side’s current capacity reference. Reduce the quantity and refresh before placing an order.';
+
+  @override
+  String get liveCapacityStale =>
+      'Capacity is out of date. Refresh order data, then read capacity again.';
+
+  @override
+  String get liveCapacityEstimateHint =>
+      'Both sides independently assume a full fill using the same account and current prices. Opening cost includes incremental margin and opening loss. Liquidation estimates use the signed taker fee and risk tiers, holding other prices and collateral rates fixed; actual fills, fees and funding can differ. Missing facts or no positive estimate show —.';
+
+  @override
+  String get liveCapacityPendingUnknown =>
+      'Capacity is unavailable because the reserved notional of a pending order cannot be verified.';
+
+  @override
+  String get liveCapacityRatesUnavailable =>
+      'Fresh collateral conversion rates are unavailable. Refresh before calculating capacity.';
+
+  @override
+  String get liveCapacityRefreshAccount => 'Refresh trading account and limits';
+
+  @override
+  String get liveCapacityRefreshAccountHint =>
+      'Sign separately to read configuration, balances, positions, orders, risk tiers and the symbol fee, with up to ten wallet signatures; also refresh public prices and collateral rates. No order is submitted.';
+
+  @override
+  String get liveCapacityLiquidation => 'Estimated liquidation price after fill';
+
+  @override
   String get apiRequestTimeout => 'The request timed out.';
 
   @override
@@ -5800,5 +5892,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apiInvalidResponse => 'The server returned an invalid response.';
 
   @override
+  String get authConnectTitle => 'Connect wallet';
+
+  @override
+  String get authVerifyTitle => 'Verify email';
+
+  @override
+  String get authWelcome => 'Welcome to Vanta';
+
+  @override
+  String get authWelcomeDescription => 'Connect your account to manage assets and trade.';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authEmailPlaceholder => 'Enter your email address';
+
+  @override
+  String get authEmailContinue => 'Continue with email';
+
+  @override
+  String get authGoogleContinue => 'Continue with Google';
+
+  @override
+  String get authXContinue => 'Continue with X';
+
+  @override
+  String get authWalletContinue => 'Connect a wallet';
+
+  @override
+  String get authAlternative => 'or';
+
+  @override
+  String get authLegalNotice => 'By continuing, you agree to the Terms of Use and Privacy Policy.';
+
+  @override
+  String get authCheckEmail => 'Check your email';
+
+  @override
+  String get authCodeDelivery => 'Enter the verification code sent to';
+
+  @override
+  String get authCodeExpired => 'Code expired. Request a new code.';
+
+  @override
+  String get authBack => 'Back';
+
+  @override
+  String get authClose => 'Close';
+
+  @override
   String get assistantRateLimited => 'Too many requests. Please wait before trying again.';
+
+  @override
+  String get authVerifyContinue => 'Verify and continue';
+
+  @override
+  String get authSpamHint => 'Check your spam folder if the email hasn’t arrived.';
+
+  @override
+  String authResendCountdown(int seconds) {
+    return 'Resend code in ${seconds}s';
+  }
 }

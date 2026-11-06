@@ -1592,7 +1592,7 @@
   "rebalanceSending": "Waiting for the signed request or account check…",
   "rebalanceRecovery": "Review Rebalance recovery",
   "liveOrderPricing": "Limit pricing",
-  "liveOrderPegHint": "Aster sets the price once from the selected best bid or ask: when placing a limit order, or when a conditional limit order triggers. It does not keep chasing the book. Notional, margin and closing PnL use Mark / trigger only as a reference; the resolved price and fill may differ.",
+  "liveOrderPegHint": "Aster sets the price once from the selected best bid or ask: when placing a limit order, or when a conditional limit order triggers. It does not keep chasing the book. Estimates use the selected current bid or ask; the engine price and fill may differ, especially at a future trigger.",
   "liveOrderPegInvalid": "BBO requires a limit order with no manual price. It cannot be combined with a market, trailing, entire-close or attached-strategy order.",
   "internalTransferTitle": "Spot ↔ Futures transfer",
   "internalTransferScope": "Transfer the selected asset between your Aster Spot and Futures accounts using the current wallet.",
@@ -2418,9 +2418,75 @@
   "orderModeTwap": "TWAP",
   "orderModeChaseUnavailable": "Chase orders are not available yet.",
   "orderModeTwapUnavailable": "Currently unavailable. TWAP is not included in this release.",
+  "liveCapacityChanged": "Account settings, positions or reserved margin changed. Refresh the order data before calculating capacity.",
+  "liveCapacityPriceUnavailable": "A reliable price reference for this order is unavailable. Refresh market data or review the pricing mode.",
+  "liveCapacityTitle": "Directional capacity reference",
+  "liveAllocationPercent": "Order percentage: {percent}%",
+  "@liveAllocationPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "liveAllocationManual": "Manual amount",
+  "liveAllocationManualHint": "Review checks the selected side’s latest capacity with up to six wallet signatures. Your entered amount is preserved and the quantity you click stays fixed.",
+  "liveAllocationMaximumChanged": "{direction}: the latest maximum is {maximum} {asset}. Adjust the amount and try again.",
+  "@liveAllocationMaximumChanged": {
+    "placeholders": {
+      "direction": {
+        "type": "String"
+      },
+      "maximum": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "liveAllocationHint": "Read capacity before choosing a percentage. Each side uses its own maximum. Review refreshes limits with up to six wallet signatures and freezes the quantity you clicked.",
+  "liveAllocationChecking": "Refreshing limits for the selected direction…",
+  "liveAllocationChanged": "Order inputs, account data or capacity changed. Review the current values and try again.",
+  "liveAllocationFrozen": "This direction, order type and quantity are frozen for confirmation. Changed or expired data blocks submission.",
+  "liveAllocationReviewBuy": "Review long",
+  "liveAllocationReviewSell": "Review short",
+  "liveCapacityRead": "Read capacity",
+  "liveCapacityReadHint": "Reading your latest account and order limits requires up to six wallet signatures. No order is placed.",
+  "liveCapacityMaximum": "Maximum quantity reference",
+  "liveCapacityCost": "Opening cost reference",
+  "liveCapacityAboveMaximum": "The quantity exceeds this side’s current capacity reference. Reduce the quantity and refresh before placing an order.",
+  "liveCapacityStale": "Capacity is out of date. Refresh order data, then read capacity again.",
+  "liveCapacityEstimateHint": "Both sides independently assume a full fill using the same account and current prices. Opening cost includes incremental margin and opening loss. Liquidation estimates use the signed taker fee and risk tiers, holding other prices and collateral rates fixed; actual fills, fees and funding can differ. Missing facts or no positive estimate show —.",
+  "liveCapacityPendingUnknown": "Capacity is unavailable because the reserved notional of a pending order cannot be verified.",
+  "liveCapacityRatesUnavailable": "Fresh collateral conversion rates are unavailable. Refresh before calculating capacity.",
+  "liveCapacityRefreshAccount": "Refresh trading account and limits",
+  "liveCapacityRefreshAccountHint": "Sign separately to read configuration, balances, positions, orders, risk tiers and the symbol fee, with up to ten wallet signatures; also refresh public prices and collateral rates. No order is submitted.",
+  "liveCapacityLiquidation": "Estimated liquidation price after fill",
   "apiRequestTimeout": "The request timed out.",
   "apiConnectionFailed": "Unable to connect to the server. Check your network connection.",
   "apiRequestCancelled": "The request was cancelled.",
   "apiInvalidResponse": "The server returned an invalid response.",
-  "assistantRateLimited": "Too many requests. Please wait before trying again."
+  "authConnectTitle": "Connect wallet",
+  "authVerifyTitle": "Verify email",
+  "authWelcome": "Welcome to Vanta",
+  "authWelcomeDescription": "Connect your account to manage assets and trade.",
+  "authEmailLabel": "Email",
+  "authEmailPlaceholder": "Enter your email address",
+  "authEmailContinue": "Continue with email",
+  "authGoogleContinue": "Continue with Google",
+  "authXContinue": "Continue with X",
+  "authWalletContinue": "Connect a wallet",
+  "authAlternative": "or",
+  "authLegalNotice": "By continuing, you agree to the Terms of Use and Privacy Policy.",
+  "authCheckEmail": "Check your email",
+  "authCodeDelivery": "Enter the verification code sent to",
+  "authCodeExpired": "Code expired. Request a new code.",
+  "authBack": "Back",
+  "authClose": "Close",
+  "assistantRateLimited": "Too many requests. Please wait before trying again.",
+  "authVerifyContinue": "Verify and continue",
+  "authSpamHint": "Check your spam folder if the email hasn’t arrived.",
+  "authResendCountdown": "Resend code in {seconds}s",
+  "@authResendCountdown": {"placeholders": {"seconds": {"type": "int"}}}
 }

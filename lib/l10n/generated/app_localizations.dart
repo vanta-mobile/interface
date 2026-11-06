@@ -6606,7 +6606,7 @@ abstract class AppLocalizations {
   /// No description provided for @liveOrderPegHint.
   ///
   /// In en, this message translates to:
-  /// **'Aster sets the price once from the selected best bid or ask: when placing a limit order, or when a conditional limit order triggers. It does not keep chasing the book. Notional, margin and closing PnL use Mark / trigger only as a reference; the resolved price and fill may differ.'**
+  /// **'Aster sets the price once from the selected best bid or ask: when placing a limit order, or when a conditional limit order triggers. It does not keep chasing the book. Estimates use the selected current bid or ask; the engine price and fill may differ, especially at a future trigger.'**
   String get liveOrderPegHint;
 
   /// No description provided for @liveOrderPegInvalid.
@@ -10107,6 +10107,156 @@ abstract class AppLocalizations {
   /// **'Currently unavailable. TWAP is not included in this release.'**
   String get orderModeTwapUnavailable;
 
+  /// No description provided for @liveCapacityChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Account settings, positions or reserved margin changed. Refresh the order data before calculating capacity.'**
+  String get liveCapacityChanged;
+
+  /// No description provided for @liveCapacityPriceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'A reliable price reference for this order is unavailable. Refresh market data or review the pricing mode.'**
+  String get liveCapacityPriceUnavailable;
+
+  /// No description provided for @liveCapacityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Directional capacity reference'**
+  String get liveCapacityTitle;
+
+  /// No description provided for @liveAllocationPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Order percentage: {percent}%'**
+  String liveAllocationPercent(int percent);
+
+  /// No description provided for @liveAllocationManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual amount'**
+  String get liveAllocationManual;
+
+  /// No description provided for @liveAllocationManualHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Review checks the selected side’s latest capacity with up to six wallet signatures. Your entered amount is preserved and the quantity you click stays fixed.'**
+  String get liveAllocationManualHint;
+
+  /// No description provided for @liveAllocationMaximumChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'{direction}: the latest maximum is {maximum} {asset}. Adjust the amount and try again.'**
+  String liveAllocationMaximumChanged(String direction, String maximum, String asset);
+
+  /// No description provided for @liveAllocationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Read capacity before choosing a percentage. Each side uses its own maximum. Review refreshes limits with up to six wallet signatures and freezes the quantity you clicked.'**
+  String get liveAllocationHint;
+
+  /// No description provided for @liveAllocationChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing limits for the selected direction…'**
+  String get liveAllocationChecking;
+
+  /// No description provided for @liveAllocationChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Order inputs, account data or capacity changed. Review the current values and try again.'**
+  String get liveAllocationChanged;
+
+  /// No description provided for @liveAllocationFrozen.
+  ///
+  /// In en, this message translates to:
+  /// **'This direction, order type and quantity are frozen for confirmation. Changed or expired data blocks submission.'**
+  String get liveAllocationFrozen;
+
+  /// No description provided for @liveAllocationReviewBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Review long'**
+  String get liveAllocationReviewBuy;
+
+  /// No description provided for @liveAllocationReviewSell.
+  ///
+  /// In en, this message translates to:
+  /// **'Review short'**
+  String get liveAllocationReviewSell;
+
+  /// No description provided for @liveCapacityRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read capacity'**
+  String get liveCapacityRead;
+
+  /// No description provided for @liveCapacityReadHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading your latest account and order limits requires up to six wallet signatures. No order is placed.'**
+  String get liveCapacityReadHint;
+
+  /// No description provided for @liveCapacityMaximum.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum quantity reference'**
+  String get liveCapacityMaximum;
+
+  /// No description provided for @liveCapacityCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening cost reference'**
+  String get liveCapacityCost;
+
+  /// No description provided for @liveCapacityAboveMaximum.
+  ///
+  /// In en, this message translates to:
+  /// **'The quantity exceeds this side’s current capacity reference. Reduce the quantity and refresh before placing an order.'**
+  String get liveCapacityAboveMaximum;
+
+  /// No description provided for @liveCapacityStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Capacity is out of date. Refresh order data, then read capacity again.'**
+  String get liveCapacityStale;
+
+  /// No description provided for @liveCapacityEstimateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Both sides independently assume a full fill using the same account and current prices. Opening cost includes incremental margin and opening loss. Liquidation estimates use the signed taker fee and risk tiers, holding other prices and collateral rates fixed; actual fills, fees and funding can differ. Missing facts or no positive estimate show —.'**
+  String get liveCapacityEstimateHint;
+
+  /// No description provided for @liveCapacityPendingUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Capacity is unavailable because the reserved notional of a pending order cannot be verified.'**
+  String get liveCapacityPendingUnknown;
+
+  /// No description provided for @liveCapacityRatesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Fresh collateral conversion rates are unavailable. Refresh before calculating capacity.'**
+  String get liveCapacityRatesUnavailable;
+
+  /// No description provided for @liveCapacityRefreshAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh trading account and limits'**
+  String get liveCapacityRefreshAccount;
+
+  /// No description provided for @liveCapacityRefreshAccountHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign separately to read configuration, balances, positions, orders, risk tiers and the symbol fee, with up to ten wallet signatures; also refresh public prices and collateral rates. No order is submitted.'**
+  String get liveCapacityRefreshAccountHint;
+
+  /// No description provided for @liveCapacityLiquidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated liquidation price after fill'**
+  String get liveCapacityLiquidation;
+
   /// No description provided for @apiRequestTimeout.
   ///
   /// In en, this message translates to:
@@ -10131,11 +10281,131 @@ abstract class AppLocalizations {
   /// **'The server returned an invalid response.'**
   String get apiInvalidResponse;
 
+  /// No description provided for @authConnectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect wallet'**
+  String get authConnectTitle;
+
+  /// No description provided for @authVerifyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify email'**
+  String get authVerifyTitle;
+
+  /// No description provided for @authWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Vanta'**
+  String get authWelcome;
+
+  /// No description provided for @authWelcomeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your account to manage assets and trade.'**
+  String get authWelcomeDescription;
+
+  /// No description provided for @authEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get authEmailLabel;
+
+  /// No description provided for @authEmailPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email address'**
+  String get authEmailPlaceholder;
+
+  /// No description provided for @authEmailContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with email'**
+  String get authEmailContinue;
+
+  /// No description provided for @authGoogleContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get authGoogleContinue;
+
+  /// No description provided for @authXContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with X'**
+  String get authXContinue;
+
+  /// No description provided for @authWalletContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a wallet'**
+  String get authWalletContinue;
+
+  /// No description provided for @authAlternative.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get authAlternative;
+
+  /// No description provided for @authLegalNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'By continuing, you agree to the Terms of Use and Privacy Policy.'**
+  String get authLegalNotice;
+
+  /// No description provided for @authCheckEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your email'**
+  String get authCheckEmail;
+
+  /// No description provided for @authCodeDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the verification code sent to'**
+  String get authCodeDelivery;
+
+  /// No description provided for @authCodeExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Code expired. Request a new code.'**
+  String get authCodeExpired;
+
+  /// No description provided for @authBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get authBack;
+
+  /// No description provided for @authClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get authClose;
+
   /// No description provided for @assistantRateLimited.
   ///
   /// In en, this message translates to:
   /// **'Too many requests. Please wait before trying again.'**
   String get assistantRateLimited;
+
+  /// No description provided for @authVerifyContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify and continue'**
+  String get authVerifyContinue;
+
+  /// No description provided for @authSpamHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your spam folder if the email hasn’t arrived.'**
+  String get authSpamHint;
+
+  /// No description provided for @authResendCountdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code in {seconds}s'**
+  String authResendCountdown(int seconds);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

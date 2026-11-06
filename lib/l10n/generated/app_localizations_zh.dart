@@ -3507,7 +3507,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get liveOrderPegHint =>
-      'Aster 按所选买一／卖一在限价单提交时、或条件限价单触发时确定一次价格，不会持续追价。金额、保证金及平仓盈亏仅按标记价／触发价参考预估，实际定价和成交可能不同。';
+      'Aster 按所选买一／卖一在限价单提交时、或条件限价单触发时确定一次价格，不会持续追价。预估使用所选当前买一／卖一；引擎实际定价和成交可能不同，尤其是未来触发时。';
 
   @override
   String get liveOrderPegInvalid => 'BBO 需使用限价单且不手填委托价，不能与市价、跟踪、触发时全部平仓或附加策略单混用。';
@@ -5357,6 +5357,87 @@ class AppLocalizationsZh extends AppLocalizations {
   String get orderModeTwapUnavailable => '暂不可用，分时委托不在本阶段支持范围内。';
 
   @override
+  String get liveCapacityChanged => '账户设置、仓位或挂单保证金已变化，请刷新下单数据后重新计算额度。';
+
+  @override
+  String get liveCapacityPriceUnavailable => '暂缺此委托的可靠价格参考，请刷新行情或检查定价方式。';
+
+  @override
+  String get liveCapacityTitle => '买卖双侧参考额度';
+
+  @override
+  String liveAllocationPercent(int percent) {
+    return '下单比例：$percent%';
+  }
+
+  @override
+  String get liveAllocationManual => '手动输入金额';
+
+  @override
+  String get liveAllocationManualHint => '确认前会最多请求六次钱包签名核对所选方向的最新额度。保留手动输入，并冻结点击时的数量。';
+
+  @override
+  String liveAllocationMaximumChanged(String direction, String maximum, String asset) {
+    return '$direction最新最大可下额度为 $maximum $asset，请调整输入后重试。';
+  }
+
+  @override
+  String get liveAllocationHint => '读取额度后可选择比例，买卖两侧分别按各自最大数量计算。确认前会最多请求六次钱包签名刷新额度，并冻结点击时的数量。';
+
+  @override
+  String get liveAllocationChecking => '正在刷新所选方向的额度…';
+
+  @override
+  String get liveAllocationChanged => '下单输入、账户数据或额度已变化，请核对当前值后重试。';
+
+  @override
+  String get liveAllocationFrozen => '本次确认的方向、委托类型和数量已冻结，数据变化或过期会阻止提交。';
+
+  @override
+  String get liveAllocationReviewBuy => '确认开多';
+
+  @override
+  String get liveAllocationReviewSell => '确认开空';
+
+  @override
+  String get liveCapacityRead => '读取额度';
+
+  @override
+  String get liveCapacityReadHint => '读取最新账户与委托额度最多需要六次钱包签名，不会下单。';
+
+  @override
+  String get liveCapacityMaximum => '参考最大数量';
+
+  @override
+  String get liveCapacityCost => '参考开仓成本';
+
+  @override
+  String get liveCapacityAboveMaximum => '数量超过此方向的当前参考额度，请减小数量并在下单前刷新。';
+
+  @override
+  String get liveCapacityStale => '额度已失效，请刷新下单数据后重新读取额度。';
+
+  @override
+  String get liveCapacityEstimateHint =>
+      '两侧使用同一账户与当前行情，分别假设本单全部成交。开仓成本含增量保证金和开仓损失；强平预估使用签名读取的吃单费率及风险档位，其他价格和抵押汇率保持当前值，实际成交、费用及资金费可能不同。缺少依据或没有有效正数预估时显示 —。';
+
+  @override
+  String get liveCapacityPendingUnknown => '存在无法核实预留名义金额的挂单，暂时无法计算可开额度。';
+
+  @override
+  String get liveCapacityRatesUnavailable => '抵押资产换算价格缺失或已过期，请刷新后重新计算额度。';
+
+  @override
+  String get liveCapacityRefreshAccount => '刷新交易账户及额度';
+
+  @override
+  String get liveCapacityRefreshAccountHint =>
+      '分别签名读取配置、余额、仓位、挂单、风险档位及合约费率，最多需要十次钱包签名；同时刷新公开行情与抵押汇率。不会下单。';
+
+  @override
+  String get liveCapacityLiquidation => '成交后预估强平价';
+
+  @override
   String get apiRequestTimeout => '请求超时。';
 
   @override
@@ -5369,5 +5450,67 @@ class AppLocalizationsZh extends AppLocalizations {
   String get apiInvalidResponse => '服务器返回的数据格式无效。';
 
   @override
+  String get authConnectTitle => '连接钱包';
+
+  @override
+  String get authVerifyTitle => '验证邮箱';
+
+  @override
+  String get authWelcome => '欢迎使用 Vanta';
+
+  @override
+  String get authWelcomeDescription => '连接账户，管理资产并进行交易。';
+
+  @override
+  String get authEmailLabel => '邮箱';
+
+  @override
+  String get authEmailPlaceholder => '请输入邮箱地址';
+
+  @override
+  String get authEmailContinue => '使用邮箱继续';
+
+  @override
+  String get authGoogleContinue => '使用 Google 继续';
+
+  @override
+  String get authXContinue => '使用 X 继续';
+
+  @override
+  String get authWalletContinue => '连接钱包';
+
+  @override
+  String get authAlternative => '或';
+
+  @override
+  String get authLegalNotice => '继续即表示你同意使用条款和隐私政策。';
+
+  @override
+  String get authCheckEmail => '查看你的邮箱';
+
+  @override
+  String get authCodeDelivery => '请输入发送至以下邮箱的验证码';
+
+  @override
+  String get authCodeExpired => '验证码已过期，请重新获取。';
+
+  @override
+  String get authBack => '返回';
+
+  @override
+  String get authClose => '关闭';
+
+  @override
   String get assistantRateLimited => '请求过于频繁，请稍后重试。';
+
+  @override
+  String get authVerifyContinue => '验证并继续';
+
+  @override
+  String get authSpamHint => '如果未收到邮件，请检查垃圾邮件文件夹。';
+
+  @override
+  String authResendCountdown(int seconds) {
+    return '$seconds 秒后可重新发送';
+  }
 }

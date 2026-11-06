@@ -1514,7 +1514,7 @@
   "rebalanceSending": "正在等待签名请求或账户核对…",
   "rebalanceRecovery": "查看 Rebalance 恢复记录",
   "liveOrderPricing": "限价定价方式",
-  "liveOrderPegHint": "Aster 按所选买一／卖一在限价单提交时、或条件限价单触发时确定一次价格，不会持续追价。金额、保证金及平仓盈亏仅按标记价／触发价参考预估，实际定价和成交可能不同。",
+  "liveOrderPegHint": "Aster 按所选买一／卖一在限价单提交时、或条件限价单触发时确定一次价格，不会持续追价。预估使用所选当前买一／卖一；引擎实际定价和成交可能不同，尤其是未来触发时。",
   "liveOrderPegInvalid": "BBO 需使用限价单且不手填委托价，不能与市价、跟踪、触发时全部平仓或附加策略单混用。",
   "internalTransferTitle": "现货 ↔ 合约划转",
   "internalTransferScope": "使用当前钱包，将所选资产在 Aster 现货与合约账户间划转。",
@@ -2340,9 +2340,75 @@
   "orderModeTwap": "分时委托（TWAP）",
   "orderModeChaseUnavailable": "追逐委托暂未开放。",
   "orderModeTwapUnavailable": "暂不可用，分时委托不在本阶段支持范围内。",
+  "liveCapacityChanged": "账户设置、仓位或挂单保证金已变化，请刷新下单数据后重新计算额度。",
+  "liveCapacityPriceUnavailable": "暂缺此委托的可靠价格参考，请刷新行情或检查定价方式。",
+  "liveCapacityTitle": "买卖双侧参考额度",
+  "liveAllocationPercent": "下单比例：{percent}%",
+  "@liveAllocationPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "liveAllocationManual": "手动输入金额",
+  "liveAllocationManualHint": "确认前会最多请求六次钱包签名核对所选方向的最新额度。保留手动输入，并冻结点击时的数量。",
+  "liveAllocationMaximumChanged": "{direction}最新最大可下额度为 {maximum} {asset}，请调整输入后重试。",
+  "@liveAllocationMaximumChanged": {
+    "placeholders": {
+      "direction": {
+        "type": "String"
+      },
+      "maximum": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "liveAllocationHint": "读取额度后可选择比例，买卖两侧分别按各自最大数量计算。确认前会最多请求六次钱包签名刷新额度，并冻结点击时的数量。",
+  "liveAllocationChecking": "正在刷新所选方向的额度…",
+  "liveAllocationChanged": "下单输入、账户数据或额度已变化，请核对当前值后重试。",
+  "liveAllocationFrozen": "本次确认的方向、委托类型和数量已冻结，数据变化或过期会阻止提交。",
+  "liveAllocationReviewBuy": "确认开多",
+  "liveAllocationReviewSell": "确认开空",
+  "liveCapacityRead": "读取额度",
+  "liveCapacityReadHint": "读取最新账户与委托额度最多需要六次钱包签名，不会下单。",
+  "liveCapacityMaximum": "参考最大数量",
+  "liveCapacityCost": "参考开仓成本",
+  "liveCapacityAboveMaximum": "数量超过此方向的当前参考额度，请减小数量并在下单前刷新。",
+  "liveCapacityStale": "额度已失效，请刷新下单数据后重新读取额度。",
+  "liveCapacityEstimateHint": "两侧使用同一账户与当前行情，分别假设本单全部成交。开仓成本含增量保证金和开仓损失；强平预估使用签名读取的吃单费率及风险档位，其他价格和抵押汇率保持当前值，实际成交、费用及资金费可能不同。缺少依据或没有有效正数预估时显示 —。",
+  "liveCapacityPendingUnknown": "存在无法核实预留名义金额的挂单，暂时无法计算可开额度。",
+  "liveCapacityRatesUnavailable": "抵押资产换算价格缺失或已过期，请刷新后重新计算额度。",
+  "liveCapacityRefreshAccount": "刷新交易账户及额度",
+  "liveCapacityRefreshAccountHint": "分别签名读取配置、余额、仓位、挂单、风险档位及合约费率，最多需要十次钱包签名；同时刷新公开行情与抵押汇率。不会下单。",
+  "liveCapacityLiquidation": "成交后预估强平价",
   "apiRequestTimeout": "请求超时。",
   "apiConnectionFailed": "无法连接服务器，请检查网络连接。",
   "apiRequestCancelled": "请求已取消。",
   "apiInvalidResponse": "服务器返回的数据格式无效。",
-  "assistantRateLimited": "请求过于频繁，请稍后重试。"
+  "authConnectTitle": "连接钱包",
+  "authVerifyTitle": "验证邮箱",
+  "authWelcome": "欢迎使用 Vanta",
+  "authWelcomeDescription": "连接账户，管理资产并进行交易。",
+  "authEmailLabel": "邮箱",
+  "authEmailPlaceholder": "请输入邮箱地址",
+  "authEmailContinue": "使用邮箱继续",
+  "authGoogleContinue": "使用 Google 继续",
+  "authXContinue": "使用 X 继续",
+  "authWalletContinue": "连接钱包",
+  "authAlternative": "或",
+  "authLegalNotice": "继续即表示你同意使用条款和隐私政策。",
+  "authCheckEmail": "查看你的邮箱",
+  "authCodeDelivery": "请输入发送至以下邮箱的验证码",
+  "authCodeExpired": "验证码已过期，请重新获取。",
+  "authBack": "返回",
+  "authClose": "关闭",
+  "assistantRateLimited": "请求过于频繁，请稍后重试。",
+  "authVerifyContinue": "验证并继续",
+  "authSpamHint": "如果未收到邮件，请检查垃圾邮件文件夹。",
+  "authResendCountdown": "{seconds} 秒后可重新发送",
+  "@authResendCountdown": {"placeholders": {"seconds": {"type": "int"}}}
 }

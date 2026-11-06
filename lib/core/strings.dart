@@ -8,6 +8,13 @@ String tr(BuildContext context, String key) {
   final messages = AppLocalizations.of(context);
   return switch (key) {
     'assistantRateLimited' => messages.assistantRateLimited,
+    'liveCapacityChanged' => messages.liveCapacityChanged,
+    'liveCapacityPriceUnavailable' => messages.liveCapacityPriceUnavailable,
+    'liveCapacityAboveMaximum' => messages.liveCapacityAboveMaximum,
+    'liveAllocationChanged' => messages.liveAllocationChanged,
+    'liveCapacityStale' => messages.liveCapacityStale,
+    'liveCapacityPendingUnknown' => messages.liveCapacityPendingUnknown,
+    'liveCapacityRatesUnavailable' => messages.liveCapacityRatesUnavailable,
     'marginAdjustOverMaximum' => messages.marginAdjustOverMaximum,
     'marginAdjustTitle' => messages.marginAdjustTitle,
     'marginAdjustScope' => messages.marginAdjustScope,
@@ -449,6 +456,7 @@ String tr(BuildContext context, String key) {
     'poweredBy' => messages.poweredBy,
     'gap' => messages.gap,
     'connect' => messages.connect,
+    'authCodeExpired' => messages.authCodeExpired,
     'loginTitle' => messages.loginTitle,
     'loginDescription' => messages.loginDescription,
     'emailAddress' => messages.emailAddress,
