@@ -43,6 +43,7 @@ class _LoginPanelState extends ConsumerState<LoginPanel> {
     final l10n = AppLocalizations.of(context);
     final controller = ref.read(authProvider.notifier);
     final ready = ref.watch(privyConfigurationProvider).isConfigured && !session.busy;
+    final reconnect = session.identity?.needsWalletConnection == true;
     return AutofillGroup(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -55,27 +56,37 @@ class _LoginPanelState extends ConsumerState<LoginPanel> {
             l10n.authWelcomeDescription,
             style: AuthTypography.body.copyWith(color: AppColors.authSecondary),
           ),
-          _emailField(session, ready, controller, l10n),
+          if (!reconnect) _emailField(session, ready, controller, l10n),
           if (session.failure case final failure?) AuthFailureText(failure),
-          AuthActionButton(
-            key: const Key('send-email-code'),
-            label: l10n.authEmailContinue,
-            primary: true,
-            busy: session.busy && _pending == 'email',
-            onPressed: ready ? () => _run('email', () => controller.sendCode(_email.text)) : null,
-          ),
-          SizedBox(
-            height: 24,
-            child: Row(
-              spacing: 12,
-              children: [
-                const Expanded(child: Divider(color: AppColors.authLine)),
-                Text(l10n.authAlternative, style: AuthTypography.caption),
-                const Expanded(child: Divider(color: AppColors.authLine)),
-              ],
+          if (reconnect) ...[
+            _walletButton(session, controller, ready, l10n, primary: true),
+            AuthActionButton(
+              key: const Key('login-use-another-wallet'),
+              label: l10n.enableTradingUseAnother,
+              busy: session.busy && _pending == 'switch',
+              onPressed: session.busy ? null : () => _run('switch', controller.logout),
             ),
-          ),
-          _loginMethods(session, controller, ready, l10n),
+          ] else ...[
+            AuthActionButton(
+              key: const Key('send-email-code'),
+              label: l10n.authEmailContinue,
+              primary: true,
+              busy: session.busy && _pending == 'email',
+              onPressed: ready ? () => _run('email', () => controller.sendCode(_email.text)) : null,
+            ),
+            SizedBox(
+              height: 24,
+              child: Row(
+                spacing: 12,
+                children: [
+                  const Expanded(child: Divider(color: AppColors.authLine)),
+                  Text(l10n.authAlternative, style: AuthTypography.caption),
+                  const Expanded(child: Divider(color: AppColors.authLine)),
+                ],
+              ),
+            ),
+            _loginMethods(session, controller, ready, l10n),
+          ],
           Text(l10n.authLegalNotice, textAlign: TextAlign.center, style: AuthTypography.caption),
         ],
       ),
@@ -151,15 +162,28 @@ class _LoginPanelState extends ConsumerState<LoginPanel> {
             ? () => _run('x', () => controller.loginWithSocial(SocialLoginProvider.x))
             : null,
       ),
-      AuthActionButton(
-        key: const Key('connect-external-wallet'),
-        label: l10n.authWalletContinue,
-        asset: 'assets/auth/wallet.svg',
-        busy: session.busy && _pending == 'wallet',
-        onPressed: ready && ref.watch(walletConfigurationProvider).isConfigured
-            ? () => _run('wallet', () => controller.connectWallet(context))
-            : null,
-      ),
+      _walletButton(session, controller, ready, l10n),
     ],
+  );
+
+  Widget _walletButton(
+    AuthSession session,
+    AuthController controller,
+    bool ready,
+    AppLocalizations l10n, {
+    bool primary = false,
+  }) => AuthActionButton(
+    key: const Key('connect-external-wallet'),
+    label: switch (session.walletStep) {
+      WalletLoginStep.connecting => l10n.walletConnectStep,
+      WalletLoginStep.signing => l10n.walletSignStep,
+      null => l10n.authWalletContinue,
+    },
+    asset: 'assets/auth/wallet.svg',
+    primary: primary,
+    busy: session.busy && _pending == 'wallet',
+    onPressed: ready && ref.watch(walletConfigurationProvider).isConfigured
+        ? () => _run('wallet', () => controller.connectWallet(context))
+        : null,
   );
 }

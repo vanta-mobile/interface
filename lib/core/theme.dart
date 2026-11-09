@@ -122,7 +122,65 @@ ThemeData vantaTheme() => ThemeData(
   ),
 );
 
-/// Typography for primary navigation from the mobile design.
+/// Portfolio and primary navigation tokens from the supplied mobile design.
+abstract final class PortfolioColors {
+  static const transparent = AppColors.transparent;
+  static const background = AppColors.authBackground;
+  static const card = AppColors.authCard;
+  static const button = AppColors.authButton;
+  static const text = AppColors.authText;
+  static const secondary = AppColors.authSecondary;
+  static const muted = Color(0xFF959B9E);
+  static const line = AppColors.authLine;
+  static const accent = AppColors.authAccent;
+  static const onAccent = AppColors.authOnAccent;
+  static const negative = AppColors.authError;
+  static const positive = Color(0xFF0FB276);
+  static const inset = Color(0xFF181A1B);
+}
+
 abstract final class PortfolioTypography {
+  static const heading = TextStyle(
+    fontSize: 18,
+    height: 26 / 18,
+    fontWeight: FontWeight.w700,
+    color: PortfolioColors.text,
+  );
+  static const section = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w700,
+    color: PortfolioColors.text,
+  );
+  static const body = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w400,
+    color: PortfolioColors.secondary,
+  );
+  static const caption = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w500,
+    color: PortfolioColors.secondary,
+  );
+  static const value = TextStyle(
+    fontSize: 32,
+    height: 40 / 32,
+    fontWeight: FontWeight.w700,
+    color: PortfolioColors.text,
+  );
+  static const metric = TextStyle(
+    fontSize: 20,
+    height: 28 / 20,
+    fontWeight: FontWeight.w700,
+    color: PortfolioColors.text,
+  );
+  static const detailValue = TextStyle(
+    fontSize: 24,
+    height: 32 / 24,
+    fontWeight: FontWeight.w700,
+    color: PortfolioColors.text,
+  );
   static const navigation = TextStyle(fontSize: 10, height: 16 / 10, fontWeight: FontWeight.w500);
 }

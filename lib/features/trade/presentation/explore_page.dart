@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../subaccounts/presentation/subaccount_list_screen.dart';
+import '../../portfolio/application/portfolio_overview_provider.dart';
 import '../application/navigation_provider.dart';
 import 'widgets/account_sheet.dart';
 
@@ -20,6 +21,15 @@ class ExplorePage extends ConsumerWidget {
       children: [
         Text(l.exploreNavigation, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 16),
+        ListTile(
+          key: const Key('portfolio-preview-entry'),
+          leading: const Icon(Icons.preview_outlined),
+          title: Text(l.portfolioPreviewAccount),
+          onTap: () {
+            ref.read(portfolioPreviewProvider.notifier).select(true);
+            select(AppDestination.portfolio);
+          },
+        ),
         ListTile(
           key: const Key('explore-assistant'),
           leading: const Icon(Icons.auto_awesome_outlined),

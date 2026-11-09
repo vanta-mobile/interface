@@ -4,7 +4,7 @@
   "connectExternalWallet": "连接 EOA 钱包",
   "externalWallet": "外部 EOA 钱包",
   "embeddedWallet": "Privy 内嵌钱包",
-  "reconnectExternalWallet": "重新连接钱包",
+  "reconnectExternalWallet": "连接钱包",
   "externalWalletLoginHint": "使用已有钱包连接并签名登录，不会额外创建钱包。登录签名不启用实盘交易。",
   "walletConnectStep": "请在钱包中确认连接。",
   "walletSignStep": "请在钱包中签名以验证登录身份。",
@@ -12,9 +12,10 @@
   "authWalletCancelled": "钱包连接已取消，可以重新尝试。",
   "authWalletRejected": "你已拒绝钱包请求，可以重新尝试。",
   "authWalletUnavailable": "钱包连接失败，请检查钱包应用和网络后重试。",
+  "authWalletConnectionTimeout": "钱包连接准备超时，请检查网络后重试。",
   "authWalletUnsupported": "请选择支持的 Ethereum、BNB Chain、Arbitrum 或 Base 钱包网络。",
   "authWalletChanged": "钱包账户或网络已变更，请重新连接并登录。",
-  "authWalletReconnect": "账户身份已恢复。签名操作前，请重新连接对应的 EOA 钱包。",
+  "authWalletReconnect": "请先连接钱包后再继续。",
   "authWalletSignature": "钱包未返回有效签名，请重试。",
   "quotesConnecting": "正在连接实时报价",
   "quotesLive": "实时报价",
@@ -2410,7 +2411,13 @@
   "authVerifyContinue": "验证并继续",
   "authSpamHint": "如果未收到邮件，请检查垃圾邮件文件夹。",
   "authResendCountdown": "{seconds} 秒后可重新发送",
-  "@authResendCountdown": {"placeholders": {"seconds": {"type": "int"}}},
+  "@authResendCountdown": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "enableTradingTitle": "开启交易",
   "enableTradingHeading": "还差一次签名",
   "enableTradingWalletHint": "请在钱包中确认签名。如果没有弹出提示，请检查钱包 App 或浏览器扩展。",
@@ -2428,5 +2435,111 @@
   "enableTradingContinue": "继续",
   "enableTradingWalletSetup": "设置钱包",
   "tradeNavigation": "交易",
-  "exploreNavigation": "探索"
+  "exploreNavigation": "探索",
+  "portfolioTotalValue": "总资产",
+  "portfolioLoginHint": "登录以查看你的资产与收益表现。",
+  "portfolioLoginBalances": "登录以查看余额",
+  "portfolioPerformance": "收益表现",
+  "portfolioFuturesAssets": "合约资产",
+  "portfolioPnlDetails": "盈亏详情",
+  "portfolioTodayPnl": "今日盈亏",
+  "portfolioPnl7d": "盈亏 · 7日",
+  "portfolioVolume7d": "成交量 · 7日",
+  "portfolioTransfer": "账户间划转",
+  "portfolioMainAccount": "主账户",
+  "portfolioPreviewAccount": "演示账户 · 静态示例",
+  "portfolioPreviewNotice": "静态设计示例，不代表真实资金或订单。",
+  "portfolioPreviewAction": "当前为静态示例，请切换至真实账户后操作。",
+  "portfolioAccountSelector": "选择账户",
+  "portfolioHideBalance": "隐藏余额",
+  "portfolioShowBalance": "显示余额",
+  "portfolioValueHistory": "总资产历史",
+  "portfolioCollapseHistory": "收起资产历史",
+  "portfolioOpenHistory": "展开资产历史",
+  "portfolioMissingPnl": "该账户暂无盈亏数据",
+  "portfolioMissingDay": "暂无当日盈亏数据",
+  "portfolioMissingValue": "该账户暂无资产历史数据",
+  "portfolioPnlNote": "历史数据可能在结算后更新。缺失数据将显示为不可用。",
+  "portfolioCalendar": "日历",
+  "portfolioMonthlyPnl": "月度盈亏",
+  "portfolioCalendarNote": "每日盈亏采用 UTC · 金额单位为 USD",
+  "portfolioPreviousMonth": "上个月",
+  "portfolioNextMonth": "下个月",
+  "portfolioHideOtherSymbols": "隐藏其他交易对",
+  "portfolioHideLowBalances": "隐藏小额资产",
+  "portfolioNoPositions": "暂无持仓",
+  "portfolioNoAssets": "暂无资产",
+  "portfolioAssets": "资产",
+  "portfolioLast7Days": "盈亏 · 最近7天",
+  "portfolioPnlPeriod": "盈亏 · {period}",
+  "@portfolioPnlPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioVolumePeriod": "成交量 · {period}",
+  "@portfolioVolumePeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioHistoryPeriod": "总资产历史 · {period}",
+  "@portfolioHistoryPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioDayUnavailable": "{date} · 暂无当日盈亏数据",
+  "@portfolioDayUnavailable": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioPositionsCount": "持仓({count})",
+  "@portfolioPositionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "portfolioAvailable": "可用 {amount}",
+  "@portfolioAvailable": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioLiquidation": "强平价",
+  "portfolioSize": "仓位价值 ({unit})",
+  "@portfolioSize": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioPnlUnit": "盈亏 ({unit})",
+  "@portfolioPnlUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioPreview7d": "仅提供7日示例",
+  "portfolioLogIn": "登录",
+  "portfolioCloseAll": "全部平仓",
+  "portfolioMark": "标记价",
+  "portfolioTpsl": "止盈止损",
+  "portfolioAll": "全部"
 }

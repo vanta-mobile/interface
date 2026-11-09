@@ -21,10 +21,16 @@ typedef WalletModalFactory = ReownAppKitModal Function(BuildContext context);
 /// BuildContext is used only to host the SDK's native wallet-selection UI.
 /// SDK clients, sessions, and signature payloads stay behind this adapter.
 class ReownWalletConnector implements WalletConnector {
-  ReownWalletConnector(this.configuration, {this.createModal});
+  ReownWalletConnector(
+    this.configuration, {
+    this.createModal,
+    this.preparationTimeout = const Duration(seconds: 20),
+  });
   final WalletConfiguration configuration;
   final WalletModalFactory? createModal;
+  final Duration preparationTimeout;
   ReownAppKitModal? _modal;
+  Future<void>? _preparation;
   Future<WalletConnection>? _pending;
   bool _disposed = false;
 
@@ -34,6 +40,10 @@ class ReownWalletConnector implements WalletConnector {
     if (!configuration.isConfigured) throw const AuthFailure('authWalletConfiguration');
     final previous = _modal;
     if (previous != null && previous.modalContext == null) {
+      await _preparation?.timeout(
+        preparationTimeout,
+        onTimeout: () => throw const AuthFailure('authWalletConnectionTimeout'),
+      );
       await previous.dispose();
       _modal = null;
     }
@@ -42,12 +52,21 @@ class ReownWalletConnector implements WalletConnector {
     // signatures can still launch the connected wallet app.
     final host = Navigator.of(context).context;
     final modal = _modal ??= createModal?.call(host) ?? _createModal(host);
-    await modal.init();
+    // A stored WalletConnect session is not proof that its peer can still
+    // sign. An explicit connect/reconnect must offer fresh wallet approval.
+    // Keep preparation separate from the modal: timing out must never open
+    // wallet UI later or run another SDK initialization concurrently.
+    final preparation = _preparation ??= _sdkCall(() => _prepare(modal))
+        .whenComplete(() => _preparation = null);
+    await preparation.timeout(
+      preparationTimeout,
+      onTimeout: () => throw const AuthFailure('authWalletConnectionTimeout'),
+    );
     if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
-    if (!modal.isConnected) {
-      if (modal.isOpen) throw const AuthFailure('authWalletUnavailable');
-      await modal.openModalView();
+    if (modal.status != ReownAppKitModalStatus.initialized || modal.isConnected || modal.isOpen) {
+      throw const AuthFailure('authWalletUnavailable');
     }
+    await modal.openModalView();
     if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
     final sessionAddress = modal.session?.getAddress('eip155');
     final chain = modal.selectedChain?.chainId;
@@ -62,6 +81,32 @@ class ReownWalletConnector implements WalletConnector {
     }
     return ReownWalletConnection(modal, address, chain.substring(7));
   }).whenComplete(() => _pending = null);
+
+  Future<void> _prepare(ReownAppKitModal modal) async {
+    if (modal.status != ReownAppKitModalStatus.initialized) await modal.init();
+    if (_disposed || !modal.isConnected) return;
+    final disconnected = Completer<void>();
+    void check() {
+      if (!modal.isConnected &&
+          modal.status == ReownAppKitModalStatus.initialized &&
+          !disconnected.isCompleted) {
+        disconnected.complete();
+      }
+    }
+
+    modal.addListener(check);
+    try {
+      await modal.disconnect(disconnectAllSessions: false);
+      check();
+      // Reown finishes local cleanup in an asynchronous session-delete event.
+      await disconnected.future.timeout(
+        preparationTimeout,
+        onTimeout: () => throw const AuthFailure('authWalletConnectionTimeout'),
+      );
+    } finally {
+      modal.removeListener(check);
+    }
+  }
 
   ReownAppKitModal _createModal(BuildContext context) => ReownAppKitModal(
     context: context,
@@ -92,6 +137,11 @@ class ReownWalletConnector implements WalletConnector {
     _disposed = true;
     final modal = _modal;
     _modal = null;
+    try {
+      await _preparation;
+    } catch (_) {
+      // Preparation failures belong to the connect operation.
+    }
     if (modal != null) await _sdkCall(modal.dispose);
   }
 }

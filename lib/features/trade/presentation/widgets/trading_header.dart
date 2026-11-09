@@ -21,9 +21,12 @@ class TradingHeader extends ConsumerWidget {
     final recoveryCount = ref.watch(pendingWalletOrdersProvider).length;
     final unread = ref.watch(unreadNotificationsProvider);
     final demo = ref.watch(accountProvider.select((a) => a.connected));
-    final identity = ref.watch(authProvider).identity;
+    final session = ref.watch(authProvider);
+    final identity = session.identity;
     final address = identity?.walletAddress;
-    final accountLabel = address != null && address.length > 12
+    final accountLabel = session.needsWalletConnection
+        ? tr(context, 'connect')
+        : address != null && address.length > 12
         ? '${address.substring(0, 6)}…${address.substring(address.length - 4)}'
         : tr(context, identity == null ? 'connect' : 'account');
     return LayoutBuilder(

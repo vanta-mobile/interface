@@ -1,3 +1,5 @@
+import '../../support/portfolio_account_tools.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -166,7 +168,7 @@ void main() {
         fundingCatalogRepository: catalogs,
       );
       await launch(tester, container);
-      await tester.tap(find.text('Portfolio'));
+      await openPortfolioAccountTools(tester);
       await tester.pumpAndSettle();
       if (market == TransferMarket.spot) {
         await tester.tap(find.text('Spot'));

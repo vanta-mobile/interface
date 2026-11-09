@@ -120,7 +120,7 @@ abstract class AppLocalizations {
   /// No description provided for @reconnectExternalWallet.
   ///
   /// In en, this message translates to:
-  /// **'Reconnect wallet'**
+  /// **'Connect wallet'**
   String get reconnectExternalWallet;
 
   /// No description provided for @externalWalletLoginHint.
@@ -165,6 +165,12 @@ abstract class AppLocalizations {
   /// **'Wallet connection failed. Check your wallet app and network, then retry.'**
   String get authWalletUnavailable;
 
+  /// No description provided for @authWalletConnectionTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet connection setup timed out. Check your network and retry.'**
+  String get authWalletConnectionTimeout;
+
   /// No description provided for @authWalletUnsupported.
   ///
   /// In en, this message translates to:
@@ -180,7 +186,7 @@ abstract class AppLocalizations {
   /// No description provided for @authWalletReconnect.
   ///
   /// In en, this message translates to:
-  /// **'Your identity is restored. Reconnect the same EOA wallet before signing.'**
+  /// **'Connect your wallet to continue.'**
   String get authWalletReconnect;
 
   /// No description provided for @authWalletSignature.
@@ -10514,6 +10520,306 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Explore'**
   String get exploreNavigation;
+
+  /// No description provided for @portfolioTotalValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Total value'**
+  String get portfolioTotalValue;
+
+  /// No description provided for @portfolioLoginHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in to view your assets and performance.'**
+  String get portfolioLoginHint;
+
+  /// No description provided for @portfolioLoginBalances.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in to view your balances'**
+  String get portfolioLoginBalances;
+
+  /// No description provided for @portfolioPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'Performance'**
+  String get portfolioPerformance;
+
+  /// No description provided for @portfolioFuturesAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'Futures assets'**
+  String get portfolioFuturesAssets;
+
+  /// No description provided for @portfolioPnlDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'PnL details'**
+  String get portfolioPnlDetails;
+
+  /// No description provided for @portfolioTodayPnl.
+  ///
+  /// In en, this message translates to:
+  /// **'Today’s PnL'**
+  String get portfolioTodayPnl;
+
+  /// No description provided for @portfolioPnl7d.
+  ///
+  /// In en, this message translates to:
+  /// **'PnL · 7D'**
+  String get portfolioPnl7d;
+
+  /// No description provided for @portfolioVolume7d.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume · 7D'**
+  String get portfolioVolume7d;
+
+  /// No description provided for @portfolioTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer between accounts'**
+  String get portfolioTransfer;
+
+  /// No description provided for @portfolioMainAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Main account'**
+  String get portfolioMainAccount;
+
+  /// No description provided for @portfolioPreviewAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo · Static preview'**
+  String get portfolioPreviewAccount;
+
+  /// No description provided for @portfolioPreviewNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Static design sample. No real funds or orders.'**
+  String get portfolioPreviewNotice;
+
+  /// No description provided for @portfolioPreviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a static preview. Switch to your account to continue.'**
+  String get portfolioPreviewAction;
+
+  /// No description provided for @portfolioAccountSelector.
+  ///
+  /// In en, this message translates to:
+  /// **'Select account'**
+  String get portfolioAccountSelector;
+
+  /// No description provided for @portfolioHideBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide balances'**
+  String get portfolioHideBalance;
+
+  /// No description provided for @portfolioShowBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Show balances'**
+  String get portfolioShowBalance;
+
+  /// No description provided for @portfolioValueHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Total value history'**
+  String get portfolioValueHistory;
+
+  /// No description provided for @portfolioCollapseHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse value history'**
+  String get portfolioCollapseHistory;
+
+  /// No description provided for @portfolioOpenHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand value history'**
+  String get portfolioOpenHistory;
+
+  /// No description provided for @portfolioMissingPnl.
+  ///
+  /// In en, this message translates to:
+  /// **'PnL data unavailable for this account'**
+  String get portfolioMissingPnl;
+
+  /// No description provided for @portfolioMissingDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily PnL unavailable'**
+  String get portfolioMissingDay;
+
+  /// No description provided for @portfolioMissingValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value history unavailable for this account'**
+  String get portfolioMissingValue;
+
+  /// No description provided for @portfolioPnlNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Historical figures may update after settlement. Missing data is shown as unavailable.'**
+  String get portfolioPnlNote;
+
+  /// No description provided for @portfolioCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get portfolioCalendar;
+
+  /// No description provided for @portfolioMonthlyPnl.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly PnL'**
+  String get portfolioMonthlyPnl;
+
+  /// No description provided for @portfolioCalendarNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily PnL uses UTC · Values in USD'**
+  String get portfolioCalendarNote;
+
+  /// No description provided for @portfolioPreviousMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous month'**
+  String get portfolioPreviousMonth;
+
+  /// No description provided for @portfolioNextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Next month'**
+  String get portfolioNextMonth;
+
+  /// No description provided for @portfolioHideOtherSymbols.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide other symbols'**
+  String get portfolioHideOtherSymbols;
+
+  /// No description provided for @portfolioHideLowBalances.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide low balance assets'**
+  String get portfolioHideLowBalances;
+
+  /// No description provided for @portfolioNoPositions.
+  ///
+  /// In en, this message translates to:
+  /// **'No open positions'**
+  String get portfolioNoPositions;
+
+  /// No description provided for @portfolioNoAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'No assets to display'**
+  String get portfolioNoAssets;
+
+  /// No description provided for @portfolioAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'Assets'**
+  String get portfolioAssets;
+
+  /// No description provided for @portfolioLast7Days.
+  ///
+  /// In en, this message translates to:
+  /// **'PnL · Last 7 days'**
+  String get portfolioLast7Days;
+
+  /// No description provided for @portfolioPnlPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'PnL · {period}'**
+  String portfolioPnlPeriod(String period);
+
+  /// No description provided for @portfolioVolumePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume · {period}'**
+  String portfolioVolumePeriod(String period);
+
+  /// No description provided for @portfolioHistoryPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Total value history · {period}'**
+  String portfolioHistoryPeriod(String period);
+
+  /// No description provided for @portfolioDayUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{date} · Daily PnL unavailable'**
+  String portfolioDayUnavailable(String date);
+
+  /// No description provided for @portfolioPositionsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Positions({count})'**
+  String portfolioPositionsCount(int count);
+
+  /// No description provided for @portfolioAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Avbl. {amount}'**
+  String portfolioAvailable(String amount);
+
+  /// No description provided for @portfolioLiquidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Liq.'**
+  String get portfolioLiquidation;
+
+  /// No description provided for @portfolioSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size ({unit})'**
+  String portfolioSize(String unit);
+
+  /// No description provided for @portfolioPnlUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'PnL ({unit})'**
+  String portfolioPnlUnit(String unit);
+
+  /// No description provided for @portfolioPreview7d.
+  ///
+  /// In en, this message translates to:
+  /// **'7D sample only'**
+  String get portfolioPreview7d;
+
+  /// No description provided for @portfolioLogIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in'**
+  String get portfolioLogIn;
+
+  /// No description provided for @portfolioCloseAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Close all'**
+  String get portfolioCloseAll;
+
+  /// No description provided for @portfolioMark.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark'**
+  String get portfolioMark;
+
+  /// No description provided for @portfolioTpsl.
+  ///
+  /// In en, this message translates to:
+  /// **'TP/SL'**
+  String get portfolioTpsl;
+
+  /// No description provided for @portfolioAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get portfolioAll;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

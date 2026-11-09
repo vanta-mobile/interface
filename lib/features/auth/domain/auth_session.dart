@@ -18,6 +18,8 @@ class AuthIdentity {
   final String? email, walletAddress, walletName;
   final WalletKind walletKind;
   final bool signingAvailable;
+
+  bool get needsWalletConnection => walletKind == WalletKind.external && !signingAvailable;
 }
 
 class AuthFailure implements Exception {
@@ -47,6 +49,10 @@ class AuthSession {
   final AuthFailure? failure;
   final DateTime? resendAt;
   final WalletLoginStep? walletStep;
+
+  /// Presentation gate only: retain restored identity for address checks and
+  /// public reads while offering the same connection entry as signed-out users.
+  bool get needsWalletConnection => identity == null || identity!.needsWalletConnection;
 }
 
 abstract interface class IdentityRepository {

@@ -4,7 +4,7 @@
   "connectExternalWallet": "Connect EOA wallet",
   "externalWallet": "External EOA wallet",
   "embeddedWallet": "Privy embedded wallet",
-  "reconnectExternalWallet": "Reconnect wallet",
+  "reconnectExternalWallet": "Connect wallet",
   "externalWalletLoginHint": "Connect and sign in with your existing wallet. No extra wallet is created. Sign-in does not enable live trading.",
   "walletConnectStep": "Confirm the connection in your wallet.",
   "walletSignStep": "Sign in your wallet to verify your identity.",
@@ -12,9 +12,10 @@
   "authWalletCancelled": "Wallet connection cancelled. You can retry.",
   "authWalletRejected": "Wallet request rejected. You can retry.",
   "authWalletUnavailable": "Wallet connection failed. Check your wallet app and network, then retry.",
+  "authWalletConnectionTimeout": "Wallet connection setup timed out. Check your network and retry.",
   "authWalletUnsupported": "Select Ethereum, BNB Chain, Arbitrum, or Base in your wallet.",
   "authWalletChanged": "Wallet account or network changed. Reconnect and sign in again.",
-  "authWalletReconnect": "Your identity is restored. Reconnect the same EOA wallet before signing.",
+  "authWalletReconnect": "Connect your wallet to continue.",
   "authWalletSignature": "Your wallet did not return a valid signature. Please retry.",
   "quotesConnecting": "Connecting live quotes",
   "quotesLive": "Live quotes",
@@ -2488,7 +2489,13 @@
   "authVerifyContinue": "Verify and continue",
   "authSpamHint": "Check your spam folder if the email hasn’t arrived.",
   "authResendCountdown": "Resend code in {seconds}s",
-  "@authResendCountdown": {"placeholders": {"seconds": {"type": "int"}}},
+  "@authResendCountdown": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "enableTradingTitle": "Enable trading",
   "enableTradingHeading": "One more signature",
   "enableTradingWalletHint": "Confirm the signature in your wallet. Check your wallet app or browser extensions if nothing pops up.",
@@ -2506,5 +2513,111 @@
   "enableTradingContinue": "Continue",
   "enableTradingWalletSetup": "Wallet setup",
   "tradeNavigation": "Trade",
-  "exploreNavigation": "Explore"
+  "exploreNavigation": "Explore",
+  "portfolioTotalValue": "Total value",
+  "portfolioLoginHint": "Log in to view your assets and performance.",
+  "portfolioLoginBalances": "Log in to view your balances",
+  "portfolioPerformance": "Performance",
+  "portfolioFuturesAssets": "Futures assets",
+  "portfolioPnlDetails": "PnL details",
+  "portfolioTodayPnl": "Today’s PnL",
+  "portfolioPnl7d": "PnL · 7D",
+  "portfolioVolume7d": "Volume · 7D",
+  "portfolioTransfer": "Transfer between accounts",
+  "portfolioMainAccount": "Main account",
+  "portfolioPreviewAccount": "Demo · Static preview",
+  "portfolioPreviewNotice": "Static design sample. No real funds or orders.",
+  "portfolioPreviewAction": "This is a static preview. Switch to your account to continue.",
+  "portfolioAccountSelector": "Select account",
+  "portfolioHideBalance": "Hide balances",
+  "portfolioShowBalance": "Show balances",
+  "portfolioValueHistory": "Total value history",
+  "portfolioCollapseHistory": "Collapse value history",
+  "portfolioOpenHistory": "Expand value history",
+  "portfolioMissingPnl": "PnL data unavailable for this account",
+  "portfolioMissingDay": "Daily PnL unavailable",
+  "portfolioMissingValue": "Value history unavailable for this account",
+  "portfolioPnlNote": "Historical figures may update after settlement. Missing data is shown as unavailable.",
+  "portfolioCalendar": "Calendar",
+  "portfolioMonthlyPnl": "Monthly PnL",
+  "portfolioCalendarNote": "Daily PnL uses UTC · Values in USD",
+  "portfolioPreviousMonth": "Previous month",
+  "portfolioNextMonth": "Next month",
+  "portfolioHideOtherSymbols": "Hide other symbols",
+  "portfolioHideLowBalances": "Hide low balance assets",
+  "portfolioNoPositions": "No open positions",
+  "portfolioNoAssets": "No assets to display",
+  "portfolioAssets": "Assets",
+  "portfolioLast7Days": "PnL · Last 7 days",
+  "portfolioPnlPeriod": "PnL · {period}",
+  "@portfolioPnlPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioVolumePeriod": "Volume · {period}",
+  "@portfolioVolumePeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioHistoryPeriod": "Total value history · {period}",
+  "@portfolioHistoryPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioDayUnavailable": "{date} · Daily PnL unavailable",
+  "@portfolioDayUnavailable": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioPositionsCount": "Positions({count})",
+  "@portfolioPositionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "portfolioAvailable": "Avbl. {amount}",
+  "@portfolioAvailable": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioLiquidation": "Liq.",
+  "portfolioSize": "Size ({unit})",
+  "@portfolioSize": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioPnlUnit": "PnL ({unit})",
+  "@portfolioPnlUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioPreview7d": "7D sample only",
+  "portfolioLogIn": "Log in",
+  "portfolioCloseAll": "Close all",
+  "portfolioMark": "Mark",
+  "portfolioTpsl": "TP/SL",
+  "portfolioAll": "All"
 }

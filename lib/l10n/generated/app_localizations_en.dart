@@ -22,7 +22,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get embeddedWallet => 'Privy embedded wallet';
 
   @override
-  String get reconnectExternalWallet => 'Reconnect wallet';
+  String get reconnectExternalWallet => 'Connect wallet';
 
   @override
   String get externalWalletLoginHint =>
@@ -48,6 +48,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Wallet connection failed. Check your wallet app and network, then retry.';
 
   @override
+  String get authWalletConnectionTimeout =>
+      'Wallet connection setup timed out. Check your network and retry.';
+
+  @override
   String get authWalletUnsupported =>
       'Select Ethereum, BNB Chain, Arbitrum, or Base in your wallet.';
 
@@ -55,8 +59,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authWalletChanged => 'Wallet account or network changed. Reconnect and sign in again.';
 
   @override
-  String get authWalletReconnect =>
-      'Your identity is restored. Reconnect the same EOA wallet before signing.';
+  String get authWalletReconnect => 'Connect your wallet to continue.';
 
   @override
   String get authWalletSignature => 'Your wallet did not return a valid signature. Please retry.';
@@ -6014,4 +6017,172 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exploreNavigation => 'Explore';
+
+  @override
+  String get portfolioTotalValue => 'Total value';
+
+  @override
+  String get portfolioLoginHint => 'Log in to view your assets and performance.';
+
+  @override
+  String get portfolioLoginBalances => 'Log in to view your balances';
+
+  @override
+  String get portfolioPerformance => 'Performance';
+
+  @override
+  String get portfolioFuturesAssets => 'Futures assets';
+
+  @override
+  String get portfolioPnlDetails => 'PnL details';
+
+  @override
+  String get portfolioTodayPnl => 'Today’s PnL';
+
+  @override
+  String get portfolioPnl7d => 'PnL · 7D';
+
+  @override
+  String get portfolioVolume7d => 'Volume · 7D';
+
+  @override
+  String get portfolioTransfer => 'Transfer between accounts';
+
+  @override
+  String get portfolioMainAccount => 'Main account';
+
+  @override
+  String get portfolioPreviewAccount => 'Demo · Static preview';
+
+  @override
+  String get portfolioPreviewNotice => 'Static design sample. No real funds or orders.';
+
+  @override
+  String get portfolioPreviewAction =>
+      'This is a static preview. Switch to your account to continue.';
+
+  @override
+  String get portfolioAccountSelector => 'Select account';
+
+  @override
+  String get portfolioHideBalance => 'Hide balances';
+
+  @override
+  String get portfolioShowBalance => 'Show balances';
+
+  @override
+  String get portfolioValueHistory => 'Total value history';
+
+  @override
+  String get portfolioCollapseHistory => 'Collapse value history';
+
+  @override
+  String get portfolioOpenHistory => 'Expand value history';
+
+  @override
+  String get portfolioMissingPnl => 'PnL data unavailable for this account';
+
+  @override
+  String get portfolioMissingDay => 'Daily PnL unavailable';
+
+  @override
+  String get portfolioMissingValue => 'Value history unavailable for this account';
+
+  @override
+  String get portfolioPnlNote =>
+      'Historical figures may update after settlement. Missing data is shown as unavailable.';
+
+  @override
+  String get portfolioCalendar => 'Calendar';
+
+  @override
+  String get portfolioMonthlyPnl => 'Monthly PnL';
+
+  @override
+  String get portfolioCalendarNote => 'Daily PnL uses UTC · Values in USD';
+
+  @override
+  String get portfolioPreviousMonth => 'Previous month';
+
+  @override
+  String get portfolioNextMonth => 'Next month';
+
+  @override
+  String get portfolioHideOtherSymbols => 'Hide other symbols';
+
+  @override
+  String get portfolioHideLowBalances => 'Hide low balance assets';
+
+  @override
+  String get portfolioNoPositions => 'No open positions';
+
+  @override
+  String get portfolioNoAssets => 'No assets to display';
+
+  @override
+  String get portfolioAssets => 'Assets';
+
+  @override
+  String get portfolioLast7Days => 'PnL · Last 7 days';
+
+  @override
+  String portfolioPnlPeriod(String period) {
+    return 'PnL · $period';
+  }
+
+  @override
+  String portfolioVolumePeriod(String period) {
+    return 'Volume · $period';
+  }
+
+  @override
+  String portfolioHistoryPeriod(String period) {
+    return 'Total value history · $period';
+  }
+
+  @override
+  String portfolioDayUnavailable(String date) {
+    return '$date · Daily PnL unavailable';
+  }
+
+  @override
+  String portfolioPositionsCount(int count) {
+    return 'Positions($count)';
+  }
+
+  @override
+  String portfolioAvailable(String amount) {
+    return 'Avbl. $amount';
+  }
+
+  @override
+  String get portfolioLiquidation => 'Liq.';
+
+  @override
+  String portfolioSize(String unit) {
+    return 'Size ($unit)';
+  }
+
+  @override
+  String portfolioPnlUnit(String unit) {
+    return 'PnL ($unit)';
+  }
+
+  @override
+  String get portfolioPreview7d => '7D sample only';
+
+  @override
+  String get portfolioLogIn => 'Log in';
+
+  @override
+  String get portfolioCloseAll => 'Close all';
+
+  @override
+  String get portfolioMark => 'Mark';
+
+  @override
+  String get portfolioTpsl => 'TP/SL';
+
+  @override
+  String get portfolioAll => 'All';
 }

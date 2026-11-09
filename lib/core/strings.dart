@@ -383,6 +383,7 @@ String tr(BuildContext context, String key) {
     'authWalletCancelled' => messages.authWalletCancelled,
     'authWalletRejected' => messages.authWalletRejected,
     'authWalletUnavailable' => messages.authWalletUnavailable,
+    'authWalletConnectionTimeout' => messages.authWalletConnectionTimeout,
     'authWalletUnsupported' => messages.authWalletUnsupported,
     'authWalletChanged' => messages.authWalletChanged,
     'authWalletReconnect' => messages.authWalletReconnect,

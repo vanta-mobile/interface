@@ -22,7 +22,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get embeddedWallet => 'Privy 内嵌钱包';
 
   @override
-  String get reconnectExternalWallet => '重新连接钱包';
+  String get reconnectExternalWallet => '连接钱包';
 
   @override
   String get externalWalletLoginHint => '使用已有钱包连接并签名登录，不会额外创建钱包。登录签名不启用实盘交易。';
@@ -46,13 +46,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authWalletUnavailable => '钱包连接失败，请检查钱包应用和网络后重试。';
 
   @override
+  String get authWalletConnectionTimeout => '钱包连接准备超时，请检查网络后重试。';
+
+  @override
   String get authWalletUnsupported => '请选择支持的 Ethereum、BNB Chain、Arbitrum 或 Base 钱包网络。';
 
   @override
   String get authWalletChanged => '钱包账户或网络已变更，请重新连接并登录。';
 
   @override
-  String get authWalletReconnect => '账户身份已恢复。签名操作前，请重新连接对应的 EOA 钱包。';
+  String get authWalletReconnect => '请先连接钱包后再继续。';
 
   @override
   String get authWalletSignature => '钱包未返回有效签名，请重试。';
@@ -5567,4 +5570,170 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get exploreNavigation => '探索';
+
+  @override
+  String get portfolioTotalValue => '总资产';
+
+  @override
+  String get portfolioLoginHint => '登录以查看你的资产与收益表现。';
+
+  @override
+  String get portfolioLoginBalances => '登录以查看余额';
+
+  @override
+  String get portfolioPerformance => '收益表现';
+
+  @override
+  String get portfolioFuturesAssets => '合约资产';
+
+  @override
+  String get portfolioPnlDetails => '盈亏详情';
+
+  @override
+  String get portfolioTodayPnl => '今日盈亏';
+
+  @override
+  String get portfolioPnl7d => '盈亏 · 7日';
+
+  @override
+  String get portfolioVolume7d => '成交量 · 7日';
+
+  @override
+  String get portfolioTransfer => '账户间划转';
+
+  @override
+  String get portfolioMainAccount => '主账户';
+
+  @override
+  String get portfolioPreviewAccount => '演示账户 · 静态示例';
+
+  @override
+  String get portfolioPreviewNotice => '静态设计示例，不代表真实资金或订单。';
+
+  @override
+  String get portfolioPreviewAction => '当前为静态示例，请切换至真实账户后操作。';
+
+  @override
+  String get portfolioAccountSelector => '选择账户';
+
+  @override
+  String get portfolioHideBalance => '隐藏余额';
+
+  @override
+  String get portfolioShowBalance => '显示余额';
+
+  @override
+  String get portfolioValueHistory => '总资产历史';
+
+  @override
+  String get portfolioCollapseHistory => '收起资产历史';
+
+  @override
+  String get portfolioOpenHistory => '展开资产历史';
+
+  @override
+  String get portfolioMissingPnl => '该账户暂无盈亏数据';
+
+  @override
+  String get portfolioMissingDay => '暂无当日盈亏数据';
+
+  @override
+  String get portfolioMissingValue => '该账户暂无资产历史数据';
+
+  @override
+  String get portfolioPnlNote => '历史数据可能在结算后更新。缺失数据将显示为不可用。';
+
+  @override
+  String get portfolioCalendar => '日历';
+
+  @override
+  String get portfolioMonthlyPnl => '月度盈亏';
+
+  @override
+  String get portfolioCalendarNote => '每日盈亏采用 UTC · 金额单位为 USD';
+
+  @override
+  String get portfolioPreviousMonth => '上个月';
+
+  @override
+  String get portfolioNextMonth => '下个月';
+
+  @override
+  String get portfolioHideOtherSymbols => '隐藏其他交易对';
+
+  @override
+  String get portfolioHideLowBalances => '隐藏小额资产';
+
+  @override
+  String get portfolioNoPositions => '暂无持仓';
+
+  @override
+  String get portfolioNoAssets => '暂无资产';
+
+  @override
+  String get portfolioAssets => '资产';
+
+  @override
+  String get portfolioLast7Days => '盈亏 · 最近7天';
+
+  @override
+  String portfolioPnlPeriod(String period) {
+    return '盈亏 · $period';
+  }
+
+  @override
+  String portfolioVolumePeriod(String period) {
+    return '成交量 · $period';
+  }
+
+  @override
+  String portfolioHistoryPeriod(String period) {
+    return '总资产历史 · $period';
+  }
+
+  @override
+  String portfolioDayUnavailable(String date) {
+    return '$date · 暂无当日盈亏数据';
+  }
+
+  @override
+  String portfolioPositionsCount(int count) {
+    return '持仓($count)';
+  }
+
+  @override
+  String portfolioAvailable(String amount) {
+    return '可用 $amount';
+  }
+
+  @override
+  String get portfolioLiquidation => '强平价';
+
+  @override
+  String portfolioSize(String unit) {
+    return '仓位价值 ($unit)';
+  }
+
+  @override
+  String portfolioPnlUnit(String unit) {
+    return '盈亏 ($unit)';
+  }
+
+  @override
+  String get portfolioPreview7d => '仅提供7日示例';
+
+  @override
+  String get portfolioLogIn => '登录';
+
+  @override
+  String get portfolioCloseAll => '全部平仓';
+
+  @override
+  String get portfolioMark => '标记价';
+
+  @override
+  String get portfolioTpsl => '止盈止损';
+
+  @override
+  String get portfolioAll => '全部';
 }

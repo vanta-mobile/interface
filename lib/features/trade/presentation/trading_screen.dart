@@ -48,23 +48,29 @@ class _TradingScreenState extends ConsumerState<TradingScreen> with WidgetsBindi
   @override
   Widget build(BuildContext context) {
     ref.watch(tradingLifecycleProvider);
+    final portfolio = ref.watch(appDestinationProvider) == AppDestination.portfolio;
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
-        child: SafeArea(
-          bottom: false,
-          child: Container(
-            height: 60,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.line)),
+      backgroundColor: portfolio ? AppColors.authBackground : null,
+      appBar: portfolio
+          ? null
+          : PreferredSize(
+              preferredSize: const Size.fromHeight(60),
+              child: SafeArea(
+                bottom: false,
+                child: Container(
+                  height: 60,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: const BoxDecoration(
+                    border: Border(bottom: BorderSide(color: AppColors.line)),
+                  ),
+                  child: TradingHeader(
+                    onLanguage: () => showAppSheet<void>(context, _LanguageSheet()),
+                  ),
+                ),
+              ),
             ),
-            child: TradingHeader(onLanguage: () => showAppSheet<void>(context, _LanguageSheet())),
-          ),
-        ),
-      ),
       body: SafeArea(
-        top: false,
+        top: portfolio,
         bottom: false,
         child: switch (ref.watch(appDestinationProvider)) {
           AppDestination.futures => const FuturesWorkspace(),

@@ -1,3 +1,5 @@
+import '../../support/portfolio_account_tools.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -20,7 +22,7 @@ void main() {
     final container = setup(tester, identityRepository: identity, asterAccountRepository: accounts);
     await launch(tester, container);
     container.read(accountProvider.notifier).connect();
-    await tester.tap(find.text('资产'));
+    await openPortfolioAccountTools(tester);
     await tester.pumpAndSettle();
     expect(find.byType(AsterAccountPanel), findsOneWidget);
     expect(find.text('10000.00'), findsNothing);
@@ -48,7 +50,7 @@ void main() {
       language: const Locale('en'),
     );
     await launch(tester, container);
-    await tester.tap(find.text('Portfolio'));
+    await openPortfolioAccountTools(tester);
     await tester.pumpAndSettle();
     expect(accounts.calls, 0);
     expect(find.byKey(const Key('aster-account-address')), findsOneWidget);
@@ -119,7 +121,7 @@ void main() {
         );
         if (spec.$1 == 844) tester.view.physicalSize = const Size(844, 390);
         await launch(tester, container);
-        await tester.tap(find.text(spec.$3 == 'en' ? 'Portfolio' : '资产'));
+        await openPortfolioAccountTools(tester);
         await tester.pumpAndSettle();
         await tester.ensureVisible(find.byKey(const Key('read-aster-account')));
         await tester.pumpAndSettle();

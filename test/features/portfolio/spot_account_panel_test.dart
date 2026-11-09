@@ -1,3 +1,5 @@
+import '../../support/portfolio_account_tools.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -24,7 +26,7 @@ void main() {
     final container = setup(tester, identityRepository: identity, asterSpotRepository: spots);
     await launch(tester, container);
     container.read(accountProvider.notifier).connect();
-    await tester.tap(find.text('资产'));
+    await openPortfolioAccountTools(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('现货'));
     await tester.pumpAndSettle();
@@ -55,7 +57,7 @@ void main() {
       asterSpotRepository: spots,
     );
     await launch(tester, container);
-    await tester.tap(find.text('Portfolio'));
+    await openPortfolioAccountTools(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Spot'));
     await tester.pumpAndSettle();
@@ -119,7 +121,7 @@ void main() {
     addTearDown(identity.dispose);
     final container = setup(tester, identityRepository: identity, asterSpotRepository: spots);
     await launch(tester, container);
-    await tester.tap(find.text('资产'));
+    await openPortfolioAccountTools(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('现货'));
     await tester.pumpAndSettle();
@@ -151,7 +153,7 @@ void main() {
       );
       tester.view.physicalSize = Size(spec.$1, spec.$2);
       await launch(tester, container);
-      await tester.tap(find.text(spec.$4 == 'zh' ? '资产' : 'Portfolio'));
+      await openPortfolioAccountTools(tester);
       await tester.pumpAndSettle();
       await tester.tap(find.text(spec.$4 == 'zh' ? '现货' : 'Spot'));
       await tester.pumpAndSettle();

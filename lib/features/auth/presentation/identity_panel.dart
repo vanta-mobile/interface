@@ -18,7 +18,7 @@ class IdentityPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authProvider);
     final identity = session.identity;
-    if (identity == null) return const LoginPanel();
+    if (identity == null || identity.needsWalletConnection) return const LoginPanel();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -63,15 +63,6 @@ class IdentityPanel extends ConsumerWidget {
         onPressed: session.busy ? null : controller.createWallet,
         child: Text(tr(context, 'createWallet')),
       ),
-    if (identity.walletKind == WalletKind.external && !identity.signingAvailable) ...[
-      const SizedBox(height: 12),
-      Text(tr(context, 'authWalletReconnect')),
-      OutlinedButton(
-        key: const Key('reconnect-external-wallet'),
-        onPressed: session.busy ? null : () => controller.connectWallet(context),
-        child: Text(tr(context, 'reconnectExternalWallet')),
-      ),
-    ],
     const SizedBox(height: 12),
     OutlinedButton(
       key: const Key('trading-authorization-entry'),

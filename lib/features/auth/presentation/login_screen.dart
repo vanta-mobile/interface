@@ -24,16 +24,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(authProvider, (previous, next) {
-      if (next.identity == null) {
+      if (next.needsWalletConnection) {
         if (_enableTrading) setState(() => _enableTrading = false);
-      } else if (previous?.identity == null && previous?.phase != AuthPhase.initializing) {
+      } else if (previous?.needsWalletConnection == true &&
+          previous?.phase != AuthPhase.initializing) {
         setState(() => _enableTrading = true);
       }
     });
     final session = ref.watch(authProvider);
-    if (_enableTrading && session.identity != null) return const EnableTradingScreen();
+    if (_enableTrading && !session.needsWalletConnection) return const EnableTradingScreen();
     final awaitingCode = session.phase == AuthPhase.awaitingCode;
-    final signedIn = session.identity != null;
+    final signedIn = !session.needsWalletConnection;
     final l10n = AppLocalizations.of(context);
     void back() {
       if (awaitingCode && !session.busy) {
