@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../../../core/errors/api_error_details.dart';
 import '../../../core/network/network_providers.dart';
 
@@ -32,6 +34,33 @@ final tradingAuthorizationProvider =
     NotifierProvider<TradingAuthorizationController, TradingAuthorizationState>(
       TradingAuthorizationController.new,
     );
+
+/// Mounted only for a fresh Privy login, never for a restored session or EOA.
+final embeddedLoginTradingAuthorizationProvider = Provider.autoDispose.family<void, String>((
+  ref,
+  identityId,
+) {
+  var attempted = false;
+  var scheduled = false;
+  bool ready(AuthSession auth) =>
+      !auth.busy &&
+      auth.failure == null &&
+      auth.identity?.id == identityId &&
+      auth.identity?.walletKind == WalletKind.embedded &&
+      auth.identity?.walletAddress != null &&
+      auth.identity!.signingAvailable;
+  ref.listen(authProvider, (_, next) {
+    if (attempted || scheduled || !ready(next)) return;
+    scheduled = true;
+    // Let the login/wallet state and authorization identity guards settle first.
+    scheduleMicrotask(() {
+      scheduled = false;
+      if (!ref.mounted || attempted || !ready(ref.read(authProvider))) return;
+      attempted = true;
+      unawaited(ref.read(tradingAuthorizationProvider.notifier).enableTrading());
+    });
+  }, fireImmediately: true);
+});
 
 class TradingAuthorizationController extends Notifier<TradingAuthorizationState> {
   int _generation = 0;
@@ -107,7 +136,7 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
     }
   }
 
-  /// The onboarding page itself reviews the default trading-only grant.
+  /// Uses the default trading-only grant for onboarding, including Privy login.
   /// An uncertain dispatched write must be checked, never submitted again.
   Future<void> enableTrading() async {
     if (_working || state.result != null) return;

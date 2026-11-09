@@ -16,7 +16,9 @@ import '../domain/trading_authorization.dart';
 import 'connected_wallet_card.dart';
 
 class EnableTradingScreen extends ConsumerWidget {
-  const EnableTradingScreen({super.key});
+  const EnableTradingScreen({this.autoEnableForIdentity, super.key});
+
+  final String? autoEnableForIdentity;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,6 +30,9 @@ class EnableTradingScreen extends ConsumerWidget {
         Navigator.of(context).maybePop();
       }
     });
+    if (autoEnableForIdentity case final identityId?) {
+      ref.watch(embeddedLoginTradingAuthorizationProvider(identityId));
+    }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: AppColors.transparent,

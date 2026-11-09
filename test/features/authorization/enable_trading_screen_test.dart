@@ -97,7 +97,7 @@ Future<ProviderContainer> _launch(
 
 void main() {
   for (final social in SocialLoginProvider.values) {
-    testWidgets('$social login opens trading page without automatically signing', (tester) async {
+    testWidgets('$social login automatically enables trading and returns home', (tester) async {
       final identity = _IdentityRepository();
       final authorization = TestTradingAuthorizationRepository();
       final container = await _launch(tester, identity: identity, authorization: authorization);
@@ -105,16 +105,15 @@ void main() {
         find.byKey(Key(social == SocialLoginProvider.google ? 'login-google' : 'login-x')),
       );
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
-      expect(find.text('One more signature'), findsOneWidget);
-      expect(find.text('Sign to enable trading'), findsOneWidget);
-      expect(find.textContaining('0x1111…1111'), findsOneWidget);
-      expect(authorization.enables, 0);
-      await tester.tap(find.byKey(const Key('enable-trading-switch')));
-      await tester.pumpAndSettle();
-      expect(container.read(authProvider).identity, isNull);
-      expect(find.byKey(const Key('login-google')), findsOneWidget);
-      expect(authorization.enables, 0);
+      expect(find.byKey(const Key('enable-trading-page')), findsNothing);
+      expect(container.read(authProvider).identity, _identity);
+      expect(authorization.enables, 1);
+      expect(authorization.review!.canWithdraw, false);
+      expect(authorization.review!.ipWhitelist, isEmpty);
+      expect(
+        authorization.review!.expiresAt.difference(authorization.review!.preparedAt),
+        const Duration(days: 30),
+      );
       await tester.pumpWidget(const SizedBox());
     });
   }
@@ -249,8 +248,8 @@ void main() {
     await tester.tap(find.byKey(const Key('enable-trading-sign')));
     await tester.pumpAndSettle();
     expect(container.read(authProvider).identity?.walletAddress, _identity.walletAddress);
-    expect(find.text('Sign to enable trading'), findsOneWidget);
-    expect(authorization.enables, 0);
+    expect(find.byKey(const Key('enable-trading-page')), findsNothing);
+    expect(authorization.enables, 1);
     await tester.pumpWidget(const SizedBox());
   });
 
