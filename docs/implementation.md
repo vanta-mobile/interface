@@ -1412,3 +1412,9 @@ Reown 显式连接不再直接信任缓存的 isConnected 会话：先断开当�
 验证：工作区全仓静态分析、格式化、差异空白检查及 auth、authorization、Portfolio 页面／动作、公开积分 provider 共 248 项测试通过；Android 正常入口 debug 构建通过。独立 Android 15 / API 35 模拟器使用本地测试身份目视检查连接页面及按钮加载反馈，证据为 docs/reference/wallet-connect-entry-zh-android.png 和 wallet-connect-loading-zh-android.png，临时入口已移除，最终 APK 使用正常入口。未请求真实钱包连接、签名或金融操作，未修改连接真机的应用或数据。Linux 无 macOS / Xcode，未执行 iOS 构建；真实钱包跨应用往返仍待验证。
 
 提交前完整验证：纳入资产页及钱包连接全部暂存内容，984 个 Dart 文件格式检查零改动，全仓 `dart analyze --fatal-infos` 无问题，认证、授权、公开积分、导航、本地化、资金页、合约／现货账户及 Portfolio 共 285 项测试通过，正常入口 Android debug APK 构建通过。
+
+### 登录页移除欢迎说明（2026-11-09）
+
+按用户截图要求移除登录页欢迎标题下方“连接账户，管理资产并进行交易。”说明行；邮箱区直接接在欢迎标题后，共用登录面板的外部钱包连接入口同步移除该行。使用原有 Column 间距，不保留额外空白，不改变登录行为。
+
+验证：修改文件格式检查、全仓静态分析和差异空白检查通过；现有登录页、账户页及外部钱包组件共 14 项测试通过，涵盖窄屏、横屏和放大文字。Android 15 / API 35 独立模拟器使用本地测试身份目视确认该行已移除、表单与登录按钮正常显示；临时预览入口已移除，模拟器已关闭。正常入口 Android debug APK 构建通过；Linux 无 macOS / Xcode，未执行 iOS 构建。没有新增测试、依赖或真实钱包操作。

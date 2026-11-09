@@ -52,10 +52,6 @@ class _LoginPanelState extends ConsumerState<LoginPanel> {
         children: [
           const SizedBox(height: 48, child: Text('Vanta', style: AuthTypography.brand)),
           Text(l10n.authWelcome, style: AuthTypography.heading),
-          Text(
-            l10n.authWelcomeDescription,
-            style: AuthTypography.body.copyWith(color: AppColors.authSecondary),
-          ),
           if (!reconnect) _emailField(session, ready, controller, l10n),
           if (session.failure case final failure?) AuthFailureText(failure),
           if (reconnect) ...[
