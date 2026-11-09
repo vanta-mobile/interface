@@ -24,9 +24,12 @@ import 'features/portfolio/application/rebalance_storage_provider.dart';
 import 'features/portfolio/application/order_recovery_provider.dart';
 import 'features/funding/data/deposit_approval_journal.dart';
 import 'features/funding/application/deposit_approval_provider.dart';
+import 'features/notifications/application/push_messaging_provider.dart';
+import 'features/notifications/data/firebase_push_messaging_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final pushMessaging = await initializeFirebaseMessaging();
   final recovery = FileOrderRecoveryJournal(getApplicationSupportDirectory);
   final rebalances = FileRebalanceJournal(getApplicationSupportDirectory);
   try {
@@ -81,6 +84,7 @@ Future<void> main() async {
   runApp(
     ProviderScope(
       overrides: [
+        pushMessagingRepositoryProvider.overrideWithValue(pushMessaging),
         initialLocaleProvider.overrideWithValue(localeFromPreference(saved)),
         orderRecoveryJournalProvider.overrideWithValue(recovery),
         rebalanceJournalProvider.overrideWithValue(rebalances),
@@ -99,6 +103,7 @@ class VantaApp extends ConsumerWidget {
   const VantaApp({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(pushRegistrationProvider);
     ref.listen(authProvider.select((s) => (s.identity?.id, s.identity?.walletAddress)), (
       previous,
       next,

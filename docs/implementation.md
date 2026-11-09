@@ -1365,3 +1365,22 @@ Android 12 真机已核对 MetaMask 名称及钱包切换链接的紧凑间距�
 资金页支持由调用方预选充值或提现，平仓入口支持由调用方预选市价或限价，默认行为不变且不会自动签名或提交。账户读取按钮在请求期间显示旋转加载并禁用重复请求。共享测试 fixture 默认使用本地测试身份仓库，避免依赖原生偏好插件。
 
 验证：仅含本次提交内容的快照通过全仓静态分析、46 项导航／资金／账户读取／平仓与确认测试，以及 Android debug 构建；格式检查与差异空白检查通过。新资产页及其专用资源、文案、预览入口和布局集成未包含在此提交中。Linux 无 Xcode，未执行 iOS 构建。
+
+
+### Firebase Cloud Messaging 接入（2026-11-09）
+
+已通过当前登录的 Firebase CLI，在用户现有 `vanta` 项目 `vanta-a7de4` 中注册 Android 和 iOS 应用，均使用现有标识 `exchange.vanta.app`。Android Firebase App ID 为 `1:908368200337:android:5f63754010b288ae327530`，iOS 为 `1:908368200337:ios:8b22057ec8e8e843327530`；远端重新查询确认两应用均 ACTIVE。配置 `.firebaserc`、`firebase.json`、生成的 `lib/firebase_options.dart`、Android `google-services.json` 和 iOS `GoogleService-Info.plist`；这些文件只有公开客户端配置，没有服务账号或 APNs 私钥。
+
+加入 `firebase_core` 5.1.0 和 `firebase_messaging` 17.0.1；Android 应用 Google Services Gradle 插件、声明通知权限，iOS plist 加入 Runner Resources、Push Notifications capability、remote-notification 后台模式及签名 entitlement，保持默认 Firebase AppDelegate swizzling。按 Messaging 17 官方新接口在两端开启 installation ID 注册，使用 `register()` / `onRegistered`，不混用已弃用的 token 注册接口。原生启动初始化 Firebase、注册带 `@pragma('vm:entry-point')` 的顶层后台处理器，再通过注入 repository 和 Riverpod 提供不可变的权限/FID 状态；初始化失败不阻塞交易页面。未确定权限时申请系统权限，拒绝后不在启动时重复弹窗；支持 authorized/provisional 和永久拒绝状态。先订阅再注册，保留初始化期间的最新 FID；空 ID 被丢弃，刷新错误保留已有注册状态，替换或销毁 provider 时取消旧监听，迟到的旧结果不能覆盖新仓库状态。iOS APNs token 尚未准备好时不调用显式 FCM 注册，后续自动注册事件可补齐 FID。预览及 Widget 测试默认没有原生 repository，不初始化 Firebase、不弹系统权限窗。
+
+本次范围是 SDK 和系统通知基础配置：后台 notification payload 交给系统展示，iOS 开启前台 alert/badge/sound；Android 前台消息没有新增本地通知横幅。点击系统通知打开正常应用入口；没有新增通知专属路由、页面、topic 或后台推送发送端。data-only 后台消息暂只初始化 Firebase，不解释为订单/转账成功，也不写入现有钱包隔离的站内收件箱。现有 Aster 通知与资金/订单恢复流程不变。尚无经认证的 FID/账户绑定接口，因此不将设备标识冒充钱包身份，不上传或打印 FID。
+
+最初按用户要求先完成 SDK 和应用注册；随后用户确认已向 Firebase 上传 APNs 密钥，远端密钥配置与投递结果尚未独立验证。iOS 仍需确认 Apple App ID 已启用 Push Notifications，并更新相应描述文件；Debug 使用 development、Profile/Release 使用 production APNs 环境。发布脚本补充检查 distribution profile 和最终签名应用必须包含 production APNs entitlement，防止使用旧的不支持推送的描述文件。步骤和验收边界见 `docs/firebase.md`，中英文 README 及 CI 文档已添加入口/更新要求。Linux 下 FlutterFire 未自动下载或接入 iOS 原生 plist，已通过 Firebase CLI 补齐下载和 Xcode 资源引用。
+
+验证：本次修改格式检查和 `git diff --check` 通过，全仓 `dart analyze --fatal-infos` 无问题；通知及交易/主页面共 184 项单元/Widget 测试通过，其中新增 16 项覆盖权限申请、拒绝/永久拒绝、APNs 未就绪、注册事件过滤、初始化竞态、重复消费者、注册失败、刷新保留以及销毁/仓库替换隔离。iOS 发布脚本 23 项测试完成（22 通过，1 项因环境跳过），包含缺失/错误 APNs 环境的拒绝。Android arm64 debug APK 构建通过；已核对最终 APK manifest 的包名、通知权限、FID 开关及 FCM service，核对实际生成的 Google Services 资源和远端 App ID 一致。iOS plist/entitlements XML 及三套 Xcode 签名配置、资源引用结构校验通过。首次 Android 构建遇到本机 Nix Flutter 缓存指向已不存在的 SDK，修复本机失效缓存链接后成功构建；未修改项目的 SDK 路径或以此引入额外构建配置。
+
+限制：当前 Linux 无 macOS/Xcode，未进行 iOS 编译、签名或真机 APNs 验收。未发送推送、未使用服务端凭据，也未完成 Firebase 到设备的投递测试；Android 需要 Google Play services 和可访问 Firebase 的网络。
+
+原生补充验收：另构建包含 arm64/x64 的 debug APK 并安装至独立 Android 15 / API 35 Google APIs 模拟器。已目视检查 Vanta 正常入口和原生中文通知权限弹窗，允许后系统权限为 granted，冷启动回到应用且不重复弹窗；检查日志未触发 Firebase 初始化失败回退或原生应用崩溃。测试环境没有登录钱包，未发送推送，未把启动/权限成功当作 FID 注册或端到端投递成功。模拟器运行结束后关闭；未更改连接真机的应用或数据。
+
+提交前隔离验证：仅使用 HEAD 与本次暂存 Firebase 文件创建独立快照，排除未提交的 Portfolio 改动；966 个 Dart 文件格式检查零改动，全仓静态分析无问题，通知/交易 184 项测试通过，iOS 发布脚本 23 项测试完成（22 通过、1 项环境跳过），Android arm64 debug APK 构建通过。APNs 上传状态按用户确认记录，尚未进行 iOS 构建或推送投递实测。

@@ -1,0 +1,30 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "vanta-a7de4",
+          "appId": "1:908368200337:android:5f63754010b288ae327530",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "vanta-a7de4",
+          "configurations": {
+            "android": "1:908368200337:android:5f63754010b288ae327530",
+            "ios": "1:908368200337:ios:8b22057ec8e8e843327530"
+          }
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "vanta-a7de4",
+          "appId": "1:908368200337:ios:8b22057ec8e8e843327530",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      }
+    }
+  }
+}

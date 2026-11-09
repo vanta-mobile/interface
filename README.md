@@ -73,6 +73,10 @@ Fill in `PRIVY_APP_ID`, `PRIVY_CLIENT_ID`, and `REOWN_PROJECT_ID` in `.env`.
 Configure Privy's allowed URL schemes for the OAuth callback `vanta://`;
 the external wallet callback is `vanta://wallet`.
 
+Firebase Cloud Messaging client configuration is included for Android and iOS.
+See [Firebase setup](docs/firebase.md) for device requirements, iOS APNs setup,
+and push delivery checks.
+
 The ignored `.env` file contains public application configuration only.
 Keep private keys, API secrets, access tokens, and signing credentials out of
 source files and Dart build arguments.

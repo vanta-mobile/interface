@@ -113,6 +113,8 @@ def validate_capabilities(entitlements, team_id):
         raise ReleaseError("The signing entitlements do not match APPLE_TEAM_ID.")
     if entitlements.get("get-task-allow", False):
         raise ReleaseError("App Store signing cannot enable get-task-allow.")
+    if entitlements.get("aps-environment") != "production":
+        raise ReleaseError("Enable Push Notifications for the App ID and regenerate the App Store profile with aps-environment=production.")
 
 
 def validate_profile(profile, team_id, identities, now=None):

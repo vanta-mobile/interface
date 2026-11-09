@@ -35,6 +35,7 @@ def distribution_profile():
             "application-identifier": f"{TEAM}.{release.BUNDLE_ID}",
             "com.apple.developer.team-identifier": TEAM,
             "get-task-allow": False,
+            "aps-environment": "production",
         },
     }
 
@@ -99,6 +100,17 @@ class SigningProfileTests(unittest.TestCase):
             profile["Entitlements"][field] = value
             with self.assertRaises(release.ReleaseError):
                 self.validate(profile)
+
+    def test_push_requires_production_apns_entitlement(self):
+        for environment in [None, "development"]:
+            with self.subTest(environment=environment):
+                profile = distribution_profile()
+                if environment is None:
+                    del profile["Entitlements"]["aps-environment"]
+                else:
+                    profile["Entitlements"]["aps-environment"] = environment
+                with self.assertRaisesRegex(release.ReleaseError, "aps-environment=production"):
+                    self.validate(profile)
 
     def test_export_requires_manual_app_store_signing_and_preserves_build_number(self):
         options = release.export_options(TEAM, PROFILE_UUID, IDENTITY)

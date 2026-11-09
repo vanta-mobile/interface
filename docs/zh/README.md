@@ -69,6 +69,9 @@ cp -n .env.example .env
 在 Privy 允许的 URL scheme 中配置 OAuth 回调 `vanta://`；
 外部钱包回调为 `vanta://wallet`。
 
+Android 和 iOS 已包含 Firebase Cloud Messaging 客户端配置。
+设备要求、iOS APNs 配置及推送验收见 [Firebase 配置](../firebase.md)。
+
 已被 Git 忽略的 `.env` 仅存放公开应用配置。私钥、API 密钥、访问令牌和签名凭据不得写入
 源码或 Dart 构建参数。
 

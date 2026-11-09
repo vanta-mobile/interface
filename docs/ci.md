@@ -44,7 +44,7 @@ iOS CI 和 IPA 发布通过共用的 `ios-configuration.yml` 自动检测，无�
 
 发布缺少必填配置会明确失败，不会以调试签名替代正式发布。CI 的 Android 验证 APK 使用开发签名且无钱包配置，产物名明确标记 `development-signed`。本地未提供任何签名环境变量时仍可做开发签名构建；只提供部分变量会在 Gradle 配置阶段失败。
 
-Android 凭据从 Secrets 解码至 runner 临时目录并在 `always()` 步骤删除。iOS 使用临时 Keychain，规范化 OpenSSL 3 PKCS12 编码；校验证书与描述文件身份、Bundle ID、Team ID、有效期、分发类型及禁用调试权限；成功或失败均清理密钥并恢复 Keychain 列表。Vanta 当前不要求源项目的 Apple 登录／Passkey 域名／APNs entitlement。
+Android 凭据从 Secrets 解码至 runner 临时目录并在 `always()` 步骤删除。iOS 使用临时 Keychain，规范化 OpenSSL 3 PKCS12 编码；校验证书与描述文件身份、Bundle ID、Team ID、有效期、分发类型及禁用调试权限；成功或失败均清理密钥并恢复 Keychain 列表。Firebase 通知接入后，iOS distribution profile 和导出应用均要求 `aps-environment=production`；需在 Apple App ID 启用 Push Notifications 后重新生成描述文件。APNs 密钥上传 Firebase，不进入 CI 或 App；详见 [Firebase 配置](firebase.md)。Apple 登录／Passkey 域名仍不要求。
 
 GitHub Release 含 `vanta-android-arm64-v8a.apk`、`vanta-android-x86_64.apk`、`vanta-android.aab`、`vanta-android-mapping.txt`；启用 iOS 且构建成功时另附 `vanta-ios.ipa`。Dart 混淆符号和 iOS dSYM 单独保留为 `debug-symbols-*` Actions artifacts（30 天）；安装产物为 7 天。AAB 必须通过签名非 Debug、bundletool 结构、64 位 ELF 段及生成 APK 的 16 KB 对齐校验；bundletool 下载固定版本和 SHA256。
 
