@@ -9,14 +9,14 @@ import 'package:vanta/features/trade/application/providers.dart';
 import 'package:vanta/features/trade/presentation/widgets/primitives.dart';
 
 import '../../support/aster_account.dart';
+import '../../support/portfolio_account_tools.dart';
 import '../../support/position_risk.dart';
 import '../../support/identity_repository.dart';
 import '../../support/trade_fixture.dart';
 
 void main() {
-  Future<void> open(WidgetTester tester, String portfolio) async {
-    await tester.tap(find.text(portfolio));
-    await tester.pumpAndSettle();
+  Future<void> open(WidgetTester tester) async {
+    await openPortfolioAccountTools(tester);
     final button = find.byKey(const Key('open-position-risk'));
     await tester.ensureVisible(button);
     await tester.pumpAndSettle();
@@ -43,7 +43,7 @@ void main() {
     addTearDown(identity.dispose);
     final container = setup(tester, identityRepository: identity, positionRiskRepository: risk);
     await launch(tester, container);
-    await open(tester, '资产');
+    await open(tester);
     expect(find.text('仓位风险'), findsOneWidget);
     expect(risk.calls, 0);
     await tester.tap(find.byKey(const Key('read-position-risk')));
@@ -68,7 +68,7 @@ void main() {
       language: const Locale('en'),
     );
     await launch(tester, container);
-    await open(tester, 'Portfolio');
+    await open(tester);
     expect(risk.calls, 0);
     risk.gate = Completer<void>();
     await tester.tap(find.byKey(const Key('read-position-risk')));
@@ -166,7 +166,7 @@ void main() {
       );
       tester.view.physicalSize = Size(spec.$1, spec.$2);
       await launch(tester, container);
-      await open(tester, spec.$4 == 'en' ? 'Portfolio' : '资产');
+      await open(tester);
       await tester.scrollUntilVisible(
         find.byKey(const Key('read-position-risk')),
         200,

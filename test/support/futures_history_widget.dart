@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/portfolio/domain/futures_history.dart';
-import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import 'futures_history.dart';
+import 'portfolio_account_tools.dart';
 import 'identity_repository.dart';
 import 'trade_fixture.dart';
 
@@ -34,9 +34,7 @@ Future<ProviderContainer> launchFuturesHistory(
   tester.view.physicalSize = Size(width, height);
   await launch(tester, container);
   if (!fromOrders) {
-    final l10n = AppLocalizations.of(tester.element(find.byType(Scaffold).first));
-    await tester.tap(find.text(l10n.portfolio));
-    await tester.pumpAndSettle();
+    await openPortfolioAccountTools(tester);
   }
   final entry = find.byKey(const Key('open-futures-history'));
   if (entry.evaluate().isEmpty) {

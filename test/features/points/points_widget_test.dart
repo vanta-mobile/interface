@@ -15,6 +15,7 @@ import 'package:vanta/l10n/generated/app_localizations.dart';
 import '../../support/identity_repository.dart';
 import '../../support/points.dart';
 import '../../support/trade_fixture.dart' as app;
+import '../../support/navigation_fixture.dart' show tapNavigationControl;
 
 void main() {
   final now = DateTime.utc(2026, 11, 4, 12);
@@ -317,12 +318,11 @@ void main() {
     final container = app.setup(tester, pointsRepository: repository);
     await app.launch(tester, container);
     expect(repository.calls, isEmpty);
-    await tester.tap(find.byIcon(Icons.diamond_outlined));
-    await tester.pumpAndSettle();
+    await tapNavigationControl(tester, 'navigation-explore');
+    await tapNavigationControl(tester, 'explore-points');
     expect(find.byKey(const Key('points-page')), findsOneWidget);
     expect(repository.calls, contains('current'));
-    await tester.tap(find.byIcon(Icons.swap_calls_rounded));
-    await tester.pumpAndSettle();
+    await tapNavigationControl(tester, 'navigation-futures');
     await tester.pump(const Duration(milliseconds: 1));
     expect(container.exists(currentPointsCampaignProvider), false);
     expect(tester.takeException(), null);

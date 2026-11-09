@@ -8,6 +8,7 @@ import 'package:vanta/features/assistant/application/assistant_provider.dart';
 import 'package:vanta/features/assistant/domain/assistant.dart';
 
 import '../../support/trade_fixture.dart' as app;
+import '../../support/navigation_fixture.dart' show tapNavigationControl;
 import 'assistant_widget_fixture.dart' as ui;
 import 'assistant_session_fixture.dart';
 
@@ -221,17 +222,16 @@ void main() {
       await ui.close(tester, h);
     });
   }
-  testWidgets('AI bottom navigation opens real page, no request on entry, leaves cleanly', (
+  testWidgets('Explore AI entry opens real page, no request on entry, leaves cleanly', (
     tester,
   ) async {
     final container = app.setup(tester);
     await app.launch(tester, container);
-    await tester.tap(find.byIcon(Icons.auto_awesome_outlined));
-    await tester.pumpAndSettle();
+    await tapNavigationControl(tester, 'navigation-explore');
+    await tapNavigationControl(tester, 'explore-assistant');
     expect(find.byKey(const Key('assistant-page')), findsOneWidget);
     expect(find.byKey(const Key('assistant-connect')), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.swap_calls_rounded));
-    await tester.pumpAndSettle();
+    await tapNavigationControl(tester, 'navigation-futures');
     expect(container.exists(assistantProvider), false);
     expect(tester.takeException(), null);
     await tester.pumpWidget(const SizedBox());

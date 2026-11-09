@@ -11,6 +11,7 @@ import 'package:vanta/features/portfolio/presentation/position_adl_indicator.dar
 import 'package:vanta/features/portfolio/presentation/position_risk_screen.dart';
 
 import '../../support/aster_account.dart';
+import '../../support/portfolio_account_tools.dart';
 import '../../support/position_adl.dart';
 import '../../support/position_risk.dart';
 import '../../support/identity_repository.dart';
@@ -18,8 +19,7 @@ import '../../support/trade_fixture.dart';
 
 void main() {
   Future<void> open(WidgetTester tester) async {
-    await tester.tap(find.text('Portfolio'));
-    await tester.pumpAndSettle();
+    await openPortfolioAccountTools(tester);
     await tester.ensureVisible(find.byKey(const Key('open-position-risk')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('open-position-risk')));

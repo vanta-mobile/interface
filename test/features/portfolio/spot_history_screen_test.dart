@@ -12,6 +12,7 @@ import 'package:vanta/features/trade/application/providers.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
+import '../../support/portfolio_account_tools.dart';
 import '../../support/identity_repository.dart';
 import '../../support/spot_history.dart';
 import '../../support/trade_fixture.dart';
@@ -21,8 +22,7 @@ Future<void> enterHistory(
   SpotHistoryKind kind = SpotHistoryKind.orders,
 }) async {
   final l10n = AppLocalizations.of(tester.element(find.byType(Scaffold).first));
-  await tester.tap(find.text(l10n.portfolio));
-  await tester.pumpAndSettle();
+  await openPortfolioAccountTools(tester);
   await tester.tap(find.text(l10n.accountSpotTab));
   await tester.pumpAndSettle();
   await tester.ensureVisible(find.byKey(Key('spot-history-${kind.name}')));

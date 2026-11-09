@@ -10,6 +10,7 @@ import 'package:vanta/features/portfolio/presentation/spot_open_orders_screen.da
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
+import '../../support/portfolio_account_tools.dart';
 import '../../support/identity_repository.dart';
 import '../../support/spot_open_orders.dart';
 import '../../support/trade_fixture.dart';
@@ -101,8 +102,7 @@ void main() {
     addTearDown(identity.dispose);
     final c = setup(tester, identityRepository: identity, spotOpenOrdersRepository: repository);
     await launch(tester, c);
-    await tester.tap(find.text('资产'));
-    await tester.pumpAndSettle();
+    await openPortfolioAccountTools(tester);
     await tester.tap(find.text('现货'));
     await tester.pumpAndSettle();
     final entry = find.byKey(const Key('spot-open-orders-entry'));

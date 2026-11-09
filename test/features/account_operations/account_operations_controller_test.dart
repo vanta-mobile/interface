@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/domain/wallet_operation.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/authorization/application/trading_authorization_provider.dart';
+import 'package:vanta/features/authorization/domain/trading_authorization.dart';
 import 'package:vanta/features/subaccounts/application/subaccount_management_provider.dart';
 import 'package:vanta/features/funding/application/withdrawal_provider.dart';
 
@@ -69,7 +70,8 @@ void main() {
           final controller = c.read(tradingAuthorizationProvider.notifier);
           controller.prepare();
           grant.gate = gate;
-          future = controller.confirm(c.read(tradingAuthorizationProvider).review!);
+          final review = c.read(tradingAuthorizationProvider).review!;
+          future = controller.confirm(review);
           await t.pump();
           if (event == 'stop') {
             controller.stop();
@@ -79,7 +81,17 @@ void main() {
           }
           gate.complete();
           await future;
-          expect(c.read(tradingAuthorizationProvider).result, null);
+          expect(
+            c.read(tradingAuthorizationProvider).result,
+            event == 'stop' ? TradingAuthorizationResult.unknown : null,
+          );
+          if (event == 'stop') {
+            controller.prepare();
+            expect(c.read(tradingAuthorizationProvider).review, null);
+            await controller.confirm(review);
+            await controller.enableTrading();
+            expect(c.read(tradingAuthorizationProvider).result, TradingAuthorizationResult.unknown);
+          }
           expect(grant.sends, 1);
         } else if (action == 'subaccount') {
           final controller = c.read(subaccountManagementProvider.notifier);
