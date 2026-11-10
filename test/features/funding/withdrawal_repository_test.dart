@@ -130,7 +130,7 @@ void main() {
   );
   for (final market in TransferMarket.values) {
     test(
-      '$market revalidates qualification/fee/limits and binds both signatures with separate nonce units',
+      '$market revalidates qualification/fee/limits and binds both signatures with distinct microsecond nonces',
       () async {
         final r = await prepare(market: market);
         expect(requests.where((r) => r.url.path.endsWith('/user-withdraw')), isEmpty);
@@ -150,7 +150,8 @@ void main() {
         expect(p['amount'], '1');
         expect(p['fee'], '0.1');
         expect(int.parse(p['userNonce']!) ~/ 1000, now.millisecondsSinceEpoch);
-        expect(int.parse(p['nonce']!) ~/ 1000000, now.millisecondsSinceEpoch);
+        expect(int.parse(p['nonce']!) ~/ 1000, now.millisecondsSinceEpoch);
+        expect(int.parse(p['nonce']!), greaterThan(int.parse(p['userNonce']!)));
         final action = signed.singleWhere((d) => d['primaryType'] == 'Action');
         expect((action['domain'] as Map)['name'], 'Aster');
         expect((action['domain'] as Map)['chainId'], 56);

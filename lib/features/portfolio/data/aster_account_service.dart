@@ -24,7 +24,7 @@ class AsterAccountService extends AsterReadService {
     );
   }
 
-  /// Read-only funding POST; uses the documented nanosecond query signature.
+  /// Read-only funding POST; uses the V3 microsecond query signature.
   Future<Object?> withdrawInfo({required String query, required String signature}) =>
       signedPostQuery('/fapi/v3/aster/user-withdraw-info', query: query, signature: signature);
 

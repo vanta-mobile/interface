@@ -30,7 +30,6 @@ class SignedTransferHistoryRepository implements TransferHistoryRepository {
       sign: sign,
       authorization: authorization,
       nonces: nonces,
-      nanosecondNonce: true,
       signatureLifetime: const Duration(seconds: 30),
     ).read(address: address, isCurrent: isCurrent, onStep: onStep);
     try {

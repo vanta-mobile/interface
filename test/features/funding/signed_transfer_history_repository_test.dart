@@ -15,20 +15,17 @@ import '../../support/transfers.dart';
 import '../../support/wallet_connection.dart';
 
 void main() {
+  test('funding and trading share unique microsecond nonces for repeated or older time', () {
+    final nonces = AsterReadNonces();
+    expect(nonces.next(1793620800123), 1793620800123000);
+    expect(nonces.next(1793620800122), 1793620800123001);
+    expect(nonces.next(1793620800123), 1793620800123002);
+    for (final time in [0, -1, 9223372036854776]) {
+      expect(() => nonces.next(time), throwsFormatException);
+    }
+  });
   test(
-    'funding nonce remains unique for repeated or older time without changing trading units',
-    () {
-      final nonces = AsterReadNonces();
-      expect(nonces.nextNanoseconds(1793620800123), 1793620800123000000);
-      expect(nonces.nextNanoseconds(1793620800122), 1793620800123000001);
-      expect(nonces.next(1793620800123), 1793620800123000);
-      for (final time in [0, -1, 9223372036855]) {
-        expect(() => nonces.nextNanoseconds(time), throwsFormatException);
-      }
-    },
-  );
-  test(
-    'read-only POST signs exact query, funding nanoseconds, same EOA and no extra params',
+    'read-only POST signs exact query with V3 microseconds, same EOA and no extra params',
     () async {
       final requests = <http.Request>[], signed = <String>[], steps = <AccountReadStep>[];
       const serverTime = 1793620800123;
@@ -70,12 +67,12 @@ void main() {
         expect(request.followRedirects, false);
         expect(request.url.query, '${signed[i]}&signature=${TestWalletConnection.signature}');
         expect(Uri.splitQueryString(signed[i]), {
-          'nonce': '${1793620800123000000 + i}',
+          'nonce': '${1793620800123001 + i}',
           'user': accountAddress,
           'signer': accountAddress,
         });
       }
-      expect(nonces.next(serverTime), 1793620800123001); // Trading unit unchanged.
+      expect(nonces.next(serverTime), 1793620800123003);
       expect(steps, [
         for (var i = 0; i < 2; i++) ...[
           AccountReadStep.preparing,
@@ -150,6 +147,46 @@ void main() {
       service.close();
     }
   });
+  test(
+    'device-time rejection preserves the server message without replaying the request',
+    () async {
+      const message = 'Your device time must match the actual time.';
+      var posts = 0, rejectedGrants = 0;
+      final service = AsterAccountService(
+        client: MockClient((request) async {
+          if (request.method != 'POST') {
+            return http.Response('{"serverTime":1793620800123}', 200);
+          }
+          posts++;
+          return http.Response(jsonEncode({'code': -1000, 'msg': message}), 400);
+        }),
+      );
+      addTearDown(service.close);
+      final repository = SignedTransferHistoryRepository(
+        service,
+        ({required expectedAddress, required typedData}) async => TestWalletConnection.signature,
+        nonces: AsterReadNonces(),
+        authorization: (_) async => AccountRequestIdentity(
+          address: accountAddress,
+          sign: ({required expectedAddress, required typedData}) async =>
+              TestWalletConnection.signature,
+          onRejected: () async {
+            rejectedGrants++;
+          },
+        ),
+      );
+      await expectLater(
+        repository.read(address: accountAddress, isCurrent: () => true, onStep: (_) {}),
+        throwsA(
+          isA<AccountReadFailure>()
+              .having((e) => e.code, 'code', -1000)
+              .having((e) => e.details?.message, 'message', message),
+        ),
+      );
+      expect(posts, 1);
+      expect(rejectedGrants, 0);
+    },
+  );
   test('a blocked time read never asks a wallet after the account changes', () async {
     var signs = 0, current = true;
     final gate = Completer<http.Response>();

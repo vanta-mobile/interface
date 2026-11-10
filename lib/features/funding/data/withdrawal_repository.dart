@@ -161,8 +161,8 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
       current();
       // The Action field table, numeric EVM examples and current official web
       // client use milliseconds x1000 for the business nonce. The API envelope
-      // uses a separate nanosecond nonce. See protocol evidence for inconsistent
-      // prose in the V3 userNonce table; real acceptance remains pending.
+      // uses a distinct microsecond nonce as required by the live V3 validator.
+      // See implementation.md for the conflicting funding demo documentation.
       final userNonce = nonces.next(server), data = withdrawalTypedData(fresh, userNonce);
       final business = await sign(expectedAddress: address, typedData: data);
       current();
@@ -172,7 +172,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
       validateWithdrawalReview(fresh, now().toUtc());
       final apiClock = Stopwatch()..start(), apiTime = await futures.serverTime();
       current();
-      final nonce = nonces.nextNanoseconds(apiTime);
+      final nonce = nonces.next(apiTime);
       final query = Uri(
         queryParameters: {
           'chainId': '${fresh.query.asset.chainId}',

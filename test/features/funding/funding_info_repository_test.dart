@@ -144,9 +144,8 @@ void main() {
     tearDown(() => service.close());
     Future<Object?> read() =>
         repository.read(address: accountAddress, isCurrent: () => current, onStep: (_) {});
-    test('exact nanosecond same-EOA signature-last POST only reads info and leaves microsecond counter independent', () async {
+    test('exact microsecond same-EOA signature-last POST shares the trading nonce counter', () async {
       final priorMicro = nonces.next(ms);
-      final priorNano = nonces.nextNanoseconds(ms);
       final result = await repository.read(
         address: accountAddress,
         isCurrent: () => current,
@@ -156,14 +155,14 @@ void main() {
       expect(result.assets['USDT']!.chains[56]!.fee.toString(), '0.000000000000000001');
       expect(
         messages.single,
-        asterReadTypedData('nonce=${priorNano + 1}&user=$accountAddress&signer=$accountAddress'),
+        asterReadTypedData('nonce=${priorMicro + 1}&user=$accountAddress&signer=$accountAddress'),
       );
       expect(requests.length, 2);
       expect(
         requests.last.url.query,
-        'nonce=${priorNano + 1}&user=$accountAddress&signer=$accountAddress&signature=${TestWalletConnection.signature}',
+        'nonce=${priorMicro + 1}&user=$accountAddress&signer=$accountAddress&signature=${TestWalletConnection.signature}',
       );
-      expect(nonces.next(ms), priorMicro + 1);
+      expect(nonces.next(ms), priorMicro + 2);
       expect(requests.any((r) => r.url.path.endsWith('/user-withdraw')), false);
     });
     test('rejected signing or scope loss during signing never sends a private POST', () async {

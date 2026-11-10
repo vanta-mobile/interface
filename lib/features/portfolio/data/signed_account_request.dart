@@ -6,25 +6,20 @@ import '../domain/account_snapshot.dart';
 import '../domain/account_request_signing.dart';
 export '../domain/account_request_signing.dart';
 
-/// Shared by Perp and Spot for the same connected signer.
+/// Shared by Perp, Spot and funding for the same connected signer.
 class AsterReadNonces {
   int _last = 0;
-  int _lastNanoseconds = 0;
-  int next(int serverMilliseconds) {
-    final candidate = serverMilliseconds * 1000;
-    _last = candidate > _last ? candidate : _last + 1;
-    return _last;
-  }
 
-  /// The separate funding V3 document uses milliseconds × 1,000,000.
-  /// Keep its counter separate from the microsecond trading protocol.
-  int nextNanoseconds(int serverMilliseconds) {
-    if (serverMilliseconds <= 0 || serverMilliseconds > 9223372036854) {
+  int next(int serverMilliseconds) {
+    if (serverMilliseconds <= 0 || serverMilliseconds > 9223372036854775) {
       throw const FormatException();
     }
-    final candidate = serverMilliseconds * 1000000;
-    _lastNanoseconds = candidate > _lastNanoseconds ? candidate : _lastNanoseconds + 1;
-    return _lastNanoseconds;
+    // V3 validates microseconds, including /aster funding endpoints. The
+    // funding demo's nanosecond description conflicts with the live API.
+    final candidate = serverMilliseconds * 1000;
+    if (_last == 9223372036854775807) throw const FormatException();
+    _last = candidate > _last ? candidate : _last + 1;
+    return _last;
   }
 }
 
@@ -35,7 +30,6 @@ class SignedAccountRequest {
     required this.sign,
     this.authorization,
     AsterReadNonces? nonces,
-    this.nanosecondNonce = false,
     this.signatureLifetime = const Duration(seconds: 50),
   }) : nonces = nonces ?? AsterReadNonces();
   final Future<int> Function() serverTime;
@@ -43,7 +37,6 @@ class SignedAccountRequest {
   final AccountRequestSigner sign;
   final AccountRequestAuthorization? authorization;
   final AsterReadNonces nonces;
-  final bool nanosecondNonce;
   final Duration signatureLifetime;
 
   Future<Object?> read({
@@ -72,9 +65,7 @@ class SignedAccountRequest {
       check();
       final serverMilliseconds = await serverTime();
       check();
-      final nonce = nanosecondNonce
-          ? nonces.nextNanoseconds(serverMilliseconds)
-          : nonces.next(serverMilliseconds);
+      final nonce = nonces.next(serverMilliseconds);
       // Freeze the exact query once: the bytes signed must match the bytes
       // transmitted. user always remains the account owner; signer can be the
       // separately authorized device agent. Never fall back after rejection.

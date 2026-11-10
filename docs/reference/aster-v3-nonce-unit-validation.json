@@ -1,0 +1,62 @@
+{
+  "recorded_at_utc": "2026-11-10T09:40:00Z",
+  "scope": "Anonymous validation probes only. Zero owner/signer and deliberately invalid all-zero signature; no wallet keys, credentials, real account queries or financial writes.",
+  "server_clock": "GET https://fapi.asterdex.com/fapi/v3/time returned current milliseconds, CloudFront Miss; no stale response observed.",
+  "documents": {
+    "v3": "https://github.com/asterdex/api-docs/blob/master/V3(Recommended)/EN/aster-finance-futures-api-v3.md",
+    "funding_demo": "https://github.com/asterdex/api-docs/blob/master/demo/aster-deposit-withdrawal.md",
+    "conflict": "Main V3 specifies microseconds; funding demo common parameters and example specify nanoseconds. Live validators distinguish the two as recorded below."
+  },
+  "probes": [
+    {
+      "method": "GET",
+      "path": "/fapi/v3/accountWithJoinMargin",
+      "nonce": "current milliseconds x 1000",
+      "http_status": 400,
+      "code": -1000,
+      "message": "Signature check failed"
+    },
+    {
+      "method": "GET",
+      "path": "/fapi/v3/accountWithJoinMargin",
+      "nonce": "current milliseconds x 1000000",
+      "http_status": 400,
+      "code": -1000,
+      "message": "Your device time must match the actual time. If it’s incorrect, your action will fail"
+    },
+    {
+      "method": "POST",
+      "path": "/fapi/v3/aster/deposit-withdraw-history",
+      "nonce": "current milliseconds x 1000",
+      "http_status": 400,
+      "code": -1000,
+      "message": "Signature check failed"
+    },
+    {
+      "method": "POST",
+      "path": "/fapi/v3/aster/deposit-withdraw-history",
+      "nonce": "current milliseconds x 1000000",
+      "http_status": 400,
+      "code": -1000,
+      "message": "Your device time must match the actual time. If it’s incorrect, your action will fail"
+    },
+    {
+      "method": "POST",
+      "path": "/fapi/v3/aster/user-withdraw-info",
+      "nonce": "current milliseconds x 1000",
+      "http_status": 400,
+      "code": -1000,
+      "message": "Signature check failed"
+    },
+    {
+      "method": "POST",
+      "path": "/fapi/v3/aster/user-withdraw-info",
+      "nonce": "current milliseconds x 1000000",
+      "http_status": 400,
+      "code": -1000,
+      "message": "Your device time must match the actual time. If it’s incorrect, your action will fail"
+    }
+  ],
+  "conclusion": "Use a unique microsecond V3 API nonce across trading and funding. Matching the nonce validator does not prove successful authenticated reads or withdrawal acceptance.",
+  "withdrawal_boundary": "Only the envelope nonce generation is corrected. Business Action and API Message remain separately signed, journaled and never automatically replayed. No live withdrawal was dispatched."
+}
