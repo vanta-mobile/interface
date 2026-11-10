@@ -1668,4 +1668,8 @@ CI run `42762846553` 的 13 个失败来自两个仍假设首访默认图表的�
 
 修复后完整 `flutter test` 共 5,180 项全部通过；两个文件的 13 项专项通过。Dart 全目录格式检查零改动，`dart analyze --fatal-infos` 无问题，Python CI 工具测试 49 项（1 项环境跳过）及 Node 报告测试 12 项通过，`git diff --check` 通过。正式入口 Android arm64 Release 构建成功，APK 47.3 MB，未安装或操作连接真机。Linux 无 macOS／Xcode，本地未构建 iOS；原提交远程 iOS archive 已通过。
 
-Native Performance run `42762846485` 首次失败于 Flutter driver 连接 VM Service（`getVersion: (112) Service has disappeared`）；设备日志显示应用继续启动，未见进程崩溃。已对原提交重跑失败任务核实，尚不能将该现象归因于图表测试或声称性能验收通过；性能测量与门槛未调整。
+Native Performance run `42762846485` 首次失败于 Flutter driver 连接 VM Service（`getVersion: (112) Service has disappeared`）；设备日志显示应用继续启动，未见进程崩溃。新提交 `fe17a52` 的原生测量完成，CI run `42767110205` 全部通过（含 Android Release、完整测试与 iOS archive），自动 Release Mobile run `42768367017` 也通过。
+
+Native Performance run `42767110278` 在生成报告时暴露第二个问题：Flutter journey 已使用 suite 3 的 24 个未签名入口场景，Node 报告仍要求 suite 2 的 26 个演示下单场景。报告严格对齐当前场景列表、版本和摘要，展示订单类型选择与账户连接入口耗时，避免将这些数据描述为报价、确认、下单或撤单。旧 suite 基线保持不可比较，样本／帧完整性与性能阈值不变。新增跨 Dart／Node suite 版本检查，报告测试共 13 项通过。
+
+下载该次 CI 实际产出的 raw.json，保留 24 个场景各 30 次采样与 2 次预热，成功生成 HTML／JSON／Markdown 与完整报告 PNG；使用最近成功 main 的 suite 2 artifact 验证旧基线不参与比较。本次后续只改 Node 报告与文档，复用前述应用构建验证；不把报告修复当作真实设备性能改善。验证产物位于 `/tmp/vanta-performance-verified-report/`。

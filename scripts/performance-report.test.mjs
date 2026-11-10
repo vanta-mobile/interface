@@ -8,7 +8,7 @@ import { compare, generate, html, markdown, markdownChanges, percentile, scenari
 
 function fixture() {
   return {
-    schema_version: 1, suite_version: 2, platform: 'android', mode: 'profile',
+    schema_version: 1, suite_version: 3, platform: 'android', mode: 'profile',
     samples: 10, warmups: 2, fixture: 'controlled-repositories-no-network-no-wallet',
     environment: { device_model: 'Pixel 6', flutter_version: '3.47.6', runner: 'test', physical_device: true },
     machine: {
@@ -28,6 +28,15 @@ function fixture() {
     })),
   };
 }
+
+test('report suite version matches the Flutter measurement journey', async () => {
+  const journey = await readFile(new URL('../test/performance/performance_scenarios.dart', import.meta.url), 'utf8');
+  const suiteVersion = Number(journey.match(/const performanceSuiteVersion = (\d+);/)?.[1]);
+  assert.ok(Number.isInteger(suiteVersion));
+  const raw = fixture();
+  raw.suite_version = suiteVersion;
+  assert.doesNotThrow(() => summarize(raw));
+});
 
 test('nearest-rank percentiles and slow-frame union honor the refresh rate', () => {
   assert.equal(percentile([100, 1, 2, 3, 4], .95), 100);
@@ -65,10 +74,10 @@ test('summary highlights user workflows and frame health', () => {
   const report = summarize(fixture());
   assert.equal(report.highlights.page_load.id, 'home_load');
   assert.equal(report.highlights.interaction_ready.id, 'market_buy_open_ready');
-  assert.equal(report.highlights.quote.id, 'market_buy_quote');
-  assert.equal(report.highlights.command.id, 'market_buy_preview');
-  assert.equal(report.highlights.frames.count, 52);
-  assert.equal(report.highlights.frames.slow_count, 26);
+  assert.equal(report.highlights.order_mode.id, 'market_buy_mode');
+  assert.equal(report.highlights.connect.id, 'market_buy_connect');
+  assert.equal(report.highlights.frames.count, 48);
+  assert.equal(report.highlights.frames.slow_count, 24);
   assert.equal(report.machine.host.cpu_model, 'Test CPU');
 });
 
@@ -78,13 +87,14 @@ test('summary frame health counts overlapping milestone frames once', () => {
   const report = summarize(raw);
   assert.equal(report.scenarios[0].frame_count, 2);
   assert.equal(report.scenarios[1].frame_count, 2);
-  assert.equal(report.highlights.frames.count, 50);
-  assert.equal(report.highlights.frames.slow_count, 25);
+  assert.equal(report.highlights.frames.count, 46);
+  assert.equal(report.highlights.frames.slow_count, 23);
 });
 
 test('incomplete, invalid, debug, and web results fail instead of producing a green report', () => {
   for (const mutate of [
     (r) => { r.mode = 'debug'; }, (r) => { r.platform = 'web'; },
+    (r) => { r.suite_version = 2; },
     (r) => { r.scenarios.pop(); }, (r) => { r.scenarios[1].id = r.scenarios[0].id; },
     (r) => { r.scenarios[0].duration_ms.pop(); }, (r) => { r.scenarios[0].frames = []; },
     (r) => { r.scenarios[0].duration_ms[0] = NaN; },
@@ -107,7 +117,7 @@ test('baseline requires matching device, mode, SDK, viewport, refresh rate and s
     (c) => { c.environment.flutter_version = 'new SDK'; },
     (c) => { c.environment.runner = 'physical runner'; },
     (c) => { c.logical_size.width = 400; }, (c) => { c.refresh_rate_hz = 120; },
-    (c) => { c.report_version = 1; }, (c) => { c.suite_version = 1; },
+    (c) => { c.report_version = 1; }, (c) => { c.suite_version = 2; },
     (c) => { c.samples = 20; },
     (c) => { c.diagnostic_tracing = true; },
   ]) {
@@ -193,12 +203,12 @@ test('report controls render both action samples and native frame samples', () =
   vm.runInNewContext(document.match(/<script>\n([\s\S]*?)<\/script>/)[1], {
     document: { getElementById: getNode, createElement: () => ({}) },
   });
-  assert.equal(getNode('scenario').options.length, 26);
+  assert.equal(getNode('scenario').options.length, 24);
   assert.match(getNode('distribution').innerHTML, /Samples 10/);
   assert.match(getNode('bars').innerHTML, /main/);
   assert.match(getNode('trend').innerHTML, /previous/);
   getNode('metric').value = 'raster_ms';
-  getNode('scenario').value = 'limit_sell_cancel';
+  getNode('scenario').value = 'limit_sell_connect';
   getNode('scenario').onchange();
   assert.match(getNode('distribution').innerHTML, /Samples 2/);
   assert.match(getNode('distribution').innerHTML, /Frame budget 16.67 ms/);

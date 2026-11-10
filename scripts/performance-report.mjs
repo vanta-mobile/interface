@@ -5,8 +5,7 @@ import { pathToFileURL } from 'node:url';
 export const scenarioIds = [
   'home_load', 'markets_load', 'markets_scroll', 'details_load',
   ...['buy', 'sell'].flatMap((side) => ['market', 'limit'].flatMap((type) => [
-    ...['open_ready', 'open_settled', 'quote', 'preview', 'submit'].map((stage) => `${type}_${side}_${stage}`),
-    ...(type === 'limit' ? [`${type}_${side}_cancel`] : []),
+    ...['open_ready', 'open_settled', 'mode', 'disabled', 'connect'].map((stage) => `${type}_${side}_${stage}`),
   ])),
 ];
 
@@ -56,8 +55,8 @@ function worstScenario(scenarios, predicate, metric = 'duration_ms') {
 function performanceHighlights(scenarios, frames, frameBudget, rasterActionable) {
   const pageLoad = worstScenario(scenarios, (s) => ['home_load', 'markets_load', 'details_load'].includes(s.id));
   const interactive = worstScenario(scenarios, (s) => s.id.endsWith('_open_ready'));
-  const quote = worstScenario(scenarios, (s) => s.id.endsWith('_quote'));
-  const command = worstScenario(scenarios, (s) => /_(preview|submit|cancel)$/.test(s.id));
+  const orderMode = worstScenario(scenarios, (s) => s.id.endsWith('_mode'));
+  const connect = worstScenario(scenarios, (s) => s.id.endsWith('_connect'));
   const build = worstScenario(scenarios, () => true, 'build_ms');
   const raster = worstScenario(scenarios, () => true, 'raster_ms');
   const frameCount = frames.length;
@@ -69,8 +68,8 @@ function performanceHighlights(scenarios, frames, frameBudget, rasterActionable)
   return {
     page_load: result(pageLoad),
     interaction_ready: result(interactive),
-    quote: result(quote),
-    command: result(command),
+    order_mode: result(orderMode),
+    connect: result(connect),
     frames: {
       budget_ms: frameBudget,
       count: frameCount,
@@ -87,8 +86,8 @@ function performanceHighlights(scenarios, frames, frameBudget, rasterActionable)
 }
 
 export function summarize(raw) {
-  if (raw.schema_version !== 1 || raw.suite_version !== 2 || raw.mode !== 'profile' || !['android', 'ios'].includes(raw.platform)) {
-    throw new Error('Expected suite version 2 native profile performance data');
+  if (raw.schema_version !== 1 || raw.suite_version !== 3 || raw.mode !== 'profile' || !['android', 'ios'].includes(raw.platform)) {
+    throw new Error('Expected suite version 3 native profile performance data');
   }
   if (!raw.environment?.device_model || !raw.environment?.flutter_version || !raw.environment?.runner ||
       typeof raw.environment.physical_device !== 'boolean' ||
@@ -190,8 +189,8 @@ export function markdown(report, comparison) {
     '| Dimension | P95 / status | Scenario |', '|---|---:|---|',
     `| Page load | ${fmt(highlights.page_load.p95_ms)} ms | ${markdownText(highlights.page_load.label)} |`,
     `| Panel interactive | ${fmt(highlights.interaction_ready.p95_ms)} ms | ${markdownText(highlights.interaction_ready.label)} |`,
-    `| Quote update | ${fmt(highlights.quote.p95_ms)} ms | ${markdownText(highlights.quote.label)} |`,
-    `| Confirm / submit / cancel | ${fmt(highlights.command.p95_ms)} ms | ${markdownText(highlights.command.label)} |`,
+    `| Order mode selection | ${fmt(highlights.order_mode.p95_ms)} ms | ${markdownText(highlights.order_mode.label)} |`,
+    `| Account connection entry | ${fmt(highlights.connect.p95_ms)} ms | ${markdownText(highlights.connect.label)} |`,
     `| Frame health | ${fmt(highlights.frames.slow_percent)}% ${slowLabel} (${highlights.frames.slow_count}/${highlights.frames.count}) | UI ${fmt(highlights.frames.worst_build.p95_ms)} ms / raster ${fmt(highlights.frames.worst_raster.p95_ms)} ms${rasterActionable ? '' : ' (diagnostic)'} |`,
     '', '### Test Environment', '',
     '| Item | Value |', '|---|---|',
@@ -256,8 +255,8 @@ export function html(report, comparison, raw, history) {
   const overview = [
     ['Page load P95', highlights.page_load.p95_ms, highlights.page_load.label],
     ['Panel interactive P95', highlights.interaction_ready.p95_ms, highlights.interaction_ready.label],
-    ['Quote update P95', highlights.quote.p95_ms, highlights.quote.label],
-    ['Command P95', highlights.command.p95_ms, highlights.command.label],
+    ['Order mode selection P95', highlights.order_mode.p95_ms, highlights.order_mode.label],
+    ['Account connection entry P95', highlights.connect.p95_ms, highlights.connect.label],
   ].map(([label, value, detail]) => `<div class="metric"><span>${esc(label)}</span><strong>${fmt(value)} ms</strong><small>${esc(detail)}</small></div>`).join('');
   const display = machine.device.display_width_px && machine.device.display_height_px
     ? `${machine.device.display_width_px}×${machine.device.display_height_px}px`
