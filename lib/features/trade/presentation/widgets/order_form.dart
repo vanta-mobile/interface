@@ -12,6 +12,7 @@ import 'account_sheet.dart';
 import 'order_review.dart';
 import 'order_controls.dart';
 import 'primitives.dart';
+import '../../../../core/presentation/app_toast.dart';
 
 class OrderForm extends ConsumerStatefulWidget {
   const OrderForm({super.key});
@@ -61,7 +62,7 @@ class _OrderFormState extends ConsumerState<OrderForm> {
         error = null;
         fraction = 0;
       });
-      message(context, tr(context, 'submitted'));
+      AppToast.showSuccess(context, tr(context, 'submitted'));
     }
   }
 

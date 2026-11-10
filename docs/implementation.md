@@ -10,6 +10,16 @@
 
 验证：新增 `funding_deposit_screen_test`（3）、`funding_withdraw_screen_test`（5，含 320×640 中文与 844×390 横屏 1.5 倍字号）及 16 张 `funding_design_test` 设计截图，均以替身仓库运行，另有设备授权下充值入账与提现终态轮询（未到链上成功不读入账、终态后停止）2 项；长币种列表在 393×640 与 844×390 下不超出屏幕并可滚动选中末项的 2 项回归；所有轮询在 App 非前台时暂停、离开页面即停止。覆盖 Gas 不足、拒签／取消不重发、授权回执轮询、提现手续费变化不签名、失败编号、Rebalance 完成回表单；渲染截图已逐张与 Figma 帧对照。本轮改动文件格式检查无改动；`dart analyze --fatal-infos lib test` 仅余并行会话未完成文件中的 2 条 info；funding／portfolio／subaccounts 3871 项及完整回归 5247 项通过（含既有账户设计截图）。Android arm64 Release 构建成功，APK 47,495,801 bytes，SHA-256 `a52449158d7df078e0b75ffe637242ea468389177f775eca6e30e6ea19675256`；首次构建因同时运行测试使插件注册混入 integration_test 而失败，`flutter pub get` 后单独重建通过。日志：/tmp/vanta-funding-full-tests.log、/tmp/vanta-funding-android-build.log。未安装到设备，未发起真实钱包／私有／资金请求；Linux 无 macOS／Xcode，iOS 未构建。已知限制：确认页 Open wallet 只能派发一次请求，不提供“重新唤起钱包 App”的能力（现有钱包连接层无此接口）；上一笔已停止等待但仍在仓库中执行的提现，会让新的确认页按钮在其结束前无反应。
 
+## 2026-11-10 全局 Toast 公用组件
+
+按设计稿 09｜toast（节点 710:24041 成功、710:24045 失败）新增 `lib/core/presentation/app_toast.dart` 的 `AppToast`，行为参照 rwa-interface 的同名组件：插入根 Overlay，位于安全区顶部下 8px，最大宽 313、窄屏保留左右各 16px 及横屏安全区；卡片 #232526、圆角 12、内边距 16/12、图标 20、间距 8、13px 粗体 18 行高白字。设计中成功态有 1px 白 14% 描边（46px 高），失败态无描边（44px 高），按稿保留该差异。图标从设计源下载为 `assets/feedback/success.svg`、`fail.svg`；颜色和字号收入 `ToastColors`／`ToastTypography`。
+
+区分两种关闭方式：`showSuccess` 与默认 `showFailure` 3 秒后自动消失；`showFailure(..., persistent: true)` 不计时，只显示右侧关闭按钮（40px 触控区，复用现有关闭图标，提示文案取 MaterialLocalizations），由用户手动关闭。新 toast 替换当前 toast 并重新计时；被替换或关闭时取消原计时器。消息以 liveRegion 朗读，长文本换行。设计稿没有关闭按钮与进出场动画，手动关闭按钮按需求补充，未额外增加动画。
+
+迁移原 SnackBar 中明确属于成功／失败的提示：助手复制成功／失败、逐仓保证金调整核验成功、演示仓位撤单／平仓成功与行情不可用、演示下单提交成功、Spot／Futures 历史时间范围无效。杠杆说明和静态预览提示属于一般信息，仍保留 SnackBar。toast 只承载传入文案，不改变任何成功判断、恢复日志或重试规则；目前没有调用方使用 persistent 模式。
+
+验证：新增 `test/core/presentation/app_toast_test.dart` 5 项（设计尺寸／资源、成功与失败自动消失时点、常驻失败需手动关闭、替换重计时、窄屏边距与换行）通过；受影响的保证金、助手、交易、导航、组合设计、历史 provider 及 test/core 共 200 项通过。改动文件格式化零问题，静态分析除工作区中未跟踪且未接入的资金页面草稿（funding_screen／funding_wallet_screens 等既有错误）外无问题。Android debug APK 首次构建在 Gradle 阶段失败（输出未保留具体原因），未改代码重跑成功，日志 /tmp/vanta-toast-build.log；未在设备上做原生视觉验收，iOS 因 Linux 环境未构建。
+
 ## 2026-11-06 本地提交核验
 
 用户在要求停止开发后，进一步明确授权先提交代码。本次只整理并提交现有改动，不恢复功能开发、不推送或发布；此前“不提交”的描述保留其历史增量语境。

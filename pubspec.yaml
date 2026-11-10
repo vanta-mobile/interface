@@ -51,6 +51,7 @@ flutter:
     - assets/trade/
     - assets/navigation/
     - assets/portfolio/
+    - assets/feedback/
   fonts:
     - family: Inter
       fonts:

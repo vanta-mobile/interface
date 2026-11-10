@@ -248,3 +248,20 @@ abstract final class FundingTypography {
   );
   static const tab = TextStyle(fontSize: 12, height: 18 / 12, fontWeight: FontWeight.w500);
 }
+
+/// Global toast tokens from the supplied feedback frames.
+abstract final class ToastColors {
+  static const background = AppColors.authCard;
+  static const border = AppColors.authLine;
+  static const text = AppColors.authText;
+  static const icon = AppColors.authSecondary;
+}
+
+abstract final class ToastTypography {
+  static const message = TextStyle(
+    fontSize: 13,
+    height: 18 / 13,
+    fontWeight: FontWeight.w700,
+    color: ToastColors.text,
+  );
+}

@@ -12,6 +12,7 @@ import 'position_margin_form.dart';
 import 'position_margin_history.dart';
 import 'position_margin_status.dart';
 import 'symbol_settings_notice.dart';
+import '../../../core/presentation/app_toast.dart';
 
 void openPositionMargin(BuildContext context, {String? symbol, String? side}) =>
     Navigator.of(context).push<void>(
@@ -169,9 +170,7 @@ class _PositionMarginScreenState extends ConsumerState<PositionMarginScreen> {
           result?.account != null &&
           result?.positions != null &&
           Navigator.of(context).canPop()) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).marginAdjustVerified)));
+        AppToast.showSuccess(context, AppLocalizations.of(context).marginAdjustVerified);
         Navigator.of(context).pop();
       }
     } else if (state.failure?.key == 'marginAdjustClosed' && Navigator.of(context).canPop()) {

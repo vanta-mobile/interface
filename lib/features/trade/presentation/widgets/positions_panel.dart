@@ -7,6 +7,7 @@ import '../../../../l10n/generated/app_localizations.dart';
 import '../../application/providers.dart';
 import '../../domain/demo_order.dart';
 import 'primitives.dart';
+import '../../../../core/presentation/app_toast.dart';
 
 class PositionsPanel extends ConsumerStatefulWidget {
   const PositionsPanel({super.key});
@@ -130,7 +131,7 @@ class _OrderCard extends ConsumerWidget {
                 onPressed: () async {
                   if (tab == 1) {
                     ref.read(accountProvider.notifier).cancel(order.id);
-                    message(context, tr(context, 'canceled'));
+                    AppToast.showSuccess(context, tr(context, 'canceled'));
                     return;
                   }
                   if (ref.read(symbolProvider) != draft.symbol) {
@@ -139,7 +140,7 @@ class _OrderCard extends ConsumerWidget {
                   }
                   final quote = ref.read(currentMarketProvider);
                   if (quote == null || quote.offline) {
-                    message(context, tr(context, 'marketUnavailable'));
+                    AppToast.showFailure(context, tr(context, 'marketUnavailable'));
                     return;
                   }
                   final confirmed = await showDialog<bool>(
@@ -161,7 +162,7 @@ class _OrderCard extends ConsumerWidget {
                   );
                   if (confirmed == true) {
                     ref.read(accountProvider.notifier).close(order.id, quote.price);
-                    if (context.mounted) message(context, tr(context, 'closed'));
+                    if (context.mounted) AppToast.showSuccess(context, tr(context, 'closed'));
                   }
                 },
                 child: Text(

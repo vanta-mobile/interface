@@ -4,10 +4,10 @@ import 'package:intl/intl.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
-import '../../trade/presentation/widgets/primitives.dart';
 import '../application/futures_history_provider.dart';
 import '../domain/futures_history.dart';
 import 'futures_history_labels.dart';
+import '../../../core/presentation/app_toast.dart';
 
 class FuturesHistoryFilters extends ConsumerWidget {
   const FuturesHistoryFilters({super.key});
@@ -145,7 +145,7 @@ Future<void> _pickDates(BuildContext context, WidgetRef ref) async {
     endOfDay < now.millisecondsSinceEpoch ? endOfDay : now.millisecondsSinceEpoch,
   );
   if (!window.valid) {
-    message(context, AppLocalizations.of(context).futuresHistoryInvalidWindow);
+    AppToast.showFailure(context, AppLocalizations.of(context).futuresHistoryInvalidWindow);
     return;
   }
   ref.read(futuresHistoryProvider.notifier).setWindow(window);

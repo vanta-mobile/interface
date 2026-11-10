@@ -4,9 +4,9 @@ import 'package:intl/intl.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
-import '../../trade/presentation/widgets/primitives.dart';
 import '../application/spot_history_provider.dart';
 import '../domain/spot_history.dart';
+import '../../../core/presentation/app_toast.dart';
 
 class SpotHistoryFilters extends ConsumerWidget {
   const SpotHistoryFilters({super.key});
@@ -125,7 +125,7 @@ Future<void> _pickDates(BuildContext context, WidgetRef ref) async {
     endOfDay < now.millisecondsSinceEpoch ? endOfDay : now.millisecondsSinceEpoch,
   );
   if (!query.inWindow(window).validWindow) {
-    message(context, AppLocalizations.of(context).historyInvalidWindow);
+    AppToast.showFailure(context, AppLocalizations.of(context).historyInvalidWindow);
     return;
   }
   ref.read(spotHistoryProvider.notifier).setWindow(window);

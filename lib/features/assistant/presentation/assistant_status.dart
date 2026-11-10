@@ -8,17 +8,16 @@ import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../application/assistant_provider.dart';
+import '../../../core/presentation/app_toast.dart';
 
 Future<void> copyAssistantText(BuildContext context, String value) async {
   final l10n = AppLocalizations.of(context);
-  String message;
   try {
     await Clipboard.setData(ClipboardData(text: value));
-    message = l10n.assistantCopied;
+    if (context.mounted) AppToast.showSuccess(context, l10n.assistantCopied);
   } catch (_) {
-    message = l10n.assistantCopyFailed;
+    if (context.mounted) AppToast.showFailure(context, l10n.assistantCopyFailed);
   }
-  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
 class AssistantStatus extends ConsumerWidget {
