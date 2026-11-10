@@ -112,4 +112,33 @@ void main() {
       }
     }
   }
+
+  test('one wallet may keep several pending deposits, each nonce at most once', () {
+    final now = DateTime.utc(2026, 11, 4, 8), q = depositQuery();
+    DepositSubmissionRecord record(int nonce) {
+      final quote = gasQuote(query: q, receivedAt: now, nonce: BigInt.from(nonce));
+      return DepositSubmissionRecord(
+        query: q,
+        kind: quote.transaction.kind,
+        amountUnits: quote.transaction.amountUnits,
+        transaction: validatedDepositQuote(
+          quote: quote,
+          address: quote.address,
+          query: q,
+          amount: '1',
+          now: now,
+        ),
+        preparedAt: now,
+        baseBlock: quote.wallet.blockNumber,
+        baseBlockHash: quote.wallet.blockHash,
+      );
+    }
+
+    final both = decodeSubmissionJournal(encodeSubmissionJournal([record(7), record(8)]));
+    expect(both.map((r) => r.key), [record(7).key, record(8).key]);
+    expect(
+      () => decodeSubmissionJournal(encodeSubmissionJournal([record(7), record(7)])),
+      throwsFormatException,
+    );
+  });
 }

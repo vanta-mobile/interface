@@ -134,7 +134,8 @@ List<DepositSubmissionRecord> decodeSubmissionJournal(String source) {
   final map = _map(decodeFundingJson(source), {'version', 'records'}), raw = map['records'];
   if (_int(map['version']) != 1 || raw is! List || raw.length > 100) throw const FormatException();
   final records = raw.map(decodeSubmissionRecord).toList();
-  if (records.map((r) => r.transaction.from.toLowerCase()).toSet().length != records.length) {
+  // Several deposits of one wallet may await credit; each nonce is recorded once.
+  if (records.map((r) => r.key).toSet().length != records.length) {
     throw const FormatException();
   }
   return List.unmodifiable(records);

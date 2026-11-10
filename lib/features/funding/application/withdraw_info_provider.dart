@@ -10,10 +10,14 @@ import '../../portfolio/application/account_read_provider.dart';
 import '../../portfolio/application/wallet_account_controller.dart';
 import '../../portfolio/data/aster_account_service.dart';
 import '../data/signed_withdraw_info_repository.dart';
+import '../data/withdraw_info_mapper.dart';
 import '../domain/withdraw_info.dart';
 
 final withdrawInfoRepositoryProvider = Provider.autoDispose<WithdrawInfoRepository>((ref) {
-  final service = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease());
+  final service = AsterAccountService(
+    client: ref.watch(backendHttpPoolProvider).lease(),
+    decodeResponse: decodeWithdrawInfoJson,
+  );
   ref.onDispose(service.close);
   return SignedWithdrawInfoRepository(
     service,

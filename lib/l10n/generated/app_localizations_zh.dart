@@ -6299,4 +6299,90 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fundingRebalancingHint => '正在更新余额，请稍候。';
+
+  @override
+  String get assetHistoryFutures => '合约';
+
+  @override
+  String get assetHistoryTitle => '资产记录';
+
+  @override
+  String get assetHistoryDetails => '记录详情';
+
+  @override
+  String get assetHistoryEmpty => '暂无记录';
+
+  @override
+  String get assetHistoryLoaded => '已加载全部记录';
+
+  @override
+  String assetHistoryAmountNetwork(String amount, String network) {
+    return '$amount，$network';
+  }
+
+  @override
+  String assetHistoryStatus(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'processing': '处理中',
+      'success': '成功',
+      'failed': '失败',
+      'other': '未知',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get assetHistoryTime => '时间';
+
+  @override
+  String get assetHistoryTransactionId => '交易 ID';
+
+  @override
+  String get assetHistoryUnavailable => '暂无';
+
+  @override
+  String get assetHistoryProgress => '进度';
+
+  @override
+  String get assetHistoryConfirmed => '链上交易已确认';
+
+  @override
+  String get assetHistoryConfirmationUnavailable => '暂无链上确认信息';
+
+  @override
+  String get assetHistoryDepositCompleted => '充值已完成';
+
+  @override
+  String get assetHistoryWithdrawCompleted => '提现已完成';
+
+  @override
+  String get assetHistoryCrediting => '账户入账中';
+
+  @override
+  String get assetHistoryWithdrawPending => '等待提现';
+
+  @override
+  String portfolioFundingPending(String amount, String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'deposit': '等待到账',
+      'withdraw': '等待处理完成',
+      'other': '处理中',
+    });
+    return '$amount · $_temp0';
+  }
+
+  @override
+  String fundingBalanceInsufficient(String asset) {
+    return '$asset 余额不足，请输入更小的金额。';
+  }
+
+  @override
+  String fundingGasTopUp(String asset) {
+    return '$asset 不足以支付网络手续费，请向钱包补充 $asset。';
+  }
+
+  @override
+  String fundingWithdrawalFeeInsufficient(String asset) {
+    return '$asset 不足以支付提现金额及手续费，请输入更小的金额。';
+  }
 }

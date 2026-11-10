@@ -66,6 +66,7 @@ final depositReceiptPollIntervalProvider = Provider<Duration>((_) => const Durat
 /// records while a funding page is visible. It never signs, resends or drops
 /// a record; a controller in review or send is left untouched.
 final depositReceiptWatchProvider = Provider.autoDispose<void>((ref) {
+  var turn = 0;
   void poll() {
     if (!ref.mounted || !_foreground()) return;
     final approval = ref.read(depositApprovalProvider);
@@ -77,10 +78,12 @@ final depositReceiptWatchProvider = Provider.autoDispose<void>((ref) {
       unawaited(ref.read(depositApprovalProvider.notifier).check(pendingApproval.key, ''));
     }
     final submission = ref.read(depositSubmissionProvider);
-    final pendingDeposit = ref
+    // Several deposits may await credit; check one receipt per tick in turn.
+    final hashed = ref
         .read(pendingDepositSubmissionsProvider)
         .where((r) => r.hash != null)
-        .firstOrNull;
+        .toList();
+    final pendingDeposit = hashed.isEmpty ? null : hashed[turn++ % hashed.length];
     final chainDone =
         submission.record?.key == pendingDeposit?.key &&
         submission.receipt?.status == DepositReceiptStatus.succeeded;

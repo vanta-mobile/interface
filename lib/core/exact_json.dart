@@ -7,10 +7,12 @@ class FundingJsonNumber {
   int? get integer => RegExp(r'^-?(?:0|[1-9]\d*)$').hasMatch(text) ? int.tryParse(text) : null;
 }
 
-Object? decodeFundingJson(String source) => _FundingJson(source).decode();
+Object? decodeFundingJson(String source, {int maxSourceLength = 262144}) =>
+    _FundingJson(source, maxSourceLength).decode();
 
 class _FundingJson {
-  _FundingJson(this.source);
+  _FundingJson(this.source, this.maxSourceLength);
+  final int maxSourceLength;
   final String source;
   int index = 0;
   static final number = RegExp(r'-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?');
@@ -22,7 +24,7 @@ class _FundingJson {
   }
 
   Object? decode() {
-    if (source.length > 262144) invalid();
+    if (source.length > maxSourceLength) invalid();
     final result = value(0);
     space();
     if (index != source.length) invalid();

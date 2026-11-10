@@ -1,16 +1,17 @@
-import '../../../core/errors/error_text.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
-import '../../portfolio/domain/account_snapshot.dart';
-import '../../trade/presentation/widgets/account_sheet.dart';
+import '../../subaccounts/application/account_entries_provider.dart';
+import '../../subaccounts/presentation/account_components.dart';
+import '../application/transfer_history_load_provider.dart';
 import '../application/transfer_history_provider.dart';
 import '../domain/transfer_history.dart';
-import 'transfer_record_details.dart';
+import 'transfer_history_components.dart';
+import 'transfer_history_feedback.dart';
+import 'transfer_record_screen.dart';
 
 void openTransferHistory(BuildContext context) =>
     Navigator.of(context)
@@ -19,22 +20,12 @@ void openTransferHistory(BuildContext context) =>
 class TransferHistoryEntry extends ConsumerWidget {
   const TransferHistoryEntry({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final needsRefresh = ref.watch(transferHistoryProvider.select((s) => s.stale));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (needsRefresh) Text(l10n.transferRefreshNeeded),
-        OutlinedButton.icon(
-          key: const Key('transfer-history-entry'),
-          onPressed: () => openTransferHistory(context),
-          icon: const Icon(Icons.swap_vert),
-          label: Text(l10n.transferHistoryTitle),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context, WidgetRef ref) => OutlinedButton.icon(
+    key: const Key('transfer-history-entry'),
+    onPressed: () => openTransferHistory(context),
+    icon: const Icon(Icons.swap_vert),
+    label: Text(AppLocalizations.of(context).assetHistoryTitle),
+  );
 }
 
 class TransferHistoryScreen extends ConsumerStatefulWidget {
@@ -44,92 +35,82 @@ class TransferHistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _TransferHistoryScreenState extends ConsumerState<TransferHistoryScreen> {
-  TransferMarket? _market;
+  TransferType? _type;
+  int _page = 0;
+  static const _pageSize = 5;
+
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context), auth = ref.watch(authProvider);
+    final l = AppLocalizations.of(context);
+    ref.watch(transferHistoryLoadProvider);
+    ref.listen(authProvider.select((s) => s.identity), (_, _) {
+      setState(() {
+        _type = null;
+        _page = 0;
+      });
+    });
     final state = ref.watch(transferHistoryProvider);
-    final controller = ref.read(transferHistoryProvider.notifier);
-    final address = auth.identity?.walletAddress;
-    final canSign = address != null && auth.identity?.signingAvailable == true;
-    final records = state.account?.records.where((r) => _market == null || r.market == _market);
+    final entry = ref.watch(activeAccountEntryProvider);
+    final records =
+        state.account?.records.where((r) => _type == null || r.type == _type).toList() ?? [];
+    final pages = (records.length / _pageSize).ceil().clamp(1, 1000);
+    final page = _page.clamp(0, pages - 1);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.transferHistoryTitle)),
+      backgroundColor: PortfolioColors.background,
       body: SafeArea(
-        child: ListView(
-          key: const Key('transfer-history-list'),
-          padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
-            Text(l10n.transferHistoryScope),
-            if (address != null) SelectableText(address),
-            FilledButton(
-              key: const Key('transfer-history-refresh'),
-              onPressed: state.busy || auth.busy
-                  ? null
-                  : canSign
-                  ? controller.refresh
-                  : () => showAccountSheet(context),
-              child: Text(canSign ? l10n.transferRefresh : l10n.accountSignInToRead),
+            HistoryHeader(title: l.assetHistoryTitle, close: true),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: ref.read(transferHistoryProvider.notifier).refresh,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final horizontal = constraints.maxWidth > 820
+                        ? (constraints.maxWidth - 788) / 2
+                        : 16.0;
+                    return ListView(
+                      key: const Key('transfer-history-list'),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal + 8, 32),
+                      children: [
+                        Text(
+                          entry == null ? l.account : accountLabel(l, entry),
+                          style: AccountTypography.body,
+                        ),
+                        const SizedBox(height: 16),
+                        HistoryFilters(
+                          selected: _type,
+                          onChanged: (type) => setState(() {
+                            _type = type;
+                            _page = 0;
+                          }),
+                        ),
+                        const SizedBox(height: 8),
+                        const TransferHistoryFeedback(),
+                        HistoryRecordList(
+                          records: records,
+                          loaded: state.account != null,
+                          page: page,
+                          pages: pages,
+                          onPage: (value) => setState(() => _page = value),
+                          onOpen: (record) => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => TransferRecordScreen(
+                                recordKey: record.key,
+                                ownerAddress: state.account!.address,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
             ),
-            if (state.busy) ...[
-              const LinearProgressIndicator(),
-              Text(switch (state.step) {
-                AccountReadStep.signing => l10n.accountReadSigning,
-                AccountReadStep.loading => l10n.accountReadLoading,
-                _ => l10n.accountReadPreparing,
-              }),
-              TextButton(
-                key: const Key('transfer-history-stop'),
-                onPressed: controller.stop,
-                child: Text(l10n.historyStop),
-              ),
-            ],
-            if (state.stale) Text(l10n.transferRefreshNeeded),
-            if (state.failure case final failure?)
-              Text(
-                accountErrorText(context, failure),
-                style: const TextStyle(color: AppColors.negative),
-              ),
-            if (state.initialBaseline) Text(l10n.transferBaselineCreated),
-            if (state.account case final history?) ...[
-              Text(l10n.transferReadTime(history.receivedAt.toIso8601String())),
-              DropdownButtonFormField<TransferMarket?>(
-                key: const Key('transfer-history-market'),
-                initialValue: _market,
-                isExpanded: true,
-                decoration: InputDecoration(labelText: l10n.transferMarketLabel),
-                items: [
-                  DropdownMenuItem(value: null, child: Text(l10n.transferAllMarkets)),
-                  for (final market in TransferMarket.values)
-                    DropdownMenuItem(value: market, child: Text(transferMarketLabel(l10n, market))),
-                ],
-                onChanged: (market) => setState(() => _market = market),
-              ),
-              if (records!.isEmpty) Text(l10n.transferHistoryEmpty),
-              for (final record in records) _TransferCard(record),
-            ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _TransferCard extends StatelessWidget {
-  const _TransferCard(this.record);
-  final TransferRecord record;
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Card(
-      child: ExpansionTile(
-        key: ValueKey('transfer-${record.key}'),
-        title: Text(transferTitle(l10n, record)),
-        subtitle: Text(
-          '${record.amount} ${record.asset} · ${transferMarketLabel(l10n, record.market)}',
-        ),
-        childrenPadding: const EdgeInsets.all(16),
-        children: [TransferRecordDetails(record)],
       ),
     );
   }

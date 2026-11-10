@@ -142,9 +142,6 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
     if (!other.ready || other.failure != null) {
       throw const AccountReadFailure('depositSubmissionStorage');
     }
-    if (other.records.any((r) => r.transaction.from.toLowerCase() == address.toLowerCase())) {
-      throw const AccountReadFailure('depositSubmissionPending');
-    }
 
     if (!journal.snapshot.ready || journal.snapshot.failure != null) {
       throw const AccountReadFailure('depositApprovalStorage');

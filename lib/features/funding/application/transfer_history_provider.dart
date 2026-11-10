@@ -37,7 +37,7 @@ final transferHistoryProvider = NotifierProvider<TransferHistoryController, Tran
   TransferHistoryController.new,
 );
 
-/// Events only request a refresh. Private reads always follow an explicit tap.
+/// Events only mark stale. Explicit history entry may read with an active grant.
 class TransferHistoryController extends Notifier<TransferHistoryState> {
   int _generation = 0, _revision = 0;
   @override
@@ -82,7 +82,17 @@ class TransferHistoryController extends Notifier<TransferHistoryState> {
     );
   }
 
-  Future<void> refresh() async {
+  Future<void>? _refreshTask;
+  Future<void> refresh() {
+    if (state.busy && _refreshTask != null) return _refreshTask!;
+    final task = _refresh();
+    _refreshTask = task;
+    return task.whenComplete(() {
+      if (identical(_refreshTask, task)) _refreshTask = null;
+    });
+  }
+
+  Future<void> _refresh() async {
     final auth = ref.read(authProvider), identity = ref.read(authProvider).identity;
     final address = identity?.walletAddress;
     if (state.busy || auth.busy || address == null || identity == null) return;

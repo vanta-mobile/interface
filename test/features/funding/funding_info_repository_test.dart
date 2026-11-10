@@ -1,3 +1,7 @@
+import 'package:vanta/features/funding/domain/withdraw_info.dart';
+import 'package:vanta/features/funding/data/withdraw_info_mapper.dart';
+import 'package:decimal/decimal.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -126,8 +130,12 @@ void main() {
           expect(request.url.path, '/fapi/v3/aster/user-withdraw-info');
           expect(request.body, isEmpty);
           return responseGate?.future ??
-              http.Response.bytes(utf8.encode(jsonEncode(payload)), status);
+              http.Response.bytes(
+                utf8.encode(payload is String ? payload as String : jsonEncode(payload)),
+                status,
+              );
         }),
+        decodeResponse: decodeWithdrawInfoJson,
       );
       repository = SignedWithdrawInfoRepository(
         service,
@@ -191,8 +199,17 @@ void main() {
         throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'authWalletChanged')),
       );
     });
+    test('numeric amounts from the server are kept exact', () async {
+      payload = jsonEncode(withdrawInfoPayload())
+          .replaceFirst('"userDailyLimit":"10000"', '"userDailyLimit":10000.000000000000000001');
+      final info = await read() as WithdrawInfo;
+      expect(info.userDailyLimitUsd, Decimal.parse('10000.000000000000000001'));
+      payload = '{"code":-1022,"msg":"bad signature"}';
+      status = 200;
+      await expectLater(read(), throwsA(isA<AccountReadFailure>()));
+    });
     test('malformed amounts and server permission errors surface safe failures', () async {
-      payload = withdrawInfoPayload()..['userDailyLimit'] = 10000.0;
+      payload = ['not', 'an', 'object'];
       await expectLater(
         read(),
         throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'accountDataInvalid')),

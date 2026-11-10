@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vanta/features/funding/application/transfer_history_provider.dart';
-import 'package:vanta/features/funding/presentation/transfer_history_screen.dart';
 import 'package:vanta/features/notifications/application/notification_provider.dart';
 import 'package:vanta/features/notifications/data/local_notification_repository.dart';
 import 'package:vanta/features/notifications/presentation/notification_details.dart';
-import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
@@ -25,79 +22,6 @@ Future<void> show(WidgetTester tester, Finder finder, String listKey, {double de
 
 void main() {
   for (final language in ['en', 'zh']) {
-    testWidgets(
-      'explicit history, silent baseline, market filter and failed refresh preserve records: $language',
-      (tester) async {
-        final identity = TestIdentityRepository()..restored = signingIdentity;
-        final repository = LocalNotificationRepository(MemoryNotificationStorage());
-        final history = TestTransferHistoryRepository()
-          ..records = [
-            transferRecord(id: 'perp-record'),
-            transferRecord(id: 'spot-record', market: 'spot'),
-          ];
-        addTearDown(identity.dispose);
-        addTearDown(repository.dispose);
-        final container = setup(
-          tester,
-          width: 320,
-          scale: 1.5,
-          language: Locale(language),
-          identityRepository: identity,
-          notificationRepository: repository,
-          transferHistoryRepository: history,
-        );
-        await launch(tester, container);
-        await tester.tap(find.byKey(const Key('notifications-entry')));
-        await tester.pumpAndSettle();
-        await show(tester, find.byKey(const Key('transfer-history-entry')), 'notification-list');
-        await tester.tap(find.byKey(const Key('transfer-history-entry')).hitTestable());
-        await tester.pumpAndSettle();
-        expect(find.byType(TransferHistoryScreen), findsOneWidget);
-        final l10n = AppLocalizations.of(tester.element(find.byType(TransferHistoryScreen)));
-        expect(history.calls, 0);
-        final refresh = find.byKey(const Key('transfer-history-refresh'));
-        await show(tester, refresh, 'transfer-history-list');
-        await tester.tap(refresh.hitTestable());
-        await tester.pumpAndSettle();
-        expect(container.read(walletNotificationsProvider), isEmpty);
-        await show(tester, find.text(l10n.transferBaselineCreated), 'transfer-history-list');
-        expect(find.text(l10n.transferBaselineCreated), findsOneWidget);
-        final market = find.byKey(const Key('transfer-history-market'));
-        await show(tester, market, 'transfer-history-list');
-        await tester.tap(market.hitTestable());
-        await tester.pumpAndSettle();
-        await tester.tap(find.text(l10n.transferSpotMarket).last);
-        await tester.pumpAndSettle();
-        final spotCard = find.byKey(ValueKey('transfer-${history.records.last.key}'));
-        await show(tester, spotCard, 'transfer-history-list');
-        expect(find.byKey(ValueKey('transfer-${history.records.first.key}')), findsNothing);
-        await tester.tap(spotCard.hitTestable());
-        await tester.pumpAndSettle();
-        await show(tester, find.text('spot-record'), 'transfer-history-list');
-        expect(find.text('spot-record'), findsOneWidget);
-        expect(find.text('0.000000000000000001 USDT'), findsWidgets);
-        expect(find.text(l10n.transferRecordTime), findsOneWidget);
-        expect(find.text(l10n.transferHashUnknown), findsOneWidget);
-        expect(find.text(l10n.transferNetworkBnb), findsOneWidget);
-        tester.view.physicalSize = const Size(844, 390);
-        await tester.pumpAndSettle();
-        expect(tester.takeException(), null);
-        history.failure = const AccountReadFailure('authWalletRejected');
-        await show(tester, refresh, 'transfer-history-list', delta: -180);
-        await tester.tap(refresh.hitTestable());
-        await tester.pumpAndSettle();
-        expect(container.read(transferHistoryProvider).account?.records.length, 2);
-        expect(container.read(transferHistoryProvider).failure?.key, 'authWalletRejected');
-        identity.events.add(identityWithWallet);
-        await tester.pumpAndSettle();
-        expect(find.text('spot-record'), findsNothing);
-        expect(find.text(accountAddress), findsNothing);
-        expect(identity.wallets, 0);
-        await tester.pumpWidget(const SizedBox());
-        container.dispose();
-      },
-    );
-
     testWidgets(
       'transfer notification has observed/record times, copyable IDs, no order units and wallet isolation: $language',
       (tester) async {

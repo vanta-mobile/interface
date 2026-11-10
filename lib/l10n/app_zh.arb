@@ -2768,5 +2768,57 @@
   "fundingUsdtBalance": "USDT 余额",
   "fundingRebalanceConfirm": "确认 Rebalance",
   "fundingRebalancing": "Rebalance 中…",
-  "fundingRebalancingHint": "正在更新余额，请稍候。"
+  "fundingRebalancingHint": "正在更新余额，请稍候。",
+  "assetHistoryFutures": "合约",
+  "assetHistoryTitle": "资产记录",
+  "assetHistoryDetails": "记录详情",
+  "assetHistoryEmpty": "暂无记录",
+  "assetHistoryLoaded": "已加载全部记录",
+  "assetHistoryAmountNetwork": "{amount}，{network}",
+  "assetHistoryStatus": "{status, select, processing{处理中} success{成功} failed{失败} other{未知}}",
+  "assetHistoryTime": "时间",
+  "assetHistoryTransactionId": "交易 ID",
+  "assetHistoryUnavailable": "暂无",
+  "assetHistoryProgress": "进度",
+  "assetHistoryConfirmed": "链上交易已确认",
+  "assetHistoryConfirmationUnavailable": "暂无链上确认信息",
+  "assetHistoryDepositCompleted": "充值已完成",
+  "assetHistoryWithdrawCompleted": "提现已完成",
+  "assetHistoryCrediting": "账户入账中",
+  "assetHistoryWithdrawPending": "等待提现",
+  "portfolioFundingPending": "{amount} · {type, select, deposit{等待到账} withdraw{等待处理完成} other{处理中}}",
+  "@portfolioFundingPending": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingBalanceInsufficient": "{asset} 余额不足，请输入更小的金额。",
+  "@fundingBalanceInsufficient": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingGasTopUp": "{asset} 不足以支付网络手续费，请向钱包补充 {asset}。",
+  "@fundingGasTopUp": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingWithdrawalFeeInsufficient": "{asset} 不足以支付提现金额及手续费，请输入更小的金额。",
+  "@fundingWithdrawalFeeInsufficient": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  }
 }

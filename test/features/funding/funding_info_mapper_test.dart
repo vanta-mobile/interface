@@ -136,37 +136,69 @@ void main() {
     );
     expect(info.assets['USDT']!.perpTotalAmount, Decimal.parse('-0.000000000000000001'));
   });
-  for (final value in <Object?>[1.5, 1000, 'NaN', '1e3', '1' * 161]) {
+  for (final value in <Object?>[1.5, 'NaN', '1' * 161, true]) {
     test(
-      'withdraw money rejects numeric JSON and invalid decimal strings: ${value.toString().length}',
+      'withdraw totals that are not exact decimals stay unknown: ${value.toString().length}',
       () {
-        expect(
-          () => mapWithdrawInfo(
-            withdrawInfoPayload()..['userDailyLimit'] = value,
-            address: accountAddress,
-            receivedAt: now,
-          ),
-          throwsFormatException,
+        final info = mapWithdrawInfo(
+          withdrawInfoPayload()..['userDailyLimit'] = value,
+          address: accountAddress,
+          receivedAt: now,
         );
+        expect(info.userDailyLimitUsd, isNull);
+        expect(info.assets['USDT']!.chains[56]!.perpMaxAmount, isNotNull);
       },
     );
   }
-  test('withdraw maps reject asset/key mismatch, chain/key mismatch and negative fees', () {
+  test('withdraw info keeps exact JSON numbers, exponents and string chain IDs', () {
+    final payload = decodeWithdrawInfoJson('''{
+      "userDailyLimit": 10000.000000000000000001,
+      "balances": {"BNB": {
+        "perpTotalWithdrawAmount": 1E-8,
+        "chainBalances": {"56": {
+          "chainId": "56", "perpMaxWithdrawAmount": 0.030355680000000001,
+          "withdrawFee": "0E-8"}}}}
+    }''');
+    final info = mapWithdrawInfo(payload, address: accountAddress, receivedAt: now);
+    expect(info.userDailyLimitUsd, Decimal.parse('10000.000000000000000001'));
+    expect(info.assets['BNB']!.perpTotalAmount, Decimal.parse('0.00000001'));
+    expect(info.assets['BNB']!.chains[56]!.perpMaxAmount, Decimal.parse('0.030355680000000001'));
+    expect(info.assets['BNB']!.chains[56]!.fee, Decimal.zero);
+  });
+  test('whole-number amounts are exact', () {
+    final info = mapWithdrawInfo(
+      withdrawInfoPayload()..['userDailyLimit'] = 1000,
+      address: accountAddress,
+      receivedAt: now,
+    );
+    expect(info.userDailyLimitUsd, Decimal.fromInt(1000));
+  });
+  test('withdraw decoder keeps a numeric business code recognisable', () {
+    expect(decodeWithdrawInfoJson('{"code":-2015,"msg":"x"}'), {'code': -2015, 'msg': 'x'});
+    expect(
+      mapWithdrawInfo({'balances': null}, address: accountAddress, receivedAt: now).assets,
+      isEmpty,
+    );
+  });
+  test('a malformed asset row is unknown without hiding other assets', () {
     final mismatchedAsset = withdrawBalanceRow()..['currency'] = 'BNB';
     final mismatchedChain = withdrawBalanceRow()..['chainBalances'] = {'1': withdrawChainRow()};
     final negativeFee = withdrawBalanceRow()
       ..['chainBalances'] = {'56': withdrawChainRow()..['withdrawFee'] = '-1'};
     for (final balance in [mismatchedAsset, mismatchedChain, negativeFee]) {
-      expect(
-        () => mapWithdrawInfo(
-          {
-            'balances': {'USDT': balance},
-          },
-          address: accountAddress,
-          receivedAt: now,
-        ),
-        throwsFormatException,
+      final info = mapWithdrawInfo(
+        {
+          'balances': {'USDT': balance, 'ETH': withdrawBalanceRow()..['currency'] = 'ETH'},
+        },
+        address: accountAddress,
+        receivedAt: now,
       );
+      expect(info.assets.containsKey('USDT'), isFalse);
+      expect(info.assets['ETH']!.chains[56]!.perpMaxAmount, isNotNull);
     }
+    expect(
+      () => mapWithdrawInfo(['not', 'an', 'object'], address: accountAddress, receivedAt: now),
+      throwsFormatException,
+    );
   });
 }

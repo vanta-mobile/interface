@@ -220,6 +220,11 @@ abstract final class AccountTypography {
   );
 }
 
+/// Compact status labels in the portfolio transaction design.
+abstract final class HistoryTypography {
+  static const status = TextStyle(fontSize: 11, height: 16 / 11, fontWeight: FontWeight.w500);
+}
+
 /// Deposit and withdrawal form typography from the supplied funding frames.
 abstract final class FundingTypography {
   static const fieldLabel = TextStyle(

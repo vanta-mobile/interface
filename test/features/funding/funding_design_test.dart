@@ -8,6 +8,7 @@ import 'package:vanta/features/funding/application/transfer_history_provider.dar
 import 'package:vanta/features/funding/application/withdraw_info_provider.dart';
 import 'package:vanta/features/funding/data/withdraw_info_mapper.dart';
 import 'package:vanta/features/funding/domain/funding_catalog.dart';
+import 'package:vanta/features/funding/domain/funding_fee.dart';
 import 'package:vanta/features/funding/domain/transfer_history.dart';
 import 'package:vanta/features/portfolio/application/rebalance_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
@@ -81,6 +82,18 @@ void main() {
         address: accountAddress,
         receivedAt: DateTime.now().toUtc(),
       );
+      // The designed BNB platform fee, so amount + fee fits the withdrawable 0.0303.
+      const bnbFee = FundingFeeQuery(market: TransferMarket.perp, chainId: 56, asset: 'BNB');
+      h.fees.gates[bnbFee] = Completer()
+        ..complete(
+          FundingFeeQuote(
+            query: bnbFee,
+            receivedAt: DateTime.now().toUtc(),
+            assetFee: Decimal.parse('0.00014'),
+            usdFee: Decimal.parse('0.1'),
+          ),
+        );
+      h.withdrawals.fee = Decimal.parse('0.00014');
       final withdraw = name.startsWith('withdraw') || name.startsWith('rebalance');
       await h.open(
         tester,

@@ -261,4 +261,32 @@ void main() {
     expect(tester.takeException(), isNull);
     await h.close(tester);
   });
+
+  testWidgets('choosing another network or token clears the amount; the same one keeps it', (
+    tester,
+  ) async {
+    final h = FundingHarness();
+    await h.open(tester);
+    final amount = find.byKey(const Key('funding-amount'));
+    String text() => tester.widget<TextField>(amount).controller!.text;
+    await tester.enterText(amount, '0.5');
+    await tester.tap(find.byKey(const Key('funding-asset-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('funding-option-BNB')).last);
+    await tester.pumpAndSettle();
+    expect(text(), '0.5');
+    await tester.tap(find.byKey(const Key('funding-asset-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('funding-option-USDT')).last);
+    await tester.pumpAndSettle();
+    expect(text(), isEmpty);
+    await tester.enterText(amount, '3');
+    await tester.tap(find.byKey(const Key('funding-network')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('funding-option-1')).last);
+    await tester.pumpAndSettle();
+    expect(text(), isEmpty);
+    expect(tester.takeException(), isNull);
+    await h.close(tester);
+  });
 }

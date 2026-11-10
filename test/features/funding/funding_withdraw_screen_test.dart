@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,8 +10,11 @@ import 'package:vanta/features/funding/presentation/funding_status_screens.dart'
 import 'package:vanta/features/funding/presentation/funding_wallet_screens.dart';
 import 'package:vanta/features/funding/presentation/rebalance_sheet.dart';
 import 'package:vanta/features/portfolio/application/rebalance_provider.dart';
+import 'package:vanta/features/funding/domain/funding_fee.dart';
+import 'package:vanta/features/funding/presentation/funding_components.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
+import '../../support/funding_fee.dart';
 import '../../support/funding_screen.dart';
 import '../../support/rebalance.dart';
 
@@ -53,7 +58,7 @@ void main() {
     expect(_withdraw(tester).onPressed, isNull);
     await tester.tap(find.byKey(const Key('funding-max')));
     await tester.pumpAndSettle();
-    expect(find.text('2.340000000000000002'), findsOneWidget);
+    expect(find.text('2.216543210987654323'), findsOneWidget);
     await tester.enterText(find.byKey(const Key('funding-amount')), '1.5');
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('funding-error')), findsNothing);
@@ -204,6 +209,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(h.history.calls, settled);
     expect(tester.takeException(), isNull);
+    await h.close(tester);
+  });
+
+  testWidgets('switching token reloads only the fee row with a skeleton', (tester) async {
+    final h = FundingHarness();
+    await h.open(tester, operation: FundingOperation.withdraw);
+    expect(find.byKey(const Key('funding-fee')), findsOneWidget);
+    const usdt = FundingFeeQuery(market: TransferMarket.perp, chainId: 56, asset: 'USDT');
+    final gate = Completer<FundingFeeQuote>();
+    h.fees.gates[usdt] = gate;
+    await tester.enterText(find.byKey(const Key('funding-amount')), '0.02');
+    await tester.pump();
+    final calls = h.fees.calls.length;
+    await tester.enterText(find.byKey(const Key('funding-amount')), '0.03');
+    await tester.pump();
+    expect(h.fees.calls.length, calls, reason: 'the fee does not depend on the amount');
+    await tester.tap(find.byKey(const Key('funding-asset-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('funding-option-USDT')).last);
+    await tester.pump();
+    await tester.pump();
+    expect(find.byKey(const Key('funding-fee')), findsNothing);
+    expect(find.byType(FundingSkeleton), findsOneWidget);
+    gate.complete(fundingFeeFixture(usdt));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('funding-fee')), findsOneWidget);
+    expect(find.byType(FundingSkeleton), findsNothing);
     await h.close(tester);
   });
 }

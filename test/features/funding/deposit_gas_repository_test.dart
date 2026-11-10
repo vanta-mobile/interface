@@ -168,7 +168,9 @@ void main() {
   });
   test('native value fits but full-balance deposit cannot cover fee reserve', () async {
     query = depositQuery(native: true);
+    simulationError = true;
     await expectLater(estimate('10'), fails('depositGasBalanceInsufficient'));
+    expect(calls.where((c) => c['method'] == 'eth_estimateGas'), isEmpty);
   });
   test('exact native value plus padded fee is allowed', () async {
     query = depositQuery(native: true);

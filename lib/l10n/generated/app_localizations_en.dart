@@ -6774,4 +6774,90 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fundingRebalancingHint => 'Updating your balance. Please wait.';
+
+  @override
+  String get assetHistoryFutures => 'Futures';
+
+  @override
+  String get assetHistoryTitle => 'Transactions';
+
+  @override
+  String get assetHistoryDetails => 'Transaction details';
+
+  @override
+  String get assetHistoryEmpty => 'No records';
+
+  @override
+  String get assetHistoryLoaded => 'All records loaded';
+
+  @override
+  String assetHistoryAmountNetwork(String amount, String network) {
+    return '$amount on $network';
+  }
+
+  @override
+  String assetHistoryStatus(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'processing': 'Processing',
+      'success': 'Success',
+      'failed': 'Failed',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get assetHistoryTime => 'Time';
+
+  @override
+  String get assetHistoryTransactionId => 'Transaction ID';
+
+  @override
+  String get assetHistoryUnavailable => 'Unavailable';
+
+  @override
+  String get assetHistoryProgress => 'Progress';
+
+  @override
+  String get assetHistoryConfirmed => 'On-chain transaction confirmed';
+
+  @override
+  String get assetHistoryConfirmationUnavailable => 'On-chain confirmation unavailable';
+
+  @override
+  String get assetHistoryDepositCompleted => 'Deposit completed';
+
+  @override
+  String get assetHistoryWithdrawCompleted => 'Withdrawal completed';
+
+  @override
+  String get assetHistoryCrediting => 'Crediting account';
+
+  @override
+  String get assetHistoryWithdrawPending => 'Withdrawal pending';
+
+  @override
+  String portfolioFundingPending(String amount, String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'deposit': 'Waiting to be credited',
+      'withdraw': 'Waiting for completion',
+      'other': 'Processing',
+    });
+    return '$amount · $_temp0';
+  }
+
+  @override
+  String fundingBalanceInsufficient(String asset) {
+    return 'Insufficient $asset balance. Enter a smaller amount.';
+  }
+
+  @override
+  String fundingGasTopUp(String asset) {
+    return 'Insufficient $asset for network fees. Add $asset to your wallet.';
+  }
+
+  @override
+  String fundingWithdrawalFeeInsufficient(String asset) {
+    return 'Insufficient $asset for the withdrawal amount and fee. Enter a smaller amount.';
+  }
 }

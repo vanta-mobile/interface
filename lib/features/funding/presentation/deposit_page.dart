@@ -18,9 +18,7 @@ import '../application/funding_flow_provider.dart';
 import '../domain/deposit_wallet.dart';
 import '../domain/funding_catalog.dart';
 import '../domain/transfer_history.dart';
-import 'deposit_approval_recovery_screen.dart';
 import 'deposit_messages.dart';
-import 'deposit_submission_recovery_screen.dart';
 import 'funding_components.dart';
 import 'funding_dropdown.dart';
 import 'funding_screen.dart';
@@ -46,6 +44,8 @@ class _DepositPageState extends ConsumerState<DepositPage> {
   FundingActionError? actionError;
   Timer? gasTimer;
   (DepositWalletQuery, String)? estimated;
+  DepositWalletQuery? estimatingQuery;
+  int estimateRevision = 0;
   void _selectionChanged() => setState(() {});
   @override
   void initState() {
@@ -57,18 +57,27 @@ class _DepositPageState extends ConsumerState<DepositPage> {
   void dispose() {
     selection.removeListener(_selectionChanged);
     gasTimer?.cancel();
+    estimateRevision++;
     super.dispose();
   }
 
   void _edited(DepositWalletQuery? query) {
-    setState(() => actionError = null);
+    estimateRevision++;
+    gasTimer?.cancel();
+    if (estimatingQuery case final previous?) {
+      ref.read(depositGasProvider(previous).notifier).stop();
+    }
+    setState(() {
+      actionError = null;
+      estimated = null;
+    });
     if (query != null) _estimateLater(query);
   }
 
   /// Public RPC gas estimate, so a Max native amount reports missing fees early.
   void _estimateLater(DepositWalletQuery query) {
     gasTimer?.cancel();
-    gasTimer = Timer(const Duration(milliseconds: 400), () {
+    gasTimer = Timer(const Duration(milliseconds: 400), () async {
       if (!mounted) return;
       final amount = selection.amount.text.trim(), wallet = ref.read(depositWalletProvider(query));
       final check = checkDepositAmount(
@@ -78,8 +87,14 @@ class _DepositPageState extends ConsumerState<DepositPage> {
         stale: wallet.stale,
       );
       if (check.units == null || wallet.busy) return;
-      setState(() => estimated = (query, amount));
-      unawaited(ref.read(depositGasProvider(query).notifier).estimate(amount));
+      final revision = ++estimateRevision;
+      estimatingQuery = query;
+      final controller = ref.read(depositGasProvider(query).notifier);
+      controller.stop();
+      await controller.estimate(amount);
+      if (mounted && revision == estimateRevision && selection.amount.text.trim() == amount) {
+        setState(() => estimated = (query, amount));
+      }
     });
   }
 
@@ -137,6 +152,10 @@ class _DepositPageState extends ConsumerState<DepositPage> {
     final l = AppLocalizations.of(context);
     final catalog = ref.watch(fundingCatalogProvider(_depositCatalog));
     ref.watch(depositReceiptWatchProvider);
+    // Earlier deposits keep resolving in the background while new ones proceed.
+    for (final pending in ref.watch(pendingDepositSubmissionsProvider)) {
+      ref.watch(depositCreditWatchProvider(pending.key));
+    }
     final choice = FundingChoice.of(
       catalog.catalog?.assets.where(_depositRoute) ?? const [],
       selection,
@@ -158,8 +177,6 @@ class _DepositPageState extends ConsumerState<DepositPage> {
       children: [
         FundingTabs(operation: FundingOperation.deposit, onChanged: widget.onOperation),
         const SizedBox(height: 12),
-        const DepositApprovalRecoveryNotice(),
-        const DepositSubmissionRecoveryNotice(),
         FundingField(
           label: l.fundingDepositTo,
           value: fundingAccountText(l, ref.watch(activeAccountEntryProvider)),
@@ -200,7 +217,7 @@ class _DepositPageState extends ConsumerState<DepositPage> {
         ],
         selected: choice.chainId,
         onSelected: (id) {
-          selection.select(chainId: id);
+          selection.select(chainId: id, shownChain: choice.chainId);
           _edited(null);
         },
         builder: (context, open, toggle) => FundingField(
@@ -219,7 +236,7 @@ class _DepositPageState extends ConsumerState<DepositPage> {
       options: [for (final a in choice.assets) FundingOption(a.asset, a.asset, a.asset)],
       selected: asset?.asset,
       onSelected: (value) {
-        selection.select(asset: value);
+        selection.select(asset: value, shownAsset: asset?.asset);
         _edited(null);
       },
       builder: (context, open, toggle) => FundingAmountField(
@@ -272,7 +289,13 @@ class _DepositPageState extends ConsumerState<DepositPage> {
       snapshot: wallet.account,
       stale: wallet.stale,
     );
-    final gasFailure = estimated == (query, amount) ? gas.failure : null;
+    final estimateMatches = estimated == (query, amount);
+    final gasFailure = estimateMatches ? gas.failure : null;
+    final gasReady =
+        estimateMatches &&
+        !gas.busy &&
+        gas.failure == null &&
+        gas.account?.transaction.amountUnits == check.units;
     final approving = ref
         .watch(pendingDepositApprovalsProvider)
         .any(
@@ -281,15 +304,22 @@ class _DepositPageState extends ConsumerState<DepositPage> {
               r.query.asset.chainId == query.asset.chainId,
         );
     final transient = {'depositReadRequired', 'depositReadStale'}.contains(check.errorKey);
-    final amountError = check.errorKey != null && !transient || gasFailure != null;
+    final amountError =
+        check.errorKey != null && !transient ||
+        gasFailure != null ||
+        {'depositBalanceInsufficient', 'depositGasBalanceInsufficient'}.contains(actionError?.key);
     String? error;
-    if (actionError case final e?) {
+    if (check.errorKey == 'depositBalanceInsufficient' ||
+        actionError?.key == 'depositBalanceInsufficient') {
+      error = AppLocalizations.of(context).fundingBalanceInsufficient(query.asset.asset);
+    } else if (gasFailure?.key == 'depositGasBalanceInsufficient' ||
+        actionError?.key == 'depositGasBalanceInsufficient') {
+      final l = AppLocalizations.of(context), native = fundingNativeSymbol(query.asset.chainId);
+      error = query.asset.isNative ? l.fundingGasInsufficient(native) : l.fundingGasTopUp(native);
+    } else if (actionError case final e?) {
       error = apiErrorText(context, e.key, e.details, fallbackText: depositMessage(context, e.key));
     } else if (check.errorKey case final key? when !transient) {
       error = depositMessage(context, key);
-    } else if (gasFailure?.key == 'depositGasBalanceInsufficient') {
-      error = AppLocalizations.of(context)
-          .fundingGasInsufficient(fundingNativeSymbol(query.asset.chainId));
     } else if (gasFailure ?? (wallet.account == null ? wallet.failure : null) case final f?) {
       error = apiErrorText(context, f.key, f.details, fallbackText: depositMessage(context, f.key));
     }
@@ -306,7 +336,7 @@ class _DepositPageState extends ConsumerState<DepositPage> {
           approving || ref.watch(depositApprovalProvider).step == DepositApprovalStep.preparing,
       needsApproval: approving || check.allowanceSufficient == false,
       preparing: ref.watch(depositSubmissionProvider).step == DepositSubmissionStep.preparing,
-      ready: check.units != null && !amountError && !wallet.busy,
+      ready: check.units != null && !amountError && !wallet.busy && gasReady,
     );
   }
 }

@@ -11888,6 +11888,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Updating your balance. Please wait.'**
   String get fundingRebalancingHint;
+
+  /// No description provided for @assetHistoryFutures.
+  ///
+  /// In en, this message translates to:
+  /// **'Futures'**
+  String get assetHistoryFutures;
+
+  /// No description provided for @assetHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get assetHistoryTitle;
+
+  /// No description provided for @assetHistoryDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction details'**
+  String get assetHistoryDetails;
+
+  /// No description provided for @assetHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No records'**
+  String get assetHistoryEmpty;
+
+  /// No description provided for @assetHistoryLoaded.
+  ///
+  /// In en, this message translates to:
+  /// **'All records loaded'**
+  String get assetHistoryLoaded;
+
+  /// No description provided for @assetHistoryAmountNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} on {network}'**
+  String assetHistoryAmountNetwork(String amount, String network);
+
+  /// No description provided for @assetHistoryStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, processing{Processing} success{Success} failed{Failed} other{Unknown}}'**
+  String assetHistoryStatus(String status);
+
+  /// No description provided for @assetHistoryTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get assetHistoryTime;
+
+  /// No description provided for @assetHistoryTransactionId.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction ID'**
+  String get assetHistoryTransactionId;
+
+  /// No description provided for @assetHistoryUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get assetHistoryUnavailable;
+
+  /// No description provided for @assetHistoryProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get assetHistoryProgress;
+
+  /// No description provided for @assetHistoryConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'On-chain transaction confirmed'**
+  String get assetHistoryConfirmed;
+
+  /// No description provided for @assetHistoryConfirmationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'On-chain confirmation unavailable'**
+  String get assetHistoryConfirmationUnavailable;
+
+  /// No description provided for @assetHistoryDepositCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit completed'**
+  String get assetHistoryDepositCompleted;
+
+  /// No description provided for @assetHistoryWithdrawCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal completed'**
+  String get assetHistoryWithdrawCompleted;
+
+  /// No description provided for @assetHistoryCrediting.
+  ///
+  /// In en, this message translates to:
+  /// **'Crediting account'**
+  String get assetHistoryCrediting;
+
+  /// No description provided for @assetHistoryWithdrawPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal pending'**
+  String get assetHistoryWithdrawPending;
+
+  /// No description provided for @portfolioFundingPending.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} · {type, select, deposit{Waiting to be credited} withdraw{Waiting for completion} other{Processing}}'**
+  String portfolioFundingPending(String amount, String type);
+
+  /// No description provided for @fundingBalanceInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient {asset} balance. Enter a smaller amount.'**
+  String fundingBalanceInsufficient(String asset);
+
+  /// No description provided for @fundingGasTopUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient {asset} for network fees. Add {asset} to your wallet.'**
+  String fundingGasTopUp(String asset);
+
+  /// No description provided for @fundingWithdrawalFeeInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient {asset} for the withdrawal amount and fee. Enter a smaller amount.'**
+  String fundingWithdrawalFeeInsufficient(String asset);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

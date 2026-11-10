@@ -173,13 +173,10 @@ class DepositSubmissionController extends Notifier<DepositSubmissionState>
     if (approvals.records.any((r) => r.transaction.from.toLowerCase() == address.toLowerCase())) {
       throw const AccountReadFailure('depositApprovalPending');
     }
+    // Earlier deposits awaiting credit do not block another one. A still
+    // unmined transaction is refused by the gas quote's pending-nonce check.
     if (!journal.snapshot.ready || journal.snapshot.failure != null) {
       throw const AccountReadFailure('depositSubmissionStorage');
-    }
-    if (journal.snapshot.records.any(
-      (r) => r.transaction.from.toLowerCase() == address.toLowerCase(),
-    )) {
-      throw const AccountReadFailure('depositSubmissionPending');
     }
   }
 

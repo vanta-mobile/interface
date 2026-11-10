@@ -2905,5 +2905,74 @@
   "fundingUsdtBalance": "USDT balance",
   "fundingRebalanceConfirm": "Confirm Rebalance",
   "fundingRebalancing": "Rebalancing…",
-  "fundingRebalancingHint": "Updating your balance. Please wait."
+  "fundingRebalancingHint": "Updating your balance. Please wait.",
+  "assetHistoryFutures": "Futures",
+  "assetHistoryTitle": "Transactions",
+  "assetHistoryDetails": "Transaction details",
+  "assetHistoryEmpty": "No records",
+  "assetHistoryLoaded": "All records loaded",
+  "assetHistoryAmountNetwork": "{amount} on {network}",
+  "@assetHistoryAmountNetwork": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "network": {
+        "type": "String"
+      }
+    }
+  },
+  "assetHistoryStatus": "{status, select, processing{Processing} success{Success} failed{Failed} other{Unknown}}",
+  "@assetHistoryStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "assetHistoryTime": "Time",
+  "assetHistoryTransactionId": "Transaction ID",
+  "assetHistoryUnavailable": "Unavailable",
+  "assetHistoryProgress": "Progress",
+  "assetHistoryConfirmed": "On-chain transaction confirmed",
+  "assetHistoryConfirmationUnavailable": "On-chain confirmation unavailable",
+  "assetHistoryDepositCompleted": "Deposit completed",
+  "assetHistoryWithdrawCompleted": "Withdrawal completed",
+  "assetHistoryCrediting": "Crediting account",
+  "assetHistoryWithdrawPending": "Withdrawal pending",
+  "portfolioFundingPending": "{amount} · {type, select, deposit{Waiting to be credited} withdraw{Waiting for completion} other{Processing}}",
+  "@portfolioFundingPending": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingBalanceInsufficient": "Insufficient {asset} balance. Enter a smaller amount.",
+  "@fundingBalanceInsufficient": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingGasTopUp": "Insufficient {asset} for network fees. Add {asset} to your wallet.",
+  "@fundingGasTopUp": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingWithdrawalFeeInsufficient": "Insufficient {asset} for the withdrawal amount and fee. Enter a smaller amount.",
+  "@fundingWithdrawalFeeInsufficient": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  }
 }

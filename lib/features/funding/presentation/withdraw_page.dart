@@ -22,6 +22,7 @@ import '../domain/deposit_wallet.dart';
 import '../domain/funding_catalog.dart';
 import '../domain/funding_fee.dart';
 import '../domain/transfer_history.dart';
+import '../domain/withdrawal_amount.dart';
 import 'funding_components.dart';
 import 'funding_dropdown.dart';
 import 'funding_screen.dart';
@@ -35,20 +36,6 @@ const _withdrawCatalog = FundingCatalogQuery(TransferMarket.perp, FundingOperati
 /// The withdrawal repository only submits automatic routes on these networks.
 bool _withdrawRoute(FundingAsset a) =>
     a.routeType == 'autoWithdraw' && fundingEvmChainIds.contains(a.chainId);
-
-/// Mirrors the repository's amount contract so the button never offers a
-/// request it would reject; reported limits still apply on submission.
-String? withdrawAmountError(String text, FundingAsset asset, Decimal? withdrawable) {
-  if (text.isEmpty) return null;
-  final value = text.length > 160 || !RegExp(r'^(0|[1-9]\d*)(?:\.\d+)?$').hasMatch(text)
-      ? null
-      : Decimal.parse(text);
-  if (value == null || value <= Decimal.zero || value.scale > asset.decimals) {
-    return 'withdrawalAmountInvalid';
-  }
-  if (withdrawable != null && value > withdrawable) return 'withdrawalLimitExceeded';
-  return null;
-}
 
 class WithdrawPage extends ConsumerStatefulWidget {
   const WithdrawPage({super.key, required this.selection, required this.onOperation});
@@ -121,10 +108,18 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
     final withdrawable = asset == null
         ? null
         : info.account?.assets[asset.asset]?.chains[asset.chainId]?.maximum(TransferMarket.perp);
+    final fee = asset == null ? null : ref.watch(fundingFeeProvider(_feeQuery(asset))).quote;
     final amountKey = asset == null
         ? null
-        : withdrawAmountError(selection.amount.text.trim(), asset, withdrawable);
+        : withdrawAmountError(
+            selection.amount.text.trim(),
+            asset,
+            withdrawable,
+            fee: fee?.assetFee,
+          );
     final error = switch ((actionError, amountKey)) {
+      (_, 'fundingBalanceInsufficient') => l.fundingBalanceInsufficient(asset!.asset),
+      (_, 'fundingWithdrawalFeeInsufficient') => l.fundingWithdrawalFeeInsufficient(asset!.asset),
       (final FundingActionError e, _) => apiErrorText(context, e.key, e.details),
       (_, final String key) => apiErrorText(context, key, null),
       _ when info.account == null && info.failure != null => apiErrorText(
@@ -169,10 +164,13 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
               ? null
               : fundingAmountText(withdrawable.toString(), asset.asset),
           loading: info.busy,
-          onMax: asset == null || withdrawable == null || withdrawable <= Decimal.zero
+          onMax:
+              asset == null || withdrawable == null || fee == null || withdrawable <= fee.assetFee
               ? null
               : () {
-                  selection.amount.text = withdrawable.floor(scale: asset.decimals).toString();
+                  selection.amount.text = (withdrawable - fee.assetFee)
+                      .floor(scale: asset.decimals)
+                      .toString();
                   _edited();
                 },
         ),
@@ -189,7 +187,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
     ],
     selected: choice.chainId,
     onSelected: (id) {
-      selection.select(chainId: id);
+      selection.select(chainId: id, shownChain: choice.chainId);
       _edited();
     },
     builder: (context, open, toggle) => FundingField(
@@ -208,7 +206,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
       options: [for (final a in choice.assets) FundingOption(a.asset, a.asset, a.asset)],
       selected: asset?.asset,
       onSelected: (value) {
-        selection.select(asset: value);
+        selection.select(asset: value, shownAsset: asset?.asset);
         _edited();
       },
       builder: (context, open, toggle) => FundingAmountField(
@@ -293,7 +291,9 @@ class _FeeRow extends ConsumerWidget {
         if (quote == null && state.loading)
           const FundingSkeleton(width: 120)
         else
-          Flexible(
+          // Tight, so the right-aligned value ends at the row edge.
+          Expanded(
+            flex: 2,
             child: Text(
               quote == null
                   ? '—'

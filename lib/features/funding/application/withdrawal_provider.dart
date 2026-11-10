@@ -13,6 +13,7 @@ import '../../portfolio/data/aster_spot_service.dart';
 import '../../portfolio/domain/account_snapshot.dart';
 import '../data/funding_catalog_repository.dart';
 import '../data/funding_fee_repository.dart';
+import '../data/withdraw_info_mapper.dart';
 import '../data/withdrawal_repository.dart';
 import '../domain/deposit_wallet.dart';
 import '../domain/withdrawal.dart';
@@ -22,9 +23,14 @@ final withdrawalRepositoryProvider = Provider<WithdrawalRepository>((ref) {
   final futures = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease()),
       spot = AsterSpotService(client: ref.watch(backendHttpPoolProvider).lease()),
       catalog = FundingCatalogService(client: ref.watch(backendHttpPoolProvider).lease()),
-      fees = FundingFeeService(client: ref.watch(backendHttpPoolProvider).lease());
+      fees = FundingFeeService(client: ref.watch(backendHttpPoolProvider).lease()),
+      info = AsterAccountService(
+        client: ref.watch(backendHttpPoolProvider).lease(),
+        decodeResponse: decodeWithdrawInfoJson,
+      );
   ref.onDispose(() {
     futures.close();
+    info.close();
     spot.close();
     catalog.close();
     fees.close();
@@ -38,6 +44,7 @@ final withdrawalRepositoryProvider = Provider<WithdrawalRepository>((ref) {
     ref.watch(walletOperationJournalProvider),
     nonces: ref.watch(asterReadNoncesProvider),
     now: ref.watch(withdrawalClockProvider),
+    infoService: info,
   );
 });
 final withdrawalProvider = NotifierProvider<WithdrawalController, WithdrawalState>(

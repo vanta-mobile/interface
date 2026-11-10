@@ -137,12 +137,16 @@ void main() {
     expect(gas.calls, isEmpty);
     expect(identity.transactions, isEmpty);
   });
-  flow('pending deposit blocks approval preparation before wallet prompt', (t) async {
+  flow('a deposit awaiting credit does not block the next deposit at a new nonce', (t) async {
     await controller().confirm(await review());
-    final approval = c.read(depositApprovalProvider.notifier);
-    expect(await approval.prepare(query, '1'), null);
-    expect(c.read(depositApprovalProvider).failure, 'depositSubmissionPending');
-    expect(identity.transactions.length, 1);
+    expect(journal.snapshot.records, hasLength(1));
+    gas.result = gasQuote(query: query, receivedAt: now, nonce: BigInt.from(8));
+    await controller().confirm(await review());
+    expect(identity.transactions, hasLength(2));
+    expect(journal.snapshot.records.map((r) => r.transaction.nonce), [
+      BigInt.from(7),
+      BigInt.from(8),
+    ]);
   });
   flow('approval flush and deposit share dispatch lock even after stop', (t) async {
     gas.result = approvalQuote(now: now);
@@ -245,13 +249,16 @@ void main() {
     expect(journal.snapshot.records, isEmpty);
     expect(state().failure, 'authWalletRejected');
   });
-  flow('unknown response remains durable and blocks another deposit', (t) async {
+  flow('unknown response stays durable; its unused nonce is never sent again', (t) async {
     final r = await review();
     identity.transactionResult = const WalletTransactionResult.unknown();
     await controller().confirm(r);
     expect(journal.snapshot.records.single.hash, null);
-    expect(await controller().prepare(query, '1', acknowledgeUnknownLimits: true), null);
+    // The chain still reports the same next nonce, so it may be the same request.
+    await controller().confirm(await review());
+    expect(state().failure, 'depositSubmissionPending');
     expect(identity.transactions.length, 1);
+    expect(journal.snapshot.records, hasLength(1));
   });
   flow('scope loss during flush removes unsubmitted record', (t) async {
     final r = await review();

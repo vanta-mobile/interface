@@ -3,12 +3,19 @@ import 'package:flutter/widgets.dart';
 import '../../../core/errors/api_error_details.dart';
 import '../domain/funding_catalog.dart';
 
-/// Form input kept per tab, so switching network, asset or tab keeps the amount.
+/// Form input kept per tab, so switching tabs keeps it. An amount belongs to
+/// one network and token; choosing a different one clears it.
 class FundingSelection extends ChangeNotifier {
   final amount = TextEditingController();
   int? chainId;
   String? asset;
-  void select({int? chainId, String? asset}) {
+
+  /// [shownChain]/[shownAsset] are what the form displayed, which may be a
+  /// default the user never picked explicitly.
+  void select({int? chainId, String? asset, int? shownChain, String? shownAsset}) {
+    if (chainId != null && chainId != shownChain || asset != null && asset != shownAsset) {
+      amount.clear();
+    }
     if (chainId != null) this.chainId = chainId;
     if (asset != null) this.asset = asset;
     notifyListeners();

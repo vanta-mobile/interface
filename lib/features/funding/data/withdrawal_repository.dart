@@ -28,7 +28,9 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
     this.journal, {
     required this.nonces,
     DateTime Function()? now,
-  }) : now = now ?? DateTime.now;
+    AsterAccountService? infoService,
+  }) : now = now ?? DateTime.now,
+       infoService = infoService ?? futures;
   final AsterAccountService futures;
   final AsterSpotService spot;
   final FundingCatalogRepository catalog;
@@ -37,6 +39,9 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
   final WalletOperationJournal journal;
   final AsterReadNonces nonces;
   final DateTime Function() now;
+
+  /// Withdrawal limits keep reported numbers exact; see [decodeWithdrawInfoJson].
+  final AsterAccountService infoService;
   void _ready(String address) {
     if (!journal.snapshot.ready || journal.snapshot.failed) {
       throw const AccountReadFailure('walletOperationStorage');
@@ -105,7 +110,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
         throw const AccountReadFailure('subaccountMasterRequired');
       }
       final info = await SignedWithdrawInfoRepository(
-        futures,
+        infoService,
         sign,
         nonces: nonces,
         now: now,

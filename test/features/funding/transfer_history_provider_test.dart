@@ -102,10 +102,13 @@ void main() {
     history.gate = Completer<void>();
     history.failure = const AccountReadFailure('authWalletRejected');
     final pending = controller().refresh();
-    await controller().refresh();
+    var duplicateSettled = false;
+    final duplicate = controller().refresh().then((_) => duplicateSettled = true);
     expect(history.calls, 2);
+    expect(duplicateSettled, false);
     history.gate!.complete();
-    await pending;
+    await Future.wait([pending, duplicate]);
+    expect(duplicateSettled, true);
     expect(container.read(transferHistoryProvider).account, same(previous));
     expect(container.read(transferHistoryProvider).failure?.key, 'authWalletRejected');
     expect(container.read(transferHistoryProvider).busy, false);

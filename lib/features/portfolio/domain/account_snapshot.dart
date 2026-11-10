@@ -6,6 +6,10 @@ class AccountReadFailure implements Exception, DetailedApiFailure {
   final ApiErrorDetails? details;
   final String key;
   final int? code;
+
+  /// Aster confirms that the exchange account has not been created by a deposit.
+  /// Neither a zero balance nor the displayed server text proves this status.
+  bool get requiresDeposit => code == -5050;
 }
 
 abstract interface class WalletAccountSnapshot {

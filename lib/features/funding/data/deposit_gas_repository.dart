@@ -60,6 +60,12 @@ class RpcDepositGasRepository implements DepositGasRepository {
       if (price <= BigInt.zero || nonce >= (BigInt.one << 64) - BigInt.one) {
         throw const FormatException();
       }
+      // Every supported EVM transaction consumes at least 21,000 gas. Prove
+      // obvious shortages locally: nodes may reject the simulation before
+      // returning an estimate (notably Max native deposits or zero gas funds).
+      if (transaction.value + BigInt.from(21000) * price > wallet.nativeUnits) {
+        throw const AccountReadFailure('depositGasBalanceInsufficient');
+      }
       final estimated = rpcQuantity(
         await service.read(chain, 'eth_estimateGas', [
           {...transaction.call, 'gasPrice': depositHex(price), 'nonce': depositHex(nonce)},
