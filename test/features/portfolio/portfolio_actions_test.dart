@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/funding/domain/funding_catalog.dart';
-import 'package:vanta/features/funding/presentation/funding_info_screen.dart';
+import 'package:vanta/features/funding/presentation/funding_screen.dart';
 import 'package:vanta/features/portfolio/application/account_read_provider.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
 
@@ -59,10 +59,7 @@ void main() {
         tester,
         'portfolio-${operation == FundingOperation.deposit ? 'deposit' : 'withdraw'}',
       );
-      expect(
-        tester.widget<FundingInfoScreen>(find.byType(FundingInfoScreen)).initialOperation,
-        operation,
-      );
+      expect(tester.widget<FundingScreen>(find.byType(FundingScreen)).initialOperation, operation);
       fixture.expectNoAccountMutation();
       expect(tester.takeException(), null);
       await fixture.close(tester);

@@ -6088,4 +6088,188 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authorizationRequired => '交易授权缺失或已过期，请开启交易，以免重复打开钱包查询此账户。';
+
+  @override
+  String get fundingAccountTitle => '账户';
+
+  @override
+  String get fundingDepositTo => '充值到';
+
+  @override
+  String get fundingWithdrawFrom => '提现自';
+
+  @override
+  String get fundingNetworkLabel => '网络';
+
+  @override
+  String get fundingAmountLabel => '数量';
+
+  @override
+  String get fundingBalance => '余额';
+
+  @override
+  String get fundingMax => '最大';
+
+  @override
+  String get fundingNetworkBnb => 'BNB Chain';
+
+  @override
+  String get fundingNetworkEthereum => 'Ethereum';
+
+  @override
+  String get fundingNetworkArbitrum => 'Arbitrum';
+
+  @override
+  String get fundingSelectNetwork => '选择网络';
+
+  @override
+  String get fundingSelectAsset => '选择币种';
+
+  @override
+  String fundingDepositTime(String network) {
+    return '$network 预计充值到账时间为 1–3 分钟。';
+  }
+
+  @override
+  String fundingApproveAsset(String asset) {
+    return '授权 $asset';
+  }
+
+  @override
+  String fundingGasInsufficient(String asset) {
+    return '$asset 不足以支付网络手续费，请输入更小的金额。';
+  }
+
+  @override
+  String get fundingConfirmDepositTitle => '在钱包中确认充值';
+
+  @override
+  String get fundingConfirmDepositHint => '请在钱包中确认交易以继续。';
+
+  @override
+  String fundingApproveTitle(String asset) {
+    return '在钱包中授权 $asset';
+  }
+
+  @override
+  String get fundingApproveSummary => '支出授权';
+
+  @override
+  String fundingApproveHint(String asset) {
+    return '充值前，请先在钱包中授权 $asset 支出。';
+  }
+
+  @override
+  String get fundingConfirmWithdrawTitle => '在钱包中确认提现';
+
+  @override
+  String get fundingConfirmWithdrawHint => '请在钱包中签署提现请求以继续。';
+
+  @override
+  String get fundingOpenWallet => '打开钱包';
+
+  @override
+  String get fundingTransactions => '资金记录';
+
+  @override
+  String fundingFuturesAmount(String amount) {
+    return '$amount · 合约账户';
+  }
+
+  @override
+  String get fundingDepositProcessing => '充值处理中';
+
+  @override
+  String get fundingStepChainPending => '链上交易';
+
+  @override
+  String get fundingStepChainConfirmed => '链上交易已确认';
+
+  @override
+  String get fundingStepCrediting => '账户入账中';
+
+  @override
+  String get fundingStepCreditingHint => '正在等待账户入账。';
+
+  @override
+  String get fundingTrackHint => '你可以关闭此页面，并在资金记录中继续跟踪。';
+
+  @override
+  String get fundingViewTransactions => '查看资金记录';
+
+  @override
+  String get fundingWithdrawable => '可提现数量';
+
+  @override
+  String get fundingTransactionFee => '手续费';
+
+  @override
+  String fundingFeeWithUsd(String amount, String usd) {
+    return '$amount（$usd USD）';
+  }
+
+  @override
+  String get fundingViewHistory => '在资产中查看记录';
+
+  @override
+  String get fundingWithdrawChainHint => '充值的代币须在同一条链上提现；USDT 收益可通过任一支持的链提现。';
+
+  @override
+  String get fundingWithdrawProcessing => '提现处理中';
+
+  @override
+  String get fundingWithdrawCompleted => '提现已完成';
+
+  @override
+  String get fundingWithdrawFailedTitle => '提现失败';
+
+  @override
+  String get fundingStepNetwork => '网络确认';
+
+  @override
+  String get fundingStepNetworkHint => '正在等待网络确认。';
+
+  @override
+  String get fundingStepWithdrawCompletion => '提现完成';
+
+  @override
+  String get fundingStepWithdrawCompletionHint => '正在等待提现完成。';
+
+  @override
+  String get fundingWithdrawalId => '提现编号';
+
+  @override
+  String get fundingStatus => '状态';
+
+  @override
+  String get fundingStatusFailed => '失败';
+
+  @override
+  String get fundingWithdrawFailedHint => '此笔提现未完成。请先确认其最终状态，再重新尝试。';
+
+  @override
+  String get fundingRebalanceRequired => '需先 Rebalance 才能提现';
+
+  @override
+  String fundingUsdtBalanceValue(String amount) {
+    return 'USDT 余额：$amount';
+  }
+
+  @override
+  String get fundingRebalance => 'Rebalance';
+
+  @override
+  String get fundingRebalanceHint => '使用其他资产清偿 USDT 欠款。';
+
+  @override
+  String get fundingUsdtBalance => 'USDT 余额';
+
+  @override
+  String get fundingRebalanceConfirm => '确认 Rebalance';
+
+  @override
+  String get fundingRebalancing => 'Rebalance 中…';
+
+  @override
+  String get fundingRebalancingHint => '正在更新余额，请稍候。';
 }

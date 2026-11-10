@@ -4,8 +4,7 @@ import 'package:decimal/decimal.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../funding/domain/funding_catalog.dart';
-import '../../funding/domain/transfer_history.dart';
-import '../../funding/presentation/funding_info_screen.dart';
+import '../../funding/presentation/funding_screen.dart';
 import '../domain/portfolio_overview.dart';
 import 'portfolio_components.dart';
 import 'portfolio_header.dart';
@@ -41,12 +40,7 @@ class _AssetDetails extends StatelessWidget {
         return;
       }
       Navigator.pop(context);
-      Navigator.of(context).push<void>(
-        MaterialPageRoute(
-          builder: (_) =>
-              FundingInfoScreen(initialMarket: TransferMarket.perp, initialOperation: operation),
-        ),
-      );
+      openFunding(context, operation);
     }
 
     return Column(

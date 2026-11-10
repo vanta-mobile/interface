@@ -139,6 +139,8 @@ abstract final class PortfolioColors {
   static const positive = Color(0xFF0FB276);
   static const inset = Color(0xFF181A1B);
   static const accountScrim = Color(0x66000000);
+  static const menuShadow = Color(0x40000000);
+  static const negativeSurface = Color(0xFF4E210F);
 }
 
 abstract final class PortfolioTypography {
@@ -216,4 +218,33 @@ abstract final class AccountTypography {
     fontWeight: FontWeight.w500,
     color: PortfolioColors.secondary,
   );
+}
+
+/// Deposit and withdrawal form typography from the supplied funding frames.
+abstract final class FundingTypography {
+  static const fieldLabel = TextStyle(
+    fontSize: 10,
+    height: 14 / 10,
+    fontWeight: FontWeight.w500,
+    color: PortfolioColors.secondary,
+  );
+  static const amount = TextStyle(
+    fontSize: 18,
+    height: 26 / 18,
+    fontWeight: FontWeight.w500,
+    color: PortfolioColors.text,
+  );
+  static const value = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w500,
+    color: PortfolioColors.text,
+  );
+  static const note = TextStyle(
+    fontSize: 13,
+    height: 18 / 13,
+    fontWeight: FontWeight.w500,
+    color: PortfolioColors.secondary,
+  );
+  static const tab = TextStyle(fontSize: 12, height: 18 / 12, fontWeight: FontWeight.w500);
 }

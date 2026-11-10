@@ -11498,6 +11498,342 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trading authorization is missing or expired. Enable trading to read this account without repeated wallet prompts.'**
   String get authorizationRequired;
+
+  /// No description provided for @fundingAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get fundingAccountTitle;
+
+  /// No description provided for @fundingDepositTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit to'**
+  String get fundingDepositTo;
+
+  /// No description provided for @fundingWithdrawFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw from'**
+  String get fundingWithdrawFrom;
+
+  /// No description provided for @fundingNetworkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Network'**
+  String get fundingNetworkLabel;
+
+  /// No description provided for @fundingAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get fundingAmountLabel;
+
+  /// No description provided for @fundingBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get fundingBalance;
+
+  /// No description provided for @fundingMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Max'**
+  String get fundingMax;
+
+  /// No description provided for @fundingNetworkBnb.
+  ///
+  /// In en, this message translates to:
+  /// **'BNB Chain'**
+  String get fundingNetworkBnb;
+
+  /// No description provided for @fundingNetworkEthereum.
+  ///
+  /// In en, this message translates to:
+  /// **'Ethereum'**
+  String get fundingNetworkEthereum;
+
+  /// No description provided for @fundingNetworkArbitrum.
+  ///
+  /// In en, this message translates to:
+  /// **'Arbitrum'**
+  String get fundingNetworkArbitrum;
+
+  /// No description provided for @fundingSelectNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Select network'**
+  String get fundingSelectNetwork;
+
+  /// No description provided for @fundingSelectAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Select asset'**
+  String get fundingSelectAsset;
+
+  /// No description provided for @fundingDepositTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated deposit time for {network} is 1–3 minutes.'**
+  String fundingDepositTime(String network);
+
+  /// No description provided for @fundingApproveAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve {asset}'**
+  String fundingApproveAsset(String asset);
+
+  /// No description provided for @fundingGasInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient {asset} for network fees. Enter a smaller amount.'**
+  String fundingGasInsufficient(String asset);
+
+  /// No description provided for @fundingConfirmDepositTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm deposit in wallet'**
+  String get fundingConfirmDepositTitle;
+
+  /// No description provided for @fundingConfirmDepositHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the transaction in your wallet to continue.'**
+  String get fundingConfirmDepositHint;
+
+  /// No description provided for @fundingApproveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve {asset} in wallet'**
+  String fundingApproveTitle(String asset);
+
+  /// No description provided for @fundingApproveSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending permission'**
+  String get fundingApproveSummary;
+
+  /// No description provided for @fundingApproveHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve {asset} spending in your wallet before making a deposit.'**
+  String fundingApproveHint(String asset);
+
+  /// No description provided for @fundingConfirmWithdrawTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm withdrawal in wallet'**
+  String get fundingConfirmWithdrawTitle;
+
+  /// No description provided for @fundingConfirmWithdrawHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign the withdrawal request in your wallet to continue.'**
+  String get fundingConfirmWithdrawHint;
+
+  /// No description provided for @fundingOpenWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Open wallet'**
+  String get fundingOpenWallet;
+
+  /// No description provided for @fundingTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get fundingTransactions;
+
+  /// No description provided for @fundingFuturesAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} · Futures Account'**
+  String fundingFuturesAmount(String amount);
+
+  /// No description provided for @fundingDepositProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit processing'**
+  String get fundingDepositProcessing;
+
+  /// No description provided for @fundingStepChainPending.
+  ///
+  /// In en, this message translates to:
+  /// **'On-chain transaction'**
+  String get fundingStepChainPending;
+
+  /// No description provided for @fundingStepChainConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'On-chain transaction confirmed'**
+  String get fundingStepChainConfirmed;
+
+  /// No description provided for @fundingStepCrediting.
+  ///
+  /// In en, this message translates to:
+  /// **'Crediting account'**
+  String get fundingStepCrediting;
+
+  /// No description provided for @fundingStepCreditingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your account to be credited.'**
+  String get fundingStepCreditingHint;
+
+  /// No description provided for @fundingTrackHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You can close this page and continue tracking in Transactions.'**
+  String get fundingTrackHint;
+
+  /// No description provided for @fundingViewTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'View Transactions'**
+  String get fundingViewTransactions;
+
+  /// No description provided for @fundingWithdrawable.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawable Amount'**
+  String get fundingWithdrawable;
+
+  /// No description provided for @fundingTransactionFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction Fee'**
+  String get fundingTransactionFee;
+
+  /// No description provided for @fundingFeeWithUsd.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} ({usd} USD)'**
+  String fundingFeeWithUsd(String amount, String usd);
+
+  /// No description provided for @fundingViewHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'View History in Portfolio'**
+  String get fundingViewHistory;
+
+  /// No description provided for @fundingWithdrawChainHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposited tokens must be withdrawn on the same chain. USDT profits can use any supported chain.'**
+  String get fundingWithdrawChainHint;
+
+  /// No description provided for @fundingWithdrawProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal processing'**
+  String get fundingWithdrawProcessing;
+
+  /// No description provided for @fundingWithdrawCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal completed'**
+  String get fundingWithdrawCompleted;
+
+  /// No description provided for @fundingWithdrawFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal failed'**
+  String get fundingWithdrawFailedTitle;
+
+  /// No description provided for @fundingStepNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Network confirmation'**
+  String get fundingStepNetwork;
+
+  /// No description provided for @fundingStepNetworkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for network confirmation.'**
+  String get fundingStepNetworkHint;
+
+  /// No description provided for @fundingStepWithdrawCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal completion'**
+  String get fundingStepWithdrawCompletion;
+
+  /// No description provided for @fundingStepWithdrawCompletionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the withdrawal to complete.'**
+  String get fundingStepWithdrawCompletionHint;
+
+  /// No description provided for @fundingWithdrawalId.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal ID'**
+  String get fundingWithdrawalId;
+
+  /// No description provided for @fundingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get fundingStatus;
+
+  /// No description provided for @fundingStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get fundingStatusFailed;
+
+  /// No description provided for @fundingWithdrawFailedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This withdrawal was not completed. Check its final status before trying again.'**
+  String get fundingWithdrawFailedHint;
+
+  /// No description provided for @fundingRebalanceRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance to withdraw'**
+  String get fundingRebalanceRequired;
+
+  /// No description provided for @fundingUsdtBalanceValue.
+  ///
+  /// In en, this message translates to:
+  /// **'USDT balance: {amount}'**
+  String fundingUsdtBalanceValue(String amount);
+
+  /// No description provided for @fundingRebalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance'**
+  String get fundingRebalance;
+
+  /// No description provided for @fundingRebalanceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use other assets to clear the USDT deficit.'**
+  String get fundingRebalanceHint;
+
+  /// No description provided for @fundingUsdtBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'USDT balance'**
+  String get fundingUsdtBalance;
+
+  /// No description provided for @fundingRebalanceConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Rebalance'**
+  String get fundingRebalanceConfirm;
+
+  /// No description provided for @fundingRebalancing.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalancing…'**
+  String get fundingRebalancing;
+
+  /// No description provided for @fundingRebalancingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating your balance. Please wait.'**
+  String get fundingRebalancingHint;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

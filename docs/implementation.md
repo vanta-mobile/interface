@@ -1,3 +1,15 @@
+## 2026-11-10 Portfolio 充值与提现（设计稿 234:13293）
+
+按 Figma「04｜Portfolio｜充值与提现」实现新的 `FundingScreen`（标题 Account，右上资金记录与关闭；Deposit／Withdraw 分段切换），Portfolio 主页及资产详情的充值／提现按钮改为打开该页面。原工程化 `FundingInfoScreen` 仍供 Aster／Spot 账户面板入口使用，未删除。业务全部复用既有 Riverpod 控制器与仓库（钱包快照、Gas、ERC-20 授权、充值提交及回执、提现、Rebalance、资金记录），页面只收集意图；新增 `funding_flow_provider.dart` 编排自动读取与回执轮询，`WithdrawalController.submit` 把“准备 + 签名”合为钱包一步。
+
+充值：账户字段只读（当前账户 · Futures）；网络、币种为原位下拉（点空白收起），切换时保留金额；下拉高度限制在安全区与键盘之外，选项较多时在菜单内滚动，下方空间不足且上方更大时向上展开；同一网络原生币排在首位。只提供 `normal` 路由且有已文档化 vault 的链。页面可见时自动读取公开 RPC 余额／授权（失败后等下拉刷新），金额合法后 400ms 防抖做公开 Gas 估算；原生币 Max 填入全部余额，Gas 不足时显示“Insufficient BNB for network fees…”并禁用按钮。授权不足时主按钮为 Approve USDT；钱包确认页 Open wallet 才派发已准备的交易，Cancel／关闭／系统返回只停止等待或取消评审，不声称钱包弹窗已撤回；钱包拒绝回原表单且不提示错误。授权发出后回表单，按钮保持加载，页面每 6 秒检查已有哈希记录的公开回执，完成后重新读取授权再显示 Deposit。充值发出后进入处理页：链上回执成功（≥2 确认）后第一步打勾，第二步“Crediting account”仅在签名资金记录精确匹配后完成，不把钱包返回或链上成功当作入账。设备授权有效时，链上成功后每 10 秒经授权读取资金记录核对入账，完成即停；无授权时不自动签名，下拉刷新只重查链上回执。已看到的链上成功不因后续核对失败而回退显示。设计无平台剩余额度确认，原勾选框不再出现，`acknowledgeUnknownLimits` 由确认页代替；目录缺最低充值额时显示既有“最低充值额未知”并禁止提交（设计无手填最低额入口）。既有授权／充值恢复提示仅在存在待处理记录时出现在表单顶部。
+
+提现：仅主账户可提交，子账户按钮显示既有“仅主账户可提现”并禁用。只提供 `autoWithdraw` 路由。可提现数量与 Rebalance 检查只在设备授权有效时于进入页面自动读取，否则不触发钱包签名，显示 —；下拉刷新只重读已显示的快照或在设备授权有效时读取。本地校验与仓库一致的金额格式、精度及不超过已读可提现数量；平台手续费按共享格式化显示资产及 USD。Withdraw 进入钱包签名页，Open wallet 后才读取资格／限额／手续费并签名；若新手续费与表单显示值不同，在任何签名前停止并回表单提示手续费已变化。返回请求编号后进入处理页；设备授权有效时进入即读取并每 10 秒刷新资金记录，按请求编号匹配到成功或失败后停止，无授权时仅下拉刷新；资金记录按请求编号精确匹配为失败时显示 Failed 卡片（编号可复制）及警告。多资产模式 USDT 为负时底部显示 Rebalance 提示并拦截提现；底部弹窗 Confirm Rebalance 使用新鲜账户读取后签名，处理中不可关闭，USDT 不再为负后关闭弹窗回到原表单，失败保留弹窗并显示原因。
+
+设计组件与资源：BNB 24px 与 Warning 图标从设计源下载为 `assets/portfolio/funding-bnb.svg`、`funding-warning.svg`；历史、关闭、信息、勾选图标与 USDT 位图经逐字节／像素比对与现有资源一致后复用，ChevronDown 复用同一路径并以设计灰色着色。颜色／字体新增 `PortfolioColors.menuShadow`、`negativeSurface` 与 `FundingTypography`；`AccountsPage` 新增 `showBack`，`AccountAction` 新增 `outlined` 与 `fadeDisabled`（设计中禁用主按钮为原色 40% 不透明度），默认值不改变账户管理页面。中英文新增 56 条文案。
+
+验证：新增 `funding_deposit_screen_test`（3）、`funding_withdraw_screen_test`（5，含 320×640 中文与 844×390 横屏 1.5 倍字号）及 16 张 `funding_design_test` 设计截图，均以替身仓库运行，另有设备授权下充值入账与提现终态轮询（未到链上成功不读入账、终态后停止）2 项；长币种列表在 393×640 与 844×390 下不超出屏幕并可滚动选中末项的 2 项回归；所有轮询在 App 非前台时暂停、离开页面即停止。覆盖 Gas 不足、拒签／取消不重发、授权回执轮询、提现手续费变化不签名、失败编号、Rebalance 完成回表单；渲染截图已逐张与 Figma 帧对照。本轮改动文件格式检查无改动；`dart analyze --fatal-infos lib test` 仅余并行会话未完成文件中的 2 条 info；funding／portfolio／subaccounts 3871 项及完整回归 5247 项通过（含既有账户设计截图）。Android arm64 Release 构建成功，APK 47,495,801 bytes，SHA-256 `a52449158d7df078e0b75ffe637242ea468389177f775eca6e30e6ea19675256`；首次构建因同时运行测试使插件注册混入 integration_test 而失败，`flutter pub get` 后单独重建通过。日志：/tmp/vanta-funding-full-tests.log、/tmp/vanta-funding-android-build.log。未安装到设备，未发起真实钱包／私有／资金请求；Linux 无 macOS／Xcode，iOS 未构建。已知限制：确认页 Open wallet 只能派发一次请求，不提供“重新唤起钱包 App”的能力（现有钱包连接层无此接口）；上一笔已停止等待但仍在仓库中执行的提现，会让新的确认页按钮在其结束前无反应。
+
 ## 2026-11-06 本地提交核验
 
 用户在要求停止开发后，进一步明确授权先提交代码。本次只整理并提交现有改动，不恢复功能开发、不推送或发布；此前“不提交”的描述保留其历史增量语境。

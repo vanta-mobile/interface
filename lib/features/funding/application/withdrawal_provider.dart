@@ -1,6 +1,7 @@
 import '../../../core/errors/api_error_details.dart';
 import '../../../core/network/network_providers.dart';
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/application/wallet_operation_provider.dart';
@@ -105,6 +106,19 @@ class WithdrawalController extends Notifier<WithdrawalState> {
     } finally {
       _working = false;
     }
+  }
+
+  /// Prepares and signs in one wallet step only when the fresh platform fee
+  /// equals the fee the user saw; a changed fee stops before any signature.
+  Future<void> submit(DepositWalletQuery query, String amount, {required Decimal shownFee}) async {
+    await prepare(query, amount);
+    final review = state.review;
+    if (!ref.mounted || review == null) return;
+    if (review.fee.assetFee != shownFee) {
+      state = const WithdrawalState(failure: 'withdrawalFeeChanged');
+      return;
+    }
+    await confirm(review);
   }
 
   Future<void> confirm(WithdrawalReview review) async {

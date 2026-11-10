@@ -6560,4 +6560,191 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authorizationRequired =>
       'Trading authorization is missing or expired. Enable trading to read this account without repeated wallet prompts.';
+
+  @override
+  String get fundingAccountTitle => 'Account';
+
+  @override
+  String get fundingDepositTo => 'Deposit to';
+
+  @override
+  String get fundingWithdrawFrom => 'Withdraw from';
+
+  @override
+  String get fundingNetworkLabel => 'Network';
+
+  @override
+  String get fundingAmountLabel => 'Amount';
+
+  @override
+  String get fundingBalance => 'Balance';
+
+  @override
+  String get fundingMax => 'Max';
+
+  @override
+  String get fundingNetworkBnb => 'BNB Chain';
+
+  @override
+  String get fundingNetworkEthereum => 'Ethereum';
+
+  @override
+  String get fundingNetworkArbitrum => 'Arbitrum';
+
+  @override
+  String get fundingSelectNetwork => 'Select network';
+
+  @override
+  String get fundingSelectAsset => 'Select asset';
+
+  @override
+  String fundingDepositTime(String network) {
+    return 'Estimated deposit time for $network is 1–3 minutes.';
+  }
+
+  @override
+  String fundingApproveAsset(String asset) {
+    return 'Approve $asset';
+  }
+
+  @override
+  String fundingGasInsufficient(String asset) {
+    return 'Insufficient $asset for network fees. Enter a smaller amount.';
+  }
+
+  @override
+  String get fundingConfirmDepositTitle => 'Confirm deposit in wallet';
+
+  @override
+  String get fundingConfirmDepositHint => 'Confirm the transaction in your wallet to continue.';
+
+  @override
+  String fundingApproveTitle(String asset) {
+    return 'Approve $asset in wallet';
+  }
+
+  @override
+  String get fundingApproveSummary => 'Spending permission';
+
+  @override
+  String fundingApproveHint(String asset) {
+    return 'Approve $asset spending in your wallet before making a deposit.';
+  }
+
+  @override
+  String get fundingConfirmWithdrawTitle => 'Confirm withdrawal in wallet';
+
+  @override
+  String get fundingConfirmWithdrawHint =>
+      'Sign the withdrawal request in your wallet to continue.';
+
+  @override
+  String get fundingOpenWallet => 'Open wallet';
+
+  @override
+  String get fundingTransactions => 'Transactions';
+
+  @override
+  String fundingFuturesAmount(String amount) {
+    return '$amount · Futures Account';
+  }
+
+  @override
+  String get fundingDepositProcessing => 'Deposit processing';
+
+  @override
+  String get fundingStepChainPending => 'On-chain transaction';
+
+  @override
+  String get fundingStepChainConfirmed => 'On-chain transaction confirmed';
+
+  @override
+  String get fundingStepCrediting => 'Crediting account';
+
+  @override
+  String get fundingStepCreditingHint => 'Waiting for your account to be credited.';
+
+  @override
+  String get fundingTrackHint => 'You can close this page and continue tracking in Transactions.';
+
+  @override
+  String get fundingViewTransactions => 'View Transactions';
+
+  @override
+  String get fundingWithdrawable => 'Withdrawable Amount';
+
+  @override
+  String get fundingTransactionFee => 'Transaction Fee';
+
+  @override
+  String fundingFeeWithUsd(String amount, String usd) {
+    return '$amount ($usd USD)';
+  }
+
+  @override
+  String get fundingViewHistory => 'View History in Portfolio';
+
+  @override
+  String get fundingWithdrawChainHint =>
+      'Deposited tokens must be withdrawn on the same chain. USDT profits can use any supported chain.';
+
+  @override
+  String get fundingWithdrawProcessing => 'Withdrawal processing';
+
+  @override
+  String get fundingWithdrawCompleted => 'Withdrawal completed';
+
+  @override
+  String get fundingWithdrawFailedTitle => 'Withdrawal failed';
+
+  @override
+  String get fundingStepNetwork => 'Network confirmation';
+
+  @override
+  String get fundingStepNetworkHint => 'Waiting for network confirmation.';
+
+  @override
+  String get fundingStepWithdrawCompletion => 'Withdrawal completion';
+
+  @override
+  String get fundingStepWithdrawCompletionHint => 'Waiting for the withdrawal to complete.';
+
+  @override
+  String get fundingWithdrawalId => 'Withdrawal ID';
+
+  @override
+  String get fundingStatus => 'Status';
+
+  @override
+  String get fundingStatusFailed => 'Failed';
+
+  @override
+  String get fundingWithdrawFailedHint =>
+      'This withdrawal was not completed. Check its final status before trying again.';
+
+  @override
+  String get fundingRebalanceRequired => 'Rebalance to withdraw';
+
+  @override
+  String fundingUsdtBalanceValue(String amount) {
+    return 'USDT balance: $amount';
+  }
+
+  @override
+  String get fundingRebalance => 'Rebalance';
+
+  @override
+  String get fundingRebalanceHint => 'Use other assets to clear the USDT deficit.';
+
+  @override
+  String get fundingUsdtBalance => 'USDT balance';
+
+  @override
+  String get fundingRebalanceConfirm => 'Confirm Rebalance';
+
+  @override
+  String get fundingRebalancing => 'Rebalancing…';
+
+  @override
+  String get fundingRebalancingHint => 'Updating your balance. Please wait.';
 }

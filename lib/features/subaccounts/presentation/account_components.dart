@@ -26,6 +26,7 @@ class AccountsPage extends StatelessWidget {
     this.onRefresh,
     this.onBack,
     this.canPop = true,
+    this.showBack = true,
   });
   final String title;
   final List<Widget> children, footer;
@@ -33,9 +34,12 @@ class AccountsPage extends StatelessWidget {
   final Future<void> Function()? onRefresh;
   final VoidCallback? onBack;
   final bool canPop;
+
+  /// Pages closed from an action button can stay poppable without a back icon.
+  final bool showBack;
   @override
   Widget build(BuildContext context) {
-    final direction = Directionality.of(context);
+    final direction = Directionality.of(context), back = canPop && showBack;
     final titleLayout =
         TextPainter(
           text: TextSpan(
@@ -48,7 +52,7 @@ class AccountsPage extends StatelessWidget {
         )..layout(
           maxWidth:
               (MediaQuery.sizeOf(context).width -
-                      (canPop ? 48 : 16) -
+                      (back ? 48 : 16) -
                       (actions?.length ?? 0) * 48 -
                       16)
                   .clamp(80, 600),
@@ -80,15 +84,15 @@ class AccountsPage extends StatelessWidget {
           centerTitle: false,
           titleSpacing: 0,
           title: Text(title, style: AccountTypography.heading, maxLines: 2),
-          automaticallyImplyLeading: canPop,
-          leading: canPop
+          automaticallyImplyLeading: back,
+          leading: back
               ? IconButton(
                   tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                   onPressed: onBack ?? () => Navigator.maybePop(context),
                   icon: const PortfolioIcon('back.svg', size: 24),
                 )
               : const SizedBox(width: 16),
-          leadingWidth: canPop ? 48 : 16,
+          leadingWidth: back ? 48 : 16,
           actions: actions,
         ),
         body: SafeArea(
@@ -130,42 +134,54 @@ class AccountAction extends StatelessWidget {
     this.busy = false,
     this.primary = true,
     this.danger = false,
+    this.outlined = false,
+    this.fadeDisabled = false,
   });
   final String label;
   final VoidCallback? onPressed;
-  final bool busy, primary, danger;
+  final bool busy, primary, danger, outlined;
+
+  /// Funding frames keep a disabled primary in its own colors at 40% opacity.
+  final bool fadeDisabled;
   @override
-  Widget build(BuildContext context) => FilledButton(
-    onPressed: busy ? null : onPressed,
-    style: FilledButton.styleFrom(
-      minimumSize: const Size(0, 48),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      backgroundColor: danger && primary
-          ? PortfolioColors.negative
-          : primary
-          ? PortfolioColors.accent
-          : PortfolioColors.card,
-      foregroundColor: danger && !primary
-          ? PortfolioColors.negative
-          : primary && !danger
-          ? PortfolioColors.onAccent
-          : PortfolioColors.text,
-      side: danger && !primary ? const BorderSide(color: PortfolioColors.line) : null,
-      disabledBackgroundColor: PortfolioColors.card,
-      disabledForegroundColor: PortfolioColors.secondary,
-      textStyle: Theme.of(context).textTheme.labelLarge?.merge(PortfolioTypography.section),
-    ),
-    child: busy
-        ? Semantics(
-            label: label,
-            child: const SizedBox.square(
-              dimension: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          )
-        : Text(label, textAlign: TextAlign.center),
-  );
+  Widget build(BuildContext context) {
+    final faded = fadeDisabled && primary && !danger && (busy || onPressed == null);
+    final button = FilledButton(
+      onPressed: busy ? null : onPressed,
+      style: FilledButton.styleFrom(
+        minimumSize: const Size(0, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: danger && primary
+            ? PortfolioColors.negative
+            : primary
+            ? PortfolioColors.accent
+            : PortfolioColors.card,
+        foregroundColor: danger && !primary
+            ? PortfolioColors.negative
+            : primary && !danger
+            ? PortfolioColors.onAccent
+            : PortfolioColors.text,
+        side: danger && !primary || outlined ? const BorderSide(color: PortfolioColors.line) : null,
+        disabledBackgroundColor: faded ? PortfolioColors.accent : PortfolioColors.card,
+        disabledForegroundColor: faded ? PortfolioColors.onAccent : PortfolioColors.secondary,
+        textStyle: Theme.of(context).textTheme.labelLarge?.merge(PortfolioTypography.section),
+      ),
+      child: busy
+          ? Semantics(
+              label: label,
+              child: SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: faded ? PortfolioColors.onAccent : null,
+                ),
+              ),
+            )
+          : Text(label, textAlign: TextAlign.center),
+    );
+    return faded ? Opacity(opacity: 0.4, child: button) : button;
+  }
 }
 
 class AccountNotice extends StatelessWidget {

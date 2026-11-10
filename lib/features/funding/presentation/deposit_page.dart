@@ -1,0 +1,328 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/errors/error_text.dart';
+import '../../../l10n/generated/app_localizations.dart';
+import '../../auth/application/auth_provider.dart';
+import '../../subaccounts/application/account_entries_provider.dart';
+import '../../subaccounts/presentation/account_components.dart';
+import '../../trade/presentation/widgets/account_sheet.dart';
+import '../application/deposit_approval_provider.dart';
+import '../application/deposit_gas_provider.dart';
+import '../application/deposit_submission_provider.dart';
+import '../application/deposit_wallet_provider.dart';
+import '../application/funding_catalog_provider.dart';
+import '../application/funding_flow_provider.dart';
+import '../domain/deposit_wallet.dart';
+import '../domain/funding_catalog.dart';
+import '../domain/transfer_history.dart';
+import 'deposit_approval_recovery_screen.dart';
+import 'deposit_messages.dart';
+import 'deposit_submission_recovery_screen.dart';
+import 'funding_components.dart';
+import 'funding_dropdown.dart';
+import 'funding_screen.dart';
+import 'funding_selection.dart';
+import 'funding_wallet_screens.dart';
+
+const _depositCatalog = FundingCatalogQuery(TransferMarket.perp, FundingOperation.deposit);
+
+/// Unsupported vault routes are not offered; the transaction builder rejects them.
+bool _depositRoute(FundingAsset a) =>
+    a.routeType == 'normal' && depositVaults.containsKey(a.chainId);
+
+class DepositPage extends ConsumerStatefulWidget {
+  const DepositPage({super.key, required this.selection, required this.onOperation});
+  final FundingSelection selection;
+  final ValueChanged<FundingOperation> onOperation;
+  @override
+  ConsumerState<DepositPage> createState() => _DepositPageState();
+}
+
+class _DepositPageState extends ConsumerState<DepositPage> {
+  FundingSelection get selection => widget.selection;
+  FundingActionError? actionError;
+  Timer? gasTimer;
+  (DepositWalletQuery, String)? estimated;
+  void _selectionChanged() => setState(() {});
+  @override
+  void initState() {
+    super.initState();
+    selection.addListener(_selectionChanged);
+  }
+
+  @override
+  void dispose() {
+    selection.removeListener(_selectionChanged);
+    gasTimer?.cancel();
+    super.dispose();
+  }
+
+  void _edited(DepositWalletQuery? query) {
+    setState(() => actionError = null);
+    if (query != null) _estimateLater(query);
+  }
+
+  /// Public RPC gas estimate, so a Max native amount reports missing fees early.
+  void _estimateLater(DepositWalletQuery query) {
+    gasTimer?.cancel();
+    gasTimer = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      final amount = selection.amount.text.trim(), wallet = ref.read(depositWalletProvider(query));
+      final check = checkDepositAmount(
+        input: amount,
+        query: query,
+        snapshot: wallet.account,
+        stale: wallet.stale,
+      );
+      if (check.units == null || wallet.busy) return;
+      setState(() => estimated = (query, amount));
+      unawaited(ref.read(depositGasProvider(query).notifier).estimate(amount));
+    });
+  }
+
+  Future<void> _deposit(DepositWalletQuery query) async {
+    setState(() => actionError = null);
+    final controller = ref.read(depositSubmissionProvider.notifier);
+    // Platform caps are not readable here; the confirm screen is the review.
+    final review = await controller.prepare(
+      query,
+      selection.amount.text.trim(),
+      acknowledgeUnknownLimits: true,
+    );
+    if (!mounted) return;
+    final state = ref.read(depositSubmissionProvider);
+    if (review == null) {
+      if (state.failure case final key?) {
+        setState(() => actionError = FundingActionError(key, state.errorDetails));
+      }
+      return;
+    }
+    final error = await Navigator.of(context).push<FundingActionError>(
+      MaterialPageRoute(builder: (_) => DepositConfirmScreen(review: review)),
+    );
+    if (mounted && error != null) setState(() => actionError = error);
+  }
+
+  Future<void> _approve(DepositWalletQuery query) async {
+    setState(() => actionError = null);
+    final controller = ref.read(depositApprovalProvider.notifier);
+    final review = await controller.prepare(query, selection.amount.text.trim());
+    if (!mounted) return;
+    final state = ref.read(depositApprovalProvider);
+    if (review == null) {
+      if (state.failure case final key?) {
+        setState(() => actionError = FundingActionError(key, state.errorDetails));
+      }
+      return;
+    }
+    final error = await Navigator.of(context).push<FundingActionError>(
+      MaterialPageRoute(builder: (_) => ApprovalConfirmScreen(review: review)),
+    );
+    if (mounted && error != null) setState(() => actionError = error);
+  }
+
+  Future<void> _refresh(DepositWalletQuery? query) async {
+    await Future.wait([
+      ref.read(fundingCatalogProvider(_depositCatalog).notifier).refresh(),
+      if (query != null) ref.read(depositWalletProvider(query).notifier).refresh(),
+    ]);
+    if (mounted && query != null) _estimateLater(query);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final catalog = ref.watch(fundingCatalogProvider(_depositCatalog));
+    ref.watch(depositReceiptWatchProvider);
+    final choice = FundingChoice.of(
+      catalog.catalog?.assets.where(_depositRoute) ?? const [],
+      selection,
+    );
+    final asset = choice.asset;
+    final query = asset == null
+        ? null
+        : DepositWalletQuery(market: TransferMarket.perp, asset: asset);
+    final model = query == null ? null : _model(query);
+    final catalogError = catalog.failureKey == null || catalog.catalog != null
+        ? null
+        : apiErrorText(context, catalog.failureKey!, catalog.errorDetails);
+    return AccountsPage(
+      title: l.fundingAccountTitle,
+      showBack: false,
+      actions: fundingHeaderActions(context),
+      onRefresh: () => _refresh(query),
+      footer: [_footer(l, query, model)],
+      children: [
+        FundingTabs(operation: FundingOperation.deposit, onChanged: widget.onOperation),
+        const SizedBox(height: 12),
+        const DepositApprovalRecoveryNotice(),
+        const DepositSubmissionRecoveryNotice(),
+        FundingField(
+          label: l.fundingDepositTo,
+          value: fundingAccountText(l, ref.watch(activeAccountEntryProvider)),
+        ),
+        const SizedBox(height: 12),
+        _network(l, choice, query),
+        const SizedBox(height: 12),
+        _amount(choice, query, model),
+        if (model?.error ?? catalogError case final error?) ...[
+          const SizedBox(height: 12),
+          FundingError(error),
+        ],
+        // The 44px Max target keeps the designed 28px row on 12px gaps.
+        const SizedBox(height: 4),
+        FundingBalanceRow(
+          label: l.fundingBalance,
+          value: model?.balance,
+          loading: catalog.loading || (model?.loading ?? false),
+          onMax: model?.max == null
+              ? null
+              : () {
+                  selection.amount.text = model!.max!;
+                  _edited(query);
+                },
+        ),
+        const SizedBox(height: 4),
+        if (choice.chainId case final chain?)
+          FundingGuidance(l.fundingDepositTime(fundingNetworkName(l, chain))),
+      ],
+    );
+  }
+
+  Widget _network(AppLocalizations l, FundingChoice choice, DepositWalletQuery? query) =>
+      FundingDropdown<int>(
+        options: [
+          for (final id in choice.chains)
+            FundingOption(id, fundingNetworkName(l, id), fundingNativeSymbol(id)),
+        ],
+        selected: choice.chainId,
+        onSelected: (id) {
+          selection.select(chainId: id);
+          _edited(null);
+        },
+        builder: (context, open, toggle) => FundingField(
+          key: const Key('funding-network'),
+          label: l.fundingNetworkLabel,
+          value: choice.chainId == null ? '—' : fundingNetworkName(l, choice.chainId!),
+          icon: choice.chainId == null ? null : fundingNativeSymbol(choice.chainId!),
+          open: open,
+          onTap: toggle,
+        ),
+      );
+
+  Widget _amount(FundingChoice choice, DepositWalletQuery? query, _DepositModel? model) {
+    final asset = choice.asset;
+    return FundingDropdown<String>(
+      options: [for (final a in choice.assets) FundingOption(a.asset, a.asset, a.asset)],
+      selected: asset?.asset,
+      onSelected: (value) {
+        selection.select(asset: value);
+        _edited(null);
+      },
+      builder: (context, open, toggle) => FundingAmountField(
+        controller: selection.amount,
+        decimals: asset?.decimals ?? 0,
+        asset: asset?.asset ?? '—',
+        enabled: asset != null,
+        error: model?.amountError ?? false,
+        onChanged: (_) => _edited(query),
+        assetSelector: FundingAssetSelector(asset: asset?.asset ?? '—', open: open, onTap: toggle),
+      ),
+    );
+  }
+
+  Widget _footer(AppLocalizations l, DepositWalletQuery? query, _DepositModel? model) {
+    final identity = ref.watch(authProvider.select((s) => s.identity));
+    final approving = model?.approving ?? false, approval = model?.needsApproval ?? false;
+    final ready = query != null && model!.ready && !ref.watch(authProvider).busy;
+    return AccountAction(
+      fadeDisabled: true,
+      key: const Key('funding-deposit-submit'),
+      label: approval ? l.fundingApproveAsset(query!.asset.asset) : l.fundingDeposit,
+      busy: approving || (model?.preparing ?? false),
+      onPressed: identity?.walletAddress == null
+          ? () => showAccountSheet(context)
+          : !ready
+          ? null
+          : approval
+          ? () => _approve(query)
+          : () => _deposit(query),
+    );
+  }
+
+  _DepositModel _model(DepositWalletQuery query) {
+    ref.watch(depositWalletAutoReadProvider(query));
+    final wallet = ref.watch(depositWalletProvider(query)),
+        gas = ref.watch(depositGasProvider(query));
+    ref.listen(depositWalletProvider(query).select((s) => s.account), (_, _) {
+      _estimateLater(query);
+    });
+    ref.listen(pendingDepositApprovalsProvider.select((r) => r.length), (before, after) {
+      if ((before ?? 0) > after) {
+        unawaited(ref.read(depositWalletProvider(query).notifier).refresh());
+      }
+    });
+    final amount = selection.amount.text.trim();
+    final check = checkDepositAmount(
+      input: amount,
+      query: query,
+      snapshot: wallet.account,
+      stale: wallet.stale,
+    );
+    final gasFailure = estimated == (query, amount) ? gas.failure : null;
+    final approving = ref
+        .watch(pendingDepositApprovalsProvider)
+        .any(
+          (r) =>
+              r.query.asset.asset == query.asset.asset &&
+              r.query.asset.chainId == query.asset.chainId,
+        );
+    final transient = {'depositReadRequired', 'depositReadStale'}.contains(check.errorKey);
+    final amountError = check.errorKey != null && !transient || gasFailure != null;
+    String? error;
+    if (actionError case final e?) {
+      error = apiErrorText(context, e.key, e.details, fallbackText: depositMessage(context, e.key));
+    } else if (check.errorKey case final key? when !transient) {
+      error = depositMessage(context, key);
+    } else if (gasFailure?.key == 'depositGasBalanceInsufficient') {
+      error = AppLocalizations.of(context)
+          .fundingGasInsufficient(fundingNativeSymbol(query.asset.chainId));
+    } else if (gasFailure ?? (wallet.account == null ? wallet.failure : null) case final f?) {
+      error = apiErrorText(context, f.key, f.details, fallbackText: depositMessage(context, f.key));
+    }
+    final snapshot = wallet.account?.query.sameAsset(query) == true ? wallet.account : null;
+    return _DepositModel(
+      balance: snapshot == null
+          ? null
+          : fundingAmountText(snapshot.assetBalance.toString(), query.asset.asset),
+      max: snapshot == null || wallet.stale ? null : snapshot.assetBalance.toString(),
+      loading: wallet.busy,
+      error: error,
+      amountError: amountError,
+      approving:
+          approving || ref.watch(depositApprovalProvider).step == DepositApprovalStep.preparing,
+      needsApproval: approving || check.allowanceSufficient == false,
+      preparing: ref.watch(depositSubmissionProvider).step == DepositSubmissionStep.preparing,
+      ready: check.units != null && !amountError && !wallet.busy,
+    );
+  }
+}
+
+class _DepositModel {
+  const _DepositModel({
+    required this.balance,
+    required this.max,
+    required this.loading,
+    required this.error,
+    required this.amountError,
+    required this.approving,
+    required this.needsApproval,
+    required this.preparing,
+    required this.ready,
+  });
+  final String? balance, max, error;
+  final bool loading, amountError, approving, needsApproval, preparing, ready;
+}

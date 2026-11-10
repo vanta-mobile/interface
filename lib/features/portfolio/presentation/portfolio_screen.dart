@@ -5,8 +5,7 @@ import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../funding/domain/funding_catalog.dart';
-import '../../funding/domain/transfer_history.dart';
-import '../../funding/presentation/funding_info_screen.dart';
+import '../../funding/presentation/funding_screen.dart';
 import '../../subaccounts/presentation/account_transfer_screen.dart';
 import '../../subaccounts/application/account_entries_provider.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
@@ -165,16 +164,8 @@ class _MoneyActions extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final entry = ref.watch(activeAccountEntryProvider);
     final child = entry != null && entry.roleKnown && !entry.main;
-    void open(FundingOperation operation) => preview
-        ? portfolioPreviewNotice(context)
-        : Navigator.of(context).push<void>(
-            MaterialPageRoute(
-              builder: (_) => FundingInfoScreen(
-                initialMarket: TransferMarket.perp,
-                initialOperation: operation,
-              ),
-            ),
-          );
+    void open(FundingOperation operation) =>
+        preview ? portfolioPreviewNotice(context) : openFunding(context, operation);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

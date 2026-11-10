@@ -2781,5 +2781,120 @@
   },
   "accountsWithdrawMainOnly": "Main account only",
   "authorizationSecureStorageFailed": "The device signing key could not be read or saved securely. Check device secure storage and try again.",
-  "authorizationRequired": "Trading authorization is missing or expired. Enable trading to read this account without repeated wallet prompts."
+  "authorizationRequired": "Trading authorization is missing or expired. Enable trading to read this account without repeated wallet prompts.",
+  "fundingAccountTitle": "Account",
+  "fundingDepositTo": "Deposit to",
+  "fundingWithdrawFrom": "Withdraw from",
+  "fundingNetworkLabel": "Network",
+  "fundingAmountLabel": "Amount",
+  "fundingBalance": "Balance",
+  "fundingMax": "Max",
+  "fundingNetworkBnb": "BNB Chain",
+  "fundingNetworkEthereum": "Ethereum",
+  "fundingNetworkArbitrum": "Arbitrum",
+  "fundingSelectNetwork": "Select network",
+  "fundingSelectAsset": "Select asset",
+  "fundingDepositTime": "Estimated deposit time for {network} is 1–3 minutes.",
+  "@fundingDepositTime": {
+    "placeholders": {
+      "network": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingApproveAsset": "Approve {asset}",
+  "@fundingApproveAsset": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingGasInsufficient": "Insufficient {asset} for network fees. Enter a smaller amount.",
+  "@fundingGasInsufficient": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingConfirmDepositTitle": "Confirm deposit in wallet",
+  "fundingConfirmDepositHint": "Confirm the transaction in your wallet to continue.",
+  "fundingApproveTitle": "Approve {asset} in wallet",
+  "@fundingApproveTitle": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingApproveSummary": "Spending permission",
+  "fundingApproveHint": "Approve {asset} spending in your wallet before making a deposit.",
+  "@fundingApproveHint": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingConfirmWithdrawTitle": "Confirm withdrawal in wallet",
+  "fundingConfirmWithdrawHint": "Sign the withdrawal request in your wallet to continue.",
+  "fundingOpenWallet": "Open wallet",
+  "fundingTransactions": "Transactions",
+  "fundingFuturesAmount": "{amount} · Futures Account",
+  "@fundingFuturesAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingDepositProcessing": "Deposit processing",
+  "fundingStepChainPending": "On-chain transaction",
+  "fundingStepChainConfirmed": "On-chain transaction confirmed",
+  "fundingStepCrediting": "Crediting account",
+  "fundingStepCreditingHint": "Waiting for your account to be credited.",
+  "fundingTrackHint": "You can close this page and continue tracking in Transactions.",
+  "fundingViewTransactions": "View Transactions",
+  "fundingWithdrawable": "Withdrawable Amount",
+  "fundingTransactionFee": "Transaction Fee",
+  "fundingFeeWithUsd": "{amount} ({usd} USD)",
+  "@fundingFeeWithUsd": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "usd": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingViewHistory": "View History in Portfolio",
+  "fundingWithdrawChainHint": "Deposited tokens must be withdrawn on the same chain. USDT profits can use any supported chain.",
+  "fundingWithdrawProcessing": "Withdrawal processing",
+  "fundingWithdrawCompleted": "Withdrawal completed",
+  "fundingWithdrawFailedTitle": "Withdrawal failed",
+  "fundingStepNetwork": "Network confirmation",
+  "fundingStepNetworkHint": "Waiting for network confirmation.",
+  "fundingStepWithdrawCompletion": "Withdrawal completion",
+  "fundingStepWithdrawCompletionHint": "Waiting for the withdrawal to complete.",
+  "fundingWithdrawalId": "Withdrawal ID",
+  "fundingStatus": "Status",
+  "fundingStatusFailed": "Failed",
+  "fundingWithdrawFailedHint": "This withdrawal was not completed. Check its final status before trying again.",
+  "fundingRebalanceRequired": "Rebalance to withdraw",
+  "fundingUsdtBalanceValue": "USDT balance: {amount}",
+  "@fundingUsdtBalanceValue": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "fundingRebalance": "Rebalance",
+  "fundingRebalanceHint": "Use other assets to clear the USDT deficit.",
+  "fundingUsdtBalance": "USDT balance",
+  "fundingRebalanceConfirm": "Confirm Rebalance",
+  "fundingRebalancing": "Rebalancing…",
+  "fundingRebalancingHint": "Updating your balance. Please wait."
 }
