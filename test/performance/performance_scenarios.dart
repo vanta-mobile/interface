@@ -5,12 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
 import 'package:vanta/features/trade/application/providers.dart';
-import 'package:vanta/features/trade/presentation/widgets/order_form.dart';
+import 'package:vanta/features/portfolio/domain/live_order_entry_mode.dart';
+import 'package:vanta/features/auth/presentation/login_screen.dart';
 
 import 'performance_fixture.dart';
 import '../support/workspace_navigation.dart';
 
-const performanceSuiteVersion = 2;
+const performanceSuiteVersion = 3;
 
 final class PerformanceRecorder {
   PerformanceRecorder({required this.recordFrames});
@@ -150,8 +151,8 @@ Future<void> runPerformanceScenarios(
               const [
                 'markets_load',
                 'details_load',
-                'market_buy_preview',
-                'limit_buy_submit',
+                'market_buy_mode',
+                'limit_buy_connect',
               ].contains(id)
           ? traceScenario(id, measured)
           : measured();
@@ -161,11 +162,13 @@ Future<void> runPerformanceScenarios(
     try {
       await measure('home_load', 'Trading workspace load (200 candles)', () async {
         await tester.pumpWidget(market.app);
+        await tester.pumpAndSettle();
+        await selectWorkspace(tester, chart: true);
         await _waitFor(tester, find.byType(KChartWidget));
         await tester.pumpAndSettle();
       });
       await measure('markets_load', 'Market selector load (100 instruments)', () async {
-        await tester.tap(find.text('BTC / USDT').first);
+        await tester.tap(find.byKey(const Key('trade-market-selector')));
         await _waitFor(tester, find.byKey(const Key('market-ETHUSDT')));
         await tester.pumpAndSettle();
       });
@@ -190,93 +193,51 @@ Future<void> runPerformanceScenarios(
       await _unmount(tester, market);
     }
 
+    // Unsigned entry exercises the production form gate. Financial execution
+    // remains covered by signed repository/provider tests, not local demo fills.
     for (final buy in [true, false]) {
       for (final isMarket in [true, false]) {
         final fixture = PerformanceFixture();
         final prefix = '${isMarket ? 'market' : 'limit'}_${buy ? 'buy' : 'sell'}';
-        final label = 'Demo ${isMarket ? 'market' : 'limit'} ${buy ? 'buy' : 'sell'}';
+        final label = 'Unsigned ${isMarket ? 'market' : 'limit'} ${buy ? 'buy' : 'sell'}';
         try {
           await tester.pumpWidget(fixture.app);
           await tester.pumpAndSettle();
           await selectWorkspace(tester, chart: false);
-          fixture.container.read(accountProvider.notifier).connect();
-          await tester.pumpAndSettle();
-          final form = find.byType(OrderForm);
-          final quantity = find.byKey(const Key('quantity-input'));
-          // The Vanta form is inline; measure scrolling it into view, then
-          // switching order type/side. There is no panel-open network request.
+          final quantity = find.byKey(const Key('trade-pending-quantity'));
           await recorder.measureMilestones('${prefix}_open', '$label form access', () async {
             await tester.ensureVisible(quantity);
             await tester.pump();
             expect(quantity.hitTestable(), findsOneWidget);
           }, () => tester.pumpAndSettle());
-          Future<void> select(String text) async {
-            final target = find.descendant(of: form, matching: find.text(text)).first;
-            await tester.ensureVisible(target);
+          await measure('${prefix}_mode', '$label order mode selection', () async {
+            final selector = find.byKey(const Key('trade-order-type'));
+            await tester.ensureVisible(selector);
             await tester.pumpAndSettle();
-            await tester.tap(target);
+            await tester.tap(selector);
             await tester.pumpAndSettle();
-          }
-
-          await select(isMarket ? '市价' : '限价');
-          await select(buy ? '做多' : '做空');
-          if (!isMarket) {
-            final price = find.byKey(const Key('price-input'));
-            await tester.ensureVisible(price);
-            await tester.enterText(price, '79000');
-            await tester.pumpAndSettle();
-          }
-          await tester.ensureVisible(quantity);
-          await tester.pumpAndSettle();
-          await measure('${prefix}_quote', '$label input to local estimate', () async {
-            await tester.enterText(quantity, '0.01');
-            await tester.pumpAndSettle();
-            expect(tester.widget<TextField>(quantity).controller!.text, '0.01');
-            expect(
-              find.descendant(
-                of: form,
-                matching: find.text(isMarket ? '800.00 USDT' : '790.00 USDT'),
-              ),
-              findsOneWidget,
+            await tester.tap(
+              find.widgetWithText(PopupMenuItem<LiveOrderEntryMode>, isMarket ? '市价' : '限价'),
             );
+            await tester.pumpAndSettle();
           });
-          final submit = find.byKey(const Key('submit-order'));
-          await tester.ensureVisible(submit);
-          await tester.pumpAndSettle();
-          await measure('${prefix}_preview', '$label confirmation preview', () async {
-            await tester.tap(submit);
+          await measure('${prefix}_disabled', '$label has no unsigned submission', () async {
+            final submit = find.byKey(Key('trade-pending-${buy ? 'buy' : 'sell'}'));
+            await tester.ensureVisible(submit);
             await tester.pumpAndSettle();
-            expect(find.byKey(const Key('confirm-order')), findsOneWidget);
-            expect(find.text('这是本地模拟订单，不会发送到交易所。'), findsOneWidget);
+            expect(tester.widget<FilledButton>(submit).onPressed, null);
+            expect(tester.widget<TextField>(quantity).enabled, false);
+            expect(fixture.container.read(accountProvider).connected, false);
           });
-          final confirm = find.byKey(const Key('confirm-order'));
-          await tester.ensureVisible(confirm);
-          await tester.pumpAndSettle();
-          await measure('${prefix}_submit', '$label submit to local result', () async {
-            await tester.tap(confirm);
+          await measure('${prefix}_connect', '$label account connection entry', () async {
+            final read = find.byKey(const Key('live-order-read'));
+            await tester.ensureVisible(read);
             await tester.pumpAndSettle();
-            final account = fixture.container.read(accountProvider);
-            final order = (isMarket ? account.positions : account.orders).single;
-            expect(order.draft.buy, buy);
-            expect(order.draft.market, isMarket);
-            expect(order.draft.quantity, '0.01');
-            expect(order.draft.symbol, 'BTCUSDT');
+            await tester.tap(read);
+            await tester.pumpAndSettle();
+            expect(find.byType(LoginScreen), findsOneWidget);
+            expect(find.byKey(const Key('enter-demo')), findsNothing);
           });
-          if (!isMarket) {
-            final orders = find.text('挂单 (1)');
-            await tester.ensureVisible(orders);
-            await tester.pumpAndSettle();
-            await tester.tap(orders);
-            await tester.pumpAndSettle();
-            final cancel = find.widgetWithText(OutlinedButton, '取消').last;
-            await tester.ensureVisible(cancel);
-            await tester.pumpAndSettle();
-            await measure('${prefix}_cancel', '$label cancel to local list update', () async {
-              await tester.tap(cancel);
-              await tester.pumpAndSettle();
-              expect(fixture.container.read(accountProvider).orders, isEmpty);
-            });
-          }
           expect(tester.takeException(), isNull);
         } finally {
           await _unmount(tester, fixture);

@@ -5,7 +5,7 @@ enum AppDestination { futures, markets, explore, portfolio, assistant, points }
 enum FuturesWorkspaceTab { chart, trade }
 
 /// Session navigation only: no wallet settings, order terms or durable drafts.
-/// A new application container opens BTCUSDT (symbolProvider) on the chart.
+/// A new application container opens BTCUSDT (symbolProvider) on the order form.
 final appDestinationProvider = NotifierProvider<AppDestinationController, AppDestination>(
   AppDestinationController.new,
 );
@@ -23,6 +23,6 @@ final futuresWorkspaceTabProvider =
 
 class FuturesWorkspaceTabController extends Notifier<FuturesWorkspaceTab> {
   @override
-  FuturesWorkspaceTab build() => FuturesWorkspaceTab.chart;
+  FuturesWorkspaceTab build() => FuturesWorkspaceTab.trade;
   void select(FuturesWorkspaceTab value) => state = value;
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../domain/live_order_entry_mode.dart';
+import '../../trade/presentation/trade_theme.dart';
 
 String orderEntryModeLabel(AppLocalizations l, LiveOrderEntryMode mode) => switch (mode) {
   LiveOrderEntryMode.limit => l.limit,
@@ -22,14 +23,46 @@ class LiveOrderModeSelector extends StatelessWidget {
     required this.remembered,
     required this.enabled,
     required this.onSelected,
+    this.compact = false,
   });
   final LiveOrderEntryMode selected, remembered;
   final bool enabled;
   final ValueChanged<LiveOrderEntryMode> onSelected;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    if (compact) {
+      return PopupMenuButton<LiveOrderEntryMode>(
+        key: const Key('trade-order-type'),
+        enabled: enabled,
+        tooltip: l.orderModeLabel,
+        initialValue: selected,
+        onSelected: onSelected,
+        itemBuilder: (_) => [
+          for (final mode in LiveOrderEntryMode.values)
+            PopupMenuItem(
+              key: Key('order-mode-option-${mode.name}'),
+              value: mode,
+              enabled: mode != LiveOrderEntryMode.chase && mode != LiveOrderEntryMode.twap,
+              child: Text(orderEntryModeLabel(l, mode)),
+            ),
+        ],
+        child: InputDecorator(
+          decoration: const InputDecoration(
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          ),
+          child: Row(
+            children: [
+              Expanded(child: Text(orderEntryModeLabel(l, selected), style: TradeTypography.body)),
+              const Icon(Icons.arrow_drop_down, size: 18),
+            ],
+          ),
+        ),
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

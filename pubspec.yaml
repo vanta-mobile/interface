@@ -1,7 +1,7 @@
 name: vanta
 description: Vanta mobile perpetual trading experience built with Flutter.
 publish_to: none
-version: 0.0.1+1
+version: 0.0.2+2
 environment:
   sdk: ^3.13.0
 dependencies:
@@ -13,7 +13,7 @@ dependencies:
   # Render the original Figma social and wallet SVG icons.
   flutter_svg: ^2.3.2
   k_chart_plus: ^1.0.4
-  # Offline recovery of wallet EIP-712 signatures; no keys are generated.
+  # EIP-712 verification and device signing keys for authorized account requests.
   web3dart: 3.0.3
   # Privy SIWE requires WalletConnect accounts in EIP-55 checksum form.
   eip55: 1.0.3
@@ -48,6 +48,7 @@ flutter:
   assets:
     - assets/branding/
     - assets/auth/
+    - assets/trade/
     - assets/navigation/
     - assets/portfolio/
   fonts:

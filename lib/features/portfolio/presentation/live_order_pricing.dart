@@ -15,7 +15,9 @@ class LiveOrderPricing extends StatelessWidget {
     required this.selected,
     required this.enabled,
     required this.onChanged,
+    this.postOnly = false,
   });
+  final bool postOnly;
   final LiveOrderPeg? selected;
   final bool enabled;
   final ValueChanged<LiveOrderPeg?> onChanged;
@@ -26,26 +28,38 @@ class LiveOrderPricing extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 12),
-        InputDecorator(
-          decoration: InputDecoration(labelText: l10n.liveOrderPricing),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              key: const Key('live-order-pricing'),
-              isExpanded: true,
-              itemHeight: null,
-              value: selected?.wire ?? 'fixed',
-              items: [
-                DropdownMenuItem(value: 'fixed', child: Text(l10n.attachedEntryFixed)),
-                for (final peg in LiveOrderPeg.values)
-                  DropdownMenuItem(value: peg.wire, child: Text(liveOrderPegLabel(l10n, peg))),
-              ],
-              onChanged: !enabled
-                  ? null
-                  : (wire) =>
-                        onChanged(LiveOrderPeg.values.where((p) => p.wire == wire).singleOrNull),
+        SwitchListTile.adaptive(
+          key: const Key('live-order-bbo'),
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.liveOrderBbo),
+          value: selected != null,
+          onChanged: !enabled
+              ? null
+              : (value) => onChanged(
+                  value ? (postOnly ? LiveOrderPeg.queue : LiveOrderPeg.counterparty) : null,
+                ),
+        ),
+        if (selected != null)
+          InputDecorator(
+            decoration: InputDecoration(labelText: l10n.liveOrderPricing),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                key: const Key('live-order-pricing'),
+                isExpanded: true,
+                itemHeight: null,
+                value: selected?.wire,
+                items: [
+                  for (final peg in LiveOrderPeg.values)
+                    if (!postOnly || peg == LiveOrderPeg.queue)
+                      DropdownMenuItem(value: peg.wire, child: Text(liveOrderPegLabel(l10n, peg))),
+                ],
+                onChanged: !enabled
+                    ? null
+                    : (wire) =>
+                          onChanged(LiveOrderPeg.values.where((p) => p.wire == wire).singleOrNull),
+              ),
             ),
           ),
-        ),
         if (selected != null) Text(l10n.liveOrderPegHint),
       ],
     );

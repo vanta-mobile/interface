@@ -12,15 +12,20 @@ void main() {
     testWidgets('responsive layout ${spec.$1} at text scale ${spec.$2}', (tester) async {
       final container = setup(tester, width: spec.$1, scale: spec.$2);
       await launch(tester, container);
+      await selectWorkspace(tester, chart: true);
       await selectWorkspace(tester, chart: false);
       expect(tester.takeException(), null);
+      expect(find.byType(KChartWidget), findsNothing);
+      await selectWorkspace(tester, chart: true);
       final chart = tester.widget<KChartWidget>(find.byType(KChartWidget));
       expect(chart.secondaryIndicators, isEmpty);
       expect(tester.getSize(find.byKey(const Key('chart-canvas-area'))).height, lessThan(400));
       expect(chart.volHidden, false);
-      await tester.ensureVisible(find.byKey(const Key('submit-order')));
+      await selectWorkspace(tester, chart: false);
+      await tester.ensureVisible(find.byKey(const Key('live-order-read')));
       await tester.pumpAndSettle();
       expect(tester.takeException(), null);
+      await selectWorkspace(tester, chart: true);
       await tester.ensureVisible(find.text('深度图'));
       await tester.tap(find.text('深度图'));
       await tester.pumpAndSettle();
@@ -34,58 +39,34 @@ void main() {
   testWidgets('one-finger vertical gesture over native chart scrolls the page', (tester) async {
     final container = setup(tester);
     await launch(tester, container);
+    await selectWorkspace(tester, chart: true);
     final scroll = tester.state<ScrollableState>(
       find.ancestor(of: find.byType(KChartWidget), matching: find.byType(Scrollable)).first,
     );
-    expect(scroll.position.pixels, 0);
+    final initialOffset = scroll.position.pixels;
     final gesture = await tester.startGesture(const Offset(170, 530));
     await gesture.moveBy(const Offset(0, -220));
     await tester.pump();
     await gesture.up();
     await tester.pumpAndSettle();
-    expect(scroll.position.pixels, greaterThan(150));
+    expect(scroll.position.pixels, greaterThan(initialOffset + 150));
     expect(tester.takeException(), null);
     await tester.pumpWidget(const SizedBox());
   });
-  testWidgets('switch line mode, connect demo, validate and confirm a simulated market order', (
-    tester,
-  ) async {
+  testWidgets('line mode and Trade show real account entry without demo controls', (tester) async {
     final container = setup(tester);
     await launch(tester, container);
+    await selectWorkspace(tester, chart: true);
     await tester.tap(find.byKey(const Key('chart-type')));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(CheckedPopupMenuItem<KChartType>, '折线图'));
     await tester.pumpAndSettle();
     expect(tester.widget<KChartWidget>(find.byType(KChartWidget)).isLine, true);
-    await tester.tap(find.byKey(const Key('navigation-explore')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('portfolio-connect-demo')));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('enter-demo')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('enter-demo')));
-    await tester.pumpAndSettle();
-    expect(container.read(accountProvider).connected, true);
-    await tester.tap(find.byKey(const Key('navigation-futures')));
-    await tester.pumpAndSettle();
     await selectWorkspace(tester, chart: false);
-    await tester.ensureVisible(find.text('市价').first);
-    await tester.tap(find.text('市价').first);
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('submit-order')));
-    await tester.tap(find.byKey(const Key('submit-order')));
-    await tester.pumpAndSettle();
-    expect(find.text('请输入大于 0 且符合该币种数量步长的数量。'), findsOneWidget);
-    await tester.enterText(find.byKey(const Key('quantity-input')), '0.01');
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('submit-order')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('submit-order')));
-    await tester.pumpAndSettle();
-    expect(find.text('这是本地模拟订单，不会发送到交易所。'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('confirm-order')));
-    await tester.pumpAndSettle();
-    expect(container.read(accountProvider).positions, hasLength(1));
+    expect(find.byKey(const Key('submit-order')), findsNothing);
+    expect(find.byKey(const Key('enter-demo')), findsNothing);
+    expect(find.byKey(const Key('trade-live-order')), findsOneWidget);
+    expect(container.read(accountProvider).connected, false);
     expect(tester.takeException(), null);
     await tester.pumpWidget(const SizedBox());
   });
@@ -94,12 +75,13 @@ void main() {
   ) async {
     final container = setup(tester);
     await launch(tester, container);
-    await tester.tap(find.text('BTC / USDT').first);
+    await selectWorkspace(tester, chart: true);
+    await tester.tap(find.byKey(const Key('trade-market-selector')));
     await tester.pumpAndSettle();
     expect(find.text('100 / 100 个永续合约'), findsOneWidget);
     await tester.enterText(find.byType(TextField).last, 'ETH');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ETH / USDT'));
+    await tester.tap(find.byKey(const Key('market-ETHUSDT')));
     await tester.pumpAndSettle();
     expect(container.read(symbolProvider), 'ETHUSDT');
     expect(tester.takeException(), null);
@@ -108,12 +90,13 @@ void main() {
   testWidgets('market list shows public metrics and filters session favorites', (tester) async {
     final container = setup(tester);
     await launch(tester, container);
-    await tester.tap(find.text('BTC / USDT').first);
+    await selectWorkspace(tester, chart: true);
+    await tester.tap(find.byKey(const Key('trade-market-selector')));
     await tester.pumpAndSettle();
 
-    expect(find.text('最新价'), findsWidgets);
-    expect(find.text('24h 成交额'), findsWidgets);
-    expect(find.text('资金费率'), findsWidgets);
+    expect(find.textContaining('价格'), findsWidgets);
+    expect(find.textContaining('24h 成交额'), findsWidgets);
+    expect(find.textContaining('资金费率'), findsWidgets);
     await tester.tap(find.byKey(const Key('favorite-BTCUSDT')));
     await tester.pumpAndSettle();
     expect(container.read(favoriteSymbolsProvider), contains('BTCUSDT'));
@@ -123,7 +106,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('market-BTCUSDT')), findsOneWidget);
-    expect(find.text('ETH / USDT'), findsNothing);
+    expect(find.byKey(const Key('market-ETHUSDT')), findsNothing);
 
     await tester.tap(find.byKey(const Key('favorite-BTCUSDT')));
     await tester.pumpAndSettle();
@@ -137,6 +120,7 @@ void main() {
   ) async {
     final container = setup(tester);
     await launch(tester, container);
+    await selectWorkspace(tester, chart: true);
     KChartWidget chart() => tester.widget<KChartWidget>(find.byType(KChartWidget));
     expect(chart().secondaryIndicators, isEmpty);
     await tester.ensureVisible(find.byKey(const Key('chart-quick-MACD')));
@@ -175,6 +159,7 @@ void main() {
   ) async {
     final container = setup(tester);
     await launch(tester, container);
+    await selectWorkspace(tester, chart: true);
     await tester.tap(find.byKey(const Key('chart-indicators')));
     await tester.pumpAndSettle();
     for (final value in ['MACD', 'KDJ', 'RSI', 'WR', 'CCI']) {
@@ -194,7 +179,7 @@ void main() {
     expect(chart.volHidden, true);
     await tester.tap(find.byKey(const Key('chart-expand')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('account-button')), findsNothing);
+    expect(find.byKey(const Key('trade-settings')), findsNothing);
     expect(
       tester.widget<KChartWidget>(find.byType(KChartWidget)).secondaryIndicators.single.shortName,
       'CCI',
@@ -205,7 +190,7 @@ void main() {
     await tester.tap(find.byKey(const Key('chart-expand')));
     await tester.pumpAndSettle();
     expect(container.read(chartPreferencesProvider).main, 'BOLL');
-    expect(find.byKey(const Key('account-button')), findsOneWidget);
+    expect(find.byKey(const Key('trade-settings')), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
   testWidgets('long press shows a bounded crosshair tooltip without scrolling the page', (
@@ -213,16 +198,18 @@ void main() {
   ) async {
     final container = setup(tester);
     await launch(tester, container);
+    await selectWorkspace(tester, chart: true);
     final scroll = tester.state<ScrollableState>(
       find.ancestor(of: find.byType(KChartWidget), matching: find.byType(Scrollable)).first,
     );
+    final initialOffset = scroll.position.pixels;
     final gesture = await tester.startGesture(const Offset(170, 480));
     await tester.pump(const Duration(milliseconds: 600));
     await tester.pump();
     expect(find.byKey(const Key('candle-detail')), findsOneWidget);
-    await gesture.moveBy(const Offset(10, 25));
+    await gesture.moveBy(const Offset(10, 25), timeStamp: const Duration(milliseconds: 650));
     await tester.pump();
-    expect(scroll.position.pixels, 0);
+    expect(scroll.position.pixels, initialOffset);
     expect(tester.takeException(), null);
     await gesture.up();
     await tester.pumpAndSettle();
@@ -234,6 +221,7 @@ void main() {
   ) async {
     final container = setup(tester);
     await launch(tester, container);
+    await selectWorkspace(tester, chart: true);
     await tester.tap(find.byKey(const Key('chart-quick-MACD')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('深度图'));

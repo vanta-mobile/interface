@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vanta/core/theme.dart';
+import 'package:vanta/features/trade/presentation/trade_theme.dart';
 import 'package:vanta/features/market/domain/market.dart';
 import 'package:vanta/features/trade/application/providers.dart';
 import 'package:vanta/features/trade/presentation/widgets/order_book.dart';
@@ -56,9 +56,12 @@ void main() {
     final initial = tester.getSize(bar).width;
     expect(initial, closeTo(width / 8, .01));
     expect(tester.getSize(barFor('bid', 80000)).width, closeTo(width / 4, .01));
-    expect(tester.getTopLeft(bar).dx, tester.getTopLeft(row).dx);
-    expect(tester.widget<ColoredBox>(bar).color, AppColors.negativeBookDepth);
-    expect(tester.widget<ColoredBox>(barFor('bid', 80000)).color, AppColors.positiveBookDepth);
+    expect(tester.getTopRight(bar).dx, tester.getTopRight(row).dx);
+    expect(tester.widget<ColoredBox>(bar).color, TradeColors.negative.withValues(alpha: .15));
+    expect(
+      tester.widget<ColoredBox>(barFor('bid', 80000)).color,
+      TradeColors.positive.withValues(alpha: .15),
+    );
     updates.add(
       const OrderBook(
         asks: [BookLevel(80001, 6), BookLevel(80002, 4)],
@@ -81,7 +84,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(tester.getSize(bar).width, closeTo(width * .375, .01));
-    expect(tester.getTopLeft(bar).dx, tester.getTopLeft(row).dx);
+    expect(tester.getTopRight(bar).dx, tester.getTopRight(row).dx);
     await tester.tap(row);
     await tester.pumpAndSettle();
     expect(container.read(orderPriceProvider), '80001');

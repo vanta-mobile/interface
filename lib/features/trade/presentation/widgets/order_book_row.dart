@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme.dart';
+import '../trade_theme.dart';
 import '../../../market/domain/market.dart';
 import '../../application/providers.dart';
 
@@ -12,7 +13,11 @@ class OrderBookRow extends ConsumerWidget {
     required this.buy,
     required this.maximum,
     this.precision = const MarketPrecision(),
+    this.compact = false,
+    this.reversed = false,
   });
+  final bool compact;
+  final bool reversed;
   final BookLevel level;
   final bool buy;
   final double maximum;
@@ -26,7 +31,7 @@ class OrderBookRow extends ConsumerWidget {
         Positioned.fill(
           child: IgnorePointer(
             child: AnimatedFractionallySizedBox(
-              alignment: Alignment.centerLeft,
+              alignment: compact && !reversed ? Alignment.centerRight : Alignment.centerLeft,
               widthFactor: maximum <= 0 ? 0 : (level.quantity / maximum).clamp(0, 1),
               heightFactor: 1,
               duration: MediaQuery.disableAnimationsOf(context)
@@ -35,25 +40,32 @@ class OrderBookRow extends ConsumerWidget {
               curve: Curves.easeOut,
               child: ColoredBox(
                 key: const Key('order-book-quantity-bar'),
-                color: buy ? AppColors.positiveBookDepth : AppColors.negativeBookDepth,
+                color: compact
+                    ? (buy ? TradeColors.positive : TradeColors.negative).withValues(alpha: .15)
+                    : buy
+                    ? AppColors.positiveBookDepth
+                    : AppColors.negativeBookDepth,
               ),
             ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+          padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 10, vertical: compact ? 3 : 4.5),
           child: Row(
+            textDirection: reversed ? TextDirection.rtl : TextDirection.ltr,
             children: [
               Expanded(
                 flex: 3,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
+                  alignment: reversed ? Alignment.centerRight : Alignment.centerLeft,
                   child: Text(
                     marketNumber(level.price, minimumDecimals: precision.priceDecimals),
                     style: TextStyle(
-                      fontSize: 10,
-                      color: buy ? AppColors.positive : AppColors.negative,
+                      fontSize: compact ? 11 : 10,
+                      color: compact
+                          ? (buy ? TradeColors.accent : TradeColors.negative)
+                          : (buy ? AppColors.positive : AppColors.negative),
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
@@ -64,12 +76,12 @@ class OrderBookRow extends ConsumerWidget {
                 flex: 2,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerRight,
+                  alignment: reversed ? Alignment.centerLeft : Alignment.centerRight,
                   child: Text(
                     marketNumber(level.quantity, minimumDecimals: precision.quantityDecimals),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontFeatures: [FontFeature.tabularFigures()],
+                    style: TextStyle(
+                      fontSize: compact ? 11 : 10,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ),

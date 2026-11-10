@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../trade_theme.dart';
 import '../../../market/application/market_selection_provider.dart';
 import '../../../market/domain/market_descriptor.dart';
 
@@ -27,6 +28,13 @@ class MarketCategoryFilter extends ConsumerWidget {
                   label: Text(_label(l10n, category)),
                   selected: selected == category,
                   showCheckmark: false,
+                  side: BorderSide.none,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  backgroundColor: TradeColors.card,
+                  selectedColor: TradeColors.accentBackground,
+                  labelStyle: TradeTypography.body.copyWith(
+                    color: selected == category ? TradeColors.accent : TradeColors.muted,
+                  ),
                   onSelected: (_) => ref.read(marketSelectionProvider.notifier).category(category),
                 ),
               ),

@@ -10,9 +10,11 @@ import '../../../market/domain/market.dart';
 import '../../../market/application/market_providers.dart';
 import 'primitives.dart';
 import 'order_book_row.dart';
+import 'trade_funding.dart';
 
 class OrderBookPanel extends ConsumerStatefulWidget {
-  const OrderBookPanel({super.key});
+  const OrderBookPanel({super.key, this.compact = false});
+  final bool compact;
   @override
   ConsumerState<OrderBookPanel> createState() => _OrderBookPanelState();
 }
@@ -22,30 +24,33 @@ class _OrderBookPanelState extends ConsumerState<OrderBookPanel> {
   @override
   Widget build(BuildContext context) {
     final feed = ref.watch(bookProvider);
-    final book = feed.value;
+    final book = feed.isReloading ? null : feed.value;
     final market = ref.watch(currentMarketProvider);
     final exchangePrecision = ref.watch(selectedPrecisionProvider);
     final precision = market?.precision ?? exchangePrecision;
-    final asks = book?.asks.take(8).toList() ?? <BookLevel>[];
-    final bids = book?.bids.take(8).toList() ?? <BookLevel>[];
+    final asks = book?.asks.take(widget.compact ? 6 : 8).toList() ?? <BookLevel>[];
+    final bids = book?.bids.take(widget.compact ? 6 : 8).toList() ?? <BookLevel>[];
     final maximum = [...asks, ...bids].map((level) => level.quantity).fold(0.0, math.max);
     final symbol = ref.watch(symbolProvider);
     return Panel(
+      flat: widget.compact,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(2, 4, 2, 0),
-            child: TabChoices(
-              items: [tr(context, 'book'), tr(context, 'trades')],
-              selected: tab,
-              onSelect: (v) => setState(() => tab = v),
-              underlined: true,
+          if (widget.compact) const TradeFunding(),
+          if (!widget.compact)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(2, 4, 2, 0),
+              child: TabChoices(
+                items: [tr(context, 'book'), tr(context, 'trades')],
+                selected: tab,
+                onSelect: (v) => setState(() => tab = v),
+                underlined: true,
+              ),
             ),
-          ),
-          const Divider(),
+          if (!widget.compact) const Divider(),
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 12, 10, 9),
+            padding: EdgeInsets.fromLTRB(widget.compact ? 0 : 10, 12, widget.compact ? 0 : 10, 9),
             child: Row(
               children: [
                 Expanded(child: MutedText('${tr(context, 'price')}\n(USDT)', size: 9)),
@@ -84,11 +89,14 @@ class _OrderBookPanelState extends ConsumerState<OrderBookPanel> {
                 buy: false,
                 maximum: maximum,
                 precision: precision,
+                compact: widget.compact,
               ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: widget.compact
+                    ? CrossAxisAlignment.center
+                    : CrossAxisAlignment.start,
                 children: [
                   Text(
                     market == null
@@ -135,6 +143,7 @@ class _OrderBookPanelState extends ConsumerState<OrderBookPanel> {
                 buy: true,
                 maximum: maximum,
                 precision: precision,
+                compact: widget.compact,
               ),
             _BookRatio(book: book),
           ] else if (book.trades.isEmpty)
@@ -183,28 +192,29 @@ class _OrderBookPanelState extends ConsumerState<OrderBookPanel> {
                 ),
               ),
           ],
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 5,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: book?.connected == true ? AppColors.accent : AppColors.warning,
-                    shape: BoxShape.circle,
+          if (!widget.compact || book?.connected != true)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: book?.connected == true ? AppColors.accent : AppColors.warning,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 5),
-                Expanded(
-                  child: Text(
-                    tr(context, book?.connected == true ? 'marketSource' : 'retry'),
-                    style: const TextStyle(fontSize: 8, color: AppColors.muted),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      tr(context, book?.connected == true ? 'marketSource' : 'retry'),
+                      style: const TextStyle(fontSize: 8, color: AppColors.muted),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );

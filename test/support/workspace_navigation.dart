@@ -9,7 +9,10 @@ Future<void> selectWorkspace(WidgetTester tester, {required bool chart}) async {
   await tester.ensureVisible(tabs);
   await tester.pumpAndSettle();
   await tester.tap(
-    find.descendant(of: tabs, matching: find.text(chart ? l10n.quickOrderChartTab : l10n.trade)),
+    find.descendant(
+      of: tabs,
+      matching: find.byTooltip(chart ? l10n.quickOrderChartTab : l10n.trade),
+    ),
   );
   await tester.pumpAndSettle();
 }

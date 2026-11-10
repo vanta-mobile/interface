@@ -6,7 +6,7 @@ import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/futures_position_mode.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/presentation/quick_order_panel.dart';
-import 'package:vanta/features/trade/presentation/widgets/order_form.dart';
+import 'package:vanta/features/portfolio/application/live_order_provider.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
@@ -38,15 +38,7 @@ void main() {
 
   Future<void> open(WidgetTester tester, ProviderContainer container) async {
     await launch(tester, container);
-    await tester.tap(
-      find.descendant(
-        of: find.byKey(const Key('trade-workspace-tabs')),
-        matching: find.text(
-          AppLocalizations.of(tester.element(find.byKey(const Key('trade-workspace-tabs'))))
-              .quickOrderChartTab,
-        ),
-      ),
-    );
+    await selectWorkspace(tester, chart: true);
     await tester.pumpAndSettle();
     await visible(tester, 'quick-order-panel');
   }
@@ -251,7 +243,11 @@ void main() {
     );
     await launch(tester, container);
     await selectWorkspace(tester, chart: false);
-    final fields = find.descendant(of: find.byType(OrderForm), matching: find.byType(TextField));
+    await container.read(liveOrderProvider.notifier).load('BTCUSDT');
+    await tester.pumpAndSettle();
+    final priceField = find.byKey(const Key('live-order-price'));
+    final sizeField = find.byKey(const Key('live-order-quantity'));
+    final fields = [priceField, sizeField];
     await tester.ensureVisible(fields.first);
     await tester.enterText(fields.first, '79000');
     await tester.ensureVisible(fields.last);
@@ -259,20 +255,16 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
     final tabs = find.byKey(const Key('trade-workspace-tabs'));
-    final messages = AppLocalizations.of(tester.element(tabs));
     await tester.ensureVisible(tabs);
-    await tester.tap(find.descendant(of: tabs, matching: find.text(messages.quickOrderChartTab)));
-    await tester.pumpAndSettle();
+    await selectWorkspace(tester, chart: true);
     expect(quantity(tester), '');
     await field(tester, '0.001');
     await tester.ensureVisible(tabs);
-    await tester.tap(find.descendant(of: tabs, matching: find.text(messages.trade)));
-    await tester.pumpAndSettle();
+    await selectWorkspace(tester, chart: false);
     expect(tester.widget<TextField>(fields.first).controller!.text, '79000');
     expect(tester.widget<TextField>(fields.last).controller!.text, '0.2');
     await tester.ensureVisible(tabs);
-    await tester.tap(find.descendant(of: tabs, matching: find.text(messages.quickOrderChartTab)));
-    await tester.pumpAndSettle();
+    await selectWorkspace(tester, chart: true);
     expect(quantity(tester), '0.001');
     expect(tester.takeException(), null);
     await dispose(tester, container);

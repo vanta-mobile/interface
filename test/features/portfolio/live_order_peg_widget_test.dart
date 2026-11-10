@@ -43,6 +43,13 @@ void main() {
   }
 
   Future<void> choose(WidgetTester tester, String value) async {
+    final l10n = AppLocalizations.of(tester.element(find.byType(LiveOrderScreen)));
+    await visible(tester, 'live-order-bbo');
+    final active = tester.widget<SwitchListTile>(find.byKey(const Key('live-order-bbo'))).value;
+    if (active != (value != l10n.attachedEntryFixed)) {
+      await tap(tester, 'live-order-bbo');
+    }
+    if (value == l10n.attachedEntryFixed) return;
     await tap(tester, 'live-order-pricing');
     await tester.ensureVisible(find.text(value).last);
     await tester.tap(find.text(value).last);

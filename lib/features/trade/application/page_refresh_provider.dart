@@ -7,6 +7,10 @@ import '../../portfolio/application/asset_index_provider.dart';
 import '../../portfolio/application/asset_metadata_provider.dart';
 import '../../portfolio/application/asset_yield_provider.dart';
 import '../../portfolio/application/open_orders_provider.dart';
+import '../../portfolio/application/live_order_provider.dart';
+import '../../portfolio/application/main_order_refresh_provider.dart';
+import '../../portfolio/application/position_risk_provider.dart';
+import '../../market/application/selection_providers.dart';
 import '../../portfolio/application/spot_account_provider.dart';
 import '../../portfolio/domain/asset_metadata.dart';
 import '../../portfolio/domain/asset_yield.dart';
@@ -39,13 +43,25 @@ class PageRefreshController {
       if (!ref.mounted) return;
       await ref.read(marketSyncProvider)?.refresh();
     },
+    () async {
+      // Reconnect the shared depth/trades feed and await its first settled event.
+      ref.invalidate(asterBookProvider);
+      await ref.read(asterBookProvider.future);
+    },
     // Keep wallet prompts sequential and only refresh previously read data.
     () async {
+      if (ref.read(liveOrderProvider).context?.symbol == ref.read(symbolProvider)) {
+        await ref.read(mainOrderRefreshProvider.notifier).refresh(ref.read(symbolProvider));
+      }
+      if (!ref.mounted) return;
       if (ref.read(accountReadProvider).account != null) {
         await ref.read(accountReadProvider.notifier).refresh();
       }
       if (ref.mounted && ref.read(openOrdersReadProvider).account != null) {
         await ref.read(openOrdersReadProvider.notifier).refresh();
+      }
+      if (ref.mounted && ref.read(positionRiskProvider).account != null) {
+        await ref.read(positionRiskProvider.notifier).refresh();
       }
     },
   ]);

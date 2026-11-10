@@ -18,8 +18,9 @@ import 'depth_panel.dart';
 import 'primitives.dart';
 
 class CandleChart extends ConsumerStatefulWidget {
-  const CandleChart({super.key, this.expanded = false, this.viewportHeight});
+  const CandleChart({super.key, this.expanded = false, this.viewportHeight, this.flat = false});
   final bool expanded;
+  final bool flat;
   final double? viewportHeight;
   @override
   ConsumerState<CandleChart> createState() => _CandleChartState();
@@ -62,6 +63,7 @@ class _CandleChartState extends ConsumerState<CandleChart> {
             : 210.0;
         final canvasHeight = mainHeight + extraHeight;
         return Panel(
+          flat: widget.flat,
           child: Column(
             children: [
               ChartToolbar(

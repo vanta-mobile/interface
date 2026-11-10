@@ -19,6 +19,9 @@ import 'live_order_form.dart';
 import 'live_order_mode_selector.dart';
 import 'live_order_status.dart';
 import 'scaled_order_screen.dart';
+import '../../trade/presentation/widgets/trade_order_pending.dart';
+import '../../trade/presentation/widgets/trade_account_settings.dart';
+import '../../trade/application/providers.dart' show orderPriceProvider, symbolProvider;
 
 void openLiveOrder(BuildContext context, String symbol) =>
     Navigator.of(context)
@@ -47,11 +50,13 @@ class LiveOrderScreen extends ConsumerStatefulWidget {
     this.closingSide,
     this.initialConditional = false,
     this.initialCloseMarket = true,
+    this.embedded = false,
   });
   final String symbol;
   final String? closingSide;
   final bool initialConditional;
   final bool initialCloseMarket;
+  final bool embedded;
   @override
   ConsumerState<LiveOrderScreen> createState() => _LiveOrderScreenState();
 }
@@ -62,6 +67,15 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
   String get symbol => widget.symbol;
   String? get closingSide => widget.closingSide;
   bool get initialConditional => widget.initialConditional;
+
+  @override
+  void didUpdateWidget(covariant LiveOrderScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.symbol != symbol) {
+      mode = LiveOrderEntryMode.limit;
+      remembered = LiveOrderEntryMode.stopLimit;
+    }
+  }
 
   void _selectMode(LiveOrderEntryMode next) {
     if (!mounted) return;
@@ -92,6 +106,11 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(symbolProvider, (previous, next) {
+      if (widget.embedded && previous != next) {
+        ref.read(orderPriceProvider.notifier).setPrice('');
+      }
+    });
     ref.listen(
       authProvider.select(
         (s) => (
@@ -115,6 +134,146 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
     final settings = ref.watch(symbolSettingsActivityProvider);
     final refresh = ref.watch(mainOrderRefreshProvider);
     final data = state.context?.symbol == symbol ? state.context : null;
+    final children = <Widget>[
+      const OrderRecoveryNotice(),
+      if (widget.embedded) ...[
+        TradeAccountSettings(
+          symbol: symbol,
+          data: data,
+          enabled:
+              !refresh.loading &&
+              !state.busy &&
+              !state.needsRecheck &&
+              !auth.busy &&
+              !settings.busy &&
+              settings.owner == null &&
+              !settings.recoveryBlocked,
+        ),
+        const SizedBox(height: 8),
+      ],
+      if (closingSide == null && !initialConditional)
+        LiveOrderModeSelector(
+          selected: mode,
+          remembered: remembered,
+          enabled:
+              !refresh.loading &&
+              !state.busy &&
+              !state.needsRecheck &&
+              settings.owner == null &&
+              !settings.recoveryBlocked &&
+              !auth.busy,
+          onSelected: _selectMode,
+          compact: widget.embedded,
+        ),
+      if (!widget.embedded) ...[
+        SelectableText(symbol, style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 8),
+        Text(closingSide == null ? l10n.liveOrderScope : l10n.liveCloseScope),
+        if (closingSide != null) SelectableText(closingSide!),
+        const SizedBox(height: 12),
+        if (identity?.walletAddress case final address?) SelectableText(address),
+      ],
+      FilledButton.icon(
+        key: const Key('live-order-read'),
+        onPressed:
+            refresh.loading ||
+                state.busy ||
+                state.needsRecheck ||
+                settings.owner != null ||
+                auth.busy
+            ? null
+            : identity?.signingAvailable == true && identity?.walletAddress != null
+            ? _refresh
+            : () => showAccountSheet(context),
+        icon: refresh.loading
+            ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
+            : const Icon(Icons.refresh),
+        label: Text(
+          identity == null
+              ? l10n.accountSignInToRead
+              : identity.walletAddress == null
+              ? l10n.createWallet
+              : !identity.signingAvailable
+              ? l10n.reconnectExternalWallet
+              : closingSide == null
+              ? l10n.liveCapacityRefreshAccount
+              : l10n.liveOrderReadContext,
+        ),
+      ),
+      if (!widget.embedded)
+        Text(
+          closingSide == null ? l10n.liveCapacityRefreshAccountHint : l10n.liveOrderReadHint,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      if (refresh.loading)
+        TextButton(
+          key: const Key('live-order-read-stop'),
+          onPressed: ref.read(mainOrderRefreshProvider.notifier).stop,
+          child: Text(l10n.cancel),
+        ),
+      if (refresh.failure case final failure?)
+        Text(
+          accountErrorText(context, failure),
+          key: const Key('live-order-refresh-error'),
+          style: const TextStyle(color: AppColors.negative),
+        ),
+      if (settings.owner != null && settings.owner != SymbolSetting.order)
+        Text(l10n.liveOrderSettingsBusy, style: const TextStyle(color: AppColors.warning)),
+      if (state.busy) ...[const SizedBox(height: 12), const LinearProgressIndicator()],
+      if (data != null) ...[
+        const SizedBox(height: 16),
+        if (!widget.embedded) ...[
+          ValueRow(l10n.liveOrderMarkPrice, data.markPrice.toString()),
+          ValueRow(l10n.leverageCurrentSetting, '${data.leverage}×'),
+          ValueRow(
+            l10n.accountMarginMode,
+            data.marginMode == PositionMarginMode.cross ? l10n.cross : l10n.accountIsolatedMode,
+          ),
+          ValueRow(
+            l10n.positionModeSettings,
+            data.mode == FuturesPositionMode.oneWay
+                ? l10n.positionModeOneWay
+                : l10n.positionModeHedge,
+          ),
+        ],
+        if (state.stale)
+          Text(l10n.liveOrderContextExpired, style: const TextStyle(color: AppColors.warning)),
+        LiveOrderForm(
+          key: ValueKey((data.address, data.symbol, closingSide, initialConditional)),
+          data: data,
+          closingSide: closingSide,
+          initialConditional: initialConditional,
+          initialCloseMarket: widget.initialCloseMarket,
+          mode: closingSide == null && !initialConditional ? mode : null,
+          bookPricing: widget.embedded,
+          onModeChanged: (next) {
+            setState(() {
+              mode = next;
+              if (next != LiveOrderEntryMode.limit && next != LiveOrderEntryMode.market) {
+                remembered = next;
+              }
+            });
+          },
+        ),
+      ] else if (widget.embedded)
+        TradeOrderPending(symbol: symbol, market: mode.marketExecution),
+      const LiveOrderStatus(),
+    ];
+    if (widget.embedded) {
+      // Account reads belong after the order controls for every identity.
+      // Keep this explicit action without interrupting the compact field stack.
+      final readIndex = children.indexWhere((child) => child.key == const Key('live-order-read'));
+      final readButton = children.removeAt(readIndex);
+      children.insert(
+        children.length - 1,
+        Padding(padding: const EdgeInsets.only(top: 8), child: readButton),
+      );
+      return Column(
+        key: const Key('trade-live-order'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -132,116 +291,7 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             key: const Key('live-order-page'),
             padding: const EdgeInsets.all(16),
-            children: [
-              const OrderRecoveryNotice(),
-              if (closingSide == null && !initialConditional)
-                LiveOrderModeSelector(
-                  selected: mode,
-                  remembered: remembered,
-                  enabled:
-                      !refresh.loading &&
-                      !state.busy &&
-                      !state.needsRecheck &&
-                      settings.owner == null &&
-                      !settings.recoveryBlocked &&
-                      !auth.busy,
-                  onSelected: _selectMode,
-                ),
-              SelectableText(symbol, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Text(closingSide == null ? l10n.liveOrderScope : l10n.liveCloseScope),
-              if (closingSide != null) SelectableText(closingSide!),
-              const SizedBox(height: 12),
-              if (identity?.walletAddress case final address?) SelectableText(address),
-              FilledButton.icon(
-                key: const Key('live-order-read'),
-                onPressed:
-                    refresh.loading ||
-                        state.busy ||
-                        state.needsRecheck ||
-                        settings.owner != null ||
-                        auth.busy
-                    ? null
-                    : identity?.signingAvailable == true && identity?.walletAddress != null
-                    ? _refresh
-                    : () => showAccountSheet(context),
-                icon: refresh.loading
-                    ? const SizedBox.square(
-                        dimension: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh),
-                label: Text(
-                  identity == null
-                      ? l10n.accountSignInToRead
-                      : identity.walletAddress == null
-                      ? l10n.createWallet
-                      : !identity.signingAvailable
-                      ? l10n.reconnectExternalWallet
-                      : closingSide == null
-                      ? l10n.liveCapacityRefreshAccount
-                      : l10n.liveOrderReadContext,
-                ),
-              ),
-              Text(
-                closingSide == null ? l10n.liveCapacityRefreshAccountHint : l10n.liveOrderReadHint,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              if (refresh.loading)
-                TextButton(
-                  key: const Key('live-order-read-stop'),
-                  onPressed: ref.read(mainOrderRefreshProvider.notifier).stop,
-                  child: Text(l10n.cancel),
-                ),
-              if (refresh.failure case final failure?)
-                Text(
-                  accountErrorText(context, failure),
-                  key: const Key('live-order-refresh-error'),
-                  style: const TextStyle(color: AppColors.negative),
-                ),
-              if (settings.owner != null && settings.owner != SymbolSetting.order)
-                Text(l10n.liveOrderSettingsBusy, style: const TextStyle(color: AppColors.warning)),
-              if (state.busy) ...[const SizedBox(height: 12), const LinearProgressIndicator()],
-              if (data != null) ...[
-                const SizedBox(height: 16),
-                ValueRow(l10n.liveOrderMarkPrice, data.markPrice.toString()),
-                ValueRow(l10n.leverageCurrentSetting, '${data.leverage}×'),
-                ValueRow(
-                  l10n.accountMarginMode,
-                  data.marginMode == PositionMarginMode.cross
-                      ? l10n.cross
-                      : l10n.accountIsolatedMode,
-                ),
-                ValueRow(
-                  l10n.positionModeSettings,
-                  data.mode == FuturesPositionMode.oneWay
-                      ? l10n.positionModeOneWay
-                      : l10n.positionModeHedge,
-                ),
-                if (state.stale)
-                  Text(
-                    l10n.liveOrderContextExpired,
-                    style: const TextStyle(color: AppColors.warning),
-                  ),
-                LiveOrderForm(
-                  key: ValueKey((data.address, data.symbol, closingSide, initialConditional)),
-                  data: data,
-                  closingSide: closingSide,
-                  initialConditional: initialConditional,
-                  initialCloseMarket: widget.initialCloseMarket,
-                  mode: closingSide == null && !initialConditional ? mode : null,
-                  onModeChanged: (next) {
-                    setState(() {
-                      mode = next;
-                      if (next != LiveOrderEntryMode.limit && next != LiveOrderEntryMode.market) {
-                        remembered = next;
-                      }
-                    });
-                  },
-                ),
-              ],
-              const LiveOrderStatus(),
-            ],
+            children: children,
           ),
         ),
       ),

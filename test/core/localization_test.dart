@@ -66,12 +66,16 @@ void main() {
     await launch(tester, container);
     container.read(symbolProvider.notifier).select('ETHUSDT');
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('语言'));
+    await tester.tap(find.byKey(const Key('trade-settings')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('语言'));
     await tester.pumpAndSettle();
     expect(find.text('跟随系统'), findsOneWidget);
     await tester.tap(find.byKey(const Key('language-en')));
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Language'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('trade-settings')));
+    await tester.pumpAndSettle();
+    expect(find.text('Language'), findsOneWidget);
     expect(container.read(symbolProvider), 'ETHUSDT');
     expect(store.value, 'en');
     await tester.tap(find.byKey(const Key('account-button')));

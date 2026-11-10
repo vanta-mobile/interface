@@ -53,9 +53,19 @@ class LiveOrderPriceInputs extends StatelessWidget {
           onChanged: onPolicy,
         ),
         if (draft.attachment != null)
-          AttachedEntryPricing(selected: entryPeg, enabled: enabled, onChanged: onEntryPeg)
+          AttachedEntryPricing(
+            selected: entryPeg,
+            enabled: enabled,
+            onChanged: onEntryPeg,
+            postOnly: policy == LiveOrderTimeInForce.postOnly,
+          )
         else
-          LiveOrderPricing(selected: peg, enabled: enabled, onChanged: onPeg),
+          LiveOrderPricing(
+            selected: peg,
+            enabled: enabled,
+            onChanged: onPeg,
+            postOnly: policy == LiveOrderTimeInForce.postOnly,
+          ),
         const SizedBox(height: 12),
         if (!draft.pegged)
           TextField(

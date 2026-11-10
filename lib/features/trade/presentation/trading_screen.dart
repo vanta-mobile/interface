@@ -19,6 +19,7 @@ import 'widgets/app_bottom_navigation.dart';
 import 'destinations.dart';
 import 'widgets/market_sheet.dart';
 import 'widgets/trading_header.dart';
+import 'widgets/trade_page_header.dart';
 import 'widgets/primitives.dart';
 
 class TradingScreen extends ConsumerStatefulWidget {
@@ -48,24 +49,32 @@ class _TradingScreenState extends ConsumerState<TradingScreen> with WidgetsBindi
   @override
   Widget build(BuildContext context) {
     ref.watch(tradingLifecycleProvider);
-    final portfolio = ref.watch(appDestinationProvider) == AppDestination.portfolio;
+    final destination = ref.watch(appDestinationProvider);
+    final portfolio = destination == AppDestination.portfolio;
+    final futures = destination == AppDestination.futures;
     return Scaffold(
-      backgroundColor: portfolio ? AppColors.authBackground : null,
+      backgroundColor: portfolio || futures ? AppColors.authBackground : null,
       appBar: portfolio
           ? null
           : PreferredSize(
-              preferredSize: const Size.fromHeight(60),
+              preferredSize: Size.fromHeight(futures ? 44 : 60),
               child: SafeArea(
                 bottom: false,
                 child: Container(
-                  height: 60,
+                  height: futures ? 44 : 60,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: AppColors.line)),
-                  ),
-                  child: TradingHeader(
-                    onLanguage: () => showAppSheet<void>(context, _LanguageSheet()),
-                  ),
+                  decoration: futures
+                      ? null
+                      : const BoxDecoration(
+                          border: Border(bottom: BorderSide(color: AppColors.line)),
+                        ),
+                  child: futures
+                      ? TradePageHeader(
+                          onLanguage: () => showAppSheet<void>(context, _LanguageSheet()),
+                        )
+                      : TradingHeader(
+                          onLanguage: () => showAppSheet<void>(context, _LanguageSheet()),
+                        ),
                 ),
               ),
             ),

@@ -4,9 +4,10 @@ import 'package:vanta/features/portfolio/application/live_order_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_allocation_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
-import 'package:vanta/features/portfolio/domain/live_order_entry_mode.dart';
 import 'package:vanta/features/portfolio/domain/live_order_peg.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
+
+import 'package:vanta/features/portfolio/domain/live_order_entry_mode.dart';
 
 import '../../support/main_order_capacity.dart';
 import '../../support/main_order_form.dart';
@@ -28,14 +29,16 @@ void main() {
   AppLocalizations messages(WidgetTester tester) =>
       AppLocalizations.of(tester.element(find.byKey(const Key('main-order-capacity'))));
   Future<void> peg(WidgetTester tester, LiveOrderPeg? selected) async {
+    await f.visible(tester, 'live-order-bbo');
+    final active = tester.widget<SwitchListTile>(find.byKey(const Key('live-order-bbo'))).value;
+    if (active != (selected != null)) await f.tap(tester, 'live-order-bbo');
+    if (selected == null) return;
     await f.tap(tester, 'live-order-pricing');
     final l10n = messages(tester);
     await tester.tap(
       find
           .text(
-            selected == null
-                ? l10n.attachedEntryFixed
-                : selected == LiveOrderPeg.counterparty
+            selected == LiveOrderPeg.counterparty
                 ? l10n.attachedEntryCounterparty(1)
                 : l10n.attachedEntryQueue(1),
           )
@@ -153,6 +156,24 @@ void main() {
     expect(f.orders.lastIntent!.draft.peg, intent.draft.peg);
     expect(f.orders.submits, 1);
     expect(f.orders.checks, 1);
+  });
+  formTest('switching opposing BBO to Post Only constrains the frozen order', (tester) async {
+    await f.open(tester);
+    await peg(tester, LiveOrderPeg.counterparty);
+    await f.tap(tester, 'live-order-policy');
+    await tester.tap(find.text(messages(tester).liveOrderPolicyPostOnly).last);
+    await tester.pumpAndSettle();
+    await f.visible(tester, 'live-order-pricing');
+    final dropdown = tester.widget<DropdownButton<String>>(
+      find.byKey(const Key('live-order-pricing')),
+    );
+    expect(dropdown.value, 'QUEUE_1');
+    expect(dropdown.items!.map((item) => item.value), ['QUEUE_1']);
+    await f.field(tester, 'live-order-quantity', '202.000');
+    await f.tap(tester, 'main-order-review-buy');
+    await f.confirm(tester);
+    expect(f.orders.lastIntent!.parameters['timeInForce'], 'GTX');
+    expect(f.orders.lastIntent!.parameters['pegPriceType'], 'QUEUE_1');
   });
   formTest('Post Only queue BBO keeps GTX through fresh review', (tester) async {
     await f.open(tester, mode: LiveOrderEntryMode.postOnly);

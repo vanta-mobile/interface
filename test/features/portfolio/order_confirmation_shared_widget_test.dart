@@ -7,6 +7,7 @@ import 'package:vanta/l10n/generated/app_localizations.dart';
 import '../../support/live_order.dart';
 import '../../support/order_confirmation_widget.dart';
 import '../../support/quick_order.dart';
+import '../../support/workspace_navigation.dart';
 
 Future<void> quickTap(WidgetTester tester, String key) async {
   final target = find.byKey(Key(key));
@@ -62,8 +63,7 @@ void main() {
     final tabs = find.byKey(const Key('trade-workspace-tabs'));
     await tester.ensureVisible(tabs);
     final l10n = AppLocalizations.of(tester.element(tabs));
-    await tester.tap(find.descendant(of: tabs, matching: find.text(l10n.quickOrderChartTab)));
-    await tester.pumpAndSettle();
+    await selectWorkspace(tester, chart: true);
     await quickTap(tester, 'quick-order-read');
     final qty = find.byKey(const Key('quick-order-quantity'));
     await tester.ensureVisible(qty);

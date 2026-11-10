@@ -44,7 +44,7 @@ void main() {
       final container = setup(tester, quoteStream: events.stream);
       await launch(tester, container);
       container.read(orderPriceProvider.notifier).setPrice('123.45');
-      await tester.tap(find.text('BTC / USDT').first);
+      await tester.tap(find.byKey(const Key('trade-market-selector')));
       await tester.pump(const Duration(milliseconds: 400));
       events.add(feed('123.456'));
       await tester.pumpAndSettle();
@@ -87,13 +87,13 @@ void main() {
       await tester.tap(find.byTooltip('清除搜索'));
       await tester.pumpAndSettle();
       expect(gold, findsOneWidget);
-      await tester.ensureVisible(find.text('XAU / USDT'));
+      await tester.ensureVisible(find.byKey(const Key('market-XAUUSDT')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('XAU / USDT'));
+      await tester.tap(find.byKey(const Key('market-XAUUSDT')));
       await tester.pumpAndSettle();
       expect(container.read(symbolProvider), 'XAUUSDT');
       expect(container.read(orderPriceProvider), '');
-      await tester.tap(find.text('XAU / USDT').first);
+      await tester.tap(find.byKey(const Key('trade-market-selector')));
       await tester.pump(const Duration(milliseconds: 400));
       events.add(feed('124.567'));
       await tester.pumpAndSettle();
@@ -115,7 +115,7 @@ void main() {
       final container = setup(tester, width: spec.$1, scale: spec.$2, language: Locale(spec.$3));
       if (spec.$1 == 844) tester.view.physicalSize = const Size(844, 390);
       await launch(tester, container);
-      await tester.tap(find.text('BTC / USDT').first);
+      await tester.tap(find.byKey(const Key('trade-market-selector')));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.byKey(const Key('market-category-semiconductors')));
       await tester.pumpAndSettle();
@@ -162,7 +162,7 @@ void main() {
       updatedAt: DateTime(2026, 11, 2, 12),
     );
     await launch(tester, container);
-    await tester.tap(find.text('BTC / USDT').first);
+    await tester.tap(find.byKey(const Key('trade-market-selector')));
     await tester.pump(const Duration(milliseconds: 400));
     events.add(feed('123.456', QuoteConnection.live));
     await tester.pumpAndSettle();
@@ -205,7 +205,7 @@ void main() {
       if (spec.$1 == 844) tester.view.physicalSize = const Size(844, 390);
       await launch(tester, container);
       expect(tester.takeException(), isNull);
-      await tester.tap(find.text('BTC / USDT').first);
+      await tester.tap(find.byKey(const Key('trade-market-selector')));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.byKey(const Key('market-search')));
       await tester.enterText(find.byKey(const Key('market-search')), ' eth ');

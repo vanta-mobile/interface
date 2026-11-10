@@ -6,6 +6,7 @@ import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../trade/presentation/widgets/primitives.dart';
+import '../../trade/application/providers.dart' show orderPriceProvider, symbolProvider;
 import '../application/live_order_provider.dart';
 import '../application/main_order_allocation_provider.dart';
 import '../application/main_order_capacity_provider.dart';
@@ -51,6 +52,7 @@ class LiveOrderForm extends ConsumerStatefulWidget {
     this.initialCloseMarket = true,
     this.mode,
     this.onModeChanged,
+    this.bookPricing = false,
   });
   final LiveOrderContext data;
   final String? closingSide;
@@ -58,6 +60,7 @@ class LiveOrderForm extends ConsumerStatefulWidget {
   final bool initialCloseMarket;
   final LiveOrderEntryMode? mode;
   final ValueChanged<LiveOrderEntryMode>? onModeChanged;
+  final bool bookPricing;
   @override
   ConsumerState<LiveOrderForm> createState() => _LiveOrderFormState();
 }
@@ -150,8 +153,14 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
     trailing = mode == LiveOrderEntryMode.trailing;
     if (mode == LiveOrderEntryMode.postOnly || previous == LiveOrderEntryMode.postOnly) {
       timeInForce = mode.defaultPolicy;
+      if (mode == LiveOrderEntryMode.postOnly) _constrainPostOnly();
     }
     entireClose = false;
+  }
+
+  void _constrainPostOnly() {
+    if (peg != null) peg = LiveOrderPeg.queue;
+    if (entryPeg != null) entryPeg = AttachedEntryPeg.queue1;
   }
 
   @override
@@ -255,6 +264,24 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
         !state.busy &&
         !state.needsRecheck &&
         !allocation.preparing;
+    if (widget.bookPricing) {
+      ref.listen<String>(orderPriceProvider, (_, value) {
+        if (!mounted ||
+            value.isEmpty ||
+            !enabled ||
+            ref.read(symbolProvider) != widget.data.symbol) {
+          return;
+        }
+        setState(() {
+          _applyMode(LiveOrderEntryMode.limit);
+          price.text = value;
+          _limitEdited = true;
+          peg = null;
+          entryPeg = null;
+        });
+        widget.onModeChanged?.call(LiveOrderEntryMode.limit);
+      });
+    }
     final contextData = _pricingContext ?? widget.data;
     _syncRatioInput();
     final size = sizing;
@@ -383,7 +410,10 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
           entryPeg: entryPeg,
           enabled: enabled,
           onPolicy: (value) {
-            setState(() => timeInForce = value);
+            setState(() {
+              timeInForce = value;
+              if (value == LiveOrderTimeInForce.postOnly) _constrainPostOnly();
+            });
             widget.onModeChanged?.call(liveOrderEntryMode(draft));
           },
           onPeg: (value) => setState(() => peg = value),

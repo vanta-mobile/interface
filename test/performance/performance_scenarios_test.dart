@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'performance_scenarios.dart';
 
 void main() {
-  testWidgets('all native performance journeys exercise Vanta demo controls', (tester) async {
+  testWidgets('native performance journeys exercise market browsing and unsigned order gates', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -12,8 +14,8 @@ void main() {
     final recorder = PerformanceRecorder(recordFrames: false);
     await runPerformanceScenarios(tester, recorder, samples: 1, warmups: 1);
     final results = recorder.results();
-    expect(results, hasLength(26));
-    expect(results.map((row) => row['id']).toSet(), hasLength(26));
+    expect(results, hasLength(24));
+    expect(results.map((row) => row['id']).toSet(), hasLength(24));
     for (final row in results) {
       expect(row['duration_ms'], hasLength(1), reason: 'Warmups must be excluded: ${row['id']}');
     }

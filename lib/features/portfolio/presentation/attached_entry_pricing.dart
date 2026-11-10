@@ -14,7 +14,9 @@ class AttachedEntryPricing extends StatelessWidget {
     required this.selected,
     required this.enabled,
     required this.onChanged,
+    this.postOnly = false,
   });
+  final bool postOnly;
   final AttachedEntryPeg? selected;
   final bool enabled;
   final ValueChanged<AttachedEntryPeg?> onChanged;
@@ -37,7 +39,11 @@ class AttachedEntryPricing extends StatelessWidget {
               items: [
                 DropdownMenuItem(value: 'fixed', child: Text(l10n.attachedEntryFixed)),
                 for (final peg in AttachedEntryPeg.values)
-                  DropdownMenuItem(value: peg.wire, child: Text(attachedEntryPegLabel(l10n, peg))),
+                  if (!postOnly || peg == AttachedEntryPeg.queue1)
+                    DropdownMenuItem(
+                      value: peg.wire,
+                      child: Text(attachedEntryPegLabel(l10n, peg)),
+                    ),
               ],
               onChanged: !enabled
                   ? null

@@ -1,3 +1,5 @@
+import '../trade_theme.dart';
+import '../../application/page_refresh_provider.dart';
 import '../../../../core/market_failure.dart';
 
 import 'package:flutter/material.dart';
@@ -11,13 +13,36 @@ import '../../../market/domain/market_quote.dart';
 import '../../../market/domain/market_descriptor.dart';
 import '../../application/providers.dart';
 import 'market_list_row.dart';
+import 'market_list_skeleton.dart';
 import 'market_quote_status.dart';
 import 'market_search_controls.dart';
 import 'primitives.dart';
 
+void openMarketSelector(BuildContext context) =>
+    Navigator.of(context)
+        .push<void>(MaterialPageRoute(builder: (_) => const _MarketSelectorPage()));
+
+class _MarketSelectorPage extends ConsumerWidget {
+  const _MarketSelectorPage();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
+    backgroundColor: TradeColors.background,
+    body: SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxHeight < 500 || MediaQuery.textScalerOf(context).scale(12) > 18) {
+            return const SingleChildScrollView(padding: EdgeInsets.all(16), child: MarketSheet());
+          }
+          return const Padding(padding: EdgeInsets.all(16), child: MarketSheet(fullscreen: true));
+        },
+      ),
+    ),
+  );
+}
+
 class MarketSheet extends ConsumerWidget {
-  const MarketSheet({super.key, this.embedded = false, this.onSelect});
-  final bool embedded;
+  const MarketSheet({super.key, this.embedded = false, this.fullscreen = false, this.onSelect});
+  final bool embedded, fullscreen;
   final VoidCallback? onSelect;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,7 +54,18 @@ class MarketSheet extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(tr(context, 'selectMarket'), style: Theme.of(context).textTheme.titleLarge),
+        Row(
+          children: [
+            Expanded(child: Text(tr(context, 'selectMarket'), style: TradeTypography.heading)),
+            if (!embedded)
+              IconButton(
+                key: const Key('close-market-selector'),
+                tooltip: l10n.close,
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close, color: TradeColors.text),
+              ),
+          ],
+        ),
         const SizedBox(height: 16),
         const MarketSearchControls(),
         const SizedBox(height: 8),
@@ -45,13 +81,57 @@ class MarketSheet extends ConsumerWidget {
             onRetry: () => ref.read(quoteReconnectProvider.notifier).reconnect(),
           ),
         const SizedBox(height: 6),
-        SizedBox(
-          height: embedded ? 520 : MediaQuery.sizeOf(context).height * .5,
-          child: _results(context, ref, results, favorites),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 5,
+                child: Text(
+                  '${l10n.tradeSymbols}\n${tr(context, 'fundingRate')}',
+                  style: TradeTypography.small,
+                ),
+              ),
+              Expanded(
+                flex: 4,
+                child: Text(
+                  '${tr(context, 'volume24h')}\nUSDT',
+                  textAlign: TextAlign.right,
+                  style: TradeTypography.small,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  '${tr(context, 'price')}\n${tr(context, 'change')}',
+                  textAlign: TextAlign.right,
+                  style: TradeTypography.small,
+                ),
+              ),
+            ],
+          ),
         ),
+        if (fullscreen)
+          Expanded(child: _refresh(context, ref, results, favorites))
+        else
+          SizedBox(
+            height: embedded ? 520 : MediaQuery.sizeOf(context).height * .5,
+            child: _refresh(context, ref, results, favorites),
+          ),
       ],
     );
   }
+
+  Widget _refresh(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<MarketQuote>> results,
+    Set<String> favorites,
+  ) => RefreshIndicator(
+    onRefresh: ref.read(pageRefreshProvider).markets,
+    child: _results(context, ref, results, favorites),
+  );
 
   Widget _results(
     BuildContext context,
@@ -60,36 +140,49 @@ class MarketSheet extends ConsumerWidget {
     Set<String> favorites,
   ) {
     return instruments.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(error is MarketFailure ? error.displayMessage : tr(context, 'marketUnavailable')),
-            TextButton(
-              onPressed: () {
-                ref.invalidate(instrumentsProvider);
-                ref.invalidate(liveMarketQuotesProvider);
-              },
-              child: Text(tr(context, 'retry')),
-            ),
-          ],
-        ),
+      loading: () => const MarketListSkeleton(),
+      error: (error, _) => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                error is MarketFailure ? error.displayMessage : tr(context, 'marketUnavailable'),
+              ),
+              TextButton(
+                onPressed: () {
+                  ref.invalidate(instrumentsProvider);
+                  ref.invalidate(liveMarketQuotesProvider);
+                },
+                child: Text(tr(context, 'retry')),
+              ),
+            ],
+          ),
+        ],
       ),
       data: (ranked) {
         final selection = ref.watch(marketSelectionProvider);
         if (ranked.isEmpty) {
-          return Center(
-            child: Text(
-              selection.onlyFavorites && favorites.isEmpty
-                  ? tr(context, 'emptyFavorites')
-                  : selection.category != MarketCategory.all && selection.query.trim().isEmpty
-                  ? AppLocalizations.of(context).marketNoCategoryResults
-                  : tr(context, 'noMarketsFound'),
-            ),
+          return ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 64),
+                child: Text(
+                  selection.onlyFavorites && favorites.isEmpty
+                      ? tr(context, 'emptyFavorites')
+                      : selection.category != MarketCategory.all && selection.query.trim().isEmpty
+                      ? AppLocalizations.of(context).marketNoCategoryResults
+                      : tr(context, 'noMarketsFound'),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
           );
         }
         return ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           itemCount: ranked.length,
           itemBuilder: (context, index) => MarketListRow(

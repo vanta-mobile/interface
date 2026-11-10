@@ -52,6 +52,8 @@ void main() {
         );
         await launch(tester, container);
         expect(repository.calls, 0);
+        await tester.tap(find.byKey(const Key('trade-settings')));
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('order-recovery-entry')));
         await tester.pumpAndSettle();
         final messages = AppLocalizations.of(tester.element(find.byType(OrderRecoveryScreen)));

@@ -1,10 +1,11 @@
+import 'package:vanta/features/trade/application/navigation_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/assistant/presentation/assistant_page.dart';
 import 'package:vanta/features/points/presentation/points_page.dart';
 import 'package:vanta/features/portfolio/presentation/quick_order_panel.dart';
 import 'package:vanta/features/trade/application/providers.dart';
-import 'package:vanta/features/trade/presentation/widgets/order_form.dart';
+import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/navigation_fixture.dart';
@@ -19,8 +20,8 @@ void main() {
       ) async {
         final fixture = NavigationFixture(tester, language: language, width: 320, scale: 1.5);
         await launch(tester, fixture.container);
-        expect(find.byType(QuickOrderPanel), findsOneWidget);
-        expect(find.byType(OrderForm), findsNothing);
+        expect(find.byType(QuickOrderPanel), findsNothing);
+        expect(find.byType(LiveOrderScreen), findsOneWidget);
         expect(find.byType(AssistantPage), findsNothing);
         expect(find.byType(PointsPage), findsNothing);
         await selectWorkspace(tester, chart: chart);
@@ -52,13 +53,11 @@ void main() {
           await tapNavigationControl(tester, 'navigation-futures');
           expect(fixture.container.read(symbolProvider), 'ETHUSDT');
           expect(
-            tester
-                .widget<SegmentedButton<bool>>(find.byKey(const Key('trade-workspace-tabs')))
-                .selected,
-            {chart},
+            fixture.container.read(futuresWorkspaceTabProvider),
+            chart ? FuturesWorkspaceTab.chart : FuturesWorkspaceTab.trade,
           );
           expect(find.byType(QuickOrderPanel), chart ? findsOneWidget : findsNothing);
-          expect(find.byType(OrderForm), chart ? findsNothing : findsOneWidget);
+          expect(find.byType(LiveOrderScreen), chart ? findsNothing : findsOneWidget);
           expect(find.byType(AssistantPage), findsNothing);
           expect(find.byType(PointsPage), findsNothing);
           fixture.expectNoAccountMutation();
@@ -78,10 +77,8 @@ void main() {
       await tapNavigationControl(tester, 'market-ETHUSDT');
       expect(fixture.container.read(symbolProvider), 'ETHUSDT');
       expect(
-        tester
-            .widget<SegmentedButton<bool>>(find.byKey(const Key('trade-workspace-tabs')))
-            .selected,
-        {chart},
+        fixture.container.read(futuresWorkspaceTabProvider),
+        chart ? FuturesWorkspaceTab.chart : FuturesWorkspaceTab.trade,
       );
       expect(find.byType(QuickOrderPanel), chart ? findsOneWidget : findsNothing);
       fixture.expectNoAccountMutation();
@@ -95,6 +92,7 @@ void main() {
   ) async {
     final fixture = NavigationFixture(tester);
     await launch(tester, fixture.container);
+    await selectWorkspace(tester, chart: true);
     final quantity = find.byKey(const Key('quick-order-quantity'));
     await tester.ensureVisible(quantity);
     await tester.enterText(quantity, '0.001');
@@ -112,8 +110,11 @@ void main() {
     final fresh = NavigationFixture(tester);
     await launch(tester, fresh.container);
     expect(fresh.container.read(symbolProvider), 'BTCUSDT');
+    expect(fresh.container.read(futuresWorkspaceTabProvider), FuturesWorkspaceTab.trade);
+    expect(find.byType(LiveOrderScreen), findsOneWidget);
+    await selectWorkspace(tester, chart: true);
     expect(find.byType(QuickOrderPanel), findsOneWidget);
-    expect(find.byType(OrderForm), findsNothing);
+    expect(find.byType(LiveOrderScreen), findsNothing);
     expect(quickQuantity(tester), '');
     expect(AppLocalizations.of(tester.element(find.byType(QuickOrderPanel))).localeName, 'en');
     fresh.expectNoAccountMutation();

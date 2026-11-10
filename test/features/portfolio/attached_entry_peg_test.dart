@@ -94,7 +94,12 @@ void main() {
   }
   for (final policy in LiveOrderTimeInForce.values) {
     test('compound BBO respects supported time in force $policy', () {
-      final intent = attachedIntent(peg: AttachedEntryPeg.queue3, policy: policy);
+      final intent = attachedIntent(
+        peg: policy == LiveOrderTimeInForce.postOnly
+            ? AttachedEntryPeg.queue1
+            : AttachedEntryPeg.queue3,
+        policy: policy,
+      );
       expect(
         intent.context.validate(intent.draft),
         policy == LiveOrderTimeInForce.ioc ? 'attachedOrderIocUnavailable' : null,

@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
 import 'package:vanta/features/market/domain/market.dart';
 import 'package:vanta/features/trade/application/providers.dart';
-import 'package:vanta/features/trade/presentation/widgets/order_book.dart';
 
 import '../../support/trade_fixture.dart';
 import '../../support/workspace_navigation.dart';
@@ -54,6 +53,7 @@ void main() {
         ),
       );
       await launch(tester, container);
+      await selectWorkspace(tester, chart: true);
       expect(find.text('0.0000010203'), findsWidgets);
       expect(
         tester.widget<KChartWidget>(find.byType(KChartWidget)).fixedLength,
@@ -77,31 +77,17 @@ void main() {
       await tester.tap(row);
       await tester.pumpAndSettle();
       expect(container.read(orderPriceProvider), '0.0000010203');
+      expect(tester.widget<TextFormField>(find.byType(TextFormField)).initialValue, '0.0000010203');
       expect(
-        tester.widget<TextField>(find.byKey(const Key('price-input'))).controller!.text,
-        '0.0000010203',
+        tester.widget<FilledButton>(find.byKey(const Key('trade-pending-buy'))).onPressed,
+        null,
       );
-      final trades = find.descendant(of: find.byType(OrderBookPanel), matching: find.text('最新成交'));
+      expect(container.read(accountProvider).connected, false);
+      await selectWorkspace(tester, chart: true);
+      final trades = find.byKey(const ValueKey('chart-trade/BTC/0'));
       await tester.ensureVisible(trades);
       await tester.pumpAndSettle();
-      await tester.tap(trades);
-      await tester.pumpAndSettle();
-      expect(
-        find.descendant(of: find.byType(OrderBookPanel), matching: find.text('0.0000010203')),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), null);
-
-      container.read(accountProvider.notifier).connect();
-      await tester.enterText(find.byKey(const Key('quantity-input')), '1.15');
-      await tester.pumpAndSettle();
-      final submit = find.byKey(const Key('submit-order'));
-      await tester.ensureVisible(submit);
-      await tester.pumpAndSettle();
-      await tester.tap(submit);
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('confirm-order')), findsOneWidget);
-      expect(find.text('0.0000010203 USDT'), findsOneWidget);
+      expect(find.descendant(of: trades, matching: find.text('0.0000010203')), findsOneWidget);
       expect(tester.takeException(), null);
       await tester.pumpWidget(const SizedBox());
     });

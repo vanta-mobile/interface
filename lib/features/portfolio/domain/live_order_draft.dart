@@ -5,6 +5,7 @@ import 'live_order_trigger.dart';
 import 'live_order_trailing.dart';
 import 'live_order_attachment.dart';
 import 'live_order_peg.dart';
+import 'attached_entry_peg.dart';
 
 /// Signed request values must use the exact string accepted by the decimal validator.
 Decimal? parseOrderDecimal(String text) {
@@ -72,6 +73,9 @@ class LiveOrderDraft {
   /// Zero is a transport sentinel, never a user-entered price. Ordinary pegs
   /// also support reducing orders; compound pegs retain their own constraints.
   bool get validPegShape =>
+      (timeInForce != LiveOrderTimeInForce.postOnly ||
+          (peg == null || peg == LiveOrderPeg.queue) &&
+              (attachment?.entryPeg == null || attachment?.entryPeg == AttachedEntryPeg.queue1)) &&
       (peg == null ||
           !market &&
               price.isEmpty &&

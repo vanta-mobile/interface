@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/strings.dart';
+import '../../../l10n/generated/app_localizations.dart';
+import 'widgets/chart_order_book.dart';
+export 'widgets/market_header.dart' show FuturesWorkspaceTabs;
 import '../../portfolio/presentation/aster_open_orders_panel.dart';
 import '../../portfolio/presentation/live_order_screen.dart';
 import '../../portfolio/presentation/quick_order_panel.dart';
@@ -11,9 +14,10 @@ import '../application/providers.dart';
 import 'widgets/candle_chart.dart';
 import 'widgets/market_header.dart';
 import 'widgets/order_book.dart';
-import 'widgets/order_form.dart';
-import 'widgets/positions_panel.dart';
+import '../../portfolio/presentation/aster_account_panel.dart';
+import '../../portfolio/presentation/position_risk_screen.dart';
 import 'widgets/primitives.dart';
+import 'trade_theme.dart';
 
 class FuturesWorkspace extends ConsumerWidget {
   const FuturesWorkspace({super.key});
@@ -26,27 +30,31 @@ class FuturesWorkspace extends ConsumerWidget {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           key: const Key('futures-workspace'),
-          padding: EdgeInsets.all(constraints.maxWidth >= 1000 ? 16 : 8),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1480),
               child: Column(
                 children: [
                   const MarketHeader(),
-                  const SizedBox(height: 8),
-                  const FuturesWorkspaceTabs(),
-                  const SizedBox(height: 8),
+                  SizedBox(height: chart ? 20 : 16),
                   Visibility(
                     visible: chart,
                     maintainState: true,
                     child: const Column(
-                      children: [CandleChart(), SizedBox(height: 8), QuickOrderPanel()],
+                      children: [
+                        CandleChart(flat: true),
+                        SizedBox(height: 20),
+                        ChartOrderBook(),
+                        SizedBox(height: 20),
+                        QuickOrderPanel(),
+                      ],
                     ),
                   ),
                   Visibility(
                     visible: !chart,
                     maintainState: true,
-                    child: const DemoTradeWorkspace(),
+                    child: const TradeOrderWorkspace(),
                   ),
                   const SizedBox(height: 8),
                   const FuturesAccountSections(),
@@ -60,70 +68,81 @@ class FuturesWorkspace extends ConsumerWidget {
   }
 }
 
-class FuturesWorkspaceTabs extends ConsumerWidget {
-  const FuturesWorkspaceTabs({super.key});
+class TradeOrderWorkspace extends ConsumerWidget {
+  const TradeOrderWorkspace({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) => SegmentedButton<bool>(
-    key: const Key('trade-workspace-tabs'),
-    segments: [
-      ButtonSegment(value: true, label: Text(tr(context, 'quickOrderChartTab'))),
-      ButtonSegment(value: false, label: Text(tr(context, 'trade'))),
-    ],
-    selected: {ref.watch(futuresWorkspaceTabProvider) == FuturesWorkspaceTab.chart},
-    onSelectionChanged: (value) => ref
-        .read(futuresWorkspaceTabProvider.notifier)
-        .select(value.first ? FuturesWorkspaceTab.chart : FuturesWorkspaceTab.trade),
-  );
-}
-
-class DemoTradeWorkspace extends StatelessWidget {
-  const DemoTradeWorkspace({super.key});
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) => constraints.maxWidth >= 1000
-        ? const Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(flex: 6, child: CandleChart()),
-              SizedBox(width: 8),
-              Expanded(flex: 2, child: OrderBookPanel()),
-              SizedBox(width: 8),
-              Expanded(flex: 3, child: OrderForm()),
-            ],
-          )
-        : const Column(
-            children: [
-              CandleChart(),
-              SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 4, child: OrderBookPanel()),
-                  SizedBox(width: 8),
-                  Expanded(flex: 6, child: OrderForm()),
-                ],
-              ),
-            ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final form = Theme(
+      data: theme.copyWith(
+        inputDecorationTheme: theme.inputDecorationTheme.copyWith(
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          fillColor: TradeColors.card,
+          labelStyle: TradeTypography.body.copyWith(color: TradeColors.muted),
+          hintStyle: TradeTypography.body.copyWith(color: TradeColors.muted),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
           ),
-  );
+        ),
+        textTheme: theme.textTheme.copyWith(
+          bodyLarge: TradeTypography.body,
+          bodyMedium: TradeTypography.body,
+        ),
+      ),
+      child: LiveOrderScreen(symbol: ref.watch(symbolProvider), embedded: true),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 340 && MediaQuery.textScalerOf(context).scale(12) > 16) {
+          return Column(
+            children: [form, const SizedBox(height: 20), const OrderBookPanel(compact: true)],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Expanded(flex: 147, child: OrderBookPanel(compact: true)),
+            const SizedBox(width: 12),
+            Expanded(flex: 202, child: form),
+          ],
+        );
+      },
+    );
+  }
 }
 
-class FuturesAccountSections extends ConsumerWidget {
+class FuturesAccountSections extends ConsumerStatefulWidget {
   const FuturesAccountSections({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Column(
+  ConsumerState<FuturesAccountSections> createState() => _FuturesAccountSectionsState();
+}
+
+class _FuturesAccountSectionsState extends ConsumerState<FuturesAccountSections> {
+  int tab = 0;
+  @override
+  Widget build(BuildContext context) => Column(
     children: [
-      OutlinedButton.icon(
-        key: const Key('open-live-order'),
-        onPressed: () => openLiveOrder(context, ref.read(symbolProvider)),
-        icon: const Icon(Icons.account_balance_wallet_outlined),
-        label: Text(tr(context, 'liveOrderEntry')),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: TabChoices(
+          items: [
+            tr(context, 'orders'),
+            tr(context, 'positions'),
+            AppLocalizations.of(context).portfolioAssets,
+          ],
+          selected: tab,
+          underlined: true,
+          onSelect: (value) => setState(() => tab = value),
+        ),
       ),
-      Text(tr(context, 'liveOrderEntryHint'), style: Theme.of(context).textTheme.bodySmall),
       const SizedBox(height: 8),
-      const PositionsPanel(),
-      const SizedBox(height: 12),
-      const AsterOpenOrdersPanel(),
+      switch (tab) {
+        0 => const AsterOpenOrdersPanel(),
+        1 => const PositionRiskScreen(embedded: true),
+        _ => const AsterAccountPanel(),
+      },
       const SizedBox(height: 20),
       Row(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -5,6 +5,7 @@ import '../../../../core/strings.dart';
 import '../../../../core/theme.dart';
 import '../../../market/domain/market.dart';
 import '../../application/chart_preferences.dart';
+import '../trade_theme.dart';
 import 'chart_touch_scroll.dart';
 import 'chart_entities.dart';
 
@@ -82,17 +83,17 @@ class _ChartCanvasState extends State<ChartCanvas> {
           entities,
           const KChartStyle(),
           const KChartColors(
-            bgColor: AppColors.surface,
-            upColor: AppColors.positive,
-            dnColor: AppColors.negative,
+            bgColor: TradeColors.background,
+            upColor: TradeColors.positive,
+            dnColor: TradeColors.negative,
             volUpColor: AppColors.positiveDepth,
             volDnColor: AppColors.negativeDepth,
-            gridColor: AppColors.line,
-            defaultTextColor: AppColors.muted,
-            nowPriceUpColor: AppColors.positive,
-            nowPriceDnColor: AppColors.negative,
-            maxColor: AppColors.secondary,
-            minColor: AppColors.secondary,
+            gridColor: TradeColors.line,
+            defaultTextColor: TradeColors.muted,
+            nowPriceUpColor: TradeColors.positive,
+            nowPriceDnColor: TradeColors.negative,
+            maxColor: TradeColors.secondary,
+            minColor: TradeColors.secondary,
             ma5Color: AppColors.warning,
             ma10Color: AppColors.accent,
             crossColor: AppColors.secondary,
@@ -100,7 +101,7 @@ class _ChartCanvasState extends State<ChartCanvas> {
             selectFillColor: AppColors.raised,
             selectBorderColor: AppColors.line,
             kLineColor: AppColors.accent,
-            kLineFillColors: [AppColors.accentSoft, AppColors.surface],
+            kLineFillColors: [AppColors.accentSoft, TradeColors.background],
           ),
           mainIndicators: indicators,
           secondaryIndicators: secondary,

@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme.dart';
+export 'coin_icon.dart';
 
 class Panel extends StatelessWidget {
-  const Panel({super.key, required this.child, this.padding = EdgeInsets.zero});
+  const Panel({super.key, required this.child, this.padding = EdgeInsets.zero, this.flat = false});
+  final bool flat;
   final Widget child;
   final EdgeInsetsGeometry padding;
   @override
   Widget build(BuildContext context) => Container(
     padding: padding,
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: flat ? AppColors.authBackground : AppColors.surface,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: AppColors.line.withValues(alpha: .45)),
+      border: flat ? null : Border.all(color: AppColors.line.withValues(alpha: .45)),
     ),
     child: child,
   );
@@ -27,27 +29,6 @@ class MutedText extends StatelessWidget {
   Widget build(BuildContext context) => Text(
     text,
     style: TextStyle(fontSize: size, color: color),
-  );
-}
-
-class CoinIcon extends StatelessWidget {
-  const CoinIcon({super.key, this.base = 'BTC', this.size = 32});
-  final String base;
-  final double size;
-  @override
-  Widget build(BuildContext context) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      color: base == 'BTC' ? AppColors.bitcoin : AppColors.raised,
-      shape: BoxShape.circle,
-    ),
-    alignment: Alignment.center,
-    child: Text(switch (base) {
-      'BTC' => '₿',
-      'ETH' => 'Ξ',
-      _ => '◎',
-    }, style: TextStyle(fontSize: size * .67, fontWeight: FontWeight.w700, color: AppColors.text)),
   );
 }
 

@@ -1,3 +1,5 @@
+import 'package:vanta/features/trade/application/navigation_provider.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -34,6 +36,7 @@ void main() {
         if (!disposed) container.dispose();
         await service.close();
       });
+      container.read(futuresWorkspaceTabProvider.notifier).select(FuturesWorkspaceTab.chart);
       await tester.pumpWidget(
         UncontrolledProviderScope(container: container, child: const VantaApp()),
       );

@@ -1,3 +1,5 @@
+import 'package:vanta/features/trade/application/navigation_provider.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -33,6 +35,7 @@ void main() {
     'all intervals and chart styles are selectable; relative axes keep quotes and tooltips raw',
     (tester) async {
       final container = setup(tester);
+      container.read(futuresWorkspaceTabProvider.notifier).select(FuturesWorkspaceTab.chart);
       await launch(tester, container);
       await visibleTap(tester, find.byKey(const Key('chart-more-timeframes')));
       await visibleTap(tester, find.byKey(const Key('timeframe-option-1M')));
@@ -73,6 +76,7 @@ void main() {
     'parameter editor validates without losing input, resets, and applies calculation settings',
     (tester) async {
       final container = setup(tester);
+      container.read(futuresWorkspaceTabProvider.notifier).select(FuturesWorkspaceTab.chart);
       await launch(tester, container);
       container.read(chartPreferencesProvider.notifier).setMain('MA');
       await tester.pumpAndSettle();
@@ -131,6 +135,7 @@ void main() {
         if (!disposed) container.dispose();
         await service.close();
       });
+      container.read(futuresWorkspaceTabProvider.notifier).select(FuturesWorkspaceTab.chart);
       await tester.pumpWidget(
         UncontrolledProviderScope(container: container, child: const VantaApp()),
       );

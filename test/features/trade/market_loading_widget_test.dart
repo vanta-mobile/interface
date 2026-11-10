@@ -1,3 +1,7 @@
+import 'package:vanta/features/trade/application/navigation_provider.dart';
+
+import '../../support/workspace_navigation.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -15,12 +19,13 @@ Finder buttonQuote(String side, String quote) =>
     find.descendant(of: find.byKey(Key('quick-order-$side')), matching: find.text(quote));
 
 void main() {
-  testWidgets('unloaded header has unknown funding/countdown; data replaces placeholders', (
+  testWidgets('unloaded chart summary has unknown values; data replaces placeholders', (
     tester,
   ) async {
     final markets = StreamController<Market>(sync: true);
     final fixture = NavigationFixture(tester, marketStream: markets.stream);
     addTearDown(markets.close);
+    fixture.container.read(futuresWorkspaceTabProvider.notifier).select(FuturesWorkspaceTab.chart);
     await tester.pumpWidget(
       UncontrolledProviderScope(container: fixture.container, child: const VantaApp()),
     );
@@ -28,16 +33,9 @@ void main() {
     final header = find.byType(MarketHeader);
     expect(find.descendant(of: header, matching: find.text('00:00:00')), findsNothing);
     expect(find.descendant(of: header, matching: find.text('—')), findsWidgets);
-    expect(
-      find.descendant(
-        of: header,
-        matching: find.byWidgetPredicate((w) => w is SelectableText && w.data == '—'),
-      ),
-      findsOneWidget,
-    );
     markets.add(fixtureMarket('BTCUSDT', '1m'));
     await tester.pumpAndSettle();
-    expect(find.descendant(of: header, matching: find.text('0.0100%')), findsOneWidget);
+    expect(find.descendant(of: header, matching: find.text(r'$80,000')), findsOneWidget);
     expect(find.descendant(of: header, matching: find.text('—')), findsNothing);
     fixture.expectNoAccountMutation();
     expect(tester.takeException(), null);
@@ -54,6 +52,7 @@ void main() {
       booksForSymbol: (symbol) => symbol == 'BTCUSDT' ? btc.stream : eth.stream,
     );
     await launch(tester, fixture.container);
+    await selectWorkspace(tester, chart: true);
     btc.add(book);
     await tester.pumpAndSettle();
     expect(buttonQuote('buy', '80001.0 USDT'), findsOneWidget);
@@ -83,6 +82,7 @@ void main() {
     addTearDown(books.close);
     final fixture = NavigationFixture(tester, booksForSymbol: (_) => books.stream);
     await launch(tester, fixture.container);
+    await selectWorkspace(tester, chart: true);
     books.add(book);
     await tester.pumpAndSettle();
     expect(buttonQuote('buy', '80001.0 USDT'), findsOneWidget);
@@ -115,6 +115,7 @@ void main() {
         ),
       );
       await launch(tester, fixture.container);
+      await selectWorkspace(tester, chart: true);
       expect(buttonQuote('buy', '—'), findsOneWidget);
       expect(buttonQuote('sell', '—'), findsOneWidget);
       fixture.expectNoAccountMutation();
