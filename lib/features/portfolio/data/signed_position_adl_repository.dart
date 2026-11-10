@@ -5,9 +5,11 @@ import 'position_adl_mapper.dart';
 import 'signed_account_request.dart';
 
 class SignedPositionAdlRepository implements PositionAdlRepository {
+  final AccountRequestAuthorization? authorization;
   SignedPositionAdlRepository(
     AsterAccountService service,
     AccountRequestSigner sign, {
+    this.authorization,
     DateTime Function()? now,
     AsterReadNonces? nonces,
   }) : now = now ?? DateTime.now,
@@ -15,6 +17,7 @@ class SignedPositionAdlRepository implements PositionAdlRepository {
          serverTime: service.serverTime,
          send: service.positionAdl,
          sign: sign,
+         authorization: authorization,
          nonces: nonces,
        );
   final DateTime Function() now;

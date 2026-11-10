@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'features/auth/application/auth_provider.dart';
+import 'features/auth/presentation/wallet_session_host.dart';
 import 'features/trade/application/providers.dart';
 import 'features/trade/presentation/trading_screen.dart';
 
@@ -117,7 +118,7 @@ class VantaApp extends ConsumerWidget {
       locale: ref.watch(localeProvider),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      home: const TradingScreen(),
+      home: const WalletSessionHost(child: TradingScreen()),
     );
   }
 }

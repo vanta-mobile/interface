@@ -10,9 +10,11 @@ import 'futures_asset_mode_mapper.dart';
 import 'signed_account_request.dart';
 
 class SignedFuturesAssetModeRepository implements FuturesAssetModeRepository {
+  final AccountRequestAuthorization? authorization;
   SignedFuturesAssetModeRepository(
     this.service,
     this.sign, {
+    this.authorization,
     required this.nonces,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
@@ -22,7 +24,13 @@ class SignedFuturesAssetModeRepository implements FuturesAssetModeRepository {
   final DateTime Function() now;
   SignedAccountRequest _request(
     Future<Object?> Function({required String query, required String signature}) send,
-  ) => SignedAccountRequest(serverTime: service.serverTime, send: send, sign: sign, nonces: nonces);
+  ) => SignedAccountRequest(
+    serverTime: service.serverTime,
+    send: send,
+    sign: sign,
+    authorization: authorization,
+    nonces: nonces,
+  );
 
   @override
   Future<FuturesAssetModeContext> read({

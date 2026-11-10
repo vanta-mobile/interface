@@ -51,7 +51,7 @@ void main() {
         );
         tester.view.physicalSize = Size(spec.$1, spec.$2);
         await launch(tester, c);
-        openInternalTransfer(tester.element(find.byKey(const Key('account-button'))));
+        openInternalTransfer(tester.element(find.byType(Navigator).first));
         await tester.pumpAndSettle();
         final l10n = AppLocalizations.of(tester.element(find.byType(InternalTransferScreen)));
         expect(repository.reads, 0);
@@ -116,7 +116,7 @@ void main() {
         internalTransferClock: () => now,
       );
       await launch(tester, c);
-      openInternalTransfer(tester.element(find.byKey(const Key('account-button'))));
+      openInternalTransfer(tester.element(find.byType(Navigator).first));
       await tester.pumpAndSettle();
       final l10n = AppLocalizations.of(tester.element(find.byType(InternalTransferScreen)));
       expect(
@@ -154,7 +154,7 @@ void main() {
         internalTransferClock: () => now,
       );
       await launch(tester, c);
-      openInternalTransfer(tester.element(find.byKey(const Key('account-button'))));
+      openInternalTransfer(tester.element(find.byType(Navigator).first));
       await tester.pumpAndSettle();
       await tapTransfer(tester, 'internal-transfer-read');
       final amount = find.byKey(const Key('internal-transfer-amount'));
@@ -196,7 +196,7 @@ void main() {
       internalTransferClock: () => now,
     );
     await launch(tester, c);
-    openInternalTransfer(tester.element(find.byKey(const Key('account-button'))));
+    openInternalTransfer(tester.element(find.byType(Navigator).first));
     await tester.pumpAndSettle();
     await tapTransfer(tester, 'internal-transfer-read');
     await tapTransfer(tester, 'internal-transfer-max');
@@ -229,7 +229,7 @@ void main() {
       internalTransferClock: () => now,
     );
     await launch(tester, c);
-    openInternalTransfer(tester.element(find.byKey(const Key('account-button'))));
+    openInternalTransfer(tester.element(find.byType(Navigator).first));
     await tester.pumpAndSettle();
     await tapTransfer(tester, 'internal-transfer-read');
     await tapTransfer(tester, 'internal-transfer-max');

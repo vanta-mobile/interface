@@ -42,7 +42,7 @@ void main() {
         );
         tester.view.physicalSize = Size(spec.$1, spec.$2);
         await launch(tester, c);
-        openRebalance(tester.element(find.byKey(const Key('account-button'))));
+        openRebalance(tester.element(find.byType(Navigator).first));
         await tester.pumpAndSettle();
         final l10n = AppLocalizations.of(tester.element(find.byType(RebalanceScreen)));
         Future<void> tap(String key) async {
@@ -109,7 +109,7 @@ void main() {
           rebalanceClock: () => now,
         );
         await launch(tester, c);
-        openRebalance(tester.element(find.byKey(const Key('account-button'))));
+        openRebalance(tester.element(find.byType(Navigator).first));
         await tester.pumpAndSettle();
         final l10n = AppLocalizations.of(tester.element(find.byType(RebalanceScreen)));
         final read = find.byKey(const Key('rebalance-read'));
@@ -143,7 +143,7 @@ void main() {
         rebalanceJournal: journal,
       );
       await launch(tester, c);
-      openRebalance(tester.element(find.byKey(const Key('account-button'))));
+      openRebalance(tester.element(find.byType(Navigator).first));
       await tester.pumpAndSettle();
       await c.read(rebalanceProvider.notifier).load();
       await tester.pumpAndSettle();
@@ -157,7 +157,7 @@ void main() {
       await pending;
       expect(repository.posts, 0);
       expect(journal.snapshot.records, isEmpty);
-      openRebalance(tester.element(find.byKey(const Key('account-button'))));
+      openRebalance(tester.element(find.byType(Navigator).first));
       await tester.pumpAndSettle();
       await controller.load();
       final second = controller.prepare()!;

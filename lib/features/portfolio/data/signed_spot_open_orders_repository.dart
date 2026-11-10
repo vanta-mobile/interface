@@ -8,9 +8,11 @@ import 'spot_history_mapper.dart';
 import 'spot_open_orders_mapper.dart';
 
 class SignedSpotOpenOrdersRepository implements SpotOpenOrdersRepository {
+  final AccountRequestAuthorization? authorization;
   SignedSpotOpenOrdersRepository(
     this.service,
     AccountRequestSigner sign, {
+    this.authorization,
     AsterReadNonces? nonces,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now,
@@ -18,6 +20,7 @@ class SignedSpotOpenOrdersRepository implements SpotOpenOrdersRepository {
          serverTime: service.serverTime,
          send: service.openOrders,
          sign: sign,
+         authorization: authorization,
          nonces: nonces,
        );
   final AsterSpotService service;

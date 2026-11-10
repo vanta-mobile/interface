@@ -22,9 +22,11 @@ import 'position_leverage_mapper.dart';
 import 'signed_account_request.dart';
 
 class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
+  final AccountRequestAuthorization? authorization;
   SignedMainOrderCapacityRepository(
     this.service,
     this.sign, {
+    this.authorization,
     required this.nonces,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
@@ -61,6 +63,7 @@ class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
             return send(query: query, signature: signature);
           },
           sign: sign,
+          authorization: authorization,
           nonces: nonces,
         ).read(
           address: context.address,

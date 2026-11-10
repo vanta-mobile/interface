@@ -10,7 +10,15 @@ import 'signed_account_request.dart';
 
 /// All paths here are GET-only, using original public IDs with fresh signatures.
 class SignedOrderQueryRepository implements OrderRecoveryRepository {
-  SignedOrderQueryRepository(this.service, this.sign, this.nonces, this.now, {this.journal});
+  final AccountRequestAuthorization? authorization;
+  SignedOrderQueryRepository(
+    this.service,
+    this.sign,
+    this.nonces,
+    this.now, {
+    this.authorization,
+    this.journal,
+  });
   final AsterAccountService service;
   final AccountRequestSigner sign;
   final AsterReadNonces nonces;
@@ -30,6 +38,7 @@ class SignedOrderQueryRepository implements OrderRecoveryRepository {
           serverTime: service.serverTime,
           send: send,
           sign: sign,
+          authorization: authorization,
           nonces: nonces,
         ).read(
           address: query.address,

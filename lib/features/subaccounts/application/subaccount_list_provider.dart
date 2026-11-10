@@ -1,3 +1,5 @@
+import '../../authorization/application/trading_agent_provider.dart';
+import 'account_role_provider.dart';
 import '../../../core/network/network_providers.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +18,7 @@ final subaccountListRepositoryProvider = Provider.autoDispose<SubaccountListRepo
     service,
     ref.watch(identityRepositoryProvider).signWalletRequest,
     nonces: ref.watch(asterReadNoncesProvider),
+    authorization: ref.watch(asterRequestAuthorizationProvider),
   );
 });
 
@@ -31,6 +34,12 @@ class SubaccountListController extends WalletAccountController<SubaccountDirecto
     // a signed request awaits its response. A read alone does not retain it.
     ref.watch(subaccountListRepositoryProvider);
     return super.build();
+  }
+
+  @override
+  SubaccountDirectory reconcileSnapshot(SubaccountDirectory snapshot) {
+    ref.read(verifiedMainAccountProvider.notifier).accept(snapshot);
+    return snapshot;
   }
 
   @override

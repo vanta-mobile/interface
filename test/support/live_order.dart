@@ -268,6 +268,7 @@ class TestLiveOrderRepository implements LiveOrderRepository {
   LiveOrderIntent? lastIntent;
   bool Function()? latestCurrent;
   AccountReadFailure? failure;
+  AccountReadFailure? readFailure;
   bool throwAfterSubmit = false;
   bool? lastIncludeFunds;
   LiveOrderContext context = liveContext();
@@ -288,6 +289,7 @@ class TestLiveOrderRepository implements LiveOrderRepository {
     lastIncludeFunds = includeFunds;
     latestCurrent = isCurrent;
     await readGate?.future;
+    if (readFailure case final error?) throw error;
     return context;
   }
 

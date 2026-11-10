@@ -47,7 +47,7 @@ void main() {
         );
         tester.view.physicalSize = Size(spec.$1, spec.$2);
         await launch(tester, c);
-        openSpotOpenOrders(tester.element(find.byKey(const Key('account-button'))));
+        openSpotOpenOrders(tester.element(find.byType(Navigator).first));
         await tester.pumpAndSettle();
         final l10n = AppLocalizations.of(tester.element(find.byType(SpotOpenOrdersScreen)));
         expect(repository.calls, 0);
@@ -132,7 +132,7 @@ void main() {
       spotOpenOrdersRepository: repository,
     );
     await launch(tester, c);
-    openSpotOpenOrders(tester.element(find.byKey(const Key('account-button'))));
+    openSpotOpenOrders(tester.element(find.byType(Navigator).first));
     await tester.pumpAndSettle();
     await tapSpot(tester, 'read-spot-open-orders');
     final l10n = AppLocalizations.of(tester.element(find.byType(SpotOpenOrdersScreen)));
@@ -150,7 +150,7 @@ void main() {
     addTearDown(identity.dispose);
     final c = setup(tester, identityRepository: identity, spotOpenOrdersRepository: repository);
     await launch(tester, c);
-    openSpotOpenOrders(tester.element(find.byKey(const Key('account-button'))));
+    openSpotOpenOrders(tester.element(find.byType(Navigator).first));
     await tester.pumpAndSettle();
     repository.gate = Completer();
     await tester.tap(find.byKey(const Key('read-spot-open-orders')));
@@ -188,7 +188,7 @@ void main() {
       spotOpenOrdersRepository: repository,
     );
     await launch(tester, c);
-    openSpotOpenOrders(tester.element(find.byKey(const Key('account-button'))));
+    openSpotOpenOrders(tester.element(find.byType(Navigator).first));
     await tester.pumpAndSettle();
     await tapSpot(tester, 'read-spot-open-orders');
     final l10n = AppLocalizations.of(tester.element(find.byType(SpotOpenOrdersScreen)));
@@ -223,7 +223,7 @@ void main() {
       spotOpenOrdersRepository: repository,
     );
     await launch(tester, c);
-    openSpotOpenOrders(tester.element(find.byKey(const Key('account-button'))));
+    openSpotOpenOrders(tester.element(find.byType(Navigator).first));
     await tester.pumpAndSettle();
     await tapSpot(tester, 'read-spot-open-orders');
     final l10n = AppLocalizations.of(tester.element(find.byType(SpotOpenOrdersScreen)));

@@ -156,7 +156,7 @@ void main() {
         depositApprovalReceiptRepository: receipts,
       );
       await launch(tester, container);
-      Navigator.of(tester.element(find.byKey(const Key('account-button'))))
+      Navigator.of(tester.element(find.byType(Navigator).first))
           .push<void>(MaterialPageRoute(builder: (_) => const DepositApprovalRecoveryScreen()));
       await tester.pumpAndSettle();
       final field = find.byKey(const Key('deposit-approval-original-hash'));

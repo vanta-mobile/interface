@@ -49,7 +49,7 @@ Future<void> reveal(
 }
 
 void open(WidgetTester tester, DepositWalletQuery query) =>
-    Navigator.of(tester.element(find.byKey(const Key('account-button'))))
+    Navigator.of(tester.element(find.byType(Navigator).first))
         .push<void>(MaterialPageRoute(builder: (_) => DepositWalletScreen(query: query)));
 
 void main() {
@@ -176,7 +176,7 @@ void main() {
       final container = setup(tester, depositWalletRepository: repository);
       // Entering the route never reads a wallet automatically.
       await launch(tester, container);
-      openFundingInfo(tester.element(find.byKey(const Key('account-button'))), market);
+      openFundingInfo(tester.element(find.byType(Navigator).first), market);
       await tester.pumpAndSettle();
       final entry = find.byKey(const Key('deposit-wallet-entry-56-USDT'));
       await reveal(tester, entry, scrollKey: 'funding-info-scroll');

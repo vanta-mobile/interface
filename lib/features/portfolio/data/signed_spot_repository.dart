@@ -6,9 +6,11 @@ import 'aster_spot_service.dart';
 import 'signed_account_request.dart';
 
 class SignedSpotRepository implements AsterSpotAccountRepository {
+  final AccountRequestAuthorization? authorization;
   SignedSpotRepository(
     AsterSpotService service,
     AccountRequestSigner sign, {
+    this.authorization,
     DateTime Function()? now,
     AsterReadNonces? nonces,
   }) : now = now ?? DateTime.now,
@@ -16,6 +18,7 @@ class SignedSpotRepository implements AsterSpotAccountRepository {
          serverTime: service.serverTime,
          send: service.account,
          sign: sign,
+         authorization: authorization,
          nonces: nonces,
        );
   final DateTime Function() now;

@@ -6,9 +6,11 @@ import 'aster_open_orders_mapper.dart';
 import 'signed_account_request.dart';
 
 class SignedOpenOrdersRepository implements AsterOpenOrdersRepository {
+  final AccountRequestAuthorization? authorization;
   SignedOpenOrdersRepository(
     this.service,
     AccountRequestSigner sign, {
+    this.authorization,
     DateTime Function()? now,
     AsterReadNonces? nonces,
   }) : now = now ?? DateTime.now,
@@ -16,6 +18,7 @@ class SignedOpenOrdersRepository implements AsterOpenOrdersRepository {
          serverTime: service.serverTime,
          send: service.openOrders,
          sign: sign,
+         authorization: authorization,
          nonces: nonces,
        );
   final AsterAccountService service;

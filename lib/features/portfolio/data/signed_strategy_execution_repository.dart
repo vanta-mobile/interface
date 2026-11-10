@@ -11,7 +11,14 @@ import 'strategy_execution_mapper.dart';
 /// Explicit read-only action. Does not complete journals, replay strategies or
 /// infer ordinary-order executions from strategy statuses / planned quantities.
 class SignedStrategyExecutionRepository implements StrategyExecutionRepository {
-  SignedStrategyExecutionRepository(this.service, this.sign, this.nonces, this.now);
+  final AccountRequestAuthorization? authorization;
+  SignedStrategyExecutionRepository(
+    this.service,
+    this.sign,
+    this.nonces,
+    this.now, {
+    this.authorization,
+  });
   final AsterAccountService service;
   final AccountRequestSigner sign;
   final AsterReadNonces nonces;
@@ -44,6 +51,7 @@ class SignedStrategyExecutionRepository implements StrategyExecutionRepository {
           serverTime: service.serverTime,
           send: send,
           sign: sign,
+          authorization: authorization,
           nonces: nonces,
         ).read(
           address: query.order.address,

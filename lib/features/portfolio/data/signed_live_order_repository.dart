@@ -23,9 +23,11 @@ import '../domain/order_query.dart';
 import '../domain/order_recovery.dart';
 
 class SignedLiveOrderRepository implements LiveOrderRepository {
+  final AccountRequestAuthorization? authorization;
   SignedLiveOrderRepository(
     this.service,
     this.sign, {
+    this.authorization,
     required this.nonces,
     this.journal,
     DateTime Function()? now,
@@ -39,7 +41,13 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
 
   SignedAccountRequest _request(
     Future<Object?> Function({required String query, required String signature}) send,
-  ) => SignedAccountRequest(serverTime: service.serverTime, send: send, sign: sign, nonces: nonces);
+  ) => SignedAccountRequest(
+    serverTime: service.serverTime,
+    send: send,
+    sign: sign,
+    authorization: authorization,
+    nonces: nonces,
+  );
 
   @override
   Future<LiveOrderContext> read({
@@ -214,6 +222,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
         nonces,
         now,
         journal: journal,
+        authorization: authorization,
       ).submit(intent: intent, isCurrent: isCurrent, canSubmit: canSubmit, onStep: onStep);
     }
     var submitted = false;
@@ -309,6 +318,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
       nonces,
       now,
       journal: journal,
+      authorization: authorization,
     ).query(OrderQuery.capture(intent), isCurrent: isCurrent, onStep: onStep);
   });
 }

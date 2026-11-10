@@ -8,9 +8,11 @@ import 'position_margin_mode_mapper.dart';
 import 'signed_account_request.dart';
 
 class SignedPositionMarginModeRepository implements PositionMarginModeRepository {
+  final AccountRequestAuthorization? authorization;
   SignedPositionMarginModeRepository(
     this.service,
     this.sign, {
+    this.authorization,
     required this.nonces,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
@@ -20,7 +22,13 @@ class SignedPositionMarginModeRepository implements PositionMarginModeRepository
   final DateTime Function() now;
   SignedAccountRequest _request(
     Future<Object?> Function({required String query, required String signature}) send,
-  ) => SignedAccountRequest(serverTime: service.serverTime, send: send, sign: sign, nonces: nonces);
+  ) => SignedAccountRequest(
+    serverTime: service.serverTime,
+    send: send,
+    sign: sign,
+    authorization: authorization,
+    nonces: nonces,
+  );
 
   @override
   Future<PositionMarginModeContext> read({

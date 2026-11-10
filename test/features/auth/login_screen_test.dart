@@ -9,6 +9,7 @@ import 'package:vanta/features/auth/presentation/auth_controls.dart';
 
 import '../../support/identity_repository.dart';
 import '../../support/trade_fixture.dart';
+import '../../support/wallet_login_route.dart';
 
 void main() {
   testWidgets('expired code preserves digits and failed resend, then accepts a new code', (
@@ -19,7 +20,7 @@ void main() {
     addTearDown(repository.dispose);
     final container = setup(tester, identityRepository: repository, language: const Locale('en'));
     await launch(tester, container);
-    await tester.tap(find.byKey(const Key('account-button')));
+    await openWalletLogin(tester);
     await tester.pumpAndSettle();
     expect(find.text('Welcome to Vanta'), findsOneWidget);
     expect(find.byKey(const Key('enter-demo')), findsNothing);
@@ -57,7 +58,7 @@ void main() {
     expect(tester.widget<TextField>(input).controller!.text, '');
     expect(find.byKey(const Key('verify-email-code')), findsOneWidget);
     expect(container.read(authProvider).resendAt, isNotNull);
-    await tester.pumpWidget(const SizedBox());
+    await closeWalletLogin(tester, container);
   });
 
   testWidgets('code uses a single autofill field and back preserves the email', (tester) async {
@@ -65,7 +66,7 @@ void main() {
     addTearDown(repository.dispose);
     final container = setup(tester, identityRepository: repository);
     await launch(tester, container);
-    await tester.tap(find.byKey(const Key('account-button')));
+    await openWalletLogin(tester);
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('login-email')), 'alex@example.com');
     await tester.tap(find.byKey(const Key('send-email-code')));
@@ -93,7 +94,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('login-email')), findsNothing);
     expect(repository.verified, 0);
-    await tester.pumpWidget(const SizedBox());
+    await closeWalletLogin(tester, container);
   });
 
   for (final provider in SocialLoginProvider.values) {
@@ -106,7 +107,7 @@ void main() {
       addTearDown(repository.dispose);
       final container = setup(tester, identityRepository: repository);
       await launch(tester, container);
-      await tester.tap(find.byKey(const Key('account-button')));
+      await openWalletLogin(tester);
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('login-email')), 'alex@example.com');
       final button = find.byKey(
@@ -125,7 +126,7 @@ void main() {
         'alex@example.com',
       );
       expect(tester.takeException(), null);
-      await tester.pumpWidget(const SizedBox());
+      await closeWalletLogin(tester, container);
     });
   }
 }

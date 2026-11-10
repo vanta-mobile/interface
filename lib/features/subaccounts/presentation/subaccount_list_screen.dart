@@ -10,10 +10,11 @@ import '../../trade/presentation/widgets/primitives.dart';
 import '../application/subaccount_list_provider.dart';
 import '../domain/subaccount_directory.dart';
 import 'subaccount_management_screen.dart';
+import 'account_management_screen.dart';
 
 void openSubaccountList(BuildContext context) =>
     Navigator.of(context)
-        .push<void>(MaterialPageRoute(builder: (_) => const SubaccountListScreen()));
+        .push<void>(MaterialPageRoute(builder: (_) => const AccountManagementScreen()));
 
 class SubaccountListScreen extends ConsumerWidget {
   const SubaccountListScreen({super.key});

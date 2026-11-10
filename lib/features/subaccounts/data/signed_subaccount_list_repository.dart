@@ -6,9 +6,11 @@ import '../domain/subaccount_directory.dart';
 import 'subaccount_list_mapper.dart';
 
 class SignedSubaccountListRepository implements SubaccountListRepository {
+  final AccountRequestAuthorization? authorization;
   SignedSubaccountListRepository(
     AsterAccountService service,
     AccountRequestSigner sign, {
+    this.authorization,
     AsterReadNonces? nonces,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now,
@@ -16,6 +18,7 @@ class SignedSubaccountListRepository implements SubaccountListRepository {
          serverTime: service.serverTime,
          send: service.subaccountList,
          sign: sign,
+         authorization: authorization,
          nonces: nonces,
        );
   final DateTime Function() now;

@@ -7,12 +7,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_provider.dart';
 import '../../auth/domain/auth_session.dart';
+import '../../auth/domain/wallet_signing_preparation.dart';
 import '../../portfolio/application/account_read_provider.dart';
 import '../../portfolio/data/aster_account_service.dart';
 import '../../portfolio/data/aster_spot_service.dart';
 import '../../portfolio/domain/account_snapshot.dart';
 import '../data/trading_authorization_repository.dart';
 import '../domain/trading_authorization.dart';
+import '../domain/trading_agent.dart';
+import 'trading_agent_provider.dart';
 
 final tradingAuthorizationClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final tradingAuthorizationRepositoryProvider = Provider<TradingAuthorizationRepository>((ref) {
@@ -22,10 +25,16 @@ final tradingAuthorizationRepositoryProvider = Provider<TradingAuthorizationRepo
     futures.close();
     spot.close();
   });
+  final identity = ref.watch(identityRepositoryProvider);
   return AsterTradingAuthorizationRepository(
     futures,
     spot,
-    ref.watch(identityRepositoryProvider).signWalletRequest,
+    identity.signWalletRequest,
+    agents: ref.watch(tradingAgentStoreProvider),
+    checkAuthorization: ref.watch(asterAuthorizationCheckProvider),
+    signingPreparation: identity is WalletSigningPreparation
+        ? identity as WalletSigningPreparation
+        : null,
     nonces: ref.watch(asterReadNoncesProvider),
     now: ref.watch(tradingAuthorizationClockProvider),
   );
@@ -69,6 +78,22 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
   @override
   TradingAuthorizationState build() {
     ref.watch(tradingAuthorizationRepositoryProvider);
+    ref.listen(tradingAgentProvider, (previous, next) {
+      if (_working || !next.hasValue || next.isLoading) return;
+      final before = previous?.asData?.value;
+      final agent = next.asData?.value;
+      if (agent?.status == TradingAgentStatus.unknown) {
+        state = TradingAuthorizationState(
+          result: TradingAuthorizationResult.unknown,
+          check: state.check,
+        );
+      } else if ((agent == null && before != null ||
+              agent?.status == TradingAgentStatus.rejected) &&
+          (state.result == TradingAuthorizationResult.acknowledged ||
+              state.result == TradingAuthorizationResult.unknown)) {
+        state = const TradingAuthorizationState();
+      }
+    });
     ref.listen(
       authProvider.select(
         (s) => (
@@ -172,6 +197,7 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
         );
       }
     } finally {
+      if (ref.mounted) ref.invalidate(tradingAgentProvider);
       _submitting = false;
       _working = false;
     }

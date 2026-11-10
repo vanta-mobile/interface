@@ -11,7 +11,15 @@ import '../domain/order_query.dart';
 import '../domain/order_recovery.dart';
 
 class SignedAttachedOrderRepository {
-  SignedAttachedOrderRepository(this.service, this.sign, this.nonces, this.now, {this.journal});
+  final AccountRequestAuthorization? authorization;
+  SignedAttachedOrderRepository(
+    this.service,
+    this.sign,
+    this.nonces,
+    this.now, {
+    this.authorization,
+    this.journal,
+  });
   final AsterAccountService service;
   final AccountRequestSigner sign;
   final AsterReadNonces nonces;
@@ -20,7 +28,13 @@ class SignedAttachedOrderRepository {
 
   SignedAccountRequest _request(
     Future<Object?> Function({required String query, required String signature}) send,
-  ) => SignedAccountRequest(serverTime: service.serverTime, send: send, sign: sign, nonces: nonces);
+  ) => SignedAccountRequest(
+    serverTime: service.serverTime,
+    send: send,
+    sign: sign,
+    authorization: authorization,
+    nonces: nonces,
+  );
 
   Future<LiveOrderResult> submit({
     required LiveOrderIntent intent,
@@ -76,6 +90,7 @@ class SignedAttachedOrderRepository {
       nonces,
       now,
       journal: journal,
+      authorization: authorization,
     ).query(OrderQuery.capture(intent), isCurrent: isCurrent, onStep: onStep);
   });
 }

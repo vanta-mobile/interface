@@ -1,21 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reown_appkit/reown_appkit.dart';
 import 'package:vanta/features/auth/data/reown_wallet_connector.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/auth/domain/wallet_transaction.dart';
 
-import '../../support/wallet_connection.dart';
+import '../../support/reown_modal.dart';
 import '../../support/wallet_transaction.dart';
 
 void main() {
-  late _Modal modal;
+  late TestReownModal modal;
   late ReownWalletConnection connection;
   setUp(() {
-    modal = _Modal();
+    modal = TestReownModal();
     connection = ReownWalletConnection(modal, modal.address, '56');
   });
   tearDown(() async {
@@ -29,6 +28,20 @@ void main() {
     expect(connection.walletName, 'Trust Wallet');
     modal.walletName = '   ';
     expect(connection.walletName, isNull);
+  });
+
+  test('wallet disconnect and session expiry invalidate exactly once', () async {
+    var invalidations = 0;
+    final subscription = connection.invalidations.listen((_) => invalidations++);
+    modal.expiry = 1;
+    modal.changed();
+    modal.isConnected = false;
+    modal.changed();
+    expect(connection.isCurrent, false);
+    expect(invalidations, 1);
+    await expectLater(connection.signPersonalMessage('test'), throwsA(isA<AuthFailure>()));
+    expect(modal.requests, isEmpty);
+    await subscription.cancel();
   });
 
   test('transaction RPC preserves exact reviewed fields and original chain', () async {
@@ -175,92 +188,4 @@ void main() {
     expect(modal.observesSession, false);
     expect(connection.isCurrent, false);
   });
-}
-
-class _Modal extends ChangeNotifier implements ReownAppKitModal {
-  String walletName = 'MetaMask';
-  List<String> methods = ['eth_sendTransaction'];
-  String approvedChain = '56';
-  bool get observesSession => hasListeners;
-  @override
-  Future<void> dispose() async => super.dispose();
-  String address = '0x2222222222222222222222222222222222222222';
-  static const metadata = ConnectionMetadata(
-    publicKey: 'key',
-    metadata: PairingMetadata(
-      name: 'test',
-      description: 'test',
-      url: 'https://example.com',
-      icons: [],
-    ),
-  );
-  @override
-  ReownAppKitModalSession get session => ReownAppKitModalSession(
-    sessionData: SessionData(
-      topic: 'topic',
-      pairingTopic: 'pairing',
-      relay: Relay('irn'),
-      expiry: 1,
-      acknowledged: true,
-      controller: 'key',
-      self: metadata,
-      peer: ConnectionMetadata(
-        publicKey: 'wallet-key',
-        metadata: PairingMetadata(
-          name: walletName,
-          description: 'Connected wallet',
-          url: 'https://example.com/wallet',
-          icons: [],
-        ),
-      ),
-      namespaces: {
-        'eip155': Namespace(
-          accounts: ['eip155:$approvedChain:$address'],
-          methods: methods,
-          events: [],
-        ),
-      },
-    ),
-  );
-  @override
-  bool isConnected = true;
-  @override
-  ReownAppKitModalNetworkInfo? get selectedChain => const ReownAppKitModalNetworkInfo(
-    name: 'BNB Chain',
-    chainId: 'eip155:56',
-    currency: 'BNB',
-    rpcUrl: 'https://example.com',
-    explorerUrl: 'https://example.com',
-  );
-  SessionRequestParams? requested;
-  String? topic, chain;
-  String result = TestWalletConnection.signature;
-  Object? failure;
-  Completer<void>? gate;
-  int disconnections = 0;
-  void changed() => notifyListeners();
-  @override
-  Future<dynamic> request({
-    required String? topic,
-    required String chainId,
-    String? switchToChainId,
-    required SessionRequestParams request,
-  }) async {
-    this.topic = topic;
-    chain = chainId;
-    requested = request;
-    await gate?.future;
-    if (failure case final error?) throw error;
-    return result;
-  }
-
-  @override
-  Future<void> disconnect({bool disconnectAllSessions = true}) async {
-    disconnections++;
-    isConnected = false;
-    notifyListeners();
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

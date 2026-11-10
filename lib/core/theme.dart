@@ -28,6 +28,7 @@ abstract final class AppColors {
   static const authLine = Color(0x24FFFFFF);
   static const authButton = Color(0xFF3C4143);
   static const authCard = Color(0xFF232526);
+  static const authOverlay = Color(0x80000000);
   static const authAccent = Color(0xFF00E4AB);
   static const authOnAccent = Color(0xFF013220);
   static const authError = Color(0xFFF5464B);
@@ -137,6 +138,7 @@ abstract final class PortfolioColors {
   static const negative = AppColors.authError;
   static const positive = Color(0xFF0FB276);
   static const inset = Color(0xFF181A1B);
+  static const accountScrim = Color(0x66000000);
 }
 
 abstract final class PortfolioTypography {
@@ -183,4 +185,35 @@ abstract final class PortfolioTypography {
     color: PortfolioColors.text,
   );
   static const navigation = TextStyle(fontSize: 10, height: 16 / 10, fontWeight: FontWeight.w500);
+}
+
+/// Account-management typography from the supplied mobile frames.
+abstract final class AccountTypography {
+  static const heading = PortfolioTypography.heading;
+  static const section = PortfolioTypography.section;
+  static const name = TextStyle(
+    fontSize: 16,
+    height: 24 / 16,
+    fontWeight: FontWeight.w700,
+    color: PortfolioColors.text,
+  );
+  static const body = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w500,
+    color: PortfolioColors.text,
+  );
+  static const secondary = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w500,
+    color: PortfolioColors.secondary,
+  );
+  static const caption = PortfolioTypography.caption;
+  static const fieldLabel = TextStyle(
+    fontSize: 12,
+    height: 14 / 12,
+    fontWeight: FontWeight.w500,
+    color: PortfolioColors.secondary,
+  );
 }

@@ -6,9 +6,11 @@ import '../domain/withdraw_info.dart';
 import 'withdraw_info_mapper.dart';
 
 class SignedWithdrawInfoRepository implements WithdrawInfoRepository {
+  final AccountRequestAuthorization? authorization;
   SignedWithdrawInfoRepository(
     AsterAccountService service,
     AccountRequestSigner sign, {
+    this.authorization,
     required AsterReadNonces nonces,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now,
@@ -16,6 +18,7 @@ class SignedWithdrawInfoRepository implements WithdrawInfoRepository {
          serverTime: service.serverTime,
          send: service.withdrawInfo,
          sign: sign,
+         authorization: authorization,
          nonces: nonces,
          nanosecondNonce: true,
          signatureLifetime: const Duration(seconds: 30),

@@ -12,7 +12,8 @@ import 'position_leverage_mapper.dart';
 import 'signed_account_request.dart';
 
 class SignedQuickOrderRepository implements QuickOrderRepository {
-  SignedQuickOrderRepository(this.service, this.sign, {required this.nonces});
+  final AccountRequestAuthorization? authorization;
+  SignedQuickOrderRepository(this.service, this.sign, {this.authorization, required this.nonces});
   final AsterAccountService service;
   final AccountRequestSigner sign;
   final AsterReadNonces nonces;
@@ -29,6 +30,7 @@ class SignedQuickOrderRepository implements QuickOrderRepository {
           serverTime: service.serverTime,
           send: send,
           sign: sign,
+          authorization: authorization,
           nonces: nonces,
         ).read(
           address: context.address,

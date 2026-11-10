@@ -1,3 +1,4 @@
+import '../../authorization/application/trading_agent_provider.dart';
 import '../../../core/network/network_providers.dart';
 
 import 'dart:async';
@@ -37,6 +38,7 @@ final positionMarginRepositoryProvider = Provider<PositionMarginRepository>((ref
     ref.watch(positionMarginJournalProvider),
     nonces: ref.watch(asterReadNoncesProvider),
     now: ref.watch(positionMarginClockProvider),
+    authorization: ref.watch(asterRequestAuthorizationProvider),
   );
 });
 final positionMarginProvider = NotifierProvider<PositionMarginController, PositionMarginState>(

@@ -6,22 +6,27 @@ import '../domain/auth_session.dart';
 import '../domain/wallet_connection.dart';
 import '../domain/wallet_transaction.dart';
 import '../domain/wallet_message_signer.dart';
+import '../domain/wallet_signing_preparation.dart';
 import 'evm_account_address.dart';
-import 'wallet_configuration.dart';
+import 'external_wallet_session.dart';
 import 'wallet_preference_store.dart';
 import 'privy_configuration.dart';
+import 'privy_auth_failure.dart';
+
 import 'privy_wallet_signer.dart';
 import 'privy_transaction_requester.dart';
 import 'privy_wallet_transaction_sender.dart';
 
-/// SDK objects and credentials stay behind this boundary. A Privy identity
-/// authenticates a wallet; it does not authorize Aster orders or fund transfers.
-class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner {
+export 'privy_auth_failure.dart' show failureFromPrivy;
+
+/// External EOA sessions use their connection directly. Privy owns only email /
+/// social identities and embedded signing; neither session grants Aster access.
+class PrivyIdentityRepository
+    implements IdentityRepository, WalletMessageSigner, WalletSigningPreparation {
   PrivyIdentityRepository(
     this.configuration, {
     Privy Function(PrivyConfig)? create,
     WalletPreferenceStore? preferences,
-    this.walletConfiguration = const WalletConfiguration.environment(),
     PrivyTypedDataRequester? requestTypedData,
     PrivyTypedDataRequester? requestTransaction,
   }) : _create = create ?? ((config) => Privy.init(config: config)),
@@ -37,58 +42,67 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
   Privy? _sdk;
   PrivyUser? _user;
 
-  final WalletConfiguration walletConfiguration;
   final WalletPreferenceStore _preferences;
   WalletPreference? _preference;
-  WalletConnection? _connection;
-  StreamSubscription<void>? _walletSubscription;
-  final _walletEvents = StreamController<AuthIdentity?>.broadcast();
-  bool _externalInvalidated = false;
+  StreamSubscription<AuthState>? _sdkSubscription;
+  late final _events = StreamController<AuthIdentity?>.broadcast(onListen: _observeSdk);
+  late final _external = ExternalWalletSession(
+    onInvalidated: () {
+      _sessionGeneration++;
+      unawaited(_remember(const WalletPreference('', WalletKind.external, null)));
+      _events.add(null);
+    },
+  );
   bool _disposed = false;
   int _sessionGeneration = 0;
+  Future<void> _preferenceWrites = Future.value();
 
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
     _sessionGeneration++;
-    await _walletSubscription?.cancel();
-    await _connection?.release();
-    _connection = null;
-    await _walletEvents.close();
+    await _sdkSubscription?.cancel();
+    await _external.dispose();
+    await _events.close();
   }
 
   @override
-  Stream<AuthIdentity?> get changes => Stream.multi((output) {
-    final sdk = _ready.authStateStream
+  Stream<AuthIdentity?> get changes => _events.stream;
+
+  void _observeSdk() {
+    if (_sdk == null || _sdkSubscription != null || _disposed) return;
+    _sdkSubscription = _sdk!.authStateStream
         .where((event) => event is Authenticated || event is Unauthenticated)
-        .listen((event) {
-          final next = event is Authenticated ? event.user : null;
-          if (next?.id != _user?.id) _sessionGeneration++;
-          _user = event is Authenticated ? event.user : null;
-          if (_externalInvalidated) {
-            output.add(null);
-          } else {
+        .listen(
+          (event) {
+            // A stale Privy session cannot replace an active EOA or explicit logout.
+            if (_external.selected || _disposed) return;
+            final next = event is Authenticated ? event.user : null;
+            if (next?.id != _user?.id) _sessionGeneration++;
+            _user = next;
             try {
-              output.add(_user == null ? null : _identity(_user!));
+              _events.add(next == null ? null : _identity(next));
             } on AuthFailure catch (failure) {
-              output.addError(failure);
+              _events.addError(failure);
             }
-          }
-        }, onError: (Object _) => output.addError(const AuthFailure('authUnavailable')));
-    final wallet = _walletEvents.stream.listen(output.add);
-    output.onCancel = () async {
-      await sdk.cancel();
-      await wallet.cancel();
-    };
-  });
+          },
+          onError: (Object _) {
+            if (!_external.selected && !_disposed) {
+              _events.addError(const AuthFailure('authUnavailable'));
+            }
+          },
+        );
+  }
 
   Future<void> _remember(WalletPreference preference) async {
     _preference = preference;
+    final write = _preferenceWrites.then((_) => _preferences.write(preference));
+    _preferenceWrites = write.then<void>((_) {}, onError: (Object _) {});
     try {
-      await _preferences.write(preference);
+      await write;
     } catch (_) {
-      // Persistence contains only an address preference. Native auth remains
-      // authoritative; restoration falls back to a verified external wallet.
+      // Only public connection metadata is persisted; a live signer is still
+      // required after restoration. A failed write never authorizes anything.
     }
   }
 
@@ -106,6 +120,54 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
 
   @override
   Future<AuthIdentity?> initialize() => _guard(() async {
+    if (_disposed) throw const AuthFailure('authSessionUnavailable');
+    if (_external.selected) return _external.identity;
+    final generation = _sessionGeneration;
+    try {
+      _preference = await _preferences.read();
+    } catch (_) {
+      _preference = null;
+    }
+    if (_disposed || generation != _sessionGeneration) {
+      throw const AuthFailure('authSessionUnavailable');
+    }
+    if (_preference?.kind == WalletKind.external) {
+      return _external.restore(_preference!);
+    }
+    // Missing Privy configuration must not disable the EOA connection path.
+    if (!configuration.isConfigured) return null;
+    final sdk = _ready;
+    final auth = await sdk.getAuthState();
+    if (_disposed || generation != _sessionGeneration) {
+      throw const AuthFailure('authSessionUnavailable');
+    }
+    if (auth case Authenticated(:final user)) {
+      if (_user?.id != user.id) _sessionGeneration++;
+      _user = user;
+      final identity = _identity(user);
+      if (identity.walletKind == WalletKind.external) {
+        // Migrate an old SIWE identity to a public address preference. A stored
+        // address cannot restore signing capability or a backend login.
+        final preference = WalletPreference(
+          ExternalWalletSession.identityId(identity.walletAddress!),
+          WalletKind.external,
+          identity.walletAddress,
+          walletName: identity.walletName,
+        );
+        final restored = _external.restore(preference);
+        await _remember(preference);
+        return restored;
+      }
+      return identity;
+    }
+    if (_user != null) _sessionGeneration++;
+    _user = null;
+    if (auth is! Unauthenticated) throw const AuthFailure('authSessionUnavailable');
+    return null;
+  });
+
+  Privy get _ready {
+    if (_disposed) throw const AuthFailure('authSessionUnavailable');
     if (!configuration.isConfigured) throw const AuthFailure('authConfiguration');
     final sdk = _sdk ??= _create(
       PrivyConfig(
@@ -114,25 +176,9 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
         logLevel: PrivyLogLevel.none,
       ),
     );
-    final auth = await sdk.getAuthState();
-    if (auth case Authenticated(:final user)) {
-      if (_externalInvalidated) return null;
-      if (_user?.id != user.id) _sessionGeneration++;
-      _user = user;
-      try {
-        _preference = await _preferences.read();
-      } catch (_) {
-        _preference = null;
-      }
-      return _identity(user);
-    }
-    if (_user != null) _sessionGeneration++;
-    _user = null;
-    if (auth is! Unauthenticated) throw const AuthFailure('authSessionUnavailable');
-    return null;
-  });
-
-  Privy get _ready => _sdk ?? (throw const AuthFailure('authUnavailable'));
+    if (_events.hasListener) _observeSdk();
+    return sdk;
+  }
 
   @override
   Future<void> sendCode(String email) => _guard(() async {
@@ -149,7 +195,7 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
     switch (await _ready.email.loginWithCode(email: email, code: code)) {
       case Success<PrivyUser>(:final value):
         _sessionGeneration++;
-        _externalInvalidated = false;
+        unawaited(_external.deselect());
         _user = value;
         await _remember(WalletPreference(value.id, WalletKind.embedded, null));
         return _identity(value);
@@ -169,7 +215,7 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
       case Success<PrivyUser>(:final value):
         if (_disposed) throw const AuthFailure('authSessionUnavailable');
         _sessionGeneration++;
-        _externalInvalidated = false;
+        unawaited(_external.deselect());
         _user = value;
         await _remember(WalletPreference(value.id, WalletKind.embedded, null));
         return _identity(value);
@@ -180,6 +226,9 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
 
   @override
   Future<AuthIdentity> ensureWallet() => _guard(() async {
+    if (_external.selected) {
+      return _external.identity ?? (throw const AuthFailure('authSessionUnavailable'));
+    }
     final user = _user;
     if (user == null) throw const AuthFailure('authSessionUnavailable');
     if (_identity(user).walletKind == WalletKind.external) return _identity(user);
@@ -202,92 +251,39 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
   @override
   Future<void> logout() => _guard(() async {
     _sessionGeneration++;
-    await _ready.logout();
+    if (!_external.selected) await _sdk?.logout();
     _user = null;
-    _externalInvalidated = false;
-    final connection = _connection;
-    _connection = null;
-    await _walletSubscription?.cancel();
-    _walletSubscription = null;
-    try {
-      await connection?.disconnect();
-    } catch (_) {
-      // Privy logout succeeded. A relay cleanup failure cannot resurrect it.
-    }
+    await _external.logout();
+    // Explicit signed-out marker prevents a legacy native SIWE session from
+    // reappearing after logout, without needing Privy for an EOA operation.
+    await _remember(const WalletPreference('', WalletKind.external, null));
   });
 
   @override
   Future<AuthIdentity> loginWithWallet(WalletConnection connection) => _guard(() async {
     if (_disposed) throw const AuthFailure('authWalletCancelled');
-    final origin = walletConfiguration.relyingParty;
-    if (origin == null) throw const AuthFailure('authWalletConfiguration');
-    final walletAddress = _walletAddress(connection.address);
-    if (!connection.isCurrent || !WalletConfiguration.chains.contains(connection.chainId)) {
-      throw const AuthFailure('authWalletChanged');
-    }
-    final params = SiweMessageParams(
-      appDomain: origin.host,
-      appUri: origin.toString(),
-      chainId: connection.chainId,
-      walletAddress: walletAddress,
-    );
-    final message = switch (await _ready.siwe.generateMessage(params)) {
-      Success<String>(:final value) => value,
-      Failure<String>(:final error) => throw failureFromPrivy(error.message),
-    };
-    if (!connection.isCurrent) throw const AuthFailure('authWalletChanged');
-    final signature = await connection.signPersonalMessage(message);
-    if (!connection.isCurrent) throw const AuthFailure('authWalletChanged');
-    final user = switch (await _ready.siwe.login(
-      message: message,
-      signature: signature,
-      params: params,
-      metadata: const WalletLoginMetadata(connectorType: 'walletconnect'),
-    )) {
-      Success<PrivyUser>(:final value) => value,
-      Failure<PrivyUser>(:final error) => throw failureFromPrivy(error.message),
-    };
-    final verified = user.linkedAccounts.whereType<ExternalWalletAccount>().any(
-      (wallet) =>
-          wallet.chainType.name == 'ethereum' &&
-          wallet.address.toLowerCase() == connection.address.toLowerCase(),
-    );
-    if (!verified || !connection.isCurrent || _disposed) {
-      await _ready.logout();
-      throw const AuthFailure('authWalletChanged');
-    }
-    await _walletSubscription?.cancel();
-    if (!identical(_connection, connection)) await _connection?.release();
-    _connection = connection;
+    final identity = _external.connect(connection);
     _sessionGeneration++;
-    _externalInvalidated = false;
-    _user = user;
-    _walletSubscription = connection.invalidations.listen((_) {
-      if (_disposed || !identical(_connection, connection)) return;
-      _externalInvalidated = true;
-      _sessionGeneration++;
-      _user = null;
-      _walletEvents.add(null);
-    });
     await _remember(
       WalletPreference(
-        user.id,
+        identity.id,
         WalletKind.external,
-        connection.address,
-        walletName: connection.walletName,
+        identity.walletAddress,
+        walletName: identity.walletName,
       ),
     );
-    if (!connection.isCurrent || _externalInvalidated) throw const AuthFailure('authWalletChanged');
-    return _identity(user);
+    if (_disposed || !_external.owns(connection)) throw const AuthFailure('authWalletChanged');
+    return identity;
   });
 
   @override
   Future<String> signPersonalMessage({required String expectedAddress, required String message}) =>
       _guard(() async {
-        final user = _user;
-        if (_disposed || user == null || _externalInvalidated) {
-          throw const AuthFailure('authSessionUnavailable');
+        if (_external.selected) {
+          return _external.signPersonalMessage(expectedAddress: expectedAddress, message: message);
         }
+        final user = _user;
+        if (_disposed || user == null) throw const AuthFailure('authSessionUnavailable');
         final identity = _identity(user), generation = _sessionGeneration;
         if (!identity.signingAvailable ||
             identity.walletAddress?.toLowerCase() != expectedAddress.toLowerCase() ||
@@ -295,28 +291,16 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
             message.length > 16384) {
           throw const AuthFailure('authWalletChanged');
         }
-        final connection = _connection;
-        String signature;
-        if (identity.walletKind == WalletKind.external) {
-          if (connection == null || !connection.isCurrent) {
-            throw const AuthFailure('authWalletReconnect');
-          }
-          signature = await connection.signPersonalMessage(message);
-        } else {
-          signature = await signEmbeddedPersonalMessage(
-            user: user,
-            expectedAddress: expectedAddress,
-            message: message,
-            request: _requestTypedData,
-          );
-        }
+        final signature = await signEmbeddedPersonalMessage(
+          user: user,
+          expectedAddress: expectedAddress,
+          message: message,
+          request: _requestTypedData,
+        );
         if (_disposed ||
             generation != _sessionGeneration ||
             _user?.id != user.id ||
-            _externalInvalidated ||
-            _identity(_user!).walletAddress?.toLowerCase() != expectedAddress.toLowerCase() ||
-            (identity.walletKind == WalletKind.external &&
-                (!identical(connection, _connection) || !connection!.isCurrent))) {
+            _identity(_user!).walletAddress?.toLowerCase() != expectedAddress.toLowerCase()) {
           throw const AuthFailure('authWalletChanged');
         }
         if (!RegExp(r'^0x[a-fA-F0-9]{130}$').hasMatch(signature)) {
@@ -325,6 +309,21 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
         return signature;
       });
 
+  @override
+  Future<void> prepareSigning({
+    required String expectedAddress,
+    required int chainId,
+    required bool Function() isCurrent,
+  }) => _guard(() async {
+    if (!isCurrent() || _disposed) throw const AuthFailure('authWalletChanged');
+    if (!_external.selected) return; // Embedded signatures need no network switch.
+    await _external.prepareSigning(
+      expectedAddress: expectedAddress,
+      chainId: chainId,
+      isCurrent: isCurrent,
+    );
+  });
+
   /// Typed requests use the selected wallet. External sessions always delegate
   /// to the connected EOA and never create an embedded fallback signer.
   @override
@@ -332,8 +331,12 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
     required String expectedAddress,
     required Map<String, Object?> typedData,
   }) => _guard(() async {
+    if (typedData.isEmpty) throw const AuthFailure('authWalletChanged');
+    if (_external.selected) {
+      return signExternalRequest(expectedAddress: expectedAddress, typedData: typedData);
+    }
     final user = _user;
-    if (_disposed || user == null || _externalInvalidated) {
+    if (_disposed || user == null) {
       throw const AuthFailure('authSessionUnavailable');
     }
     final identity = _identity(user);
@@ -364,30 +367,8 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
   Future<String> signExternalRequest({
     required String expectedAddress,
     required Map<String, Object?> typedData,
-  }) => _guard(() async {
-    final user = _user;
-    final connection = _connection;
-    if (_disposed || user == null || connection == null || _externalInvalidated) {
-      throw const AuthFailure('authWalletReconnect');
-    }
-    final identity = _identity(user);
-    final generation = _sessionGeneration;
-    if (identity.walletKind != WalletKind.external ||
-        identity.walletAddress?.toLowerCase() != expectedAddress.toLowerCase() ||
-        !connection.isCurrent) {
-      throw const AuthFailure('authWalletChanged');
-    }
-    final signature = await connection.signTypedData(typedData);
-    if (_disposed ||
-        generation != _sessionGeneration ||
-        _user?.id != user.id ||
-        !identical(connection, _connection) ||
-        !connection.isCurrent ||
-        _externalInvalidated) {
-      throw const AuthFailure('authWalletChanged');
-    }
-    return signature;
-  });
+  }) =>
+      _guard(() => _external.signTypedData(expectedAddress: expectedAddress, typedData: typedData));
 
   @override
   Future<WalletTransactionResult> sendWalletTransaction({
@@ -396,9 +377,10 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
   }) {
     final generation = _sessionGeneration;
     return _transactions.send(
-      user: _externalInvalidated ? null : _user,
-      resolveIdentity: _identity,
-      connection: _connection,
+      user: _external.selected ? null : _user,
+      resolveIdentity: () =>
+          _external.selected ? _external.identity : (_user == null ? null : _identity(_user!)),
+      connection: _external.connection,
       transaction: transaction,
       isCurrent: () => !_disposed && generation == _sessionGeneration && isCurrent(),
     );
@@ -410,73 +392,20 @@ class PrivyIdentityRepository implements IdentityRepository, WalletMessageSigner
     final externalWallets = user.linkedAccounts.whereType<ExternalWalletAccount>().where(
       (wallet) => wallet.chainType.name == 'ethereum',
     );
-    final selectedExternal = externalWallets
-        .where((wallet) => wallet.address.toLowerCase() == preference?.address?.toLowerCase())
-        .firstOrNull;
-    // A remembered EOA must never silently become an embedded signer when its
-    // linked account is missing or changed on the server.
-    if (preference?.kind == WalletKind.external && selectedExternal == null) {
-      throw const AuthFailure('authWalletChanged');
-    }
-    final external = preference?.kind == WalletKind.embedded
-        ? null
-        : selectedExternal ?? externalWallets.firstOrNull;
+    // Saved EOA metadata is restored before entering the Privy branch. Without
+    // a preference, retain the legacy external choice for migration only.
+    final external = preference?.kind == WalletKind.embedded ? null : externalWallets.firstOrNull;
     final address = external?.address ?? user.embeddedEthereumWallets.firstOrNull?.address;
-    final connection =
-        _connection?.isCurrent == true &&
-            _connection?.address.toLowerCase() == external?.address.toLowerCase()
-        ? _connection
-        : null;
     return AuthIdentity(
       id: user.id,
       email: user.linkedAccounts.whereType<EmailAccount>().firstOrNull?.emailAddress,
       walletAddress: address == null ? null : _walletAddress(address),
       walletKind: external == null ? WalletKind.embedded : WalletKind.external,
-      walletName: external == null
-          ? null
-          : connection?.walletName ??
-                (selectedExternal == external ? preference?.walletName : null),
-      signingAvailable:
-          !_disposed &&
-          !_externalInvalidated &&
-          (external == null ? address != null : connection != null),
+      signingAvailable: !_disposed && external == null && address != null,
     );
   }
 
   static String _walletAddress(String address) {
     return canonicalEvmAddress(address) ?? (throw const AuthFailure('authUnavailable'));
   }
-}
-
-AuthFailure failureFromPrivy(String message) {
-  final lower = message.toLowerCase();
-  final key = lower.contains('network') || lower.contains('timeout') || lower.contains('connection')
-      ? 'authNetwork'
-      : lower.contains('rate') || lower.contains('too many')
-      ? 'authRateLimited'
-      : lower.contains('expired') && (lower.contains('code') || lower.contains('otp'))
-      ? 'authCodeExpired'
-      : lower.contains('code') || lower.contains('otp') || lower.contains('expired')
-      ? 'authInvalidCode'
-      : lower.contains('client') || lower.contains('app id') || lower.contains('configuration')
-      ? 'authConfiguration'
-      : 'authUnavailable';
-  // Retain a concise SDK reason, without code values, credentials or payloads.
-  var reason = message.split('\n').first.trim();
-  reason = reason.replaceAll(
-    RegExp(r'\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b'),
-    '[redacted]',
-  );
-  reason = reason.replaceAll(
-    RegExp(
-      r'(?:[a-z_]*token|[a-z_]*secret|private[_ -]?key|password|signature|authorization|code|otp)\s*[:=]\s*[^\s,;]+',
-      caseSensitive: false,
-    ),
-    '[redacted]',
-  );
-  reason = reason.replaceAll(RegExp(r'\b\d{6}\b|0x[a-fA-F0-9]{64,}'), '[redacted]');
-  reason = reason.replaceAll(RegExp(r'\bBearer\s+[^\s,;]+', caseSensitive: false), '[redacted]');
-  reason = reason.replaceAll(RegExp(r'\b[a-fA-F0-9]{64}\b'), '[redacted]');
-  if (reason.contains('{') || reason.contains('Exception(') || reason.length > 200) reason = '';
-  return AuthFailure(key, reason: reason.isEmpty ? null : reason);
 }

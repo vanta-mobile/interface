@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:privy_flutter/privy_flutter.dart';
-import 'package:privy_flutter/src/modules/login_with_siwe/login_with_siwe.dart';
 import 'package:vanta/features/auth/data/privy_configuration.dart';
 import 'package:vanta/features/auth/data/privy_identity_repository.dart';
 import 'package:vanta/features/auth/data/wallet_preference_store.dart';
@@ -33,32 +32,39 @@ void main() {
   tearDown(() async {
     await repository.dispose();
     await connection.dispose();
+    await sdk.events.close();
   });
 
-  test('wallet name is retained on login and restored for the same user and address', () async {
+  test('wallet name is retained on connection and restored for the same address', () async {
     final named = TestWalletConnection(walletName: 'MetaMask');
     addTearDown(named.dispose);
     await repository.initialize();
     final identity = await repository.loginWithWallet(named);
     expect(identity.walletName, 'MetaMask');
     expect(preferences.value?.walletName, 'MetaMask');
-    sdk.state = Authenticated(sdk.siwe.user);
+    sdk.state = Authenticated(sdk.legacyUser);
     final restored = build();
     addTearDown(restored.dispose);
     expect((await restored.initialize())?.walletName, 'MetaMask');
     expect((await restored.initialize())?.signingAvailable, false);
   });
 
-  test('a stored wallet name belonging to another user is not displayed', () async {
-    preferences.value = WalletPreference(
-      'other-user',
-      WalletKind.external,
-      connection.address,
-      walletName: 'Other wallet',
-    );
-    sdk.state = Authenticated(sdk.siwe.user);
-    expect((await repository.initialize())?.walletName, isNull);
-  });
+  test(
+    'legacy public EOA preference migrates to an address identity without trusting its user ID',
+    () async {
+      preferences.value = WalletPreference(
+        'other-user',
+        WalletKind.external,
+        connection.address,
+        walletName: 'Other wallet',
+      );
+      sdk.state = Authenticated(sdk.legacyUser);
+      final restored = await repository.initialize();
+      expect(restored?.walletName, 'Other wallet');
+      expect(restored?.id, 'eip155:${connection.address.toLowerCase()}');
+      expect(restored?.signingAvailable, false);
+    },
+  );
 
   test(
     'EOA personal message delegates to the connected wallet without an embedded fallback',
@@ -75,7 +81,7 @@ void main() {
       );
       expect(connection.personalSigns, before + 1);
       expect(connection.personalMessage, 'Registration message');
-      expect(sdk.siwe.user.created, 0);
+      expect(sdk.legacyUser.created, 0);
       expect(connection.typedSigns, 0);
     },
   );
@@ -90,7 +96,7 @@ void main() {
     connection.invalidate();
     connection.signGate!.complete();
     await expectLater(pending, throwsA(isA<AuthFailure>()));
-    expect(sdk.siwe.user.created, 0);
+    expect(sdk.legacyUser.created, 0);
   });
 
   test('EOA transactions delegate only to connected wallet without Privy fallback', () async {
@@ -101,17 +107,17 @@ void main() {
     expect(result.hash, '0x${'a' * 64}');
     expect(connection.transactions.single, same(tx));
     expect(connection.typedSigns, 0);
-    expect(sdk.siwe.user.created, 0);
+    expect(sdk.legacyUser.created, 0);
   });
   test('restored EOA cannot send through an existing embedded wallet', () async {
-    sdk.state = Authenticated(sdk.siwe.user);
+    sdk.state = Authenticated(sdk.legacyUser);
     await repository.initialize();
     await expectLater(
       repository.sendWalletTransaction(transaction: walletTransaction(), isCurrent: () => true),
       throwsA(isA<WalletTransactionNotSent>().having((e) => e.key, 'key', 'authWalletReconnect')),
     );
     expect(connection.transactions, isEmpty);
-    expect(sdk.siwe.user.created, 0);
+    expect(sdk.legacyUser.created, 0);
   });
   for (final issue in ['address', 'scope', 'logout', 'dispose']) {
     test('EOA $issue blocks transaction before dispatch', () async {
@@ -131,7 +137,7 @@ void main() {
         throwsA(isA<WalletTransactionNotSent>()),
       );
       expect(connection.transactions, isEmpty);
-      expect(sdk.siwe.user.created, 0);
+      expect(sdk.legacyUser.created, 0);
     });
   }
   test(
@@ -154,7 +160,7 @@ void main() {
       connection.transactionGate!.complete();
       expect((await pending).hash, '0x${'a' * 64}');
       expect(connection.transactions.length, 1);
-      expect(sdk.siwe.user.created, 0);
+      expect(sdk.legacyUser.created, 0);
     },
   );
   test('unexpected external transport failure after dispatch remains unknown', () async {
@@ -179,19 +185,18 @@ void main() {
   });
 
   test(
-    'EOA SIWE and typed requests use the connected wallet and never create an embedded wallet',
+    'EOA connection does not sign in and typed requests use only the connected wallet',
     () async {
       await repository.initialize();
       final identity = await repository.loginWithWallet(connection);
       expect(identity.walletKind, WalletKind.external);
       expect(identity.walletAddress, connection.address);
       expect(identity.signingAvailable, true);
-      expect(sdk.siwe.params?.walletAddress, connection.address);
-      expect(sdk.siwe.params?.chainId, '56');
-      expect(connection.personalMessage, 'Privy server challenge');
-      expect(sdk.siwe.signature, TestWalletConnection.signature);
+      expect(identity.id, 'eip155:${connection.address.toLowerCase()}');
+      expect(connection.personalSigns, 0);
+      expect(connection.typedSigns, 0);
       expect((await repository.ensureWallet()).walletKind, WalletKind.external);
-      expect(sdk.siwe.user.created, 0);
+      expect(sdk.legacyUser.created, 0);
       final typed = <String, Object?>{
         'primaryType': 'Message',
         'message': {'nonce': '1'},
@@ -204,7 +209,7 @@ void main() {
       expect(connection.typedData, same(typed));
       await repository.logout();
       expect(connection.disconnected, 1);
-      expect(sdk.loggedOut, true);
+      expect(sdk.loggedOut, false);
       await expectLater(
         repository.signExternalRequest(expectedAddress: connection.address, typedData: typed),
         throwsA(isA<AuthFailure>()),
@@ -212,15 +217,14 @@ void main() {
     },
   );
 
-  test('EOA SIWE canonicalizes a lowercase WalletConnect address to EIP-55', () async {
+  test('EOA connection canonicalizes a lowercase WalletConnect address to EIP-55', () async {
     const checksummed = '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf';
     final lowercaseConnection = TestWalletConnection(address: checksummed.toLowerCase());
-    sdk.siwe.user.walletAddress = checksummed;
+    sdk.legacyUser.walletAddress = checksummed;
     await repository.initialize();
 
     final identity = await repository.loginWithWallet(lowercaseConnection);
 
-    expect(sdk.siwe.params?.walletAddress, checksummed);
     expect(identity.walletAddress, checksummed);
     await lowercaseConnection.dispose();
   });
@@ -230,14 +234,15 @@ void main() {
     () async {
       await repository.initialize();
       await repository.loginWithWallet(connection);
-      sdk.state = Authenticated(sdk.siwe.user);
+      sdk.state = Authenticated(sdk.legacyUser);
       final restored = build();
+      addTearDown(restored.dispose);
       final identity = await restored.initialize();
       expect(identity?.walletAddress, connection.address);
       expect(identity?.walletKind, WalletKind.external);
       expect(identity?.signingAvailable, false);
       await restored.ensureWallet();
-      expect(sdk.siwe.user.created, 0);
+      expect(sdk.legacyUser.created, 0);
       await expectLater(
         restored.signExternalRequest(expectedAddress: connection.address, typedData: {}),
         throwsA(isA<AuthFailure>().having((error) => error.key, 'key', 'authWalletReconnect')),
@@ -248,27 +253,29 @@ void main() {
   test(
     'without saved preference a verified EOA is restored without creating another wallet',
     () async {
-      sdk.state = Authenticated(sdk.siwe.user);
+      sdk.state = Authenticated(sdk.legacyUser);
       final identity = await repository.initialize();
       expect(identity?.walletKind, WalletKind.external);
       expect(identity?.walletAddress, connection.address);
       await repository.ensureWallet();
-      expect(sdk.siwe.user.created, 0);
+      expect(sdk.legacyUser.created, 0);
       preferences.value = WalletPreference('user', WalletKind.embedded, null);
-      expect((await build().initialize())?.walletKind, WalletKind.embedded);
+      final embedded = build();
+      addTearDown(embedded.dispose);
+      expect((await embedded.initialize())?.walletKind, WalletKind.embedded);
     },
   );
 
-  test('rejected login never authenticates or creates a wallet', () async {
+  test('an invalid connection never replaces the selected wallet or signs', () async {
     await repository.initialize();
-    connection.failure = const AuthFailure('authWalletRejected');
-    await expectLater(
-      repository.loginWithWallet(connection),
-      throwsA(isA<AuthFailure>().having((error) => error.key, 'key', 'authWalletRejected')),
-    );
-    expect(sdk.siwe.logins, 0);
-    expect(sdk.siwe.user.created, 0);
-    expect(preferences.value, null);
+    final original = await repository.loginWithWallet(connection);
+    final invalid = TestWalletConnection(address: '0x${'3' * 40}')..current = false;
+    addTearDown(invalid.dispose);
+    await expectLater(repository.loginWithWallet(invalid), throwsA(isA<AuthFailure>()));
+    expect((await repository.initialize())?.id, original.id);
+    expect(connection.isCurrent, true);
+    expect(invalid.personalSigns, 0);
+    expect(sdk.legacyUser.created, 0);
   });
 
   test('account change invalidates the session and rejects late typed signatures', () async {
@@ -290,9 +297,9 @@ void main() {
       throwsA(isA<AuthFailure>().having((error) => error.key, 'key', 'authWalletChanged')),
     );
     await invalidated.future.timeout(const Duration(seconds: 1));
-    sdk.state = Authenticated(sdk.siwe.user);
+    sdk.state = Authenticated(sdk.legacyUser);
     expect(await repository.initialize(), null);
-    expect(sdk.siwe.user.created, 0);
+    expect(sdk.legacyUser.created, 0);
     await subscription.cancel();
   });
 
@@ -309,60 +316,104 @@ void main() {
     expect(connection.typedSigns, 0);
   });
 
-  test('a missing remembered EOA cannot fall back to an embedded wallet', () async {
-    preferences.value = const WalletPreference(
-      'user',
-      WalletKind.external,
-      '0x3333333333333333333333333333333333333333',
+  test(
+    'remembered EOA needs no Privy association and cannot fall back to embedded signing',
+    () async {
+      preferences.value = const WalletPreference(
+        'user',
+        WalletKind.external,
+        '0x3333333333333333333333333333333333333333',
+      );
+      sdk.state = Authenticated(sdk.legacyUser);
+      final identity = await repository.initialize();
+      expect(identity?.walletAddress, preferences.value!.address);
+      expect(identity?.signingAvailable, false);
+      await expectLater(
+        repository.signWalletRequest(
+          expectedAddress: identity!.walletAddress!,
+          typedData: {'message': 'read'},
+        ),
+        throwsA(isA<AuthFailure>()),
+      );
+      expect(sdk.legacyUser.created, 0);
+    },
+  );
+
+  test('EOA connect, restore, sign and logout never initialize Privy', () async {
+    final direct = PrivyIdentityRepository(
+      const PrivyConfiguration(appId: '', clientId: ''),
+      preferences: preferences,
+      create: (_) => throw TestFailure('EOA must not initialize Privy'),
     );
-    sdk.state = Authenticated(sdk.siwe.user);
-    await expectLater(
-      repository.initialize(),
-      throwsA(isA<AuthFailure>().having((failure) => failure.key, 'key', 'authWalletChanged')),
+    addTearDown(direct.dispose);
+    expect(await direct.initialize(), null);
+    final identity = await direct.loginWithWallet(connection);
+    expect(connection.personalSigns, 0);
+    expect(connection.typedSigns, 0);
+    expect((await direct.ensureWallet()).id, identity.id);
+    await direct.signWalletRequest(
+      expectedAddress: connection.address,
+      typedData: {'message': 'read'},
     );
-    await expectLater(repository.ensureWallet(), throwsA(isA<AuthFailure>()));
-    expect(sdk.siwe.user.created, 0);
+    final restored = PrivyIdentityRepository(
+      const PrivyConfiguration(appId: 'app', clientId: 'client'),
+      preferences: preferences,
+      create: (_) => throw TestFailure('Restoration must not initialize Privy'),
+    );
+    addTearDown(restored.dispose);
+    expect((await restored.initialize())?.id, identity.id);
+    expect((await restored.initialize())?.signingAvailable, false);
+    await direct.logout();
+    final signedOut = build();
+    addTearDown(signedOut.dispose);
+    sdk.state = Authenticated(sdk.legacyUser);
+    expect(await signedOut.initialize(), null);
+    expect(connection.disconnected, 1);
   });
+
+  test(
+    'switch discards a signature from the previous connection and isolates SDK events',
+    () async {
+      await repository.initialize();
+      final subscription = repository.changes.listen((_) => fail('Stale Privy event leaked'));
+      addTearDown(subscription.cancel);
+      await repository.loginWithWallet(connection);
+      connection.signGate = Completer();
+      final pending = repository.signWalletRequest(
+        expectedAddress: connection.address,
+        typedData: {'message': 'read'},
+      );
+      final other = TestWalletConnection(address: '0x${'3' * 40}');
+      addTearDown(other.dispose);
+      final switched = await repository.loginWithWallet(other);
+      sdk.events.add(Authenticated(sdk.legacyUser));
+      sdk.events.add(const Unauthenticated());
+      await Future<void>.delayed(Duration.zero);
+      connection.signGate!.complete();
+      await expectLater(pending, throwsA(isA<AuthFailure>()));
+      expect((await repository.initialize())?.id, switched.id);
+      expect(other.personalSigns, 0);
+      expect(connection.isCurrent, false);
+      await repository.signWalletRequest(
+        expectedAddress: other.address,
+        typedData: {'message': 'read'},
+      );
+      expect(other.typedSigns, 1);
+    },
+  );
 }
 
 class _Sdk implements Privy {
   AuthState state = const Unauthenticated();
   bool loggedOut = false;
+  final legacyUser = _User();
+  final events = StreamController<AuthState>.broadcast(sync: true);
   @override
-  final _Siwe siwe = _Siwe();
-  @override
-  Stream<AuthState> get authStateStream => const Stream.empty();
+  Stream<AuthState> get authStateStream => events.stream;
   @override
   Future<AuthState> getAuthState() async => state;
   @override
   Future<void> logout() async => loggedOut = true;
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-class _Siwe implements LoginWithSiwe {
-  final user = _User();
-  SiweMessageParams? params;
-  String? signature;
-  int logins = 0;
-  @override
-  Future<Result<String>> generateMessage(SiweMessageParams params) async {
-    this.params = params;
-    return const Success('Privy server challenge');
-  }
-
-  @override
-  Future<Result<PrivyUser>> login({
-    required String message,
-    required String signature,
-    required SiweMessageParams params,
-    WalletLoginMetadata? metadata,
-  }) async {
-    this.signature = signature;
-    logins++;
-    return Success(user);
-  }
-
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

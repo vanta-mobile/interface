@@ -10,9 +10,11 @@ import 'aster_user_stream.dart';
 import 'signed_account_request.dart';
 
 class SignedAccountChangeRepository implements AccountChangeRepository {
+  final AccountRequestAuthorization? authorization;
   SignedAccountChangeRepository(
     AsterAccountService service,
     AccountRequestSigner sign, {
+    this.authorization,
     AsterReadNonces? nonces,
     DateTime Function()? now,
     WebSocketChannel Function(Uri)? connect,
@@ -20,6 +22,7 @@ class SignedAccountChangeRepository implements AccountChangeRepository {
          serverTime: service.serverTime,
          send: service.userStream,
          sign: sign,
+         authorization: authorization,
          nonces: nonces,
        ),
        _now = now ?? DateTime.now,
@@ -29,6 +32,7 @@ class SignedAccountChangeRepository implements AccountChangeRepository {
   SignedAccountChangeRepository.spot(
     AsterSpotService service,
     AccountRequestSigner sign, {
+    this.authorization,
     AsterReadNonces? nonces,
     DateTime Function()? now,
     WebSocketChannel Function(Uri)? connect,
@@ -36,6 +40,7 @@ class SignedAccountChangeRepository implements AccountChangeRepository {
          serverTime: service.serverTime,
          send: service.userStream,
          sign: sign,
+         authorization: authorization,
          nonces: nonces,
        ),
        _now = now ?? DateTime.now,

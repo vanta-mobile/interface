@@ -1,3 +1,4 @@
+import '../../authorization/application/trading_agent_provider.dart';
 import '../../../core/network/network_providers.dart';
 
 import 'dart:async';
@@ -26,6 +27,7 @@ final accountChangeRepositoryProvider = Provider<AccountChangeRepository>((ref) 
     ref.watch(identityRepositoryProvider).signWalletRequest,
     nonces: ref.watch(asterReadNoncesProvider),
     now: ref.watch(accountChangeClockProvider),
+    authorization: ref.watch(asterRequestAuthorizationProvider),
   );
   ref.onDispose(() {
     repository.clear();

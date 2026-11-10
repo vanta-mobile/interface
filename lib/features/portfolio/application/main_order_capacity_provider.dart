@@ -1,3 +1,4 @@
+import '../../authorization/application/trading_agent_provider.dart';
 import '../../../core/network/network_providers.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +25,7 @@ final mainOrderCapacityRepositoryProvider = Provider<MainOrderCapacityRepository
     ref.watch(identityRepositoryProvider).signWalletRequest,
     nonces: ref.watch(asterReadNoncesProvider),
     now: ref.watch(liveOrderClockProvider),
+    authorization: ref.watch(asterRequestAuthorizationProvider),
   );
 });
 

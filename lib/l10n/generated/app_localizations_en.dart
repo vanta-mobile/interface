@@ -32,9 +32,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walletConnectStep => 'Confirm the connection in your wallet.';
 
   @override
-  String get walletSignStep => 'Sign in your wallet to verify your identity.';
-
-  @override
   String get authWalletConfiguration => 'External wallet sign-in is not available.';
 
   @override
@@ -46,6 +43,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authWalletUnavailable =>
       'Wallet connection failed. Check your wallet app and network, then retry.';
+
+  @override
+  String get authWalletBusy => 'Another wallet request is pending. Finish it before continuing.';
+
+  @override
+  String get authWalletSigningNetwork =>
+      'Approve BNB Chain (56) in your wallet and reconnect before enabling trading.';
 
   @override
   String get authWalletConnectionTimeout =>
@@ -450,6 +454,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get margin => 'Required margin';
 
   @override
+  String get tradeEstimatedLiquidation => 'Est. Liq. Price';
+
+  @override
+  String get tradeMargin => 'Margin';
+
+  @override
   String get fees => 'Estimated fee';
 
   @override
@@ -733,7 +743,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get asterAccountScope =>
-      'Account data for the wallet below. Each refresh asks this wallet to sign a read request.';
+      'Account data belongs to the wallet below. An authorized device signing key signs queries automatically.';
 
   @override
   String get asterUsdtSummary => 'USDT account summary';
@@ -758,23 +768,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountSignInToRead => 'Sign in to view account';
 
   @override
-  String get accountReadWithWallet => 'Sign to read Aster account';
+  String get accountReadWithWallet => 'Read Aster account';
 
   @override
-  String get accountRefreshWithWallet => 'Sign to refresh account';
+  String get accountRefreshWithWallet => 'Refresh account';
 
   @override
   String get accountReadPreparing => 'Preparing account request…';
 
   @override
-  String get accountReadSigning => 'Confirm the account read signature in your wallet.';
+  String get accountReadSigning => 'Signing the account query…';
 
   @override
   String get accountReadLoading => 'Reading account data from Aster…';
 
   @override
   String get accountReadNotice =>
-      'Read-only: no order, wallet creation, transfer, or trading authorization is submitted. Aster must accept this wallet as an authorized signer; signing alone does not grant access.';
+      'Read-only account query using the authorized device signing key. No order, transfer, or additional authorization is submitted. Data belongs to the selected account.';
 
   @override
   String accountErrorCode(int code) {
@@ -3384,7 +3394,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get attachedEntryPegInvalid =>
-      'BBO entry pricing requires a limit or stop-limit entry with attached TP/SL and no entered limit price.';
+      'BBO entry pricing requires a limit or stop-limit entry with attached TP/SL and no entered limit price. Post Only BBO supports same-side level 1 only.';
 
   @override
   String get scaledTitle => 'Scaled orders';
@@ -3767,8 +3777,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Aster sets the price once from the selected best bid or ask: when placing a limit order, or when a conditional limit order triggers. It does not keep chasing the book. Estimates use the selected current bid or ask; the engine price and fill may differ, especially at a future trigger.';
 
   @override
+  String get liveOrderBbo => 'BBO';
+
+  @override
   String get liveOrderPegInvalid =>
-      'BBO requires a limit order with no manual price. It cannot be combined with a market, trailing, entire-close or attached-strategy order.';
+      'BBO requires a limit order with no manual price. It cannot be combined with a market, trailing, entire-close or attached-strategy order. Post Only BBO supports same-side level 1 only.';
 
   @override
   String get internalTransferTitle => 'Spot ↔ Futures transfer';
@@ -4373,7 +4386,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authorizationScope =>
-      'Use the connected wallet itself as the API signer. No additional wallet is created. Aster must accept this address and its permissions.';
+      'Authorize a device signing key for the connected account. Account queries and trading requests use this key without repeated wallet prompts. Aster validates the grant.';
 
   @override
   String get authorizationEnable => 'Enable trading with this wallet';
@@ -4383,14 +4396,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authorizationCheckScope =>
-      'Two wallet signatures read Futures and Spot accounts. This sends no orders. Read access and account trading status are separate from an agent permission grant.';
+      'Read Futures and Spot accounts with the device agent. This sends no orders. Accepted reads do not prove trading permissions.';
 
   @override
   String get authorizationReview => 'Review authorization';
 
   @override
   String get authorizationGrant =>
-      'Signer: same wallet. Spot and Futures trading: allowed. Withdrawal: not granted. Valid for 30 days. No builder or fee grant.';
+      'Signer: device agent. Spot and Futures trading: allowed. Withdrawal: not granted. Valid for 30 days. No builder or fee grant.';
 
   @override
   String get authorizationConfirm => 'Confirm and sign authorization';
@@ -4431,7 +4444,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subaccountActionsScope =>
-      'The connected wallet signs as the master. Aster checks account relationships and permissions. The directory does not provide child addresses or live freeze status. No wallet or private key is created.';
+      'Manage linked accounts using the connected master wallet. Generated subaccount keys are kept in device secure storage.';
 
   @override
   String get subaccountCreate => 'Create subaccount';
@@ -4505,7 +4518,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subaccountSwitchScope =>
-      'This signs out the current identity. Select the displayed child address in your wallet and complete a new sign-in. The active account changes only after the new address is verified; an account ID alone cannot switch signing authority.';
+      'Connect the selected wallet to switch accounts. If the connection is declined, your current account remains active.';
 
   @override
   String get subaccountMasterRequired =>
@@ -5928,7 +5941,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authAlternative => 'or';
 
   @override
-  String get authLegalNotice => 'By continuing, you agree to the Terms of Use and Privacy Policy.';
+  String authLegalNotice(String termsOfUse, String privacyPolicy) {
+    return 'By continuing, you agree to the $termsOfUse and $privacyPolicy.';
+  }
+
+  @override
+  String get authTermsOfUse => 'Terms of Use';
+
+  @override
+  String get authPrivacyPolicy => 'Privacy Policy';
 
   @override
   String get authCheckEmail => 'Check your email';
@@ -5990,7 +6011,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get enableTradingScope =>
-      'This signature enables gas-free Spot and Futures trading for 30 days. Withdrawal access is not granted.';
+      'Authorize a device signing key for 30 days of account queries and gas-free Spot and Futures trading without repeated wallet prompts. Withdrawal access is not granted.';
 
   @override
   String get enableTradingReturnHint =>
@@ -6185,4 +6206,358 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portfolioAll => 'All';
+
+  @override
+  String get accountsTitle => 'Accounts';
+
+  @override
+  String get accountsSwitchTitle => 'Switch account';
+
+  @override
+  String get accountsManage => 'Manage accounts';
+
+  @override
+  String get accountsListTitle => 'Sub-accounts';
+
+  @override
+  String get accountsYourChildren => 'Your sub-accounts';
+
+  @override
+  String get accountsSeparateStrategies =>
+      'Keep strategies separate. Each account has its own address and balance.';
+
+  @override
+  String get accountsDetailsTitle => 'Sub-account details';
+
+  @override
+  String get accountsStatusUnverified => 'Status unavailable';
+
+  @override
+  String get accountsFreezeRequested => 'Freeze request accepted';
+
+  @override
+  String get accountsUnfreezeRequested => 'Unfreeze request accepted';
+
+  @override
+  String get accountsBalance => 'Balance';
+
+  @override
+  String get accountsStatus => 'Status';
+
+  @override
+  String get accountsAddress => 'Address';
+
+  @override
+  String get accountsOwnerWallet => 'Owner wallet';
+
+  @override
+  String get accountsAssets => 'Assets';
+
+  @override
+  String get accountsFreeze => 'Freeze account';
+
+  @override
+  String get accountsUnfreeze => 'Unfreeze account';
+
+  @override
+  String accountsFreezeTitle(String name) {
+    return 'Freeze $name?';
+  }
+
+  @override
+  String get accountsFreezeNotice =>
+      'Cross-account transfers to and from this sub-account will be blocked.';
+
+  @override
+  String get accountsReviewOrders => 'Review open positions and orders before continuing.';
+
+  @override
+  String get accountsIndependentKey =>
+      'This sub-account has a separate private key. Manage access carefully.';
+
+  @override
+  String get accountsFrozenNotice =>
+      'Transfers remain unavailable while a freeze request is pending or accepted. Confirm the current status with Aster.';
+
+  @override
+  String get accountsFreezeBoundary =>
+      'This does not confirm that positions, orders or TP/SL have been stopped.';
+
+  @override
+  String get accountsSwitchTo => 'Switch to this account';
+
+  @override
+  String accountsSwitchHeading(String name) {
+    return 'Switch to $name';
+  }
+
+  @override
+  String get accountsSwitchNotice =>
+      'Your current account remains active until the switch is confirmed.';
+
+  @override
+  String get accountsSwitchConnection =>
+      'Confirm the account switch with a signature from your current wallet.';
+
+  @override
+  String get accountsSwitchConfirm => 'Confirm switch';
+
+  @override
+  String get accountsCreate => 'Create sub-account';
+
+  @override
+  String get accountsNameHeading => 'Name your account';
+
+  @override
+  String get accountsNameHint => 'Use a name that helps you identify this strategy.';
+
+  @override
+  String get accountsName => 'Account name';
+
+  @override
+  String get accountsOwner => 'Owner';
+
+  @override
+  String get accountsNewWallet => 'Independent wallet';
+
+  @override
+  String get accountsNewAccount => 'New account';
+
+  @override
+  String get accountsSlots => 'Sub-account slots';
+
+  @override
+  String get accountsCreateNotice =>
+      'Your wallet will ask you to sign. You’ll need to save the new account’s private key.';
+
+  @override
+  String get accountsSignCreate => 'Sign and create';
+
+  @override
+  String get accountsBackupTitle => 'Save your private key';
+
+  @override
+  String get accountsCreated => 'Account created';
+
+  @override
+  String get accountsBackupNotice => 'Save the private key before continuing.';
+
+  @override
+  String get accountsPrivateKey => 'Private key';
+
+  @override
+  String get accountsHiddenKey => 'Hidden by default';
+
+  @override
+  String get accountsRevealKey => 'Show private key';
+
+  @override
+  String get accountsHideKey => 'Hide private key';
+
+  @override
+  String get accountsKeyWarning =>
+      'Anyone with this key can control the account. Keep it private and store it safely.';
+
+  @override
+  String get accountsSavedKey => 'I have saved my private key.';
+
+  @override
+  String get accountsContinue => 'Continue';
+
+  @override
+  String get accountsBackupPending => 'Back up this wallet';
+
+  @override
+  String get accountsTransferTitle => 'Transfer between accounts';
+
+  @override
+  String get accountsFrom => 'From';
+
+  @override
+  String get accountsTo => 'To';
+
+  @override
+  String get accountsAsset => 'Asset';
+
+  @override
+  String get accountsAmount => 'Amount';
+
+  @override
+  String get accountsAvailable => 'Available';
+
+  @override
+  String get accountsMax => 'Max';
+
+  @override
+  String get accountsFutures => 'Futures';
+
+  @override
+  String get accountsReviewTransfer => 'Review transfer';
+
+  @override
+  String get accountsTransferReviewTitle => 'Review transfer';
+
+  @override
+  String get accountsTransferSubmit => 'Transfer';
+
+  @override
+  String get accountsTransferSubmitted => 'Transfer submitted';
+
+  @override
+  String get accountsTransferWaiting =>
+      'Awaiting final status. Account balances update after confirmation.';
+
+  @override
+  String get accountsBackPortfolio => 'Back to Portfolio';
+
+  @override
+  String get accountsChooseAccount => 'Select account';
+
+  @override
+  String get accountsChooseAsset => 'Select asset';
+
+  @override
+  String get accountsNoDestination => 'Create a sub-account before transferring between accounts.';
+
+  @override
+  String get accountsUnknownAddress =>
+      'The directory does not provide this account’s wallet address. Manage it through Aster.';
+
+  @override
+  String get accountsTransferBalanceNotice =>
+      'Refresh your Futures balance before reviewing the transfer.';
+
+  @override
+  String get subaccountSecureStorageFailed =>
+      'Cannot access the device’s secure wallet storage. No new creation request will be sent.';
+
+  @override
+  String get subaccountSecureStorageFull =>
+      'The device wallet storage is full. Back up your wallets before continuing.';
+
+  @override
+  String get subaccountLocalKeyMissing =>
+      'The private key is unavailable on this device. Import your backup into an external wallet to use this account.';
+
+  @override
+  String get subaccountCreationFailed =>
+      'The sub-account could not be created. Your generated wallet remains available for backup.';
+
+  @override
+  String get subaccountNativeTransactionUnavailable =>
+      'Import this account into an external wallet to send on-chain transactions.';
+
+  @override
+  String get accountsTransferInsufficient => 'The amount exceeds the available Futures balance.';
+
+  @override
+  String get accountsLocalWallets => 'Created on this device';
+
+  @override
+  String get accountsRemoteDirectory => 'Aster account directory';
+
+  @override
+  String get accountsCreatedBadge => 'Created';
+
+  @override
+  String get accountsTotalAssets => 'Total assets';
+
+  @override
+  String accountsSlotsUsed(int count) {
+    return '$count of 10 used';
+  }
+
+  @override
+  String get accountsUnfreezeNotice =>
+      'Cross-account transfers can resume after Aster confirms that the account is unfrozen.';
+
+  @override
+  String get tradeAskAi => 'Ask AI';
+
+  @override
+  String get tradeHigh24h => '24h High';
+
+  @override
+  String get tradeLow24h => '24h Low';
+
+  @override
+  String get tradeFutures => 'Futures';
+
+  @override
+  String get tradeSymbols => 'Symbols';
+
+  @override
+  String get accountsSelect => 'Select';
+
+  @override
+  String get accountsDifferentSource => 'Choose a different account from the source.';
+
+  @override
+  String get accountsTransferUnavailable => 'Transfer unavailable';
+
+  @override
+  String get accountsTransferFreezeHeading => 'A selected account has a freeze request';
+
+  @override
+  String get accountsBackTransfer => 'Back to transfer';
+
+  @override
+  String get accountsDone => 'Done';
+
+  @override
+  String get accountsSwitchRetry => 'Try switching again';
+
+  @override
+  String accountsSwitchFailed(String message, String account) {
+    return '$message $account is still active.';
+  }
+
+  @override
+  String get accountsAccount => 'Account';
+
+  @override
+  String get accountsOpenWallet => 'Open wallet';
+
+  @override
+  String get accountsConfirmCreation => 'Confirm account creation';
+
+  @override
+  String accountsCreateSummary(String name) {
+    return 'Create $name';
+  }
+
+  @override
+  String get accountsAuthorizeCreation =>
+      'Authorize creation with your main account wallet. Save the new private key after creation.';
+
+  @override
+  String get accountsConfirmFreeze => 'Confirm freeze in wallet';
+
+  @override
+  String get accountsConfirmUnfreeze => 'Confirm unfreeze in wallet';
+
+  @override
+  String get accountsFreezeAction => 'Freeze';
+
+  @override
+  String get accountsUnfreezeAction => 'Unfreeze';
+
+  @override
+  String get accountsAuthorizeFreeze =>
+      'Authorize this change with the main account wallet. Cross-account transfers will be restricted.';
+
+  @override
+  String get accountsAuthorizeUnfreeze =>
+      'Authorize this change with the main account wallet to restore the account status.';
+
+  @override
+  String get accountsWithdrawMainOnly => 'Main account only';
+
+  @override
+  String get authorizationSecureStorageFailed =>
+      'The device signing key could not be read or saved securely. Check device secure storage and try again.';
+
+  @override
+  String get authorizationRequired =>
+      'Trading authorization is missing or expired. Enable trading to read this account without repeated wallet prompts.';
 }

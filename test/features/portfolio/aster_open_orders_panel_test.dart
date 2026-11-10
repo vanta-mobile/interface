@@ -60,7 +60,7 @@ void main() {
     await tester.tap(find.byKey(const Key('read-open-orders')));
     await tester.pump();
     expect(orders.calls, 1);
-    expect(find.text('Confirm the account read signature in your wallet.'), findsOneWidget);
+    expect(find.text('Signing the account query…'), findsOneWidget);
     expect(tester.widget<FilledButton>(find.byKey(const Key('read-open-orders'))).onPressed, null);
     orders.gate!.complete();
     await tester.pumpAndSettle();

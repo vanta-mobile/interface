@@ -17,21 +17,21 @@ class PrivyWalletTransactionSender {
 
   Future<WalletTransactionResult> send({
     required PrivyUser? user,
-    required AuthIdentity Function(PrivyUser) resolveIdentity,
+    required AuthIdentity? Function() resolveIdentity,
     required WalletConnection? connection,
     required EvmWalletTransaction transaction,
     required bool Function() isCurrent,
   }) async {
-    if (user == null || !isCurrent()) {
-      throw const WalletTransactionNotSent('authSessionUnavailable');
-    }
-    if (_pending) throw const WalletTransactionNotSent('walletTransactionBusy');
-    final AuthIdentity identity;
+    final AuthIdentity? identity;
     try {
-      identity = resolveIdentity(user);
+      identity = resolveIdentity();
     } on AuthFailure catch (error) {
       throw WalletTransactionNotSent(error.key);
     }
+    if (identity == null || !isCurrent()) {
+      throw const WalletTransactionNotSent('authSessionUnavailable');
+    }
+    if (_pending) throw const WalletTransactionNotSent('walletTransactionBusy');
     if (identity.walletAddress?.toLowerCase() != transaction.from.toLowerCase()) {
       throw const WalletTransactionNotSent('authWalletChanged');
     }
@@ -43,7 +43,7 @@ class PrivyWalletTransactionSender {
       );
     }
     final wallets = identity.walletKind == WalletKind.embedded
-        ? user.embeddedEthereumWallets
+        ? (user?.embeddedEthereumWallets ?? <EmbeddedEthereumWallet>[])
               .where((wallet) => wallet.address.toLowerCase() == transaction.from.toLowerCase())
               .toList()
         : <EmbeddedEthereumWallet>[];

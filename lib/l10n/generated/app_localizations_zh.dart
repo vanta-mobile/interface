@@ -31,9 +31,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get walletConnectStep => '请在钱包中确认连接。';
 
   @override
-  String get walletSignStep => '请在钱包中签名以验证登录身份。';
-
-  @override
   String get authWalletConfiguration => '外部钱包登录暂不可用。';
 
   @override
@@ -44,6 +41,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authWalletUnavailable => '钱包连接失败，请检查钱包应用和网络后重试。';
+
+  @override
+  String get authWalletBusy => '钱包中还有待处理的请求，请完成后再继续。';
+
+  @override
+  String get authWalletSigningNetwork => '请在钱包中批准 BNB Chain（56）并重新连接后，再开启交易。';
 
   @override
   String get authWalletConnectionTimeout => '钱包连接准备超时，请检查网络后重试。';
@@ -439,6 +442,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get margin => '所需保证金';
 
   @override
+  String get tradeEstimatedLiquidation => '预估强平价';
+
+  @override
+  String get tradeMargin => '保证金';
+
+  @override
   String get fees => '预估手续费';
 
   @override
@@ -717,7 +726,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get asterAccountTab => 'Aster 账户';
 
   @override
-  String get asterAccountScope => '查询下方钱包对应的账户数据。每次刷新都由该钱包签名读取。';
+  String get asterAccountScope => '查询下方钱包对应的账户数据，由已授权的设备签名密钥自动签署查询请求。';
 
   @override
   String get asterUsdtSummary => 'USDT 账户概览';
@@ -740,23 +749,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountSignInToRead => '登录以查看账户';
 
   @override
-  String get accountReadWithWallet => '签名读取 Aster 账户';
+  String get accountReadWithWallet => '读取 Aster 账户';
 
   @override
-  String get accountRefreshWithWallet => '签名刷新账户';
+  String get accountRefreshWithWallet => '刷新账户';
 
   @override
   String get accountReadPreparing => '正在准备账户查询…';
 
   @override
-  String get accountReadSigning => '请在钱包中确认账户查询签名。';
+  String get accountReadSigning => '正在签署账户查询…';
 
   @override
   String get accountReadLoading => '正在从 Aster 读取账户数据…';
 
   @override
-  String get accountReadNotice =>
-      '此操作仅查询账户，不下单、不创建钱包、不划转，也不授予交易权限。Aster 必须认可该钱包的查询权限；完成签名不代表已获得访问权限。';
+  String get accountReadNotice => '使用已授权的设备签名密钥查询账户，不下单、不划转，也不提交额外授权。数据属于当前选中的账户。';
 
   @override
   String accountErrorCode(int code) {
@@ -3172,7 +3180,8 @@ class AppLocalizationsZh extends AppLocalizations {
       '名义价值与保证金预估使用标记价（条件主单使用触发价），不代表所选盘口档位或成交价。Aster 会按实际定价复核止盈止损，可能拒绝策略。';
 
   @override
-  String get attachedEntryPegInvalid => 'BBO 主单定价仅适用于附加止盈止损的限价或条件限价主单，且不能同时输入限价。';
+  String get attachedEntryPegInvalid =>
+      'BBO 主单定价仅适用于附加止盈止损的限价或条件限价主单，且不能同时输入限价。 只做 Maker 的 BBO 仅支持同侧一档。';
 
   @override
   String get scaledTitle => '分段委托';
@@ -3513,7 +3522,11 @@ class AppLocalizationsZh extends AppLocalizations {
       'Aster 按所选买一／卖一在限价单提交时、或条件限价单触发时确定一次价格，不会持续追价。预估使用所选当前买一／卖一；引擎实际定价和成交可能不同，尤其是未来触发时。';
 
   @override
-  String get liveOrderPegInvalid => 'BBO 需使用限价单且不手填委托价，不能与市价、跟踪、触发时全部平仓或附加策略单混用。';
+  String get liveOrderBbo => 'BBO';
+
+  @override
+  String get liveOrderPegInvalid =>
+      'BBO 需使用限价单且不手填委托价，不能与市价、跟踪、触发时全部平仓或附加策略单混用。 只做 Maker 的 BBO 仅支持同侧一档。';
 
   @override
   String get internalTransferTitle => '现货 ↔ 合约划转';
@@ -4069,7 +4082,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authorizationTitle => 'Aster 交易授权';
 
   @override
-  String get authorizationScope => '直接使用当前钱包作为 API signer，不创建额外钱包。地址资格和权限由 Aster 核验。';
+  String get authorizationScope => '为当前账户授权一个保存在设备上的签名密钥。账户查询和交易请求由此密钥签名，无需反复打开钱包。授权资格由 Aster 核验。';
 
   @override
   String get authorizationEnable => '授权当前钱包交易';
@@ -4078,13 +4091,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authorizationCheck => '核对签名 API 权限';
 
   @override
-  String get authorizationCheckScope => '将分别签名读取合约和现货账户，不发送订单。读取权限、账户交易状态和代理授权范围分别显示。';
+  String get authorizationCheckScope => '使用设备代理分别查询合约和现货账户，不发送订单。查询被接受不代表交易权限已核实。';
 
   @override
   String get authorizationReview => '确认授权内容';
 
   @override
-  String get authorizationGrant => 'Signer：当前同一钱包；允许现货和合约交易；不授予提现权限；有效期 30 天；不附加 Builder 或费用授权。';
+  String get authorizationGrant => '签名者：设备代理。允许现货及合约交易；不授予提现权限。有效期 30 天，无 builder 或费用授权。';
 
   @override
   String get authorizationConfirm => '确认并签名授权';
@@ -4120,7 +4133,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get subaccountActions => '管理子账户';
 
   @override
-  String get subaccountActionsScope => '当前钱包以主账户身份签名，Aster 核验账户关系和权限。列表不提供子钱包地址或实时冻结状态，不创建钱包或私钥。';
+  String get subaccountActionsScope => '使用当前主钱包管理关联账户。App 生成的子账户私钥保存在设备安全存储中。';
 
   @override
   String get subaccountCreate => '创建子账户';
@@ -4190,7 +4203,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get subaccountSwitch => '切换钱包账户';
 
   @override
-  String get subaccountSwitchScope => '将退出当前身份。请在钱包中选择显示的子地址并重新签名登录，地址核验成功后才切换当前账户；账户编号不能替代签名权限。';
+  String get subaccountSwitchScope => '连接选中的钱包以切换账户；连接被拒绝时，保留当前账户。';
 
   @override
   String get subaccountMasterRequired => 'Aster 未返回该钱包有效的主账户列表。';
@@ -5486,7 +5499,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authAlternative => '或';
 
   @override
-  String get authLegalNotice => '继续即表示你同意使用条款和隐私政策。';
+  String authLegalNotice(String termsOfUse, String privacyPolicy) {
+    return '继续即表示你同意$termsOfUse和$privacyPolicy。';
+  }
+
+  @override
+  String get authTermsOfUse => '使用条款';
+
+  @override
+  String get authPrivacyPolicy => '隐私政策';
 
   @override
   String get authCheckEmail => '查看你的邮箱';
@@ -5545,7 +5566,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get enableTradingEmbeddedSignHint => '签名以继续。';
 
   @override
-  String get enableTradingScope => '此签名将授权 30 天的免 Gas 现货及合约交易，不授予提现权限。';
+  String get enableTradingScope => '授权设备签名密钥在 30 天内查询账户、进行免 Gas 现货及合约交易，无需反复打开钱包。不授予提现权限。';
 
   @override
   String get enableTradingReturnHint => '如果没有打开钱包，请检查钱包 App，完成签名后返回这里。';
@@ -5736,4 +5757,335 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get portfolioAll => '全部';
+
+  @override
+  String get accountsTitle => '账户';
+
+  @override
+  String get accountsSwitchTitle => '切换账户';
+
+  @override
+  String get accountsManage => '管理账户';
+
+  @override
+  String get accountsListTitle => '子账户';
+
+  @override
+  String get accountsYourChildren => '我的子账户';
+
+  @override
+  String get accountsSeparateStrategies => '分开管理不同策略，每个账户拥有独立地址和余额。';
+
+  @override
+  String get accountsDetailsTitle => '子账户详情';
+
+  @override
+  String get accountsStatusUnverified => '状态待核验';
+
+  @override
+  String get accountsFreezeRequested => '冻结请求已受理';
+
+  @override
+  String get accountsUnfreezeRequested => '解冻请求已受理';
+
+  @override
+  String get accountsBalance => '余额';
+
+  @override
+  String get accountsStatus => '状态';
+
+  @override
+  String get accountsAddress => '地址';
+
+  @override
+  String get accountsOwnerWallet => '所属主钱包';
+
+  @override
+  String get accountsAssets => '资产';
+
+  @override
+  String get accountsFreeze => '冻结账户';
+
+  @override
+  String get accountsUnfreeze => '解冻账户';
+
+  @override
+  String accountsFreezeTitle(String name) {
+    return '冻结 $name？';
+  }
+
+  @override
+  String get accountsFreezeNotice => '该子账户转入和转出的跨账户划转将被限制。';
+
+  @override
+  String get accountsReviewOrders => '继续前，请检查当前持仓和挂单。';
+
+  @override
+  String get accountsIndependentKey => '该子账户使用独立私钥，请妥善管理访问权限。';
+
+  @override
+  String get accountsFrozenNotice => '冻结请求待核验或已受理时，暂不可划转。请向 Aster 核实当前状态。';
+
+  @override
+  String get accountsFreezeBoundary => '这不代表持仓、挂单或止盈止损已停止。';
+
+  @override
+  String get accountsSwitchTo => '切换至此账户';
+
+  @override
+  String accountsSwitchHeading(String name) {
+    return '切换至 $name';
+  }
+
+  @override
+  String get accountsSwitchNotice => '切换确认前，当前账户保持激活。';
+
+  @override
+  String get accountsSwitchConnection => '请使用当前钱包签名，确认切换账户。';
+
+  @override
+  String get accountsSwitchConfirm => '确认切换';
+
+  @override
+  String get accountsCreate => '创建子账户';
+
+  @override
+  String get accountsNameHeading => '为账户命名';
+
+  @override
+  String get accountsNameHint => '使用便于识别策略的名称。';
+
+  @override
+  String get accountsName => '账户名称';
+
+  @override
+  String get accountsOwner => '所属账户';
+
+  @override
+  String get accountsNewWallet => '独立钱包';
+
+  @override
+  String get accountsNewAccount => '新账户';
+
+  @override
+  String get accountsSlots => '子账户名额';
+
+  @override
+  String get accountsCreateNotice => '主钱包将请求签名，之后请备份新账户的私钥。';
+
+  @override
+  String get accountsSignCreate => '签名并创建';
+
+  @override
+  String get accountsBackupTitle => '备份私钥';
+
+  @override
+  String get accountsCreated => '账户已创建';
+
+  @override
+  String get accountsBackupNotice => '继续前，请保存私钥。';
+
+  @override
+  String get accountsPrivateKey => '私钥';
+
+  @override
+  String get accountsHiddenKey => '默认隐藏';
+
+  @override
+  String get accountsRevealKey => '显示私钥';
+
+  @override
+  String get accountsHideKey => '隐藏私钥';
+
+  @override
+  String get accountsKeyWarning => '持有私钥即可控制账户，请保密并安全保存。';
+
+  @override
+  String get accountsSavedKey => '我已保存私钥。';
+
+  @override
+  String get accountsContinue => '继续';
+
+  @override
+  String get accountsBackupPending => '备份此钱包';
+
+  @override
+  String get accountsTransferTitle => '账户间划转';
+
+  @override
+  String get accountsFrom => '从';
+
+  @override
+  String get accountsTo => '至';
+
+  @override
+  String get accountsAsset => '资产';
+
+  @override
+  String get accountsAmount => '数量';
+
+  @override
+  String get accountsAvailable => '可用';
+
+  @override
+  String get accountsMax => '最大';
+
+  @override
+  String get accountsFutures => '合约';
+
+  @override
+  String get accountsReviewTransfer => '确认划转信息';
+
+  @override
+  String get accountsTransferReviewTitle => '确认划转';
+
+  @override
+  String get accountsTransferSubmit => '划转';
+
+  @override
+  String get accountsTransferSubmitted => '划转已提交';
+
+  @override
+  String get accountsTransferWaiting => '等待最终结果，确认后更新账户余额。';
+
+  @override
+  String get accountsBackPortfolio => '返回资产页';
+
+  @override
+  String get accountsChooseAccount => '选择账户';
+
+  @override
+  String get accountsChooseAsset => '选择资产';
+
+  @override
+  String get accountsNoDestination => '请先创建子账户，再进行账户间划转。';
+
+  @override
+  String get accountsUnknownAddress => '列表未提供该账户的钱包地址，请通过 Aster 管理。';
+
+  @override
+  String get accountsTransferBalanceNotice => '确认划转前，请刷新合约账户余额。';
+
+  @override
+  String get subaccountSecureStorageFailed => '无法访问设备安全钱包存储，不会发送新的创建请求。';
+
+  @override
+  String get subaccountSecureStorageFull => '设备钱包存储已满，请先备份钱包。';
+
+  @override
+  String get subaccountLocalKeyMissing => '此设备没有该账户的私钥，请将备份导入外部钱包后使用。';
+
+  @override
+  String get subaccountCreationFailed => '子账户创建失败，生成的钱包仍可备份。';
+
+  @override
+  String get subaccountNativeTransactionUnavailable => '请将此账户导入外部钱包后发送链上交易。';
+
+  @override
+  String get accountsTransferInsufficient => '划转数量超过合约账户可用余额。';
+
+  @override
+  String get accountsLocalWallets => '此设备创建的账户';
+
+  @override
+  String get accountsRemoteDirectory => 'Aster 账户列表';
+
+  @override
+  String get accountsCreatedBadge => '已创建';
+
+  @override
+  String get accountsTotalAssets => '总资产';
+
+  @override
+  String accountsSlotsUsed(int count) {
+    return '已使用 $count / 10';
+  }
+
+  @override
+  String get accountsUnfreezeNotice => 'Aster 确认账户解冻后，即可恢复账户间划转。';
+
+  @override
+  String get tradeAskAi => '问 AI';
+
+  @override
+  String get tradeHigh24h => '24小时最高';
+
+  @override
+  String get tradeLow24h => '24小时最低';
+
+  @override
+  String get tradeFutures => '合约';
+
+  @override
+  String get tradeSymbols => '交易对';
+
+  @override
+  String get accountsSelect => '选择';
+
+  @override
+  String get accountsDifferentSource => '请选择与转出账户不同的账户。';
+
+  @override
+  String get accountsTransferUnavailable => '暂时无法划转';
+
+  @override
+  String get accountsTransferFreezeHeading => '所选账户有冻结申请';
+
+  @override
+  String get accountsBackTransfer => '返回划转';
+
+  @override
+  String get accountsDone => '完成';
+
+  @override
+  String get accountsSwitchRetry => '重新尝试切换';
+
+  @override
+  String accountsSwitchFailed(String message, String account) {
+    return '$message 当前仍使用$account。';
+  }
+
+  @override
+  String get accountsAccount => '账户';
+
+  @override
+  String get accountsOpenWallet => '打开钱包';
+
+  @override
+  String get accountsConfirmCreation => '确认创建账户';
+
+  @override
+  String accountsCreateSummary(String name) {
+    return '创建 $name';
+  }
+
+  @override
+  String get accountsAuthorizeCreation => '请使用主账户钱包授权创建，创建后请备份新账户的私钥。';
+
+  @override
+  String get accountsConfirmFreeze => '在钱包中确认冻结';
+
+  @override
+  String get accountsConfirmUnfreeze => '在钱包中确认解冻';
+
+  @override
+  String get accountsFreezeAction => '冻结';
+
+  @override
+  String get accountsUnfreezeAction => '解冻';
+
+  @override
+  String get accountsAuthorizeFreeze => '请使用主账户钱包授权此变更，跨账户划转将受到限制。';
+
+  @override
+  String get accountsAuthorizeUnfreeze => '请使用主账户钱包授权此变更以恢复账户状态。';
+
+  @override
+  String get accountsWithdrawMainOnly => '仅主账户可提现';
+
+  @override
+  String get authorizationSecureStorageFailed => '无法安全读取或保存设备签名密钥，请检查设备安全存储后重试。';
+
+  @override
+  String get authorizationRequired => '交易授权缺失或已过期，请开启交易，以免重复打开钱包查询此账户。';
 }

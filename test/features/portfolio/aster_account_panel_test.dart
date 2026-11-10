@@ -59,7 +59,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('read-aster-account')));
     await tester.pump();
-    expect(find.text('Confirm the account read signature in your wallet.'), findsOneWidget);
+    expect(find.text('Signing the account query…'), findsOneWidget);
     expect(
       tester.widget<FilledButton>(find.byKey(const Key('read-aster-account'))).onPressed,
       null,

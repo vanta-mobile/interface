@@ -1,5 +1,5 @@
 /// Aster V3 specifies chain 1666 for account request signatures, independent
-/// of the chain used for SIWE. Wallet compatibility/authorization is verified
+/// of the connected wallet chain. Wallet compatibility/authorization is verified
 /// only by a successful signed account response, never by a local signature.
 Map<String, Object?> asterReadTypedData(String query) => {
   'types': {

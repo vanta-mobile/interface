@@ -6,6 +6,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../application/auth_provider.dart';
 import '../domain/auth_session.dart';
 import 'auth_controls.dart';
+import 'auth_legal_notice.dart';
 import 'email_code_form.dart';
 
 class LoginPanel extends ConsumerStatefulWidget {
@@ -32,6 +33,14 @@ class _LoginPanelState extends ConsumerState<LoginPanel> {
 
   Future<void> _run(String action, Future<void> Function() operation) async {
     setState(() => _pending = action);
+    if (action != 'wallet' && ref.read(authProvider).identity?.needsWalletConnection == true) {
+      await ref.read(authProvider.notifier).logout();
+      if (!mounted) return;
+      if (ref.read(authProvider).identity != null) {
+        setState(() => _pending = null);
+        return;
+      }
+    }
     await operation();
     if (mounted) setState(() => _pending = null);
   }
@@ -43,7 +52,6 @@ class _LoginPanelState extends ConsumerState<LoginPanel> {
     final l10n = AppLocalizations.of(context);
     final controller = ref.read(authProvider.notifier);
     final ready = ref.watch(privyConfigurationProvider).isConfigured && !session.busy;
-    final reconnect = session.identity?.needsWalletConnection == true;
     return AutofillGroup(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -52,17 +60,9 @@ class _LoginPanelState extends ConsumerState<LoginPanel> {
         children: [
           const SizedBox(height: 48, child: Text('Vanta', style: AuthTypography.brand)),
           Text(l10n.authWelcome, style: AuthTypography.heading),
-          if (!reconnect) _emailField(session, ready, controller, l10n),
+          _emailField(session, ready, controller, l10n),
           if (session.failure case final failure?) AuthFailureText(failure),
-          if (reconnect) ...[
-            _walletButton(session, controller, ready, l10n, primary: true),
-            AuthActionButton(
-              key: const Key('login-use-another-wallet'),
-              label: l10n.enableTradingUseAnother,
-              busy: session.busy && _pending == 'switch',
-              onPressed: session.busy ? null : () => _run('switch', controller.logout),
-            ),
-          ] else ...[
+          ...[
             AuthActionButton(
               key: const Key('send-email-code'),
               label: l10n.authEmailContinue,
@@ -83,7 +83,7 @@ class _LoginPanelState extends ConsumerState<LoginPanel> {
             ),
             _loginMethods(session, controller, ready, l10n),
           ],
-          Text(l10n.authLegalNotice, textAlign: TextAlign.center, style: AuthTypography.caption),
+          const AuthLegalNotice(),
         ],
       ),
     );
@@ -158,27 +158,25 @@ class _LoginPanelState extends ConsumerState<LoginPanel> {
             ? () => _run('x', () => controller.loginWithSocial(SocialLoginProvider.x))
             : null,
       ),
-      _walletButton(session, controller, ready, l10n),
+      _walletButton(session, controller, l10n),
     ],
   );
 
   Widget _walletButton(
     AuthSession session,
     AuthController controller,
-    bool ready,
     AppLocalizations l10n, {
     bool primary = false,
   }) => AuthActionButton(
     key: const Key('connect-external-wallet'),
     label: switch (session.walletStep) {
       WalletLoginStep.connecting => l10n.walletConnectStep,
-      WalletLoginStep.signing => l10n.walletSignStep,
       null => l10n.authWalletContinue,
     },
     asset: 'assets/auth/wallet.svg',
     primary: primary,
     busy: session.busy && _pending == 'wallet',
-    onPressed: ready && ref.watch(walletConfigurationProvider).isConfigured
+    onPressed: !session.busy && ref.watch(walletConfigurationProvider).isConfigured
         ? () => _run('wallet', () => controller.connectWallet(context))
         : null,
   );

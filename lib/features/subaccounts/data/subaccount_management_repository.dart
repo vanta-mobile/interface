@@ -38,6 +38,10 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
   }
 
   Future<void> _parent(AuthIdentity i, WalletOperationKind kind, bool Function() current) async {
+    // The transfer contract also permits a child to sign its own transfer.
+    // Master-only directory reads would reject that supported account scope.
+    // Relationship, freeze status and asset limits remain server-enforced.
+    if (kind == WalletOperationKind.subaccountTransfer) return;
     final directory = await SignedSubaccountListRepository(
       service,
       sign,

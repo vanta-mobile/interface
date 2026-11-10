@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/strings.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../subaccounts/presentation/subaccount_list_screen.dart';
+import '../../subaccounts/application/account_entries_provider.dart';
 import '../../authorization/presentation/trading_authorization_screen.dart';
 import '../application/auth_provider.dart';
 import '../domain/auth_session.dart';
@@ -25,7 +26,13 @@ class IdentityPanel extends ConsumerWidget {
       children: [
         Text(tr(context, 'account'), style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 12),
-        ..._walletFields(context, identity, session, ref.read(authProvider.notifier)),
+        ..._walletFields(
+          context,
+          identity,
+          session,
+          ref.read(authProvider.notifier),
+          ref.watch(canManageAccountsProvider),
+        ),
         if (session.failure case final failure?) ...[
           const SizedBox(height: 12),
           AuthFailureText(failure),
@@ -39,6 +46,7 @@ class IdentityPanel extends ConsumerWidget {
     AuthIdentity identity,
     AuthSession session,
     AuthController controller,
+    bool manage,
   ) => [
     Text(
       tr(context, identity.walletKind == WalletKind.external ? 'externalWallet' : 'embeddedWallet'),
@@ -69,13 +77,15 @@ class IdentityPanel extends ConsumerWidget {
       onPressed: session.busy ? null : () => openTradingAuthorization(context),
       child: Text(AppLocalizations.of(context).authorizationTitle),
     ),
-    const SizedBox(height: 12),
-    OutlinedButton.icon(
-      key: const Key('subaccount-list-entry'),
-      onPressed: session.busy ? null : () => openSubaccountList(context),
-      icon: const Icon(Icons.manage_accounts_outlined),
-      label: Text(AppLocalizations.of(context).subaccountManagement),
-    ),
+    if (manage) ...[
+      const SizedBox(height: 12),
+      OutlinedButton.icon(
+        key: const Key('subaccount-list-entry'),
+        onPressed: session.busy ? null : () => openSubaccountList(context),
+        icon: const Icon(Icons.manage_accounts_outlined),
+        label: Text(AppLocalizations.of(context).subaccountManagement),
+      ),
+    ],
     const SizedBox(height: 12),
     OutlinedButton(
       key: const Key('logout-identity'),

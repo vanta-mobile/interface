@@ -1,3 +1,4 @@
+import '../../authorization/application/trading_agent_provider.dart';
 import '../../../core/network/network_providers.dart';
 
 import 'dart:async';
@@ -24,6 +25,7 @@ final strategyExecutionRepositoryProvider = Provider.autoDispose<StrategyExecuti
     ref.watch(identityRepositoryProvider).signWalletRequest,
     ref.watch(asterReadNoncesProvider),
     ref.watch(liveOrderClockProvider),
+    authorization: ref.watch(asterRequestAuthorizationProvider),
   );
 });
 final strategyExecutionProvider = NotifierProvider.autoDispose

@@ -30,7 +30,7 @@ class AuthFailure implements Exception {
 
 enum AuthPhase { initializing, signedOut, awaitingCode, signedIn }
 
-enum WalletLoginStep { connecting, signing }
+enum WalletLoginStep { connecting }
 
 class AuthSession {
   const AuthSession({

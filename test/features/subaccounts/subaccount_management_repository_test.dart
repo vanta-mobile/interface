@@ -78,7 +78,10 @@ void main() {
       ({required expectedAddress, required typedData}) async {
         signatures++;
         await signHook?.call();
-        return fixtureSign(typedData);
+        return fixtureSign(
+          typedData,
+          child: expectedAddress.toLowerCase() == fixtureChild.toLowerCase(),
+        );
       },
       journal,
       nonces: AsterReadNonces(),
@@ -282,6 +285,29 @@ void main() {
       }
     }
   }
+  test('child signs its outgoing transfer without a master-only directory read', () async {
+    activeIdentity = const AuthIdentity(
+      id: 'child',
+      walletAddress: fixtureChild,
+      walletKind: WalletKind.external,
+      signingAvailable: true,
+    );
+    final review = await prepare(WalletOperationKind.subaccountTransfer, {
+      'from': fixtureChild,
+      'to': fixtureMaster,
+      'asset': 'USDT',
+      'amount': '1.000000000000000001',
+      'direction': 'FUTURE_FUTURE',
+    });
+    await repo.submit(review, isCurrent: () => current);
+    expect(requests.where((r) => r.url.path.endsWith('/getSubAccountList')), isEmpty);
+    final post = requests.singleWhere((r) => r.method == 'POST');
+    final params = Uri.splitQueryString(post.body);
+    expect(params['user'], fixtureChild);
+    expect(params['fromAccountAddress'], fixtureChild);
+    expect(params['toAccountAddress'], fixtureMaster);
+    expect(journal.snapshot.records.single.acknowledged, true);
+  });
   test('ten-child creation rule blocks prepare without a create signature', () async {
     children = 10;
     await expectLater(

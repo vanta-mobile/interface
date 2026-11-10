@@ -7,7 +7,13 @@ import 'aster_open_orders_mapper.dart';
 import 'signed_account_request.dart';
 
 class SignedOrderCancellationRepository implements OrderCancellationRepository {
-  SignedOrderCancellationRepository(this.service, this.sign, {required this.nonces});
+  final AccountRequestAuthorization? authorization;
+  SignedOrderCancellationRepository(
+    this.service,
+    this.sign, {
+    this.authorization,
+    required this.nonces,
+  });
   final AsterAccountService service;
   final AccountRequestSigner sign;
   final AsterReadNonces nonces;
@@ -114,7 +120,13 @@ class SignedOrderCancellationRepository implements OrderCancellationRepository {
 
   SignedAccountRequest _request(
     Future<Object?> Function({required String query, required String signature}) send,
-  ) => SignedAccountRequest(serverTime: service.serverTime, send: send, sign: sign, nonces: nonces);
+  ) => SignedAccountRequest(
+    serverTime: service.serverTime,
+    send: send,
+    sign: sign,
+    authorization: authorization,
+    nonces: nonces,
+  );
 
   Map<String, String> _parameters(AsterOpenOrder order) {
     if (!RegExp(r'^[\p{L}\p{N}_.-]{1,50}$', unicode: true).hasMatch(order.symbol) ||

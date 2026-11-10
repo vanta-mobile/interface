@@ -139,13 +139,15 @@ void main() {
     var created = false;
     final repository = PrivyIdentityRepository(
       const PrivyConfiguration(appId: '', clientId: ''),
+      preferences: MemoryWalletPreferences(),
       create: (_) {
         created = true;
         throw StateError('Unexpected initialization');
       },
     );
+    expect(await repository.initialize(), null);
     await expectLater(
-      repository.initialize(),
+      repository.sendCode('test@example.com'),
       throwsA(isA<AuthFailure>().having((e) => e.key, 'key', 'authConfiguration')),
     );
     expect(created, false);

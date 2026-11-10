@@ -6,6 +6,7 @@ import 'package:vanta/features/trade/application/providers.dart';
 
 import '../../support/identity_repository.dart';
 import '../../support/trade_fixture.dart';
+import '../../support/wallet_login_route.dart';
 
 void main() {
   testWidgets('email login shows failures, keeps entered code, and isolates demo funds', (
@@ -15,7 +16,7 @@ void main() {
     addTearDown(repository.dispose);
     final container = setup(tester, identityRepository: repository);
     await launch(tester, container);
-    await tester.tap(find.byKey(const Key('account-button')));
+    await openWalletLogin(tester);
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('login-email')), 'test@example.com');
     await tester.ensureVisible(find.byKey(const Key('send-email-code')));
@@ -44,7 +45,7 @@ void main() {
     expect(container.read(authProvider).identity, null);
     expect(find.byKey(const Key('login-email')), findsOneWidget);
     expect(tester.takeException(), null);
-    await tester.pumpWidget(const SizedBox());
+    await closeWalletLogin(tester, container);
   });
 
   for (final spec in [(360.0, 1.0), (390.0, 1.5), (844.0, 1.5)]) {
@@ -61,7 +62,7 @@ void main() {
       );
       if (spec.$1 == 844) tester.view.physicalSize = const Size(844, 390);
       await launch(tester, container);
-      await tester.tap(find.byKey(const Key('account-button')));
+      await openWalletLogin(tester);
       await tester.pumpAndSettle();
       tester.view.viewInsets = const FakeViewPadding(bottom: 180);
       addTearDown(tester.view.resetViewInsets);
@@ -75,7 +76,7 @@ void main() {
       await tester.ensureVisible(find.byKey(const Key('login-code')));
       expect(find.byKey(const Key('login-code')), findsOneWidget);
       expect(tester.takeException(), null);
-      await tester.pumpWidget(const SizedBox());
+      await closeWalletLogin(tester, container);
     });
   }
 }

@@ -6,9 +6,11 @@ import 'signed_account_request.dart';
 import 'spot_history_mapper.dart';
 
 class SignedSpotHistoryRepository implements SpotHistoryRepository {
+  final AccountRequestAuthorization? authorization;
   SignedSpotHistoryRepository(
     this.service,
     this.sign, {
+    this.authorization,
     required this.nonces,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
@@ -35,6 +37,7 @@ class SignedSpotHistoryRepository implements SpotHistoryRepository {
         SpotHistoryKind.transactions => service.transactionHistory,
       },
       sign: sign,
+      authorization: authorization,
       nonces: nonces,
     );
     final payload = await request.read(

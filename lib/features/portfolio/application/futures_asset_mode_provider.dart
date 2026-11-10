@@ -1,3 +1,4 @@
+import '../../authorization/application/trading_agent_provider.dart';
 import '../../../core/network/network_providers.dart';
 
 import 'dart:async';
@@ -25,6 +26,7 @@ final futuresAssetModeRepositoryProvider = Provider<FuturesAssetModeRepository>(
     ref.watch(identityRepositoryProvider).signWalletRequest,
     nonces: ref.watch(asterReadNoncesProvider),
     now: ref.watch(futuresAssetModeClockProvider),
+    authorization: ref.watch(asterRequestAuthorizationProvider),
   );
 });
 final futuresAssetModeProvider =

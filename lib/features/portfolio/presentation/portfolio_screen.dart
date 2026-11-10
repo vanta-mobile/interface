@@ -7,9 +7,12 @@ import '../../auth/application/auth_provider.dart';
 import '../../funding/domain/funding_catalog.dart';
 import '../../funding/domain/transfer_history.dart';
 import '../../funding/presentation/funding_info_screen.dart';
-import '../../funding/presentation/internal_transfer_screen.dart';
+import '../../subaccounts/presentation/account_transfer_screen.dart';
+import '../../subaccounts/application/account_entries_provider.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
 import '../application/portfolio_overview_provider.dart';
+import '../application/portfolio_account_load_provider.dart';
+import 'portfolio_account_feedback.dart';
 import 'portfolio_assets.dart';
 import 'portfolio_pnl_screen.dart';
 import 'portfolio_components.dart';
@@ -32,6 +35,7 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
     final active = ref.watch(authProvider.select((s) => !s.needsWalletConnection));
     final preview = ref.watch(portfolioPreviewProvider);
     final overview = ref.watch(portfolioOverviewProvider);
+    ref.watch(portfolioAccountLoadProvider);
     return Material(
       color: PortfolioColors.background,
       child: Column(
@@ -138,6 +142,7 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
                             hideOther: hideOther,
                             onHideOther: (value) => setState(() => hideOther = value),
                           ),
+                        if (!preview) const PortfolioAccountFeedback(),
                       ] else
                         PortfolioEmpty(l.portfolioLoginBalances),
                     ],
@@ -152,12 +157,14 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
   }
 }
 
-class _MoneyActions extends StatelessWidget {
+class _MoneyActions extends ConsumerWidget {
   const _MoneyActions({required this.preview});
   final bool preview;
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
+    final entry = ref.watch(activeAccountEntryProvider);
+    final child = entry != null && entry.roleKnown && !entry.main;
     void open(FundingOperation operation) => preview
         ? portfolioPreviewNotice(context)
         : Navigator.of(context).push<void>(
@@ -185,8 +192,8 @@ class _MoneyActions extends StatelessWidget {
             Expanded(
               child: PortfolioAction(
                 key: const Key('portfolio-withdraw'),
-                label: l.fundingWithdraw,
-                onPressed: () => open(FundingOperation.withdraw),
+                label: preview || !child ? l.fundingWithdraw : l.accountsWithdrawMainOnly,
+                onPressed: preview || !child ? () => open(FundingOperation.withdraw) : null,
               ),
             ),
           ],
@@ -197,7 +204,7 @@ class _MoneyActions extends StatelessWidget {
           onPressed: preview
               ? () => portfolioPreviewNotice(context)
               : () => Navigator.of(context)
-                    .push<void>(MaterialPageRoute(builder: (_) => const InternalTransferScreen())),
+                    .push<void>(MaterialPageRoute(builder: (_) => const AccountTransferScreen())),
           child: Text(
             l.portfolioTransfer,
             style: PortfolioTypography.caption.copyWith(color: PortfolioColors.accent),

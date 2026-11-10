@@ -58,7 +58,7 @@ void main() {
       );
       tester.view.physicalSize = Size(spec.$1, spec.$2);
       await launch(tester, container);
-      Navigator.of(tester.element(find.byKey(const Key('account-button')))).push<void>(
+      Navigator.of(tester.element(find.byType(Navigator).first)).push<void>(
         MaterialPageRoute(builder: (_) => const FundingFeeScreen(query: fundingFeeQuery)),
       );
       await tester.pumpAndSettle();
@@ -105,7 +105,7 @@ void main() {
         fundingFeeRepository: repository,
       );
       await launch(tester, container);
-      openFundingInfo(tester.element(find.byKey(const Key('account-button'))), market);
+      openFundingInfo(tester.element(find.byType(Navigator).first), market);
       await tester.pumpAndSettle();
       expect(repository.calls, isEmpty);
       expect(find.byType(FundingFeeEntry), findsNothing); // Deposit has no withdrawal fee requests.
@@ -134,7 +134,7 @@ void main() {
     final container = setup(tester, fundingFeeRepository: repository);
     await launch(tester, container);
     Navigator.of(
-      tester.element(find.byKey(const Key('account-button'))),
+      tester.element(find.byType(Navigator).first),
     ).push<void>(MaterialPageRoute(builder: (_) => const FundingFeeScreen(query: fundingFeeQuery)));
     await tester.pumpAndSettle();
     final l10n = AppLocalizations.of(tester.element(find.byType(FundingFeeScreen)));
@@ -157,7 +157,7 @@ void main() {
     final container = setup(tester, fundingFeeRepository: repository);
     await launch(tester, container);
     Navigator.of(
-      tester.element(find.byKey(const Key('account-button'))),
+      tester.element(find.byType(Navigator).first),
     ).push<void>(MaterialPageRoute(builder: (_) => const FundingFeeScreen(query: fundingFeeQuery)));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));

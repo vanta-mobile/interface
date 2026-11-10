@@ -135,12 +135,6 @@ abstract class AppLocalizations {
   /// **'Confirm the connection in your wallet.'**
   String get walletConnectStep;
 
-  /// No description provided for @walletSignStep.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign in your wallet to verify your identity.'**
-  String get walletSignStep;
-
   /// No description provided for @authWalletConfiguration.
   ///
   /// In en, this message translates to:
@@ -164,6 +158,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Wallet connection failed. Check your wallet app and network, then retry.'**
   String get authWalletUnavailable;
+
+  /// No description provided for @authWalletBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'Another wallet request is pending. Finish it before continuing.'**
+  String get authWalletBusy;
+
+  /// No description provided for @authWalletSigningNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve BNB Chain (56) in your wallet and reconnect before enabling trading.'**
+  String get authWalletSigningNetwork;
 
   /// No description provided for @authWalletConnectionTimeout.
   ///
@@ -951,6 +957,18 @@ abstract class AppLocalizations {
   /// **'Required margin'**
   String get margin;
 
+  /// No description provided for @tradeEstimatedLiquidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Est. Liq. Price'**
+  String get tradeEstimatedLiquidation;
+
+  /// No description provided for @tradeMargin.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin'**
+  String get tradeMargin;
+
   /// No description provided for @fees.
   ///
   /// In en, this message translates to:
@@ -1506,7 +1524,7 @@ abstract class AppLocalizations {
   /// No description provided for @asterAccountScope.
   ///
   /// In en, this message translates to:
-  /// **'Account data for the wallet below. Each refresh asks this wallet to sign a read request.'**
+  /// **'Account data belongs to the wallet below. An authorized device signing key signs queries automatically.'**
   String get asterAccountScope;
 
   /// No description provided for @asterUsdtSummary.
@@ -1548,13 +1566,13 @@ abstract class AppLocalizations {
   /// No description provided for @accountReadWithWallet.
   ///
   /// In en, this message translates to:
-  /// **'Sign to read Aster account'**
+  /// **'Read Aster account'**
   String get accountReadWithWallet;
 
   /// No description provided for @accountRefreshWithWallet.
   ///
   /// In en, this message translates to:
-  /// **'Sign to refresh account'**
+  /// **'Refresh account'**
   String get accountRefreshWithWallet;
 
   /// No description provided for @accountReadPreparing.
@@ -1566,7 +1584,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountReadSigning.
   ///
   /// In en, this message translates to:
-  /// **'Confirm the account read signature in your wallet.'**
+  /// **'Signing the account query…'**
   String get accountReadSigning;
 
   /// No description provided for @accountReadLoading.
@@ -1578,7 +1596,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountReadNotice.
   ///
   /// In en, this message translates to:
-  /// **'Read-only: no order, wallet creation, transfer, or trading authorization is submitted. Aster must accept this wallet as an authorized signer; signing alone does not grant access.'**
+  /// **'Read-only account query using the authorized device signing key. No order, transfer, or additional authorization is submitted. Data belongs to the selected account.'**
   String get accountReadNotice;
 
   /// Numeric error code returned by Aster; no raw server payload
@@ -5958,7 +5976,7 @@ abstract class AppLocalizations {
   /// No description provided for @attachedEntryPegInvalid.
   ///
   /// In en, this message translates to:
-  /// **'BBO entry pricing requires a limit or stop-limit entry with attached TP/SL and no entered limit price.'**
+  /// **'BBO entry pricing requires a limit or stop-limit entry with attached TP/SL and no entered limit price. Post Only BBO supports same-side level 1 only.'**
   String get attachedEntryPegInvalid;
 
   /// No description provided for @scaledTitle.
@@ -6615,10 +6633,16 @@ abstract class AppLocalizations {
   /// **'Aster sets the price once from the selected best bid or ask: when placing a limit order, or when a conditional limit order triggers. It does not keep chasing the book. Estimates use the selected current bid or ask; the engine price and fill may differ, especially at a future trigger.'**
   String get liveOrderPegHint;
 
+  /// No description provided for @liveOrderBbo.
+  ///
+  /// In en, this message translates to:
+  /// **'BBO'**
+  String get liveOrderBbo;
+
   /// No description provided for @liveOrderPegInvalid.
   ///
   /// In en, this message translates to:
-  /// **'BBO requires a limit order with no manual price. It cannot be combined with a market, trailing, entire-close or attached-strategy order.'**
+  /// **'BBO requires a limit order with no manual price. It cannot be combined with a market, trailing, entire-close or attached-strategy order. Post Only BBO supports same-side level 1 only.'**
   String get liveOrderPegInvalid;
 
   /// No description provided for @internalTransferTitle.
@@ -7668,7 +7692,7 @@ abstract class AppLocalizations {
   /// No description provided for @authorizationScope.
   ///
   /// In en, this message translates to:
-  /// **'Use the connected wallet itself as the API signer. No additional wallet is created. Aster must accept this address and its permissions.'**
+  /// **'Authorize a device signing key for the connected account. Account queries and trading requests use this key without repeated wallet prompts. Aster validates the grant.'**
   String get authorizationScope;
 
   /// No description provided for @authorizationEnable.
@@ -7686,7 +7710,7 @@ abstract class AppLocalizations {
   /// No description provided for @authorizationCheckScope.
   ///
   /// In en, this message translates to:
-  /// **'Two wallet signatures read Futures and Spot accounts. This sends no orders. Read access and account trading status are separate from an agent permission grant.'**
+  /// **'Read Futures and Spot accounts with the device agent. This sends no orders. Accepted reads do not prove trading permissions.'**
   String get authorizationCheckScope;
 
   /// No description provided for @authorizationReview.
@@ -7698,7 +7722,7 @@ abstract class AppLocalizations {
   /// No description provided for @authorizationGrant.
   ///
   /// In en, this message translates to:
-  /// **'Signer: same wallet. Spot and Futures trading: allowed. Withdrawal: not granted. Valid for 30 days. No builder or fee grant.'**
+  /// **'Signer: device agent. Spot and Futures trading: allowed. Withdrawal: not granted. Valid for 30 days. No builder or fee grant.'**
   String get authorizationGrant;
 
   /// No description provided for @authorizationConfirm.
@@ -7770,7 +7794,7 @@ abstract class AppLocalizations {
   /// No description provided for @subaccountActionsScope.
   ///
   /// In en, this message translates to:
-  /// **'The connected wallet signs as the master. Aster checks account relationships and permissions. The directory does not provide child addresses or live freeze status. No wallet or private key is created.'**
+  /// **'Manage linked accounts using the connected master wallet. Generated subaccount keys are kept in device secure storage.'**
   String get subaccountActionsScope;
 
   /// No description provided for @subaccountCreate.
@@ -7908,7 +7932,7 @@ abstract class AppLocalizations {
   /// No description provided for @subaccountSwitchScope.
   ///
   /// In en, this message translates to:
-  /// **'This signs out the current identity. Select the displayed child address in your wallet and complete a new sign-in. The active account changes only after the new address is verified; an account ID alone cannot switch signing authority.'**
+  /// **'Connect the selected wallet to switch accounts. If the connection is declined, your current account remains active.'**
   String get subaccountSwitchScope;
 
   /// No description provided for @subaccountMasterRequired.
@@ -10353,11 +10377,23 @@ abstract class AppLocalizations {
   /// **'or'**
   String get authAlternative;
 
-  /// No description provided for @authLegalNotice.
+  /// Login notice with independent links to the terms and privacy documents.
   ///
   /// In en, this message translates to:
-  /// **'By continuing, you agree to the Terms of Use and Privacy Policy.'**
-  String get authLegalNotice;
+  /// **'By continuing, you agree to the {termsOfUse} and {privacyPolicy}.'**
+  String authLegalNotice(String termsOfUse, String privacyPolicy);
+
+  /// No description provided for @authTermsOfUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Use'**
+  String get authTermsOfUse;
+
+  /// No description provided for @authPrivacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get authPrivacyPolicy;
 
   /// No description provided for @authCheckEmail.
   ///
@@ -10470,7 +10506,7 @@ abstract class AppLocalizations {
   /// No description provided for @enableTradingScope.
   ///
   /// In en, this message translates to:
-  /// **'This signature enables gas-free Spot and Futures trading for 30 days. Withdrawal access is not granted.'**
+  /// **'Authorize a device signing key for 30 days of account queries and gas-free Spot and Futures trading without repeated wallet prompts. Withdrawal access is not granted.'**
   String get enableTradingScope;
 
   /// No description provided for @enableTradingReturnHint.
@@ -10820,6 +10856,648 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All'**
   String get portfolioAll;
+
+  /// No description provided for @accountsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get accountsTitle;
+
+  /// No description provided for @accountsSwitchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch account'**
+  String get accountsSwitchTitle;
+
+  /// No description provided for @accountsManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage accounts'**
+  String get accountsManage;
+
+  /// No description provided for @accountsListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sub-accounts'**
+  String get accountsListTitle;
+
+  /// No description provided for @accountsYourChildren.
+  ///
+  /// In en, this message translates to:
+  /// **'Your sub-accounts'**
+  String get accountsYourChildren;
+
+  /// No description provided for @accountsSeparateStrategies.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep strategies separate. Each account has its own address and balance.'**
+  String get accountsSeparateStrategies;
+
+  /// No description provided for @accountsDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sub-account details'**
+  String get accountsDetailsTitle;
+
+  /// No description provided for @accountsStatusUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Status unavailable'**
+  String get accountsStatusUnverified;
+
+  /// No description provided for @accountsFreezeRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Freeze request accepted'**
+  String get accountsFreezeRequested;
+
+  /// No description provided for @accountsUnfreezeRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfreeze request accepted'**
+  String get accountsUnfreezeRequested;
+
+  /// No description provided for @accountsBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get accountsBalance;
+
+  /// No description provided for @accountsStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get accountsStatus;
+
+  /// No description provided for @accountsAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get accountsAddress;
+
+  /// No description provided for @accountsOwnerWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner wallet'**
+  String get accountsOwnerWallet;
+
+  /// No description provided for @accountsAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'Assets'**
+  String get accountsAssets;
+
+  /// No description provided for @accountsFreeze.
+  ///
+  /// In en, this message translates to:
+  /// **'Freeze account'**
+  String get accountsFreeze;
+
+  /// No description provided for @accountsUnfreeze.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfreeze account'**
+  String get accountsUnfreeze;
+
+  /// No description provided for @accountsFreezeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Freeze {name}?'**
+  String accountsFreezeTitle(String name);
+
+  /// No description provided for @accountsFreezeNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Cross-account transfers to and from this sub-account will be blocked.'**
+  String get accountsFreezeNotice;
+
+  /// No description provided for @accountsReviewOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Review open positions and orders before continuing.'**
+  String get accountsReviewOrders;
+
+  /// No description provided for @accountsIndependentKey.
+  ///
+  /// In en, this message translates to:
+  /// **'This sub-account has a separate private key. Manage access carefully.'**
+  String get accountsIndependentKey;
+
+  /// No description provided for @accountsFrozenNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfers remain unavailable while a freeze request is pending or accepted. Confirm the current status with Aster.'**
+  String get accountsFrozenNotice;
+
+  /// No description provided for @accountsFreezeBoundary.
+  ///
+  /// In en, this message translates to:
+  /// **'This does not confirm that positions, orders or TP/SL have been stopped.'**
+  String get accountsFreezeBoundary;
+
+  /// No description provided for @accountsSwitchTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to this account'**
+  String get accountsSwitchTo;
+
+  /// No description provided for @accountsSwitchHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to {name}'**
+  String accountsSwitchHeading(String name);
+
+  /// No description provided for @accountsSwitchNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current account remains active until the switch is confirmed.'**
+  String get accountsSwitchNotice;
+
+  /// No description provided for @accountsSwitchConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the account switch with a signature from your current wallet.'**
+  String get accountsSwitchConnection;
+
+  /// No description provided for @accountsSwitchConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm switch'**
+  String get accountsSwitchConfirm;
+
+  /// No description provided for @accountsCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create sub-account'**
+  String get accountsCreate;
+
+  /// No description provided for @accountsNameHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Name your account'**
+  String get accountsNameHeading;
+
+  /// No description provided for @accountsNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a name that helps you identify this strategy.'**
+  String get accountsNameHint;
+
+  /// No description provided for @accountsName.
+  ///
+  /// In en, this message translates to:
+  /// **'Account name'**
+  String get accountsName;
+
+  /// No description provided for @accountsOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get accountsOwner;
+
+  /// No description provided for @accountsNewWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Independent wallet'**
+  String get accountsNewWallet;
+
+  /// No description provided for @accountsNewAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'New account'**
+  String get accountsNewAccount;
+
+  /// No description provided for @accountsSlots.
+  ///
+  /// In en, this message translates to:
+  /// **'Sub-account slots'**
+  String get accountsSlots;
+
+  /// No description provided for @accountsCreateNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wallet will ask you to sign. You’ll need to save the new account’s private key.'**
+  String get accountsCreateNotice;
+
+  /// No description provided for @accountsSignCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign and create'**
+  String get accountsSignCreate;
+
+  /// No description provided for @accountsBackupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your private key'**
+  String get accountsBackupTitle;
+
+  /// No description provided for @accountsCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Account created'**
+  String get accountsCreated;
+
+  /// No description provided for @accountsBackupNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the private key before continuing.'**
+  String get accountsBackupNotice;
+
+  /// No description provided for @accountsPrivateKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Private key'**
+  String get accountsPrivateKey;
+
+  /// No description provided for @accountsHiddenKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden by default'**
+  String get accountsHiddenKey;
+
+  /// No description provided for @accountsRevealKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Show private key'**
+  String get accountsRevealKey;
+
+  /// No description provided for @accountsHideKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide private key'**
+  String get accountsHideKey;
+
+  /// No description provided for @accountsKeyWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with this key can control the account. Keep it private and store it safely.'**
+  String get accountsKeyWarning;
+
+  /// No description provided for @accountsSavedKey.
+  ///
+  /// In en, this message translates to:
+  /// **'I have saved my private key.'**
+  String get accountsSavedKey;
+
+  /// No description provided for @accountsContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get accountsContinue;
+
+  /// No description provided for @accountsBackupPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up this wallet'**
+  String get accountsBackupPending;
+
+  /// No description provided for @accountsTransferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer between accounts'**
+  String get accountsTransferTitle;
+
+  /// No description provided for @accountsFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get accountsFrom;
+
+  /// No description provided for @accountsTo.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get accountsTo;
+
+  /// No description provided for @accountsAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset'**
+  String get accountsAsset;
+
+  /// No description provided for @accountsAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get accountsAmount;
+
+  /// No description provided for @accountsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get accountsAvailable;
+
+  /// No description provided for @accountsMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Max'**
+  String get accountsMax;
+
+  /// No description provided for @accountsFutures.
+  ///
+  /// In en, this message translates to:
+  /// **'Futures'**
+  String get accountsFutures;
+
+  /// No description provided for @accountsReviewTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Review transfer'**
+  String get accountsReviewTransfer;
+
+  /// No description provided for @accountsTransferReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review transfer'**
+  String get accountsTransferReviewTitle;
+
+  /// No description provided for @accountsTransferSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get accountsTransferSubmit;
+
+  /// No description provided for @accountsTransferSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer submitted'**
+  String get accountsTransferSubmitted;
+
+  /// No description provided for @accountsTransferWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting final status. Account balances update after confirmation.'**
+  String get accountsTransferWaiting;
+
+  /// No description provided for @accountsBackPortfolio.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Portfolio'**
+  String get accountsBackPortfolio;
+
+  /// No description provided for @accountsChooseAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Select account'**
+  String get accountsChooseAccount;
+
+  /// No description provided for @accountsChooseAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Select asset'**
+  String get accountsChooseAsset;
+
+  /// No description provided for @accountsNoDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a sub-account before transferring between accounts.'**
+  String get accountsNoDestination;
+
+  /// No description provided for @accountsUnknownAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'The directory does not provide this account’s wallet address. Manage it through Aster.'**
+  String get accountsUnknownAddress;
+
+  /// No description provided for @accountsTransferBalanceNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh your Futures balance before reviewing the transfer.'**
+  String get accountsTransferBalanceNotice;
+
+  /// No description provided for @subaccountSecureStorageFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot access the device’s secure wallet storage. No new creation request will be sent.'**
+  String get subaccountSecureStorageFailed;
+
+  /// No description provided for @subaccountSecureStorageFull.
+  ///
+  /// In en, this message translates to:
+  /// **'The device wallet storage is full. Back up your wallets before continuing.'**
+  String get subaccountSecureStorageFull;
+
+  /// No description provided for @subaccountLocalKeyMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The private key is unavailable on this device. Import your backup into an external wallet to use this account.'**
+  String get subaccountLocalKeyMissing;
+
+  /// No description provided for @subaccountCreationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The sub-account could not be created. Your generated wallet remains available for backup.'**
+  String get subaccountCreationFailed;
+
+  /// No description provided for @subaccountNativeTransactionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Import this account into an external wallet to send on-chain transactions.'**
+  String get subaccountNativeTransactionUnavailable;
+
+  /// No description provided for @accountsTransferInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'The amount exceeds the available Futures balance.'**
+  String get accountsTransferInsufficient;
+
+  /// No description provided for @accountsLocalWallets.
+  ///
+  /// In en, this message translates to:
+  /// **'Created on this device'**
+  String get accountsLocalWallets;
+
+  /// No description provided for @accountsRemoteDirectory.
+  ///
+  /// In en, this message translates to:
+  /// **'Aster account directory'**
+  String get accountsRemoteDirectory;
+
+  /// No description provided for @accountsCreatedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get accountsCreatedBadge;
+
+  /// No description provided for @accountsTotalAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'Total assets'**
+  String get accountsTotalAssets;
+
+  /// No description provided for @accountsSlotsUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of 10 used'**
+  String accountsSlotsUsed(int count);
+
+  /// No description provided for @accountsUnfreezeNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Cross-account transfers can resume after Aster confirms that the account is unfrozen.'**
+  String get accountsUnfreezeNotice;
+
+  /// No description provided for @tradeAskAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI'**
+  String get tradeAskAi;
+
+  /// No description provided for @tradeHigh24h.
+  ///
+  /// In en, this message translates to:
+  /// **'24h High'**
+  String get tradeHigh24h;
+
+  /// No description provided for @tradeLow24h.
+  ///
+  /// In en, this message translates to:
+  /// **'24h Low'**
+  String get tradeLow24h;
+
+  /// No description provided for @tradeFutures.
+  ///
+  /// In en, this message translates to:
+  /// **'Futures'**
+  String get tradeFutures;
+
+  /// No description provided for @tradeSymbols.
+  ///
+  /// In en, this message translates to:
+  /// **'Symbols'**
+  String get tradeSymbols;
+
+  /// No description provided for @accountsSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get accountsSelect;
+
+  /// No description provided for @accountsDifferentSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a different account from the source.'**
+  String get accountsDifferentSource;
+
+  /// No description provided for @accountsTransferUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer unavailable'**
+  String get accountsTransferUnavailable;
+
+  /// No description provided for @accountsTransferFreezeHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'A selected account has a freeze request'**
+  String get accountsTransferFreezeHeading;
+
+  /// No description provided for @accountsBackTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to transfer'**
+  String get accountsBackTransfer;
+
+  /// No description provided for @accountsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get accountsDone;
+
+  /// No description provided for @accountsSwitchRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try switching again'**
+  String get accountsSwitchRetry;
+
+  /// No description provided for @accountsSwitchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{message} {account} is still active.'**
+  String accountsSwitchFailed(String message, String account);
+
+  /// No description provided for @accountsAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get accountsAccount;
+
+  /// No description provided for @accountsOpenWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Open wallet'**
+  String get accountsOpenWallet;
+
+  /// No description provided for @accountsConfirmCreation.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm account creation'**
+  String get accountsConfirmCreation;
+
+  /// No description provided for @accountsCreateSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Create {name}'**
+  String accountsCreateSummary(String name);
+
+  /// No description provided for @accountsAuthorizeCreation.
+  ///
+  /// In en, this message translates to:
+  /// **'Authorize creation with your main account wallet. Save the new private key after creation.'**
+  String get accountsAuthorizeCreation;
+
+  /// No description provided for @accountsConfirmFreeze.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm freeze in wallet'**
+  String get accountsConfirmFreeze;
+
+  /// No description provided for @accountsConfirmUnfreeze.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm unfreeze in wallet'**
+  String get accountsConfirmUnfreeze;
+
+  /// No description provided for @accountsFreezeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Freeze'**
+  String get accountsFreezeAction;
+
+  /// No description provided for @accountsUnfreezeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfreeze'**
+  String get accountsUnfreezeAction;
+
+  /// No description provided for @accountsAuthorizeFreeze.
+  ///
+  /// In en, this message translates to:
+  /// **'Authorize this change with the main account wallet. Cross-account transfers will be restricted.'**
+  String get accountsAuthorizeFreeze;
+
+  /// No description provided for @accountsAuthorizeUnfreeze.
+  ///
+  /// In en, this message translates to:
+  /// **'Authorize this change with the main account wallet to restore the account status.'**
+  String get accountsAuthorizeUnfreeze;
+
+  /// No description provided for @accountsWithdrawMainOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Main account only'**
+  String get accountsWithdrawMainOnly;
+
+  /// No description provided for @authorizationSecureStorageFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The device signing key could not be read or saved securely. Check device secure storage and try again.'**
+  String get authorizationSecureStorageFailed;
+
+  /// No description provided for @authorizationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Trading authorization is missing or expired. Enable trading to read this account without repeated wallet prompts.'**
+  String get authorizationRequired;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -6,6 +6,9 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../funding/presentation/transfer_history_screen.dart';
 import '../../subaccounts/presentation/subaccount_list_screen.dart';
+import '../../subaccounts/presentation/account_selector_sheet.dart';
+import '../../subaccounts/presentation/account_components.dart';
+import '../../subaccounts/application/account_entries_provider.dart';
 import '../application/portfolio_overview_provider.dart';
 import 'portfolio_account_details.dart';
 import 'portfolio_components.dart';
@@ -25,7 +28,9 @@ class PortfolioHeader extends ConsumerWidget {
             child: active
                 ? InkWell(
                     key: const Key('portfolio-account-selector'),
-                    onTap: () => _selectAccount(context, ref, preview),
+                    onTap: () => preview
+                        ? _selectAccount(context, ref, preview)
+                        : showAccountSelector(context),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(minHeight: 44),
                       child: Row(
@@ -34,7 +39,11 @@ class PortfolioHeader extends ConsumerWidget {
                           const SizedBox(width: 8),
                           Flexible(
                             child: Text(
-                              preview ? l.portfolioPreviewAccount : l.portfolioMainAccount,
+                              preview
+                                  ? l.portfolioPreviewAccount
+                                  : ref.watch(activeAccountEntryProvider) == null
+                                  ? l.account
+                                  : accountLabel(l, ref.watch(activeAccountEntryProvider)!),
                               style: PortfolioTypography.heading,
                             ),
                           ),

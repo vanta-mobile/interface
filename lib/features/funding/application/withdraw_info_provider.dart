@@ -1,3 +1,4 @@
+import '../../authorization/application/trading_agent_provider.dart';
 import '../../../core/network/network_providers.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,7 @@ final withdrawInfoRepositoryProvider = Provider.autoDispose<WithdrawInfoReposito
     service,
     ref.watch(identityRepositoryProvider).signWalletRequest,
     nonces: ref.watch(asterReadNoncesProvider),
+    authorization: ref.watch(asterRequestAuthorizationProvider),
   );
 });
 final withdrawInfoProvider =

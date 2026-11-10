@@ -1,3 +1,4 @@
+import '../../authorization/application/trading_agent_provider.dart';
 import '../../../core/network/network_providers.dart';
 
 import 'dart:async';
@@ -27,6 +28,7 @@ final rebalanceRepositoryProvider = Provider<RebalanceRepository>((ref) {
     ref.watch(identityRepositoryProvider).signWalletRequest,
     nonces: ref.watch(asterReadNoncesProvider),
     now: ref.watch(rebalanceClockProvider),
+    authorization: ref.watch(asterRequestAuthorizationProvider),
   );
 });
 final rebalanceProvider = NotifierProvider<RebalanceController, RebalanceState>(

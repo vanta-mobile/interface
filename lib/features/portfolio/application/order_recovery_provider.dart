@@ -1,3 +1,4 @@
+import '../../authorization/application/trading_agent_provider.dart';
 import '../../../core/network/network_providers.dart';
 
 import 'dart:async';
@@ -65,6 +66,7 @@ final orderRecoveryRepositoryProvider = Provider<OrderRecoveryRepository>((ref) 
     ref.watch(asterReadNoncesProvider),
     DateTime.now,
     journal: ref.watch(orderRecoveryJournalProvider),
+    authorization: ref.watch(asterRequestAuthorizationProvider),
   );
 });
 

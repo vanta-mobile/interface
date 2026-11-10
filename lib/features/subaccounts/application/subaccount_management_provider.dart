@@ -30,6 +30,13 @@ final subaccountManagementProvider =
       SubaccountManagementController.new,
     );
 
+// The status authorization page owns its request lifetime independently of the
+// legacy management route. Disposal cancels applicable preflights/writes.
+final accountStatusUpdateProvider =
+    NotifierProvider.autoDispose<SubaccountManagementController, SubaccountManagementState>(
+      SubaccountManagementController.new,
+    );
+
 class SubaccountManagementController extends Notifier<SubaccountManagementState> {
   int _generation = 0;
   bool _working = false;

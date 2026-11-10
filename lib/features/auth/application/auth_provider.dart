@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/account_switch_authorization.dart';
 import '../data/privy_configuration.dart';
 import '../data/privy_identity_repository.dart';
 import '../domain/auth_session.dart';
@@ -14,10 +15,7 @@ final privyConfigurationProvider = Provider<PrivyConfiguration>(
   (_) => const PrivyConfiguration.environment(),
 );
 final identityRepositoryProvider = Provider<IdentityRepository>((ref) {
-  final repository = PrivyIdentityRepository(
-    ref.watch(privyConfigurationProvider),
-    walletConfiguration: ref.watch(walletConfigurationProvider),
-  );
+  final repository = PrivyIdentityRepository(ref.watch(privyConfigurationProvider));
   ref.onDispose(() => unawaited(repository.dispose()));
   return repository;
 });
@@ -29,6 +27,15 @@ final walletConnectorProvider = Provider<WalletConnector>((ref) {
   ref.onDispose(() => unawaited(connector.dispose()));
   return connector;
 });
+// Switching uses a fresh SDK connection so a rejected target connection cannot
+// disconnect the current signing wallet during connector preparation.
+final walletSwitchConnectorFactoryProvider = Provider<WalletConnector Function()>((ref) {
+  final config = ref.watch(walletConfigurationProvider);
+  return () => ReownWalletConnector(config);
+});
+final accountSwitchAuthorizationProvider = Provider<AccountSwitchAuthorization>(
+  (ref) => AccountSwitchAuthorization(ref.watch(identityRepositoryProvider).signWalletRequest),
+);
 final authProvider = NotifierProvider<AuthController, AuthSession>(AuthController.new);
 
 class AuthController extends Notifier<AuthSession> {
@@ -36,11 +43,16 @@ class AuthController extends Notifier<AuthSession> {
   int _generation = 0;
   bool _loggingOut = false;
   bool _refreshing = false;
+  bool _restoringWallet = false;
+  WalletConnector? _switchConnector;
   bool _isCurrent(int generation) => ref.mounted && generation == _generation;
 
   @override
   AuthSession build() {
-    ref.onDispose(() => unawaited(_subscription?.cancel()));
+    ref.onDispose(() {
+      unawaited(_subscription?.cancel());
+      unawaited(_switchConnector?.dispose());
+    });
     scheduleMicrotask(bootstrap);
     return const AuthSession();
   }
@@ -120,6 +132,51 @@ class AuthController extends Notifier<AuthSession> {
       }
     } finally {
       _refreshing = false;
+    }
+  }
+
+  Future<void> restoreWalletSession(BuildContext context) async {
+    if (!ref.mounted || state.busy || _restoringWallet) return;
+    final identity = state.identity;
+    if (identity?.needsWalletConnection != true || identity?.walletAddress == null) return;
+    final connector = ref.read(walletConnectorProvider);
+    if (connector is! WalletSessionRestorer) return;
+    _restoringWallet = true;
+    final generation = _generation;
+    final previous = state;
+    final pending = AuthSession(phase: previous.phase, identity: identity, busy: true);
+    state = pending;
+    bool current() => _isCurrent(generation) && identical(state, pending);
+    WalletConnection? connection;
+    try {
+      connection = await (connector as WalletSessionRestorer).restore(
+        context,
+        expectedAddress: identity!.walletAddress!,
+      );
+      if (!current()) {
+        await connection?.release();
+        return;
+      }
+      final repository = ref.read(identityRepositoryProvider);
+      if (connection == null) {
+        await repository.logout();
+        if (current()) state = const AuthSession(phase: AuthPhase.signedOut);
+        return;
+      }
+      final restored = await repository.loginWithWallet(connection);
+      if (!current()) return;
+      state = AuthSession(phase: AuthPhase.signedIn, identity: restored);
+    } catch (error) {
+      await connection?.release();
+      if (current()) {
+        state = AuthSession(
+          phase: previous.phase,
+          identity: previous.identity,
+          failure: error is AuthFailure ? error : const AuthFailure('authUnavailable'),
+        );
+      }
+    } finally {
+      _restoringWallet = false;
     }
   }
 
@@ -328,9 +385,6 @@ class AuthController extends Notifier<AuthSession> {
     );
     try {
       final repository = ref.read(identityRepositoryProvider);
-      // Initialize without auto-creating any wallet. EOA login owns its signer.
-      await repository.initialize();
-      if (!_isCurrent(generation)) return;
       _observe(repository);
       if (!_isCurrent(generation) || !context.mounted) return;
       connection = await ref.read(walletConnectorProvider).connect(context);
@@ -342,12 +396,6 @@ class AuthController extends Notifier<AuthSession> {
       if (expected != null && expected.toLowerCase() != connection.address.toLowerCase()) {
         throw const AuthFailure('authWalletChanged');
       }
-      state = AuthSession(
-        phase: previous.phase,
-        identity: previous.identity,
-        busy: true,
-        walletStep: WalletLoginStep.signing,
-      );
       final identity = await repository.loginWithWallet(connection);
       if (!_isCurrent(generation)) {
         await connection.disconnect();
@@ -381,14 +429,110 @@ class AuthController extends Notifier<AuthSession> {
     }
   }
 
-  /// Explicit account switch signs out first. New identity is accepted only
-  /// after SIWE for the selected address; no local active-account override.
+  /// Connect the target before replacing the active identity. A separate
+  /// connector preserves the current wallet when approval is cancelled.
   Future<void> switchToWallet(BuildContext context, String expectedAddress) async {
     if (state.busy || !RegExp(r'^0x[a-fA-F0-9]{40}$').hasMatch(expectedAddress)) return;
     if (state.identity?.walletAddress?.toLowerCase() == expectedAddress.toLowerCase()) return;
-    if (state.identity != null) await logout();
-    if (!ref.mounted || !context.mounted || state.identity != null || state.busy) return;
-    await connectWallet(context, expectedAddress: expectedAddress);
+    final connector = ref.read(walletSwitchConnectorFactoryProvider)();
+    final accepted = await _switchConnection(
+      () => connector.connect(context),
+      expectedAddress: expectedAddress,
+    );
+    if (accepted) {
+      final previousConnector = _switchConnector;
+      _switchConnector = connector;
+      try {
+        await previousConnector?.dispose();
+      } catch (_) {
+        // Cleanup cannot invalidate the newly connected identity.
+      }
+    } else {
+      try {
+        await connector.dispose();
+      } catch (_) {
+        // Preserve the connection failure when relay cleanup fails.
+      }
+    }
+  }
+
+  /// Authorize with the current wallet before activating a device signing connection.
+  Future<void> switchWithConnection(WalletConnection connection) async {
+    if (state.busy) {
+      await _releaseSwitchConnection(connection);
+      return;
+    }
+    final accepted = await _switchConnection(
+      () async => connection,
+      expectedAddress: connection.address,
+    );
+    if (!accepted) await _releaseSwitchConnection(connection);
+  }
+
+  Future<bool> _switchConnection(
+    Future<WalletConnection> Function() connect, {
+    required String expectedAddress,
+  }) async {
+    if (state.busy) return false;
+    final previous = state, generation = _generation;
+    WalletConnection? connection;
+    state = AuthSession(
+      phase: previous.phase,
+      identity: previous.identity,
+      busy: true,
+      walletStep: WalletLoginStep.connecting,
+    );
+    try {
+      final from = previous.identity?.walletAddress;
+      if (from == null || previous.identity?.signingAvailable != true) {
+        throw const AuthFailure('authWalletReconnect');
+      }
+      await ref
+          .read(accountSwitchAuthorizationProvider)
+          .authorize(
+            from: from,
+            to: expectedAddress,
+            isCurrent: () => _isCurrent(generation) && identical(state.identity, previous.identity),
+          );
+      if (!_isCurrent(generation)) return false;
+      connection = await connect();
+      if (!_isCurrent(generation)) {
+        await _releaseSwitchConnection(connection);
+        return false;
+      }
+      if (!connection.isCurrent ||
+          connection.address.toLowerCase() != expectedAddress.toLowerCase()) {
+        throw const AuthFailure('authWalletChanged');
+      }
+      final identity = await ref.read(identityRepositoryProvider).loginWithWallet(connection);
+      if (!_isCurrent(generation)) {
+        await _releaseSwitchConnection(connection);
+        return false;
+      }
+      if (identity.walletAddress?.toLowerCase() != expectedAddress.toLowerCase()) {
+        throw const AuthFailure('authWalletChanged');
+      }
+      state = AuthSession(phase: AuthPhase.signedIn, identity: identity);
+      return true;
+    } catch (error) {
+      if (_isCurrent(generation)) {
+        state = AuthSession(
+          phase: previous.phase,
+          identity: previous.identity,
+          failure: error is AuthFailure ? error : const AuthFailure('authWalletUnavailable'),
+        );
+      }
+      await _releaseSwitchConnection(connection);
+      return false;
+    }
+  }
+
+  Future<void> _releaseSwitchConnection(WalletConnection? connection) async {
+    try {
+      await connection?.release();
+    } catch (_) {
+      // Keep the original failure or identity invalidation authoritative.
+    }
   }
 
   Future<void> logout() async {

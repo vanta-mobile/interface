@@ -71,6 +71,36 @@ void main() {
     await connection.release();
   });
 
+  testWidgets('restores an approved session without disconnecting or opening wallet UI', (
+    tester,
+  ) async {
+    await mount(tester);
+    modal.isConnected = true;
+    final connection = await connector.restore(host, expectedAddress: modal.address);
+    expect(connection?.isCurrent, true);
+    expect(modal.calls, ['init']);
+    var invalidations = 0;
+    final subscription = connection!.invalidations.listen((_) => invalidations++);
+    modal.finishDisconnect();
+    await tester.pump();
+    expect(connection.isCurrent, false);
+    expect(invalidations, 1);
+    addTearDown(() async {
+      await subscription.cancel();
+      await connection.release();
+    });
+  });
+
+  testWidgets('missing, expired and different-address sessions cannot restore', (tester) async {
+    await mount(tester);
+    expect(await connector.restore(host, expectedAddress: modal.address), isNull);
+    modal.isConnected = true;
+    expect(await connector.restore(host, expectedAddress: '0x${'3' * 40}'), isNull);
+    modal.expiry = 1;
+    expect(await connector.restore(host, expectedAddress: modal.address), isNull);
+    expect(modal.calls, ['init']);
+  });
+
   testWidgets('connection cleanup event settles before wallet selection opens', (tester) async {
     await mount(tester);
     modal.isConnected = true;
@@ -127,6 +157,7 @@ void main() {
 class _Modal extends ChangeNotifier implements ReownAppKitModal {
   final calls = <String>[];
   final address = '0x2222222222222222222222222222222222222222';
+  int expiry = 9999999999;
   BuildContext? host;
   Completer<void>? initGate, openGate;
   bool cancel = false, deferDisconnect = false;
@@ -178,7 +209,7 @@ class _Modal extends ChangeNotifier implements ReownAppKitModal {
             topic: 'topic',
             pairingTopic: 'pairing',
             relay: Relay('irn'),
-            expiry: 9999999999,
+            expiry: expiry,
             acknowledged: true,
             controller: 'key',
             self: metadata,

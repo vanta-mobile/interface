@@ -9,9 +9,11 @@ import 'rebalance_codec.dart';
 import 'signed_account_request.dart';
 
 class SignedRebalanceRepository implements RebalanceRepository {
+  final AccountRequestAuthorization? authorization;
   SignedRebalanceRepository(
     this.service,
     this.sign, {
+    this.authorization,
     required this.nonces,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
@@ -33,6 +35,7 @@ class SignedRebalanceRepository implements RebalanceRepository {
           serverTime: service.serverTime,
           send: send,
           sign: sign,
+          authorization: authorization,
           nonces: nonces,
           signatureLifetime: const Duration(seconds: 30),
         );
@@ -71,6 +74,10 @@ class SignedRebalanceRepository implements RebalanceRepository {
     if (!fresh.needed || fresh.terms != context.terms || !_fresh(fresh)) {
       throw const AccountReadFailure('rebalanceChanged');
     }
+    final signing = authorization == null
+        ? AccountRequestIdentity(address: context.address, sign: sign)
+        : await authorization!(context.address);
+    check();
     final serverTime = await service.serverTime();
     check();
     final nonce = nonces.next(serverTime);
@@ -78,11 +85,11 @@ class SignedRebalanceRepository implements RebalanceRepository {
       throw const AccountReadFailure('accountDataInvalid');
     }
     final query = Uri(
-      queryParameters: {'nonce': '$nonce', 'user': context.address, 'signer': context.address},
+      queryParameters: {'nonce': '$nonce', 'user': context.address, 'signer': signing.address},
     ).query;
     final stopwatch = Stopwatch()..start();
-    final signature = await sign(
-      expectedAddress: context.address,
+    final signature = await signing.sign(
+      expectedAddress: signing.address,
       typedData: asterReadTypedData(query),
     );
     check();

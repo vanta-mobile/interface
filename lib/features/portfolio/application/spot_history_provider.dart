@@ -1,3 +1,4 @@
+import '../../authorization/application/trading_agent_provider.dart';
 import '../../../core/network/network_providers.dart';
 
 import 'dart:async';
@@ -18,6 +19,7 @@ final spotHistoryRepositoryProvider = Provider<SpotHistoryRepository>((ref) {
     service,
     ref.watch(identityRepositoryProvider).signWalletRequest,
     nonces: ref.watch(asterReadNoncesProvider),
+    authorization: ref.watch(asterRequestAuthorizationProvider),
   );
 });
 final spotHistoryClockProvider = Provider<DateTime Function()>((_) => DateTime.now);

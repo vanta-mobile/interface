@@ -5,14 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/application/providers.dart';
-import '../application/account_read_provider.dart';
 import '../domain/portfolio_overview.dart';
 import 'portfolio_components.dart';
 import 'portfolio_header.dart';
 import 'portfolio_position_card.dart';
 import 'portfolio_asset_details.dart';
 import 'futures_history_screen.dart';
-import 'account_read_controls.dart';
 import 'position_risk_screen.dart';
 
 class PortfolioAssetTabs extends StatelessWidget {
@@ -152,7 +150,6 @@ class PortfolioPositionList extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 12),
               child: PortfolioPositionCard(position: position, preview: preview, hidden: hidden),
             ),
-        if (!preview) const _ReadAccount(),
       ],
     );
   }
@@ -192,7 +189,6 @@ class PortfolioAssetList extends StatelessWidget {
           PortfolioEmpty(l.portfolioNoAssets)
         else
           for (final asset in assets) _AssetRow(asset: asset, hidden: hidden, preview: preview),
-        if (!preview) const _ReadAccount(),
       ],
     );
   }
@@ -252,23 +248,4 @@ class _AssetRow extends StatelessWidget {
       ),
     ),
   );
-}
-
-class _ReadAccount extends ConsumerWidget {
-  const _ReadAccount();
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountReadProvider), l = AppLocalizations.of(context);
-    if (state.account != null && state.failure == null && !state.busy) {
-      return const SizedBox.shrink();
-    }
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: AccountReadControls(
-        state: state,
-        onRead: () => ref.read(accountReadProvider.notifier).refresh(),
-        initialLabel: l.accountReadWithWallet,
-      ),
-    );
-  }
 }

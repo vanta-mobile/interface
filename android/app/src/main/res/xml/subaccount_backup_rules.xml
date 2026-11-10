@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <exclude domain="sharedpref" path="vanta_subaccounts_v1.xml" />
+    <exclude domain="sharedpref" path="FlutterSecureKeyStorage:vanta_subaccounts_v1.xml" />
+    <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration:vanta_subaccounts_v1.xml" />
+    <exclude domain="sharedpref" path="vanta_trading_agents_v1.xml" />
+    <exclude domain="sharedpref" path="FlutterSecureKeyStorage:vanta_trading_agents_v1.xml" />
+    <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration:vanta_trading_agents_v1.xml" />
+</full-backup-content>

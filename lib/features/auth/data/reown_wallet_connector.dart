@@ -7,20 +7,27 @@ import 'package:reown_appkit/reown_appkit.dart';
 import '../domain/auth_session.dart';
 import '../domain/wallet_connection.dart';
 import '../domain/wallet_transaction.dart';
+import '../domain/wallet_signing_preparation.dart';
 import 'evm_account_address.dart';
 import 'wallet_transaction_dispatch.dart';
 import 'wallet_configuration.dart';
+import 'reown_auth_failure.dart';
+import 'reown_signing_network.dart';
 
 abstract interface class WalletConnector {
   Future<WalletConnection> connect(BuildContext context);
   Future<void> dispose();
 }
 
+abstract interface class WalletSessionRestorer {
+  Future<WalletConnection?> restore(BuildContext context, {required String expectedAddress});
+}
+
 typedef WalletModalFactory = ReownAppKitModal Function(BuildContext context);
 
 /// BuildContext is used only to host the SDK's native wallet-selection UI.
 /// SDK clients, sessions, and signature payloads stay behind this adapter.
-class ReownWalletConnector implements WalletConnector {
+class ReownWalletConnector implements WalletConnector, WalletSessionRestorer {
   ReownWalletConnector(
     this.configuration, {
     this.createModal,
@@ -33,6 +40,38 @@ class ReownWalletConnector implements WalletConnector {
   Future<void>? _preparation;
   Future<WalletConnection>? _pending;
   bool _disposed = false;
+
+  @override
+  Future<WalletConnection?> restore(BuildContext context, {required String expectedAddress}) =>
+      _sdkCall(() async {
+        if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
+        if (!configuration.isConfigured) throw const AuthFailure('authWalletConfiguration');
+        final host = Navigator.of(context).context;
+        final modal = _modal ??= createModal?.call(host) ?? _createModal(host);
+        final preparation = _preparation ??= _sdkCall(() async {
+          if (modal.status != ReownAppKitModalStatus.initialized) await modal.init();
+        }).whenComplete(() => _preparation = null);
+        await preparation.timeout(
+          preparationTimeout,
+          onTimeout: () => throw const AuthFailure('authWalletConnectionTimeout'),
+        );
+        if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
+        final session = modal.session;
+        final address = canonicalEvmAddress(session?.getAddress('eip155') ?? '');
+        final chain = modal.selectedChain?.chainId;
+        final expiry = session?.expiry;
+        if (!modal.isConnected ||
+            address == null ||
+            address.toLowerCase() != expectedAddress.toLowerCase() ||
+            chain == null ||
+            !chain.startsWith('eip155:') ||
+            !WalletConfiguration.chains.contains(chain.substring(7)) ||
+            expiry == null ||
+            expiry <= DateTime.now().millisecondsSinceEpoch ~/ 1000) {
+          return null;
+        }
+        return ReownWalletConnection(modal, address, chain.substring(7));
+      });
 
   @override
   Future<WalletConnection> connect(BuildContext context) => _pending ??= _sdkCall(() async {
@@ -113,7 +152,7 @@ class ReownWalletConnector implements WalletConnector {
     projectId: configuration.projectId.trim(),
     metadata: PairingMetadata(
       name: 'Vanta',
-      description: 'Vanta wallet sign-in',
+      description: 'Vanta wallet connection',
       url: configuration.relyingParty!.toString(),
       redirect: Redirect(native: WalletConfiguration.redirect),
     ),
@@ -146,15 +185,32 @@ class ReownWalletConnector implements WalletConnector {
   }
 }
 
-class ReownWalletConnection implements WalletConnection {
-  ReownWalletConnection(this.modal, this.address, this.chainId) {
+class ReownWalletConnection implements WalletConnection, WalletSigningPreparation {
+  ReownWalletConnection(this.modal, this.address, String chainId) : _chainId = chainId {
     modal.addListener(_check);
+    _scheduleExpiry();
   }
+
+  void _scheduleExpiry() {
+    _expiryTimer?.cancel();
+    final expiry = modal.session?.expiry;
+    if (expiry != null) {
+      _expiryTimer = Timer(
+        Duration(milliseconds: expiry * 1000 - DateTime.now().millisecondsSinceEpoch),
+        _check,
+      );
+    }
+  }
+
   final ReownAppKitModal modal;
   @override
   final String address;
   @override
-  final String chainId;
+  String get chainId => _chainId;
+  String _chainId;
+  String? _switchingTo;
+  bool _signing = false;
+  Timer? _expiryTimer;
   @override
   String? get walletName {
     final name = modal.session?.connectedWalletName?.trim();
@@ -169,31 +225,77 @@ class ReownWalletConnection implements WalletConnection {
       !_invalid &&
       !_closed &&
       modal.isConnected &&
+      (modal.session?.expiry == null ||
+          modal.session!.expiry! > DateTime.now().millisecondsSinceEpoch ~/ 1000) &&
       modal.session?.getAddress('eip155')?.toLowerCase() == address.toLowerCase() &&
-      modal.selectedChain?.chainId == 'eip155:$chainId';
+      (modal.selectedChain?.chainId == 'eip155:$chainId' ||
+          _switchingTo != null && modal.selectedChain?.chainId == 'eip155:$_switchingTo');
+
+  @override
+  Future<void> prepareSigning({
+    required String expectedAddress,
+    required int chainId,
+    required bool Function() isCurrent,
+  }) => _sdkCall(() async {
+    if (_signing || _sending || _switchingTo != null) throw const AuthFailure('authWalletBusy');
+    if (!this.isCurrent || !isCurrent() || address.toLowerCase() != expectedAddress.toLowerCase()) {
+      throw const AuthFailure('authWalletChanged');
+    }
+    if (!WalletConfiguration.chains.contains('$chainId')) {
+      throw const AuthFailure('authWalletUnsupported');
+    }
+    _switchingTo = '$chainId';
+    try {
+      await prepareReownSigningNetwork(
+        modal: modal,
+        address: address,
+        fromChain: this.chainId,
+        chainId: chainId,
+        isCurrent: () => this.isCurrent && isCurrent(),
+      );
+      _chainId = '$chainId';
+    } finally {
+      _switchingTo = null;
+      _check();
+    }
+  });
 
   void _check() {
     if (!_invalid && !_closed && !isCurrent) {
-      _invalid = true;
-      _invalidations.add(null);
+      _invalidate();
+    } else if (!_invalid && !_closed) {
+      _scheduleExpiry();
     }
+  }
+
+  void _invalidate() {
+    if (_invalid || _closed) return;
+    _invalid = true;
+    _expiryTimer?.cancel();
+    _invalidations.add(null);
   }
 
   @override
   Stream<void> get invalidations => _invalidations.stream;
 
   Future<String> _request(String method, List<Object?> parameters) => _sdkCall(() async {
+    if (_signing || _switchingTo != null) throw const AuthFailure('authWalletBusy');
     if (!isCurrent) throw const AuthFailure('authWalletChanged');
-    final result = await modal.request(
-      topic: modal.session!.topic,
-      chainId: 'eip155:$chainId',
-      request: SessionRequestParams(method: method, params: parameters),
-    );
-    if (!isCurrent) throw const AuthFailure('authWalletChanged');
-    if (result is! String || !RegExp(r'^0x[a-fA-F0-9]{130}$').hasMatch(result)) {
-      throw const AuthFailure('authWalletSignature');
+    _signing = true;
+    try {
+      final result = await modal.request(
+        topic: modal.session!.topic,
+        chainId: 'eip155:$chainId',
+        request: SessionRequestParams(method: method, params: parameters),
+      );
+      if (!isCurrent) throw const AuthFailure('authWalletChanged');
+      if (result is! String || !RegExp(r'^0x[a-fA-F0-9]{130}$').hasMatch(result)) {
+        throw const AuthFailure('authWalletSignature');
+      }
+      return result;
+    } finally {
+      _signing = false;
     }
-    return result;
   });
 
   @override
@@ -212,7 +314,9 @@ class ReownWalletConnection implements WalletConnection {
     required EvmWalletTransaction transaction,
     required bool Function() isCurrent,
   }) async {
-    if (_sending) throw const WalletTransactionNotSent('walletTransactionBusy');
+    if (_sending || _signing || _switchingTo != null) {
+      throw const WalletTransactionNotSent('walletTransactionBusy');
+    }
     if (!this.isCurrent ||
         !isCurrent() ||
         transaction.from.toLowerCase() != address.toLowerCase()) {
@@ -250,6 +354,7 @@ class ReownWalletConnection implements WalletConnection {
   Future<void> release() async {
     if (_closed) return;
     _closed = true;
+    _expiryTimer?.cancel();
     modal.removeListener(_check);
     await _invalidations.close();
   }
@@ -272,17 +377,7 @@ Future<T> _sdkCall<T>(Future<T> Function() operation) {
       parent.handleUncaughtError(error, stack);
       return;
     }
-    final message = error.toString().toLowerCase();
-    result.completeError(
-      error is AuthFailure
-          ? error
-          : AuthFailure(
-              message.contains('4001') || message.contains('reject')
-                  ? 'authWalletRejected'
-                  : 'authWalletUnavailable',
-            ),
-      stack,
-    );
+    result.completeError(failureFromReown(error), stack);
   }
 
   runZonedGuarded(() async {

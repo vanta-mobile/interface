@@ -20,17 +20,12 @@ class AccountSheet extends ConsumerWidget {
   final bool demoOnly;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!demoOnly) return const IdentityPanel();
     final account = ref.watch(accountProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (!demoOnly) ...[
-          const IdentityPanel(),
-          const SizedBox(height: 24),
-          const Divider(),
-          const SizedBox(height: 8),
-        ],
         Align(
           alignment: Alignment.centerLeft,
           child: Image.asset('assets/branding/mark.webp', height: 40, width: 40),

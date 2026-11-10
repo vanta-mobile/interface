@@ -4,7 +4,9 @@
     <application
         android:label="Vanta"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:fullBackupContent="@xml/subaccount_backup_rules"
+        android:dataExtractionRules="@xml/subaccount_data_extraction_rules">
         <meta-data
             android:name="firebase_messaging_installation_id_enabled"
             android:value="true" />

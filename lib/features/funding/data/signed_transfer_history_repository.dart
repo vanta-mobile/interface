@@ -6,9 +6,11 @@ import '../domain/transfer_history.dart';
 import 'transfer_history_mapper.dart';
 
 class SignedTransferHistoryRepository implements TransferHistoryRepository {
+  final AccountRequestAuthorization? authorization;
   SignedTransferHistoryRepository(
     this.service,
     this.sign, {
+    this.authorization,
     required this.nonces,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
@@ -26,6 +28,7 @@ class SignedTransferHistoryRepository implements TransferHistoryRepository {
       serverTime: service.serverTime,
       send: service.transferHistory,
       sign: sign,
+      authorization: authorization,
       nonces: nonces,
       nanosecondNonce: true,
       signatureLifetime: const Duration(seconds: 30),

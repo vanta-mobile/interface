@@ -1,3 +1,7 @@
+import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
+import 'package:vanta/features/authorization/domain/trading_agent.dart';
+
+import 'trading_agents.dart';
 import 'identity_repository.dart';
 
 import 'package:vanta/features/portfolio/application/main_order_pricing_provider.dart';
@@ -178,6 +182,7 @@ Market fixtureMarket(String symbol, String interval) => Market(
 );
 ProviderContainer setup(
   WidgetTester tester, {
+  TradingAgentStore? tradingAgentStore,
   PointsRepository? pointsRepository,
   NotificationRepository? notificationRepository,
   NotificationUnitsRepository? notificationUnitsRepository,
@@ -255,6 +260,9 @@ ProviderContainer setup(
   if (notificationRepository == null) addTearDown(inboxRepository.dispose);
   final container = ProviderContainer(
     overrides: [
+      tradingAgentStoreProvider.overrideWithValue(
+        tradingAgentStore ?? MemoryTradingAgentStorage().store(DateTime.now),
+      ),
       pointsRepositoryProvider.overrideWithValue(pointsRepository ?? TestPointsRepository()),
       spotOpenOrdersRepositoryProvider.overrideWithValue(
         spotOpenOrdersRepository ?? TestSpotOpenOrdersRepository(),

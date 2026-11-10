@@ -3,11 +3,8 @@ import '../domain/aster_signature.dart';
 export '../domain/aster_signature.dart';
 import '../../auth/domain/auth_session.dart';
 import '../domain/account_snapshot.dart';
-
-typedef AccountRequestSigner = Future<String> Function({
-  required String expectedAddress,
-  required Map<String, Object?> typedData,
-});
+import '../domain/account_request_signing.dart';
+export '../domain/account_request_signing.dart';
 
 /// Shared by Perp and Spot for the same connected signer.
 class AsterReadNonces {
@@ -36,6 +33,7 @@ class SignedAccountRequest {
     required this.serverTime,
     required this.send,
     required this.sign,
+    this.authorization,
     AsterReadNonces? nonces,
     this.nanosecondNonce = false,
     this.signatureLifetime = const Duration(seconds: 50),
@@ -43,6 +41,7 @@ class SignedAccountRequest {
   final Future<int> Function() serverTime;
   final Future<Object?> Function({required String query, required String signature}) send;
   final AccountRequestSigner sign;
+  final AccountRequestAuthorization? authorization;
   final AsterReadNonces nonces;
   final bool nanosecondNonce;
   final Duration signatureLifetime;
@@ -53,6 +52,7 @@ class SignedAccountRequest {
     required void Function(AccountReadStep) onStep,
     Map<String, String> parameters = const {},
   }) => RequestScope.run(isCurrent, () async {
+    AccountRequestIdentity? signing;
     void check() {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
     }
@@ -66,20 +66,32 @@ class SignedAccountRequest {
         throw const AccountReadFailure('accountDataInvalid');
       }
       onStep(AccountReadStep.preparing);
+      signing = authorization == null
+          ? AccountRequestIdentity(address: address, sign: sign)
+          : await authorization!(address);
+      check();
       final serverMilliseconds = await serverTime();
       check();
       final nonce = nanosecondNonce
           ? nonces.nextNanoseconds(serverMilliseconds)
           : nonces.next(serverMilliseconds);
       // Freeze the exact query once: the bytes signed must match the bytes
-      // transmitted. The connected wallet is both user and signer; an Aster
-      // authorization rejection is surfaced, never bypassed with another key.
+      // transmitted. user always remains the account owner; signer can be the
+      // separately authorized device agent. Never fall back after rejection.
       final query = Uri(
-        queryParameters: {...parameters, 'nonce': '$nonce', 'user': address, 'signer': address},
+        queryParameters: {
+          ...parameters,
+          'nonce': '$nonce',
+          'user': address,
+          'signer': signing.address,
+        },
       ).query;
       final started = Stopwatch()..start();
       onStep(AccountReadStep.signing);
-      final signature = await sign(expectedAddress: address, typedData: asterReadTypedData(query));
+      final signature = await signing.sign(
+        expectedAddress: signing.address,
+        typedData: asterReadTypedData(query),
+      );
       check();
       if (started.elapsed >= signatureLifetime) {
         throw const AccountReadFailure('accountSignatureExpired');
@@ -88,7 +100,16 @@ class SignedAccountRequest {
       final payload = await send(query: query, signature: signature);
       check();
       return payload;
-    } on AccountReadFailure {
+    } on AccountReadFailure catch (failure) {
+      if (isCurrent() &&
+          (failure.key == 'accountPermissionRequired' ||
+              failure.key == 'accountSignatureRejected')) {
+        try {
+          await signing?.onRejected?.call();
+        } catch (_) {
+          // Preserve the server error. The next request still checks the grant.
+        }
+      }
       rethrow;
     } on AuthFailure catch (failure) {
       throw AccountReadFailure(failure.key);

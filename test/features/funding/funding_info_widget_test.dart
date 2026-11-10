@@ -67,10 +67,7 @@ void main() {
         );
         tester.view.physicalSize = Size(spec.$1, spec.$2);
         await launch(tester, container);
-        openFundingInfo(
-          tester.element(find.byKey(const Key('account-button'))),
-          TransferMarket.perp,
-        );
+        openFundingInfo(tester.element(find.byType(Navigator).first), TransferMarket.perp);
         await tester.pumpAndSettle();
         final l10n = AppLocalizations.of(tester.element(find.byType(FundingInfoScreen)));
         expect(catalogs.calls, [
@@ -199,7 +196,7 @@ void main() {
         withdrawInfoRepository: limits,
       );
       await launch(tester, container);
-      openFundingInfo(tester.element(find.byKey(const Key('account-button'))), TransferMarket.spot);
+      openFundingInfo(tester.element(find.byType(Navigator).first), TransferMarket.spot);
       await tester.pumpAndSettle();
       final l10n = AppLocalizations.of(tester.element(find.byType(FundingInfoScreen)));
       await show(tester, find.text(l10n.fundingNoNetworkAssets));
@@ -226,7 +223,7 @@ void main() {
     addTearDown(identity.dispose);
     final container = setup(tester, identityRepository: identity, withdrawInfoRepository: limits);
     await launch(tester, container);
-    openFundingInfo(tester.element(find.byKey(const Key('account-button'))), TransferMarket.perp);
+    openFundingInfo(tester.element(find.byType(Navigator).first), TransferMarket.perp);
     await tester.pumpAndSettle();
     final withdraw = find.byKey(const Key('funding-operation-withdraw'));
     await show(tester, withdraw);
