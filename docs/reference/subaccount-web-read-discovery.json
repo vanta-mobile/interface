@@ -1,0 +1,42 @@
+{
+  "checkedOn": "2026-11-09",
+  "publicV3Docs": "https://github.com/asterdex/api-docs/tree/master",
+  "webSource": [
+    "https://static2.asterdexfx.com/assets/useGetAccountInfo-Csx4H45v.js",
+    "https://static2.asterdexfx.com/assets/ConnectButton-BJnQSa3M.js",
+    "https://static2.asterdexfx.com/assets/useConnectCexLoginSession-BJcdgdwJ.js"
+  ],
+  "webReadEndpoints": {
+    "list": {
+      "method": "POST",
+      "path": "/bapi/futures/v1/private/future/subAccount/list",
+      "observedFields": [
+        "accountId",
+        "subAccountName",
+        "sourceAddr",
+        "remark",
+        "subAccountStatus",
+        "futureBalanceList",
+        "spotBalanceList"
+      ],
+      "frozenLiteral": "FREEZE"
+    },
+    "currentAccount": {
+      "method": "POST",
+      "path": "/bapi/futures/v1/private/future/subAccount/getAccountInfo",
+      "observedFields": [
+        "subAccountVo.accountId",
+        "subAccountVo.sourceAddr"
+      ]
+    }
+  },
+  "authentication": {
+    "webClient": "withCredentials; login-cookie-derived CSRF header; list body signed with requestAddSignature and derived wallet",
+    "anonymousListCheck": {
+      "httpStatus": 401,
+      "businessCode": "100001005",
+      "safeMessage": "Please log in first."
+    }
+  },
+  "boundary": "Source discovery plus anonymous read only. No authenticated wallet, login, signature, financial write or successful account data response was tested. Web private contracts are separate from V3; third-party authentication and response validation remain to be integrated."
+}

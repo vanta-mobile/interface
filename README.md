@@ -69,7 +69,9 @@ cp -n .env.example .env
 ```
 
 Fill in `PRIVY_APP_ID`, `PRIVY_CLIENT_ID`, and `REOWN_PROJECT_ID` in `.env`.
-`WALLET_LOGIN_ORIGIN` defaults to `https://app.vanta.exchange`.
+`WALLET_LOGIN_ORIGIN` defaults to `https://app.vanta.exchange` and supplies Reown app metadata.
+External EOA connections do not request a Privy/SIWE login signature; Enable Trading
+remains a separate signature. Privy is used for email and social embedded wallets.
 Configure Privy's allowed URL schemes for the OAuth callback `vanta://`;
 the external wallet callback is `vanta://wallet`.
 
