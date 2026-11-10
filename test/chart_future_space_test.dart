@@ -7,6 +7,7 @@ import 'package:vanta/features/market/domain/market.dart';
 import 'package:vanta/features/trade/application/chart_preferences.dart';
 
 import 'support/trade_fixture.dart';
+import 'support/workspace_navigation.dart';
 
 ChartPainter painter(WidgetTester tester) => tester
     .widgetList<CustomPaint>(
@@ -40,6 +41,7 @@ void main() {
       final container = setup(tester, width: spec.$1);
       container.read(chartPreferencesProvider.notifier).setLine(spec.$3);
       await launch(tester, container);
+      await selectWorkspace(tester, chart: true);
       if (spec.$2) {
         await tester.tap(find.byKey(const Key('chart-expand')));
         await tester.pumpAndSettle();
@@ -72,6 +74,7 @@ void main() {
   testWidgets('pinch keeps future space stable in screen pixels', (tester) async {
     final container = setup(tester);
     await launch(tester, container);
+    await selectWorkspace(tester, chart: true);
     await pan(tester, -160);
     final gap = rightSpace(tester);
     final width = painter(tester).mWidth;
@@ -100,6 +103,7 @@ void main() {
     final container = setup(tester, marketStream: updates.stream);
     updates.add(fixture);
     await launch(tester, container);
+    await selectWorkspace(tester, chart: true);
     await pan(tester, -160);
     final gap = rightSpace(tester);
     final last = fixture.candles.last;

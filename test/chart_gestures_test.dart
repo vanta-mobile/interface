@@ -4,11 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
 
 import 'support/trade_fixture.dart';
+import 'support/workspace_navigation.dart';
 
 void main() {
   testWidgets('mouse dragging still works after a touch pinch', (tester) async {
     final container = setup(tester);
     await launch(tester, container);
+    await selectWorkspace(tester, chart: true);
     ChartPainter painter() => tester
         .widgetList<CustomPaint>(
           find.descendant(of: find.byType(KChartWidget), matching: find.byType(CustomPaint)),
@@ -42,6 +44,7 @@ void main() {
     ) async {
       final container = setup(tester);
       await launch(tester, container);
+      await selectWorkspace(tester, chart: true);
       if (start == 'fullscreen') {
         await tester.tap(find.byKey(const Key('chart-expand')));
         await tester.pumpAndSettle();
@@ -117,6 +120,11 @@ void main() {
   testWidgets('horizontal pan and two-finger zoom belong to the chart', (tester) async {
     final container = setup(tester);
     await launch(tester, container);
+    await selectWorkspace(tester, chart: true);
+    final scroll = tester.state<ScrollableState>(
+      find.ancestor(of: find.byType(KChartWidget), matching: find.byType(Scrollable)).first,
+    );
+    final initialPageOffset = scroll.position.pixels;
     ChartPainter painter() => tester
         .widgetList<CustomPaint>(
           find.descendant(of: find.byType(KChartWidget), matching: find.byType(CustomPaint)),
@@ -141,10 +149,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
     expect(painter().scaleX, greaterThan(initialScale));
-    final scroll = tester.state<ScrollableState>(
-      find.ancestor(of: find.byType(KChartWidget), matching: find.byType(Scrollable)).first,
-    );
-    expect(scroll.position.pixels, 0);
+    expect(scroll.position.pixels, initialPageOffset);
     await first.up();
     await second.up();
     await tester.pumpAndSettle();
@@ -154,6 +159,7 @@ void main() {
   testWidgets('pinch takes over after the first finger has started dragging', (tester) async {
     final container = setup(tester);
     await launch(tester, container);
+    await selectWorkspace(tester, chart: true);
     ChartPainter painter() => tester
         .widgetList<CustomPaint>(
           find.descendant(of: find.byType(KChartWidget), matching: find.byType(CustomPaint)),
