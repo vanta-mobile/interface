@@ -14,6 +14,7 @@ import 'asset_yield_badge.dart';
 import 'asset_identity.dart';
 import '../application/asset_metadata_provider.dart';
 import '../domain/asset_metadata.dart';
+import '../../../core/presentation/status_view.dart';
 
 class SpotBalanceRows extends ConsumerStatefulWidget {
   const SpotBalanceRows({super.key, required this.account, this.accountStale = false});
@@ -77,11 +78,14 @@ class _SpotBalanceRowsState extends ConsumerState<SpotBalanceRows> {
           onChanged: (value) => setState(() => hideLow = value ?? false),
         ),
         if (balances.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Text(
-              widget.account.balances.isEmpty ? l10n.spotNoAssets : l10n.accountNoMatchingAssets,
-            ),
+          StatusEmptyView(
+            key: const Key('spot-assets-empty'),
+            title: widget.account.balances.isEmpty
+                ? l10n.statusNoAssetsTitle
+                : l10n.statusNoResultsTitle,
+            message: widget.account.balances.isEmpty
+                ? l10n.spotNoAssets
+                : l10n.accountNoMatchingAssets,
           ),
         for (final balance in balances)
           Padding(

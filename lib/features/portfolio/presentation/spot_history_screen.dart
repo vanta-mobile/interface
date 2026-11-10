@@ -55,6 +55,7 @@ class SpotHistoryScreen extends ConsumerWidget {
               ],
               const SizedBox(height: 16),
               AccountReadControls(
+                failureView: true,
                 state: state,
                 buttonKey: const Key('read-spot-history'),
                 enabled: state.query.validScope,

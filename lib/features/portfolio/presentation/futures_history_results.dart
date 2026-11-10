@@ -7,6 +7,7 @@ import '../application/futures_history_provider.dart';
 import '../domain/futures_history.dart';
 import 'account_snapshot_status.dart';
 import 'futures_history_record_card.dart';
+import '../../../core/presentation/status_view.dart';
 
 class FuturesHistoryResults extends ConsumerWidget {
   const FuturesHistoryResults({super.key});
@@ -57,7 +58,7 @@ class FuturesHistoryResults extends ConsumerWidget {
           ],
           const SizedBox(height: 16),
           if (snapshot.records.isEmpty)
-            Text(l10n.historyEmpty, key: const Key('futures-history-empty'))
+            StatusEmptyView(key: const Key('futures-history-empty'), message: l10n.historyEmpty)
           else
             FuturesHistoryRecords(snapshot: snapshot),
         ],

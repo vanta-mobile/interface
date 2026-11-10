@@ -149,7 +149,7 @@ void main() {
       expect(container.read(asterMarketProvider).hasError, true);
       service.failRequests = false;
       service.gate = null;
-      await tester.tap(find.text('重新连接'));
+      await tester.tap(find.byKey(const Key('status-retry')));
       await settleData();
       await tester.pump();
       expect(tester.widget<ChartCanvas>(find.byType(ChartCanvas)).market.interval, '1h');

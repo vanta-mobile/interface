@@ -550,6 +550,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get retry => '重新连接';
 
   @override
+  String get statusLoadFailedTitle => '加载失败';
+
+  @override
+  String get statusLoadFailedMessage => '出了点问题，请重试。';
+
+  @override
+  String get statusRetry => '重试';
+
+  @override
+  String get statusEmptyTitle => '暂无数据';
+
+  @override
+  String get statusEmptyMessage => '当前没有可显示的内容。';
+
+  @override
+  String get statusNoResultsTitle => '未找到结果';
+
+  @override
+  String get statusNoResultsMessage => '请尝试其他关键词。';
+
+  @override
+  String get statusNoAssetsTitle => '暂无资产';
+
+  @override
+  String get statusNoAssetsMessage => '充值后即可开始交易。';
+
+  @override
   String get snapshotHint => '实时连接中断，展示最近历史行情。';
 
   @override

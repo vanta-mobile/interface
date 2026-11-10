@@ -3,12 +3,15 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/market_failure.dart';
+import '../../../../core/presentation/status_view.dart';
 import '../../../../core/strings.dart';
 import '../../../../core/theme.dart';
 import '../../application/providers.dart';
 import '../../../market/domain/market.dart';
 import '../../../market/application/market_providers.dart';
 import 'primitives.dart';
+import 'book_skeleton.dart';
 import 'order_book_row.dart';
 import 'trade_funding.dart';
 
@@ -65,21 +68,9 @@ class _OrderBookPanelState extends ConsumerState<OrderBookPanel> {
             ),
           ),
           if (book == null || (book.asks.isEmpty && book.bids.isEmpty))
-            SizedBox(
-              height: 430,
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    tr(
-                      context,
-                      book?.connected == false || feed.hasError ? 'bookError' : 'bookWaiting',
-                    ),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 11, color: AppColors.secondary),
-                  ),
-                ),
-              ),
+            BookFeedState(
+              feed: feed,
+              loading: const BookSkeleton.compact(key: Key('order-book-skeleton')),
             )
           else if (tab == 0) ...[
             for (final level in asks.reversed)
@@ -268,5 +259,33 @@ class _BookRatio extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Reconnects the shared depth/trades feed and waits for its first event.
+Future<void> retryOrderBook(WidgetRef ref) async {
+  ref.invalidate(bookProvider);
+  await ref.read(bookProvider.future);
+}
+
+/// Section state while the shared book feed has no rows to show.
+class BookFeedState extends ConsumerWidget {
+  const BookFeedState({super.key, required this.feed, required this.loading, this.empty});
+  final AsyncValue<OrderBook> feed;
+  final Widget loading;
+  final Widget? empty;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final book = feed.isReloading ? null : feed.value;
+    final error = feed.error;
+    if (feed.hasError || book?.connected == false) {
+      return StatusFailureView(
+        message: error is MarketFailure ? error.displayMessage : tr(context, 'bookError'),
+        onRetry: () => retryOrderBook(ref),
+      );
+    }
+    if (book == null) return loading;
+    return empty ?? const StatusEmptyView();
   }
 }

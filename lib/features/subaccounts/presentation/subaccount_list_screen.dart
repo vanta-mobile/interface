@@ -11,6 +11,7 @@ import '../application/subaccount_list_provider.dart';
 import '../domain/subaccount_directory.dart';
 import 'subaccount_management_screen.dart';
 import 'account_management_screen.dart';
+import '../../../core/presentation/status_view.dart';
 
 void openSubaccountList(BuildContext context) =>
     Navigator.of(context)
@@ -43,6 +44,7 @@ class SubaccountListScreen extends ConsumerWidget {
             ],
             const SizedBox(height: 12),
             AccountReadControls(
+              failureView: true,
               state: state,
               onRead: controller.refresh,
               buttonKey: const Key('subaccount-list-refresh'),
@@ -100,7 +102,7 @@ class _DirectoryViewState extends State<_DirectoryView> with AutomaticKeepAliveC
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(l10n.subaccountCount(directory.childCount)),
-        if (directory.childCount == 0) Text(l10n.subaccountNoChildren),
+        if (directory.childCount == 0) StatusEmptyView(message: l10n.subaccountNoChildren),
         Text(l10n.subaccountListBoundaries, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 12),
         TextField(

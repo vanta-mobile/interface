@@ -75,6 +75,7 @@ class AsterAccountPanel extends ConsumerWidget {
               const SizedBox(height: 16),
               AccountReadControls(
                 state: state,
+                failureView: true,
                 onRead: () => ref.read(accountReadProvider.notifier).refresh(),
               ),
             ],

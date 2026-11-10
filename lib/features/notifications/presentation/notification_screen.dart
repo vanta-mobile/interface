@@ -12,6 +12,7 @@ import '../application/notification_provider.dart';
 import '../domain/account_notification.dart';
 import 'notification_details.dart';
 import 'notification_labels.dart';
+import '../../../core/presentation/status_view.dart';
 
 void openNotifications(BuildContext context) =>
     Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => const NotificationScreen()));
@@ -66,7 +67,11 @@ class NotificationScreen extends ConsumerWidget {
                     child: Text(l10n.notificationMarkAllRead),
                   ),
                 ),
-              if (inbox.loaded && entries.isEmpty) Text(l10n.notificationEmpty),
+              if (inbox.loaded && entries.isEmpty)
+                StatusEmptyView(
+                  key: const Key('notification-empty'),
+                  message: l10n.notificationEmpty,
+                ),
               for (final entry in entries) _NotificationCard(entry),
             ],
           ],

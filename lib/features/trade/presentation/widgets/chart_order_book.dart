@@ -8,6 +8,8 @@ import '../../../market/application/market_providers.dart';
 import '../../../market/domain/market.dart';
 import '../../application/providers.dart';
 import '../trade_theme.dart';
+import 'book_skeleton.dart';
+import 'order_book.dart';
 import 'order_book_row.dart';
 
 /// The chart page consumes the same shared public feed as the trade book.
@@ -56,13 +58,9 @@ class ChartOrderBook extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         if (book == null || asks.isEmpty && bids.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 40),
-            child: Text(
-              tr(context, feed.hasError ? 'bookError' : 'bookWaiting'),
-              textAlign: TextAlign.center,
-              style: TradeTypography.caption,
-            ),
+          BookFeedState(
+            feed: feed,
+            loading: const BookSkeleton.split(key: Key('chart-order-book-skeleton')),
           )
         else
           Row(
@@ -128,13 +126,11 @@ class ChartOrderBook extends ConsumerWidget {
           ],
         ),
         if (book?.trades.isNotEmpty != true)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32),
-            child: Text(
-              tr(context, book?.connected == false || feed.hasError ? 'bookError' : 'noTrades'),
-              textAlign: TextAlign.center,
-              style: TradeTypography.caption,
-            ),
+          BookFeedState(
+            feed: feed,
+            loading: const BookSkeleton.trades(key: Key('chart-trades-skeleton')),
+            // A connected feed without trades is still waiting for its first fill.
+            empty: const BookSkeleton.trades(key: Key('chart-trades-skeleton')),
           )
         else
           for (final (index, trade) in book!.trades.take(10).indexed)

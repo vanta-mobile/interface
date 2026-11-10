@@ -19,6 +19,7 @@ import '../application/account_balances_provider.dart';
 import 'create_subaccount_screen.dart';
 import 'subaccount_backup_screen.dart';
 import 'subaccount_details_screen.dart';
+import '../../../core/presentation/status_view.dart';
 
 class AccountManagementScreen extends ConsumerWidget {
   const AccountManagementScreen({super.key});
@@ -101,7 +102,7 @@ class AccountManagementScreen extends ConsumerWidget {
         if (directory.account != null)
           for (final account in directory.account!.accounts.where((a) => !a.isParent))
             Padding(padding: const EdgeInsets.only(bottom: 12), child: _DirectoryCard(account)),
-        if (count == 0 && entries.isEmpty) PortfolioEmpty(l.subaccountNoChildren),
+        if (count == 0 && entries.isEmpty) StatusEmptyView(message: l.subaccountNoChildren),
         for (final wallet in wallets.value ?? const <GeneratedSubaccount>[])
           if (wallet.owner.toLowerCase() == owner?.toLowerCase() && !wallet.backedUp)
             Padding(

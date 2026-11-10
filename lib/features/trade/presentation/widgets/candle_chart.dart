@@ -16,6 +16,7 @@ import 'chart_market_status.dart';
 import 'chart_toolbar.dart';
 import 'depth_panel.dart';
 import 'primitives.dart';
+import '../../../../core/presentation/status_view.dart';
 
 class CandleChart extends ConsumerStatefulWidget {
   const CandleChart({super.key, this.expanded = false, this.viewportHeight, this.flat = false});
@@ -115,30 +116,23 @@ class _CandleChartState extends ConsumerState<CandleChart> {
                           secondaryHeight: secondaryHeight,
                         ),
                         error: (error, _) => Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  error is MarketFailure
-                                      ? error.message
-                                      : tr(context, 'marketUnavailable'),
-                                  textAlign: TextAlign.center,
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    final sync = ref.read(marketSyncProvider);
-                                    if (sync == null) {
-                                      ref.invalidate(instrumentsProvider);
-                                    } else {
-                                      sync.retry();
-                                    }
-                                    ref.invalidate(marketProvider);
-                                  },
-                                  child: Text(tr(context, 'retry')),
-                                ),
-                              ],
+                          child: SingleChildScrollView(
+                            child: StatusFailureView(
+                              key: const Key('chart-load-failure'),
+                              padding: const EdgeInsets.all(16),
+                              message: error is MarketFailure
+                                  ? error.message
+                                  : tr(context, 'marketUnavailable'),
+                              onRetry: () async {
+                                final sync = ref.read(marketSyncProvider);
+                                if (sync == null) {
+                                  ref.invalidate(instrumentsProvider);
+                                } else {
+                                  sync.retry();
+                                }
+                                ref.invalidate(marketProvider);
+                                await ref.read(marketProvider.future);
+                              },
                             ),
                           ),
                         ),

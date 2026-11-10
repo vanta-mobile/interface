@@ -7,6 +7,7 @@ import '../application/spot_history_provider.dart';
 import '../domain/spot_history.dart';
 import 'account_snapshot_status.dart';
 import 'spot_history_record_card.dart';
+import '../../../core/presentation/status_view.dart';
 
 class SpotHistoryResults extends ConsumerWidget {
   const SpotHistoryResults({super.key});
@@ -57,7 +58,7 @@ class SpotHistoryResults extends ConsumerWidget {
           ],
           const SizedBox(height: 16),
           if (snapshot.records.isEmpty)
-            Text(l10n.historyEmpty, key: const Key('history-empty'))
+            StatusEmptyView(key: const Key('history-empty'), message: l10n.historyEmpty)
           else
             SpotHistoryRecords(snapshot: snapshot),
         ],

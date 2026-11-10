@@ -2,6 +2,7 @@ import '../../../core/errors/error_text.dart';
 
 import 'package:flutter/material.dart';
 
+import '../../../core/presentation/status_view.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../domain/points.dart';
@@ -16,7 +17,7 @@ String pointsCampaignStatus(String status, AppLocalizations l10n) => switch (sta
   _ => l10n.pointsStatusUnknown,
 };
 
-class PointsStatus<T> extends StatelessWidget {
+class PointsStatus<T> extends StatefulWidget {
   const PointsStatus({
     super.key,
     required this.state,
@@ -29,45 +30,79 @@ class PointsStatus<T> extends StatelessWidget {
   final VoidCallback onStop;
   final String sectionKey;
   @override
+  State<PointsStatus<T>> createState() => _PointsStatusState<T>();
+}
+
+class _PointsStatusState<T> extends State<PointsStatus<T>> {
+  // A reload clears the failure while it runs; keep the failure state and
+  // its spinning Retry in place until that reload settles.
+  bool _retrying = false;
+
+  Future<void> _retry() async {
+    setState(() => _retrying = true);
+    try {
+      await widget.onRefresh();
+    } finally {
+      if (mounted) setState(() => _retrying = false);
+    }
+  }
+
+  String _failureText(BuildContext context, String key) {
+    final l10n = AppLocalizations.of(context);
+    return apiErrorText(
+      context,
+      key,
+      widget.state.errorDetails,
+      fallbackText: switch (key) {
+        'pointsDataInvalid' => l10n.pointsDataInvalid,
+        'pointsNetwork' => l10n.pointsNetwork,
+        'pointsRateLimited' => l10n.pointsRateLimited,
+        'pointsWalletRequired' => l10n.pointsWalletRequired,
+        _ => l10n.pointsUnavailable,
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final state = widget.state;
+    final failureKey = state.failureKey;
+    final failureView = state.snapshot == null && (failureKey != null || _retrying);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (state.snapshot case final snapshot?)
           Text(l10n.pointsReadTime(snapshot.receivedAt.toIso8601String())),
-        if (state.loading) ...[const LinearProgressIndicator(), Text(l10n.pointsLoading)],
+        if (state.loading && !failureView) ...[
+          const LinearProgressIndicator(),
+          Text(l10n.pointsLoading),
+        ],
         if (!state.active) Text(l10n.pointsPaused),
         if (state.stale) Text(l10n.pointsStale, style: const TextStyle(color: AppColors.warning)),
-        if (state.failureKey case final key?)
-          Text(
-            apiErrorText(
-              context,
-              key,
-              state.errorDetails,
-              fallbackText: switch (key) {
-                'pointsDataInvalid' => l10n.pointsDataInvalid,
-                'pointsNetwork' => l10n.pointsNetwork,
-                'pointsRateLimited' => l10n.pointsRateLimited,
-                'pointsWalletRequired' => l10n.pointsWalletRequired,
-                _ => l10n.pointsUnavailable,
-              },
-            ),
-            style: const TextStyle(color: AppColors.warning),
-          ),
+        if (failureView)
+          StatusFailureView(
+            message: failureKey == null ? null : _failureText(context, failureKey),
+            retryKey: Key('points-refresh-${widget.sectionKey}'),
+            retrying: _retrying || state.loading || !state.active,
+            onRetry: _retry,
+          )
+        else if (failureKey != null)
+          Text(_failureText(context, failureKey), style: const TextStyle(color: AppColors.warning)),
         Wrap(
           spacing: 8,
           children: [
-            OutlinedButton.icon(
-              key: Key('points-refresh-$sectionKey'),
-              onPressed: state.loading || !state.active ? null : onRefresh,
-              icon: const Icon(Icons.refresh),
-              label: Text(l10n.pointsRefresh),
-            ),
+            if (!failureView)
+              OutlinedButton.icon(
+                key: Key('points-refresh-${widget.sectionKey}'),
+                onPressed: state.loading || !state.active ? null : widget.onRefresh,
+                icon: const Icon(Icons.refresh),
+                label: Text(l10n.pointsRefresh),
+              ),
             if (state.loading)
               TextButton(
-                key: Key('points-stop-$sectionKey'),
-                onPressed: onStop,
+                key: Key('points-stop-${widget.sectionKey}'),
+                onPressed: widget.onStop,
                 child: Text(l10n.pointsStop),
               ),
           ],

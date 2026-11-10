@@ -19,6 +19,7 @@ import 'position_settings_entries.dart';
 import '../application/batch_close_provider.dart';
 import 'batch_close_controls.dart';
 import 'batch_close_status.dart';
+import '../../../core/presentation/status_view.dart';
 
 class PositionRiskScreen extends ConsumerStatefulWidget {
   const PositionRiskScreen({super.key, this.embedded = false});
@@ -54,6 +55,7 @@ class _PositionRiskScreenState extends ConsumerState<PositionRiskScreen> {
         enabled:
             !ref.watch(positionAdlProvider.select((s) => s.busy)) &&
             !ref.watch(batchCloseProvider.select((s) => s.busy)),
+        failureView: true,
         onRead: () => ref.read(positionRiskProvider.notifier).refresh(),
       ),
       AccountSnapshotStatus(
@@ -83,8 +85,11 @@ class _PositionRiskScreenState extends ConsumerState<PositionRiskScreen> {
         ),
         const SizedBox(height: 12),
         if (positions.isEmpty)
-          Text(
-            currentOnly && all.isNotEmpty ? l10n.positionRiskNoCurrent : l10n.accountNoPositions,
+          StatusEmptyView(
+            key: const Key('position-risk-empty'),
+            message: currentOnly && all.isNotEmpty
+                ? l10n.positionRiskNoCurrent
+                : l10n.accountNoPositions,
           ),
         for (final position in positions)
           Padding(

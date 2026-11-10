@@ -59,6 +59,7 @@ class SpotAccountPanel extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               AccountReadControls(
+                failureView: true,
                 state: state,
                 buttonKey: const Key('read-spot-account'),
                 onRead: () => ref.read(spotAccountReadProvider.notifier).refresh(),

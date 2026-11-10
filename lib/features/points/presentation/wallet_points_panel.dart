@@ -11,6 +11,7 @@ import '../../trade/presentation/widgets/primitives.dart';
 import '../application/points_provider.dart';
 import '../domain/points.dart';
 import 'points_status.dart';
+import '../../../core/presentation/status_view.dart';
 
 class WalletPointsPanel extends ConsumerWidget {
   const WalletPointsPanel({super.key});
@@ -139,7 +140,8 @@ class _WalletPointsHistoryState extends ConsumerState<_WalletPointsHistory> {
           l10n.pointsSelectedHistory,
           amount(campaign == null ? value?.total : selected?.points),
         ),
-        if (history.snapshot != null && entries.isEmpty) Text(l10n.pointsNoHistory),
+        if (history.snapshot != null && entries.isEmpty)
+          StatusEmptyView(message: l10n.pointsNoHistory),
         PointsStatus(
           state: history,
           onRefresh: ref.read(walletPointsHistoryProvider.notifier).refresh,

@@ -1173,6 +1173,60 @@ abstract class AppLocalizations {
   /// **'Reconnect'**
   String get retry;
 
+  /// No description provided for @statusLoadFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to Load'**
+  String get statusLoadFailedTitle;
+
+  /// No description provided for @statusLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get statusLoadFailedMessage;
+
+  /// No description provided for @statusRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get statusRetry;
+
+  /// No description provided for @statusEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Data Yet'**
+  String get statusEmptyTitle;
+
+  /// No description provided for @statusEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'There\'s nothing to display here right now.'**
+  String get statusEmptyMessage;
+
+  /// No description provided for @statusNoResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found'**
+  String get statusNoResultsTitle;
+
+  /// No description provided for @statusNoResultsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Try searching with another term.'**
+  String get statusNoResultsMessage;
+
+  /// No description provided for @statusNoAssetsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Assets Yet'**
+  String get statusNoAssetsTitle;
+
+  /// No description provided for @statusNoAssetsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit funds to get started with trading.'**
+  String get statusNoAssetsMessage;
+
   /// No description provided for @snapshotHint.
   ///
   /// In en, this message translates to:

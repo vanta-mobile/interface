@@ -265,3 +265,39 @@ abstract final class ToastTypography {
     color: ToastColors.text,
   );
 }
+
+/// Shared load-failure, empty and skeleton state tokens.
+abstract final class StatusColors {
+  static const title = AppColors.authText;
+  static const message = PortfolioColors.muted;
+  static const actionBorder = AppColors.authLine;
+  static const skeleton = AppColors.authCard;
+}
+
+abstract final class StatusTypography {
+  static const title = TextStyle(
+    fontFamily: 'Inter',
+    fontFamilyFallback: ['NotoSansSC'],
+    fontSize: 16,
+    height: 24 / 16,
+    fontWeight: FontWeight.w700,
+    color: StatusColors.title,
+  );
+  static const message = TextStyle(
+    fontFamily: 'Inter',
+    fontFamilyFallback: ['NotoSansSC'],
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w500,
+    color: StatusColors.message,
+  );
+  // Button text styles replace, rather than merge with, the theme font.
+  static const action = TextStyle(
+    fontFamily: 'Inter',
+    fontFamilyFallback: ['NotoSansSC'],
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w700,
+    color: StatusColors.title,
+  );
+}

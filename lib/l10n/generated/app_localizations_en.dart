@@ -564,6 +564,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retry => 'Reconnect';
 
   @override
+  String get statusLoadFailedTitle => 'Unable to Load';
+
+  @override
+  String get statusLoadFailedMessage => 'Something went wrong. Please try again.';
+
+  @override
+  String get statusRetry => 'Retry';
+
+  @override
+  String get statusEmptyTitle => 'No Data Yet';
+
+  @override
+  String get statusEmptyMessage => 'There\'s nothing to display here right now.';
+
+  @override
+  String get statusNoResultsTitle => 'No results found';
+
+  @override
+  String get statusNoResultsMessage => 'Try searching with another term.';
+
+  @override
+  String get statusNoAssetsTitle => 'No Assets Yet';
+
+  @override
+  String get statusNoAssetsMessage => 'Deposit funds to get started with trading.';
+
+  @override
   String get snapshotHint => 'Realtime disconnected. Showing recent history.';
 
   @override

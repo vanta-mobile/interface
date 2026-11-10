@@ -1,6 +1,7 @@
 import '../trade_theme.dart';
 import '../../application/page_refresh_provider.dart';
 import '../../../../core/market_failure.dart';
+import '../../../../core/presentation/status_view.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -144,40 +145,34 @@ class MarketSheet extends ConsumerWidget {
       error: (error, _) => ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                error is MarketFailure ? error.displayMessage : tr(context, 'marketUnavailable'),
-              ),
-              TextButton(
-                onPressed: () {
-                  ref.invalidate(instrumentsProvider);
-                  ref.invalidate(liveMarketQuotesProvider);
-                },
-                child: Text(tr(context, 'retry')),
-              ),
-            ],
+          StatusFailureView(
+            message: error is MarketFailure ? error.displayMessage : null,
+            onRetry: () async {
+              ref.invalidate(instrumentsProvider);
+              ref.invalidate(liveMarketQuotesProvider);
+              // Settles on the first catalog/quote event, including a new failure.
+              await ref.read(liveMarketQuotesProvider.future);
+            },
           ),
         ],
       ),
       data: (ranked) {
         final selection = ref.watch(marketSelectionProvider);
         if (ranked.isEmpty) {
+          final l10n = AppLocalizations.of(context);
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 64),
-                child: Text(
-                  selection.onlyFavorites && favorites.isEmpty
-                      ? tr(context, 'emptyFavorites')
-                      : selection.category != MarketCategory.all && selection.query.trim().isEmpty
-                      ? AppLocalizations.of(context).marketNoCategoryResults
-                      : tr(context, 'noMarketsFound'),
-                  textAlign: TextAlign.center,
+              if (selection.onlyFavorites && favorites.isEmpty)
+                StatusEmptyView(title: tr(context, 'emptyFavorites'))
+              else if (selection.category != MarketCategory.all && selection.query.trim().isEmpty)
+                StatusEmptyView(title: l10n.marketNoCategoryResults)
+              else
+                StatusEmptyView(
+                  title: l10n.statusNoResultsTitle,
+                  message: l10n.statusNoResultsMessage,
                 ),
-              ),
             ],
           );
         }

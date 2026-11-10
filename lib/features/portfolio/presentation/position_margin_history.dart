@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/domain/wallet_operation.dart';
-import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../trade/presentation/widgets/primitives.dart';
 import '../application/position_margin_provider.dart';
 import '../application/position_margin_storage_provider.dart';
 import 'position_margin_screen.dart';
+import '../../../core/presentation/status_view.dart';
 
 class PositionMarginHistoryEntry extends ConsumerWidget {
   const PositionMarginHistoryEntry({super.key});
@@ -41,16 +41,14 @@ class PositionMarginHistory extends ConsumerWidget {
       children: [
         const SizedBox(height: 12),
         Text(l.marginAdjustHistory, style: Theme.of(context).textTheme.titleMedium),
-        if (!storage.ready || storage.failed) ...[
-          Text(l.marginAdjustStorage, style: const TextStyle(color: AppColors.warning)),
-          OutlinedButton(
-            onPressed: state.busy
-                ? null
-                : () => ref.read(positionMarginStorageProvider.notifier).reload(),
-            child: Text(l.marginAdjustReload),
+        if (!storage.ready || storage.failed)
+          StatusFailureView(
+            message: l.marginAdjustStorage,
+            retrying: state.busy,
+            onRetry: () => ref.read(positionMarginStorageProvider.notifier).reload(),
           ),
-        ],
-        if (records.isEmpty && storage.ready && !storage.failed) Text(l.marginAdjustHistoryEmpty),
+        if (records.isEmpty && storage.ready && !storage.failed)
+          StatusEmptyView(message: l.marginAdjustHistoryEmpty),
         for (final record in records.reversed)
           _Record(
             record: record,

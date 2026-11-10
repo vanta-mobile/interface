@@ -8,6 +8,7 @@ import '../domain/trading_event.dart';
 import 'event_document_view.dart';
 import 'points_status.dart';
 import 'trading_event_page.dart';
+import '../../../core/presentation/status_view.dart';
 
 String tradingEventStatus(String status, AppLocalizations l10n) => status == 'OPEN_FOR_REGISTRATION'
     ? l10n.eventRegistrationOpen
@@ -66,7 +67,7 @@ class _TradingEventsPageState extends ConsumerState<TradingEventsPage> {
             onStop: controller.stop,
             sectionKey: 'events',
           ),
-          if (state.snapshot != null && rows.isEmpty) Text(l10n.eventsEmpty),
+          if (state.snapshot != null && rows.isEmpty) StatusEmptyView(message: l10n.eventsEmpty),
           if (state.snapshot != null) Text(l10n.eventsCount(rows.length)),
           for (final event in rows.skip(selected * 20).take(20))
             Padding(

@@ -17,6 +17,9 @@ import 'asset_yield_badge.dart';
 import 'asset_identity.dart';
 import '../application/asset_metadata_provider.dart';
 import '../domain/asset_metadata.dart';
+import '../../../core/presentation/status_view.dart';
+import '../../funding/domain/funding_catalog.dart';
+import '../../funding/presentation/funding_screen.dart';
 
 class AsterAccountRows extends ConsumerStatefulWidget {
   const AsterAccountRows({super.key, required this.account, this.accountStale = false});
@@ -73,12 +76,19 @@ class _AsterAccountRowsState extends ConsumerState<AsterAccountRows> {
           onChanged: (value) => setState(() => hideZero = value ?? true),
         ),
         if (assets.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Text(
-              widget.account.assets.isEmpty ? l10n.accountNoAssets : l10n.accountNoMatchingAssets,
-            ),
-          ),
+          widget.account.assets.isEmpty
+              ? StatusEmptyView(
+                  key: const Key('account-assets-empty'),
+                  title: l10n.statusNoAssetsTitle,
+                  message: l10n.statusNoAssetsMessage,
+                  actionLabel: l10n.fundingDeposit,
+                  onAction: () => openFunding(context, FundingOperation.deposit),
+                )
+              : StatusEmptyView(
+                  key: const Key('account-assets-empty'),
+                  title: l10n.statusNoResultsTitle,
+                  message: l10n.accountNoMatchingAssets,
+                ),
         for (final asset in assets)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),

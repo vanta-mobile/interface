@@ -20,6 +20,7 @@ import '../domain/live_order_attachment.dart';
 import '../domain/live_order_trigger.dart';
 import 'attached_exit_preview.dart';
 import 'strategy_execution_screen.dart';
+import '../../../core/presentation/status_view.dart';
 
 void openOrderRecovery(BuildContext context) =>
     Navigator.of(context)
@@ -49,18 +50,17 @@ class OrderRecoveryScreen extends ConsumerWidget {
                 child: Text(l10n.orderRecoveryConnect),
               ),
             if (!storage.ready || check.busy) const LinearProgressIndicator(),
-            if (storage.failure != null) ...[
-              Text(l10n.orderRecoveryStorage, style: const TextStyle(color: AppColors.negative)),
-              OutlinedButton(
-                key: const Key('order-recovery-reload'),
-                onPressed: ref.read(orderRecoverySnapshotProvider.notifier).retry,
-                child: Text(l10n.orderRecoveryReload),
+            if (storage.failure != null)
+              StatusFailureView(
+                message: l10n.orderRecoveryStorage,
+                retryKey: const Key('order-recovery-reload'),
+                retrying: !storage.ready,
+                onRetry: ref.read(orderRecoverySnapshotProvider.notifier).retry,
               ),
-            ],
-            if (storage.ready && storage.failure == null && records.isEmpty)
-              Text(l10n.orderRecoveryEmpty),
             for (final record in records) _RecoveryCard(record: record),
             if (check.record != null && !check.busy) _RecoveryResult(check: check),
+            if (storage.ready && storage.failure == null && records.isEmpty)
+              StatusEmptyView(message: l10n.orderRecoveryEmpty),
           ],
         ),
       ),

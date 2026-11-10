@@ -1,3 +1,28 @@
+## 2026-11-10 状态组件扩展接入
+
+在上一节公用组件基础上扩展到其他页面。`StatusFailureView` 新增 `retryKey`、`StatusEmptyView` 新增 `actionKey`，接入处保留原有按钮 Key。
+- 空状态（标题用通用或“无结果／暂无资产”，描述保留原具体文案）：通知列表、积分活动列表、积分历史、Futures／Spot 历史、Spot 挂单（有筛选时为无结果）、订单恢复、逐仓保证金调整历史、Spot 资产（无资产／筛选无匹配）、子账户列表与账户管理、资产页持仓与资产。资产页资产为空显示 Deposit，预览模式仍提示静态预览，正式模式走 `openFunding(deposit)`；资产页在账户快照载入前（totalUsd 为空）保留原紧凑文本，避免大插图把下方账户错误／启用交易入口挤出可见区。订单恢复的核查结果移到空状态之前显示。
+- 失败态＋Retry：K 线图加载失败（重新同步并等待行情）、通知合约单位读取失败、订单恢复日志读取失败、逐仓保证金日志读取失败；积分各区块在没有快照且读取失败时显示失败态，Retry 复用原 `points-refresh-*` Key，并在重新读取期间保持失败态与转圈（`PointsStatus` 改为有状态组件）。
+- `AccountReadControls(failureView: true)` 扩展到 Spot 账户、Spot／Futures 历史、Spot 挂单、子账户列表与独立持仓页；用户主动停止的读取（historyReadStopped、strategyExecutionStopped）不显示为加载失败，仍保留读取按钮。ADL 子面板、资产标签内的持仓子列表等嵌套小区块保持原文本。
+- 未接入：资金充提页面（funding_*、deposit／withdraw、rebalance、withdraw_info_panel）由并行会话开发且未提交，未改动；其交易记录已自行使用 `StatusEmptyView`。其他页面的加载指示未改为骨架屏（设计稿只给出了市场列表、盘口和成交的骨架）。
+
+验证：lib 与 test 静态分析无问题，格式化零改动；更新图表失败重试测试为点击 `status-retry`。test/core、portfolio、trade、market、points、notifications、subaccounts、盘口与 widget 测试共 3,954 项，3,952 项通过；失败的 2 项为 `price_precision_widget_test` 中 `trade-pending-buy` 按钮应禁用的断言，对应并行会话尚未提交的 `trade_order_pending.dart` 下单入口门控改动，与本次状态组件无关（/tmp/vanta-status-tests2.log）。Android debug APK 构建成功（/tmp/vanta-status-build2.log）。
+
+## 2026-11-10 加载失败、空状态与骨架屏公用组件
+
+按设计稿 11｜加载失败/空状态/骨架屏（节点 758:29046）新增 `lib/core/presentation/status_view.dart`：`StatusFailureView`（默认“Unable to Load／Something went wrong. Please try again.”＋Retry）、`StatusEmptyView`（默认“No Data Yet／There's nothing to display here right now.”，可选操作按钮）、`StatusActionButton` 与 `SkeletonBox`。布局按稿：80px 插图、间距 16／4、上下 72、文案宽 240、按钮 120×40 圆角 12 描边；可用宽度小于 240（如合约页 147px 盘口列，节点 758:29720）时文案占满列宽、按钮按文字宽度自适应。插图从设计源下载的 1254px 原图缩放为 240px（80 的 3 倍）并转无损 WebP：`assets/feedback/load-failed.webp`、`empty.webp`；Figma 渲染接口只能导出 1x，故未使用其截图。颜色字体收入 `StatusColors`／`StatusTypography`，按钮字体显式指定 Inter，避免 ButtonStyle 文字样式替换主题字体。中英文文案新增 `status*` 键。
+
+Retry 接收返回 Future 的回调：点击后按钮禁用并显示转圈，直到请求结束；失败由所属 provider 状态展示，组件不重复抛错。外部已有请求进行中时可用 `retrying` 保持转圈。
+
+接入范围：
+- 合约页盘口（紧凑列）：无数据时显示设计的两列骨架；行情流出错或断开时显示失败态，消息优先使用 MarketFailure 的接口说明，否则使用已知原因“盘口已断开，正在重连”；Retry 重建共享盘口流并等待第一条事件（与下拉刷新相同）。已有档位时不替换。
+- 图表页盘口与最新成交：分别使用四列／三列骨架，出错时显示失败态；已连接但暂无成交仍视为等待首笔成交，显示骨架。
+- 选择市场：加载骨架改用 `SkeletonBox`（20px 圆、10／8px 条、56 行高，保留与真实行对齐的收藏列）；加载失败使用失败态，Retry 重新请求合约目录并等待报价流首个事件；搜索无结果使用“No results found／Try searching with another term.”，自选为空沿用原标题。
+- 合约页底部 挂单／持仓／资产：首次签名读取失败且没有快照时，`AccountReadControls(failureView: true)` 显示失败态并保留接口错误文本，Retry 执行与读取按钮相同的钱包签名读取，期间隐藏重复的读取按钮、保留签名进度提示；已有快照时仍按原方式保留旧数据并内联显示错误。挂单／持仓为空使用通用空状态标题，描述保留原有具体文案（含当前合约筛选）。资产为空显示“No Assets Yet”及 Deposit，复用资金页 `openFunding(deposit)` 入口；筛选无匹配显示无结果标题和原文案。`AccountReadControls` 的其余 7 处调用默认不变。
+- 未实现：图表页设计中的灰色 K 线占位图，现有图表继续使用原 `ChartLoading` 指示；其他页面的旧空状态文本未统一替换。
+
+验证：新增 `test/core/presentation/status_view_test.dart` 6 项（文案、插图、按钮尺寸、Retry 转圈与防重复、外部 retrying、窄列布局、空状态操作、骨架尺寸）及 `test/features/trade/section_states_widget_test.dart` 2 项（盘口骨架→失败→Retry 转圈→恢复；挂单首次读取失败→原位 Retry 防重复→空状态）。选择市场搜索无结果断言按新文案更新。test/core、portfolio、trade、market、授权页、盘口与 widget 测试共 3,379 项通过（/tmp/vanta-status-tests.log）；改动文件格式化零改动，lib 与 test 静态分析无问题；Android debug APK 构建成功（/tmp/vanta-status-build.log）。另用临时 golden 渲染（加载 Inter 字体，未保留）目视核对失败／空状态宽窄两种布局和骨架，与设计一致；英文描述在 240 宽度下会比设计多折一行。资产空状态的 Deposit 入口复用资金页 `openFunding`（c10926f 已提交）。无真机验收，iOS 因 Linux 环境未构建。
+
 ## 2026-11-10 Portfolio 充值与提现（设计稿 234:13293）
 
 按 Figma「04｜Portfolio｜充值与提现」实现新的 `FundingScreen`（标题 Account，右上资金记录与关闭；Deposit／Withdraw 分段切换），Portfolio 主页及资产详情的充值／提现按钮改为打开该页面。原工程化 `FundingInfoScreen` 仍供 Aster／Spot 账户面板入口使用，未删除。业务全部复用既有 Riverpod 控制器与仓库（钱包快照、Gas、ERC-20 授权、充值提交及回执、提现、Rebalance、资金记录），页面只收集意图；新增 `funding_flow_provider.dart` 编排自动读取与回执轮询，`WithdrawalController.submit` 把“准备 + 签名”合为钱包一步。

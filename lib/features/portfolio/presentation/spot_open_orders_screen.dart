@@ -9,6 +9,7 @@ import 'account_change_panel.dart';
 import 'account_read_controls.dart';
 import 'account_snapshot_status.dart';
 import 'spot_open_order_card.dart';
+import '../../../core/presentation/status_view.dart';
 
 void openSpotOpenOrders(BuildContext context) =>
     Navigator.of(context)
@@ -47,6 +48,7 @@ class SpotOpenOrdersScreen extends ConsumerWidget {
               if (address != null) SelectableText(address),
               const AccountChangePanel(spot: true),
               AccountReadControls(
+                failureView: true,
                 state: state,
                 buttonKey: const Key('read-spot-open-orders'),
                 initialLabel: l10n.spotOpenOrdersRead,
@@ -123,9 +125,10 @@ class _ResultsState extends ConsumerState<_Results> {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         if (orders.isEmpty)
-          Text(
-            filter.isEmpty ? l10n.spotOpenOrdersEmpty : l10n.spotOpenOrdersNoMatch,
+          StatusEmptyView(
             key: const Key('spot-open-orders-empty'),
+            title: filter.isEmpty ? null : l10n.statusNoResultsTitle,
+            message: filter.isEmpty ? l10n.spotOpenOrdersEmpty : l10n.spotOpenOrdersNoMatch,
           ),
         for (final order in orders)
           Padding(

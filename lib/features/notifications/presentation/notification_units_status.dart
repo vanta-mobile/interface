@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../application/notification_provider.dart';
+import '../../../core/presentation/status_view.dart';
 
 class NotificationUnitsStatus extends ConsumerWidget {
   const NotificationUnitsStatus({super.key, this.spot = false});
@@ -15,22 +16,18 @@ class NotificationUnitsStatus extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     if (units.isLoading) return const LinearProgressIndicator();
     if (!units.hasError) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(l10n.notificationUnitFailure),
-        OutlinedButton(
-          key: Key(spot ? 'spot-notification-units-retry' : 'notification-units-retry'),
-          onPressed: () {
-            if (spot) {
-              ref.invalidate(spotNotificationUnitsProvider);
-            } else {
-              ref.invalidate(notificationUnitsProvider);
-            }
-          },
-          child: Text(l10n.retry),
-        ),
-      ],
+    return StatusFailureView(
+      message: l10n.notificationUnitFailure,
+      retryKey: Key(spot ? 'spot-notification-units-retry' : 'notification-units-retry'),
+      onRetry: () async {
+        if (spot) {
+          ref.invalidate(spotNotificationUnitsProvider);
+          await ref.read(spotNotificationUnitsProvider.future);
+        } else {
+          ref.invalidate(notificationUnitsProvider);
+          await ref.read(notificationUnitsProvider.future);
+        }
+      },
     );
   }
 }

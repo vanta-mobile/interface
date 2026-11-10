@@ -15,6 +15,7 @@ import 'account_read_controls.dart';
 import 'account_snapshot_status.dart';
 import 'aster_open_order_card.dart';
 import 'open_orders_event_status.dart';
+import '../../../core/presentation/status_view.dart';
 
 class AsterOpenOrdersPanel extends ConsumerStatefulWidget {
   const AsterOpenOrdersPanel({super.key});
@@ -61,6 +62,7 @@ class _AsterOpenOrdersPanelState extends ConsumerState<AsterOpenOrdersPanel> {
             initialLabel: l10n.openOrdersReadWithWallet,
             refreshLabel: l10n.openOrdersRefreshWithWallet,
             enabled: !cancellation.busy && !cancellation.needsRecheck,
+            failureView: true,
             onRead: () => ref.read(openOrdersReadProvider.notifier).refresh(),
           ),
           const OrderCancellationStatus(),
@@ -97,14 +99,11 @@ class _AsterOpenOrdersPanelState extends ConsumerState<AsterOpenOrdersPanel> {
             ),
             const SizedBox(height: 10),
             if (orders.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Text(
-                  currentSymbolOnly && all.isNotEmpty
-                      ? l10n.openOrdersNoCurrentSymbol
-                      : l10n.openOrdersEmpty,
-                  key: const Key('open-orders-empty'),
-                ),
+              StatusEmptyView(
+                key: const Key('open-orders-empty'),
+                message: currentSymbolOnly && all.isNotEmpty
+                    ? l10n.openOrdersNoCurrentSymbol
+                    : l10n.openOrdersEmpty,
               ),
             for (final order in orders)
               Padding(

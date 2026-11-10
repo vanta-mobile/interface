@@ -12,6 +12,9 @@ import 'portfolio_position_card.dart';
 import 'portfolio_asset_details.dart';
 import 'futures_history_screen.dart';
 import 'position_risk_screen.dart';
+import '../../../core/presentation/status_view.dart';
+import '../../funding/domain/funding_catalog.dart';
+import '../../funding/presentation/funding_screen.dart';
 
 class PortfolioAssetTabs extends StatelessWidget {
   const PortfolioAssetTabs({
@@ -142,8 +145,15 @@ class PortfolioPositionList extends ConsumerWidget {
             ),
           ],
         ),
-        if (positions.isEmpty)
+        // Before the account loads, keep the compact note so the account
+        // feedback below it stays in view.
+        if (positions.isEmpty && overview.totalUsd == null)
           PortfolioEmpty(l.portfolioNoPositions)
+        else if (positions.isEmpty)
+          StatusEmptyView(
+            key: const Key('portfolio-positions-empty'),
+            message: l.portfolioNoPositions,
+          )
         else
           for (final position in positions)
             Padding(
@@ -185,8 +195,24 @@ class PortfolioAssetList extends StatelessWidget {
           onChanged: (v) => onHideSmall(v ?? false),
           title: Text(l.portfolioHideLowBalances, style: PortfolioTypography.caption),
         ),
-        if (assets.isEmpty)
+        if (assets.isEmpty && overview.totalUsd == null)
           PortfolioEmpty(l.portfolioNoAssets)
+        else if (assets.isEmpty)
+          overview.assets.isEmpty
+              ? StatusEmptyView(
+                  key: const Key('portfolio-assets-empty'),
+                  title: l.statusNoAssetsTitle,
+                  message: l.statusNoAssetsMessage,
+                  actionLabel: l.fundingDeposit,
+                  onAction: () => preview
+                      ? portfolioPreviewNotice(context)
+                      : openFunding(context, FundingOperation.deposit),
+                )
+              : StatusEmptyView(
+                  key: const Key('portfolio-assets-empty'),
+                  title: l.statusNoResultsTitle,
+                  message: l.portfolioNoAssets,
+                )
         else
           for (final asset in assets) _AssetRow(asset: asset, hidden: hidden, preview: preview),
       ],

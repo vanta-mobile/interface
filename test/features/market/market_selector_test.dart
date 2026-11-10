@@ -59,7 +59,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('market-search')), '黄金');
       await tester.pumpAndSettle();
-      expect(find.text('没有匹配的合约'), findsOneWidget);
+      expect(find.text('未找到结果'), findsOneWidget);
+      expect(find.text('请尝试其他关键词。'), findsOneWidget);
       await tester.ensureVisible(find.byKey(const Key('market-category-commodities')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('market-category-commodities')));
@@ -218,7 +219,8 @@ void main() {
       expect(find.byKey(const Key('market-BTCUSDT')), findsOneWidget);
       await tester.enterText(find.byKey(const Key('market-search')), 'notlisted');
       await tester.pumpAndSettle();
-      expect(find.text('没有匹配的合约'), findsOneWidget);
+      expect(find.text('未找到结果'), findsOneWidget);
+      expect(find.text('请尝试其他关键词。'), findsOneWidget);
       expect(container.read(symbolProvider), 'BTCUSDT');
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
