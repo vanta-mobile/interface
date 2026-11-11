@@ -15,6 +15,7 @@ import '../../subaccounts/application/account_entries_provider.dart';
 import '../../subaccounts/presentation/account_components.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
 import '../application/funding_catalog_provider.dart';
+import '../application/funding_icon_provider.dart';
 import '../application/funding_fee_provider.dart';
 import '../application/funding_flow_provider.dart';
 import '../application/withdraw_info_provider.dart';
@@ -85,6 +86,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
   Future<void> _refresh(FundingAsset? asset) async {
     final silent = ref.read(fundingSilentReadsProvider);
     await Future.wait([
+      ref.read(fundingIconRefreshProvider)(),
       ref.read(fundingCatalogProvider(_withdrawCatalog).notifier).refresh(),
       if (asset != null) ref.read(fundingFeeProvider(_feeQuery(asset)).notifier).refresh(),
       if (silent || ref.read(withdrawInfoProvider).account != null)
@@ -183,7 +185,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
   Widget _network(AppLocalizations l, FundingChoice choice) => FundingDropdown<int>(
     options: [
       for (final id in choice.chains)
-        FundingOption(id, fundingNetworkName(l, id), fundingNativeSymbol(id)),
+        FundingOption(id, fundingNetworkName(l, id), FundingNetworkIcon(id)),
     ],
     selected: choice.chainId,
     onSelected: (id) {
@@ -194,7 +196,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
       key: const Key('funding-network'),
       label: l.fundingNetworkLabel,
       value: choice.chainId == null ? '—' : fundingNetworkName(l, choice.chainId!),
-      icon: choice.chainId == null ? null : fundingNativeSymbol(choice.chainId!),
+      icon: choice.chainId == null ? null : FundingNetworkIcon(choice.chainId!),
       open: open,
       onTap: toggle,
     ),
@@ -203,7 +205,9 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
   Widget _amount(FundingChoice choice, bool error) {
     final asset = choice.asset;
     return FundingDropdown<String>(
-      options: [for (final a in choice.assets) FundingOption(a.asset, a.asset, a.asset)],
+      options: [
+        for (final a in choice.assets) FundingOption(a.asset, a.asset, FundingAssetIcon(a.asset)),
+      ],
       selected: asset?.asset,
       onSelected: (value) {
         selection.select(asset: value, shownAsset: asset?.asset);

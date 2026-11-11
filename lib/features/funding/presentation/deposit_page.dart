@@ -14,6 +14,7 @@ import '../application/deposit_gas_provider.dart';
 import '../application/deposit_submission_provider.dart';
 import '../application/deposit_wallet_provider.dart';
 import '../application/funding_catalog_provider.dart';
+import '../application/funding_icon_provider.dart';
 import '../application/funding_flow_provider.dart';
 import '../domain/deposit_wallet.dart';
 import '../domain/funding_catalog.dart';
@@ -141,6 +142,7 @@ class _DepositPageState extends ConsumerState<DepositPage> {
 
   Future<void> _refresh(DepositWalletQuery? query) async {
     await Future.wait([
+      ref.read(fundingIconRefreshProvider)(),
       ref.read(fundingCatalogProvider(_depositCatalog).notifier).refresh(),
       if (query != null) ref.read(depositWalletProvider(query).notifier).refresh(),
     ]);
@@ -213,7 +215,7 @@ class _DepositPageState extends ConsumerState<DepositPage> {
       FundingDropdown<int>(
         options: [
           for (final id in choice.chains)
-            FundingOption(id, fundingNetworkName(l, id), fundingNativeSymbol(id)),
+            FundingOption(id, fundingNetworkName(l, id), FundingNetworkIcon(id)),
         ],
         selected: choice.chainId,
         onSelected: (id) {
@@ -224,7 +226,7 @@ class _DepositPageState extends ConsumerState<DepositPage> {
           key: const Key('funding-network'),
           label: l.fundingNetworkLabel,
           value: choice.chainId == null ? '—' : fundingNetworkName(l, choice.chainId!),
-          icon: choice.chainId == null ? null : fundingNativeSymbol(choice.chainId!),
+          icon: choice.chainId == null ? null : FundingNetworkIcon(choice.chainId!),
           open: open,
           onTap: toggle,
         ),
@@ -233,7 +235,9 @@ class _DepositPageState extends ConsumerState<DepositPage> {
   Widget _amount(FundingChoice choice, DepositWalletQuery? query, _DepositModel? model) {
     final asset = choice.asset;
     return FundingDropdown<String>(
-      options: [for (final a in choice.assets) FundingOption(a.asset, a.asset, a.asset)],
+      options: [
+        for (final a in choice.assets) FundingOption(a.asset, a.asset, FundingAssetIcon(a.asset)),
+      ],
       selected: asset?.asset,
       onSelected: (value) {
         selection.select(asset: value, shownAsset: asset?.asset);

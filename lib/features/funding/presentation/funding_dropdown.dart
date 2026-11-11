@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme.dart';
 import '../../portfolio/presentation/portfolio_components.dart';
-import 'funding_components.dart';
 
 /// One selectable row of an in-place funding dropdown.
 class FundingOption<T> {
   const FundingOption(this.value, this.label, this.icon);
   final T value;
-  final String label, icon;
+  final String label;
+  final Widget icon;
 }
 
 /// In-place dropdown below its anchor; tapping outside closes it.
@@ -142,7 +142,7 @@ class _FundingDropdownState<T> extends State<FundingDropdown<T>> {
                         padding: const EdgeInsets.all(8),
                         child: Row(
                           children: [
-                            FundingAssetIcon(option.icon),
+                            option.icon,
                             const SizedBox(width: 8),
                             Expanded(child: Text(option.label, style: AccountTypography.body)),
                             if (option.value == widget.selected)

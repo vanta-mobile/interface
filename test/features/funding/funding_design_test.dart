@@ -159,6 +159,7 @@ void main() {
           await _tap(tester, 'funding-rebalance');
           await _tap(tester, 'funding-rebalance-confirm', settle: false);
       }
+      await h.settleIcons(tester);
       await expectLater(
         find.byKey(fundingCaptureKey),
         matchesGoldenFile('goldens/funding-$name.png'),

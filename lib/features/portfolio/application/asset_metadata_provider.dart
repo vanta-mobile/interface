@@ -8,13 +8,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../market/application/market_providers.dart';
 import '../data/asset_metadata_service.dart';
+import '../data/asset_logo_disk_cache.dart';
 import '../data/asset_metadata_repository.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/asset_metadata.dart';
 
 final assetMetadataClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
+final assetLogoDiskCacheProvider = Provider<AssetLogoDiskCache>(
+  (ref) => AssetLogoDiskCache(now: ref.watch(assetMetadataClockProvider)),
+);
 final assetMetadataServiceProvider = Provider.autoDispose<AssetMetadataService>((ref) {
-  final s = AssetMetadataService(client: ref.watch(backendHttpPoolProvider).lease());
+  final s = AssetMetadataService(
+    client: ref.watch(backendHttpPoolProvider).lease(),
+    diskCache: ref.watch(assetLogoDiskCacheProvider),
+  );
   ref.onDispose(s.close);
   return s;
 });
@@ -51,6 +58,14 @@ class AssetMetadataController extends Notifier<AssetMetadataState> {
   @override
   AssetMetadataState build() {
     ref.watch(assetMetadataRepositoryProvider);
+    // A hidden icon has no expiry UI to update; release its timer as soon as
+    // the last consumer leaves, including the frame before auto-disposal.
+    ref.onCancel(() => _expiry?.cancel());
+    ref.onResume(
+      () => scheduleMicrotask(() {
+        if (ref.mounted) _schedule();
+      }),
+    );
     ref.listen(quoteUpdatesActiveProvider, (_, active) {
       _generation++;
       _expiry?.cancel();

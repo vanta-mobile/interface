@@ -8,6 +8,12 @@ void main() {
   final now = DateTime.utc(2026, 11, 4);
   AssetMetadataSnapshot map(Object? p, [AssetMetadataSource source = AssetMetadataSource.names]) =>
       mapAssetMetadata(p, source: source, receivedAt: now);
+  test('official catalog accepts success code without optional success flag', () {
+    final payload = metadataPayload(AssetMetadataSource.logos)..remove('success');
+    expect(map(payload, AssetMetadataSource.logos).forSymbol('USDT')!.logo, metadataLogo());
+    payload['code'] = 'FAILED';
+    expect(() => map(payload, AssetMetadataSource.logos), throwsFormatException);
+  });
   test('names and official mixed-case logo code map to original account identifiers without guessing aliases', () {
     final names = map(metadataPayload(AssetMetadataSource.names)),
         logos = map(metadataPayload(AssetMetadataSource.logos), AssetMetadataSource.logos);

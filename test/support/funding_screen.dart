@@ -27,6 +27,7 @@ import 'package:vanta/features/funding/presentation/funding_screen.dart';
 import 'package:vanta/features/notifications/application/notification_provider.dart';
 import 'package:vanta/features/notifications/data/local_notification_repository.dart';
 import 'package:vanta/features/portfolio/application/rebalance_provider.dart';
+import 'package:vanta/features/portfolio/application/asset_metadata_provider.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import 'aster_account.dart';
@@ -36,6 +37,7 @@ import 'deposit_submission.dart';
 import 'deposit_wallet.dart';
 import 'funding_fee.dart';
 import 'funding_info.dart';
+import 'funding_icons.dart';
 import 'notifications.dart';
 import 'rebalance.dart';
 import 'trading_agents.dart';
@@ -128,6 +130,7 @@ class FundingHarness {
   }
   final identity = FundingIdentity();
   final catalog = TestFundingCatalogRepository();
+  final icons = FundingIconFixture();
   final wallet = TestDepositWalletRepository();
   final gas = TestDepositGasRepository();
   final approvalReceipts = TestApprovalReceiptRepository();
@@ -162,6 +165,11 @@ class FundingHarness {
           MemoryTradingAgentStorage().store(DateTime.now),
         ),
         fundingCatalogRepositoryProvider.overrideWithValue(catalog),
+        assetMetadataServiceProvider.overrideWith((ref) {
+          final service = icons.service();
+          ref.onDispose(service.close);
+          return service;
+        }),
         depositWalletRepositoryProvider.overrideWithValue(wallet),
         depositGasRepositoryProvider.overrideWithValue(gas),
         depositApprovalReceiptRepositoryProvider.overrideWithValue(approvalReceipts),
@@ -214,6 +222,17 @@ class FundingHarness {
     );
     await tester.tap(find.byKey(const Key('open-funding')));
     await tester.pumpAndSettle();
+    await settleIcons(tester);
+  }
+
+  /// Wait for native image codecs, which run outside the widget fake clock.
+  Future<void> settleIcons(WidgetTester tester) async {
+    final images = tester.widgetList<Image>(find.byType(Image)).toList();
+    final context = tester.element(find.byType(MaterialApp));
+    await tester.runAsync(() async {
+      await Future.wait([for (final image in images) precacheImage(image.image, context)]);
+    });
+    await tester.pump();
   }
 
   /// Disposes the providers so their snapshot expiry timers end with the test.

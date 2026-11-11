@@ -9,19 +9,26 @@ import '../../../core/errors/api_error_parser.dart';
 import '../../market/data/market_http_client.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/asset_metadata.dart';
+import 'asset_logo_disk_cache.dart';
+import 'asset_logo_png.dart';
 
 /// Anonymous catalog and image transport only. No wallet or account data.
 class AssetMetadataService {
-  AssetMetadataService({http.Client? client, this.timeout = const Duration(seconds: 12)})
-    : _client = createMarketHttpClient(client: client, timeout: timeout);
+  AssetMetadataService({
+    http.Client? client,
+    this.timeout = const Duration(seconds: 12),
+    this.diskCache,
+  }) : _client = createMarketHttpClient(client: client, timeout: timeout);
   final http.Client _client;
   final Duration timeout;
+  final AssetLogoDiskCache? diskCache;
   bool _closed = false;
   int _running = 0, _cacheBytes = 0;
   final _waiting = <Completer<void>>[];
   final _aborts = <Completer<void>>{};
   final _cache = <Uri, Uint8List>{};
   final _inflight = <Uri, Future<Uint8List>>{};
+  final _loads = <Uri, Object>{};
 
   Future<Uint8List> _read(http.Request request, int limit, String type) async {
     final abort = Completer<void>();
@@ -122,20 +129,40 @@ class AssetMetadataService {
   }
 
   Future<Uint8List> logo(Uri uri) {
-    if (assetLogoUri(uri.toString()) != uri || _closed) {
+    if (assetLogoUri(uri.toString()) != uri) {
       return Future.error(const AccountReadFailure('accountDataInvalid'));
     }
+    return _logo(uri);
+  }
+
+  /// Orderly's public network icons, keyed by numeric chain ID like Vanta web.
+  Future<Uint8List> networkLogo(int chainId) {
+    if (chainId <= 0 || chainId > 999999999999) {
+      return Future.error(const AccountReadFailure('accountDataInvalid'));
+    }
+    return _logo(Uri.https('oss.orderly.network', '/static/network_logo/$chainId.png'));
+  }
+
+  Future<Uint8List> _logo(Uri uri) {
+    if (_closed) return Future.error(const AccountReadFailure('accountDataInvalid'));
     final cached = _cache.remove(uri);
     if (cached != null) {
       _cache[uri] = cached;
       return Future.value(cached);
     }
-    return _inflight[uri] ??= _loadLogo(uri).whenComplete(() {
-      _inflight.remove(uri);
+    final existing = _inflight[uri];
+    if (existing != null) return existing;
+    final identity = Object();
+    _loads[uri] = identity;
+    return _inflight[uri] = _loadLogo(uri, identity).whenComplete(() {
+      if (identical(_loads[uri], identity)) {
+        _loads.remove(uri);
+        _inflight.remove(uri);
+      }
     });
   }
 
-  Future<Uint8List> _loadLogo(Uri uri) async {
+  Future<Uint8List> _loadLogo(Uri uri, Object identity) async {
     if (_running >= 4) {
       final gate = Completer<void>();
       _waiting.add(gate);
@@ -144,26 +171,17 @@ class AssetMetadataService {
       _running++;
     }
     try {
-      final bytes = await _read(http.Request('GET', uri), 524288, 'image/png');
-      // Bound decoded pixel size as well as compressed bytes, before Flutter's
-      // decoder sees the image. Thumbnails decode at a fixed small target size.
-      final header = ByteData.sublistView(bytes);
-      if (bytes.length < 33 ||
-          bytes[0] != 137 ||
-          ascii.decode(bytes.sublist(1, 4), allowInvalid: true) != 'PNG' ||
-          bytes[4] != 13 ||
-          bytes[5] != 10 ||
-          bytes[6] != 26 ||
-          bytes[7] != 10 ||
-          header.getUint32(8) != 13 ||
-          ascii.decode(bytes.sublist(12, 16), allowInvalid: true) != 'IHDR' ||
-          header.getUint32(16) < 1 ||
-          header.getUint32(20) < 1 ||
-          header.getUint32(16) > 2048 ||
-          header.getUint32(20) > 2048) {
+      if (_closed) throw const AccountReadFailure('accountNetwork');
+      final saved = await diskCache?.read(uri);
+      if (_closed) throw const AccountReadFailure('accountNetwork');
+      final bytes = saved ?? await _read(http.Request('GET', uri), assetLogoMaxBytes, 'image/png');
+      if (!isAssetLogoPng(bytes)) {
         throw const AccountReadFailure('accountDataInvalid');
       }
-      if (!_closed) {
+      if (saved == null && !_closed && identical(_loads[uri], identity)) {
+        await diskCache?.write(uri, bytes);
+      }
+      if (!_closed && identical(_loads[uri], identity)) {
         _cache[uri] = bytes;
         _cacheBytes += bytes.length;
         while (_cache.length > 64 || _cacheBytes > 4194304) {
@@ -181,13 +199,18 @@ class AssetMetadataService {
   }
 
   void evictLogo(Uri uri) {
+    _loads.remove(uri);
+    _inflight.remove(uri);
     final old = _cache.remove(uri);
     if (old != null) _cacheBytes -= old.length;
+    // Enqueued before the next read, so a retry cannot reload the bad file.
+    unawaited(diskCache?.remove(uri));
   }
 
   void close() {
     _closed = true;
     _cache.clear();
+    _loads.clear();
     _cacheBytes = 0;
     for (final abort in _aborts) {
       if (!abort.isCompleted) abort.complete();

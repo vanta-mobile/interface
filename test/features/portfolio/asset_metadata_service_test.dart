@@ -225,6 +225,38 @@ void main() {
     );
     expect(calls, 0);
   });
+  test('network icons use fixed Orderly URLs and share bounded image caching', () async {
+    final requests = <http.Request>[];
+    final s = AssetMetadataService(
+      client: MockClient((request) async {
+        requests.add(request);
+        return http.Response.bytes(metadataPng, 200, headers: pngType);
+      }),
+    );
+    addTearDown(s.close);
+    for (final id in [1, 56, 42161]) {
+      expect(await s.networkLogo(id), metadataPng);
+      expect(await s.networkLogo(id), metadataPng);
+    }
+    expect(requests.length, 3);
+    expect(requests.map((r) => r.url.toString()), [
+      'https://oss.orderly.network/static/network_logo/1.png',
+      'https://oss.orderly.network/static/network_logo/56.png',
+      'https://oss.orderly.network/static/network_logo/42161.png',
+    ]);
+    for (final request in requests) {
+      expect(request.method, 'GET');
+      expect(request.followRedirects, false);
+      expect(request.body, isEmpty);
+      expect(request.headers, isEmpty);
+    }
+    for (final id in [0, -1, 1000000000000]) {
+      await expectLater(s.networkLogo(id), throwsA(isA<AccountReadFailure>()));
+    }
+    // Aster asset catalogs retain their original URL validation.
+    await expectLater(s.logo(requests.first.url), throwsA(isA<AccountReadFailure>()));
+    expect(requests.length, 3);
+  });
   for (final value in [
     metadataImage(0, 1),
     metadataImage(2049, 1),

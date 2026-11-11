@@ -7,7 +7,7 @@ AssetMetadataSnapshot mapAssetMetadata(
 }) {
   if (payload is! Map<String, dynamic> ||
       payload['code'] != '000000' ||
-      payload['success'] != true ||
+      (payload.containsKey('success') && payload['success'] != true) ||
       payload['data'] is! List ||
       (payload['data'] as List).length > 5000) {
     throw const FormatException();

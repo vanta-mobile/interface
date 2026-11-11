@@ -8,6 +8,9 @@ import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../portfolio/presentation/portfolio_components.dart';
 import '../domain/funding_catalog.dart';
+import 'funding_icons.dart';
+
+export 'funding_icons.dart';
 
 String fundingNetworkName(AppLocalizations l, int chainId) => switch (chainId) {
   1 => l.fundingNetworkEthereum,
@@ -85,24 +88,6 @@ class FundingTabs extends StatelessWidget {
   }
 }
 
-class FundingAssetIcon extends StatelessWidget {
-  const FundingAssetIcon(this.symbol, {super.key});
-  final String symbol;
-  @override
-  Widget build(BuildContext context) => switch (symbol) {
-    'BNB' => const PortfolioIcon('funding-bnb.svg', size: 24),
-    'USDT' => Image.asset('assets/portfolio/usdt.webp', width: 24, height: 24),
-    _ => CircleAvatar(
-      radius: 12,
-      backgroundColor: PortfolioColors.button,
-      child: Text(
-        symbol.isEmpty ? '?' : symbol.characters.first,
-        style: FundingTypography.fieldLabel.copyWith(color: PortfolioColors.text),
-      ),
-    ),
-  };
-}
-
 class FundingChevron extends StatelessWidget {
   const FundingChevron({super.key, this.open = false});
   final bool open;
@@ -124,7 +109,7 @@ class FundingField extends StatelessWidget {
     this.open = false,
   });
   final String label, value;
-  final String? icon;
+  final Widget? icon;
   final VoidCallback? onTap;
   final bool open;
   @override
@@ -143,7 +128,7 @@ class FundingField extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
-              if (icon case final symbol?) ...[FundingAssetIcon(symbol), const SizedBox(width: 8)],
+              if (icon case final image?) ...[image, const SizedBox(width: 8)],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

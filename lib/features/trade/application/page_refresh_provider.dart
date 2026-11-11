@@ -5,6 +5,7 @@ import '../../market/application/market_providers.dart';
 import '../../portfolio/application/account_read_provider.dart';
 import '../../portfolio/application/asset_index_provider.dart';
 import '../../portfolio/application/asset_metadata_provider.dart';
+import '../../portfolio/application/asset_metadata_refresh_provider.dart';
 import '../../portfolio/application/asset_yield_provider.dart';
 import '../../portfolio/application/open_orders_provider.dart';
 import '../../portfolio/application/live_order_provider.dart';
@@ -23,6 +24,7 @@ class PageRefreshController {
   final _market = RefreshBatch(), _futures = RefreshBatch(), _portfolio = RefreshBatch();
 
   Future<void> markets() => _market.run([
+    () => ref.read(assetMetadataRefreshProvider)(),
     () async {
       if (ref.read(instrumentsProvider).value == null) {
         ref.invalidate(instrumentsProvider);
@@ -35,6 +37,7 @@ class PageRefreshController {
   ]);
 
   Future<void> futures() => _futures.run([
+    () => ref.read(assetMetadataRefreshProvider)(),
     () async {
       if (ref.read(instrumentsProvider).value == null) {
         ref.invalidate(instrumentsProvider);
