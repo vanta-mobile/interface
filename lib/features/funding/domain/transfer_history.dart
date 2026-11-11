@@ -32,7 +32,6 @@ class TransferRecord {
   final int chainId;
   final String? txHash;
   String get key => jsonEncode([market.name, type.name, id]);
-  String get stateKey => jsonEncode([market.name, type.name, id, status.name]);
 }
 
 class TransferHistory implements WalletAccountSnapshot {

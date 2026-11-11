@@ -1170,20 +1170,16 @@
   "orderRecoveryVerified": "Original reference and terms checked. Execution and account state remain limited to what the query reports.",
   "orderRecoveryActiveOperation": "An operation in this session is still active or unresolved. Use its original page to recheck.",
   "notificationTitle": "Notifications",
-  "notificationScope": "Spot and perpetual events for the selected wallet. Enable live monitors explicitly below; deposit / withdrawal status changes are recorded when you sign to refresh their records. No demo activity is included.",
-  "notificationRetention": "Stored on this device: up to 500 recent events across wallets, subject to a 4 MiB limit. Older events may be removed. This is not a complete account history.",
-  "notificationDelivery": "Live events require connected authorized monitoring. Transfer history requires explicit signed refreshes. Background pauses, expiry and disconnections can leave gaps; no system push or complete missed-event backfill is provided.",
   "notificationEmpty": "No recorded notifications for this wallet. An empty inbox does not prove there were no account events.",
   "notificationSignIn": "Sign in to view this wallet’s notifications.",
   "notificationStorageFailed": "Local notifications could not be loaded or saved. Visible changes remain in memory; retry to restore persistence. Existing stored data is not cleared.",
   "notificationRetry": "Retry local storage",
   "notificationMarkAllRead": "Mark all as read",
   "notificationUnread": "Unread",
-  "notificationRead": "Read",
-  "notificationCritical": "Critical risk",
-  "notificationMarginTitle": "Position margin risk",
-  "notificationLiquidationTitle": "Liquidation order update",
-  "notificationAdlTitle": "ADL order update",
+  "notificationCritical": "Critical",
+  "notificationMarginTitle": "Margin Call",
+  "notificationLiquidationTitle": "Liquidation Order Update",
+  "notificationAdlTitle": "ADL Order Update",
   "notificationRiskScope": "This event does not prove the whole position was closed. Review actual fills and read remaining positions separately. Risk warnings may arrive during or after liquidation.",
   "notificationMarginScope": "All risk positions reported in this event are listed below. The event supplies no risk percentage, liquidation price or countdown. Delivery before liquidation is not guaranteed.",
   "notificationEventTime": "Event time (UTC)",
@@ -1198,7 +1194,7 @@
   "notificationMaintenanceMargin": "Maintenance margin required",
   "notificationYes": "Yes",
   "notificationNo": "No",
-  "notificationOrderTitle": "{status, select, NEW{Perpetual order created} PARTIALLY_FILLED{Perpetual order partially filled} FILLED{Perpetual order filled} CANCELED{Perpetual order canceled} EXPIRED{Perpetual order expired} REJECTED{Perpetual order rejected} other{Perpetual order updated}}",
+  "notificationOrderTitle": "{status, select, NEW{Perp Order · New} PARTIALLY_FILLED{Perp Order · Partially Filled} FILLED{Perp Order · Filled} CANCELED{Perp Order · Canceled} EXPIRED{Perp Order · Expired} REJECTED{Perp Order · Rejected} other{Perp Order · Updated}}",
   "@notificationOrderTitle": {
     "placeholders": {
       "status": {
@@ -1240,7 +1236,7 @@
   "spotNotificationCumulativeQuote": "Cumulative filled quote amount",
   "spotNotificationQuoteOrderQuantity": "Requested quote-asset budget",
   "spotNotificationCreationTime": "Order created (UTC)",
-  "spotNotificationOrderTitle": "{status, select, NEW{Spot order created} PARTIALLY_FILLED{Spot order partially filled} FILLED{Spot order filled} CANCELED{Spot order canceled} EXPIRED{Spot order expired} REJECTED{Spot order rejected} other{Spot order updated}}",
+  "spotNotificationOrderTitle": "{status, select, NEW{Spot Order · New} PARTIALLY_FILLED{Spot Order · Partially Filled} FILLED{Spot Order · Filled} CANCELED{Spot Order · Canceled} EXPIRED{Spot Order · Expired} REJECTED{Spot Order · Rejected} other{Spot Order · Updated}}",
   "@spotNotificationOrderTitle": {
     "placeholders": {
       "status": {
@@ -3014,5 +3010,28 @@
       }
     }
   },
-  "tradeExitRoi": "ROI (%)"
+  "tradeExitRoi": "ROI (%)",
+  "notificationFilterAll": "All",
+  "notificationFilterTransfers": "Transfers",
+  "notificationFilterOrders": "Orders",
+  "notificationUnreadOnly": "Unread only",
+  "notificationToday": "Today",
+  "notificationPerp": "Perp",
+  "notificationAdlChip": "ADL",
+  "notificationUnreadCount": "{count} unread",
+  "@notificationUnreadCount": {"placeholders": {"count": {"type": "int"}}},
+  "notificationOrderSide": "{side, select, BUY{buy order} SELL{sell order} other{order}}",
+  "@notificationOrderSide": {"placeholders": {"side": {"type": "String"}}},
+  "notificationOrderSummary": "{status, select, NEW{{symbol} {side} created, awaiting fill.} PARTIALLY_FILLED{{symbol} {side} filled {last} this time; {progress} filled in total.} FILLED{{symbol} {side} fully filled at an average price of {average}.} CANCELED{{symbol} {side} canceled; fills before cancellation remain in history.} EXPIRED{{symbol} {side} expired; the unfilled part will no longer execute.} REJECTED{{symbol} {side} was rejected. Check your order records.} other{{symbol} {side} updated. See details.}}",
+  "@notificationOrderSummary": {"placeholders": {"status": {"type": "String"}, "symbol": {"type": "String"}, "side": {"type": "String"}, "last": {"type": "String"}, "progress": {"type": "String"}, "average": {"type": "String"}}},
+  "notificationLiquidationSummary": "{symbol} liquidation order updated. See details for the filled quantity.",
+  "@notificationLiquidationSummary": {"placeholders": {"symbol": {"type": "String"}}},
+  "notificationAdlSummary": "{symbol} ADL order has a new execution. Review your positions and fills.",
+  "@notificationAdlSummary": {"placeholders": {"symbol": {"type": "String"}}},
+  "notificationMarginSummary": "{symbols} position risk is high. Check your margin and positions promptly.",
+  "@notificationMarginSummary": {"placeholders": {"symbols": {"type": "String"}}},
+  "notificationTransferSummary": "{kind, select, deposit_processing{{amount} deposit to the {market} account is processing. Network: {network}.} deposit_success{{amount} deposited to the {market} account. Network: {network}.} deposit_failed{Your {amount} deposit failed. See details.} withdraw_processing{{amount} withdrawal is processing. Check progress in funding records.} withdraw_success{{amount} withdrawn from the {market} account. Network: {network}.} withdraw_failed{Your {amount} withdrawal failed. See details.} other{{amount} transfer updated.}}",
+  "@notificationTransferSummary": {"placeholders": {"kind": {"type": "String"}, "amount": {"type": "String"}, "market": {"type": "String"}, "network": {"type": "String"}}},
+  "notificationTransferTitle": "{type, select, deposit{{status, select, processing{Deposit Processing} success{Deposit Successful} failed{Deposit Failed} other{Deposit Update}}} withdraw{{status, select, processing{Withdrawal Processing} success{Withdrawal Successful} failed{Withdrawal Failed} other{Withdrawal Update}}} other{Transfer Update}}",
+  "@notificationTransferTitle": {"placeholders": {"type": {"type": "String"}, "status": {"type": "String"}}}
 }

@@ -4,6 +4,7 @@ import 'package:vanta/features/notifications/application/notification_provider.d
 import 'package:vanta/features/notifications/data/local_notification_repository.dart';
 import 'package:vanta/features/notifications/presentation/notification_details.dart';
 import 'package:vanta/features/notifications/presentation/notification_screen.dart';
+import 'package:vanta/features/portfolio/application/account_change_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_change_stream.dart';
 import 'package:vanta/features/notifications/domain/account_notification.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
@@ -56,11 +57,9 @@ void main() {
         await tester.tap(find.byKey(const Key('notifications-entry')));
         await tester.pumpAndSettle();
         final l10n = AppLocalizations.of(tester.element(find.byType(NotificationScreen)));
-        expect(find.text(l10n.notificationScope), findsOneWidget);
-        expect(find.text(l10n.notificationDelivery), findsOneWidget);
         final card = find.byKey(ValueKey('notification-${repository.snapshot.entries.single.key}'));
         await show(tester, card, 'notification-list');
-        expect(find.text(l10n.notificationUnread), findsOneWidget);
+        expect(find.byKey(const Key('notification-unread-dot')), findsOneWidget);
         await tester.tap(card.hitTestable());
         await tester.pumpAndSettle();
         expect(container.read(unreadNotificationsProvider), 0);
@@ -87,7 +86,7 @@ void main() {
         Navigator.of(tester.element(find.byType(NotificationDetails))).pop();
         await tester.pumpAndSettle();
         await show(tester, card, 'notification-list');
-        expect(find.text(l10n.notificationRead), findsOneWidget);
+        expect(find.byKey(const Key('notification-unread-dot')), findsNothing);
         expect(changes.authorizations, 0);
         await tester.pumpWidget(const SizedBox());
         container.dispose();
@@ -212,7 +211,7 @@ void main() {
       container.dispose();
     },
   );
-  testWidgets('explicit monitoring controls feed the inbox; logout hides cached events', (
+  testWidgets('explicitly authorized monitoring feeds the inbox; logout hides cached events', (
     tester,
   ) async {
     final identity = TestIdentityRepository()..restored = signingIdentity;
@@ -229,12 +228,8 @@ void main() {
     await tester.tap(find.byKey(const Key('notifications-entry')));
     await tester.pumpAndSettle();
     final l10n = AppLocalizations.of(tester.element(find.byType(NotificationScreen)));
-    await tester.tap(find.byKey(const Key('account-change-panel')));
-    await tester.pumpAndSettle();
-    final authorize = find.byKey(const Key('authorize-account-changes'));
-    await show(tester, authorize, 'notification-list');
     expect(changes.authorizations, 0);
-    await tester.tap(authorize.hitTestable());
+    await container.read(accountChangeProvider.notifier).authorize();
     await tester.pumpAndSettle();
     expect(changes.authorizations, 1);
     final event = notificationOrder();

@@ -26,7 +26,7 @@ List<InboxEntry> decodeNotifications(String? source) {
   }
   final records = raw['entries'] as List;
   if (records.length > notificationLimit) throw const FormatException();
-  final result = <InboxEntry>[], seen = <String>{};
+  final result = <String, InboxEntry>{};
   for (final record in records) {
     if (record is! Map<String, dynamic> ||
         record.length != 3 ||
@@ -50,10 +50,17 @@ List<InboxEntry> decodeNotifications(String? source) {
       event: event,
       read: record['read'] as bool,
     );
-    if (!seen.add(entry.key)) throw const FormatException();
-    result.add(entry);
+    final previous = result[entry.key];
+    if (previous == null) {
+      result[entry.key] = entry;
+    } else if (event is! TransferNotification) {
+      throw const FormatException();
+    } else if (event.eventTime.isAfter(previous.event.eventTime)) {
+      // Earlier stores kept one entry per transfer status; keep the latest.
+      result[entry.key] = entry;
+    }
   }
-  return result;
+  return result.values.toList();
 }
 
 bool _sameFields(Object? actual, Object? expected) {

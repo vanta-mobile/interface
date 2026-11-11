@@ -64,7 +64,7 @@ void main() {
         await tester.tap(card.hitTestable());
         await tester.pumpAndSettle();
         final l10n = AppLocalizations.of(tester.element(find.byType(NotificationDetails)));
-        expect(find.text(l10n.transferTitle('deposit', 'success')), findsOneWidget);
+        expect(find.text(l10n.notificationTransferTitle('deposit', 'success')), findsOneWidget);
         expect(find.text(l10n.transferObservedTime), findsOneWidget);
         expect(find.text(l10n.notificationUnits), findsNothing);
         expect(find.text(l10n.openOrdersLongSide), findsNothing);

@@ -2522,15 +2522,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notificationTitle => '通知中心';
 
   @override
-  String get notificationScope => '当前钱包的现货及合约事件。请在下方显式开启实时监听；充提状态变化在签名刷新记录时收集。不包含本地演示活动。';
-
-  @override
-  String get notificationRetention => '仅保存在本机：所有钱包合计最多 500 条近期事件，上限 4 MiB，较早事件可能移除。这不是完整账户历史。';
-
-  @override
-  String get notificationDelivery => '实时事件需要已授权的监听连接，充提记录需要手动签名刷新。后台暂停、到期及断线可能造成缺口；不提供系统推送或完整漏报补录。';
-
-  @override
   String get notificationEmpty => '当前钱包暂无已记录通知。列表为空不代表账户未发生事件。';
 
   @override
@@ -2549,13 +2540,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notificationUnread => '未读';
 
   @override
-  String get notificationRead => '已读';
+  String get notificationCritical => '高风险';
 
   @override
-  String get notificationCritical => '严重风险';
-
-  @override
-  String get notificationMarginTitle => '仓位保证金风险提醒';
+  String get notificationMarginTitle => '仓位风险提醒';
 
   @override
   String get notificationLiquidationTitle => '强平订单更新';
@@ -6448,4 +6436,108 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tradeExitRoi => '收益率（%）';
+
+  @override
+  String get notificationFilterAll => '全部';
+
+  @override
+  String get notificationFilterTransfers => '充提';
+
+  @override
+  String get notificationFilterOrders => '订单';
+
+  @override
+  String get notificationUnreadOnly => '仅看未读';
+
+  @override
+  String get notificationToday => '今天';
+
+  @override
+  String get notificationPerp => '合约';
+
+  @override
+  String get notificationAdlChip => 'ADL';
+
+  @override
+  String notificationUnreadCount(int count) {
+    return '$count 条未读';
+  }
+
+  @override
+  String notificationOrderSide(String side) {
+    String _temp0 = intl.Intl.selectLogic(side, {'BUY': '买单', 'SELL': '卖单', 'other': '订单'});
+    return '$_temp0';
+  }
+
+  @override
+  String notificationOrderSummary(
+    String status,
+    String symbol,
+    String side,
+    String last,
+    String progress,
+    String average,
+  ) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'NEW': '$symbol $side已创建，等待成交。',
+      'PARTIALLY_FILLED': '$symbol $side本次成交 $last，累计成交 $progress。',
+      'FILLED': '$symbol $side已全部成交，成交均价为 $average。',
+      'CANCELED': '$symbol $side已取消；取消前成交数量仍保留在历史记录。',
+      'EXPIRED': '$symbol $side已过期，未成交部分不再等待执行。',
+      'REJECTED': '$symbol $side被拒绝，请查看订单记录。',
+      'other': '$symbol $side有新的更新，请查看详情。',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String notificationLiquidationSummary(String symbol) {
+    return '$symbol 强平订单发生更新，具体已成交数量请查看详情。';
+  }
+
+  @override
+  String notificationAdlSummary(String symbol) {
+    return '$symbol 自动减仓订单有新的执行记录，请查看仓位及成交结果。';
+  }
+
+  @override
+  String notificationMarginSummary(String symbols) {
+    return '$symbols 仓位风险过高，请及时检查保证金和仓位。';
+  }
+
+  @override
+  String notificationTransferSummary(String kind, String amount, String market, String network) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'deposit_processing': '$amount 充值处理中，网络：$network。',
+      'deposit_success': '$amount 已充值至 $market 账户，网络：$network。',
+      'deposit_failed': '你的 $amount 充值记录状态为失败，请查看详情。',
+      'withdraw_processing': '$amount 提现申请处理中，可前往资金记录查看进度。',
+      'withdraw_success': '$amount 已从 $market 账户提现，网络：$network。',
+      'withdraw_failed': '你的 $amount 提现记录状态为失败，请查看详情。',
+      'other': '$amount 充提记录有更新。',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String notificationTransferTitle(String type, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'processing': '充值处理中',
+      'success': '充值成功',
+      'failed': '充值失败',
+      'other': '充值更新',
+    });
+    String _temp1 = intl.Intl.selectLogic(status, {
+      'processing': '提现处理中',
+      'success': '提现成功',
+      'failed': '提现失败',
+      'other': '提现更新',
+    });
+    String _temp2 = intl.Intl.selectLogic(type, {
+      'deposit': '$_temp0',
+      'withdraw': '$_temp1',
+      'other': '充提更新',
+    });
+    return '$_temp2';
+  }
 }

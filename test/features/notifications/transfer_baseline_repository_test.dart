@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/funding/domain/transfer_history.dart';
 import 'package:vanta/features/notifications/data/local_notification_repository.dart';
 import 'package:vanta/features/notifications/data/notification_codec.dart';
 import 'package:vanta/features/notifications/data/notification_store_codec.dart';
@@ -107,10 +108,10 @@ void main() {
         isCurrent: () => true,
       );
     }
-    expect(
-      repository.snapshot.entries.length,
-      2,
-    ); // Baseline SUCCESS stays silent, other states once.
+    // Baseline SUCCESS stays silent; each new state refreshes the one transfer entry.
+    final entry = repository.snapshot.entries.single;
+    expect((entry.event as TransferNotification).record.status, TransferStatus.failed);
+    expect(entry.read, false);
     expect(
       decodeNotificationStore(storage.value).baselines[accountAddress]!.values.single.states.length,
       3,

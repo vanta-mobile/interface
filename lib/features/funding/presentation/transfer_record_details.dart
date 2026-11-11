@@ -14,9 +14,6 @@ String transferNetworkLabel(AppLocalizations l10n, int chainId) => switch (chain
   _ => l10n.transferUnknownNetwork(chainId.toString()),
 };
 
-String transferTitle(AppLocalizations l10n, TransferRecord record) =>
-    l10n.transferTitle(record.type.name, record.status.name);
-
 class TransferRecordDetails extends StatelessWidget {
   const TransferRecordDetails(this.record, {super.key});
   final TransferRecord record;

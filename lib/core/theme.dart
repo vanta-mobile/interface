@@ -306,3 +306,65 @@ abstract final class StatusTypography {
     color: StatusColors.title,
   );
 }
+
+/// Notification center tokens from the supplied mobile frames.
+abstract final class NotificationColors {
+  static const background = PortfolioColors.background;
+  static const unread = PortfolioColors.card;
+  static const divider = PortfolioColors.line;
+  static const title = PortfolioColors.secondary;
+  static const body = PortfolioColors.secondary;
+  static const time = Color(0xFF7B8185);
+  static const muted = PortfolioColors.muted;
+  static const accent = PortfolioColors.accent;
+  static const neutralSurface = PortfolioColors.card;
+  static const neutral = PortfolioColors.secondary;
+  static const positiveSurface = PortfolioColors.onAccent;
+  static const positive = PortfolioColors.positive;
+  static const warningSurface = Color(0xFF472909);
+  static const warning = Color(0xFFE9A83C);
+  static const negativeSurface = PortfolioColors.negativeSurface;
+  static const negative = PortfolioColors.negative;
+}
+
+abstract final class NotificationTypography {
+  static const heading = PortfolioTypography.heading;
+  static const action = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w500,
+    color: NotificationColors.accent,
+  );
+  static const tab = TextStyle(fontSize: 12, height: 18 / 12, fontWeight: FontWeight.w700);
+  static const filter = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w500,
+    color: NotificationColors.title,
+  );
+  static const group = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w500,
+    color: NotificationColors.muted,
+  );
+  static const title = TextStyle(
+    fontSize: 11,
+    height: 16 / 11,
+    fontWeight: FontWeight.w700,
+    color: NotificationColors.title,
+  );
+  static const time = TextStyle(
+    fontSize: 10,
+    height: 16 / 10,
+    fontWeight: FontWeight.w500,
+    color: NotificationColors.time,
+  );
+  static const body = TextStyle(
+    fontSize: 10,
+    height: 16 / 10,
+    fontWeight: FontWeight.w500,
+    color: NotificationColors.body,
+  );
+  static const chip = TextStyle(fontSize: 11, height: 16 / 11, fontWeight: FontWeight.w700);
+}

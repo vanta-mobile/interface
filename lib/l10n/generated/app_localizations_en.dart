@@ -2688,18 +2688,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationTitle => 'Notifications';
 
   @override
-  String get notificationScope =>
-      'Spot and perpetual events for the selected wallet. Enable live monitors explicitly below; deposit / withdrawal status changes are recorded when you sign to refresh their records. No demo activity is included.';
-
-  @override
-  String get notificationRetention =>
-      'Stored on this device: up to 500 recent events across wallets, subject to a 4 MiB limit. Older events may be removed. This is not a complete account history.';
-
-  @override
-  String get notificationDelivery =>
-      'Live events require connected authorized monitoring. Transfer history requires explicit signed refreshes. Background pauses, expiry and disconnections can leave gaps; no system push or complete missed-event backfill is provided.';
-
-  @override
   String get notificationEmpty =>
       'No recorded notifications for this wallet. An empty inbox does not prove there were no account events.';
 
@@ -2720,19 +2708,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationUnread => 'Unread';
 
   @override
-  String get notificationRead => 'Read';
+  String get notificationCritical => 'Critical';
 
   @override
-  String get notificationCritical => 'Critical risk';
+  String get notificationMarginTitle => 'Margin Call';
 
   @override
-  String get notificationMarginTitle => 'Position margin risk';
+  String get notificationLiquidationTitle => 'Liquidation Order Update';
 
   @override
-  String get notificationLiquidationTitle => 'Liquidation order update';
-
-  @override
-  String get notificationAdlTitle => 'ADL order update';
+  String get notificationAdlTitle => 'ADL Order Update';
 
   @override
   String get notificationRiskScope =>
@@ -2782,13 +2767,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String notificationOrderTitle(String status) {
     String _temp0 = intl.Intl.selectLogic(status, {
-      'NEW': 'Perpetual order created',
-      'PARTIALLY_FILLED': 'Perpetual order partially filled',
-      'FILLED': 'Perpetual order filled',
-      'CANCELED': 'Perpetual order canceled',
-      'EXPIRED': 'Perpetual order expired',
-      'REJECTED': 'Perpetual order rejected',
-      'other': 'Perpetual order updated',
+      'NEW': 'Perp Order · New',
+      'PARTIALLY_FILLED': 'Perp Order · Partially Filled',
+      'FILLED': 'Perp Order · Filled',
+      'CANCELED': 'Perp Order · Canceled',
+      'EXPIRED': 'Perp Order · Expired',
+      'REJECTED': 'Perp Order · Rejected',
+      'other': 'Perp Order · Updated',
     });
     return '$_temp0';
   }
@@ -2875,13 +2860,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String spotNotificationOrderTitle(String status) {
     String _temp0 = intl.Intl.selectLogic(status, {
-      'NEW': 'Spot order created',
-      'PARTIALLY_FILLED': 'Spot order partially filled',
-      'FILLED': 'Spot order filled',
-      'CANCELED': 'Spot order canceled',
-      'EXPIRED': 'Spot order expired',
-      'REJECTED': 'Spot order rejected',
-      'other': 'Spot order updated',
+      'NEW': 'Spot Order · New',
+      'PARTIALLY_FILLED': 'Spot Order · Partially Filled',
+      'FILLED': 'Spot Order · Filled',
+      'CANCELED': 'Spot Order · Canceled',
+      'EXPIRED': 'Spot Order · Expired',
+      'REJECTED': 'Spot Order · Rejected',
+      'other': 'Spot Order · Updated',
     });
     return '$_temp0';
   }
@@ -6923,4 +6908,113 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tradeExitRoi => 'ROI (%)';
+
+  @override
+  String get notificationFilterAll => 'All';
+
+  @override
+  String get notificationFilterTransfers => 'Transfers';
+
+  @override
+  String get notificationFilterOrders => 'Orders';
+
+  @override
+  String get notificationUnreadOnly => 'Unread only';
+
+  @override
+  String get notificationToday => 'Today';
+
+  @override
+  String get notificationPerp => 'Perp';
+
+  @override
+  String get notificationAdlChip => 'ADL';
+
+  @override
+  String notificationUnreadCount(int count) {
+    return '$count unread';
+  }
+
+  @override
+  String notificationOrderSide(String side) {
+    String _temp0 = intl.Intl.selectLogic(side, {
+      'BUY': 'buy order',
+      'SELL': 'sell order',
+      'other': 'order',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String notificationOrderSummary(
+    String status,
+    String symbol,
+    String side,
+    String last,
+    String progress,
+    String average,
+  ) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'NEW': '$symbol $side created, awaiting fill.',
+      'PARTIALLY_FILLED': '$symbol $side filled $last this time; $progress filled in total.',
+      'FILLED': '$symbol $side fully filled at an average price of $average.',
+      'CANCELED': '$symbol $side canceled; fills before cancellation remain in history.',
+      'EXPIRED': '$symbol $side expired; the unfilled part will no longer execute.',
+      'REJECTED': '$symbol $side was rejected. Check your order records.',
+      'other': '$symbol $side updated. See details.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String notificationLiquidationSummary(String symbol) {
+    return '$symbol liquidation order updated. See details for the filled quantity.';
+  }
+
+  @override
+  String notificationAdlSummary(String symbol) {
+    return '$symbol ADL order has a new execution. Review your positions and fills.';
+  }
+
+  @override
+  String notificationMarginSummary(String symbols) {
+    return '$symbols position risk is high. Check your margin and positions promptly.';
+  }
+
+  @override
+  String notificationTransferSummary(String kind, String amount, String market, String network) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'deposit_processing':
+          '$amount deposit to the $market account is processing. Network: $network.',
+      'deposit_success': '$amount deposited to the $market account. Network: $network.',
+      'deposit_failed': 'Your $amount deposit failed. See details.',
+      'withdraw_processing': '$amount withdrawal is processing. Check progress in funding records.',
+      'withdraw_success': '$amount withdrawn from the $market account. Network: $network.',
+      'withdraw_failed': 'Your $amount withdrawal failed. See details.',
+      'other': '$amount transfer updated.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String notificationTransferTitle(String type, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'processing': 'Deposit Processing',
+      'success': 'Deposit Successful',
+      'failed': 'Deposit Failed',
+      'other': 'Deposit Update',
+    });
+    String _temp1 = intl.Intl.selectLogic(status, {
+      'processing': 'Withdrawal Processing',
+      'success': 'Withdrawal Successful',
+      'failed': 'Withdrawal Failed',
+      'other': 'Withdrawal Update',
+    });
+    String _temp2 = intl.Intl.selectLogic(type, {
+      'deposit': '$_temp0',
+      'withdraw': '$_temp1',
+      'other': 'Transfer Update',
+    });
+    return '$_temp2';
+  }
 }

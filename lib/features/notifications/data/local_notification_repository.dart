@@ -113,8 +113,9 @@ class LocalNotificationRepository implements NotificationRepository {
       }
       _baselines = baselines;
       final merged = {for (final entry in _snapshot.entries) entry.key: entry};
+      // A new transfer status refreshes that transfer's entry and marks it unread.
       for (final entry in events) {
-        merged.putIfAbsent(entry.key, () => entry);
+        merged[entry.key] = entry;
       }
       _publish(_trim(merged.values), loaded: true, failed: _snapshot.storageFailed);
       await _save();

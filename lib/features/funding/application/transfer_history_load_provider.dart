@@ -13,6 +13,8 @@ import 'transfer_history_provider.dart';
 final transferHistoryLoadProvider = Provider.autoDispose<void>((ref) {
   final auth = ref.watch(authProvider);
   final agent = ref.watch(tradingAgentProvider).asData?.value;
+  // Balance updates only mark transfer status stale; re-read while a consumer is open.
+  ref.watch(transferHistoryProvider.select((s) => s.stale));
   if (auth.busy || auth.needsWalletConnection || agent?.status != TradingAgentStatus.active) return;
   final identity = auth.identity!;
   scheduleMicrotask(() {

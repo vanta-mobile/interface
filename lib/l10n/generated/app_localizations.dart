@@ -4887,24 +4887,6 @@ abstract class AppLocalizations {
   /// **'Notifications'**
   String get notificationTitle;
 
-  /// No description provided for @notificationScope.
-  ///
-  /// In en, this message translates to:
-  /// **'Spot and perpetual events for the selected wallet. Enable live monitors explicitly below; deposit / withdrawal status changes are recorded when you sign to refresh their records. No demo activity is included.'**
-  String get notificationScope;
-
-  /// No description provided for @notificationRetention.
-  ///
-  /// In en, this message translates to:
-  /// **'Stored on this device: up to 500 recent events across wallets, subject to a 4 MiB limit. Older events may be removed. This is not a complete account history.'**
-  String get notificationRetention;
-
-  /// No description provided for @notificationDelivery.
-  ///
-  /// In en, this message translates to:
-  /// **'Live events require connected authorized monitoring. Transfer history requires explicit signed refreshes. Background pauses, expiry and disconnections can leave gaps; no system push or complete missed-event backfill is provided.'**
-  String get notificationDelivery;
-
   /// No description provided for @notificationEmpty.
   ///
   /// In en, this message translates to:
@@ -4941,34 +4923,28 @@ abstract class AppLocalizations {
   /// **'Unread'**
   String get notificationUnread;
 
-  /// No description provided for @notificationRead.
-  ///
-  /// In en, this message translates to:
-  /// **'Read'**
-  String get notificationRead;
-
   /// No description provided for @notificationCritical.
   ///
   /// In en, this message translates to:
-  /// **'Critical risk'**
+  /// **'Critical'**
   String get notificationCritical;
 
   /// No description provided for @notificationMarginTitle.
   ///
   /// In en, this message translates to:
-  /// **'Position margin risk'**
+  /// **'Margin Call'**
   String get notificationMarginTitle;
 
   /// No description provided for @notificationLiquidationTitle.
   ///
   /// In en, this message translates to:
-  /// **'Liquidation order update'**
+  /// **'Liquidation Order Update'**
   String get notificationLiquidationTitle;
 
   /// No description provided for @notificationAdlTitle.
   ///
   /// In en, this message translates to:
-  /// **'ADL order update'**
+  /// **'ADL Order Update'**
   String get notificationAdlTitle;
 
   /// No description provided for @notificationRiskScope.
@@ -5058,7 +5034,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationOrderTitle.
   ///
   /// In en, this message translates to:
-  /// **'{status, select, NEW{Perpetual order created} PARTIALLY_FILLED{Perpetual order partially filled} FILLED{Perpetual order filled} CANCELED{Perpetual order canceled} EXPIRED{Perpetual order expired} REJECTED{Perpetual order rejected} other{Perpetual order updated}}'**
+  /// **'{status, select, NEW{Perp Order · New} PARTIALLY_FILLED{Perp Order · Partially Filled} FILLED{Perp Order · Filled} CANCELED{Perp Order · Canceled} EXPIRED{Perp Order · Expired} REJECTED{Perp Order · Rejected} other{Perp Order · Updated}}'**
   String notificationOrderTitle(String status);
 
   /// No description provided for @notificationStatus.
@@ -5142,7 +5118,7 @@ abstract class AppLocalizations {
   /// No description provided for @spotNotificationOrderTitle.
   ///
   /// In en, this message translates to:
-  /// **'{status, select, NEW{Spot order created} PARTIALLY_FILLED{Spot order partially filled} FILLED{Spot order filled} CANCELED{Spot order canceled} EXPIRED{Spot order expired} REJECTED{Spot order rejected} other{Spot order updated}}'**
+  /// **'{status, select, NEW{Spot Order · New} PARTIALLY_FILLED{Spot Order · Partially Filled} FILLED{Spot Order · Filled} CANCELED{Spot Order · Canceled} EXPIRED{Spot Order · Expired} REJECTED{Spot Order · Rejected} other{Spot Order · Updated}}'**
   String spotNotificationOrderTitle(String status);
 
   /// No description provided for @transferHistoryTitle.
@@ -12128,6 +12104,103 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'ROI (%)'**
   String get tradeExitRoi;
+
+  /// No description provided for @notificationFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get notificationFilterAll;
+
+  /// No description provided for @notificationFilterTransfers.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfers'**
+  String get notificationFilterTransfers;
+
+  /// No description provided for @notificationFilterOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get notificationFilterOrders;
+
+  /// No description provided for @notificationUnreadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread only'**
+  String get notificationUnreadOnly;
+
+  /// No description provided for @notificationToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get notificationToday;
+
+  /// No description provided for @notificationPerp.
+  ///
+  /// In en, this message translates to:
+  /// **'Perp'**
+  String get notificationPerp;
+
+  /// No description provided for @notificationAdlChip.
+  ///
+  /// In en, this message translates to:
+  /// **'ADL'**
+  String get notificationAdlChip;
+
+  /// No description provided for @notificationUnreadCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} unread'**
+  String notificationUnreadCount(int count);
+
+  /// No description provided for @notificationOrderSide.
+  ///
+  /// In en, this message translates to:
+  /// **'{side, select, BUY{buy order} SELL{sell order} other{order}}'**
+  String notificationOrderSide(String side);
+
+  /// No description provided for @notificationOrderSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, NEW{{symbol} {side} created, awaiting fill.} PARTIALLY_FILLED{{symbol} {side} filled {last} this time; {progress} filled in total.} FILLED{{symbol} {side} fully filled at an average price of {average}.} CANCELED{{symbol} {side} canceled; fills before cancellation remain in history.} EXPIRED{{symbol} {side} expired; the unfilled part will no longer execute.} REJECTED{{symbol} {side} was rejected. Check your order records.} other{{symbol} {side} updated. See details.}}'**
+  String notificationOrderSummary(
+    String status,
+    String symbol,
+    String side,
+    String last,
+    String progress,
+    String average,
+  );
+
+  /// No description provided for @notificationLiquidationSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} liquidation order updated. See details for the filled quantity.'**
+  String notificationLiquidationSummary(String symbol);
+
+  /// No description provided for @notificationAdlSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} ADL order has a new execution. Review your positions and fills.'**
+  String notificationAdlSummary(String symbol);
+
+  /// No description provided for @notificationMarginSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{symbols} position risk is high. Check your margin and positions promptly.'**
+  String notificationMarginSummary(String symbols);
+
+  /// No description provided for @notificationTransferSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, deposit_processing{{amount} deposit to the {market} account is processing. Network: {network}.} deposit_success{{amount} deposited to the {market} account. Network: {network}.} deposit_failed{Your {amount} deposit failed. See details.} withdraw_processing{{amount} withdrawal is processing. Check progress in funding records.} withdraw_success{{amount} withdrawn from the {market} account. Network: {network}.} withdraw_failed{Your {amount} withdrawal failed. See details.} other{{amount} transfer updated.}}'**
+  String notificationTransferSummary(String kind, String amount, String market, String network);
+
+  /// No description provided for @notificationTransferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{type, select, deposit{{status, select, processing{Deposit Processing} success{Deposit Successful} failed{Deposit Failed} other{Deposit Update}}} withdraw{{status, select, processing{Withdrawal Processing} success{Withdrawal Successful} failed{Withdrawal Failed} other{Withdrawal Update}}} other{Transfer Update}}'**
+  String notificationTransferTitle(String type, String status);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

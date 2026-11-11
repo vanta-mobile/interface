@@ -96,7 +96,7 @@ void main() {
         Navigator.of(tester.element(find.byType(NotificationDetails))).pop();
         await tester.pumpAndSettle();
         await show(tester, card, 'notification-list');
-        expect(find.text(l10n.notificationRead), findsOneWidget);
+        expect(find.byKey(const Key('notification-unread-dot')), findsOneWidget);
         expect(units.calls, 1);
         expect(spot.authorizations, 0);
         expect(perp.authorizations, 0);
@@ -106,62 +106,50 @@ void main() {
       },
     );
   }
-  testWidgets(
-    'Spot and futures monitor controls authorize/stop independently and retain local events',
-    (tester) async {
-      final identity = TestIdentityRepository()..restored = signingIdentity;
-      final spot = TestAccountChangeRepository(), perp = TestAccountChangeRepository();
-      addTearDown(identity.dispose);
-      addTearDown(spot.dispose);
-      addTearDown(perp.dispose);
-      final container = setup(
-        tester,
-        identityRepository: identity,
-        accountChangeRepository: perp,
-        spotAccountChangeRepository: spot,
-        monitorClock: () => spot.now,
-      );
-      await launch(tester, container);
-      await tester.tap(find.byKey(const Key('notifications-entry')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('spot-account-change-panel')));
-      await tester.pumpAndSettle();
-      final authorize = find.byKey(const Key('authorize-spot-account-changes'));
-      await show(tester, authorize, 'notification-list');
-      await tester.tap(authorize.hitTestable());
-      await tester.pumpAndSettle();
-      expect(spot.authorizations, 1);
-      expect(perp.authorizations, 0);
-      spot.channels.last.add(const AccountChangeEvent.connected());
-      final event = spotNotification();
-      spot.channels.last.add(
-        AccountChangeEvent.changed(AccountChangeKind.order, event.eventTime, notification: event),
-      );
-      await tester.pumpAndSettle();
-      expect(container.read(walletNotificationsProvider).length, 1);
-      await show(tester, find.byKey(const Key('account-change-panel')), 'notification-list');
-      await tester.tap(find.byKey(const Key('account-change-panel')));
-      await tester.pumpAndSettle();
-      final futureAuthorize = find.byKey(const Key('authorize-account-changes'));
-      await show(tester, futureAuthorize, 'notification-list');
-      await tester.tap(futureAuthorize.hitTestable());
-      await tester.pumpAndSettle();
-      perp.channels.last.add(const AccountChangeEvent.connected());
-      await tester.pumpAndSettle();
-      final stop = find.byKey(const Key('stop-spot-account-changes'));
-      await show(tester, stop, 'notification-list');
-      await tester.tap(stop.hitTestable());
-      await tester.pumpAndSettle();
-      expect(container.read(spotAccountChangeProvider).connection, AccountChangeConnection.stopped);
-      expect(container.read(accountChangeProvider).connection, AccountChangeConnection.connected);
-      expect(container.read(walletNotificationsProvider).length, 1);
-      expect(spot.authorizations, 1);
-      expect(perp.authorizations, 1);
-      expect(identity.wallets, 0);
-      await tester.pumpWidget(const SizedBox());
-      container.dispose();
-    },
-  );
+  testWidgets('Spot and futures monitors authorize/stop independently and retain local events', (
+    tester,
+  ) async {
+    final identity = TestIdentityRepository()..restored = signingIdentity;
+    final spot = TestAccountChangeRepository(), perp = TestAccountChangeRepository();
+    addTearDown(identity.dispose);
+    addTearDown(spot.dispose);
+    addTearDown(perp.dispose);
+    final container = setup(
+      tester,
+      identityRepository: identity,
+      accountChangeRepository: perp,
+      spotAccountChangeRepository: spot,
+      monitorClock: () => spot.now,
+    );
+    await launch(tester, container);
+    await tester.tap(find.byKey(const Key('notifications-entry')));
+    await tester.pumpAndSettle();
+    await container.read(spotAccountChangeProvider.notifier).authorize();
+    await tester.pumpAndSettle();
+    expect(spot.authorizations, 1);
+    expect(perp.authorizations, 0);
+    spot.channels.last.add(const AccountChangeEvent.connected());
+    final event = spotNotification();
+    spot.channels.last.add(
+      AccountChangeEvent.changed(AccountChangeKind.order, event.eventTime, notification: event),
+    );
+    await tester.pumpAndSettle();
+    expect(container.read(walletNotificationsProvider).length, 1);
+    await container.read(accountChangeProvider.notifier).authorize();
+    await tester.pumpAndSettle();
+    perp.channels.last.add(const AccountChangeEvent.connected());
+    await tester.pumpAndSettle();
+    container.read(spotAccountChangeProvider.notifier).stop();
+    await tester.pumpAndSettle();
+    expect(container.read(spotAccountChangeProvider).connection, AccountChangeConnection.stopped);
+    expect(container.read(accountChangeProvider).connection, AccountChangeConnection.connected);
+    expect(container.read(walletNotificationsProvider).length, 1);
+    expect(spot.authorizations, 1);
+    expect(perp.authorizations, 1);
+    expect(identity.wallets, 0);
+    await tester.pumpWidget(const SizedBox());
+    container.dispose();
+  });
   testWidgets('Spot metadata failure retries its own market without private authorization', (
     tester,
   ) async {

@@ -1,79 +1,182 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/presentation/status_view.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
-import '../../funding/presentation/transfer_history_screen.dart';
-import '../../funding/presentation/transfer_record_details.dart';
-import '../../portfolio/presentation/account_change_panel.dart';
+import '../../funding/application/transfer_history_load_provider.dart';
+import '../../funding/application/transfer_history_provider.dart';
+import '../../portfolio/presentation/portfolio_components.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
 import '../application/notification_provider.dart';
 import '../domain/account_notification.dart';
-import 'notification_details.dart';
+import '../domain/notification_status.dart';
 import 'notification_labels.dart';
-import '../../../core/presentation/status_view.dart';
+import 'notification_tile.dart';
 
 void openNotifications(BuildContext context) =>
     Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => const NotificationScreen()));
 
-class NotificationScreen extends ConsumerWidget {
+class NotificationScreen extends ConsumerStatefulWidget {
   const NotificationScreen({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context), auth = ref.watch(authProvider);
-    final inbox = ref.watch(notificationInboxProvider);
+  ConsumerState<NotificationScreen> createState() => _NotificationScreenState();
+}
+
+class _NotificationScreenState extends ConsumerState<NotificationScreen> {
+  NotificationFilter _filter = NotificationFilter.all;
+  bool _unreadOnly = false;
+
+  /// Settles only after storage, transfer status and market units have all finished.
+  Future<void> _refresh() async {
+    Future<void> settle(Future<void> Function() task) => task().catchError((Object _) {});
+    await Future.wait([
+      settle(ref.read(notificationInboxProvider.notifier).retry),
+      if (ref.read(authProvider).identity?.walletAddress != null)
+        settle(ref.read(transferHistoryProvider.notifier).refresh),
+      settle(() {
+        ref.invalidate(notificationUnitsProvider);
+        return ref.read(notificationUnitsProvider.future);
+      }),
+      settle(() {
+        ref.invalidate(spotNotificationUnitsProvider);
+        return ref.read(spotNotificationUnitsProvider.future);
+      }),
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.watch(transferHistoryLoadProvider);
     final entries = ref.watch(walletNotificationsProvider);
-    final address = auth.identity?.walletAddress;
+    final unread = entries.where((e) => !e.read).length;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.notificationTitle)),
+      backgroundColor: NotificationColors.background,
       body: SafeArea(
-        child: ListView(
-          key: const Key('notification-list'),
-          padding: const EdgeInsets.all(16),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _NotificationHeader(unread: unread),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _NotificationTabs(
+                    selected: _filter,
+                    onChanged: (value) => setState(() => _filter = value),
+                  ),
+                ),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _refresh,
+                    child: _NotificationList(
+                      entries: [
+                        for (final entry in entries)
+                          if (notificationMatches(_filter, entry.event) &&
+                              (!_unreadOnly || !entry.read))
+                            entry,
+                      ],
+                      unreadOnly: _unreadOnly,
+                      onUnreadOnly: (value) => setState(() => _unreadOnly = value),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NotificationHeader extends ConsumerWidget {
+  const _NotificationHeader({required this.unread});
+  final int unread;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 7, 4, 0),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 44),
+        child: Row(
           children: [
-            Text(l10n.notificationScope),
-            if (address != null) SelectableText(address),
-            Text(l10n.notificationDelivery),
-            Text(l10n.notificationRetention, style: Theme.of(context).textTheme.bodySmall),
-            const AccountChangePanel(),
-            const AccountChangePanel(spot: true),
-            const TransferHistoryEntry(),
-            if (!inbox.loaded && !inbox.storageFailed) const LinearProgressIndicator(),
-            if (inbox.storageFailed) ...[
-              Text(
-                l10n.notificationStorageFailed,
-                style: const TextStyle(color: AppColors.negative),
+            IconButton(
+              key: const Key('notification-back'),
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              onPressed: () => Navigator.maybePop(context),
+              style: IconButton.styleFrom(
+                minimumSize: const Size(40, 44),
+                padding: EdgeInsets.zero,
               ),
-              OutlinedButton(
-                key: const Key('notification-retry'),
-                onPressed: ref.read(notificationInboxProvider.notifier).retry,
-                child: Text(l10n.notificationRetry),
+              icon: const Padding(
+                padding: EdgeInsets.only(left: 16),
+                child: PortfolioIcon('back.svg', size: 24),
               ),
-            ],
-            if (address == null) ...[
-              Text(l10n.notificationSignIn),
-              OutlinedButton(
-                onPressed: auth.busy ? null : () => showAccountSheet(context),
-                child: Text(l10n.accountSignInToRead),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      l10n.notificationTitle,
+                      style: NotificationTypography.heading,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (unread > 0) ...[
+                    const SizedBox(width: 8),
+                    Semantics(
+                      label: l10n.notificationUnreadCount(unread),
+                      excludeSemantics: true,
+                      child: Container(
+                        key: const Key('notification-unread-count'),
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: NotificationColors.neutralSurface,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '$unread',
+                          style: NotificationTypography.chip.copyWith(
+                            color: NotificationColors.accent,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ] else ...[
-              if (entries.any((e) => !e.read))
-                Align(
+            ),
+            if (unread > 0)
+              Flexible(
+                // Keep unused flex space to the left so the action stays flush right.
+                child: Align(
                   alignment: AlignmentDirectional.centerEnd,
                   child: TextButton(
                     key: const Key('notification-read-all'),
                     onPressed: () => ref.read(notificationInboxProvider.notifier).markRead(),
-                    child: Text(l10n.notificationMarkAllRead),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(44, 44),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                    child: Text(
+                      l10n.notificationMarkAllRead,
+                      style: NotificationTypography.action,
+                      textAlign: TextAlign.end,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
-              if (inbox.loaded && entries.isEmpty)
-                StatusEmptyView(
-                  key: const Key('notification-empty'),
-                  message: l10n.notificationEmpty,
-                ),
-              for (final entry in entries) _NotificationCard(entry),
-            ],
+              ),
           ],
         ),
       ),
@@ -81,71 +184,203 @@ class NotificationScreen extends ConsumerWidget {
   }
 }
 
-class _NotificationCard extends ConsumerWidget {
-  const _NotificationCard(this.entry);
-  final InboxEntry entry;
+class _NotificationTabs extends StatelessWidget {
+  const _NotificationTabs({required this.selected, required this.onChanged});
+  final NotificationFilter selected;
+  final ValueChanged<NotificationFilter> onChanged;
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context), event = entry.event;
-    final base = event is OrderNotification
-        ? ref.watch(notificationUnitsProvider).asData?.value[event.symbol]?.base
-        : event is SpotOrderNotification
-        ? ref.watch(spotNotificationUnitsProvider).asData?.value[event.symbol]?.base
-        : null;
-    return Card(
-      child: InkWell(
-        key: ValueKey('notification-${entry.key}'),
-        onTap: () {
-          ref.read(notificationInboxProvider.notifier).markRead(key: entry.key);
-          Navigator.of(
-            context,
-          ).push<void>(MaterialPageRoute(builder: (_) => NotificationDetails(entryKey: entry.key)));
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: NotificationColors.neutralSurface)),
+      ),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
             children: [
-              Text(notificationTitle(l10n, event), style: Theme.of(context).textTheme.titleMedium),
-              if (event.critical)
-                Text(l10n.notificationCritical, style: const TextStyle(color: AppColors.negative)),
-              Text(
-                entry.read ? l10n.notificationRead : l10n.notificationUnread,
-                style: TextStyle(color: entry.read ? AppColors.secondary : AppColors.accent),
-              ),
-              if (event is OrderNotification) ...[
-                Text(
-                  '${event.symbol} · ${event.side == 'BUY' ? l10n.openOrdersBuy : l10n.openOrdersSell}',
+              for (final filter in NotificationFilter.values)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 20),
+                  child: Semantics(
+                    button: true,
+                    selected: filter == selected,
+                    child: InkWell(
+                      key: Key('notification-filter-${filter.name}'),
+                      onTap: () => onChanged(filter),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minWidth: 44),
+                        child: IntrinsicWidth(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const SizedBox(height: 17),
+                              Text(
+                                switch (filter) {
+                                  NotificationFilter.all => l10n.notificationFilterAll,
+                                  NotificationFilter.transfers => l10n.notificationFilterTransfers,
+                                  NotificationFilter.orders => l10n.notificationFilterOrders,
+                                },
+                                style: NotificationTypography.tab.copyWith(
+                                  color: filter == selected
+                                      ? PortfolioColors.text
+                                      : NotificationColors.muted,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                height: 1,
+                                color: filter == selected
+                                    ? NotificationColors.accent
+                                    : PortfolioColors.transparent,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                Text(l10n.notificationStatus(event.status)),
-                Text(
-                  '${l10n.notificationLastQuantity}: ${event.lastQuantity} ${base ?? l10n.accountUnitUnavailable}',
-                ),
-                Text(
-                  '${l10n.notificationCumulativeQuantity}: ${event.filledQuantity} ${base ?? l10n.accountUnitUnavailable}',
-                ),
-              ] else if (event is SpotOrderNotification) ...[
-                Text(
-                  '${event.symbol} · ${event.side == 'BUY' ? l10n.openOrdersBuy : l10n.openOrdersSell}',
-                ),
-                Text(l10n.notificationStatus(event.status)),
-                Text(
-                  '${l10n.notificationLastQuantity}: ${event.lastQuantity} ${base ?? l10n.accountUnitUnavailable}',
-                ),
-                Text(
-                  '${l10n.notificationCumulativeQuantity}: ${event.filledQuantity} ${base ?? l10n.accountUnitUnavailable}',
-                ),
-              ] else if (event is TransferNotification) ...[
-                Text('${event.record.amount} ${event.record.asset}'),
-                Text(transferMarketLabel(l10n, event.record.market)),
-                Text(transferNetworkLabel(l10n, event.record.chainId)),
-              ] else if (event is MarginNotification)
-                Text(event.positions.map((p) => p.symbol).join(', ')),
-              Text(event.eventTime.toIso8601String()),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+class _NotificationList extends ConsumerWidget {
+  const _NotificationList({
+    required this.entries,
+    required this.unreadOnly,
+    required this.onUnreadOnly,
+  });
+  final List<InboxEntry> entries;
+  final bool unreadOnly;
+  final ValueChanged<bool> onUnreadOnly;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context), auth = ref.watch(authProvider);
+    final inbox = ref.watch(notificationInboxProvider);
+    final signedIn = auth.identity?.walletAddress != null;
+    final groups = <DateTime, List<InboxEntry>>{};
+    for (final entry in entries) {
+      groups.putIfAbsent(notificationDay(entry.event.eventTime), () => []).add(entry);
+    }
+    final now = DateTime.now();
+    return ListView(
+      key: const Key('notification-list'),
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      children: [
+        _UnreadOnlyToggle(value: unreadOnly, onChanged: onUnreadOnly),
+        if (inbox.storageFailed)
+          StatusFailureView(
+            message: l10n.notificationStorageFailed,
+            retryKey: const Key('notification-retry'),
+            onRetry: ref.read(notificationInboxProvider.notifier).retry,
+          ),
+        if (!signedIn)
+          StatusEmptyView(
+            message: l10n.notificationSignIn,
+            actionKey: const Key('notification-sign-in'),
+            actionLabel: l10n.accountSignInToRead,
+            onAction: auth.busy ? null : () => showAccountSheet(context),
+          )
+        else if (!inbox.loaded && !inbox.storageFailed && entries.isEmpty)
+          const _NotificationSkeleton()
+        else if (inbox.loaded && entries.isEmpty)
+          StatusEmptyView(key: const Key('notification-empty'), message: l10n.notificationEmpty)
+        else
+          for (final group in groups.entries) ...[
+            Text(notificationDayLabel(l10n, group.key, now), style: NotificationTypography.group),
+            const SizedBox(height: 8),
+            for (final (index, entry) in group.value.indexed)
+              NotificationTile(entry, divider: index < group.value.length - 1),
+            const SizedBox(height: 8),
+          ],
+      ],
+    );
+  }
+}
+
+class _UnreadOnlyToggle extends StatelessWidget {
+  const _UnreadOnlyToggle({required this.value, required this.onChanged});
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: AlignmentDirectional.centerStart,
+    child: Semantics(
+      checked: value,
+      child: InkWell(
+        key: const Key('notification-unread-only'),
+        onTap: () => onChanged(!value),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 36),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: value ? NotificationColors.accent : NotificationColors.title,
+                    width: .7,
+                  ),
+                  borderRadius: BorderRadius.circular(5.6),
+                ),
+                child: value
+                    ? const Icon(Icons.check_rounded, size: 10, color: NotificationColors.accent)
+                    : null,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  AppLocalizations.of(context).notificationUnreadOnly,
+                  style: NotificationTypography.filter,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _NotificationSkeleton extends StatelessWidget {
+  const _NotificationSkeleton();
+  @override
+  Widget build(BuildContext context) => Column(
+    key: const Key('notification-skeleton'),
+    children: [
+      for (var i = 0; i < 4; i++)
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 32, height: 32, radius: 12),
+              SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(height: 16),
+                    SizedBox(height: 4),
+                    SkeletonBox(height: 16),
+                    SizedBox(height: 4),
+                    SkeletonBox(width: 96, height: 22),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+    ],
+  );
 }
