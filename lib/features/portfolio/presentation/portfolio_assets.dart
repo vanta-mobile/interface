@@ -9,8 +9,7 @@ import '../domain/portfolio_overview.dart';
 import 'portfolio_components.dart';
 import 'portfolio_header.dart';
 import 'portfolio_position_card.dart';
-import 'portfolio_asset_details.dart';
-import 'futures_history_screen.dart';
+import 'portfolio_asset_row.dart';
 import 'position_risk_screen.dart';
 import '../../../core/presentation/status_view.dart';
 import '../../funding/domain/funding_catalog.dart';
@@ -21,48 +20,51 @@ class PortfolioAssetTabs extends StatelessWidget {
     super.key,
     required this.assets,
     required this.count,
-    required this.preview,
     required this.onChanged,
   });
-  final bool assets, preview;
+  final bool assets;
   final int count;
   final ValueChanged<bool> onChanged;
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return DecoratedBox(
+    return Container(
+      width: double.infinity,
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: PortfolioColors.line)),
+        border: Border(bottom: BorderSide(color: PortfolioColors.assetDivider)),
       ),
-      child: Row(
+      child: Wrap(
+        spacing: 20,
         children: [
           for (final (value, label) in [
             (false, l.portfolioPositionsCount(count)),
             (true, l.portfolioAssets),
           ])
-            Flexible(
+            IntrinsicWidth(
               child: Semantics(
                 selected: assets == value,
                 child: TextButton(
                   key: Key('portfolio-assets-tab-${value ? 'assets' : 'positions'}'),
                   onPressed: () => onChanged(value),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.only(right: 20, top: 12),
+                    padding: const EdgeInsets.only(top: 12),
                     minimumSize: const Size(0, 44),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: const RoundedRectangleBorder(),
                   ),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
                         label,
-                        textAlign: TextAlign.center,
-                        style: PortfolioTypography.section.copyWith(
+                        style: PortfolioTypography.tab.copyWith(
                           color: assets == value ? PortfolioColors.text : PortfolioColors.muted,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Container(
                         height: 1,
-                        width: 48,
                         color: assets == value
                             ? PortfolioColors.accent
                             : PortfolioColors.transparent,
@@ -72,15 +74,6 @@ class PortfolioAssetTabs extends StatelessWidget {
                 ),
               ),
             ),
-          const Spacer(),
-          IconButton(
-            key: const Key('portfolio-orders-history'),
-            tooltip: l.futuresHistoryTitle,
-            onPressed: preview
-                ? () => portfolioPreviewNotice(context)
-                : () => openFuturesHistory(context),
-            icon: const PortfolioIcon('orders.svg', size: 24, color: PortfolioColors.secondary),
-          ),
         ],
       ),
     );
@@ -99,67 +92,103 @@ class PortfolioPositionList extends ConsumerWidget {
   final PortfolioOverview overview;
   final bool preview, hidden, hideOther;
   final ValueChanged<bool> onHideOther;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l = AppLocalizations.of(context), symbol = ref.watch(symbolProvider);
-    final positions = overview.positions.where((p) => !hideOther || p.symbol == symbol);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                onTap: () => onHideOther(!hideOther),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 30,
-                      height: 44,
-                      child: Checkbox(
-                        value: hideOther,
-                        onChanged: (v) => onHideOther(v ?? false),
-                        side: const BorderSide(color: PortfolioColors.secondary, width: .7),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.6)),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(l.portfolioHideOtherSymbols, style: PortfolioTypography.caption),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            TextButton(
-              key: const Key('portfolio-close-all'),
-              onPressed: preview
-                  ? () => portfolioPreviewNotice(context)
-                  : () => Navigator.of(context)
-                        .push<void>(MaterialPageRoute(builder: (_) => const PositionRiskScreen())),
-              child: Text(
-                l.portfolioCloseAll,
-                style: PortfolioTypography.caption.copyWith(color: PortfolioColors.negative),
-              ),
-            ),
-          ],
+    final l = AppLocalizations.of(context);
+    final symbol = hideOther ? ref.watch(symbolProvider) : null;
+    final positions = overview.positions.where((p) => !hideOther || p.symbol == symbol).toList();
+    String rowKey(PortfolioPosition p) => 'portfolio-position-${p.symbol}-${p.side}';
+    final indices = {for (var i = 0; i < positions.length; i++) rowKey(positions[i]): i};
+    return SliverMainAxisGroup(
+      slivers: [
+        SliverToBoxAdapter(
+          child: _PositionControls(
+            preview: preview,
+            hasPositions: overview.positions.isNotEmpty,
+            hideOther: hideOther,
+            onHideOther: onHideOther,
+          ),
         ),
-        // Before the account loads, keep the compact note so the account
-        // feedback below it stays in view.
-        if (positions.isEmpty && overview.totalUsd == null)
-          PortfolioEmpty(l.portfolioNoPositions)
-        else if (positions.isEmpty)
-          StatusEmptyView(
-            key: const Key('portfolio-positions-empty'),
-            message: l.portfolioNoPositions,
+        if (positions.isEmpty)
+          SliverToBoxAdapter(
+            child: overview.totalUsd == null
+                ? PortfolioEmpty(l.portfolioNoPositions)
+                : StatusEmptyView(
+                    key: const Key('portfolio-positions-empty'),
+                    message: l.portfolioNoPositions,
+                  ),
           )
         else
-          for (final position in positions)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: PortfolioPositionCard(position: position, preview: preview, hidden: hidden),
+          SliverList.builder(
+            itemCount: positions.length,
+            findChildIndexCallback: (key) => key is ValueKey<String> ? indices[key.value] : null,
+            itemBuilder: (_, index) {
+              final position = positions[index];
+              return Padding(
+                key: ValueKey(rowKey(position)),
+                padding: const EdgeInsets.only(bottom: 12),
+                child: PortfolioPositionCard(position: position, preview: preview, hidden: hidden),
+              );
+            },
+          ),
+      ],
+    );
+  }
+}
+
+class _PositionControls extends StatelessWidget {
+  const _PositionControls({
+    required this.preview,
+    required this.hasPositions,
+    required this.hideOther,
+    required this.onHideOther,
+  });
+  final bool preview, hasPositions, hideOther;
+  final ValueChanged<bool> onHideOther;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: InkWell(
+            key: const Key('portfolio-hide-other-symbols'),
+            onTap: () => onHideOther(!hideOther),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 30,
+                  height: 44,
+                  child: Checkbox(
+                    value: hideOther,
+                    onChanged: (v) => onHideOther(v ?? false),
+                    side: const BorderSide(color: PortfolioColors.secondary, width: .7),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.6)),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(l.portfolioHideOtherSymbols, style: PortfolioTypography.caption),
+                ),
+              ],
             ),
+          ),
+        ),
+        if (hasPositions)
+          TextButton(
+            key: const Key('portfolio-close-all'),
+            onPressed: preview
+                ? () => portfolioPreviewNotice(context)
+                : () => Navigator.of(context)
+                      .push<void>(MaterialPageRoute(builder: (_) => const PositionRiskScreen())),
+            child: Text(
+              l.portfolioCloseAll,
+              style: PortfolioTypography.caption.copyWith(color: PortfolioColors.negative),
+            ),
+          ),
       ],
     );
   }
@@ -173,104 +202,114 @@ class PortfolioAssetList extends StatelessWidget {
     required this.hidden,
     required this.hideSmall,
     required this.onHideSmall,
+    this.sliver = false,
+    this.valuationLoading = false,
   });
   final PortfolioOverview overview;
-  final bool preview, hidden, hideSmall;
+  final bool preview, hidden, hideSmall, sliver, valuationLoading;
   final ValueChanged<bool> onHideSmall;
+
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    final assets = overview.assets.where(
-      (a) => !hideSmall || a.usd == null || a.usd!.abs() >= Decimal.one,
+    final assets = overview.assets
+        .where((a) => !hideSmall || a.usd == null || a.usd!.abs() >= Decimal.one)
+        .toList();
+    final filter = _LowBalanceFilter(value: hideSmall, onChanged: onHideSmall);
+    String rowKey(PortfolioAsset a) => 'portfolio-asset-${a.symbol}';
+    Widget row(int index) => PortfolioAssetRow(
+      key: ValueKey(rowKey(assets[index])),
+      asset: assets[index],
+      hidden: hidden,
+      preview: preview,
+      valuationLoading: valuationLoading,
     );
+    const divider = Divider(height: 1, thickness: 1, color: PortfolioColors.assetDivider);
+    if (sliver) {
+      final indices = {for (var i = 0; i < assets.length; i++) rowKey(assets[i]): i};
+      return SliverMainAxisGroup(
+        slivers: [
+          SliverToBoxAdapter(child: filter),
+          if (assets.isEmpty)
+            SliverToBoxAdapter(child: _empty(context))
+          else
+            SliverList.separated(
+              itemCount: assets.length,
+              findItemIndexCallback: (key) => key is ValueKey<String> ? indices[key.value] : null,
+              itemBuilder: (_, index) => row(index),
+              separatorBuilder: (_, _) => divider,
+            ),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CheckboxListTile(
-          key: const Key('portfolio-hide-small-assets'),
-          contentPadding: EdgeInsets.zero,
-          controlAffinity: ListTileControlAffinity.leading,
-          dense: true,
-          value: hideSmall,
-          onChanged: (v) => onHideSmall(v ?? false),
-          title: Text(l.portfolioHideLowBalances, style: PortfolioTypography.caption),
-        ),
-        if (assets.isEmpty && overview.totalUsd == null)
-          PortfolioEmpty(l.portfolioNoAssets)
-        else if (assets.isEmpty)
-          overview.assets.isEmpty
-              ? StatusEmptyView(
-                  key: const Key('portfolio-assets-empty'),
-                  title: l.statusNoAssetsTitle,
-                  message: l.statusNoAssetsMessage,
-                  actionLabel: l.fundingDeposit,
-                  onAction: () => preview
-                      ? portfolioPreviewNotice(context)
-                      : openFunding(context, FundingOperation.deposit),
-                )
-              : StatusEmptyView(
-                  key: const Key('portfolio-assets-empty'),
-                  title: l.statusNoResultsTitle,
-                  message: l.portfolioNoAssets,
-                )
-        else
-          for (final asset in assets) _AssetRow(asset: asset, hidden: hidden, preview: preview),
+        filter,
+        if (assets.isEmpty) _empty(context),
+        for (var i = 0; i < assets.length; i++) ...[if (i > 0) divider, row(i)],
       ],
+    );
+  }
+
+  Widget _empty(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    if (overview.totalUsd == null) return PortfolioEmpty(l.portfolioNoAssets);
+    if (overview.assets.isNotEmpty) {
+      return StatusEmptyView(
+        key: const Key('portfolio-assets-empty'),
+        title: l.statusNoResultsTitle,
+        message: l.portfolioNoAssets,
+      );
+    }
+    return StatusEmptyView(
+      key: const Key('portfolio-assets-empty'),
+      title: l.statusNoAssetsTitle,
+      message: l.statusNoAssetsMessage,
+      actionLabel: l.fundingDeposit,
+      onAction: () => preview
+          ? portfolioPreviewNotice(context)
+          : openFunding(context, FundingOperation.deposit),
     );
   }
 }
 
-class _AssetRow extends StatelessWidget {
-  const _AssetRow({required this.asset, required this.hidden, required this.preview});
-  final PortfolioAsset asset;
-  final bool hidden, preview;
+class _LowBalanceFilter extends StatelessWidget {
+  const _LowBalanceFilter({required this.value, required this.onChanged});
+  final bool value;
+  final ValueChanged<bool> onChanged;
   @override
-  Widget build(BuildContext context) => InkWell(
-    key: ValueKey('portfolio-asset-${asset.symbol}'),
-    onTap: () => showPortfolioAssetDetails(context, asset: asset, hidden: hidden, preview: preview),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          PortfolioAssetBadge(symbol: asset.symbol),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(asset.symbol, style: PortfolioTypography.section),
-                Text(
-                  hidden ? '••••' : portfolioAmount(asset.pnl),
-                  style: PortfolioTypography.caption.copyWith(color: portfolioPnlColor(asset.pnl)),
+  Widget build(BuildContext context) => Semantics(
+    checked: value,
+    child: InkWell(
+      key: const Key('portfolio-hide-small-assets'),
+      onTap: () => onChanged(!value),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 44),
+        child: Row(
+          children: [
+            SizedBox.square(
+              dimension: 14,
+              child: Transform.scale(
+                scale: 14 / 18,
+                child: Checkbox(
+                  value: value,
+                  onChanged: (v) => onChanged(v ?? false),
+                  side: const BorderSide(color: PortfolioColors.secondary, width: .7),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.6)),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
                 ),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  hidden
-                      ? '••••'
-                      : '${portfolioAmount(asset.balance)} (${portfolioUsd(asset.usd)})',
-                  textAlign: TextAlign.right,
-                  style: PortfolioTypography.caption,
-                ),
-                Text(
-                  hidden
-                      ? '••••'
-                      : AppLocalizations.of(context)
-                            .portfolioAvailable(portfolioAmount(asset.available)),
-                  textAlign: TextAlign.right,
-                  style: PortfolioTypography.caption.copyWith(color: PortfolioColors.muted),
-                ),
-              ],
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context).portfolioHideLowBalances,
+                style: PortfolioTypography.caption,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     ),
   );

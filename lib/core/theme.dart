@@ -141,9 +141,23 @@ abstract final class PortfolioColors {
   static const accountScrim = Color(0x66000000);
   static const menuShadow = Color(0x40000000);
   static const negativeSurface = Color(0xFF4E210F);
+  static const assetEstimate = Color(0xFFA1A9B4);
+  static const assetDivider = Color(0xFF232526);
 }
 
 abstract final class PortfolioTypography {
+  static const assetSymbol = TextStyle(
+    fontSize: 16,
+    height: 24 / 16,
+    fontWeight: FontWeight.w700,
+    color: PortfolioColors.text,
+  );
+  static const tab = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w500,
+    color: PortfolioColors.text,
+  );
   static const heading = TextStyle(
     fontSize: 18,
     height: 26 / 18,

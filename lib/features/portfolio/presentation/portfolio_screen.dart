@@ -11,8 +11,8 @@ import '../../subaccounts/application/account_entries_provider.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
 import '../application/portfolio_overview_provider.dart';
 import '../application/portfolio_account_load_provider.dart';
-import 'portfolio_account_feedback.dart';
-import 'portfolio_assets.dart';
+import 'portfolio_futures_section.dart';
+import '../application/portfolio_loading_provider.dart';
 import 'portfolio_pnl_screen.dart';
 import 'portfolio_components.dart';
 import 'portfolio_header.dart';
@@ -25,7 +25,7 @@ class PortfolioPage extends ConsumerStatefulWidget {
 }
 
 class _PortfolioPageState extends ConsumerState<PortfolioPage> {
-  bool assets = false, hidden = false, hideOther = false, hideSmall = false, expanded = false;
+  bool hidden = false, expanded = false;
   String period = '7D';
 
   @override
@@ -35,6 +35,7 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
     final preview = ref.watch(portfolioPreviewProvider);
     final overview = ref.watch(portfolioOverviewProvider);
     ref.watch(portfolioAccountLoadProvider);
+    final valueLoading = ref.watch(portfolioLoadingProvider.select((s) => s.value));
     return Material(
       color: PortfolioColors.background,
       child: Column(
@@ -48,102 +49,100 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
                   final horizontal = constraints.maxWidth > 820
                       ? (constraints.maxWidth - 788) / 2
                       : 16.0;
-                  return ListView(
+                  return CustomScrollView(
                     key: const Key('portfolio-page'),
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, 24),
-                    children: [
-                      if (preview)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Text(l.portfolioPreviewNotice, style: PortfolioTypography.caption),
-                        ),
-                      PortfolioAccountValue(
-                        overview: overview,
-                        visible: !hidden,
-                        active: active || preview,
-                        historyExpanded: expanded,
-                        period: period,
-                        onToggleVisibility: () => setState(() => hidden = !hidden),
-                        onToggleHistory: () => setState(() => expanded = !expanded),
-                      ),
-                      if (expanded && !hidden) ...[
-                        const SizedBox(height: 12),
-                        PortfolioValueHistory(
-                          overview: overview,
-                          period: period,
-                          onPeriod: (value) => setState(() => period = value),
-                          onCollapse: () => setState(() => expanded = false),
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      if (active || preview)
-                        _MoneyActions(preview: preview)
-                      else ...[
-                        Text(l.portfolioLoginHint, style: PortfolioTypography.body),
-                        const SizedBox(height: 16),
-                        PortfolioAction(
-                          key: const Key('portfolio-login'),
-                          label: l.authWalletContinue,
-                          primary: true,
-                          onPressed: () => showAccountSheet(context),
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(l.portfolioPerformance, style: PortfolioTypography.section),
-                          ),
-                          if (active || preview)
-                            TextButton(
-                              key: const Key('portfolio-pnl-entry'),
-                              onPressed: () => Navigator.of(context).push<void>(
-                                MaterialPageRoute(builder: (_) => const PortfolioPnlScreen()),
-                              ),
-                              child: Text(
-                                l.portfolioPnlDetails,
-                                style: PortfolioTypography.caption.copyWith(
-                                  color: PortfolioColors.accent,
+                    slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.symmetric(horizontal: horizontal),
+                        sliver: SliverMainAxisGroup(
+                          slivers: [
+                            SliverList.list(
+                              children: [
+                                if (preview)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: Text(
+                                      l.portfolioPreviewNotice,
+                                      style: PortfolioTypography.caption,
+                                    ),
+                                  ),
+                                PortfolioAccountValue(
+                                  overview: overview,
+                                  loading: valueLoading,
+                                  visible: !hidden,
+                                  active: active || preview,
+                                  historyExpanded: expanded,
+                                  period: period,
+                                  onToggleVisibility: () => setState(() => hidden = !hidden),
+                                  onToggleHistory: () => setState(() => expanded = !expanded),
                                 ),
-                              ),
+                                if (expanded && !hidden) ...[
+                                  const SizedBox(height: 12),
+                                  PortfolioValueHistory(
+                                    overview: overview,
+                                    period: period,
+                                    onPeriod: (value) => setState(() => period = value),
+                                    onCollapse: () => setState(() => expanded = false),
+                                  ),
+                                ],
+                                const SizedBox(height: 16),
+                                if (active || preview)
+                                  _MoneyActions(preview: preview)
+                                else ...[
+                                  Text(l.portfolioLoginHint, style: PortfolioTypography.body),
+                                  const SizedBox(height: 16),
+                                  PortfolioAction(
+                                    key: const Key('portfolio-login'),
+                                    label: l.authWalletContinue,
+                                    primary: true,
+                                    onPressed: () => showAccountSheet(context),
+                                  ),
+                                ],
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        l.portfolioPerformance,
+                                        style: PortfolioTypography.section,
+                                      ),
+                                    ),
+                                    if (active || preview)
+                                      TextButton(
+                                        key: const Key('portfolio-pnl-entry'),
+                                        onPressed: () => Navigator.of(context).push<void>(
+                                          MaterialPageRoute(
+                                            builder: (_) => const PortfolioPnlScreen(),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          l.portfolioPnlDetails,
+                                          style: PortfolioTypography.caption.copyWith(
+                                            color: PortfolioColors.accent,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                PortfolioPerformanceCard(
+                                  overview: overview,
+                                  preview: preview,
+                                  hidden: hidden,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(l.portfolioFuturesAssets, style: PortfolioTypography.section),
+                              ],
                             ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      PortfolioPerformanceCard(
-                        overview: overview,
-                        preview: preview,
-                        hidden: hidden,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(l.portfolioFuturesAssets, style: PortfolioTypography.section),
-                      if (active || preview) ...[
-                        PortfolioAssetTabs(
-                          assets: assets,
-                          count: overview.positions.length,
-                          preview: preview,
-                          onChanged: (value) => setState(() => assets = value),
+                            if (active || preview)
+                              PortfolioFuturesSection(hidden: hidden)
+                            else
+                              SliverToBoxAdapter(child: PortfolioEmpty(l.portfolioLoginBalances)),
+                            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                          ],
                         ),
-                        if (assets)
-                          PortfolioAssetList(
-                            overview: overview,
-                            preview: preview,
-                            hidden: hidden,
-                            hideSmall: hideSmall,
-                            onHideSmall: (value) => setState(() => hideSmall = value),
-                          )
-                        else
-                          PortfolioPositionList(
-                            overview: overview,
-                            preview: preview,
-                            hidden: hidden,
-                            hideOther: hideOther,
-                            onHideOther: (value) => setState(() => hideOther = value),
-                          ),
-                        if (!preview) const PortfolioAccountFeedback(),
-                      ] else
-                        PortfolioEmpty(l.portfolioLoginBalances),
+                      ),
                     ],
                   );
                 },

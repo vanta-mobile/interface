@@ -6,6 +6,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../funding/domain/funding_catalog.dart';
 import '../../funding/presentation/funding_screen.dart';
 import '../domain/portfolio_overview.dart';
+import 'asset_token_logo.dart';
 import 'portfolio_components.dart';
 import 'portfolio_header.dart';
 
@@ -130,13 +131,17 @@ class PortfolioAssetBadge extends StatelessWidget {
       'BTC' => 'btc.svg',
       _ => null,
     };
-    return SizedBox.square(
-      dimension: 32,
-      child: asset == null
+    return AssetTokenLogo(
+      symbol: symbol,
+      size: 32,
+      fallback: asset == null
           ? CircleAvatar(
               radius: 16,
               backgroundColor: PortfolioColors.card,
-              child: Text(symbol.characters.first, style: PortfolioTypography.caption),
+              child: Text(
+                symbol.isEmpty ? '?' : symbol.characters.first,
+                style: PortfolioTypography.caption,
+              ),
             )
           : asset.endsWith('.webp')
           ? Image.asset('assets/portfolio/$asset', width: 32, height: 32)

@@ -8,6 +8,7 @@ import '../domain/portfolio_overview.dart';
 import '../domain/asset_valuation.dart';
 import 'account_read_provider.dart';
 import 'asset_index_provider.dart';
+import 'asset_metadata_refresh_provider.dart';
 
 final portfolioPreviewProvider = NotifierProvider<PortfolioPreviewController, bool>(
   PortfolioPreviewController.new,
@@ -39,6 +40,9 @@ final portfolioOverviewProvider = Provider<PortfolioOverview>((ref) {
         balance: a.walletBalance,
         available: a.availableBalance,
         pnl: a.unrealizedProfit,
+        pnlUsd: a.unrealizedProfit == null
+            ? null
+            : AssetAmountValue(a.unrealizedProfit!, a.asset, prices).usd,
         margin: a.unrealizedProfit == null ? null : a.walletBalance + a.unrealizedProfit!,
         usd: AssetAmountValue(a.walletBalance, a.asset, prices).usd,
       ),
@@ -82,6 +86,7 @@ final portfolioRefreshProvider = Provider<Future<void> Function()>((ref) {
         ref.read(accountReadProvider.notifier).refresh,
       if (!ref.read(authProvider).needsWalletConnection)
         ref.read(assetIndexProvider.notifier).refresh,
+      ref.read(assetMetadataRefreshProvider),
     ]);
   };
 });

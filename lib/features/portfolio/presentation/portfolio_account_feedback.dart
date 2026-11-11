@@ -30,12 +30,6 @@ class PortfolioAccountFeedback extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (account.account == null && (account.busy || agent.isLoading))
-          Padding(
-            key: const Key('portfolio-account-loading'),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Semantics(label: l.accountReadLoading, child: const LinearProgressIndicator()),
-          ),
         if (failure != null)
           Padding(
             padding: const EdgeInsets.only(top: 12),

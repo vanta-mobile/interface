@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/motion/animated_number_text.dart';
+import '../../../core/presentation/status_view.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../domain/portfolio_overview.dart';
@@ -17,9 +18,10 @@ class PortfolioAccountValue extends StatelessWidget {
     required this.period,
     required this.onToggleVisibility,
     required this.onToggleHistory,
+    this.loading = false,
   });
   final PortfolioOverview overview;
-  final bool visible, active, historyExpanded;
+  final bool visible, active, historyExpanded, loading;
   final String period;
   final VoidCallback onToggleVisibility, onToggleHistory;
 
@@ -64,11 +66,19 @@ class PortfolioAccountValue extends StatelessWidget {
             return Row(
               children: [
                 Expanded(
-                  child: AnimatedNumberText(
-                    total,
-                    style: PortfolioTypography.value,
-                    softWrap: true,
-                  ),
+                  child: loading && visible
+                      ? Semantics(
+                          label: l.accountReadLoading,
+                          child: const Align(
+                            alignment: Alignment.centerLeft,
+                            child: SkeletonBox(
+                              key: Key('portfolio-value-loading'),
+                              width: 180,
+                              height: 40,
+                            ),
+                          ),
+                        )
+                      : AnimatedNumberText(total, style: PortfolioTypography.value, softWrap: true),
                 ),
                 if (showSparkline)
                   Tooltip(
@@ -100,7 +110,7 @@ class PortfolioAccountValue extends StatelessWidget {
             onPressed: onToggleHistory,
             child: Text(historyExpanded ? l.portfolioCollapseHistory : l.portfolioOpenHistory),
           ),
-        if (overview.partialValue)
+        if (overview.partialValue && !loading)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(l.assetValueUnavailable, style: PortfolioTypography.caption),

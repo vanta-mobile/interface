@@ -68,6 +68,7 @@ PortfolioOverview portfolioPreview() {
         available: d('2986.45'),
         margin: d('3000.07'),
         pnl: d('0.07'),
+        pnlUsd: d('0.07'),
         usd: d('3000'),
       ),
       PortfolioAsset(
