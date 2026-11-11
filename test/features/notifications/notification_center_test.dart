@@ -44,10 +44,20 @@ void main() {
     expect(notificationStatusIcon(transfer('PROCESSING')), NotificationStatusIcon.pending);
     expect(notificationStatusIcon(transfer('SUCCESS')), NotificationStatusIcon.success);
     expect(notificationStatusIcon(transfer('FAILED')), NotificationStatusIcon.failed);
-    expect(notificationStatusIcon(notificationOrder()), NotificationStatusIcon.success);
-    expect(notificationStatusIcon(spotNotification()), NotificationStatusIcon.success);
+    // Partial fills still wait for the remainder.
+    expect(notificationStatusIcon(notificationOrder()), NotificationStatusIcon.pending);
+    expect(
+      notificationStatusIcon(notificationOrder(status: 'FILLED', filled: '0.4', last: '0.4')),
+      NotificationStatusIcon.success,
+    );
+    for (final status in ['CANCELED', 'EXPIRED']) {
+      expect(
+        notificationStatusIcon(notificationOrder(status: status, filled: '0', last: '0')),
+        NotificationStatusIcon.failed,
+      );
+    }
     expect(notificationStatusIcon(marginNotification()), NotificationStatusIcon.warning);
-    expect(notificationStatusIcon(adl), NotificationStatusIcon.info);
+    expect(notificationStatusIcon(adl), NotificationStatusIcon.warning);
     expect(notificationTone(transfer('PROCESSING')), NotificationTone.warning);
     expect(notificationTone(transfer('SUCCESS')), NotificationTone.positive);
     expect(notificationTone(transfer('FAILED')), NotificationTone.negative);
@@ -150,7 +160,8 @@ void main() {
         );
         expect(find.text('4'), findsOneWidget);
         expect(find.text(l10n.notificationToday), findsOneWidget);
-        expect(find.byKey(const Key('notification-icon-pending')), findsOneWidget);
+        // Processing deposit and both partially filled orders are still pending.
+        expect(find.byKey(const Key('notification-icon-pending')), findsNWidgets(3));
         expect(
           find.text(
             l10n.notificationTransferSummary(

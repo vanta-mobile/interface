@@ -17,11 +17,11 @@ NotificationStatusIcon notificationStatusIcon(AccountNotification event) => swit
   },
   MarginNotification() ||
   OrderNotification(risk: OrderRisk.liquidation) => NotificationStatusIcon.warning,
-  OrderNotification(risk: OrderRisk.adl) => NotificationStatusIcon.info,
+  OrderNotification(risk: OrderRisk.adl) => NotificationStatusIcon.warning,
   OrderNotification(:final status) || SpotOrderNotification(:final status) => switch (status) {
-    'NEW' => NotificationStatusIcon.pending,
-    'FILLED' || 'PARTIALLY_FILLED' => NotificationStatusIcon.success,
-    'REJECTED' => NotificationStatusIcon.failed,
+    'NEW' || 'PARTIALLY_FILLED' => NotificationStatusIcon.pending,
+    'FILLED' => NotificationStatusIcon.success,
+    'REJECTED' || 'CANCELED' || 'EXPIRED' => NotificationStatusIcon.failed,
     _ => NotificationStatusIcon.info,
   },
 };
