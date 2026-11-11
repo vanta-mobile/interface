@@ -68,6 +68,9 @@ void main() {
     expect(closed, 0);
     listener.close();
     await tester.pump(const Duration(milliseconds: 1));
+    // Kept briefly for the next order-pricing subscription, then released.
+    expect(closed, 0);
+    await tester.pump(const Duration(seconds: 60));
     await tester.pump(const Duration(milliseconds: 1));
     expect(closed, 1);
   });
@@ -169,11 +172,38 @@ void main() {
     await advance(tester, 30);
     listener.close();
     await tester.pump(const Duration(milliseconds: 1));
+    expect(container.exists(assetIndexProvider), true);
+    await tester.pump(const Duration(seconds: 60));
     await tester.pump(const Duration(milliseconds: 1));
     expect(container.exists(assetIndexProvider), false);
     gate.complete(assetIndexFixture(now));
     await tester.pump();
     await advance(tester, 120);
     expect(repository.calls, 2);
+  });
+  valueTest('a resubscription within the grace period keeps the current rates', (tester) async {
+    await tester.pump();
+    expect(container.read(assetIndexProvider).snapshot, isNotNull);
+    listener.close();
+    await tester.pump(const Duration(seconds: 20));
+    listener = container.listen(assetIndexProvider, (_, _) {});
+    expect(container.read(assetIndexProvider).snapshot, isNotNull);
+    await tester.pump(const Duration(seconds: 60));
+    expect(container.exists(assetIndexProvider), true);
+  });
+  valueTest('a failed refresh keeps the last snapshot and retries after five seconds', (
+    tester,
+  ) async {
+    await tester.pump();
+    final calls = repository.calls;
+    repository.failure = Exception('network');
+    await advance(tester, 30);
+    expect(repository.calls, calls + 1);
+    expect(container.read(assetIndexProvider).failed, true);
+    expect(container.read(assetIndexProvider).snapshot, isNotNull);
+    repository.failure = null;
+    await advance(tester, 5);
+    expect(repository.calls, calls + 2);
+    expect(container.read(assetIndexProvider).failed, false);
   });
 }

@@ -36,8 +36,11 @@ class MainOrderPricingWait {
       cancel();
       return;
     }
+    // Read once: a later read can rebuild the provider and re-enter _check
+    // through the listener, completing the result twice.
+    final source = ref.read(mainOrderPricingProvider);
+    if (_result.isCompleted) return;
     try {
-      final source = ref.read(mainOrderPricingProvider);
       final value = source.revalue(snapshot);
       if (notBefore case final since? when source is MainOrderMarketData) {
         final scope = mainOrderPriceScope(snapshot.context, snapshot);
@@ -52,8 +55,12 @@ class MainOrderPricingWait {
       _result.complete(value);
       _close();
     } on AccountReadFailure catch (failure) {
-      final source = ref.read(mainOrderPricingProvider);
-      if (failure.key == 'liveCapacityPriceUnavailable' &&
+      // Initial public marks/quotes and multi-asset collateral rates may still
+      // be in flight; keep waiting until they settle or the deadline expires.
+      if (const {
+            'liveCapacityPriceUnavailable',
+            'liveCapacityRatesUnavailable',
+          }.contains(failure.key) &&
           source is MainOrderMarketData &&
           source.pending &&
           source.active) {

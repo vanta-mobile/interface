@@ -23,7 +23,7 @@ final assetIndexProvider = NotifierProvider.autoDispose<AssetIndexController, As
 /// Public prices only, shared by displayed Spot/Futures balances. No wallet
 /// signatures. Cancel timers and discard in-flight results on pause/disposal.
 class AssetIndexController extends Notifier<AssetIndexState> {
-  Timer? _refreshTimer, _expiry;
+  Timer? _refreshTimer, _expiry, _release;
   int _generation = 0;
   DateTime get _now => ref.read(assetIndexClockProvider)().toUtc();
   bool get _active => ref.read(quoteUpdatesActiveProvider);
@@ -37,10 +37,17 @@ class AssetIndexController extends Notifier<AssetIndexState> {
       state = AssetIndexState(checkedAt: _now, snapshot: state.snapshot, active: active);
       if (active) unawaited(refresh());
     });
+    // Order pricing stops watching whenever its signed context expires (every
+    // 30s). Keep polling briefly so a re-read finds current rates instead of
+    // an empty, freshly created controller.
+    final link = ref.keepAlive();
+    ref.onCancel(() => _release = Timer(const Duration(seconds: 60), link.close));
+    ref.onResume(() => _release?.cancel());
     ref.onDispose(() {
       _generation++;
       _refreshTimer?.cancel();
       _expiry?.cancel();
+      _release?.cancel();
     });
     Future.microtask(() {
       if (ref.mounted && _active) unawaited(refresh());
@@ -83,7 +90,9 @@ class AssetIndexController extends Notifier<AssetIndexState> {
     }
     if (!current()) return;
     _scheduleExpiry();
-    _refreshTimer = Timer(const Duration(seconds: 30), () => unawaited(refresh()));
+    // A failed read retries soon; the previous snapshot stays usable until its
+    // own freshness limits expire.
+    _refreshTimer = Timer(Duration(seconds: state.failed ? 5 : 30), () => unawaited(refresh()));
   }
 
   void _scheduleExpiry() {

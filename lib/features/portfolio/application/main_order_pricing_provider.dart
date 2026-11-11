@@ -131,12 +131,26 @@ final mainOrderPricingProvider = Provider.autoDispose<MainOrderPricing>((ref) {
             (s) =>
                 marks.invalid.contains(s) || marks.snapshotFailed && !marks.quotes.containsKey(s),
           );
+  // After a reconnect, a recent value awaits re-verification before it is
+  // fresh again. That is still pending; an aged value is unavailable.
+  bool recent(DateTime received) {
+    final age = now().difference(received);
+    return !age.isNegative && age < const Duration(seconds: 10);
+  }
+
   var pending =
       markState.isLoading ||
       marks.connection == MarkPriceConnection.connecting ||
       !markState.hasError &&
           !marks.snapshotFailed &&
-          scope.marks.split(',').any((s) => !marks.quotes.containsKey(s));
+          scope.marks
+              .split(',')
+              .any(
+                (s) => switch (marks.quotes[s]) {
+                  null => true,
+                  final quote => !marks.fresh.contains(s) && recent(quote.receivedAt),
+                },
+              );
   final quotes = <String, OrderReferencePrices>{};
   for (final symbol in scope.last) {
     final quoteState = ref.watch(
@@ -155,8 +169,11 @@ final mainOrderPricingProvider = Provider.autoDispose<MainOrderPricing>((ref) {
         quoteState.isLoading ||
         value != null &&
             (value.connection == OrderPriceConnection.connecting ||
-                value.trade == null && !value.tradeFailed ||
-                symbol == context.symbol && value.book == null && !value.bookFailed);
+                !value.tradeFailed &&
+                    (value.trade == null || !value.tradeFresh && recent(value.trade!.receivedAt)) ||
+                symbol == context.symbol &&
+                    !value.bookFailed &&
+                    (value.book == null || !value.bookFresh && recent(value.book!.receivedAt)));
     if (value != null) quotes[symbol] = value;
   }
   final indices = snapshot?.assetMode == FuturesAssetMode.multi
@@ -166,9 +183,16 @@ final mainOrderPricingProvider = Provider.autoDispose<MainOrderPricing>((ref) {
     anchor: context,
     marks: marks,
     references: quotes,
-    indices: indices != null && indices.active && !indices.failed ? indices.snapshot : null,
+    // Freshness is enforced per rate during revaluation, so a failed refresh
+    // does not discard a snapshot that is still within its limits.
+    indices: indices != null && indices.active ? indices.snapshot : null,
     active: active,
-    pending: !unavailable && (pending || (indices?.loading == true && indices?.snapshot == null)),
+    // The index controller starts its first fetch in a microtask, so an
+    // empty, unfailed state is still pending rather than unavailable.
+    pending:
+        !unavailable &&
+        (pending ||
+            indices != null && (indices.loading || indices.snapshot == null && !indices.failed)),
     now: now,
   );
 });
