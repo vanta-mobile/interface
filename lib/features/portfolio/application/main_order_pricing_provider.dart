@@ -1,3 +1,5 @@
+import '../../market/domain/market_price_failure.dart';
+
 import 'dart:async';
 
 import 'package:decimal/decimal.dart';
@@ -11,6 +13,7 @@ import '../../market/data/order_reference_prices_repository.dart';
 import '../../market/domain/mark_prices.dart';
 import '../../market/domain/order_reference_prices.dart';
 import '../domain/futures_asset_mode.dart';
+import '../domain/account_snapshot.dart';
 import '../domain/live_order.dart';
 import '../domain/main_order_capacity.dart';
 import '../domain/main_order_pricing.dart';
@@ -76,8 +79,12 @@ final mainOrderMarksProvider = StreamProvider.autoDispose.family<MarkPrices, Str
   MainOrderCapacitySnapshot? snapshot,
 ) {
   final marks = {context.symbol}, last = {context.symbol};
-  if (snapshot?.context == context) {
-    final multi = snapshot!.assetMode == FuturesAssetMode.multi;
+  // Old account rows may keep the subscription scope warm during renewal.
+  // They are never accepted by the separate execution/valuation guards.
+  if (snapshot != null &&
+      snapshot.context.symbol == context.symbol &&
+      snapshot.context.address.toLowerCase() == context.address.toLowerCase()) {
+    final multi = snapshot.assetMode == FuturesAssetMode.multi;
     final eligible = {
       for (final a in snapshot.account.assets)
         if (multi ? a.marginAvailable : a.asset == context.rules.quoteAsset) a.asset,
@@ -97,6 +104,7 @@ final mainOrderMarksProvider = StreamProvider.autoDispose.family<MarkPrices, Str
 final mainOrderPricingProvider = Provider.autoDispose<MainOrderPricing>((ref) {
   final context = ref.watch(liveOrderProvider.select((s) => s.context));
   final stale = ref.watch(liveOrderProvider.select((s) => s.stale));
+  final accountFailure = ref.watch(liveOrderProvider.select((s) => s.failure));
   final identity = ref.watch(
     authProvider.select((s) => (s.identity?.walletAddress, s.identity?.signingAvailable, s.busy)),
   );
@@ -105,7 +113,6 @@ final mainOrderPricingProvider = Provider.autoDispose<MainOrderPricing>((ref) {
   final now = ref.watch(liveOrderClockProvider);
   final active = ref.watch(mainOrderQuotesActiveProvider);
   if (context == null ||
-      stale ||
       identity.$3 ||
       identity.$2 != true ||
       identity.$1?.toLowerCase() != context.address.toLowerCase() ||
@@ -117,6 +124,8 @@ final mainOrderPricingProvider = Provider.autoDispose<MainOrderPricing>((ref) {
       indices: null,
       active: false,
       now: now,
+      failure:
+          accountFailure ?? (stale ? const AccountReadFailure('liveOrderContextExpired') : null),
     );
   }
   final scope = mainOrderPriceScope(context, snapshot);
@@ -175,6 +184,16 @@ final mainOrderPricingProvider = Provider.autoDispose<MainOrderPricing>((ref) {
                     !value.bookFailed &&
                     (value.book == null || !value.bookFresh && recent(value.book!.receivedAt)));
     if (value != null) quotes[symbol] = value;
+    if (quoteState.hasError) {
+      final failure = marketPriceFailure(quoteState.error!, 'livePriceLastMissing');
+      quotes[symbol] = OrderReferencePrices(
+        symbol: symbol,
+        checkedAt: now(),
+        connection: OrderPriceConnection.online,
+        tradeFailed: true,
+        tradeFailure: failure,
+      );
+    }
   }
   final indices = snapshot?.assetMode == FuturesAssetMode.multi
       ? ref.watch(assetIndexProvider)
@@ -194,5 +213,12 @@ final mainOrderPricingProvider = Provider.autoDispose<MainOrderPricing>((ref) {
         (pending ||
             indices != null && (indices.loading || indices.snapshot == null && !indices.failed)),
     now: now,
+    failure:
+        accountFailure ??
+        (stale
+            ? const AccountReadFailure('liveOrderContextExpired')
+            : markState.hasError
+            ? marketPriceFailure(markState.error!, 'livePriceMarkMissing')
+            : null),
   );
 });

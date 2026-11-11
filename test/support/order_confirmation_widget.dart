@@ -3,6 +3,8 @@ import 'order_mode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/core/presentation/app_toast.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/domain/order_confirmation.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
@@ -107,25 +109,18 @@ Future<void> fillConfirmation(WidgetTester tester, OrderConfirmationKind kind) a
   }
 }
 
-Future<void> toggleDialogSkip(WidgetTester tester) async {
-  final skip = find.byKey(const Key('live-order-skip-confirmation'));
-  await tester.ensureVisible(skip);
-  await tester.pumpAndSettle();
-  await tester.tap(skip);
-  await tester.pumpAndSettle();
-}
-
 Future<void> confirmDialog(WidgetTester tester) async {
   final button = find.byKey(const Key('live-order-confirm'));
   await tester.ensureVisible(button);
   await tester.pumpAndSettle();
   await tester.tap(button);
   await tester.pumpAndSettle();
+  await dismissOrderConfirmation(tester);
 }
 
 Future<void> cancelConfirmation(WidgetTester tester) async {
-  final dialog = find.byType(AlertDialog),
-      l10n = AppLocalizations.of(tester.element(find.byType(AlertDialog)));
+  final dialog = find.byType(OrderConfirmationDialog),
+      l10n = AppLocalizations.of(tester.element(find.byType(OrderConfirmationDialog)));
   await tester.tap(find.descendant(of: dialog, matching: find.text(l10n.cancel)));
   await tester.pumpAndSettle();
 }
@@ -133,4 +128,15 @@ Future<void> cancelConfirmation(WidgetTester tester) async {
 Future<void> closeConfirmation(WidgetTester tester, ProviderContainer container) async {
   await tester.pumpWidget(const SizedBox());
   container.dispose();
+}
+
+/// A failed or unknown submission keeps the confirmation open with its toast;
+/// close it before interacting with the form behind it.
+Future<void> dismissOrderConfirmation(WidgetTester tester) async {
+  final cancel = find.byKey(const Key('live-order-cancel'));
+  if (cancel.evaluate().isEmpty) return;
+  AppToast.dismiss();
+  await tester.pump();
+  await tester.tap(cancel);
+  await tester.pumpAndSettle();
 }

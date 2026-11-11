@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/application/order_confirmation_provider.dart';
 import 'package:vanta/features/portfolio/domain/order_confirmation.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
@@ -34,7 +35,7 @@ void main() {
         await tapConfirmation(tester, 'attached-tp-enabled');
         await confirmationField(tester, 'attached-tp-price', '1');
         await tapConfirmation(tester, 'live-order-review');
-        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(OrderConfirmationDialog), findsNothing);
         expect(orders.submits, 1);
         expect(orders.lastIntent!.draft.attachment!.takeProfit, isNotNull);
         expect(orders.lastIntent!.draft.quantity, '0.001');
@@ -53,9 +54,9 @@ void main() {
     final sizing = TestQuickOrderRepository();
     final container = await launchConfirmation(tester, orders, prefs, sizing: sizing);
     await fillConfirmation(tester, OrderConfirmationKind.market);
+    await tapConfirmation(tester, 'order-confirmation-market');
     await tapConfirmation(tester, 'live-order-review');
-    await toggleDialogSkip(tester);
-    await confirmDialog(tester);
+    expect(find.byType(OrderConfirmationDialog), findsNothing);
     expect(orders.submits, 1);
     expect(prefs.required, false);
     await tester.tap(find.byType(BackButton));
@@ -110,7 +111,7 @@ void main() {
     final container = await launchConfirmation(tester, orders, prefs);
     await fillConfirmation(tester, OrderConfirmationKind.limit);
     await tapConfirmation(tester, 'live-order-review');
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(OrderConfirmationDialog), findsOneWidget);
     expect(orders.submits, 0);
     expect(container.read(orderConfirmationProvider(OrderConfirmationKind.limit)).failure, true);
     await cancelConfirmation(tester);

@@ -24,26 +24,3 @@ class EmbeddedOrderFailure extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 24),
   );
 }
-
-class EmbeddedOrderSkeleton extends StatelessWidget {
-  const EmbeddedOrderSkeleton({super.key});
-  @override
-  Widget build(BuildContext context) => const Padding(
-    key: Key('trade-order-skeleton'),
-    padding: EdgeInsets.symmetric(vertical: 12),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SkeletonBox(height: 48, radius: 12),
-        SizedBox(height: 8),
-        SkeletonBox(height: 48, radius: 12),
-        SizedBox(height: 12),
-        SkeletonBox(height: 16),
-        SizedBox(height: 12),
-        SkeletonBox(height: 90, radius: 12),
-        SizedBox(height: 8),
-        SkeletonBox(height: 90, radius: 12),
-      ],
-    ),
-  );
-}

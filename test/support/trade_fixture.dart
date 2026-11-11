@@ -1,6 +1,10 @@
+import 'package:vanta/features/market/application/public_leverage_provider.dart';
 import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
 import 'package:vanta/features/authorization/domain/trading_agent.dart';
+import 'package:vanta/features/portfolio/application/open_order_strategies_provider.dart';
+import 'package:vanta/features/portfolio/domain/open_order_strategy.dart';
 
+import 'aster_open_orders.dart' show TestOpenOrderStrategyRepository;
 import 'trading_agents.dart';
 import 'identity_repository.dart';
 
@@ -222,6 +226,7 @@ ProviderContainer setup(
   AsterAccountRepository? asterAccountRepository,
   AsterSpotAccountRepository? asterSpotRepository,
   AsterOpenOrdersRepository? openOrdersRepository,
+  OpenOrderStrategyRepository? openOrderStrategyRepository,
   OrderCancellationRepository? orderCancellationRepository,
   BatchOrderCancellationRepository? batchCancellationRepository,
   PositionAdlRepository? positionAdlRepository,
@@ -260,6 +265,7 @@ ProviderContainer setup(
   if (notificationRepository == null) addTearDown(inboxRepository.dispose);
   final container = ProviderContainer(
     overrides: [
+      publicLeverageProvider.overrideWith((ref) async => const {}),
       tradingAgentStoreProvider.overrideWithValue(
         tradingAgentStore ?? MemoryTradingAgentStorage().store(DateTime.now),
       ),
@@ -367,6 +373,9 @@ ProviderContainer setup(
         orderCancellationRepositoryProvider.overrideWithValue(orderCancellationRepository),
       if (openOrdersRepository != null)
         asterOpenOrdersRepositoryProvider.overrideWithValue(openOrdersRepository),
+      openOrderStrategyRepositoryProvider.overrideWithValue(
+        openOrderStrategyRepository ?? TestOpenOrderStrategyRepository(),
+      ),
       if (asterSpotRepository != null)
         asterSpotRepositoryProvider.overrideWithValue(asterSpotRepository),
       if (asterAccountRepository != null)

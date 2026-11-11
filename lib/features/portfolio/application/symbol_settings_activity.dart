@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_provider.dart';
 import '../../market/application/market_providers.dart' show quoteUpdatesActiveProvider;
-import 'order_recovery_provider.dart';
 import 'position_margin_storage_provider.dart';
 import 'rebalance_storage_provider.dart';
 import '../../funding/application/internal_transfer_storage_provider.dart';
@@ -36,8 +35,8 @@ class SymbolSettingsActivity {
   bool blocks(SymbolSetting setting) => recoveryBlocked || owner != null && owner != setting;
 }
 
-/// Serializes actual settings operations, including unknown outcomes, across
-/// account-wide and symbol-scoped routes. A new setting cannot supersede an unresolved write.
+/// Serializes active operations. Order records and settled unknown order
+/// outcomes are observational; other financial settings retain their guards.
 final symbolSettingsActivityProvider =
     NotifierProvider<SymbolSettingsActivityController, SymbolSettingsActivity>(
       SymbolSettingsActivityController.new,
@@ -61,8 +60,7 @@ class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> 
   Object? _identityKey;
   bool get _recoveryBlocked => _hasRecoveryBlock();
 
-  bool _hasRecoveryBlock({String? activeOrderId}) {
-    final storage = ref.read(orderRecoverySnapshotProvider);
+  bool _hasRecoveryBlock() {
     final rebalances = ref.read(rebalanceStorageProvider);
     final transfers = ref.read(internalTransferStorageProvider);
     final margins = ref.read(positionMarginStorageProvider);
@@ -74,20 +72,8 @@ class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> 
         ref.read(pendingInternalTransfersProvider).isNotEmpty ||
         !rebalances.ready ||
         rebalances.failure ||
-        ref.read(pendingRebalancesProvider).isNotEmpty ||
-        !storage.ready ||
-        storage.failure != null ||
-        ref.read(pendingWalletOrdersProvider).any((r) => r.query.clientOrderId != activeOrderId);
+        ref.read(pendingRebalancesProvider).isNotEmpty;
   }
-
-  /// The active order must persist its own recovery record before POST. That
-  /// record blocks other work, but must not invalidate the write which owns it.
-  /// Storage failures and every other pending operation still block the send.
-  bool canContinueOrder(String clientOrderId) =>
-      state.owner == SymbolSetting.order &&
-      state.busy &&
-      !state.unresolved &&
-      !_hasRecoveryBlock(activeOrderId: clientOrderId);
 
   @override
   SymbolSettingsActivity build() {
@@ -115,8 +101,6 @@ class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> 
     ref.watch(pendingInternalTransfersProvider);
     ref.watch(rebalanceStorageProvider);
     ref.watch(pendingRebalancesProvider);
-    ref.watch(orderRecoverySnapshotProvider);
-    ref.watch(pendingWalletOrdersProvider);
     return SymbolSettingsActivity(
       owner: _operation.owner,
       busy: _operation.busy,
@@ -127,7 +111,6 @@ class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> 
   }
 
   int? acquire(SymbolSetting owner, {bool checkingOnly = false}) {
-    final storage = ref.read(orderRecoverySnapshotProvider);
     final rebalances = ref.read(rebalanceStorageProvider);
     final transfers = ref.read(internalTransferStorageProvider);
     final margins = ref.read(positionMarginStorageProvider);
@@ -139,10 +122,7 @@ class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> 
         ref.read(pendingInternalTransfersProvider).isNotEmpty && !checkingOnly ||
         !rebalances.ready ||
         rebalances.failure ||
-        ref.read(pendingRebalancesProvider).isNotEmpty && !checkingOnly ||
-        !storage.ready ||
-        storage.failure != null ||
-        ref.read(pendingWalletOrdersProvider).isNotEmpty && !checkingOnly) {
+        ref.read(pendingRebalancesProvider).isNotEmpty && !checkingOnly) {
       return null;
     }
     if (state.busy ||
@@ -171,9 +151,17 @@ class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> 
 
   void finish(int token, {required bool unresolved}) {
     if (!ref.mounted || token != _token) return;
+    final holdsSettings =
+        unresolved &&
+        !const {
+          SymbolSetting.order,
+          SymbolSetting.scaled,
+          SymbolSetting.batchClose,
+          SymbolSetting.recovery,
+        }.contains(state.owner);
     state = _operation = SymbolSettingsActivity(
-      owner: unresolved ? state.owner : null,
-      unresolved: unresolved,
+      owner: holdsSettings ? state.owner : null,
+      unresolved: holdsSettings,
       epoch: state.epoch,
       recoveryBlocked: _recoveryBlocked,
     );

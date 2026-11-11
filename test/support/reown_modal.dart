@@ -12,6 +12,7 @@ class TestReownModal extends ChangeNotifier implements ReownAppKitModal {
     'personal_sign',
     'eth_signTypedData_v4',
     'wallet_switchEthereumChain',
+    'wallet_addEthereumChain',
   ];
   String selectedChainId = '56';
   List<String>? approvedAccounts;

@@ -1,5 +1,7 @@
 import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
 
+import 'package:vanta/features/authorization/domain/trading_agent.dart';
+
 import 'trading_agents.dart';
 
 import 'package:flutter/material.dart';
@@ -64,6 +66,7 @@ class GeneratedAccountsFixture {
     WidgetTester t, {
     List<WalletOperationRecord> records = const [],
     WalletConnector? switchConnector,
+    TradingAgentStore? agents,
   }) {
     journal = MemoryWalletOperationJournal(records: records);
     repository = JournalSubaccountRepository(journal);
@@ -76,7 +79,7 @@ class GeneratedAccountsFixture {
     container = ProviderContainer(
       overrides: [
         tradingAgentStoreProvider.overrideWithValue(
-          MemoryTradingAgentStorage().store(DateTime.now),
+          agents ?? MemoryTradingAgentStorage().store(DateTime.now),
         ),
         identityRepositoryProvider.overrideWithValue(identity),
         accountSwitchAuthorizationProvider.overrideWithValue(TestAccountSwitchAuthorization()),
@@ -86,6 +89,7 @@ class GeneratedAccountsFixture {
         subaccountWalletStoreProvider.overrideWithValue(wallets),
         subaccountBalanceRepositoryProvider.overrideWithValue(balances),
         subaccountManagementRepositoryProvider.overrideWithValue(repository),
+        subaccountCreationPollProvider.overrideWithValue(Duration.zero),
         subaccountListRepositoryProvider.overrideWithValue(directory),
         asterAccountRepositoryProvider.overrideWithValue(account),
       ],

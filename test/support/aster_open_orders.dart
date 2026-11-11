@@ -4,6 +4,8 @@ import 'package:vanta/features/portfolio/data/aster_open_orders_mapper.dart';
 import 'package:vanta/features/portfolio/domain/aster_account.dart';
 import 'package:vanta/features/portfolio/domain/aster_open_orders.dart';
 
+import 'package:vanta/features/portfolio/domain/open_order_strategy.dart';
+
 import 'aster_account.dart';
 
 Map<String, Object?> openOrder({
@@ -74,6 +76,21 @@ class TestOpenOrdersRepository implements AsterOpenOrdersRepository {
     await gate?.future;
     onStep(AccountReadStep.loading);
     if (failure case final error?) throw error;
+    return result;
+  }
+}
+
+class TestOpenOrderStrategyRepository implements OpenOrderStrategyRepository {
+  OpenOrderStrategy? result;
+  final queries = <OpenOrderStrategyQuery>[];
+  @override
+  Future<OpenOrderStrategy?> read({
+    required String address,
+    required AsterOpenOrder order,
+    required OpenOrderStrategyQuery query,
+    required bool Function() isCurrent,
+  }) async {
+    queries.add(query);
     return result;
   }
 }

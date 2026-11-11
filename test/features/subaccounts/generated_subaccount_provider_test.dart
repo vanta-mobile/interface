@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/data/aster_signature_verifier.dart';
+import 'package:vanta/core/errors/api_error_details.dart';
 import 'package:vanta/core/domain/wallet_operation.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
@@ -63,6 +64,7 @@ void main() {
         identityRepositoryProvider.overrideWithValue(identity),
         subaccountWalletStoreProvider.overrideWithValue(store),
         subaccountManagementRepositoryProvider.overrideWithValue(repo),
+        subaccountCreationPollProvider.overrideWithValue(Duration.zero),
       ],
     );
     addTearDown(container.dispose);
@@ -95,13 +97,42 @@ void main() {
     expect(repo.prepares, 0);
     expect(container.read(generatedAccountProvider).failure, 'subaccountCreateExternalOnly');
   });
-  test('unknown outcome retains durable backup and never auto retries', () async {
+  test('undecided outcome stays busy until the directory confirms the child', () async {
+    await launch();
+    repo.submitFailure = const AccountReadFailure('walletOperationUnknown');
+    repo.settlements.addAll([null, null, true]);
+    final task = container.read(generatedAccountProvider.notifier).create('Desk');
+    await Future<void>.delayed(Duration.zero);
+    expect(container.read(generatedAccountProvider).busy, true);
+    expect(container.read(generatedAccountProvider).accepted, false);
+    await task;
+    final state = container.read(generatedAccountProvider);
+    expect(state.accepted, true);
+    expect(state.wallet, isNotNull);
+    expect(repo.settles, 3);
+    expect(repo.sends, 1);
+    expect((await store.list()).single.backedUp, false);
+  });
+  test('provably absent creation reports failure and discards the unused key', () async {
+    await launch();
+    repo.submitFailure = const AccountReadFailure('walletOperationUnknown');
+    repo.settlements.addAll([null, false]);
+    await container.read(generatedAccountProvider.notifier).create('Desk');
+    final state = container.read(generatedAccountProvider);
+    expect(state.wallet, null);
+    expect(state.accepted, false);
+    expect(state.failure, 'subaccountCreationNotCompleted');
+    expect(await store.list(), isEmpty);
+    expect(repo.sends, 1);
+  });
+  test('outcome still unknown after the window keeps the key without opening backup', () async {
     await launch();
     repo.submitFailure = const AccountReadFailure('walletOperationUnknown');
     await container.read(generatedAccountProvider.notifier).create('Desk');
+    final state = container.read(generatedAccountProvider);
+    expect(state.wallet, null);
+    expect(state.failure, 'walletOperationUnknown');
     expect((await store.list()).length, 1);
-    expect(container.read(generatedAccountProvider).wallet, isNotNull);
-    expect(container.read(generatedAccountProvider).failure, 'walletOperationUnknown');
     expect(repo.prepares, 1);
     expect(repo.sends, 1);
   });
@@ -119,7 +150,22 @@ void main() {
     expect(repo.latestCurrent!(), false);
     expect(repo.sends, 0);
     expect(container.read(generatedAccountProvider).wallet, null);
-    expect((await store.list()).length, 1);
+    expect(await store.list(), isEmpty);
+  });
+  test('wallet failure before dispatch keeps the review and discards the unused key', () async {
+    await launch();
+    repo.failure = const AccountReadFailure(
+      'authWalletUnavailable',
+      details: ApiErrorDetails(message: 'Provided chainId must match the active chainId'),
+    );
+    await container.read(generatedAccountProvider.notifier).create('Desk');
+    final state = container.read(generatedAccountProvider);
+    expect(state.wallet, null);
+    expect(state.accepted, false);
+    expect(state.failure, 'authWalletUnavailable');
+    expect(state.details?.message, 'Provided chainId must match the active chainId');
+    expect(repo.sends, 0);
+    expect(await store.list(), isEmpty);
   });
   test('invalid names do not generate keys or request signatures', () async {
     await launch();

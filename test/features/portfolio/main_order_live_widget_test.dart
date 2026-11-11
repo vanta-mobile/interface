@@ -7,8 +7,10 @@ import 'package:vanta/core/theme.dart';
 import 'package:vanta/features/portfolio/application/main_order_allocation_provider.dart';
 import 'package:vanta/features/portfolio/domain/live_order_entry_mode.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_form.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
+import '../../support/order_confirmation_widget.dart';
 import '../../support/main_order_live_pricing.dart';
 import '../../support/main_order_capacity.dart';
 
@@ -97,10 +99,15 @@ void main() {
       });
       await tester.pumpAndSettle();
       expect(r.intent.draft.quantity, '2');
+      expect(
+        find.descendant(of: find.byType(OrderConfirmationDialog), matching: find.text('1.8 BTC')),
+        findsOneWidget,
+      );
       await tester.ensureVisible(find.byKey(const Key('live-order-confirm')));
       await tester.tap(find.byKey(const Key('live-order-confirm')));
       await tester.pumpAndSettle();
-      expect(f.orders.lastIntent!.draft.quantity, '2');
+      await dismissOrderConfirmation(tester);
+      expect(f.orders.lastIntent!.draft.quantity, '1.8');
       expect(raw(tester), '198.000');
     } finally {
       await tester.pumpWidget(const SizedBox());
@@ -138,8 +145,23 @@ void main() {
           tester.widget<TextField>(find.byKey(const Key('attached-tp-price'))).controller!.text,
           '+2',
         );
-        await tester.tap(find.text('Cancel'));
+        await tester.runAsync(() async {
+          f.prices(bid: '104', ask: '105', mark: '105', last: '105');
+          await f.flush();
+        });
         await tester.pumpAndSettle();
+        expect(
+          find.descendant(
+            of: find.byType(OrderConfirmationDialog),
+            matching: find.textContaining('106 USDT'),
+          ),
+          findsOneWidget,
+        );
+        await tester.tap(find.byKey(const Key('live-order-confirm')));
+        await tester.pumpAndSettle();
+        expect(f.orders.submits, 1);
+        expect(f.orders.lastIntent!.draft.quantity, '1.923');
+        expect(f.orders.lastIntent!.draft.attachment!.takeProfit!.price, '106');
         expect(tester.takeException(), isNull);
       } finally {
         await tester.pumpWidget(const SizedBox());

@@ -91,7 +91,7 @@ void main() {
       expect(orders.lastIntent!.draft.quickEntry, true);
     },
   );
-  test('unknown outcome locks entry and recovers original intent without another POST', () async {
+  test('unknown outcome allows editing while explicit recheck keeps original intent', () async {
     await controller().load();
     controller().setQuantity('0.001');
     orders.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
@@ -99,11 +99,8 @@ void main() {
     final intent = orders.lastIntent!;
     expect(container.read(quickOrderProvider).quantity, '0.001');
     controller().setQuantity('1');
-    controller().selectPercent(100);
-    await controller().load();
-    expect(controller().prepare(true), null);
-    expect(orders.reads, 1);
-    expect(container.read(quickOrderProvider).quantity, '0.001');
+    expect(container.read(quickOrderProvider).quantity, '1');
+    expect(orders.submits, 1);
     orders.result = LiveOrderResult(
       orderId: '12345',
       status: 'FILLED',

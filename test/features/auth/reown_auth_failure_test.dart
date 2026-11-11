@@ -43,4 +43,22 @@ void main() {
     }
     expect(failureFromReown(StateError('Request failed')).reason, 'Request failed');
   });
+  test('MetaMask JSON-wrapped WalletConnect errors expose the wallet message', () {
+    final failure = failureFromReown(
+      JsonRpcError(
+        code: 5000,
+        message:
+            '{"code":-32602,"message":"Invalid parameters: must provide an Ethereum address."}',
+      ),
+    );
+    expect(failure.key, 'authWalletUnavailable');
+    expect(failure.reason, 'Invalid parameters: must provide an Ethereum address.');
+    for (final message in [
+      '{"code":-32000,"message":"wc:topic@2?symKey=private"}',
+      '{"code":-32000,"message":{"secret":"private"}}',
+      '{"code":-32000}',
+    ]) {
+      expect(failureFromReown(JsonRpcError(code: 5000, message: message)).reason, isNull);
+    }
+  });
 }

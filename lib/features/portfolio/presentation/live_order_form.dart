@@ -1,7 +1,9 @@
+import 'minimum_order_size_hint.dart';
+import 'embedded_time_in_force_selector.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
@@ -14,6 +16,7 @@ import '../application/main_order_refresh_provider.dart';
 import '../application/main_order_capacity_preview_provider.dart';
 import '../application/main_order_pricing_provider.dart';
 import '../domain/account_snapshot.dart';
+import '../domain/main_order_pricing.dart';
 import '../application/symbol_settings_activity.dart';
 import '../domain/live_order.dart';
 import '../domain/futures_position_mode.dart';
@@ -40,6 +43,7 @@ import 'main_order_capacity_panel.dart';
 import 'main_order_percentage_control.dart';
 import '../domain/main_order_capacity_preview.dart';
 import '../domain/main_order_allocation.dart';
+import '../domain/main_order_review_input.dart';
 import '../../../core/domain/decimal_value.dart';
 import '../../../core/errors/error_text.dart';
 import '../../../core/formatters/token_amount_formatter.dart';
@@ -49,7 +53,7 @@ import '../../trade/presentation/trade_theme.dart';
 import 'live_order_embedded_controls.dart';
 import 'live_order_embedded_inputs.dart';
 import 'live_order_embedded_triggers.dart';
-import 'live_order_policy.dart';
+import '../../trade/presentation/widgets/trade_option_sheet.dart';
 
 part 'live_order_allocation_binding.dart';
 part 'live_order_form_embedded.dart';
@@ -96,6 +100,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
   );
   final triggerPrice = TextEditingController();
   bool buy = true, market = false, reduceOnly = false;
+  bool? _refreshingReviewDirection;
   bool conditional = false, protect = false;
   bool entireClose = false, trailing = false;
   final trailingRate = TextEditingController(), trailingActivation = TextEditingController();
@@ -255,10 +260,10 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
     if (!reducing) ref.watch(mainOrderPricingProvider);
     ref.watch(symbolSettingsActivityProvider);
     final controller = ref.read(liveOrderProvider.notifier);
+    final refresh = ref.watch(mainOrderRefreshProvider);
     final enabled =
-        !ref.watch(mainOrderRefreshProvider).loading &&
-        !state.busy &&
-        !state.needsRecheck &&
+        (!refresh.loading || refresh.background) &&
+        (!state.busy || refresh.background && state.intent == null) &&
         !allocation.preparing;
     if (widget.bookPricing) {
       ref.listen<String>(orderPriceProvider, (_, value) {
@@ -283,7 +288,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
     final size = sizing;
     final invalid =
         size.failure ??
-        (!reducing && _pricingContext == null ? 'liveCapacityPriceUnavailable' : null) ??
+        (!reducing && _pricingContext == null ? _pricing.failure?.key : null) ??
         attachmentFailure ??
         contextData.validate(draft);
     final intent = invalid == null
@@ -299,7 +304,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
       size: size,
       enabled: enabled,
       stale: state.stale,
-      pending: allocation.preparing || state.busy,
+      pending: allocation.preparing || state.busy && state.intent != null,
     );
   }
 

@@ -6,7 +6,7 @@ import 'package:vanta/features/market/domain/market.dart';
 import 'package:vanta/features/portfolio/application/open_orders_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/aster_open_orders.dart';
-import 'package:vanta/features/portfolio/presentation/aster_open_orders_panel.dart';
+import 'package:vanta/features/portfolio/presentation/trade_open_orders_section.dart';
 import 'package:vanta/features/trade/presentation/widgets/compact_order_book.dart';
 
 import '../../support/aster_account.dart';
@@ -18,7 +18,7 @@ import '../../support/workspace_navigation.dart';
 Finder inBook(Finder finder) =>
     find.descendant(of: find.byType(CompactOrderBook), matching: finder);
 Finder inOrders(Finder finder) =>
-    find.descendant(of: find.byType(AsterOpenOrdersPanel), matching: finder);
+    find.descendant(of: find.byType(TradeOpenOrdersSection), matching: finder);
 const retry = Key('status-retry');
 const spinner = Key('status-action-loading');
 
@@ -95,7 +95,8 @@ void main() {
     expect(inOrders(find.byKey(const Key('status-failure'))), findsNothing);
     expect(inOrders(find.text('No Data Yet')), findsOneWidget);
     expect(find.text('No open perpetual orders in this account.'), findsOneWidget);
-    expect(find.byKey(const Key('read-open-orders')), findsOneWidget);
+    // Reads are signed silently by the device grant; no manual read button.
+    expect(find.byKey(const Key('read-open-orders')), findsNothing);
     expect(tester.takeException(), isNull);
     // Signing out clears the snapshot and its expiry timer.
     identity.events.add(null);

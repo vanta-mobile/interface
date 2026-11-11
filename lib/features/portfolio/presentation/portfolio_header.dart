@@ -68,7 +68,7 @@ class PortfolioHeader extends ConsumerWidget {
           if (active)
             IconButton(
               key: const Key('portfolio-history-entry'),
-              tooltip: l.transferHistoryTitle,
+              tooltip: l.assetHistoryTitle,
               onPressed: preview
                   ? () => portfolioPreviewNotice(context)
                   : () => openTransferHistory(context),

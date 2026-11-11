@@ -174,22 +174,19 @@ void main() {
     expect(risk.calls, 1);
     expect(container.read(symbolSettingsActivityProvider).owner, null);
   });
-  test('unknown outcome blocks every trade setting; recovery only queries original ID', () async {
+  test('unknown outcome releases trade settings; explicit recovery queries original ID', () async {
     final intent = await prepare();
     repository.unknown = true;
     await controller().submit(intent);
     expect(repository.posts.length, 1);
     expect(state().needsRecheck, true);
-    expect(container.read(symbolSettingsActivityProvider).unresolved, true);
-    expect(controller().prepare(), null);
-    expect(
-      container.read(symbolSettingsActivityProvider.notifier).acquire(SymbolSetting.order),
-      null,
-    );
-    expect(
-      container.read(symbolSettingsActivityProvider.notifier).acquire(SymbolSetting.leverage),
-      null,
-    );
+    expect(container.read(symbolSettingsActivityProvider).unresolved, false);
+    final activity = container.read(symbolSettingsActivityProvider.notifier);
+    for (final setting in [SymbolSetting.order, SymbolSetting.leverage]) {
+      final lease = activity.acquire(setting);
+      expect(lease, isNotNull);
+      activity.finish(lease!, unresolved: false);
+    }
     repository.unknown = false;
     await controller().recheck();
     expect(state().needsRecheck, false);
@@ -301,16 +298,17 @@ void main() {
     expect(repository.reads, isEmpty);
   });
 
-  test('unknown single order lease prevents batch preparation or submission', () async {
+  test('settled unknown single order lease allows a new batch confirmation', () async {
     final intent = await prepare();
     final activity = container.read(symbolSettingsActivityProvider.notifier);
     final lease = activity.acquire(SymbolSetting.order)!;
     activity.submitted(lease);
     activity.finish(lease, unresolved: true);
-    expect(controller().prepare(), null);
+    expect(controller().prepare(), isNotNull);
+    expect(container.read(symbolSettingsActivityProvider).owner, isNull);
+    // A previously frozen pre-write confirmation is still invalidated by epoch.
     await controller().submit(intent);
     expect(repository.reads, isEmpty);
-    expect(container.read(symbolSettingsActivityProvider).owner, SymbolSetting.order);
   });
 
   test('second position failure preserves first verified order and unsubmitted failure', () async {

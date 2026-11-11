@@ -21,6 +21,7 @@ import '../../support/wallet_connection.dart';
 void main() {
   late List<http.Request> requests;
   late List<String> messages;
+  Completer<void>? publicReadGate;
   late AsterAccountService service;
   late SignedLiveOrderRepository repository;
   late LiveOrderIntent intent;
@@ -41,6 +42,7 @@ void main() {
     postTimeout = hedge = false;
     refusedSignature = 0;
     afterSign = null;
+    publicReadGate = null;
     closePositions = null;
     badBook = false;
     fundsPayload = assetModePayload = lastTickerPayload = null;
@@ -48,6 +50,16 @@ void main() {
     service = AsterAccountService(
       client: MockClient((request) async {
         requests.add(request);
+        if (publicReadGate != null &&
+            const {
+              '/fapi/v3/time',
+              '/fapi/v3/exchangeInfo',
+              '/fapi/v3/premiumIndex',
+              '/fapi/v3/ticker/price',
+              '/fapi/v3/ticker/bookTicker',
+            }.contains(request.url.path)) {
+          await publicReadGate!.future;
+        }
         expect(request.followRedirects, false);
         expect(request.url.host, 'fapi.asterdex.com');
         final path = request.url.path;
@@ -575,6 +587,8 @@ void main() {
     final result = await submit();
     expect(result.needsRecheck, true);
     expect(result.failure?.key, 'accountDataInvalid');
+    expect(result.failure?.reasonKey, 'orderResponseIdentityMismatch');
+    expect(result.failure?.details?.endpoint, '/fapi/v3/order');
   });
   test('preflight reads zero-sized configuration without placing an order', () async {
     final context = await repository.read(
@@ -761,6 +775,32 @@ void main() {
     includeFunds: includeFunds,
   );
 
+  test(
+    'public bootstrap overlaps requests and each read operation calibrates its own clock once',
+    () async {
+      publicReadGate = Completer<void>();
+      final pending = readContext();
+      await Future<void>.delayed(Duration.zero);
+      expect(requests.map((r) => r.url.path).toSet(), {
+        '/fapi/v3/time',
+        '/fapi/v3/exchangeInfo',
+        '/fapi/v3/premiumIndex',
+        '/fapi/v3/ticker/price',
+        '/fapi/v3/ticker/bookTicker',
+      });
+      expect(messages, isEmpty);
+      publicReadGate!.complete();
+      await pending;
+      expect(requests.where((r) => r.url.path.endsWith('/time')).length, 1);
+      publicReadGate = null;
+      await readContext();
+      expect(requests.where((r) => r.url.path.endsWith('/time')).length, 2);
+      final signed = requests.where((r) => r.url.queryParameters.containsKey('signature'));
+      expect(signed.map((r) => r.url.queryParameters['nonce']).toSet().length, 8);
+      expect(requests.where((r) => r.method == 'POST'), isEmpty);
+    },
+  );
+
   test('opening preflight separately signs asset mode and funds with exact query bytes', () async {
     assetModePayload = {'multiAssetsMargin': true};
     fundsPayload = {...accountPayload(), 'positions': <Map<String, dynamic>>[], 'canTrade': true};
@@ -777,6 +817,7 @@ void main() {
       '/fapi/v3/accountWithJoinMargin',
     ]);
     expect(signed.map((r) => r.method).toSet(), {'GET'});
+    expect(requests.where((r) => r.url.path.endsWith('/time')).length, 1);
     expect(signed.map((r) => r.url.queryParameters['nonce']).toSet().length, 4);
     for (var i = 0; i < signed.length; i++) {
       expect(signed[i].url.query.split('&signature=').first, messages[i]);

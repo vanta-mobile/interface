@@ -254,18 +254,18 @@ LiveOrderContext mainOrderPriceContext({
   required DateTime now,
 }) {
   final book = reference;
-  // Both channels are required for the selected symbol, including Last-based
-  // trigger/trailing validation. Never substitute a stale book with Mark.
   _last(book, context.symbol, now);
-  if (book == null ||
-      !book.bookFresh ||
-      book.bookFailed ||
-      book.book == null ||
-      book.book!.symbol != context.symbol ||
-      !_recent(book.book!.receivedAt, now) ||
+  if (book!.bookFailed) {
+    throw book.bookFailure ?? _priceFailure('livePriceBookInvalid');
+  }
+  if (book.book == null) throw _priceFailure('livePriceBookMissing');
+  if (book.book!.symbol != context.symbol ||
       book.book!.bid <= Decimal.zero ||
       book.book!.ask < book.book!.bid) {
-    throw const AccountReadFailure('liveCapacityPriceUnavailable');
+    throw _priceFailure('livePriceBookInvalid');
+  }
+  if (!book.bookFresh || !_recent(book.book!.receivedAt, now)) {
+    throw _priceFailure('livePriceBookStale');
   }
   return LiveOrderContext(
     address: context.address,
@@ -287,32 +287,42 @@ LiveOrderContext mainOrderPriceContext({
   );
 }
 
+AccountReadFailure _priceFailure(String reason) =>
+    AccountReadFailure('liveCapacityPriceUnavailable', reasonKey: reason);
+
 Decimal _mark(MarkPrices marks, String symbol, DateTime now) {
+  if (marks.connection == MarkPriceConnection.offline) throw _priceFailure('livePriceDisconnected');
+  if (marks.connection == MarkPriceConnection.connecting) {
+    throw _priceFailure('livePriceConnecting');
+  }
+  if (marks.invalid.contains(symbol)) throw _priceFailure('livePriceMarkInvalid');
   final value = marks.quotes[symbol];
-  if (marks.connection != MarkPriceConnection.online ||
-      !marks.fresh.contains(symbol) ||
-      marks.invalid.contains(symbol) ||
-      value == null ||
-      value.symbol != symbol ||
-      value.price <= Decimal.zero ||
-      !_recent(value.receivedAt, now)) {
-    throw const AccountReadFailure('liveCapacityPriceUnavailable');
+  if (value == null) throw marks.failure ?? _priceFailure('livePriceMarkMissing');
+  if (value.symbol != symbol || value.price <= Decimal.zero) {
+    throw _priceFailure('livePriceMarkInvalid');
+  }
+  if (!marks.fresh.contains(symbol) || !_recent(value.receivedAt, now)) {
+    throw marks.failure ?? _priceFailure('livePriceMarkStale');
   }
   return value.price;
 }
 
 Decimal _last(OrderReferencePrices? value, String symbol, DateTime now) {
-  if (value == null ||
-      value.symbol != symbol ||
-      value.connection != OrderPriceConnection.online ||
-      value.checkedAt.isAfter(now) ||
-      !value.tradeFresh ||
-      value.tradeFailed ||
-      value.trade == null ||
-      value.trade!.symbol != symbol ||
-      value.trade!.price <= Decimal.zero ||
-      !_recent(value.trade!.receivedAt, now)) {
-    throw const AccountReadFailure('liveCapacityPriceUnavailable');
+  if (value == null) throw _priceFailure('livePriceConnecting');
+  if (value.symbol != symbol) throw _priceFailure('livePriceLastInvalid');
+  if (value.connection == OrderPriceConnection.offline) {
+    throw _priceFailure('livePriceDisconnected');
+  }
+  if (value.connection == OrderPriceConnection.connecting) {
+    throw _priceFailure('livePriceConnecting');
+  }
+  if (value.tradeFailed) throw value.tradeFailure ?? _priceFailure('livePriceLastInvalid');
+  if (value.trade == null) throw _priceFailure('livePriceLastMissing');
+  if (value.trade!.symbol != symbol || value.trade!.price <= Decimal.zero) {
+    throw _priceFailure('livePriceLastInvalid');
+  }
+  if (value.checkedAt.isAfter(now) || !value.tradeFresh || !_recent(value.trade!.receivedAt, now)) {
+    throw _priceFailure('livePriceLastStale');
   }
   return value.trade!.price;
 }

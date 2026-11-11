@@ -282,17 +282,17 @@ void main() {
     await controller().load('BTCUSDT');
     expect(repository.reads, 1);
   });
-  test('recovery becoming blocked during read prevents acceptance', () async {
+  test('a diagnostic record during a read does not invalidate capacity', () async {
     repository.gate = Completer<void>();
     final future = controller().load('BTCUSDT');
     await container
         .read(orderRecoveryJournalProvider)
         .prepare(OrderRecoveryRecord(query: OrderQuery.capture(liveIntent()), createdAt: now));
-    expect(repository.latestCurrent!(), false);
+    expect(repository.latestCurrent!(), true);
     repository.gate!.complete();
     await future;
-    expect(controller().current, null);
-    expect(state().snapshot, null);
+    expect(controller().current, isNotNull);
+    expect(state().snapshot, isNotNull);
   });
   test('disposed provider rejects late results without throwing', () async {
     repository.gate = Completer<void>();

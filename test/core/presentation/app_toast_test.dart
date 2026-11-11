@@ -46,7 +46,7 @@ void main() {
     expect(find.text('Saved'), findsNothing);
   });
 
-  testWidgets('failure toast dismisses automatically by default', (tester) async {
+  testWidgets('failure toast stays until manually closed by default', (tester) async {
     await tester.pumpWidget(
       buildTestApp((context) => AppToast.showFailure(context, 'Request failed')),
     );
@@ -54,10 +54,57 @@ void main() {
     await tester.pump();
 
     expect(svgAsset(tester), 'assets/feedback/fail.svg');
-    expect(tester.getSize(find.byKey(const Key('app-toast'))).height, 44);
-    await tester.pump(AppToast.autoDismissDuration);
+    expect(find.byKey(const Key('app-toast-close')), findsOneWidget);
+    await tester.pump(const Duration(minutes: 5));
+    expect(find.text('Request failed'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('app-toast-close')));
     await tester.pump();
     expect(find.text('Request failed'), findsNothing);
+  });
+
+  testWidgets('success feedback cannot replace an unread error', (tester) async {
+    late BuildContext toastContext;
+    await tester.pumpWidget(
+      buildTestApp((context) {
+        toastContext = context;
+        AppToast.showFailure(context, 'Margin is insufficient.');
+      }),
+    );
+    await tester.tap(find.text('Show'));
+    await tester.pump();
+    AppToast.showSuccess(toastContext, 'Refreshed');
+    await tester.pump(const Duration(minutes: 1));
+    expect(find.text('Margin is insufficient.'), findsOneWidget);
+    expect(find.text('Refreshed'), findsNothing);
+    await tester.tap(find.byKey(const Key('app-toast-close')));
+    await tester.pump();
+    AppToast.showSuccess(toastContext, 'Refreshed');
+    await tester.pump();
+    expect(find.text('Refreshed'), findsOneWidget);
+    await tester.pump(AppToast.autoDismissDuration);
+    await tester.pump();
+    expect(find.text('Refreshed'), findsNothing);
+  });
+
+  testWidgets('replaced success timer cannot close an error', (tester) async {
+    var count = 0;
+    await tester.pumpWidget(
+      buildTestApp((context) {
+        if (count++ == 0) {
+          AppToast.showSuccess(context, 'Saved');
+        } else {
+          AppToast.showFailure(context, 'Request failed');
+        }
+      }),
+    );
+    await tester.tap(find.text('Show'));
+    await tester.pump(const Duration(seconds: 2));
+    await tester.tap(find.text('Show'));
+    // Cross the old deadline before the next frame removes its overlay state.
+    await tester.pump(const Duration(minutes: 1));
+    expect(find.text('Request failed'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('app-toast-close')));
+    await tester.pump();
   });
 
   testWidgets('persistent failure stays until manually closed', (tester) async {

@@ -97,18 +97,18 @@ void main() {
     await controller().submit(intent); // no replay of confirmed plan
     expect(repository.posts.length, 3);
   });
-  test('unknown first child locks all writes and rechecks only its original ID', () async {
+  test('unknown first child releases lease; recheck only queries its original ID', () async {
     final intent = await prepare();
     repository.unknown = true;
     await controller().submit(intent);
     expect(repository.posts.length, 1);
     expect(state().items.map((i) => i.submitted), [true, false, false]);
     expect(state().needsRecheck, true);
-    expect(container.read(symbolSettingsActivityProvider).unresolved, true);
-    expect(
-      container.read(symbolSettingsActivityProvider.notifier).acquire(SymbolSetting.leverage),
-      null,
-    );
+    expect(container.read(symbolSettingsActivityProvider).unresolved, false);
+    final activity = container.read(symbolSettingsActivityProvider.notifier);
+    final lease = activity.acquire(SymbolSetting.leverage);
+    expect(lease, isNotNull);
+    activity.finish(lease!, unresolved: false);
     await controller().submit(intent);
     expect(repository.posts.length, 1);
     repository.unknown = false;
@@ -275,15 +275,15 @@ void main() {
     expect(repository.posts, isEmpty);
     expect(repository.reads.length, 1);
   });
-  test('a previous unresolved durable record blocks fresh scaled submissions', () async {
+  test('a previous diagnostic record allows fresh scaled submissions', () async {
     final intent = await prepare();
     await container
         .read(orderRecoveryJournalProvider)
         .prepare(OrderRecoveryRecord(query: OrderQuery.capture(liveIntent()), createdAt: now));
     await Future<void>.delayed(Duration.zero);
-    expect(controller().prepare('BTCUSDT', scaledDraft()), null);
+    expect(controller().prepare('BTCUSDT', scaledDraft()), isNotNull);
     await controller().submit(intent);
-    expect(repository.posts, isEmpty);
+    expect(repository.posts.length, 3);
   });
   test('unexpected error after POST stays unknown and permits GET only', () async {
     final intent = await prepare();

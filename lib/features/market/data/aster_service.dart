@@ -1,4 +1,5 @@
 import '../../../core/errors/api_error_parser.dart';
+import '../../../core/errors/api_error_details.dart';
 export '../domain/aster_instrument.dart';
 
 import 'dart:async';
@@ -59,7 +60,10 @@ class AsterService {
         }
         return payload;
       } on FormatException {
-        throw const MarketFailure('Invalid Aster response');
+        throw MarketFailure(
+          'Invalid Aster response',
+          details: ApiErrorDetails(cause: ApiErrorCause.invalidResponse, endpoint: path),
+        );
       }
     }
     throw const MarketFailure('Aster rate limit');

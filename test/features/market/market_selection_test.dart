@@ -5,27 +5,23 @@ import 'package:vanta/features/market/domain/market_precision.dart';
 import 'package:vanta/features/market/domain/market_quote.dart';
 import 'package:vanta/features/market/domain/market_selection.dart';
 
-MarketQuote quote(
-  String symbol, {
-  String name = '',
-  List<String> aliases = const [],
-  List<String> categories = const [],
-}) => MarketQuote(
-  symbol: symbol,
-  base: symbol.replaceFirst(RegExp(r'USDT$'), ''),
-  precision: const MarketPrecision(),
-  descriptor: MarketDescriptor(name: name, aliases: aliases, categories: categories),
-);
+MarketQuote quote(String symbol, {String name = '', List<String> aliases = const []}) =>
+    MarketQuote(
+      symbol: symbol,
+      base: symbol.replaceFirst(RegExp(r'USDT$'), ''),
+      precision: const MarketPrecision(),
+      descriptor: MarketDescriptor(name: name, aliases: aliases),
+    );
 
 void main() {
   final quotes = [
-    quote('AITOKENUSDT', name: 'Bitcoin derivative', categories: ['Meme']),
-    quote('BTCUSDT', aliases: ['Bitcoin', '比特币'], categories: ['Top', 'AI']),
-    quote('ETHUSDT', name: 'Ethereum', aliases: ['以太坊'], categories: ['Top']),
-    quote('XAUUSDT', name: 'Gold', aliases: ['黄金'], categories: ['Commodities']),
+    quote('AITOKENUSDT', name: 'Bitcoin derivative'),
+    quote('BTCUSDT', aliases: ['Bitcoin', '比特币']),
+    quote('ETHUSDT', name: 'Ethereum', aliases: ['以太坊']),
+    quote('XAUUSDT', name: 'Gold', aliases: ['黄金']),
     quote('USD1TESTUSDT', name: 'New AI', aliases: ['Top']),
-    quote('FUTUREUSDT', categories: ['pre-launch']),
-    quote('RWAUSDT', categories: ['USD1-RWA']),
+    quote('FUTUREUSDT'),
+    quote('RWAUSDT'),
   ];
   List<String> select(MarketSelection selection, [Set<String> favorites = const {}]) =>
       selectMarkets(quotes, selection, favorites).map((q) => q.symbol).toList();
@@ -43,27 +39,18 @@ void main() {
     ]);
   });
 
-  test(
-    'categories intersect favorites and search; names and quote suffixes cannot invent membership',
-    () {
-      expect(select(const MarketSelection(category: MarketCategory.top)), ['BTCUSDT', 'ETHUSDT']);
-      expect(select(const MarketSelection(category: MarketCategory.ai)), ['BTCUSDT']);
-      expect(
-        select(const MarketSelection(category: MarketCategory.top, onlyFavorites: true), {
-          'ETHUSDT',
-          'XAUUSDT',
-        }),
-        ['ETHUSDT'],
-      );
-      expect(select(const MarketSelection(category: MarketCategory.top, query: '比特币')), [
-        'BTCUSDT',
-      ]);
-      expect(select(const MarketSelection(category: MarketCategory.rwa)), ['RWAUSDT']);
-      expect(select(const MarketSelection(category: MarketCategory.preLaunch)), ['FUTUREUSDT']);
-      expect(select(const MarketSelection(category: MarketCategory.meme, query: '黄金')), isEmpty);
-      expect(select(const MarketSelection(onlyFavorites: true)), isEmpty);
-    },
-  );
+  test('favorites intersect search', () {
+    expect(select(const MarketSelection(onlyFavorites: true), {'ETHUSDT', 'XAUUSDT'}), [
+      'ETHUSDT',
+      'XAUUSDT',
+    ]);
+    expect(
+      select(const MarketSelection(onlyFavorites: true, query: '黄金'), {'ETHUSDT', 'XAUUSDT'}),
+      ['XAUUSDT'],
+    );
+    expect(select(const MarketSelection(onlyFavorites: true, query: '比特币'), {'ETHUSDT'}), isEmpty);
+    expect(select(const MarketSelection(onlyFavorites: true)), isEmpty);
+  });
 
   test('default order remains stable with no search and output cannot be mutated', () {
     expect(select(const MarketSelection()), quotes.map((q) => q.symbol));
@@ -73,7 +60,7 @@ void main() {
     );
   });
 
-  test('optional labels are validated, deduplicated and immutable without guessing categories', () {
+  test('optional labels are validated, deduplicated and immutable', () {
     final descriptor = mapMarketDescriptor({
       'name': ' Gold ',
       'tags': ['黄金', 'gold', '黄金', '', 17, '\u0000payload'],
@@ -82,9 +69,7 @@ void main() {
     });
     expect(descriptor.name, 'Gold');
     expect(descriptor.aliases, ['黄金', 'gold']);
-    expect(descriptor.categories, {'Commodities', 'ETF'});
     expect(() => descriptor.aliases.clear(), throwsUnsupportedError);
-    expect(() => descriptor.categories.clear(), throwsUnsupportedError);
     final unknown = mapMarketDescriptor({
       'name': {'raw': 'invalid'},
       'tags': 'AI',
@@ -93,6 +78,5 @@ void main() {
     });
     expect(unknown.name, '');
     expect(unknown.aliases, isEmpty);
-    expect(unknown.categories, {'top'}); // no invented Top/New labels
   });
 }

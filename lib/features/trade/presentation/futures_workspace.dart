@@ -5,7 +5,9 @@ import '../../../core/strings.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'widgets/chart_order_book.dart';
 export 'widgets/market_header.dart' show FuturesWorkspaceTabs;
-import '../../portfolio/presentation/aster_open_orders_panel.dart';
+import '../../portfolio/presentation/futures_history_screen.dart';
+import '../../portfolio/presentation/portfolio_components.dart';
+import '../../portfolio/presentation/trade_open_orders_section.dart';
 import '../../portfolio/presentation/live_order_screen.dart';
 import '../../portfolio/presentation/quick_order_panel.dart';
 import '../application/navigation_provider.dart';
@@ -126,23 +128,20 @@ class _FuturesAccountSectionsState extends ConsumerState<FuturesAccountSections>
   int tab = 0;
   @override
   Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Align(
-        alignment: Alignment.centerLeft,
-        child: TabChoices(
-          items: [
-            tr(context, 'orders'),
-            tr(context, 'positions'),
-            AppLocalizations.of(context).portfolioAssets,
-          ],
-          selected: tab,
-          underlined: true,
-          onSelect: (value) => setState(() => tab = value),
-        ),
+      _AccountTabs(
+        items: [
+          AppLocalizations.of(context).openOrdersTab,
+          tr(context, 'positions'),
+          AppLocalizations.of(context).portfolioAssets,
+        ],
+        selected: tab,
+        onSelect: (value) => setState(() => tab = value),
       ),
-      const SizedBox(height: 8),
+      const SizedBox(height: 16),
       switch (tab) {
-        0 => const AsterOpenOrdersPanel(),
+        0 => const TradeOpenOrdersSection(),
         1 => const PositionRiskScreen(embedded: true),
         _ => const AsterAccountPanel(),
       },
@@ -157,5 +156,78 @@ class _FuturesAccountSectionsState extends ConsumerState<FuturesAccountSections>
       ),
       const SizedBox(height: 16),
     ],
+  );
+}
+
+/// Account tabs from the Futures design with the history shortcut on the right.
+class _AccountTabs extends StatelessWidget {
+  const _AccountTabs({required this.items, required this.selected, required this.onSelect});
+  final List<String> items;
+  final int selected;
+  final ValueChanged<int> onSelect;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.only(top: 12),
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: TradeColors.card)),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (var i = 0; i < items.length; i++)
+                  Padding(
+                    padding: EdgeInsets.only(right: i == items.length - 1 ? 0 : 20),
+                    child: Semantics(
+                      selected: i == selected,
+                      button: true,
+                      child: InkWell(
+                        key: ValueKey('futures-account-tab-$i'),
+                        onTap: () => onSelect(i),
+                        child: IntrinsicWidth(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 44),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  items[i],
+                                  style: TradeTypography.body.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: i == selected ? TradeColors.text : TradeColors.muted,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  height: 1,
+                                  color: i == selected
+                                      ? TradeColors.accent
+                                      : TradeColors.transparent,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        IconButton(
+          key: const Key('open-futures-history'),
+          tooltip: AppLocalizations.of(context).futuresHistoryTitle,
+          onPressed: () => openFuturesHistory(context),
+          icon: const PortfolioIcon('history.svg', size: 24, color: TradeColors.text),
+        ),
+      ],
+    ),
   );
 }

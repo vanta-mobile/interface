@@ -1,9 +1,11 @@
+import '../../support/order_confirmation_widget.dart';
 import '../../support/order_mode_widget.dart';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
@@ -93,20 +95,12 @@ void main() {
           if (explicit) await field(tester, 'live-trailing-activation', '79000');
           expect(find.byKey(const Key('live-order-type')), findsNothing);
           await tap(tester, 'live-order-review');
-          final messages = l10n(tester), dialog = find.byType(AlertDialog);
+          final messages = l10n(tester), dialog = find.byType(OrderConfirmationDialog);
           expect(dialog, findsOneWidget);
           expect(find.descendant(of: dialog, matching: find.text('1.25%')), findsOneWidget);
           expect(
             find.descendant(of: dialog, matching: find.text(messages.openOrdersTrailingStop)),
             findsOneWidget,
-          );
-          expect(
-            find.descendant(of: dialog, matching: find.text(messages.liveTrailingBuy)),
-            findsOneWidget,
-          );
-          expect(
-            find.descendant(of: dialog, matching: find.text(messages.liveTrailingDefault)),
-            explicit ? findsNothing : findsOneWidget,
           );
           expect(tester.takeException(), null);
           tester.view.physicalSize = const Size(844, 390);
@@ -123,6 +117,7 @@ void main() {
           await tap(tester, 'live-order-review');
           await tester.tap(find.byKey(const Key('live-order-confirm')));
           await tester.pumpAndSettle();
+          await dismissOrderConfirmation(tester);
           expect(repository.lastIntent!.draft.trailing!.callbackRate, '1.25');
           expect(repository.lastIntent!.parameters['activationPrice'], explicit ? '79000' : null);
           for (final key in [
@@ -179,13 +174,10 @@ void main() {
             await field(tester, 'live-trailing-rate', '0.1');
             await tap(tester, 'live-close-fraction-50');
             await tap(tester, 'live-order-review');
-            expect(find.byType(AlertDialog), findsOneWidget);
-            expect(
-              find.text(short ? l10n(tester).liveTrailingBuy : l10n(tester).liveTrailingSell),
-              findsOneWidget,
-            );
+            expect(find.byType(OrderConfirmationDialog), findsOneWidget);
             await tester.tap(find.byKey(const Key('live-order-confirm')));
             await tester.pumpAndSettle();
+            await dismissOrderConfirmation(tester);
             expect(repository.lastIntent!.parameters['side'], short ? 'BUY' : 'SELL');
             expect(
               repository.lastIntent!.parameters['positionSide'],
@@ -243,6 +235,7 @@ void main() {
       await tap(tester, 'live-order-review');
       await tester.tap(find.byKey(const Key('live-order-confirm')));
       await tester.pumpAndSettle();
+      await dismissOrderConfirmation(tester);
       expect(repository.lastIntent!.parameters['type'], 'MARKET');
       for (final key in ['activationPrice', 'callbackRate', 'workingType', 'stopPrice']) {
         expect(repository.lastIntent!.parameters.containsKey(key), false);
@@ -273,9 +266,10 @@ void main() {
     await field(tester, 'live-trailing-rate', '1');
     await field(tester, 'live-order-quantity', '0.001');
     await tap(tester, 'live-order-review');
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(OrderConfirmationDialog), findsOneWidget);
     await tester.tap(find.byKey(const Key('live-order-confirm')));
     await tester.pumpAndSettle();
+    await dismissOrderConfirmation(tester);
     expect(repository.lastIntent!.draft.trigger, null);
     expect(repository.lastIntent!.parameters['type'], 'TRAILING_STOP_MARKET');
     expect(repository.lastIntent!.parameters.containsKey('stopPrice'), false);

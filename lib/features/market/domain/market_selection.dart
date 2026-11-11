@@ -1,14 +1,8 @@
-import 'market_descriptor.dart';
 import 'market_quote.dart';
 
 class MarketSelection {
-  const MarketSelection({
-    this.query = '',
-    this.category = MarketCategory.all,
-    this.onlyFavorites = false,
-  });
+  const MarketSelection({this.query = '', this.onlyFavorites = false});
   final String query;
-  final MarketCategory category;
   final bool onlyFavorites;
 }
 
@@ -30,11 +24,7 @@ List<MarketQuote> selectMarkets(
       ].any((value) => value.toUpperCase().contains(query));
   final filtered = quotes
       .where(
-        (quote) =>
-            (selection.category.tag == null ||
-                quote.descriptor.categories.contains(selection.category.tag)) &&
-            (!selection.onlyFavorites || favorites.contains(quote.symbol)) &&
-            matches(quote),
+        (quote) => (!selection.onlyFavorites || favorites.contains(quote.symbol)) && matches(quote),
       )
       .toList();
   // Exact identities precede partial labels, retaining the stable metadata

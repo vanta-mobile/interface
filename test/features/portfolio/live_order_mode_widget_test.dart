@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/portfolio/domain/live_order_trigger.dart';
 import 'package:vanta/features/portfolio/domain/live_order_time_in_force.dart';
@@ -145,7 +146,7 @@ void main() {
         await _field(t, 'live-order-quantity', '0.001');
         await _tap(t, 'live-order-review');
         expect(orders.submits, 0);
-        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(find.byType(OrderConfirmationDialog), findsOneWidget);
         await t.ensureVisible(find.byKey(const Key('live-order-confirm')));
         await t.tap(find.byKey(const Key('live-order-confirm')));
         await t.pumpAndSettle();
@@ -170,44 +171,41 @@ void main() {
       });
     }
 
-    testWidgets(
-      'signed-out menu lists all nine entries, unavailable strategies cannot navigate $spec',
-      (t) async {
-        await open(t, spec, signed: false);
-        await _tap(t, 'order-mode-more');
-        final scroll = find
-            .descendant(
-              of: find.byKey(const Key('order-mode-menu')),
-              matching: find.byType(Scrollable),
-            )
-            .first;
-        for (final mode in LiveOrderEntryMode.values.where(
-          (m) => m != LiveOrderEntryMode.limit && m != LiveOrderEntryMode.market,
-        )) {
-          final row = find.byKey(Key('order-mode-option-${mode.name}'));
-          await t.scrollUntilVisible(row, 130, scrollable: scroll);
-          await Scrollable.ensureVisible(t.element(row), alignment: .5);
-          await t.pumpAndSettle();
-          final tile = t.widget<ListTile>(row);
-          expect(tile.enabled, mode != LiveOrderEntryMode.chase && mode != LiveOrderEntryMode.twap);
-          if (!tile.enabled) {
-            expect(tile.subtitle, isA<Text>());
-            expect(tile.onTap, null);
-            await t.tap(row);
-            await t.pumpAndSettle();
-            expect(find.byKey(const Key('order-mode-menu')), findsOneWidget);
-          }
-        }
-        Navigator.of(t.element(find.byKey(const Key('order-mode-menu')))).pop();
+    testWidgets('signed-out menu lists seven available entries $spec', (t) async {
+      await open(t, spec, signed: false);
+      await _tap(t, 'order-mode-more');
+      final scroll = find
+          .descendant(
+            of: find.byKey(const Key('order-mode-menu')),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      for (final mode in LiveOrderEntryMode.values.where(
+        (m) =>
+            m != LiveOrderEntryMode.limit &&
+            m != LiveOrderEntryMode.market &&
+            m != LiveOrderEntryMode.chase &&
+            m != LiveOrderEntryMode.twap,
+      )) {
+        final row = find.byKey(Key('order-mode-option-${mode.name}'));
+        await t.scrollUntilVisible(row, 130, scrollable: scroll);
+        await Scrollable.ensureVisible(t.element(row), alignment: .5);
         await t.pumpAndSettle();
-        await chooseOrderMode(t, LiveOrderEntryMode.scaled);
-        expect(find.byType(ScaledOrderScreen), findsOneWidget);
-        expect(orders.reads, 0);
-        expect(orders.submits, 0);
-        expect(identity.wallets, 0);
-        await close(t);
-      },
-    );
+        final tile = t.widget<ListTile>(row);
+        expect(tile.enabled, isTrue);
+        expect(tile.onTap, isNotNull);
+      }
+      expect(find.byKey(const Key('order-mode-option-chase')), findsNothing);
+      expect(find.byKey(const Key('order-mode-option-twap')), findsNothing);
+      Navigator.of(t.element(find.byKey(const Key('order-mode-menu')))).pop();
+      await t.pumpAndSettle();
+      await chooseOrderMode(t, LiveOrderEntryMode.scaled);
+      expect(find.byType(ScaledOrderScreen), findsOneWidget);
+      expect(orders.reads, 0);
+      expect(orders.submits, 0);
+      expect(identity.wallets, 0);
+      await close(t);
+    });
   }
 
   testWidgets('menu memory and input survive refresh and cancel, reset when identity changes', (

@@ -1,6 +1,8 @@
 import 'package:decimal/decimal.dart';
 
 import '../domain/futures_asset_mode.dart';
+import '../domain/position_margin_mode.dart';
+import '../domain/aster_open_orders.dart';
 import 'position_configuration_rows.dart';
 
 FuturesAssetMode mapFuturesAssetMode(Object? payload) {
@@ -12,7 +14,11 @@ FuturesAssetMode mapFuturesAssetMode(Object? payload) {
 
 /// An empty configuration alone is not an open isolated position. Retained
 /// isolated collateral, including negative balances, still requires attention.
-List<String> mapAssetModeIsolatedSymbols(Object? payload) {
+List<String> mapAssetModeIsolatedSymbols(Object? payload) => List.unmodifiable(
+  mapAssetModeMarkets(payload).where((m) => m.requiresCross && m.blocked).map((m) => m.symbol),
+);
+
+List<AssetModeMarket> mapAssetModeMarkets(Object? payload, {AsterOpenOrders? orders}) {
   if (payload is! List) throw const FormatException('Missing positions');
   final grouped = <String, List<Map<String, dynamic>>>{};
   for (final row in payload) {
@@ -23,15 +29,23 @@ List<String> mapAssetModeIsolatedSymbols(Object? payload) {
     validatePositionSymbol(symbol);
     grouped.putIfAbsent(symbol, () => []).add(row);
   }
-  final isolated = <String>[];
+  final markets = <AssetModeMarket>[];
   bool? hedge;
   for (final entry in grouped.entries) {
     final rows = positionConfigurationRows(entry.value, entry.key);
     final currentHedge = rows.first['positionSide'] != 'BOTH';
     if (hedge != null && hedge != currentHedge) throw const FormatException('Mixed position modes');
     hedge = currentHedge;
+    if (orders?.orders.any(
+          (o) =>
+              o.symbol == entry.key &&
+              !(currentHedge ? {'LONG', 'SHORT'} : {'BOTH'}).contains(o.positionSide),
+        ) ==
+        true) {
+      throw const FormatException('Conflicting order mode');
+    }
     String? margin;
-    var needsCross = false;
+    var hasPosition = false, hasCollateral = false;
     for (final row in rows) {
       final mode = row['marginType'];
       if (mode != 'cross' && mode != 'isolated' || margin != null && margin != mode) {
@@ -44,13 +58,23 @@ List<String> mapAssetModeIsolatedSymbols(Object? payload) {
           row['positionSide'] == 'SHORT' && quantity > Decimal.zero) {
         throw const FormatException('Invalid direction');
       }
-      if (mode == 'isolated' && (quantity != Decimal.zero || wallet != Decimal.zero)) {
-        needsCross = true;
-      }
+      hasPosition |= quantity != Decimal.zero;
+      hasCollateral |= wallet != Decimal.zero;
     }
-    if (needsCross) isolated.add(entry.key);
+    markets.add(
+      AssetModeMarket(
+        symbol: entry.key,
+        marginMode: margin == 'isolated' ? PositionMarginMode.isolated : PositionMarginMode.cross,
+        hasPosition: hasPosition,
+        hasCollateral: hasCollateral,
+        openOrderCount: orders?.orders.where((o) => o.symbol == entry.key).length ?? 0,
+      ),
+    );
   }
-  return List.unmodifiable(isolated..sort());
+  if (orders != null && orders.orders.any((o) => !grouped.containsKey(o.symbol))) {
+    throw const FormatException('Order has no margin configuration');
+  }
+  return List.unmodifiable(markets..sort((a, b) => a.symbol.compareTo(b.symbol)));
 }
 
 Decimal _decimal(Object? value) {

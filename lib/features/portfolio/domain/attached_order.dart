@@ -80,6 +80,10 @@ List<Map<String, String>> buildStrategyLegs(OrderQuery query) {
   final clientOrderId = query.clientOrderId, mode = query.mode;
   final entry = <String, String>{
     'strategySubId': '1',
+    // The gateway requires explicit no-driver sentinels even though the
+    // public table marks these linkage fields optional.
+    'firstDrivenId': '0',
+    'secondDrivenId': '0',
     'securityType': 'USDT_FUTURES',
     'symbol': symbol,
     'side': side,
@@ -121,8 +125,8 @@ List<Map<String, String>> buildStrategyLegs(OrderQuery query) {
         'firstDrivenId': '1',
         'firstDrivenOn': attachment.drivenOn.wire,
         'firstTrigger': 'PLACE_ORDER',
+        'secondDrivenId': attachment.exits.length == 2 ? '${i == 0 ? 3 : 2}' : '0',
         if (attachment.exits.length == 2) ...{
-          'secondDrivenId': '${i == 0 ? 3 : 2}',
           'secondDrivenOn': attachment.drivenOn.wire,
           'secondTrigger': 'CANCEL_ORDER',
         },

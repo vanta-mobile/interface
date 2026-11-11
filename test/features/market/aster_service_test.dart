@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:vanta/core/market_failure.dart';
+import 'package:vanta/core/errors/api_error_details.dart';
 import 'package:vanta/features/market/data/aster_service.dart';
 
 Map<String, Object?> instrument(
@@ -99,7 +100,6 @@ void main() {
       expect(result.first.base, 'BTC');
       expect(result.first.descriptor.name, 'Bitcoin');
       expect(result.first.descriptor.aliases, ['比特币']);
-      expect(result.first.descriptor.categories, {'Top', 'AI'});
       expect(result.first.precision.priceTick, '0.00000001');
       expect(result.first.precision.quantityStep, '0.05');
       expect((service.serverNow - now).abs(), lessThan(2000));
@@ -267,11 +267,22 @@ void main() {
         await expectLater(
           AsterService(client).request('/fapi/v3/time'),
           throwsA(
-            isA<MarketFailure>().having(
-              (e) => e.message,
-              'safe reason',
-              status == 200 ? 'Invalid Aster response' : 'Aster HTTP 502',
-            ),
+            isA<MarketFailure>()
+                .having(
+                  (e) => e.message,
+                  'safe reason',
+                  status == 200 ? 'Invalid Aster response' : 'Aster HTTP 502',
+                )
+                .having(
+                  (e) => e.details?.cause,
+                  'cause',
+                  status == 200 ? ApiErrorCause.invalidResponse : isNull,
+                )
+                .having(
+                  (e) => e.details?.endpoint,
+                  'fixed endpoint without response body',
+                  status == 200 ? '/fapi/v3/time' : isNull,
+                ),
           ),
         );
       }

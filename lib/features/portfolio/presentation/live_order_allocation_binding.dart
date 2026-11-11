@@ -23,20 +23,33 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
     return entry.buy ? preview.buy : preview.sell;
   }
 
-  LiveOrderContext? get _pricingContext {
-    if (reducing) return widget.data;
+  ({LiveOrderContext? context, AccountReadFailure? failure}) get _pricing {
+    if (reducing) return (context: widget.data, failure: null);
     try {
-      return ref.read(mainOrderPricingProvider).priceContext(widget.data);
-    } on AccountReadFailure {
-      return null;
+      return (context: ref.read(mainOrderPricingProvider).priceContext(widget.data), failure: null);
+    } on AccountReadFailure catch (failure) {
+      return (context: null, failure: failure);
     }
+  }
+
+  LiveOrderContext? get _pricingContext => _pricing.context;
+  bool get _pricingPending => switch (ref.read(mainOrderPricingProvider)) {
+    MainOrderMarketData(pending: true) => true,
+    _ => false,
+  };
+
+  String _validationText(String key) {
+    final failure = _pricing.failure;
+    return accountErrorText(context, failure?.key == key ? failure! : AccountReadFailure(key));
   }
 
   OrderSizeResolution _resolveSize(LiveOrderDraft entry) {
     if (_allocationPercent == null) {
       final context = _pricingContext;
       if (context == null) {
-        return const OrderSizeResolution(failure: 'liveCapacityPriceUnavailable');
+        return OrderSizeResolution(
+          failure: _pricing.failure?.key ?? 'liveCapacityPriceUnavailable',
+        );
       }
       return _manualSizeInput.resolve(context, entry);
     }
@@ -81,13 +94,14 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
   }
 
   Object get _formTerms => (
-    liveOrderDraftKey(rawDraft(null)),
+    liveOrderDraftKey(rawDraft(null).withQuantity('')),
     sizeUnit,
     quantity.text,
     quoteAmount.text,
     attachment,
     entryPeg,
-    widget.data,
+    widget.data.address,
+    widget.data.symbol,
     _allocationPercent,
   );
 
@@ -98,6 +112,12 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
     final review = await controller.prepare(
       candidate,
       isFormCurrent: () => mounted && _formTerms == terms,
+      input: MainOrderReviewInput(
+        draft: rawDraft(attaching ? LiveOrderAttachment(entryPeg: entryPeg) : null),
+        size: _manualSizeInput,
+        percent: _allocationPercent,
+        attachment: attaching ? attachment : null,
+      ),
     );
     if (!mounted || review == null) return;
     await reviewLiveOrder(
@@ -110,8 +130,7 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
         revision: review.intent.revision,
       ),
       sizing: capturedSize,
-      onSubmit: () => controller.submit(review),
-      extraTerms: MainOrderAllocationTerms(review: review),
+      allocationReview: review,
     );
   }
 }

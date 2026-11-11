@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:decimal/decimal.dart';
+import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/core/domain/wallet_operation.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/authorization/domain/trading_authorization.dart';
@@ -84,6 +85,22 @@ class TestSubaccountManagementRepository implements SubaccountManagementReposito
     await gate?.future;
     if (failure != null) throw failure!;
     return review.record.reported();
+  }
+
+  /// Directory checks in order: true, false, null or an error to throw.
+  /// An exhausted queue ends checking as an unknown outcome.
+  final settlements = <Object?>[];
+  int settles = 0;
+  @override
+  Future<bool?> settleCreation(
+    SubaccountManagementReview review, {
+    required bool Function() isCurrent,
+  }) async {
+    settles++;
+    if (settlements.isEmpty) throw const AccountReadFailure('walletOperationUnknown');
+    final next = settlements.removeAt(0);
+    if (next is Exception) throw next;
+    return next as bool?;
   }
 }
 

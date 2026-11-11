@@ -7,6 +7,8 @@ import '../../../core/application/wallet_operation_provider.dart';
 import '../../../core/domain/wallet_operation.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../auth/domain/auth_session.dart';
+import '../../auth/domain/wallet_signing_preparation.dart';
+import '../../authorization/application/trading_agent_provider.dart';
 import '../../portfolio/application/account_read_provider.dart';
 import '../../portfolio/data/aster_account_service.dart';
 import '../../portfolio/domain/account_snapshot.dart';
@@ -17,11 +19,16 @@ final subaccountManagementClockProvider = Provider<DateTime Function()>((_) => D
 final subaccountManagementRepositoryProvider = Provider<SubaccountManagementRepository>((ref) {
   final service = AsterAccountService(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(service.close);
+  final identity = ref.watch(identityRepositoryProvider);
   return AsterSubaccountManagementRepository(
     service,
-    ref.watch(identityRepositoryProvider).signWalletRequest,
+    identity.signWalletRequest,
     ref.watch(walletOperationJournalProvider),
     nonces: ref.watch(asterReadNoncesProvider),
+    authorization: ref.watch(asterRequestAuthorizationProvider),
+    signingPreparation: identity is WalletSigningPreparation
+        ? identity as WalletSigningPreparation
+        : null,
     now: ref.watch(subaccountManagementClockProvider),
   );
 });

@@ -14,6 +14,7 @@ import 'wallet_transaction_dispatch.dart';
 import 'wallet_configuration.dart';
 import 'reown_auth_failure.dart';
 import 'reown_signing_network.dart';
+import 'reown_wallet_namespaces.dart';
 import 'wallet_redirect_handler.dart';
 
 part 'reown_wallet_connection.dart';
@@ -187,13 +188,7 @@ class ReownWalletConnector
       url: configuration.relyingParty!.toString(),
       redirect: Redirect(native: WalletConfiguration.redirect),
     ),
-    optionalNamespaces: {
-      'eip155': RequiredNamespace(
-        chains: WalletConfiguration.chains.map((chain) => 'eip155:$chain').toList(),
-        methods: const ['personal_sign', 'eth_signTypedData_v4', 'eth_sendTransaction'],
-        events: const ['accountsChanged', 'chainChanged'],
-      ),
-    },
+    optionalNamespaces: reownWalletNamespaces(),
     // Reown 1.9 still reads this deprecated flag when building its login UI.
     // ignore: deprecated_member_use
     featuresConfig: FeaturesConfig(email: false, socials: const [], showMainWallets: true),

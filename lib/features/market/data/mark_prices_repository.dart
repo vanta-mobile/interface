@@ -1,3 +1,6 @@
+import '../domain/market_price_failure.dart';
+import '../../portfolio/domain/account_snapshot.dart';
+
 import '../../../core/network/request_scope.dart';
 
 import 'dart:async';
@@ -31,6 +34,8 @@ class MarkPricesRepository {
   bool _hadConnection = false, _snapshotFailed = false;
   int _revision = 0;
   int? _loadingRevision;
+  DateTime? _lastRefresh;
+  AccountReadFailure? _failure;
   Stream<MarkPrices> get events => _output.stream;
 
   MarkPrices get state {
@@ -56,6 +61,7 @@ class MarkPricesRepository {
           ? MarkPriceConnection.online
           : MarkPriceConnection.connecting,
       snapshotFailed: _snapshotFailed,
+      failure: _failure,
     );
   }
 
@@ -84,7 +90,20 @@ class MarkPricesRepository {
             if (!_disposed && _active && revision == _subscriptionRevision) _disconnect();
           },
         );
-    _freshnessTimer = Timer.periodic(const Duration(seconds: 1), (_) => _publish());
+    _freshnessTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _publish();
+      if (_connected &&
+          (_lastRefresh == null ||
+              _now().difference(_lastRefresh!) >= const Duration(seconds: 5)) &&
+          symbols.any(
+            (s) =>
+                _quotes[s] == null ||
+                !_verified.contains(s) ||
+                _now().difference(_quotes[s]!.receivedAt) >= const Duration(seconds: 5),
+          )) {
+        unawaited(_refresh());
+      }
+    });
     _publish();
     unawaited(_refresh());
   }
@@ -142,9 +161,10 @@ class MarkPricesRepository {
     final revision = _revision;
     if (_disposed || !_active || _loadingRevision == revision) return;
     _loadingRevision = revision;
+    _lastRefresh = _now();
     final baseline = Map.of(_symbolRevisions);
     try {
-      final payload = await RequestScope.run(
+      final payload = await RequestScope.runOwned(
         () => !_disposed && _active && revision == _revision,
         () => service.request('/fapi/v3/premiumIndex'),
       );
@@ -168,8 +188,21 @@ class MarkPricesRepository {
         _invalid.remove(quote.symbol);
       }
       _snapshotFailed = symbols.any((s) => !parsed.containsKey(s));
-    } catch (_) {
-      if (!_disposed && revision == _revision) _snapshotFailed = true;
+      _failure = _snapshotFailed
+          ? const AccountReadFailure(
+              'liveCapacityPriceUnavailable',
+              reasonKey: 'livePriceMarkMissing',
+            )
+          : null;
+    } catch (error) {
+      if (!_disposed && revision == _revision) {
+        _snapshotFailed = true;
+        _failure = marketPriceFailure(
+          error,
+          'livePriceMarkInvalid',
+          endpoint: '/fapi/v3/premiumIndex',
+        );
+      }
     } finally {
       if (_loadingRevision == revision) _loadingRevision = null;
       if (!_disposed && revision == _revision) _publish();

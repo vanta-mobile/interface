@@ -53,58 +53,81 @@ void main() {
     await journal.close();
   });
   OrderRecoveryController controller() => container.read(orderRecoveryProvider.notifier);
-  test('restored pending blocks order/config writes; no automatic signatures or query', () async {
+  test('restored records allow orders and settings without automatic query', () async {
     expect(reader.calls, 0);
     expect(identity.wallets, 0);
     expect(container.read(pendingWalletOrdersProvider).single.key, record.key);
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    expect(container.read(symbolSettingsActivityProvider).recoveryBlocked, true);
+    expect(container.read(symbolSettingsActivityProvider).recoveryBlocked, false);
     for (final setting in SymbolSetting.values.where((s) => s != SymbolSetting.recovery)) {
-      expect(activity.acquire(setting), null);
+      final lease = activity.acquire(setting);
+      expect(lease, isNotNull);
+      activity.finish(lease!, unresolved: false);
     }
     await container.read(liveOrderProvider.notifier).load('BTCUSDT');
-    expect(orders.reads, 0);
+    expect(orders.reads, 1);
     await controller().query(record.key);
     expect(reader.calls, 1);
     expect(reader.latestQuery!.clientOrderId, 'vanta-test-123');
     expect(journal.snapshot.records, isEmpty);
     expect(container.read(symbolSettingsActivityProvider).recoveryBlocked, false);
     await container.read(liveOrderProvider.notifier).load('BTCUSDT');
-    expect(orders.reads, 1);
+    expect(orders.reads, 2);
   });
+  for (final loading in [false, true]) {
+    test(
+      'diagnostic storage ${loading ? 'loading' : 'failure'} does not block a new submission',
+      () async {
+        journal.publish(
+          OrderRecoverySnapshot(
+            records: [record],
+            ready: !loading,
+            failure: loading ? null : const AccountReadFailure('orderRecoveryStorage'),
+          ),
+        );
+        final live = container.read(liveOrderProvider.notifier);
+        await live.load('BTCUSDT');
+        final intent = live.prepare('BTCUSDT', liveDraft());
+        expect(intent, isNotNull);
+        await live.submit(intent!);
+        expect(orders.submits, 1);
+        expect(journal.snapshot.records.single.key, record.key);
+        expect(container.read(symbolSettingsActivityProvider).recoveryBlocked, false);
+      },
+    );
+  }
   test('failed query retains pending and original ID through query-only retry', () async {
     reader.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
     await controller().query(record.key);
     expect(journal.snapshot.records.length, 1);
-    expect(container.read(symbolSettingsActivityProvider).unresolved, true);
+    expect(container.read(symbolSettingsActivityProvider).unresolved, false);
     reader.result = orders.result;
     await controller().query(record.key);
     expect(reader.calls, 2);
     expect(reader.latestQuery!.key, record.key);
     expect(journal.snapshot.records, isEmpty);
   });
-  test(
-    'different account cannot see/query original record; returning wallet restores its block',
-    () async {
-      identity.events.add(
-        const AuthIdentity(
-          id: 'other',
-          walletAddress: '0x3333333333333333333333333333333333333333',
-          signingAvailable: true,
-        ),
-      );
-      expect(container.read(pendingWalletOrdersProvider), isEmpty);
-      await controller().query(record.key);
-      expect(reader.calls, 0);
-      final activity = container.read(symbolSettingsActivityProvider.notifier);
-      final token = activity.acquire(SymbolSetting.leverage);
-      expect(token, isNotNull);
-      activity.finish(token!, unresolved: false);
-      identity.events.add(signingIdentity);
-      expect(container.read(pendingWalletOrdersProvider).single.key, record.key);
-      expect(activity.acquire(SymbolSetting.leverage), null);
-    },
-  );
+  test('different account cannot see/query original record; returning wallet restores records without locking settings', () async {
+    identity.events.add(
+      const AuthIdentity(
+        id: 'other',
+        walletAddress: '0x3333333333333333333333333333333333333333',
+        signingAvailable: true,
+      ),
+    );
+    expect(container.read(pendingWalletOrdersProvider), isEmpty);
+    await controller().query(record.key);
+    expect(reader.calls, 0);
+    final activity = container.read(symbolSettingsActivityProvider.notifier);
+    final token = activity.acquire(SymbolSetting.leverage);
+    expect(token, isNotNull);
+    activity.finish(token!, unresolved: false);
+    identity.events.add(signingIdentity);
+    expect(container.read(pendingWalletOrdersProvider).single.key, record.key);
+    final returned = activity.acquire(SymbolSetting.leverage);
+    expect(returned, isNotNull);
+    activity.finish(returned!, unresolved: false);
+  });
   test(
     'same address with unavailable signer requires reconnect and never creates wallet',
     () async {
@@ -135,23 +158,31 @@ void main() {
       expect(container.read(pendingWalletOrdersProvider), isEmpty);
     },
   );
-  test('storage failure blocks new operations without dropping known entries', () async {
+  test('storage failure never blocks orders or an existing record query', () async {
     journal.publish(
       OrderRecoverySnapshot(
         records: [record],
         failure: const AccountReadFailure('orderRecoveryStorage'),
       ),
     );
-    expect(
-      container.read(symbolSettingsActivityProvider.notifier).acquire(SymbolSetting.order),
-      null,
-    );
-    await controller().query(record.key);
-    expect(reader.calls, 0);
-    expect(journal.snapshot.records.single.key, record.key);
-    journal.publish(OrderRecoverySnapshot(records: [record]));
+    final activity = container.read(symbolSettingsActivityProvider.notifier);
+    final lease = activity.acquire(SymbolSetting.order);
+    expect(lease, isNotNull);
+    activity.finish(lease!, unresolved: false);
     await controller().query(record.key);
     expect(reader.calls, 1);
+  });
+
+  test('slow diagnostic query does not acquire the trading lock', () async {
+    reader.gate = Completer<void>();
+    final pending = controller().query(record.key);
+    final activity = container.read(symbolSettingsActivityProvider.notifier);
+    final lease = activity.acquire(SymbolSetting.order);
+    expect(lease, isNotNull);
+    reader.gate!.complete();
+    await pending;
+    expect(container.read(symbolSettingsActivityProvider).owner, SymbolSetting.order);
+    activity.finish(lease!, unresolved: false);
   });
   test('duplicate tap does not open multiple wallet prompts', () async {
     reader.gate = Completer<void>();

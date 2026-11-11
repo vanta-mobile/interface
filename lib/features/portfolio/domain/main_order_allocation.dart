@@ -1,17 +1,12 @@
 import 'account_snapshot.dart';
 import 'live_order.dart';
 import 'live_order_attachment.dart';
-import 'live_order_capacity.dart';
 import 'main_order_capacity.dart';
 import 'main_order_capacity_preview.dart';
 import 'main_order_revaluation.dart';
+import 'main_order_review_input.dart';
 
-class MainOrderCapacityExceeded extends AccountReadFailure {
-  const MainOrderCapacityExceeded({required this.capacity, required this.context})
-    : super('liveCapacityAboveMaximum');
-  final LiveOrderSideCapacity capacity;
-  final LiveOrderContext context;
-}
+export 'main_order_capacity_exceeded.dart';
 
 class MainOrderAllocationReview {
   const MainOrderAllocationReview({
@@ -20,11 +15,13 @@ class MainOrderAllocationReview {
     required this.side,
     required this.revision,
     this.valuation,
+    this.input,
   });
   final LiveOrderIntent intent;
   final MainOrderCapacitySnapshot capacity;
   final MainOrderSidePreview side;
   final MainOrderRevaluation? valuation;
+  final MainOrderReviewInput? input;
   final int revision;
 }
 

@@ -12,6 +12,7 @@ import 'package:vanta/features/portfolio/application/live_order_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_allocation_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_capacity_provider.dart';
 import 'package:vanta/features/portfolio/application/order_recovery_provider.dart';
+import 'package:vanta/features/portfolio/application/symbol_settings_activity.dart';
 import 'package:vanta/features/portfolio/data/aster_account_service.dart';
 import 'package:vanta/features/portfolio/data/signed_account_request.dart';
 import 'package:vanta/features/portfolio/data/signed_live_order_repository.dart';
@@ -243,16 +244,14 @@ void main() {
       }
     }
   }
-  for (final change in ['stale', 'storage', 'other-order']) {
-    test('journal write only exempts its own record; $change still blocks POST', () async {
+  for (final change in ['storage', 'other-order']) {
+    test('diagnostic $change does not block POST', () async {
       final review = (await allocation().prepare(
         liveDraft(quantity: '2', price: '100'),
         isFormCurrent: () => formCurrent,
       ))!;
       journal.afterPrepare = (own) {
         switch (change) {
-          case 'stale':
-            container.read(liveOrderProvider.notifier).markStale();
           case 'storage':
             journal.publish(
               OrderRecoverySnapshot(
@@ -278,13 +277,9 @@ void main() {
         }
       };
       await allocation().submit(review);
-      expect(posts(), isEmpty);
-      expect(container.read(liveOrderProvider).failure!.key, 'liveOrderContextExpired');
-      expect(container.read(mainOrderAllocationProvider).percent, 20);
-      expect(
-        journal.snapshot.records.map((r) => r.query.clientOrderId),
-        change == 'other-order' ? ['vanta-other-request'] : isEmpty,
-      );
+      expect(posts().length, 1);
+      expect(container.read(liveOrderProvider).needsRecheck, isFalse);
+      expect(container.read(symbolSettingsActivityProvider).owner, isNull);
     });
   }
 

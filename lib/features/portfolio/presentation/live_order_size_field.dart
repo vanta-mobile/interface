@@ -1,3 +1,5 @@
+import 'minimum_order_size_hint.dart';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -10,6 +12,7 @@ class LiveOrderSizeField extends StatelessWidget {
   const LiveOrderSizeField({
     super.key,
     required this.data,
+    required this.pricingData,
     required this.draft,
     required this.unit,
     required this.controller,
@@ -18,6 +21,7 @@ class LiveOrderSizeField extends StatelessWidget {
     required this.onInput,
   });
   final LiveOrderContext data;
+  final LiveOrderContext? pricingData;
   final LiveOrderDraft draft;
   final OrderSizeUnit unit;
   final TextEditingController controller;
@@ -52,6 +56,7 @@ class LiveOrderSizeField extends StatelessWidget {
           readOnly: !enabled,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
+            hintText: minimumOrderSizeHint(context, data: pricingData, draft: draft, unit: unit),
             labelText: unit == OrderSizeUnit.quote
                 ? l10n.liveAmountInput(data.rules.quoteAsset)
                 : l10n.liveOrderQuantity(data.rules.baseAsset),

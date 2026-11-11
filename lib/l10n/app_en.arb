@@ -11,8 +11,16 @@
   "authWalletCancelled": "Wallet connection cancelled. You can retry.",
   "authWalletRejected": "Wallet request rejected. You can retry.",
   "authWalletUnavailable": "Wallet connection failed. Check your wallet app and network, then retry.",
+  "walletResponseReason": "Wallet response: {reason}",
+  "@walletResponseReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "authWalletBusy": "Another wallet request is pending. Finish it before continuing.",
-  "authWalletSigningNetwork": "Approve BNB Chain (56) in your wallet and reconnect before enabling trading.",
+  "authWalletSigningNetwork": "Enable and select BNB Chain (chain ID 56) in your wallet, allow this app to connect to it, then reconnect before enabling trading.",
   "authWalletConnectionTimeout": "Wallet connection setup timed out. Check your network and retry.",
   "authWalletUnsupported": "Select Ethereum, BNB Chain, Arbitrum, or Base in your wallet.",
   "authWalletChanged": "Wallet account or network changed. Reconnect and sign in again.",
@@ -307,18 +315,7 @@
   },
   "accountUnitUnavailable": "(unit unavailable)",
   "accountIsolatedMode": "Isolated",
-  "marketCategoryTop": "Top",
-  "marketCategoryRwa": "USD1-RWA",
-  "marketCategoryMeme": "Meme",
-  "marketCategoryAi": "AI",
-  "marketCategoryPreLaunch": "Pre-launch",
-  "marketCategoryStocks": "Stocks",
-  "marketCategoryEtf": "ETF",
-  "marketCategoryCommodities": "Commodities",
-  "marketCategorySemiconductors": "Semiconductors",
-  "marketNoCategoryResults": "No contracts in this category match your filters.",
   "marketResultsCount": "{shown} of {total} perpetuals",
-  "marketCategories": "Market categories",
   "@marketResultsCount": {
     "placeholders": {
       "shown": {
@@ -329,7 +326,6 @@
       }
     }
   },
-  "marketCategoryAll": "All categories",
   "accountPerpetualTab": "Perpetual",
   "accountSpotTab": "Spot",
   "spotAccountTitle": "Aster spot account",
@@ -854,8 +850,8 @@
   "assetModeMulti": "Multi-assets",
   "assetModeSingleHint": "Single-asset mode uses each contract’s margin asset.",
   "assetModeMultiHint": "Multi-assets mode shares eligible collateral across cross-margin positions. Isolated positions or retained isolated collateral must be handled first. Supported assets, valuations, balance requirements and final eligibility are determined by Aster.",
-  "assetModeReadSettings": "Read asset mode and positions (2 signatures)",
-  "assetModeReadHint": "Sign separately to read asset mode and all futures position configurations. Reading submits no changes. The 30-second validity starts at the first response and includes the second signature.",
+  "assetModeReadSettings": "Read asset mode, positions and orders",
+  "assetModeReadHint": "Read asset mode, all position configurations and all open orders. Reading submits no changes. The 30-second validity starts at the first response.",
   "assetModeCurrentSetting": "Asset mode at last read",
   "assetModeTarget": "Target asset mode",
   "assetModeContextExpired": "Refresh asset mode and positions before reviewing a change. Your selection is preserved.",
@@ -954,11 +950,14 @@
     }
   },
   "liveOrderQueryScope": "This is the query snapshot. Only FILLED confirms the complete requested quantity; later changes need another account read.",
-  "liveOrderOutcomeUnknown": "The request may have reached Aster. Query this client reference to verify. Another order is blocked; querying never places it again.",
+  "liveOrderOutcomeUnknown": "Order submission was attempted, but the result is not yet confirmed. Check the original order before placing it again to avoid duplicates. Checking never resubmits the order.",
   "liveOrderRecheck": "Sign to query this order",
   "liveOrderConfirmTitle": "Place this live futures order?",
   "liveOrderConfirmHint": "This submits a real order. Sign to place it, then sign separately to query its status. A market order can execute at a different price. Limit execution follows the policy shown below. No leverage or margin setting is changed.",
   "liveOrderPolicy": "Limit execution policy",
+  "timeInForceTitle": "Time In Force",
+  "timeInForceGtc": "GTC (Good till canceled)",
+  "timeInForceIoc": "IOC (Immediate or canceled)",
   "liveOrderConditional": "Conditional order",
   "liveOrderPositionTriggers": "Position TP/SL",
   "liveOrderStop": "Stop",
@@ -1160,8 +1159,8 @@
   "attachedOrderConfirmHint": "This submits a real linked strategy. Review the full main-order protection quantity, each trigger and exit price. Entry partial or full fills drive placement; partial or full exit fills drive peer cancellation. Query exchange reports to check the actual outcome.",
   "orderRecoveryTitle": "Pending order recovery",
   "orderRecoveryScope": "Only pending futures orders or strategies saved for this wallet on this device appear here. Reconnect the same wallet and sign to query; recovery never submits an order. A missing result does not prove the original was not sent; its record stays pending. Check the outcome before placing new orders or changing settings. Clearing app data or uninstalling removes local records.",
-  "orderRecoveryStorage": "Pending records could not be read or saved. New live orders and configuration changes are paused. Records are not cleared automatically; retry storage access.",
-  "orderRecoveryPending": "This wallet has an order or strategy to check. Query its original reference first. New live orders and configuration changes are temporarily unavailable.",
+  "orderRecoveryStorage": "Local order records could not be read or saved. Trading remains available.",
+  "orderRecoveryPending": "This wallet has order records with unconfirmed results. You can inspect their original references; trading remains available.",
   "orderRecoveryConnect": "Sign in or reconnect the original wallet",
   "orderRecoveryReload": "Retry local records",
   "orderRecoveryEmpty": "No pending records for this wallet on this device. This does not mean the exchange has no open orders.",
@@ -1603,6 +1602,25 @@
   "liveOrderPricing": "Limit pricing",
   "liveOrderPegHint": "Aster sets the price once from the selected best bid or ask: when placing a limit order, or when a conditional limit order triggers. It does not keep chasing the book. Estimates use the selected current bid or ask; the engine price and fill may differ, especially at a future trigger.",
   "liveOrderBbo": "BBO",
+  "liveOrderBboModeLabel": "BBO mode",
+  "liveOrderBboModeTitle": "BBO Mode",
+  "liveOrderBboModeHint": "Best-bid-offer places a limit order at the best bid or ask. Post-Only may fail if it immediately takes liquidity.",
+  "liveOrderBboCounterparty": "Counterparty {depth}",
+  "@liveOrderBboCounterparty": {
+    "placeholders": {
+      "depth": {
+        "type": "int"
+      }
+    }
+  },
+  "liveOrderBboQueue": "Queue {depth}",
+  "@liveOrderBboQueue": {
+    "placeholders": {
+      "depth": {
+        "type": "int"
+      }
+    }
+  },
   "liveOrderPegInvalid": "BBO requires a limit order with no manual price. It cannot be combined with a market, trailing, entire-close or attached-strategy order. Post Only BBO supports same-side level 1 only.",
   "internalTransferTitle": "Spot ↔ Futures transfer",
   "internalTransferScope": "Transfer the selected asset between your Aster Spot and Futures accounts using the current wallet.",
@@ -2378,6 +2396,16 @@
   "orderConfirmTrailing": "Confirm trailing stop entries",
   "orderConfirmLimitShared": "Limit and Post Only share this setting.",
   "orderConfirmDoNotShow": "Do not show confirmation again for this order type",
+  "orderConfirmTitle": "Order Confirmation",
+  "orderConfirmPrice": "Order price",
+  "orderConfirmQuantity": "Order Qty",
+  "orderConfirmMarketPrice": "Market Price",
+  "orderConfirmTakeProfit": "Take Profit",
+  "orderConfirmStopLoss": "Stop Loss",
+  "orderConfirmBuy": "Buy/Long",
+  "orderConfirmSell": "Sell/Short",
+  "orderConfirmSubmitted": "Order submitted",
+  "orderConfirmExpired": "Order details are no longer current. Close this dialog and place the order again.",
   "orderConfirmWalletHint": "This setting controls the app review. Wallet signatures and checks before submission still apply.",
   "scaledTotalAmount": "Total order amount",
   "scaledAmountInvalid": "Enter a positive total order amount.",
@@ -2420,6 +2448,12 @@
   },
   "scaledCountRange": "2–110",
   "assistantNavigation": "AI",
+  "orderTypeTrailing": "Trailing Stop",
+  "orderTypeTitle": "Order Type",
+  "orderTypePostOnly": "Post Only",
+  "orderTypeStopLimit": "Stop Limit",
+  "orderTypeStopMarket": "Stop Market",
+  "orderTypeScaled": "Scaled Order",
   "orderModeLabel": "Order type",
   "orderModeMore": "More order types",
   "orderModeStopLimit": "TP/SL Limit",
@@ -2476,6 +2510,14 @@
   "apiRequestTimeout": "The request timed out.",
   "apiConnectionFailed": "Unable to connect to the server. Check your network connection.",
   "apiRequestCancelled": "The request was cancelled.",
+  "apiInvalidResponseAt": "Aster returned invalid data from {endpoint}. Please retry.",
+  "@apiInvalidResponseAt": {
+    "placeholders": {
+      "endpoint": {
+        "type": "String"
+      }
+    }
+  },
   "apiInvalidResponse": "The server returned an invalid response.",
   "authConnectTitle": "Connect wallet",
   "authVerifyTitle": "Verify email",
@@ -2701,6 +2743,7 @@
   "accountsHiddenKey": "Hidden by default",
   "accountsRevealKey": "Show private key",
   "accountsHideKey": "Hide private key",
+  "accountsCopyKey": "Copy private key",
   "accountsKeyWarning": "Anyone with this key can control the account. Keep it private and store it safely.",
   "accountsSavedKey": "I have saved my private key.",
   "accountsContinue": "Continue",
@@ -2727,7 +2770,8 @@
   "subaccountSecureStorageFailed": "Cannot access the device’s secure wallet storage. No new creation request will be sent.",
   "subaccountSecureStorageFull": "The device wallet storage is full. Back up your wallets before continuing.",
   "subaccountLocalKeyMissing": "The private key is unavailable on this device. Import your backup into an external wallet to use this account.",
-  "subaccountCreationFailed": "The sub-account could not be created. Your generated wallet remains available for backup.",
+  "subaccountCreationFailed": "The sub-account could not be created. Please try again.",
+  "subaccountCreationNotCompleted": "Aster did not create this sub-account. Please try again.",
   "subaccountNativeTransactionUnavailable": "Import this account into an external wallet to send on-chain transactions.",
   "accountsTransferInsufficient": "The amount exceeds the available Futures balance.",
   "accountsLocalWallets": "Created on this device",
@@ -2908,24 +2952,7 @@
   "assetHistoryEmpty": "No records",
   "assetHistoryLoaded": "All records loaded",
   "assetHistoryAmountNetwork": "{amount} on {network}",
-  "@assetHistoryAmountNetwork": {
-    "placeholders": {
-      "amount": {
-        "type": "String"
-      },
-      "network": {
-        "type": "String"
-      }
-    }
-  },
   "assetHistoryStatus": "{status, select, processing{Processing} success{Success} failed{Failed} other{Unknown}}",
-  "@assetHistoryStatus": {
-    "placeholders": {
-      "status": {
-        "type": "String"
-      }
-    }
-  },
   "assetHistoryTime": "Time",
   "assetHistoryTransactionId": "Transaction ID",
   "assetHistoryUnavailable": "Unavailable",
@@ -2936,6 +2963,23 @@
   "assetHistoryWithdrawCompleted": "Withdrawal completed",
   "assetHistoryCrediting": "Crediting account",
   "assetHistoryWithdrawPending": "Withdrawal pending",
+  "@assetHistoryAmountNetwork": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "network": {
+        "type": "String"
+      }
+    }
+  },
+  "@assetHistoryStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
   "portfolioFundingPending": "{amount} · {type, select, deposit{Waiting to be credited} withdraw{Waiting for completion} other{Processing}}",
   "@portfolioFundingPending": {
     "placeholders": {
@@ -2948,6 +2992,8 @@
     }
   },
   "fundingBalanceInsufficient": "Insufficient {asset} balance. Enter a smaller amount.",
+  "fundingGasTopUp": "Insufficient {asset} for network fees. Add {asset} to your wallet.",
+  "fundingWithdrawalFeeInsufficient": "Insufficient {asset} for the withdrawal amount and fee. Enter a smaller amount.",
   "@fundingBalanceInsufficient": {
     "placeholders": {
       "asset": {
@@ -2955,7 +3001,6 @@
       }
     }
   },
-  "fundingGasTopUp": "Insufficient {asset} for network fees. Add {asset} to your wallet.",
   "@fundingGasTopUp": {
     "placeholders": {
       "asset": {
@@ -2963,7 +3008,6 @@
       }
     }
   },
-  "fundingWithdrawalFeeInsufficient": "Insufficient {asset} for the withdrawal amount and fee. Enter a smaller amount.",
   "@fundingWithdrawalFeeInsufficient": {
     "placeholders": {
       "asset": {
@@ -3011,6 +3055,27 @@
     }
   },
   "tradeExitRoi": "ROI (%)",
+  "livePriceDisconnected": "Market price connection is disconnected. Reconnecting automatically.",
+  "livePriceConnecting": "Connecting to market prices.",
+  "livePriceMarkMissing": "The mark price has not been received. Retrying automatically.",
+  "livePriceMarkInvalid": "The mark price response is invalid. Retrying automatically.",
+  "livePriceMarkStale": "Mark price updates have stopped. Refreshing automatically.",
+  "livePriceLastMissing": "The latest trade price has not been received. Retrying automatically.",
+  "livePriceLastInvalid": "The latest trade price response is invalid. Retrying automatically.",
+  "livePriceLastStale": "No recent trade price is available. Refreshing automatically.",
+  "livePriceBookMissing": "The best bid and ask have not been received. Retrying automatically.",
+  "livePriceBookInvalid": "The best bid and ask response is invalid. Retrying automatically.",
+  "livePriceBookStale": "Best bid and ask updates have stopped. Refreshing automatically.",
+  "livePriceClockUnavailable": "The exchange time could not be verified. Retrying automatically.",
+  "livePriceTimestampInvalid": "The quote timestamp is ahead of exchange time. Refreshing automatically.",
+  "liveOrderMinimumPlaceholder": "Min {amount}",
+  "@liveOrderMinimumPlaceholder": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "notificationFilterAll": "All",
   "notificationFilterTransfers": "Transfers",
   "notificationFilterOrders": "Orders",
@@ -3019,19 +3084,179 @@
   "notificationPerp": "Perp",
   "notificationAdlChip": "ADL",
   "notificationUnreadCount": "{count} unread",
-  "@notificationUnreadCount": {"placeholders": {"count": {"type": "int"}}},
+  "@notificationUnreadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notificationOrderSide": "{side, select, BUY{buy order} SELL{sell order} other{order}}",
-  "@notificationOrderSide": {"placeholders": {"side": {"type": "String"}}},
+  "@notificationOrderSide": {
+    "placeholders": {
+      "side": {
+        "type": "String"
+      }
+    }
+  },
   "notificationOrderSummary": "{status, select, NEW{{symbol} {side} created, awaiting fill.} PARTIALLY_FILLED{{symbol} {side} filled {last} this time; {progress} filled in total.} FILLED{{symbol} {side} fully filled at an average price of {average}.} CANCELED{{symbol} {side} canceled; fills before cancellation remain in history.} EXPIRED{{symbol} {side} expired; the unfilled part will no longer execute.} REJECTED{{symbol} {side} was rejected. Check your order records.} other{{symbol} {side} updated. See details.}}",
-  "@notificationOrderSummary": {"placeholders": {"status": {"type": "String"}, "symbol": {"type": "String"}, "side": {"type": "String"}, "last": {"type": "String"}, "progress": {"type": "String"}, "average": {"type": "String"}}},
+  "@notificationOrderSummary": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      },
+      "symbol": {
+        "type": "String"
+      },
+      "side": {
+        "type": "String"
+      },
+      "last": {
+        "type": "String"
+      },
+      "progress": {
+        "type": "String"
+      },
+      "average": {
+        "type": "String"
+      }
+    }
+  },
   "notificationLiquidationSummary": "{symbol} liquidation order updated. See details for the filled quantity.",
-  "@notificationLiquidationSummary": {"placeholders": {"symbol": {"type": "String"}}},
+  "@notificationLiquidationSummary": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
   "notificationAdlSummary": "{symbol} ADL order has a new execution. Review your positions and fills.",
-  "@notificationAdlSummary": {"placeholders": {"symbol": {"type": "String"}}},
+  "@notificationAdlSummary": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
   "notificationMarginSummary": "{symbols} position risk is high. Check your margin and positions promptly.",
-  "@notificationMarginSummary": {"placeholders": {"symbols": {"type": "String"}}},
+  "@notificationMarginSummary": {
+    "placeholders": {
+      "symbols": {
+        "type": "String"
+      }
+    }
+  },
   "notificationTransferSummary": "{kind, select, deposit_processing{{amount} deposit to the {market} account is processing. Network: {network}.} deposit_success{{amount} deposited to the {market} account. Network: {network}.} deposit_failed{Your {amount} deposit failed. See details.} withdraw_processing{{amount} withdrawal is processing. Check progress in funding records.} withdraw_success{{amount} withdrawn from the {market} account. Network: {network}.} withdraw_failed{Your {amount} withdrawal failed. See details.} other{{amount} transfer updated.}}",
-  "@notificationTransferSummary": {"placeholders": {"kind": {"type": "String"}, "amount": {"type": "String"}, "market": {"type": "String"}, "network": {"type": "String"}}},
+  "@notificationTransferSummary": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "market": {
+        "type": "String"
+      },
+      "network": {
+        "type": "String"
+      }
+    }
+  },
+  "livePriceDepthUnavailable": "The selected BBO depth has no supported price reference for capacity estimates.",
+  "livePricePrecisionMissing": "The exchange did not provide price precision for this market order.",
+  "livePriceExecutionInvalid": "The calculated reference execution price is not positive. Check this contract’s price precision.",
   "notificationTransferTitle": "{type, select, deposit{{status, select, processing{Deposit Processing} success{Deposit Successful} failed{Deposit Failed} other{Deposit Update}}} withdraw{{status, select, processing{Withdrawal Processing} success{Withdrawal Successful} failed{Withdrawal Failed} other{Withdrawal Update}}} other{Transfer Update}}",
-  "@notificationTransferTitle": {"placeholders": {"type": {"type": "String"}, "status": {"type": "String"}}}
+  "@notificationTransferTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "modeAccountSettings": "Account Settings",
+  "modeAssetTitle": "Asset Mode",
+  "modePositionTitle": "Position Mode",
+  "modeSingleShort": "Single-Asset",
+  "modeMultiShort": "Multi-Asset",
+  "modeSingleTitle": "Single-Asset Mode",
+  "modeMultiTitle": "Multi-Asset Mode",
+  "modeSingleDescription": "Use the pair’s settlement currency as margin.\nPnL offsets across Cross positions of the same currency.\nSupports Cross and Isolated margin.",
+  "modeMultiDescription": "Contracts can be traded across margin assets. Profits and losses with different margin assets can offset one another. Supports Cross margin.",
+  "modeReadAboutPrefix": "Read about ",
+  "modeReadAboutSuffix": " to better manage risk.",
+  "modeOneWayDescription": "Hold a single net position per market. Orders in the opposite direction reduce or reverse the position.",
+  "modeHedgeDescription": "Hold long and short positions separately in the same market.",
+  "modePositionBlocked": "Close all open positions and cancel all open orders before switching position mode.",
+  "modeActivateMulti": "Activate Multi-Asset Mode",
+  "modeMultiRequirements": "Multi-Asset Mode requires all positions to use Cross Margin. Close any open Isolated positions and cancel their open orders before switching.",
+  "modeAffectedMarkets": "AFFECTED MARKETS",
+  "modeManage": "Manage",
+  "modeSwitchCross": "Switch to Cross",
+  "modeRequirementsMet": "Requirements met",
+  "modeOpenPosition": "Open position",
+  "modeOpenOrders": "Open orders",
+  "modeIsolatedCollateral": "Isolated collateral remaining",
+  "modeNoPositionsOrders": "No open positions or orders",
+  "modeNegativeUsdt": "Your available USDT assets are negative. Please rebalance your assets before switching asset mode.",
+  "modeRefresh": "Refresh settings",
+  "modeConfirm": "Confirm",
+  "openOrdersCancelAll": "Cancel all",
+  "openOrdersAmountUnit": "Filled / Total amount ({unit})",
+  "openOrdersTriggerCondition": "{basis} {operator} {price}",
+  "openOrdersYes": "Yes",
+  "openOrdersNo": "No",
+  "openOrdersConfirm": "Confirm",
+  "openOrdersDetailsTitle": "Order details",
+  "openOrdersViewChart": "View {symbol} chart",
+  "openOrdersCancelAllQuestion": "Are you sure you want to cancel all perpetual orders?",
+  "openOrdersCancelSymbolQuestion": "Are you sure you want to cancel all {symbol} orders?",
+  "@openOrdersAmountUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "@openOrdersTriggerCondition": {
+    "placeholders": {
+      "basis": {
+        "type": "String"
+      },
+      "operator": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "@openOrdersViewChart": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "@openOrdersCancelSymbolQuestion": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "openOrdersSide": "Side",
+  "openOrdersTab": "Open",
+  "openOrdersViewExplorer": "View Explorer",
+  "orderResponseIdentityMismatch": "Aster returned an order reference, symbol or side that does not match this order.",
+  "orderResponseLinkageMismatch": "Aster returned TP/SL links that do not match this order.",
+  "orderResponseTermsMismatch": "Aster returned a price, quantity or execution setting that does not match this order.",
+  "orderResponseStatusInvalid": "Aster returned a missing or unrecognized order status.",
+  "orderResponseMalformed": "Aster returned incomplete or invalid order fields; the order could not be verified.",
+  "orderAcknowledgementInvalid": "Aster did not return a valid strategy submission result.",
+  "openOrdersTpSl": "TP/SL",
+  "openOrdersLinkedOrder": "Linked order:"
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/application/main_order_allocation_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
@@ -110,10 +111,12 @@ void main() {
       await f.select(tester);
       await f.tap(tester, buy ? 'main-order-review-buy' : 'main-order-review-sell');
       expect(f.capacities.reads, 2);
-      expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.byKey(const Key('main-order-frozen-capacity')), findsOneWidget);
+      expect(find.byType(OrderConfirmationDialog), findsOneWidget);
       expect(
-        find.descendant(of: find.byType(AlertDialog), matching: find.text(buy ? '1.801' : '1.98')),
+        find.descendant(
+          of: find.byType(OrderConfirmationDialog),
+          matching: find.text(buy ? '1.801 BTC' : '1.98 BTC'),
+        ),
         findsOneWidget,
       );
       expect(f.orders.submits, 0);
@@ -126,26 +129,25 @@ void main() {
       expect(f.input(tester), '');
     });
   }
-  allocationTest(
-    'higher fresh maximum keeps confirmation at clicked quantity rather than resizing',
-    (tester) async {
-      await f.open(tester);
-      await f.tap(tester, 'main-order-capacity-read');
-      await f.select(tester);
-      f.capacities.transform = (context) {
-        final payload = capacityAccountPayload();
-        (payload['assets'] as List).single['availableBalance'] = '200';
-        return assembledCapacity(context: context, payload: payload);
-      };
-      await f.tap(tester, 'main-order-review-buy');
-      expect(
-        find.descendant(of: find.byType(AlertDialog), matching: find.text('1.801')),
-        findsOneWidget,
-      );
-      await f.confirm(tester);
-      expect(f.orders.lastIntent!.draft.quantity, '1.801');
-    },
-  );
+  allocationTest('higher fresh maximum updates the percentage quantity shown for confirmation', (
+    tester,
+  ) async {
+    await f.open(tester);
+    await f.tap(tester, 'main-order-capacity-read');
+    await f.select(tester);
+    f.capacities.transform = (context) {
+      final payload = capacityAccountPayload();
+      (payload['assets'] as List).single['availableBalance'] = '200';
+      return assembledCapacity(context: context, payload: payload);
+    };
+    await f.tap(tester, 'main-order-review-buy');
+    expect(
+      find.descendant(of: find.byType(OrderConfirmationDialog), matching: find.text('3.603 BTC')),
+      findsOneWidget,
+    );
+    await f.confirm(tester);
+    expect(f.orders.lastIntent!.draft.quantity, '3.603');
+  });
   allocationTest('cancelling review preserves percentage and never submits', (tester) async {
     await f.open(tester);
     await f.tap(tester, 'main-order-capacity-read');
@@ -156,7 +158,7 @@ void main() {
     expect(f.input(tester), '181.901');
     expect(f.orders.submits, 0);
   });
-  allocationTest('lower fresh maximum shows a safe failure and never opens confirmation', (
+  allocationTest('lower percentage amount reports the actual exchange minimum failure', (
     tester,
   ) async {
     await f.open(tester);
@@ -168,8 +170,8 @@ void main() {
       return assembledCapacity(context: context, payload: payload);
     };
     await f.tap(tester, 'main-order-review-buy');
-    expect(find.byType(AlertDialog), findsNothing);
-    expect(f.container.read(mainOrderAllocationProvider).failure!.key, 'liveCapacityAboveMaximum');
+    expect(find.byType(OrderConfirmationDialog), findsNothing);
+    expect(f.container.read(mainOrderAllocationProvider).failure!.key, 'liveOrderNotionalFilter');
     expect(f.container.read(mainOrderAllocationProvider).percent, 20);
     expect(f.orders.submits, 0);
   });
@@ -189,7 +191,7 @@ void main() {
     expect(f.input(tester), '181.901');
     f.capacities.gate!.complete();
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(OrderConfirmationDialog), findsNothing);
     expect(f.orders.submits, 0);
   });
   allocationTest('expired confirmation and expired wallet prompt cannot submit', (tester) async {
@@ -209,12 +211,12 @@ void main() {
     await f.tap(tester, 'main-order-capacity-read');
     await f.select(tester);
     await f.tap(tester, 'main-order-review-sell');
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(OrderConfirmationDialog), findsNothing);
     expect(f.capacities.reads, 2);
     expect(f.orders.lastIntent!.draft.quantity, '1.98');
     expect(f.orders.lastIntent!.draft.buy, false);
   });
-  allocationTest('unknown result preserves ratio and input, and disables further submission', (
+  allocationTest('unknown result preserves ratio and input without blocking further editing', (
     tester,
   ) async {
     f.orders.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
@@ -225,8 +227,10 @@ void main() {
     await f.confirm(tester);
     expect(f.container.read(mainOrderAllocationProvider).percent, 20);
     expect(f.input(tester), '181.901');
-    expect(tester.widget<Slider>(find.byKey(const Key('main-order-percentage'))).onChanged, null);
-    expect(tester.widget<TextField>(find.byKey(const Key('live-order-quantity'))).readOnly, true);
+    // Ratio calculation needs renewed facts after an uncertain write. The
+    // diagnostic record itself must not lock the user's manual input.
+    expect(tester.widget<Slider>(find.byKey(const Key('main-order-percentage'))).onChanged, isNull);
+    expect(tester.widget<TextField>(find.byKey(const Key('live-order-quantity'))).readOnly, false);
     expect(f.orders.submits, 1);
   });
   allocationTest('market ratio uses per-side book conversion and fixed MARKET confirmation', (
@@ -248,8 +252,8 @@ void main() {
         await f.tap(tester, 'main-order-capacity-read');
         await f.select(tester);
         await f.tap(tester, 'main-order-review-sell');
-        expect(find.byType(AlertDialog), findsOneWidget);
-        expect(find.byKey(const Key('main-order-frozen-capacity')), findsOneWidget);
+        expect(find.byType(OrderConfirmationDialog), findsOneWidget);
+        expect(find.byType(OrderConfirmationDialog), findsOneWidget);
         await f.cancel(tester);
         expect(tester.takeException(), null);
       });

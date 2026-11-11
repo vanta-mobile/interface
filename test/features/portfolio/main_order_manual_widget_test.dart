@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/application/live_order_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_allocation_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
+import 'package:vanta/features/portfolio/domain/main_order_allocation.dart';
 import 'package:vanta/features/portfolio/domain/live_order_entry_mode.dart';
 import 'package:vanta/features/portfolio/domain/order_confirmation.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
@@ -55,10 +57,13 @@ void main() {
         expect(review.intent.draft.market, mode.marketExecution);
         expect(review.intent.draft.trigger != null, mode.conditional);
         expect(review.intent.draft.trailing != null, mode == LiveOrderEntryMode.trailing);
-        expect(find.byKey(const Key('main-order-frozen-capacity')), findsOneWidget);
+        expect(find.byType(OrderConfirmationDialog), findsOneWidget);
         await f.confirm(tester);
         expect(f.orders.submits, 1);
-        expect(f.orders.lastIntent!.draft, same(review.intent.draft));
+        expect(
+          liveOrderDraftKey(f.orders.lastIntent!.draft),
+          liveOrderDraftKey(review.intent.draft),
+        );
         expect(f.input(tester), '2.000');
       });
     }
@@ -83,7 +88,7 @@ void main() {
     await base(tester);
     await f.tap(tester, 'live-order-review');
     expect(f.capacities.reads, 1);
-    expect(find.byKey(const Key('main-order-frozen-capacity')), findsOneWidget);
+    expect(find.byType(OrderConfirmationDialog), findsOneWidget);
     await f.cancel(tester);
     expect(f.input(tester), '2.000');
     expect(f.orders.submits, 0);
@@ -131,7 +136,7 @@ void main() {
             return assembledCapacity(context: context, payload: payload);
           };
           await f.tap(tester, 'main-order-review-buy');
-          expect(find.byType(AlertDialog), findsNothing);
+          expect(find.byType(OrderConfirmationDialog), findsNothing);
           final l10n = AppLocalizations.of(
             tester.element(find.byKey(const Key('main-order-capacity'))),
           );
@@ -151,7 +156,7 @@ void main() {
           f.capacities.transform = null;
           await f.tap(tester, 'main-order-review-buy');
           expect(f.capacities.reads, 2);
-          expect(find.byType(AlertDialog), findsOneWidget);
+          expect(find.byType(OrderConfirmationDialog), findsOneWidget);
           await f.cancel(tester);
         },
       );
@@ -165,7 +170,7 @@ void main() {
     await base(tester, '3.000');
     f.capacities.failure = const AccountReadFailure('authWalletRejected');
     await f.tap(tester, 'main-order-review-buy');
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(OrderConfirmationDialog), findsNothing);
     expect(f.input(tester), '3.000');
     await f.tap(tester, 'live-order-unit-quote');
     expect(f.input(tester), '202.000');
@@ -197,7 +202,7 @@ void main() {
     expect(f.input(tester), '2.000');
     f.capacities.gate!.complete();
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(OrderConfirmationDialog), findsNothing);
     expect(f.orders.submits, 0);
     expect(button(tester, true).onPressed, isNotNull);
   });
@@ -208,7 +213,7 @@ void main() {
     await f.open(tester);
     await base(tester);
     await f.tap(tester, 'main-order-review-sell');
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(OrderConfirmationDialog), findsNothing);
     expect(f.capacities.reads, 1);
     expect(f.orders.lastIntent!.draft.buy, false);
     expect(f.orders.lastIntent!.draft.quantity, '2.000');
@@ -244,7 +249,7 @@ void main() {
         );
         await f.field(tester, 'live-order-quantity', '101.000');
         await f.tap(tester, 'main-order-review-sell');
-        expect(find.byKey(const Key('main-order-frozen-capacity')), findsOneWidget);
+        expect(find.byType(OrderConfirmationDialog), findsOneWidget);
         await f.cancel(tester);
         expect(f.input(tester), '101.000');
         expect(tester.takeException(), null);

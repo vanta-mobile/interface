@@ -1,10 +1,13 @@
 import '../../../core/errors/api_error_details.dart';
 
 class AccountReadFailure implements Exception, DetailedApiFailure {
-  const AccountReadFailure(this.key, {this.code, this.details});
+  const AccountReadFailure(this.key, {this.code, this.details, this.reasonKey});
   @override
   final ApiErrorDetails? details;
   final String key;
+
+  /// Concrete localized cause; the stable key still controls recovery behavior.
+  final String? reasonKey;
   final int? code;
 
   /// Aster confirms that the exchange account has not been created by a deposit.

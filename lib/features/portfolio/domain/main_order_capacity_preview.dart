@@ -46,7 +46,15 @@ MainOrderSidePreview _manualSide(
   String input,
 ) {
   if (input.trim().isEmpty) return const MainOrderSidePreview();
-  if (draft.reducing || draft.entireClose || draft.attachment?.entryPeg != null) {
+  if (draft.attachment?.entryPeg != null) {
+    return const MainOrderSidePreview(
+      failure: AccountReadFailure(
+        'liveCapacityPriceUnavailable',
+        reasonKey: 'livePriceDepthUnavailable',
+      ),
+    );
+  }
+  if (draft.reducing || draft.entireClose) {
     return const MainOrderSidePreview(failure: AccountReadFailure('liveCapacityPriceUnavailable'));
   }
   final size = LiveOrderSize(unit: unit, text: input).resolve(context, draft);
@@ -66,7 +74,12 @@ MainOrderSidePreview _manualSide(
   }
   final reference = context.referenceExecutionPrice(draft);
   if (draft.peg != null && (reference == null || reference <= Decimal.zero)) {
-    return const MainOrderSidePreview(failure: AccountReadFailure('liveCapacityPriceUnavailable'));
+    return const MainOrderSidePreview(
+      failure: AccountReadFailure(
+        'liveCapacityPriceUnavailable',
+        reasonKey: 'livePriceBookMissing',
+      ),
+    );
   }
   return MainOrderSidePreview(
     size: size,

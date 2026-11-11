@@ -1,4 +1,5 @@
 import '../../../core/errors/error_text.dart';
+import '../../../core/presentation/status_view.dart';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import '../../../core/formatters/token_amount_formatter.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
 import '../domain/live_order.dart';
+import '../domain/live_order_capacity.dart';
 import '../domain/live_order_size.dart';
 import '../domain/main_order_capacity_preview.dart';
 
@@ -29,8 +31,11 @@ class MainOrderDirectionCard extends StatelessWidget {
     required this.data,
     required this.unit,
     required this.buy,
+    required this.hasSize,
     required this.onReview,
     this.pending = false,
+    this.resultsPending = false,
+    this.retainedCapacity,
     this.showFailure = true,
     this.showLiquidation = true,
   });
@@ -38,8 +43,11 @@ class MainOrderDirectionCard extends StatelessWidget {
   final LiveOrderContext data;
   final OrderSizeUnit unit;
   final bool buy;
+  final bool hasSize;
   final VoidCallback? onReview;
   final bool pending;
+  final bool resultsPending;
+  final LiveOrderSideCapacity? retainedCapacity;
 
   /// Idle forms hide transient preview failures until a size is entered.
   final bool showFailure;
@@ -51,7 +59,9 @@ class MainOrderDirectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context), side = buy ? 'buy' : 'sell';
     final color = buy ? TradeColors.positive : TradeColors.negative;
-    final quote = data.rules.quoteAsset, capacity = value?.capacity, cost = value?.cost;
+    final quote = data.rules.quoteAsset,
+        capacity = value?.capacity ?? retainedCapacity,
+        cost = hasSize ? value?.cost : null;
     // Two-decimal display never understates cost or overstates the maximum.
     String? fixed(Decimal? amount) => amount == null
         ? null
@@ -61,7 +71,12 @@ class MainOrderDirectionCard extends StatelessWidget {
         : Decimal.fromBigInt((cost.total * Rational.fromInt(100)).ceil()).shift(-2);
     final rows = [
       if (showLiquidation)
-        (l.tradeEstimatedLiquidation, mainOrderLiquidationText(value, data), quote, 'liquidation'),
+        (
+          l.tradeEstimatedLiquidation,
+          hasSize ? mainOrderLiquidationText(value, data) : null,
+          quote,
+          'liquidation',
+        ),
       (l.tradeMargin, fixed(margin), quote, 'cost'),
       if (unit == OrderSizeUnit.quote)
         (l.accountsMax, fixed(capacity?.maximumQuote.floor(scale: 2)), quote, 'maximum')
@@ -90,20 +105,30 @@ class MainOrderDirectionCard extends StatelessWidget {
                       Expanded(child: Text(label, style: TradeTypography.caption)),
                       const SizedBox(width: 4),
                       Expanded(
-                        child: Text.rich(
-                          key: Key('main-order-$name-$side'),
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: amount ?? '—',
-                                style: TextStyle(color: amount == null ? TradeColors.text : color),
+                        child:
+                            resultsPending &&
+                                (name == 'maximum' ? retainedCapacity == null : hasSize)
+                            ? Align(
+                                key: Key('main-order-$name-pending-$side'),
+                                alignment: Alignment.centerRight,
+                                child: const SkeletonBox(width: 72, height: 14),
+                              )
+                            : Text.rich(
+                                key: Key('main-order-$name-$side'),
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: amount ?? '—',
+                                      style: TextStyle(
+                                        color: amount == null ? TradeColors.text : color,
+                                      ),
+                                    ),
+                                    if (amount != null) TextSpan(text: ' $asset'),
+                                  ],
+                                ),
+                                textAlign: TextAlign.end,
+                                style: TradeTypography.caption.copyWith(color: TradeColors.text),
                               ),
-                              if (amount != null) TextSpan(text: ' $asset'),
-                            ],
-                          ),
-                          textAlign: TextAlign.end,
-                          style: TradeTypography.caption.copyWith(color: TradeColors.text),
-                        ),
                       ),
                     ],
                   ),
@@ -142,7 +167,8 @@ class MainOrderDirectionCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(buy ? l.long : l.short),
-                    if (value?.quantity case final quantity? when quantity > Decimal.zero)
+                    if (value?.quantity case final quantity?
+                        when hasSize && quantity > Decimal.zero)
                       Text(
                         '≈$quantity ${data.rules.baseAsset}',
                         key: Key('main-order-estimate-$side'),

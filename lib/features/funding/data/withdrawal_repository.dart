@@ -238,7 +238,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
     } catch (e) {
       if (saved && !sent && record != null) await journal.removeNotSent(record.key);
       if (sent) throw AccountReadFailure('walletOperationUnknown', details: errorDetailsOf(e));
-      if (e is AuthFailure) throw AccountReadFailure(e.key);
+      if (e is AuthFailure) throw AccountReadFailure(e.key, details: e.details);
       if (e is WalletOperationPending) throw const AccountReadFailure('walletOperationPending');
       if (e is WalletOperationStorageFailure) {
         throw const AccountReadFailure('walletOperationStorage');

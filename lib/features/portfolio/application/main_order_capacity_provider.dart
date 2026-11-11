@@ -13,6 +13,7 @@ import '../domain/main_order_capacity.dart';
 import 'account_read_provider.dart';
 import 'live_order_provider.dart';
 import 'symbol_settings_activity.dart';
+import 'order_review_activity_provider.dart';
 
 final mainOrderCapacityRepositoryProvider = Provider<MainOrderCapacityRepository>((ref) {
   final service = AsterAccountService(
@@ -41,10 +42,13 @@ class MainOrderCapacityController extends Notifier<MainOrderCapacityState> {
   int? _lease;
   @override
   MainOrderCapacityState build() {
-    void reset() {
+    void reset({bool retainScope = false}) {
       _revision++;
       _releaseRead();
-      state = const MainOrderCapacityState();
+      state = MainOrderCapacityState(
+        snapshot: retainScope ? state.snapshot : null,
+        stale: retainScope,
+      );
     }
 
     ref.listen(
@@ -66,7 +70,14 @@ class MainOrderCapacityController extends Notifier<MainOrderCapacityState> {
     });
     ref.listen(liveOrderProvider, (before, after) {
       if (before?.context != after.context) {
-        reset();
+        final previous = state.snapshot?.context, next = after.context;
+        reset(
+          retainScope:
+              previous != null &&
+              next != null &&
+              previous.address.toLowerCase() == next.address.toLowerCase() &&
+              previous.symbol == next.symbol,
+        );
       } else if (after.stale && before?.stale != true) {
         _revision++;
         _releaseRead();
@@ -85,7 +96,6 @@ class MainOrderCapacityController extends Notifier<MainOrderCapacityState> {
         data.context != live.context ||
         data.context.symbol != ref.read(symbolProvider) ||
         live.busy ||
-        live.needsRecheck ||
         live.stale ||
         activity.busy ||
         activity.owner != null ||
@@ -117,11 +127,11 @@ class MainOrderCapacityController extends Notifier<MainOrderCapacityState> {
     }
   }
 
-  Future<void> load(String symbol) async {
+  Future<void> load(String symbol, {bool allowDuringReview = false}) async {
     final live = ref.read(liveOrderProvider), data = live.context, auth = ref.read(authProvider);
-    if (state.loading ||
+    if (ref.read(orderReviewActivityProvider) > 0 && !allowDuringReview ||
+        state.loading ||
         live.busy ||
-        live.needsRecheck ||
         auth.busy ||
         data == null ||
         data.symbol != symbol ||
@@ -162,7 +172,6 @@ class MainOrderCapacityController extends Notifier<MainOrderCapacityState> {
       return state.context == data &&
           data.symbol == ref.read(symbolProvider) &&
           !state.busy &&
-          !state.needsRecheck &&
           !state.stale &&
           operation.epoch == epoch &&
           operation.owner == SymbolSetting.order &&

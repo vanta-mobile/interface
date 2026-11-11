@@ -30,7 +30,7 @@ class PortfolioAccountFeedback extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (failure != null)
+        if (failure != null && !failure.requiresDeposit)
           Padding(
             padding: const EdgeInsets.only(top: 12),
             child: Text(

@@ -1,12 +1,10 @@
 import '../../../core/errors/error_text.dart';
 
-import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../trade/presentation/widgets/primitives.dart';
 import '../application/live_order_provider.dart';
 import '../application/main_order_allocation_provider.dart';
 import '../application/main_order_capacity_provider.dart';
@@ -134,31 +132,6 @@ class MainOrderPercentageControl extends ConsumerWidget {
           : accountErrorText(context, failure),
       key: const Key('main-order-allocation-failure'),
       style: const TextStyle(color: AppColors.negative),
-    );
-  }
-}
-
-class MainOrderAllocationTerms extends StatelessWidget {
-  const MainOrderAllocationTerms({super.key, required this.review});
-  final MainOrderAllocationReview review;
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context), unit = review.intent.context.rules.quoteAsset;
-    return Column(
-      key: const Key('main-order-frozen-capacity'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(l10n.liveAllocationFrozen),
-        ValueRow(
-          l10n.liveCapacityMaximum,
-          '${review.side.capacity!.maximum} ${review.intent.context.rules.baseAsset}',
-        ),
-        ValueRow(
-          l10n.liveCapacityCost,
-          '≈ ${review.side.cost!.total.toDecimal(scaleOnInfinitePrecision: 18)} $unit',
-        ),
-        Text(l10n.accountSnapshotTime(review.capacity.receivedAt.toUtc().toIso8601String())),
-      ],
     );
   }
 }

@@ -3,6 +3,9 @@ import '../../../core/errors/api_error_parser.dart';
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -56,6 +59,10 @@ class AsterReadService {
           details: ApiErrorDetails(status: response.statusCode),
         );
       }
+      if (kDebugMode && path == '/fapi/v3/commissionRate') {
+        await File('${Directory.systemTemp.path}/vanta-fee-audit.json')
+            .writeAsBytes(response.bodyBytes);
+      }
       Object? data;
       try {
         final source = utf8.decode(response.bodyBytes);
@@ -72,6 +79,7 @@ class AsterReadService {
           details: ApiErrorDetails(
             status: response.statusCode,
             cause: response.statusCode == 200 ? ApiErrorCause.invalidResponse : null,
+            endpoint: path,
           ),
         );
       }

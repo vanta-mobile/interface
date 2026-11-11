@@ -43,14 +43,10 @@ class _CreateSubaccountScreenState extends ConsumerState<CreateSubaccountScreen>
     final identity = ref.watch(authProvider.select((s) => s.identity));
     final count = ref.watch(subaccountListProvider).account?.childCount;
     final enabled = canCreateSubaccount(identity) && count != null && count < 10;
-    if (state.wallet != null && !state.busy) {
-      return SubaccountBackupScreen(
-        wallet: state.wallet!,
-        accepted: state.accepted,
-        failure: state.failure == null
-            ? null
-            : apiErrorText(context, state.failure!, state.details),
-      );
+    // Backup follows only a creation Aster confirmed; every other outcome,
+    // including one still being checked, stays on the review.
+    if (state.accepted && state.wallet != null) {
+      return SubaccountBackupScreen(wallet: state.wallet!, accepted: true);
     }
     if (authorize) {
       return AccountAuthorizationPage(
@@ -59,6 +55,7 @@ class _CreateSubaccountScreenState extends ConsumerState<CreateSubaccountScreen>
         owner: identity?.walletAddress ?? '—',
         notice: l.accountsAuthorizeCreation,
         busy: state.busy,
+        showCancel: true,
         onCancel: () => setState(() => authorize = false),
         onOpen: enabled
             ? () => ref.read(generatedAccountProvider.notifier).create(name.text)
@@ -75,7 +72,7 @@ class _CreateSubaccountScreenState extends ConsumerState<CreateSubaccountScreen>
       footer: [
         AccountAction(
           key: const Key('generated-subaccount-create'),
-          label: l.accountsContinue,
+          label: l.accountsSignCreate,
           busy: state.busy,
           onPressed: enabled && name.text.trim().isNotEmpty
               ? () {
@@ -92,6 +89,7 @@ class _CreateSubaccountScreenState extends ConsumerState<CreateSubaccountScreen>
         ),
       ],
       children: [
+        if (identity?.walletAddress case final owner?) AccountContext(owner),
         Text(l.accountsNameHeading, style: PortfolioTypography.heading),
         const SizedBox(height: 16),
         Text(l.accountsNameHint, style: AccountTypography.secondary),

@@ -213,14 +213,14 @@ void main() {
     expect(find.byType(LinearProgressIndicator), findsNothing);
     expect(orders.submits, 0);
   });
-  panelTest('account invalidation and deadline hide values and disable reads until base refresh', (
+  panelTest('account deadline retains displayed maximum but disables reads until base refresh', (
     tester,
   ) async {
     await open(tester);
     await tap(tester, 'main-order-capacity-read');
     await tester.pump(const Duration(seconds: 30));
     await tester.pumpAndSettle();
-    expect(inKey('main-order-maximum-buy', '—'), findsOneWidget);
+    expect(inKey('main-order-maximum-buy', '9.009 BTC'), findsOneWidget);
     expect(
       tester.widget<OutlinedButton>(find.byKey(const Key('main-order-capacity-read'))).onPressed,
       null,

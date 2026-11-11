@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/errors/error_text.dart';
+
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../domain/auth_session.dart';
 
@@ -79,7 +81,7 @@ class AuthFailureText extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     liveRegion: true,
     child: Text(
-      failure.reason ?? tr(context, failure.key),
+      authFailureText(context, failure),
       key: const Key('auth-error'),
       style: AuthTypography.caption.copyWith(color: AppColors.authError),
     ),

@@ -26,16 +26,12 @@ class MemoryOrderRecoveryJournal implements OrderRecoveryJournal {
     if (!snapshot.ready || snapshot.failure != null) {
       throw const AccountReadFailure('orderRecoveryStorage');
     }
-    if (snapshot.records.any(
-      (r) => r.query.address.toLowerCase() == record.query.address.toLowerCase(),
-    )) {
-      throw const AccountReadFailure('orderRecoveryPending');
-    }
   }
 
   @override
   Future<void> prepare(OrderRecoveryRecord record) async {
     checkNew(record);
+    if (snapshot.records.any((r) => r.key == record.key)) return;
     final validated = decodeRecoveryRecord(encodeRecoveryRecord(record));
     publish(OrderRecoverySnapshot(records: [...snapshot.records, validated]));
   }
@@ -113,9 +109,7 @@ class FileOrderRecoveryJournal extends MemoryOrderRecoveryJournal {
     () => _guard(() async {
       checkNew(record);
       final file = await _file(), records = await _read(file);
-      if (records.any((r) => r.query.address.toLowerCase() == record.query.address.toLowerCase())) {
-        throw const AccountReadFailure('orderRecoveryPending');
-      }
+      if (records.any((r) => r.key == record.key)) return;
       await _write(file, [...records, decodeRecoveryRecord(encodeRecoveryRecord(record))]);
     }),
   );

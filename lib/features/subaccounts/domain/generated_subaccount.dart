@@ -20,5 +20,8 @@ abstract interface class SubaccountWalletStore {
   Future<String> reveal(String address);
   Future<String> sign(String address, Map<String, Object?> typedData);
   Future<void> acknowledgeBackup(String address);
+
+  /// Removes an unbacked key whose creation request was never dispatched.
+  Future<void> discard(String address);
   WalletConnection connection(GeneratedSubaccount account);
 }

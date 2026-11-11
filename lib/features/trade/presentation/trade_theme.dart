@@ -21,6 +21,13 @@ abstract final class TradeColors {
   static const sheet = PortfolioColors.inset;
   static const ratioBuy = Color(0xFF013220);
   static const ratioSell = PortfolioColors.negativeSurface;
+  static const buyLabel = ratioBuy;
+  static const sellLabel = ratioSell;
+  static const onDirection = AppColors.authText;
+  static const scrim = AppColors.authOverlay;
+  static const warning = NotificationColors.warning;
+  static const warningLabel = NotificationColors.warningSurface;
+  static const onAccent = PortfolioColors.inset;
 }
 
 abstract final class TradeTypography {
@@ -57,6 +64,19 @@ abstract final class TradeTypography {
     fontSize: 16,
     height: 24 / 16,
     fontWeight: FontWeight.w500,
+    color: TradeColors.text,
+  );
+  static const tag = TextStyle(
+    fontFamily: 'Inter',
+    fontSize: 11,
+    height: 16 / 11,
+    fontWeight: FontWeight.w400,
+  );
+  static const action = TextStyle(
+    fontFamily: 'Inter',
+    fontSize: 16,
+    height: 24 / 16,
+    fontWeight: FontWeight.w700,
     color: TradeColors.text,
   );
   static const small = TextStyle(

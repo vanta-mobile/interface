@@ -97,16 +97,17 @@ void main() {
       expect(repository.lastIntent!.draft.attachment, same(intent.draft.attachment));
     },
   );
-  test('unknown locks shared order/config operations and recovery remains query only', () async {
+  test('unknown releases shared operations and recovery remains query only', () async {
     repository.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
     final intent = prepare();
     await controller().submit(intent);
     expect(container.read(liveOrderProvider).needsRecheck, true);
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    expect(activity.acquire(SymbolSetting.leverage), null);
+    final lease = activity.acquire(SymbolSetting.leverage);
+    expect(lease, isNotNull);
+    activity.finish(lease!, unresolved: false);
+    // The submitted account snapshot is stale until explicitly renewed.
     expect(controller().prepare('BTCUSDT', liveDraft()), null);
-    await controller().load('BTCUSDT');
-    expect(repository.reads, 1);
     repository.result = verified();
     now = now.add(const Duration(hours: 1));
     await controller().recheck();
@@ -115,6 +116,10 @@ void main() {
     expect(repository.lastIntent!.clientOrderId, intent.clientOrderId);
     expect(container.read(liveOrderProvider).needsRecheck, false);
     expect(container.read(symbolSettingsActivityProvider).owner, null);
+    repository.context = liveContext(time: now);
+    await controller().load('BTCUSDT');
+    expect(repository.reads, 2);
+    expect(controller().prepare('BTCUSDT', liveDraft()), isNotNull);
   });
   test('failed refresh of an accepted strategy retains its query-only recovery', () async {
     await controller().submit(prepare());

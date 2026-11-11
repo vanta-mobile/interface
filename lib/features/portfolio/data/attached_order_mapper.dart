@@ -3,6 +3,7 @@ import '../domain/attached_order.dart';
 import '../domain/live_order.dart';
 import '../domain/live_order_attachment.dart';
 import '../domain/order_query.dart';
+import '../../../core/errors/api_error_details.dart';
 
 String _status(Object? value) {
   if (value is! String || !RegExp(r'^[A-Z][A-Z0-9_]{0,39}$').hasMatch(value)) {
@@ -22,7 +23,14 @@ String? _orderId(Object? value) {
 /// Read failureCode even on HTTP 200. The raw server reason is never displayed.
 void checkAttachedOrderAcknowledgement(Object? payload) {
   if (payload is! Map<String, dynamic> || payload['failureCode'] is! int) {
-    throw const AccountReadFailure('accountDataInvalid');
+    throw const AccountReadFailure(
+      'accountDataInvalid',
+      reasonKey: 'orderAcknowledgementInvalid',
+      details: ApiErrorDetails(
+        cause: ApiErrorCause.invalidResponse,
+        endpoint: '/fapi/v3/placeStrategyOrder',
+      ),
+    );
   }
   if (payload['failureCode'] != 0) {
     throw AccountReadFailure('attachedOrderRejected', code: payload['failureCode'] as int);

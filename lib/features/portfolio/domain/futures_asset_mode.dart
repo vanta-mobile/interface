@@ -1,6 +1,23 @@
 import 'package:decimal/decimal.dart';
 
 import 'account_snapshot.dart';
+import 'position_margin_mode.dart';
+
+class AssetModeMarket {
+  const AssetModeMarket({
+    required this.symbol,
+    required this.marginMode,
+    required this.hasPosition,
+    required this.hasCollateral,
+    this.openOrderCount = 0,
+  });
+  final String symbol;
+  final PositionMarginMode marginMode;
+  final bool hasPosition, hasCollateral;
+  final int openOrderCount;
+  bool get requiresCross => marginMode == PositionMarginMode.isolated;
+  bool get blocked => hasPosition || hasCollateral || openOrderCount > 0;
+}
 
 enum FuturesAssetMode {
   single('false'),
@@ -17,14 +34,18 @@ class FuturesAssetModeContext {
     required List<String> isolatedSymbols,
     required this.receivedAt,
     this.usdtWalletBalance,
-  }) : isolatedSymbols = List.unmodifiable(isolatedSymbols);
+    List<AssetModeMarket> markets = const [],
+  }) : isolatedSymbols = List.unmodifiable(isolatedSymbols),
+       markets = List.unmodifiable(markets);
   final String address;
   final FuturesAssetMode current;
   final List<String> isolatedSymbols;
   final DateTime receivedAt;
   final Decimal? usdtWalletBalance;
+  final List<AssetModeMarket> markets;
   bool blocks(FuturesAssetMode target) =>
-      target == FuturesAssetMode.multi && isolatedSymbols.isNotEmpty ||
+      target == FuturesAssetMode.multi &&
+          (isolatedSymbols.isNotEmpty || markets.any((m) => m.requiresCross)) ||
       target == FuturesAssetMode.single &&
           current == FuturesAssetMode.multi &&
           (usdtWalletBalance == null || usdtWalletBalance! < Decimal.zero);

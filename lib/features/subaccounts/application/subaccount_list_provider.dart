@@ -1,5 +1,10 @@
+import 'dart:async';
+
 import '../../authorization/application/trading_agent_provider.dart';
 import 'account_role_provider.dart';
+import 'generated_subaccount_provider.dart';
+import 'subaccount_creation_recovery.dart';
+import '../../../core/application/wallet_operation_provider.dart';
 import '../../../core/network/network_providers.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,7 +44,21 @@ class SubaccountListController extends WalletAccountController<SubaccountDirecto
   @override
   SubaccountDirectory reconcileSnapshot(SubaccountDirectory snapshot) {
     ref.read(verifiedMainAccountProvider.notifier).accept(snapshot);
+    unawaited(_reconcileCreations(snapshot));
     return snapshot;
+  }
+
+  Future<void> _reconcileCreations(SubaccountDirectory snapshot) async {
+    try {
+      final changed = await reconcileSubaccountCreations(
+        directory: snapshot,
+        journal: ref.read(walletOperationJournalProvider),
+        wallets: ref.read(subaccountWalletStoreProvider),
+      );
+      if (changed && ref.mounted) ref.invalidate(generatedWalletsProvider);
+    } catch (_) {
+      // Records stay unresolved and are checked again on the next read.
+    }
   }
 
   @override

@@ -1,7 +1,7 @@
 /// Aster V3 specifies chain 1666 for account request signatures, independent
 /// of the connected wallet chain. Wallet compatibility/authorization is verified
 /// only by a successful signed account response, never by a local signature.
-Map<String, Object?> asterReadTypedData(String query) => {
+Map<String, Object?> asterReadTypedData(String query, {int chainId = 1666}) => {
   'types': {
     'EIP712Domain': [
       {'name': 'name', 'type': 'string'},
@@ -17,7 +17,7 @@ Map<String, Object?> asterReadTypedData(String query) => {
   'domain': {
     'name': 'AsterSignTransaction',
     'version': '1',
-    'chainId': 1666,
+    'chainId': chainId,
     'verifyingContract': '0x0000000000000000000000000000000000000000',
   },
   'message': {'msg': query},

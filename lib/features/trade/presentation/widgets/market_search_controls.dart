@@ -5,7 +5,6 @@ import '../../../../core/strings.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../trade_theme.dart';
 import '../../../market/application/market_selection_provider.dart';
-import 'market_category_filter.dart';
 
 class MarketSearchControls extends ConsumerStatefulWidget {
   const MarketSearchControls({super.key});
@@ -112,8 +111,6 @@ class _MarketSearchControlsState extends ConsumerState<MarketSearchControls> {
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        const MarketCategoryFilter(),
       ],
     );
   }

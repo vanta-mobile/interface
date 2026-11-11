@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/application/live_order_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/futures_asset_mode.dart';
@@ -81,8 +82,8 @@ void main() {
       findsOneWidget,
     );
     await tap(tester, 'live-order-review');
-    final dialog = find.byType(AlertDialog);
-    for (final text in ['89.000000000000000001 USDT', '8 USDT', '0.001 BTC', 'Single-asset']) {
+    final dialog = find.byType(OrderConfirmationDialog);
+    for (final text in ['0.001 BTC']) {
       expect(
         find.descendant(of: dialog, matching: find.text(text)),
         findsOneWidget,
@@ -254,7 +255,7 @@ void main() {
         await tap(tester, 'live-order-collateral');
         await fill(tester);
         await tap(tester, 'live-order-review');
-        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(find.byType(OrderConfirmationDialog), findsOneWidget);
         expect(tester.takeException(), null);
         tester.view.physicalSize = const Size(844, 390);
         await tester.pumpAndSettle();

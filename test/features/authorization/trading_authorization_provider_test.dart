@@ -119,4 +119,63 @@ void main() {
       TradingAuthorizationResult.acknowledged,
     );
   });
+
+  test('changing wallets releases the old wait before its callback returns', () async {
+    final oldGate = repository.enableGate = Completer<void>();
+    final old = controller.enableTrading();
+    final oldCurrent = repository.isCurrent!;
+    identity.events.add(
+      const AuthIdentity(
+        id: 'other-user',
+        walletAddress: '0x2222222222222222222222222222222222222222',
+        signingAvailable: true,
+      ),
+    );
+    final newGate = repository.enableGate = Completer<void>();
+    final next = controller.enableTrading();
+    expect(repository.enables, 2);
+    expect(container.read(tradingAuthorizationProvider).busy, true);
+    expect(oldCurrent(), false);
+    oldGate.complete();
+    await old;
+    expect(container.read(tradingAuthorizationProvider).busy, true);
+    await controller.enableTrading();
+    expect(repository.enables, 2);
+    newGate.complete();
+    await next;
+    expect(container.read(tradingAuthorizationProvider).busy, false);
+    expect(
+      container.read(tradingAuthorizationProvider).result,
+      TradingAuthorizationResult.acknowledged,
+    );
+  });
+
+  test('stopped wait settles and permits a read-only check without the old response', () async {
+    final gate = repository.enableGate = Completer<void>();
+    final pending = controller.enableTrading();
+    controller.stop();
+    await pending;
+    await controller.check();
+    expect(repository.checks, 1);
+    expect(repository.enables, 1);
+    expect(container.read(tradingAuthorizationProvider).result, TradingAuthorizationResult.unknown);
+    gate.complete();
+    await Future<void>.delayed(Duration.zero);
+  });
+
+  test('repository replacement interrupts its pending wait and permits checking', () async {
+    final gate = repository.enableGate = Completer<void>();
+    final pending = controller.enableTrading();
+    final replacement = TestTradingAuthorizationRepository();
+    container.updateOverrides([
+      identityRepositoryProvider.overrideWithValue(identity),
+      tradingAuthorizationRepositoryProvider.overrideWithValue(replacement),
+    ]);
+    container.read(tradingAuthorizationProvider);
+    await controller.check();
+    expect(replacement.checks, 1);
+    expect(container.read(tradingAuthorizationProvider).busy, false);
+    gate.complete();
+    await pending;
+  });
 }

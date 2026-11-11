@@ -11,8 +11,9 @@
   "authWalletCancelled": "钱包连接已取消，可以重新尝试。",
   "authWalletRejected": "你已拒绝钱包请求，可以重新尝试。",
   "authWalletUnavailable": "钱包连接失败，请检查钱包应用和网络后重试。",
+  "walletResponseReason": "钱包返回：{reason}",
   "authWalletBusy": "钱包中还有待处理的请求，请完成后再继续。",
-  "authWalletSigningNetwork": "请在钱包中批准 BNB Chain（56）并重新连接后，再开启交易。",
+  "authWalletSigningNetwork": "请在钱包中启用并选择 BNB Chain（链 ID 56），允许此应用连接该网络，然后重新连接再开启交易。",
   "authWalletConnectionTimeout": "钱包连接准备超时，请检查网络后重试。",
   "authWalletUnsupported": "请选择支持的 Ethereum、BNB Chain、Arbitrum 或 Base 钱包网络。",
   "authWalletChanged": "钱包账户或网络已变更，请重新连接并登录。",
@@ -307,18 +308,7 @@
   },
   "accountUnitUnavailable": "（单位待确认）",
   "accountIsolatedMode": "逐仓",
-  "marketCategoryTop": "热门",
-  "marketCategoryRwa": "USD1-RWA",
-  "marketCategoryMeme": "Meme",
-  "marketCategoryAi": "AI",
-  "marketCategoryPreLaunch": "盘前",
-  "marketCategoryStocks": "股票",
-  "marketCategoryEtf": "ETF",
-  "marketCategoryCommodities": "大宗商品",
-  "marketCategorySemiconductors": "半导体",
-  "marketNoCategoryResults": "该分类下没有符合筛选条件的合约。",
   "marketResultsCount": "{shown} / {total} 个永续合约",
-  "marketCategories": "市场分类",
   "@marketResultsCount": {
     "placeholders": {
       "shown": {
@@ -329,7 +319,6 @@
       }
     }
   },
-  "marketCategoryAll": "全部分类",
   "accountPerpetualTab": "合约",
   "accountSpotTab": "现货",
   "spotAccountTitle": "Aster 现货账户",
@@ -776,8 +765,8 @@
   "assetModeMulti": "多资产",
   "assetModeSingleHint": "单一资产模式使用合约对应的保证金资产。",
   "assetModeMultiHint": "多资产模式由全仓仓位共享合格抵押资产。需先处理逐仓仓位或留存的逐仓抵押余额；支持资产、估值、余额要求及最终切换资格由Aster确定。",
-  "assetModeReadSettings": "读取资产模式及仓位（2次签名）",
-  "assetModeReadHint": "分别签名读取资产模式和全部合约仓位配置，读取不会提交修改。配置从首个响应起30秒有效，包含等待第二次签名的时间。",
+  "assetModeReadSettings": "读取资产模式、仓位和挂单",
+  "assetModeReadHint": "读取资产模式、所有仓位配置和全部挂单。查询不会提交修改，数据有效期从首次响应起为 30 秒。",
   "assetModeCurrentSetting": "读取时资产模式",
   "assetModeTarget": "目标资产模式",
   "assetModeContextExpired": "请刷新资产模式及仓位后再检查修改，已保留选择。",
@@ -876,11 +865,14 @@
     }
   },
   "liveOrderQueryScope": "以上为查询时的快照。只有 FILLED 代表所请求数量全部成交；后续变更需再次读取账户核对。",
-  "liveOrderOutcomeUnknown": "请求可能已到达 Aster，请使用此客户端编号查询核对。当前禁止再次下单；查询不会重新提交订单。",
+  "liveOrderOutcomeUnknown": "下单请求已尝试发送，暂未确认是否成功。请先查询原订单，避免重复下单；查询不会重新提交订单。",
   "liveOrderRecheck": "签名查询此订单",
   "liveOrderConfirmTitle": "提交此实盘合约订单？",
   "liveOrderConfirmHint": "此操作会提交真实订单。先签名下单，再另行签名查询状态。市价单实际成交价可能不同；限价单按下方所示策略执行。本操作不修改杠杆或保证金配置。",
   "liveOrderPolicy": "限价成交策略",
+  "timeInForceTitle": "有效方式",
+  "timeInForceGtc": "GTC（撤销前有效）",
+  "timeInForceIoc": "IOC（立即成交或取消）",
   "liveOrderConditional": "条件委托",
   "liveOrderPositionTriggers": "仓位止盈止损",
   "liveOrderStop": "止损／突破",
@@ -1082,8 +1074,8 @@
   "attachedOrderConfirmHint": "此操作提交真实联动策略。请复核本次主单全量保护数量、各触发条件及退出价格。主单部分或全部成交驱动挂单，一侧退出单部分或全部成交驱动互撤；实际结果需查询交易所回报。",
   "orderRecoveryTitle": "未决订单恢复",
   "orderRecoveryScope": "这里仅显示当前钱包在此设备保存的未决合约订单或策略。查询需要重新连接同一钱包并签名，不会重新下单。查询不到不代表原单未提交；记录会继续保留。请先核对结果，再进行新的下单或配置修改。清除应用数据或卸载会丢失本地记录。",
-  "orderRecoveryStorage": "无法读取或保存本地未决记录，已暂停新的实盘下单及配置操作。记录不会自动清除，请重试。",
-  "orderRecoveryPending": "当前钱包有待核对的订单或策略，请先查询原编号。新的实盘下单及配置操作暂不可用。",
+  "orderRecoveryStorage": "无法读取或保存本地订单记录，不影响继续交易。",
+  "orderRecoveryPending": "当前钱包有结果待核对的订单记录，可按原编号查看，不影响继续交易。",
   "orderRecoveryConnect": "登录或重新连接原钱包",
   "orderRecoveryReload": "重新读取本地记录",
   "orderRecoveryEmpty": "当前钱包在此设备没有未决记录；这不代表交易所没有挂单。",
@@ -1525,6 +1517,11 @@
   "liveOrderPricing": "限价定价方式",
   "liveOrderPegHint": "Aster 按所选买一／卖一在限价单提交时、或条件限价单触发时确定一次价格，不会持续追价。预估使用所选当前买一／卖一；引擎实际定价和成交可能不同，尤其是未来触发时。",
   "liveOrderBbo": "BBO",
+  "liveOrderBboModeLabel": "BBO 模式",
+  "liveOrderBboModeTitle": "BBO 模式",
+  "liveOrderBboModeHint": "BBO 以当前最优买价或卖价下限价单。只做 Maker 订单若会立即吃单，可能下单失败。",
+  "liveOrderBboCounterparty": "对手价 {depth}",
+  "liveOrderBboQueue": "排队价 {depth}",
   "liveOrderPegInvalid": "BBO 需使用限价单且不手填委托价，不能与市价、跟踪、触发时全部平仓或附加策略单混用。 只做 Maker 的 BBO 仅支持同侧一档。",
   "internalTransferTitle": "现货 ↔ 合约划转",
   "internalTransferScope": "使用当前钱包，将所选资产在 Aster 现货与合约账户间划转。",
@@ -2300,6 +2297,16 @@
   "orderConfirmTrailing": "跟踪委托开仓前确认",
   "orderConfirmLimitShared": "限价与只做 Maker 共用此设置。",
   "orderConfirmDoNotShow": "此订单类型不再显示确认",
+  "orderConfirmTitle": "下单确认",
+  "orderConfirmPrice": "委托价格",
+  "orderConfirmQuantity": "委托数量",
+  "orderConfirmMarketPrice": "市价",
+  "orderConfirmTakeProfit": "止盈",
+  "orderConfirmStopLoss": "止损",
+  "orderConfirmBuy": "买入/做多",
+  "orderConfirmSell": "卖出/做空",
+  "orderConfirmSubmitted": "下单成功",
+  "orderConfirmExpired": "订单信息已失效，请关闭弹窗后重新下单。",
   "orderConfirmWalletHint": "此设置控制应用内确认。提交前检查和钱包签名仍会执行。",
   "scaledTotalAmount": "总委托金额",
   "scaledAmountInvalid": "请输入正数总委托金额。",
@@ -2342,6 +2349,12 @@
   },
   "scaledCountRange": "2–110",
   "assistantNavigation": "AI",
+  "orderTypeTrailing": "追踪止损",
+  "orderTypeTitle": "订单类型",
+  "orderTypePostOnly": "只做 Maker",
+  "orderTypeStopLimit": "限价止盈止损",
+  "orderTypeStopMarket": "市价止盈止损",
+  "orderTypeScaled": "分段委托",
   "orderModeLabel": "下单模式",
   "orderModeMore": "更多下单模式",
   "orderModeStopLimit": "限价止盈止损",
@@ -2398,6 +2411,14 @@
   "apiRequestTimeout": "请求超时。",
   "apiConnectionFailed": "无法连接服务器，请检查网络连接。",
   "apiRequestCancelled": "请求已取消。",
+  "apiInvalidResponseAt": "Aster 返回的 {endpoint} 数据格式无效，请重试。",
+  "@apiInvalidResponseAt": {
+    "placeholders": {
+      "endpoint": {
+        "type": "String"
+      }
+    }
+  },
   "apiInvalidResponse": "服务器返回的数据格式无效。",
   "authConnectTitle": "连接钱包",
   "authVerifyTitle": "验证邮箱",
@@ -2623,6 +2644,7 @@
   "accountsHiddenKey": "默认隐藏",
   "accountsRevealKey": "显示私钥",
   "accountsHideKey": "隐藏私钥",
+  "accountsCopyKey": "复制私钥",
   "accountsKeyWarning": "持有私钥即可控制账户，请保密并安全保存。",
   "accountsSavedKey": "我已保存私钥。",
   "accountsContinue": "继续",
@@ -2649,7 +2671,8 @@
   "subaccountSecureStorageFailed": "无法访问设备安全钱包存储，不会发送新的创建请求。",
   "subaccountSecureStorageFull": "设备钱包存储已满，请先备份钱包。",
   "subaccountLocalKeyMissing": "此设备没有该账户的私钥，请将备份导入外部钱包后使用。",
-  "subaccountCreationFailed": "子账户创建失败，生成的钱包仍可备份。",
+  "subaccountCreationFailed": "子账户创建失败，请重试。",
+  "subaccountCreationNotCompleted": "Aster 未创建该子账户，请重试。",
   "subaccountNativeTransactionUnavailable": "请将此账户导入外部钱包后发送链上交易。",
   "accountsTransferInsufficient": "划转数量超过合约账户可用余额。",
   "accountsLocalWallets": "此设备创建的账户",
@@ -2794,6 +2817,8 @@
     }
   },
   "fundingBalanceInsufficient": "{asset} 余额不足，请输入更小的金额。",
+  "fundingGasTopUp": "{asset} 不足以支付网络手续费，请向钱包补充 {asset}。",
+  "fundingWithdrawalFeeInsufficient": "{asset} 不足以支付提现金额及手续费，请输入更小的金额。",
   "@fundingBalanceInsufficient": {
     "placeholders": {
       "asset": {
@@ -2801,7 +2826,6 @@
       }
     }
   },
-  "fundingGasTopUp": "{asset} 不足以支付网络手续费，请向钱包补充 {asset}。",
   "@fundingGasTopUp": {
     "placeholders": {
       "asset": {
@@ -2809,7 +2833,6 @@
       }
     }
   },
-  "fundingWithdrawalFeeInsufficient": "{asset} 不足以支付提现金额及手续费，请输入更小的金额。",
   "@fundingWithdrawalFeeInsufficient": {
     "placeholders": {
       "asset": {
@@ -2836,6 +2859,27 @@
   "tradeExitPnl": "盈亏（{asset}）",
   "tradeExitPrice": "价格（{asset}）",
   "tradeExitRoi": "收益率（%）",
+  "livePriceDisconnected": "行情连接已断开，正在自动重连。",
+  "livePriceConnecting": "正在连接下单行情。",
+  "livePriceMarkMissing": "尚未收到标记价格，正在自动重试。",
+  "livePriceMarkInvalid": "标记价格数据异常，正在自动重试。",
+  "livePriceMarkStale": "标记价格停止更新，正在自动刷新。",
+  "livePriceLastMissing": "尚未收到最新成交价，正在自动重试。",
+  "livePriceLastInvalid": "最新成交价数据异常，正在自动重试。",
+  "livePriceLastStale": "暂无近期成交价格，正在自动刷新。",
+  "livePriceBookMissing": "尚未收到买卖一档报价，正在自动重试。",
+  "livePriceBookInvalid": "买卖一档报价数据异常，正在自动重试。",
+  "livePriceBookStale": "买卖一档报价停止更新，正在自动刷新。",
+  "livePriceClockUnavailable": "无法校验交易所时间，正在自动重试。",
+  "livePriceTimestampInvalid": "报价时间超前于交易所时间，正在自动刷新。",
+  "liveOrderMinimumPlaceholder": "Min {amount}",
+  "@liveOrderMinimumPlaceholder": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "notificationFilterAll": "全部",
   "notificationFilterTransfers": "充提",
   "notificationFilterOrders": "订单",
@@ -2850,5 +2894,56 @@
   "notificationAdlSummary": "{symbol} 自动减仓订单有新的执行记录，请查看仓位及成交结果。",
   "notificationMarginSummary": "{symbols} 仓位风险过高，请及时检查保证金和仓位。",
   "notificationTransferSummary": "{kind, select, deposit_processing{{amount} 充值处理中，网络：{network}。} deposit_success{{amount} 已充值至 {market} 账户，网络：{network}。} deposit_failed{你的 {amount} 充值记录状态为失败，请查看详情。} withdraw_processing{{amount} 提现申请处理中，可前往资金记录查看进度。} withdraw_success{{amount} 已从 {market} 账户提现，网络：{network}。} withdraw_failed{你的 {amount} 提现记录状态为失败，请查看详情。} other{{amount} 充提记录有更新。}}",
-  "notificationTransferTitle": "{type, select, deposit{{status, select, processing{充值处理中} success{充值成功} failed{充值失败} other{充值更新}}} withdraw{{status, select, processing{提现处理中} success{提现成功} failed{提现失败} other{提现更新}}} other{充提更新}}"
+  "livePriceDepthUnavailable": "当前所选 BBO 档位尚无可用于额度估算的深度报价。",
+  "livePricePrecisionMissing": "交易所未返回此市价委托所需的价格精度。",
+  "livePriceExecutionInvalid": "计算所得参考成交价不大于零，请检查该合约价格精度。",
+  "notificationTransferTitle": "{type, select, deposit{{status, select, processing{充值处理中} success{充值成功} failed{充值失败} other{充值更新}}} withdraw{{status, select, processing{提现处理中} success{提现成功} failed{提现失败} other{提现更新}}} other{充提更新}}",
+  "modeAccountSettings": "账户设置",
+  "modeAssetTitle": "资产模式",
+  "modePositionTitle": "持仓模式",
+  "modeSingleShort": "单资产",
+  "modeMultiShort": "多资产",
+  "modeSingleTitle": "单资产模式",
+  "modeMultiTitle": "多资产模式",
+  "modeSingleDescription": "使用交易对的结算币种作为保证金。\n相同币种的全仓仓位盈亏可以互相抵扣。\n支持全仓和逐仓保证金。",
+  "modeMultiDescription": "支持使用多种保证金资产交易合约，不同保证金资产的盈亏可以互相抵扣。支持全仓保证金。",
+  "modeReadAboutPrefix": "了解",
+  "modeReadAboutSuffix": "，更好地管理风险。",
+  "modeOneWayDescription": "每个市场仅持有一个净仓位，反方向订单会减少或反转现有仓位。",
+  "modeHedgeDescription": "在同一市场分别持有多头和空头仓位。",
+  "modePositionBlocked": "切换持仓模式前，请先平掉所有仓位并取消所有挂单。",
+  "modeActivateMulti": "开启多资产模式",
+  "modeMultiRequirements": "多资产模式要求所有仓位使用全仓保证金。切换前，请平掉逐仓仓位并取消其挂单。",
+  "modeAffectedMarkets": "受影响的市场",
+  "modeManage": "管理",
+  "modeSwitchCross": "切换为全仓",
+  "modeRequirementsMet": "已满足条件",
+  "modeOpenPosition": "有未平仓位",
+  "modeOpenOrders": "有未成交挂单",
+  "modeIsolatedCollateral": "仍有逐仓保证金",
+  "modeNoPositionsOrders": "无持仓或挂单",
+  "modeNegativeUsdt": "您的可用 USDT 资产为负，请先平衡资产，再切换资产模式。",
+  "modeRefresh": "刷新设置",
+  "modeConfirm": "确认",
+  "openOrdersCancelAll": "全部撤单",
+  "openOrdersAmountUnit": "已成交 / 总数量（{unit}）",
+  "openOrdersTriggerCondition": "{basis} {operator} {price}",
+  "openOrdersYes": "是",
+  "openOrdersNo": "否",
+  "openOrdersConfirm": "确认",
+  "openOrdersDetailsTitle": "订单详情",
+  "openOrdersViewChart": "查看 {symbol} 图表",
+  "openOrdersCancelAllQuestion": "确定要撤销全部合约挂单吗？",
+  "openOrdersCancelSymbolQuestion": "确定要撤销 {symbol} 的全部挂单吗？",
+  "openOrdersSide": "方向",
+  "openOrdersTab": "挂单",
+  "openOrdersViewExplorer": "查看浏览器",
+  "orderResponseIdentityMismatch": "Aster 返回的订单编号、交易对或方向与本次委托不一致。",
+  "orderResponseLinkageMismatch": "Aster 返回的止盈止损关联关系与本次委托不一致。",
+  "orderResponseTermsMismatch": "Aster 返回的价格、数量或执行设置与本次委托不一致。",
+  "orderResponseStatusInvalid": "Aster 返回的订单状态缺失或无法识别。",
+  "orderResponseMalformed": "Aster 返回的订单字段缺失或格式不正确，暂时无法核对订单。",
+  "orderAcknowledgementInvalid": "Aster 未返回有效的策略下单处理结果。",
+  "openOrdersTpSl": "止盈/止损",
+  "openOrdersLinkedOrder": "关联订单："
 }

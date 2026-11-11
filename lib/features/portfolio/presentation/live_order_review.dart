@@ -1,23 +1,22 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../l10n/generated/app_localizations.dart';
-import '../../trade/presentation/widgets/primitives.dart';
-import '../application/live_order_provider.dart';
-import '../domain/live_order.dart';
-import '../domain/futures_position_mode.dart';
-import '../domain/position_margin_mode.dart';
-import 'live_order_funds_panel.dart';
-import 'live_order_policy.dart';
-import 'live_order_trigger_controls.dart';
-import '../application/order_confirmation_provider.dart';
-import '../domain/order_confirmation.dart';
 import '../../auth/application/auth_provider.dart';
-import 'live_order_attachment_summary.dart';
-import 'attached_entry_pricing.dart';
-import 'live_order_pricing.dart';
+import '../../trade/presentation/trade_theme.dart';
+import '../application/live_order_provider.dart';
+import '../application/main_order_allocation_provider.dart';
+import '../application/order_confirmation_provider.dart';
+import '../application/order_review_activity_provider.dart';
+import '../application/main_order_review_provider.dart';
+import '../application/main_order_review_submission_provider.dart';
+import '../domain/account_snapshot.dart';
+import '../domain/live_order.dart';
+import '../domain/main_order_allocation.dart';
 import '../domain/live_order_size.dart';
-import 'live_order_size_field.dart';
+import '../domain/order_confirmation.dart';
+import 'order_confirmation_dialog.dart';
 
 Future<void> reviewLiveOrder(
   BuildContext context,
@@ -25,152 +24,113 @@ Future<void> reviewLiveOrder(
   LiveOrderIntent intent, {
   OrderSizeResolution? sizing,
   Future<void> Function()? onSubmit,
-  Widget? extraTerms,
+  MainOrderAllocationReview? allocationReview,
+}) async {
+  final activity = ref.read(orderReviewActivityProvider.notifier);
+  activity.begin();
+  try {
+    await _reviewLiveOrder(
+      context,
+      ref,
+      intent,
+      sizing: sizing,
+      onSubmit: onSubmit,
+      allocationReview: allocationReview,
+    );
+  } finally {
+    activity.end();
+  }
+}
+
+Future<void> _reviewLiveOrder(
+  BuildContext context,
+  WidgetRef ref,
+  LiveOrderIntent intent, {
+  OrderSizeResolution? sizing,
+  Future<void> Function()? onSubmit,
+  MainOrderAllocationReview? allocationReview,
 }) async {
   final controller = ref.read(liveOrderProvider.notifier);
-  final kind = orderConfirmationKind(intent.draft);
-  final preference = ref.read(orderConfirmationProvider(kind));
+  Future<void> submit() => onSubmit?.call() ?? controller.submit(intent);
   final identity = ref.read(authProvider).identity;
+  final container = ProviderScope.containerOf(context, listen: false);
+  Future<OrderSubmissionOutcome> submitCurrent() async {
+    if (!identical(identity, container.read(authProvider).identity)) {
+      return const OrderSubmissionOutcome(OrderSubmissionKind.notSubmitted);
+    }
+    if (allocationReview case final original?) {
+      return _observe(
+        container,
+        original.intent,
+        () => container.read(mainOrderReviewSubmissionProvider.notifier).submit(original),
+      );
+    }
+    return _observe(container, intent, submit);
+  }
+
+  final preference = ref.read(orderConfirmationProvider(orderConfirmationKind(intent.draft)));
   // Reducing and entire-position close flows keep their dedicated review.
   if (!intent.draft.reducing && preference.canSkip) {
-    await (onSubmit?.call() ?? controller.submit(intent));
+    await submitCurrent();
     return;
   }
-  var skipNext = false;
-  final confirmed = await showDialog<bool>(
+  // The dialog can outlive the form (for example after a logout), so its
+  // submission reads through the container rather than the form's ref.
+  await showDialog<void>(
     context: context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setState) {
-        final l10n = AppLocalizations.of(context);
-        return AlertDialog(
-          scrollable: true,
-          title: Text(
-            intent.draft.reducing ? l10n.liveCloseConfirmTitle : l10n.liveOrderConfirmTitle,
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                intent.draft.attachment != null
-                    ? l10n.attachedOrderConfirmHint
-                    : intent.draft.reducing
-                    ? l10n.liveCloseConfirmHint
-                    : l10n.liveOrderConfirmHint,
-              ),
-              SelectableText(intent.context.address),
-              SelectableText(intent.context.symbol),
-              if (!intent.draft.reducing) LiveOrderFundsPanel(data: intent.context),
-              _LiveOrderAccountTerms(intent: intent),
-              _LiveOrderFinancialTerms(intent: intent, sizing: sizing),
-              ?extraTerms,
-              if (!intent.draft.reducing)
-                CheckboxListTile(
-                  key: const Key('live-order-skip-confirmation'),
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l10n.orderConfirmDoNotShow),
-                  value: skipNext,
-                  onChanged: (value) => setState(() => skipNext = value ?? false),
-                ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
-            FilledButton(
-              key: const Key('live-order-confirm'),
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(l10n.liveOrderSignSubmit),
-            ),
-          ],
-        );
-      },
+    // A stray touch must not dismiss a financial confirmation.
+    barrierDismissible: false,
+    barrierColor: TradeColors.scrim,
+    builder: (_) => BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+      child: Consumer(
+        builder: (_, ref, _) {
+          final current = allocationReview == null
+              ? null
+              : ref.watch(mainOrderReviewProvider(allocationReview));
+          final live = ref.watch(liveOrderProvider);
+          final frozen = live.busy && live.intent?.clientOrderId == intent.clientOrderId
+              ? live.intent
+              : null;
+          return OrderConfirmationDialog(
+            intent: frozen ?? current?.review?.intent ?? intent,
+            sizing: current?.review?.side.size ?? sizing,
+            ready: frozen != null || current == null || current.review != null,
+            submitWhileUpdating: allocationReview != null,
+            submit: submitCurrent,
+          );
+        },
+      ),
     ),
   );
-  if (confirmed != true ||
-      !context.mounted ||
-      !identical(identity, ref.read(authProvider).identity)) {
-    return;
-  }
-  if (skipNext) await ref.read(orderConfirmationProvider(kind).notifier).select(false);
-  if (context.mounted) await (onSubmit?.call() ?? controller.submit(intent));
 }
 
-class _LiveOrderAccountTerms extends StatelessWidget {
-  const _LiveOrderAccountTerms({required this.intent});
-  final LiveOrderIntent intent;
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ValueRow(
-          l10n.liveOrderSide,
-          intent.draft.reducing
-              ? (intent.draft.buy ? l10n.liveCloseShort : l10n.liveCloseLong)
-              : (intent.draft.buy ? l10n.long : l10n.short),
-        ),
-        if (intent.draft.reducing) ...[
-          SelectableText(intent.positionSide),
-          ValueRow(
-            l10n.liveClosePositionAmount,
-            '${intent.context.reductionPosition(intent.draft)!.quantity.abs()} ${intent.context.rules.baseAsset}',
-          ),
-          if (!intent.draft.entireClose) Text(l10n.liveOrderReduceHint),
-        ],
-        ValueRow(
-          l10n.positionModeSettings,
-          intent.mode == FuturesPositionMode.oneWay
-              ? l10n.positionModeOneWay
-              : l10n.positionModeHedge,
-        ),
-        ValueRow(
-          l10n.accountMarginMode,
-          intent.context.marginMode == PositionMarginMode.cross
-              ? l10n.cross
-              : l10n.accountIsolatedMode,
-        ),
-        ValueRow(l10n.leverageCurrentSetting, '${intent.context.leverage}×'),
-      ],
+/// Reads the settled order and allocation state around one submission.
+Future<OrderSubmissionOutcome> _observe(
+  ProviderContainer ref,
+  LiveOrderIntent intent,
+  Future<void> Function() submit,
+) async {
+  final before = ref.read(liveOrderProvider), allocation = ref.read(mainOrderAllocationProvider);
+  try {
+    await submit();
+  } on AccountReadFailure catch (failure) {
+    return OrderSubmissionOutcome(OrderSubmissionKind.notSubmitted, failure);
+  }
+  final after = ref.read(liveOrderProvider);
+  if (identical(before, after)) {
+    final current = ref.read(mainOrderAllocationProvider);
+    return OrderSubmissionOutcome(
+      OrderSubmissionKind.notSubmitted,
+      identical(allocation, current) ? null : current.failure,
     );
   }
-}
-
-class _LiveOrderFinancialTerms extends StatelessWidget {
-  const _LiveOrderFinancialTerms({required this.intent, this.sizing});
-  final LiveOrderIntent intent;
-  final OrderSizeResolution? sizing;
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final notional = intent.draft.entireClose
-        ? null
-        : parseOrderDecimal(intent.draft.quantity)! *
-              intent.context.referenceExecutionPrice(intent.draft)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ValueRow(l10n.liveOrderType, liveOrderTypeLabel(l10n, intent.draft)),
-        LiveOrderTriggerSummary(data: intent.context, draft: intent.draft),
-        LiveOrderAttachmentSummary(intent: intent),
-        if (!intent.draft.market) LiveOrderPolicySummary(policy: intent.draft.timeInForce),
-        ValueRow(
-          l10n.liveOrderQuantity(intent.context.rules.baseAsset),
-          intent.draft.entireClose ? l10n.liveEntireQuantity : intent.draft.quantity,
-        ),
-        if (intent.draft.attachment?.entryPeg case final peg?)
-          AttachedEntryPegSummary(peg: peg)
-        else if (intent.draft.peg case final peg?)
-          LiveOrderPegSummary(peg: peg)
-        else if (!intent.draft.market)
-          ValueRow(l10n.liveOrderPrice(intent.context.rules.quoteAsset), intent.draft.price),
-        if (sizing?.converted == true) LiveOrderSizePreview(value: sizing!, data: intent.context),
-        if (notional != null && sizing?.converted != true)
-          ValueRow(l10n.liveOrderEstimatedNotional, '$notional ${intent.context.rules.quoteAsset}'),
-        Text(intent.draft.attachment != null ? l10n.attachedOrderClientId : l10n.liveOrderClientId),
-        if (!intent.draft.reducing) LiveOrderCostPreview(data: intent.context, draft: intent.draft),
-        SelectableText(intent.clientOrderId),
-      ],
-    );
+  final result = after.intent?.clientOrderId == intent.clientOrderId ? after.result : null;
+  if (result != null && result.failure == null && !result.needsRecheck) {
+    return const OrderSubmissionOutcome(OrderSubmissionKind.success);
   }
+  if (after.needsRecheck) {
+    return OrderSubmissionOutcome(OrderSubmissionKind.unknown, result?.failure);
+  }
+  return OrderSubmissionOutcome(OrderSubmissionKind.failed, after.failure ?? result?.failure);
 }

@@ -43,9 +43,21 @@ class AsterOpenOrder {
     this.units,
     this.updatedAt,
     this.originalType,
+    this.transactionHash,
+    this.clientOrderId,
+    this.strategy,
   });
   final String symbol, orderId, side, positionSide, type, status;
   final String? originalType;
+
+  /// Aster Chain transaction of the placement. Liquidation and non-L1 orders
+  /// have none, so explorer links stay unavailable for them.
+  final String? transactionHash;
+  final String? clientOrderId;
+
+  /// OTO/OTOCO membership when the exchange row reports it (undocumented on
+  /// REST; asterdex.com rows carry it). Null when the row has no linkage.
+  final OpenOrderStrategy? strategy;
 
   /// User-stream T is an update time, never a substitute for REST time.
   final DateTime? time;
@@ -61,6 +73,24 @@ class AsterOpenOrder {
       type == 'LIMIT' && pegPriceType == null && price > Decimal.zero && origQty > Decimal.zero
       ? origQty * price
       : null;
+}
+
+/// Strategy linkage and TP/SL exit prices of an OTO/OTOCO order. Leg 1 is the
+/// entry; legs 2/3 are its reduce-only take-profit / stop-loss exits.
+class OpenOrderStrategy {
+  const OpenOrderStrategy({
+    required this.strategyId,
+    this.type,
+    this.sequence,
+    this.takeProfit,
+    this.stopLoss,
+  });
+  final String strategyId;
+  final String? type;
+  final int? sequence;
+  final Decimal? takeProfit, stopLoss;
+  bool get entry => sequence == null || sequence == 1;
+  bool get hasExits => takeProfit != null || stopLoss != null;
 }
 
 int compareOpenOrders(AsterOpenOrder a, AsterOpenOrder b) {

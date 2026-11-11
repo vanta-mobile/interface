@@ -28,8 +28,7 @@ class _AccountSwitchScreenState extends ConsumerState<AccountSwitchScreen> {
     final l = AppLocalizations.of(context), active = ref.watch(activeAccountEntryProvider);
     final auth = ref.watch(authProvider);
     final error =
-        failure ??
-        (auth.failure == null ? null : auth.failure!.reason ?? tr(context, auth.failure!.key));
+        failure ?? (auth.failure == null ? null : authFailureText(context, auth.failure!));
     return AccountsPage(
       title: l.accountsTitle,
       canPop: !busy,

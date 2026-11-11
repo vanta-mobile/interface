@@ -57,10 +57,8 @@ class ScaledOrderController extends Notifier<ScaledOrderState> {
     final live = ref.read(liveOrderProvider), auth = ref.read(authProvider);
     final data = live.context, activity = ref.read(symbolSettingsActivityProvider);
     if (state.busy ||
-        state.needsRecheck ||
         auth.busy ||
         live.busy ||
-        live.needsRecheck ||
         live.stale ||
         data == null ||
         data.symbol != symbol ||
@@ -112,10 +110,8 @@ class ScaledOrderController extends Notifier<ScaledOrderState> {
       if (!identical(state.intent, intent)) return;
     } else {
       final live = ref.read(liveOrderProvider), activity = ref.read(symbolSettingsActivityProvider);
-      if (state.needsRecheck ||
-          intent.revision != _revision ||
+      if (intent.revision != _revision ||
           live.busy ||
-          live.needsRecheck ||
           live.stale ||
           !identical(live.context, intent.context) ||
           !_fresh(intent.context) ||

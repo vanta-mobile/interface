@@ -295,13 +295,17 @@ class LiveOrderResult {
     this.failure,
     this.checkedAt,
     this.strategy,
+    this.rejected = false,
   });
   final String? orderId, status;
   final Decimal? executedQuantity;
   final AccountReadFailure? failure;
   final DateTime? checkedAt;
   final AttachedOrderSnapshot? strategy;
-  bool get needsRecheck => orderId == null && strategy == null;
+
+  /// Explicit gateway parameter rejection, independent of display text.
+  final bool rejected;
+  bool get needsRecheck => !rejected && orderId == null && strategy == null;
 }
 
 class LiveOrderState {

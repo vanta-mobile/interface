@@ -3,10 +3,21 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/market/application/market_providers.dart';
+import 'package:vanta/core/network/request_scope.dart';
 import 'package:vanta/features/portfolio/application/asset_index_provider.dart';
 import 'package:vanta/features/portfolio/domain/asset_valuation.dart';
 
 import '../../support/asset_indices.dart';
+
+class ScopedAssetIndices extends TestAssetIndexRepository {
+  ScopedAssetIndices({super.now});
+  RequestScope? scope;
+  @override
+  Future<AssetIndexSnapshot> read() {
+    scope = RequestScope.current;
+    return super.read();
+  }
+}
 
 void main() {
   late DateTime now;
@@ -42,6 +53,33 @@ void main() {
     await tester.pump(Duration(seconds: seconds));
     await tester.pump();
   }
+
+  valueTest('public collateral rates survive caller completion and retain owner cancellation', (
+    tester,
+  ) async {
+    listener.close();
+    container.dispose();
+    final owned = ScopedAssetIndices(now: () => now)..gate = Completer<AssetIndexSnapshot>();
+    container = ProviderContainer(
+      overrides: [
+        assetIndexClockProvider.overrideWithValue(() => now),
+        assetIndexRepositoryProvider.overrideWithValue(owned),
+      ],
+    );
+    var caller = true;
+    await RequestScope.run(() => caller, () async {
+      listener = container.listen(assetIndexProvider, (_, _) {});
+      await tester.pump();
+    });
+    caller = false;
+    expect(owned.scope!.active, isTrue);
+    owned.gate!.complete(assetIndexFixture(now));
+    await tester.pump();
+    expect(container.read(assetIndexProvider).failed, isFalse);
+    expect(container.read(assetIndexProvider).snapshot, isNotNull);
+    container.read(quoteUpdatesActiveProvider.notifier).setActive(false);
+    expect(owned.scope!.active, isFalse);
+  });
 
   valueTest('price repository stays alive during delayed refresh and closes with its controller', (
     tester,

@@ -40,7 +40,11 @@ void main() {
       f.orders.readFailure = AccountReadFailure('accountDataInvalid', code: code);
       final task = f.container.read(mainOrderRefreshProvider.notifier).refresh('BTCUSDT');
       await t.pump();
-      expect(find.byKey(const Key('trade-order-skeleton')), findsOneWidget);
+      expect(find.byKey(const Key('trade-order-skeleton')), findsNothing);
+      expect(find.byKey(const Key('trade-pending-quantity')), findsOneWidget);
+      expect(find.byKey(const Key('trade-available-pending')), findsOneWidget);
+      expect(find.byType(SkeletonBox), findsWidgets);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
       final l = AppLocalizations.of(t.element(find.byKey(const Key('trade-live-order'))));
       expect(find.text(l.accountReadPreparing), findsNothing);
       expect(find.text(l.accountReadLoading), findsNothing);

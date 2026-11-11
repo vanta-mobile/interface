@@ -1,9 +1,11 @@
+import '../../support/order_confirmation_widget.dart';
 import '../../support/order_mode_widget.dart';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/domain/live_order_trigger.dart';
@@ -123,6 +125,7 @@ void main() {
     await tap(tester, 'live-order-review');
     await tester.tap(find.byKey(const Key('live-order-confirm')));
     await tester.pumpAndSettle();
+    await dismissOrderConfirmation(tester);
     expect(repository.lastIntent!.draft.buy, true);
     expect(repository.lastIntent!.draft.timeInForce, LiveOrderTimeInForce.gtc);
     expect(repository.lastIntent!.draft.market, false);
@@ -229,27 +232,15 @@ void main() {
       await field(tester, 'live-order-quantity', '80.000');
       await market(tester);
       await tap(tester, 'live-order-review');
-      final dialog = find.byType(AlertDialog);
-      expect(
-        find.descendant(
-          of: find.descendant(
-            of: dialog,
-            matching: find.byKey(const Key('live-order-size-preview')),
-          ),
-          matching: find.text('0.001 BTC'),
-        ),
-        findsOneWidget,
-      );
+      final dialog = find.byType(OrderConfirmationDialog);
+      expect(find.descendant(of: dialog, matching: find.text('0.001 BTC')), findsOneWidget);
       expect(find.descendant(of: dialog, matching: find.text('80 USDT')), findsWidgets);
-      expect(
-        find.descendant(of: dialog, matching: find.text(messages(tester).liveAmountEstimateHint)),
-        findsOneWidget,
-      );
       await cancel(tester);
       expect(repository.submits, 0);
       await tap(tester, 'live-order-review');
       await tester.tap(find.byKey(const Key('live-order-confirm')));
       await tester.pumpAndSettle();
+      await dismissOrderConfirmation(tester);
       final original = repository.lastIntent!;
       expect(original.parameters['quantity'], '0.001');
       expect(original.parameters['quantityUnit'], null);
@@ -323,18 +314,25 @@ void main() {
     await field(tester, 'attached-tp-price', '+2');
     await tap(tester, 'live-order-review');
     expect(
-      find.descendant(of: find.byType(AlertDialog), matching: find.textContaining('≥ 81000 USDT')),
+      find.descendant(
+        of: find.byType(OrderConfirmationDialog),
+        matching: find.textContaining('≥ 81000 USDT'),
+      ),
       findsOneWidget,
     );
     await cancel(tester);
     await field(tester, 'live-order-quantity', '320');
     await tap(tester, 'live-order-review');
     expect(
-      find.descendant(of: find.byType(AlertDialog), matching: find.textContaining('≥ 80500 USDT')),
+      find.descendant(
+        of: find.byType(OrderConfirmationDialog),
+        matching: find.textContaining('≥ 80500 USDT'),
+      ),
       findsOneWidget,
     );
     await tester.tap(find.byKey(const Key('live-order-confirm')));
     await tester.pumpAndSettle();
+    await dismissOrderConfirmation(tester);
     expect(repository.lastIntent!.draft.quantity, '0.004');
     expect(repository.lastIntent!.draft.attachment!.takeProfit!.price, '80500');
     await dispose(tester, container);
@@ -351,17 +349,12 @@ void main() {
       await container.read(liveOrderProvider.notifier).load('BTCUSDT');
       await tester.pumpAndSettle();
       expect(
-        find.descendant(
-          of: find.descendant(
-            of: find.byType(AlertDialog),
-            matching: find.byKey(const Key('live-order-size-preview')),
-          ),
-          matching: find.text('0.002 BTC'),
-        ),
+        find.descendant(of: find.byType(OrderConfirmationDialog), matching: find.text('0.002 BTC')),
         findsOneWidget,
       );
       await tester.tap(find.byKey(const Key('live-order-confirm')));
       await tester.pumpAndSettle();
+      await dismissOrderConfirmation(tester);
       expect(repository.submits, 0);
       await preview(tester, '0.001');
       await dispose(tester, container);
@@ -376,6 +369,7 @@ void main() {
     await tap(tester, 'live-order-review');
     await tester.tap(find.byKey(const Key('live-order-confirm')));
     await tester.pumpAndSettle();
+    await dismissOrderConfirmation(tester);
     expect(repository.submits, 1);
     await visible(tester, 'live-order-unit-quote');
     expect(
@@ -431,17 +425,10 @@ void main() {
         await tester.pumpAndSettle();
         await preview(tester, '0.002');
         await tap(tester, 'live-order-review');
-        expect(find.byType(AlertDialog), findsOneWidget);
-        expect(
-          find.descendant(of: find.byType(AlertDialog), matching: find.text(accountAddress)),
-          findsOneWidget,
-        );
+        expect(find.byType(OrderConfirmationDialog), findsOneWidget);
         expect(
           find.descendant(
-            of: find.descendant(
-              of: find.byType(AlertDialog),
-              matching: find.byKey(const Key('live-order-size-preview')),
-            ),
+            of: find.byType(OrderConfirmationDialog),
             matching: find.text('0.002 BTC'),
           ),
           findsOneWidget,

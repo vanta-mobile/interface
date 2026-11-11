@@ -13,15 +13,24 @@ import 'account_read_provider.dart';
 import 'asset_index_provider.dart';
 import 'live_order_provider.dart';
 import 'main_order_capacity_provider.dart';
+import 'main_order_pricing_provider.dart';
 import 'main_order_pricing_wait.dart';
+import 'main_order_allocation_provider.dart';
 import 'symbol_settings_activity.dart';
+import 'order_review_activity_provider.dart';
 
 enum MainOrderRefreshStage { idle, monitoring, account, capacity, pricing }
 
 class MainOrderRefreshState {
-  const MainOrderRefreshState({this.stage = MainOrderRefreshStage.idle, this.failure});
+  const MainOrderRefreshState({
+    this.stage = MainOrderRefreshStage.idle,
+    this.failure,
+    this.background = false,
+  });
   final MainOrderRefreshStage stage;
   final AccountReadFailure? failure;
+  final bool background;
+  bool get showProgress => loading && !background;
   bool get loading => stage != MainOrderRefreshStage.idle;
 }
 
@@ -31,7 +40,7 @@ final mainOrderRefreshProvider =
     );
 
 /// One refresh restores all facts needed by the opening form. The authorized
-/// login coordinator or an explicit refresh initiates it; quotes never do.
+/// login coordinator, periodic renewal, or an explicit refresh initiates it.
 class MainOrderRefreshController extends Notifier<MainOrderRefreshState> {
   int _revision = 0;
   Completer<bool>? _cancel;
@@ -39,6 +48,26 @@ class MainOrderRefreshController extends Notifier<MainOrderRefreshState> {
 
   @override
   MainOrderRefreshState build() {
+    ref.listen(mainOrderPricingProvider, weak: true, (_, pricing) {
+      if (state.loading ||
+          !const {
+            'liveCapacityPriceUnavailable',
+            'liveCapacityRatesUnavailable',
+          }.contains(state.failure?.key)) {
+        return;
+      }
+      final snapshot = ref.read(mainOrderCapacityProvider.notifier).current;
+      if (snapshot == null) return;
+      try {
+        // A failed public bootstrap can recover through its stream/polling.
+        // Clear only after the entire current scope passes the same checks
+        // used for review; account failures still require an account read.
+        pricing.revalue(snapshot);
+        state = const MainOrderRefreshState();
+      } on AccountReadFailure {
+        // Keep the concrete failure until every required price is usable.
+      }
+    });
     ref.listen(authProvider.select((s) => (s.identity, s.busy)), (a, b) {
       if (a != b) {
         stop();
@@ -65,7 +94,11 @@ class MainOrderRefreshController extends Notifier<MainOrderRefreshState> {
       }
     });
     ref.listen(symbolProvider, (a, b) {
-      if (a != b) stop();
+      if (a == b) return;
+      stop();
+      // Read errors belong to the captured market, including an already
+      // completed read. The verified account deposit prerequisite is global.
+      if (state.failure?.requiresDeposit != true) state = const MainOrderRefreshState();
     });
     ref.onDispose(() {
       _revision++;
@@ -90,16 +123,21 @@ class MainOrderRefreshController extends Notifier<MainOrderRefreshState> {
     state = const MainOrderRefreshState();
   }
 
-  Future<bool> refresh(String symbol) async {
+  Future<bool> refresh(
+    String symbol, {
+    bool reconnectPrices = true,
+    bool background = false,
+  }) async {
     final auth = ref.read(authProvider), identity = auth.identity;
     final live = ref.read(liveOrderProvider), activity = ref.read(symbolSettingsActivityProvider);
-    if (state.failure?.requiresDeposit == true ||
+    if (ref.read(orderReviewActivityProvider) > 0 &&
+            !(background && ref.read(mainOrderAllocationProvider).review?.input != null) ||
+        state.failure?.requiresDeposit == true ||
         ref.read(accountReadProvider).failure?.requiresDeposit == true ||
         live.failure?.requiresDeposit == true ||
         ref.read(mainOrderCapacityProvider).failure?.requiresDeposit == true ||
         state.loading ||
         live.busy ||
-        live.needsRecheck ||
         auth.busy ||
         identity?.signingAvailable != true ||
         identity?.walletAddress == null ||
@@ -119,11 +157,19 @@ class MainOrderRefreshController extends Notifier<MainOrderRefreshState> {
         ref.read(authProvider).identity == identity &&
         !ref.read(authProvider).busy &&
         ref.read(symbolProvider) == symbol;
-    state = const MainOrderRefreshState(stage: MainOrderRefreshStage.monitoring);
-    return Future.any([_refresh(symbol, started, current), cancel.future]);
+    state = MainOrderRefreshState(stage: MainOrderRefreshStage.monitoring, background: background);
+    return Future.any([
+      _refresh(symbol, started, current, reconnectPrices: reconnectPrices),
+      cancel.future,
+    ]);
   }
 
-  Future<bool> _refresh(String symbol, DateTime started, bool Function() current) async {
+  Future<bool> _refresh(
+    String symbol,
+    DateTime started,
+    bool Function() current, {
+    required bool reconnectPrices,
+  }) async {
     void check() {
       if (!current()) throw const AccountReadFailure('authWalletChanged');
     }
@@ -133,28 +179,44 @@ class MainOrderRefreshController extends Notifier<MainOrderRefreshState> {
       check();
       // Public reconnection and private re-reads are separate. New receipts,
       // including a newly enlarged symbol scope, must satisfy the final wait.
-      ref.read(quoteReconnectProvider.notifier).reconnect();
-      state = const MainOrderRefreshState(stage: MainOrderRefreshStage.account);
-      await ref.read(liveOrderProvider.notifier).load(symbol);
+      if (reconnectPrices) ref.read(quoteReconnectProvider.notifier).reconnect();
+      state = MainOrderRefreshState(
+        stage: MainOrderRefreshStage.account,
+        background: state.background,
+      );
+      await ref.read(liveOrderProvider.notifier).load(symbol, allowDuringReview: state.background);
       check();
       final live = ref.read(liveOrderProvider);
       if (live.context?.symbol != symbol || live.stale || live.failure != null) {
         throw live.failure ?? const AccountReadFailure('liveOrderContextExpired');
       }
-      state = const MainOrderRefreshState(stage: MainOrderRefreshStage.capacity);
-      await ref.read(mainOrderCapacityProvider.notifier).load(symbol);
+      state = MainOrderRefreshState(
+        stage: MainOrderRefreshStage.capacity,
+        background: state.background,
+      );
+      await ref
+          .read(mainOrderCapacityProvider.notifier)
+          .load(symbol, allowDuringReview: state.background);
       check();
       final snapshot = ref.read(mainOrderCapacityProvider.notifier).current;
       if (snapshot == null) {
         throw ref.read(mainOrderCapacityProvider).failure ??
             const AccountReadFailure('liveCapacityStale');
       }
-      state = const MainOrderRefreshState(stage: MainOrderRefreshStage.pricing);
+      state = MainOrderRefreshState(
+        stage: MainOrderRefreshStage.pricing,
+        background: state.background,
+      );
       if (snapshot.assetMode == FuturesAssetMode.multi) {
         await ref.read(assetIndexProvider.notifier).refresh();
         check();
       }
-      final waiting = MainOrderPricingWait(ref, snapshot, current, notBefore: started);
+      final waiting = MainOrderPricingWait(
+        ref,
+        snapshot,
+        current,
+        notBefore: reconnectPrices ? started : null,
+      );
       _pricing = waiting;
       waiting.start();
       await waiting.future;
@@ -166,6 +228,7 @@ class MainOrderRefreshController extends Notifier<MainOrderRefreshState> {
       if (current()) {
         _pricing = null;
         state = MainOrderRefreshState(
+          background: state.background,
           failure: error is AccountReadFailure
               ? error
               : const AccountReadFailure('accountReadFailed'),

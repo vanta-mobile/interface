@@ -1,3 +1,4 @@
+import '../../../core/errors/api_error_details.dart';
 import 'wallet_connection.dart';
 import 'wallet_transaction.dart';
 
@@ -22,10 +23,15 @@ class AuthIdentity {
   bool get needsWalletConnection => walletKind == WalletKind.external && !signingAvailable;
 }
 
-class AuthFailure implements Exception {
+class AuthFailure implements Exception, DetailedApiFailure {
   const AuthFailure(this.key, {this.reason});
   final String key;
+
+  /// The wallet or identity provider's own sanitized explanation.
   final String? reason;
+
+  @override
+  ApiErrorDetails? get details => reason == null ? null : ApiErrorDetails(message: reason);
 }
 
 enum AuthPhase { initializing, signedOut, awaitingCode, signedIn }

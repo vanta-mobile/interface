@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/application/live_order_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_allocation_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
@@ -65,7 +66,7 @@ void main() {
           expect(review.intent.draft.peg, selected);
           expect(review.intent.draft.buy, buy);
           expect(review.intent.parameters['price'], '0');
-          expect(find.byKey(const Key('main-order-frozen-capacity')), findsOneWidget);
+          expect(find.byType(OrderConfirmationDialog), findsOneWidget);
           await f.confirm(tester);
           expect(f.orders.submits, 1);
           expect(f.orders.lastIntent!.draft.quantity, expected);
@@ -84,7 +85,7 @@ void main() {
     await f.field(tester, 'live-order-quantity', '2.000');
     await f.tap(tester, 'live-order-review');
     expect(f.capacities.reads, 1);
-    expect(find.byKey(const Key('main-order-frozen-capacity')), findsOneWidget);
+    expect(find.byType(OrderConfirmationDialog), findsOneWidget);
     await f.cancel(tester);
     expect(f.input(tester), '2.000');
     await peg(tester, null);
@@ -107,7 +108,7 @@ void main() {
         return assembledCapacity(context: context, payload: raw);
       };
       await f.tap(tester, 'main-order-review-buy');
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(OrderConfirmationDialog), findsNothing);
       expect(
         f.container.read(mainOrderAllocationProvider).failure!.key,
         'liveCapacityAboveMaximum',

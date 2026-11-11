@@ -1,10 +1,15 @@
+import 'package:vanta/features/market/application/market_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/core/errors/api_error_details.dart';
 import 'package:vanta/features/market/application/selection_providers.dart';
+import 'package:vanta/features/market/domain/order_reference_prices.dart';
 import 'package:vanta/features/portfolio/application/account_change_provider.dart';
 import 'package:vanta/features/portfolio/application/live_order_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_capacity_provider.dart';
+import 'package:vanta/features/portfolio/application/main_order_pricing_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_refresh_provider.dart';
 import 'package:vanta/features/portfolio/application/symbol_settings_activity.dart';
 import 'package:vanta/features/portfolio/domain/account_change_stream.dart';
@@ -47,6 +52,22 @@ void main() {
     expect(f.container.read(mainOrderCapacityProvider.notifier).current, isNotNull);
     expect(f.orders.submits, 0);
   });
+  test(
+    'automatic renewal preserves public subscriptions and accepts current fresh quotes',
+    () async {
+      await f.open();
+      f.now = f.now.add(const Duration(seconds: 3));
+      f.orders.context = capacityContext(time: f.now);
+      // These receipts remain fresh; automatic reads do not force a reconnect.
+      final reconnect = f.container.read(quoteReconnectProvider);
+      expect(await controller().refresh('BTCUSDT', reconnectPrices: false), true);
+      expect(f.container.read(quoteReconnectProvider), reconnect);
+      expect(f.container.read(liveOrderProvider).context!.receivedAt, f.now);
+      expect(f.container.read(mainOrderCapacityProvider.notifier).current, isNotNull);
+      expect(f.orders.reads, 2);
+      expect(f.orders.submits, 0);
+    },
+  );
   test('deposit prerequisite suppresses subsequent account and capacity reads', () async {
     state();
     await f.flush();
@@ -60,6 +81,75 @@ void main() {
     expect(await controller().refresh('ETHUSDT'), false);
     expect(f.orders.reads, 1);
     expect(f.capacities.reads, 0);
+  });
+  test('public quote recovery clears a pricing failure without another account read', () async {
+    await f.open();
+    f.quotes['BTCUSDT']!.emit(
+      OrderReferencePrices(
+        symbol: 'BTCUSDT',
+        checkedAt: f.now,
+        connection: OrderPriceConnection.online,
+        tradeFailed: true,
+        tradeFailure: const AccountReadFailure(
+          'liveCapacityPriceUnavailable',
+          reasonKey: 'livePriceLastStale',
+        ),
+      ),
+    );
+    await f.flush();
+    expect(await controller().refresh('BTCUSDT', reconnectPrices: false), isFalse);
+    expect(state().failure?.reasonKey, 'livePriceLastStale');
+    final accountReads = f.orders.reads, capacityReads = f.capacities.reads;
+    // A partial recovery must not claim the full pricing scope is ready.
+    f.quotes['BTCUSDT']!.emit(
+      OrderReferencePrices(
+        symbol: 'BTCUSDT',
+        checkedAt: f.now,
+        connection: OrderPriceConnection.online,
+        trade: revaluationReference(time: f.now).trade,
+        tradeFresh: true,
+      ),
+    );
+    await f.flush();
+    expect(state().failure, isNotNull);
+    f.prices();
+    await f.flush();
+    expect(state().failure, isNull);
+    expect(state().loading, isFalse);
+    expect(f.orders.reads, accountReads);
+    expect(f.capacities.reads, capacityReads);
+    expect(f.orders.submits, 0);
+  });
+
+  test('public quote recovery does not clear an account read failure', () async {
+    await f.open();
+    const failure = AccountReadFailure(
+      'accountReadFailed',
+      details: ApiErrorDetails(message: 'Account service unavailable', status: 503),
+    );
+    f.orders.readFailure = failure;
+    expect(await controller().refresh('BTCUSDT', reconnectPrices: false), isFalse);
+    f.prices();
+    await f.flush();
+    expect(state().failure, same(failure));
+  });
+
+  test('refresh error observation does not keep unused public feeds alive', () async {
+    // Observe pricing directly, without the allocation controller that owns
+    // a separate subscription for the lifetime of a review/signature.
+    f.listener = f.container.listen(mainOrderPricingProvider, (_, _) {});
+    await f.flush();
+    await f.container.read(liveOrderProvider.notifier).load('BTCUSDT');
+    await f.flush();
+    state();
+    expect(f.marks.listeners, 1);
+    expect(f.quotes['BTCUSDT']!.listeners, 1);
+    f.listener!.close();
+    await f.container.pump();
+    await f.flush();
+    expect(f.marks.listeners, 0);
+    expect(f.quotes['BTCUSDT']!.listeners, 0);
+    expect(state().loading, isFalse);
   });
   test('stale/expired account is completely re-read using a new original lease', () async {
     await f.open();
@@ -178,11 +268,72 @@ void main() {
     await f.flush();
     f.container.read(symbolProvider.notifier).select('ETHUSDT');
     expect(await result, false);
+    f.orders.readFailure = const AccountReadFailure(
+      'accountNetwork',
+      details: ApiErrorDetails(cause: ApiErrorCause.cancelled),
+    );
     f.orders.readGate!.complete();
     await f.flush();
     expect(f.capacities.reads, 1);
     expect(state().loading, false);
+    expect(state().failure, isNull);
+    expect(f.container.read(liveOrderProvider).failure, isNull);
   });
+  test('new symbol clears an old completed read error before its replacement starts', () async {
+    await f.open();
+    f.orders.readFailure = const AccountReadFailure(
+      'accountNetwork',
+      details: ApiErrorDetails(cause: ApiErrorCause.cancelled),
+    );
+    expect(await controller().refresh('BTCUSDT'), false);
+    expect(state().failure?.details?.cause, ApiErrorCause.cancelled);
+    f.container.read(symbolProvider.notifier).select('ETHUSDT');
+    expect(state().failure, isNull);
+    expect(f.container.read(liveOrderProvider).failure, isNull);
+    expect(f.orders.submits, 0);
+  });
+  for (final stage in [MainOrderRefreshStage.account, MainOrderRefreshStage.capacity]) {
+    test(
+      'rapid market switches ignore a late cancelled $stage after replacement succeeds',
+      () async {
+        await f.open();
+        final held = Completer<void>();
+        if (stage == MainOrderRefreshStage.account) f.orders.readGate = held;
+        if (stage == MainOrderRefreshStage.capacity) f.capacities.gate = held;
+        final previous = controller().refresh('BTCUSDT', reconnectPrices: false);
+        await f.flush();
+        expect(state().stage, stage);
+        for (final symbol in ['ETHUSDT', 'SOLUSDT', 'BTCUSDT']) {
+          f.container.read(symbolProvider.notifier).select(symbol);
+          expect(state().failure, isNull);
+        }
+        expect(await previous, isFalse);
+        f.orders.readGate = null;
+        f.capacities.gate = null;
+        f.now = f.now.add(const Duration(seconds: 3));
+        f.orders.context = capacityContext(time: f.now);
+        f.prices();
+        expect(await controller().refresh('BTCUSDT', reconnectPrices: false), isTrue);
+        const cancelled = AccountReadFailure(
+          'accountNetwork',
+          details: ApiErrorDetails(cause: ApiErrorCause.cancelled),
+        );
+        if (stage == MainOrderRefreshStage.account) f.orders.readFailure = cancelled;
+        if (stage == MainOrderRefreshStage.capacity) f.capacities.failure = cancelled;
+        held.complete();
+        await f.flush();
+        expect(state().failure, isNull);
+        expect(f.container.read(liveOrderProvider).failure, isNull);
+        expect(f.container.read(mainOrderCapacityProvider).failure, isNull);
+        expect(
+          f.container.read(mainOrderCapacityProvider.notifier).current?.context,
+          f.orders.context,
+        );
+        expect(f.container.read(symbolSettingsActivityProvider).owner, isNull);
+        expect(f.orders.submits, 0);
+      },
+    );
+  }
   test('account event during refresh invalidates new facts instead of claiming success', () async {
     await f.open();
     f.capacities.gate = Completer<void>();

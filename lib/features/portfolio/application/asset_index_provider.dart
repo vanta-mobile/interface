@@ -37,9 +37,8 @@ class AssetIndexController extends Notifier<AssetIndexState> {
       state = AssetIndexState(checkedAt: _now, snapshot: state.snapshot, active: active);
       if (active) unawaited(refresh());
     });
-    // Order pricing stops watching whenever its signed context expires (every
-    // 30s). Keep polling briefly so a re-read finds current rates instead of
-    // an empty, freshly created controller.
+    // Keep shared public rates briefly across gaps between page consumers;
+    // a returning consumer can reuse still-fresh data without a cold fetch.
     final link = ref.keepAlive();
     ref.onCancel(() => _release = Timer(const Duration(seconds: 60), link.close));
     ref.onResume(() => _release?.cancel());
@@ -78,7 +77,7 @@ class AssetIndexController extends Notifier<AssetIndexState> {
     );
     bool current() => ref.mounted && generation == _generation && _active;
     try {
-      final snapshot = await RequestScope.run(
+      final snapshot = await RequestScope.runOwned(
         current,
         () => ref.read(assetIndexRepositoryProvider).read(),
       );

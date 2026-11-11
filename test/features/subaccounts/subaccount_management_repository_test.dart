@@ -10,6 +10,7 @@ import 'package:http/testing.dart';
 import 'package:vanta/core/data/wallet_operation_journal.dart';
 import 'package:vanta/core/domain/wallet_operation.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
+import 'package:vanta/features/auth/domain/wallet_signing_preparation.dart';
 import 'package:vanta/features/portfolio/data/aster_account_service.dart';
 import 'package:vanta/features/portfolio/data/signed_account_request.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
@@ -27,6 +28,8 @@ void main() {
     signingAvailable: true,
   );
   late AsterSubaccountManagementRepository repo;
+  late _SigningPreparation preparation;
+  late List<Object?> signedChains;
   late MemoryWalletOperationJournal journal;
   late List<http.Request> requests;
   late bool current;
@@ -35,9 +38,13 @@ void main() {
   int children = 0;
   Object? postFailure;
   Object? reply;
+  int replyStatus = 200;
+  String? listedChild;
   Future<void> Function()? signHook;
   Future<void> Function()? postHook;
   setUp(() {
+    preparation = _SigningPreparation();
+    signedChains = [];
     now = DateTime.utc(2026, 11, 4, 8);
     requests = [];
     current = true;
@@ -48,6 +55,8 @@ void main() {
     signHook = null;
     postHook = null;
     reply = {'code': 200, 'msg': 'success'};
+    replyStatus = 200;
+    listedChild = null;
     journal = MemoryWalletOperationJournal();
     final client = MockClient((r) async {
       requests.add(r);
@@ -61,6 +70,8 @@ void main() {
             {'accountId': 1, 'subAccountName': '', 'parentAccount': true},
             for (var i = 0; i < children; i++)
               {'accountId': i + 2, 'subAccountName': 'Desk $i', 'parentAccount': false},
+            if (listedChild != null)
+              {'accountId': 99, 'address': listedChild, 'parentAccount': false},
           ]),
           200,
         );
@@ -69,7 +80,7 @@ void main() {
       expect(encodeWalletOperations(journal.snapshot.records).contains('signature'), false);
       await postHook?.call();
       if (postFailure != null) throw postFailure!;
-      return http.Response(jsonEncode(reply), 200);
+      return http.Response(jsonEncode(reply), replyStatus);
     });
     addTearDown(client.close);
     addTearDown(journal.close);
@@ -77,6 +88,7 @@ void main() {
       AsterAccountService(client: client),
       ({required expectedAddress, required typedData}) async {
         signatures++;
+        signedChains.add((typedData['domain'] as Map)['chainId']);
         await signHook?.call();
         return fixtureSign(
           typedData,
@@ -85,6 +97,7 @@ void main() {
       },
       journal,
       nonces: AsterReadNonces(),
+      signingPreparation: preparation,
       now: () => now,
     );
   });
@@ -213,6 +226,12 @@ void main() {
     expect(p['user'], fixtureMaster);
     expect(p['signer'], fixtureMaster);
     expect(p['subSourceAddr'], fixtureChild);
+    // Compatibility trial: the owner signs on BNB Chain and declares it; the
+    // local child proof keeps the documented 1666 domain.
+    expect(p['signatureChainId'], '56');
+    expect((r.childTypedData['domain'] as Map)['chainId'], 1666);
+    expect(signedChains.last, 56);
+    expect(preparation.chains, [56]);
     expect(journal.snapshot.records.single.terms['child'], fixtureChild);
     expect(encodeWalletOperations(journal.snapshot.records), isNot(contains(child)));
   });
@@ -248,6 +267,10 @@ void main() {
           expect(post.url.path, '/fapi/v3/updateSubAccount');
           expect(p['status'], k == WalletOperationKind.freezeSubaccount ? 'FROZEN' : 'NORMAL');
           expect(p.containsKey('subAccountName'), false);
+          // Only creation runs the BNB-chain compatibility trial.
+          expect(p.containsKey('signatureChainId'), false);
+          expect(signedChains.last, 1666);
+          expect(preparation.chains, isEmpty);
         },
       );
     }
@@ -335,6 +358,122 @@ void main() {
     await expectLater(repo.submit(r, isCurrent: () => true), throwsA(isA<AccountReadFailure>()));
     expect(requests.where((r) => r.method == 'POST'), isEmpty);
   });
+  test('explicit creation refusal clears its record and keeps Aster\'s message', () async {
+    final r = await prepare(WalletOperationKind.createSubaccount);
+    reply = {'code': -1022, 'msg': 'Signature check failed'};
+    replyStatus = 400;
+    await expectLater(
+      repo.submit(
+        r,
+        childSignature: fixtureSign(r.childTypedData, child: true),
+        isCurrent: () => true,
+      ),
+      throwsA(
+        isA<AccountReadFailure>()
+            .having((e) => e.key, 'key', 'accountSignatureRejected')
+            .having((e) => e.details?.message, 'message', 'Signature check failed'),
+      ),
+    );
+    expect(journal.snapshot.records, isEmpty);
+    expect(requests.where((r) => r.method == 'POST').length, 1);
+  });
+  for (final (status, body) in [
+    (200, {'code': 400, 'msg': 'Signature check failed'}),
+    (400, {'code': 400, 'msg': 'Signature check failed'}),
+    (400, {'msg': 'Signature check failed'}),
+  ]) {
+    test('explicit Aster answer $status $body is a refusal, not an unknown outcome', () async {
+      final r = await prepare(WalletOperationKind.createSubaccount);
+      reply = body;
+      replyStatus = status;
+      await expectLater(
+        repo.submit(
+          r,
+          childSignature: fixtureSign(r.childTypedData, child: true),
+          isCurrent: () => true,
+        ),
+        throwsA(
+          isA<AccountReadFailure>()
+              .having((e) => e.key, 'key', isNot('walletOperationUnknown'))
+              .having((e) => e.details?.message, 'message', 'Signature check failed'),
+        ),
+      );
+      expect(journal.snapshot.records, isEmpty);
+    });
+  }
+  test('an error answer never discards a creation the directory lists', () async {
+    final r = await prepare(WalletOperationKind.createSubaccount);
+    reply = {'code': 500, 'msg': 'Internal error: 1'};
+    listedChild = fixtureChild;
+    final result = await repo.submit(
+      r,
+      childSignature: fixtureSign(r.childTypedData, child: true),
+      isCurrent: () => true,
+    );
+    expect(result.acknowledged, true);
+    expect(journal.snapshot.records.single.acknowledged, true);
+  });
+  test('undecided creation is confirmed by the child address in the signed directory', () async {
+    final r = await prepare(WalletOperationKind.createSubaccount);
+    postFailure = TimeoutException('fixture');
+    listedChild = fixtureChild;
+    final result = await repo.submit(
+      r,
+      childSignature: fixtureSign(r.childTypedData, child: true),
+      isCurrent: () => true,
+    );
+    expect(result.acknowledged, true);
+    expect(journal.snapshot.records.single.acknowledged, true);
+  });
+  test('settling confirms a listed child, proves absence only after the window', () async {
+    final r = await prepare(WalletOperationKind.createSubaccount);
+    postFailure = TimeoutException('fixture');
+    await expectLater(
+      repo.submit(
+        r,
+        childSignature: fixtureSign(r.childTypedData, child: true),
+        isCurrent: () => true,
+      ),
+      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'walletOperationUnknown')),
+    );
+    expect(await repo.settleCreation(r, isCurrent: () => true), isNull);
+    expect(journal.snapshot.records.single.acknowledged, false);
+    now = now.add(creationSettleWindow);
+    expect(await repo.settleCreation(r, isCurrent: () => true), false);
+    expect(journal.snapshot.records, isEmpty);
+  });
+  test('settling past the window with an unreadable directory stays unknown', () async {
+    final r = await prepare(WalletOperationKind.createSubaccount);
+    postFailure = TimeoutException('fixture');
+    await expectLater(
+      repo.submit(
+        r,
+        childSignature: fixtureSign(r.childTypedData, child: true),
+        isCurrent: () => true,
+      ),
+      throwsA(isA<AccountReadFailure>()),
+    );
+    now = now.add(creationSettleWindow + const Duration(minutes: 1));
+    await expectLater(
+      repo.settleCreation(r, isCurrent: () => false),
+      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'walletOperationUnknown')),
+    );
+    expect(journal.snapshot.records.single.acknowledged, false);
+  });
+  test('server failure without a refusal keeps creation outcome unknown', () async {
+    final r = await prepare(WalletOperationKind.createSubaccount);
+    reply = {'code': -1000, 'msg': 'Internal error'};
+    replyStatus = 500;
+    await expectLater(
+      repo.submit(
+        r,
+        childSignature: fixtureSign(r.childTypedData, child: true),
+        isCurrent: () => true,
+      ),
+      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'walletOperationUnknown')),
+    );
+    expect(journal.snapshot.records.single.acknowledged, false);
+  });
   test('unknown result survives and blocks a new request without automatic retry', () async {
     final r = await prepare(WalletOperationKind.freezeSubaccount, {'child': fixtureChild});
     postFailure = TimeoutException('fixture');
@@ -388,4 +527,14 @@ void main() {
     );
     expect(requests, isEmpty);
   });
+}
+
+class _SigningPreparation implements WalletSigningPreparation {
+  final chains = <int>[];
+  @override
+  Future<void> prepareSigning({
+    required String expectedAddress,
+    required int chainId,
+    required bool Function() isCurrent,
+  }) async => chains.add(chainId);
 }

@@ -67,6 +67,11 @@ AsterOpenOrders mapAsterOpenOrders(
       closePosition: closePosition,
       timeInForce: _optionalEnum(item['timeInForce']),
       units: units[symbol],
+      transactionHash: _transactionHash(
+        item['newChainData'] is Map ? (item['newChainData'] as Map)['hash'] : item['hash'],
+      ),
+      clientOrderId: _clientOrderId(item['clientOrderId']),
+      strategy: _strategy(item),
     );
     // Duplicate updates can appear near snapshot boundaries. Keep the last
     // order for a symbol/orderId pair; terminal rows never re-enter the list.
@@ -115,4 +120,43 @@ DateTime _time(int value) {
   } catch (_) {
     throw const FormatException();
   }
+}
+
+/// Undocumented on REST. Live openOrders rows carry it as `newChainData.hash`
+/// (verified on device 2026-11-11); anything that is not a tx hash is ignored.
+String? _transactionHash(Object? value) =>
+    value is String &&
+        RegExp(r'^0[xX][0-9a-fA-F]{64}$').hasMatch(value) &&
+        !value.substring(2).contains(RegExp('^0+\$'))
+    ? '0x${value.substring(2).toLowerCase()}'
+    : null;
+
+String? _clientOrderId(Object? value) =>
+    value is String && RegExp(r'^[.A-Z:/a-z0-9_-]{1,36}$').hasMatch(value) ? value : null;
+
+/// Optional linkage fields are never required; malformed values are ignored
+/// rather than failing the whole open-order read.
+OpenOrderStrategy? _strategy(Map<String, dynamic> item) {
+  final id = item['strategyId'];
+  final strategyId = id is int && id > 0
+      ? '$id'
+      : id is String && RegExp(r'^[1-9]\d{0,30}$').hasMatch(id)
+      ? id
+      : null;
+  if (strategyId == null) return null;
+  final type = item['strategyType'];
+  final sub = item['strategySubId'];
+  final sequence = int.tryParse('${sub ?? ''}');
+  Decimal? price(Object? value) {
+    final parsed = value is String ? Decimal.tryParse(value) : null;
+    return parsed != null && parsed > Decimal.zero ? parsed : null;
+  }
+
+  return OpenOrderStrategy(
+    strategyId: strategyId,
+    type: type == 'OTO' || type == 'OTOCO' ? type as String : null,
+    sequence: sequence != null && sequence >= 1 && sequence <= 3 ? sequence : null,
+    takeProfit: price(item['tp']),
+    stopLoss: price(item['sl']),
+  );
 }

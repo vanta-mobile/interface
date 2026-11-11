@@ -28,7 +28,7 @@ void main() {
               jsonEncode(switch (r.url.path) {
                 '/fapi/v3/time' => {'serverTime': 1793779200000},
                 '/fapi/v3/multiAssetsMargin' => {'multiAssetsMargin': true},
-                '/fapi/v3/positionRisk' => <Object?>[],
+                '/fapi/v3/positionRisk' || '/fapi/v3/openOrders' => <Object?>[],
                 _ => {
                   'assets': [
                     if (usdt != null) {'asset': 'USDT', 'walletBalance': usdt},

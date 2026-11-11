@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/core/exact_json.dart';
 import 'package:vanta/core/domain/wallet_operation.dart';
 import 'package:vanta/features/portfolio/data/position_margin_mapper.dart';
 
@@ -13,6 +14,21 @@ void main() {
     expect(json['code'], 200);
     expect(json['rows'], ['1.25', 2]);
   });
+  test('large account payload preserves exact money while funding keeps its default bound', () {
+    final source = '{"metadata":"${'x' * 900000}","amount":0.100000000000000001}';
+    final decoded = decodePositionMarginJson(source) as Map;
+    expect(decoded['amount'], '0.100000000000000001');
+    expect(() => decodeFundingJson(source), throwsFormatException);
+    expect(() => decodePositionMarginJson('"${'x' * (16 * 1024 * 1024)}"'), throwsFormatException);
+  });
+  test('Aster risk exponent coefficients preserve their exact decimal value', () {
+    expect(marginDecimal('1.4481993E7'), md('14481993'));
+    expect(marginDecimal('4.18161993E8'), md('418161993'));
+    expect(marginDecimal('1e-8'), md('0.00000001'));
+    for (final bad in ['NaN', 'Infinity', '1e161', '1e-161', '1e9999']) {
+      expect(() => marginDecimal(bad), throwsFormatException);
+    }
+  });
   test('tiers accept object and scoped array with consistent cumulative maintenance', () {
     expect(mapMarginRiskTiers(marginBrackets(), 'BTCUSDT').last.cumulative, md('1.5'));
     expect(mapMarginRiskTiers([marginBrackets()], 'BTCUSDT').length, 2);
@@ -24,9 +40,11 @@ void main() {
       expect(() => mapMarginRiskTiers(data, 'BTCUSDT'), throwsFormatException);
     });
   }
-  test('noncontinuous cumulative offsets rejected', () {
+  test('server cumulative offsets need not imply exact tier continuity', () {
     final data = marginBrackets();
     ((data['brackets'] as List).last as Map)['cum'] = '1.4';
+    expect(mapMarginRiskTiers(data, 'BTCUSDT').last.cumulative, md('1.4'));
+    ((data['brackets'] as List).last as Map)['cum'] = '3.1';
     expect(() => mapMarginRiskTiers(data, 'BTCUSDT'), throwsFormatException);
   });
   test('exact original ID and terms match history', () {

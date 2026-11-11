@@ -1,4 +1,5 @@
 import '../../authorization/application/trading_agent_provider.dart';
+import '../../market/application/selection_providers.dart';
 import '../../../core/network/network_providers.dart';
 
 import 'dart:async';
@@ -17,6 +18,7 @@ import 'open_orders_provider.dart';
 import 'position_risk_provider.dart';
 import 'symbol_settings_activity.dart';
 import 'order_recovery_provider.dart';
+import 'order_review_activity_provider.dart';
 
 final liveOrderClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final liveOrderRepositoryProvider = Provider<LiveOrderRepository>((ref) {
@@ -67,6 +69,13 @@ class LiveOrderController extends Notifier<LiveOrderState> {
     ref.listen(accountChangeProvider, (before, after) {
       if (!identical(before, after)) markStale();
     });
+    ref.listen(symbolProvider, (before, after) {
+      if (before == after || state.intent != null) return;
+      stopReading();
+      if (!state.busy && state.failure != null && state.failure?.requiresDeposit != true) {
+        state = LiveOrderState(context: state.context, stale: true);
+      }
+    });
     ref.onDispose(() {
       _revision++;
       _expiry?.cancel();
@@ -110,11 +119,15 @@ class LiveOrderController extends Notifier<LiveOrderState> {
         identity?.signingAvailable == true;
   }
 
-  Future<void> load(String symbol, {bool includeFunds = true}) async {
+  Future<void> load(
+    String symbol, {
+    bool includeFunds = true,
+    bool allowDuringReview = false,
+  }) async {
     final auth = ref.read(authProvider), identity = auth.identity;
     final address = identity?.walletAddress;
-    if (state.busy ||
-        state.needsRecheck ||
+    if (ref.read(orderReviewActivityProvider) > 0 && !allowDuringReview ||
+        state.busy ||
         auth.busy ||
         address == null ||
         identity?.signingAvailable != true) {
@@ -179,13 +192,13 @@ class LiveOrderController extends Notifier<LiveOrderState> {
     String symbol,
     LiveOrderDraft draft, {
     LiveOrderContext? pricingContext,
+    String? clientOrderId,
   }) {
     final context = state.context, auth = ref.read(authProvider);
     if (context == null ||
         context.symbol != symbol ||
         !_fresh(context) ||
         state.busy ||
-        state.needsRecheck ||
         auth.busy ||
         ref.read(symbolSettingsActivityProvider).owner != null ||
         ref.read(symbolSettingsActivityProvider).recoveryBlocked ||
@@ -196,8 +209,9 @@ class LiveOrderController extends Notifier<LiveOrderState> {
       return null;
     }
     final id =
+        clientOrderId ??
         'vanta-${_now.microsecondsSinceEpoch.toRadixString(36)}-'
-        '${_random.nextInt(1 << 32).toRadixString(36)}';
+            '${_random.nextInt(1 << 32).toRadixString(36)}';
     return LiveOrderIntent(
       context: context,
       draft: draft,

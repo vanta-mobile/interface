@@ -54,13 +54,7 @@ class _ScaledOrderScreenState extends ConsumerState<ScaledOrderScreen> {
     final activity = ref.watch(symbolSettingsActivityProvider), identity = auth.identity;
     final data = live.context?.symbol == widget.symbol ? live.context : null;
     final locked =
-        state.busy ||
-        state.needsRecheck ||
-        live.busy ||
-        live.needsRecheck ||
-        auth.busy ||
-        activity.owner != null ||
-        activity.recoveryBlocked;
+        state.busy || live.busy || auth.busy || activity.owner != null || activity.recoveryBlocked;
     return PopScope(
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) controller.stop();

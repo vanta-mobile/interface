@@ -23,6 +23,27 @@ void main() {
       expect(() => directory.accounts.clear(), throwsUnsupportedError);
     },
   );
+  test('live rows without subAccountName keep their wallet address and extra fields', () {
+    final directory = mapSubaccountDirectory(
+      [
+        {
+          'address': accountAddress,
+          'accountId': 7,
+          'futureBalanceList': [
+            {'asset': 'USDT', 'balance': '1.00'},
+          ],
+          'spotEnabled': true,
+          'parentAccount': true,
+        },
+      ],
+      address: accountAddress,
+      receivedAt: now,
+    );
+    expect(directory.accounts.single.name, '');
+    expect(directory.accounts.single.address, accountAddress);
+    expect(directory.accounts.single.isParent, true);
+    expect(directory.childCount, 0);
+  });
   test('empty directory and parent-only response do not fabricate children', () {
     expect(mapSubaccountDirectory([], address: accountAddress, receivedAt: now).childCount, 0);
     expect(
@@ -48,12 +69,13 @@ void main() {
     ('accountId', -1),
     ('accountId', '123'),
     ('accountId', 1.5),
-    ('subAccountName', null),
     ('subAccountName', 1),
     ('subAccountName', 'a' * 4097),
     ('parentAccount', 'true'),
     ('parentAccount', 1),
     ('parentAccount', null),
+    ('address', 1),
+    ('address', '0x1234'),
   ]) {
     test(
       'rejects malformed ${entry.$1} ${entry.$2.toString().length > 20 ? 'oversized' : entry.$2}',

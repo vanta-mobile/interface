@@ -1,9 +1,7 @@
-import 'dart:async';
-
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vanta/features/portfolio/application/live_order_provider.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/application/order_confirmation_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
@@ -17,15 +15,6 @@ import '../../support/identity_repository.dart';
 import '../../support/live_order.dart';
 import '../../support/order_confirmation_widget.dart';
 import '../../support/quick_order.dart';
-
-class GatedMemoryConfirmation extends MemoryOrderConfirmationPreferences {
-  Completer<void>? save;
-  @override
-  Future<void> write(OrderConfirmationKind kind, bool value) async {
-    await save?.future;
-    await super.write(kind, value);
-  }
-}
 
 void main() {
   for (final language in ['en', 'zh']) {
@@ -46,43 +35,39 @@ void main() {
           );
           await fillConfirmation(tester, kind);
           await tapConfirmation(tester, 'live-order-review');
-          expect(find.byType(AlertDialog), findsOneWidget);
+          expect(find.byType(OrderConfirmationDialog), findsOneWidget);
           expect(orders.submits, 0);
-          final skip = find.byKey(const Key('live-order-skip-confirmation'));
-          expect(tester.widget<CheckboxListTile>(skip).value, false);
-          await toggleDialogSkip(tester);
           await cancelConfirmation(tester);
           expect(prefs.writes, 0);
           expect(orders.submits, 0);
           await tapConfirmation(tester, 'live-order-review');
-          expect(tester.widget<CheckboxListTile>(skip).value, false);
-          await toggleDialogSkip(tester);
           await confirmDialog(tester);
-          expect(prefs.values[kind], false);
           expect(orders.submits, 1);
+          expect(prefs.writes, 0);
+          final before = orders.lastIntent!;
+          final setting = 'order-confirmation-${kind.name}';
+          await tapConfirmation(tester, 'live-order-read');
+          await tapConfirmation(tester, setting);
+          expect(prefs.values[kind], false);
           for (final other in OrderConfirmationKind.values.where((v) => v != kind)) {
             expect(prefs.values[other], null);
           }
-          final before = orders.lastIntent!;
-          await tapConfirmation(tester, 'live-order-read');
           await tapConfirmation(tester, 'live-order-review');
-          expect(find.byType(AlertDialog), findsNothing);
+          expect(find.byType(OrderConfirmationDialog), findsNothing);
           expect(orders.submits, 2);
           expect(orders.lastIntent!.draft.orderType, before.draft.orderType);
           expect(orders.lastIntent!.draft.quantity, '0.001');
           await tapConfirmation(tester, 'live-order-read');
-          final setting = 'order-confirmation-${kind.name}';
           await tapConfirmation(tester, setting);
           expect(prefs.values[kind], true);
           await tapConfirmation(tester, 'live-order-review');
-          expect(find.byType(AlertDialog), findsOneWidget);
-          expect(tester.widget<CheckboxListTile>(skip).value, false);
+          expect(find.byType(OrderConfirmationDialog), findsOneWidget);
           tester.view.physicalSize = const Size(844, 390);
           await tester.pumpAndSettle();
           expect(tester.takeException(), null);
           container.read(localeProvider.notifier).select(language == 'en' ? 'zh' : 'en');
           await tester.pumpAndSettle();
-          expect(tester.widget<CheckboxListTile>(skip).value, false);
+          expect(find.byType(OrderConfirmationDialog), findsOneWidget);
           expect(orders.submits, 2);
           await cancelConfirmation(tester);
           await closeConfirmation(tester, container);
@@ -106,7 +91,7 @@ void main() {
     await tester.pumpAndSettle();
     await tapConfirmation(tester, 'order-confirmation-limit');
     await tapConfirmation(tester, 'live-order-review');
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(OrderConfirmationDialog), findsNothing);
     expect(orders.submits, 1);
     expect(orders.lastIntent!.draft.timeInForce, LiveOrderTimeInForce.postOnly);
     expect(orders.lastIntent!.parameters['timeInForce'], 'GTX');
@@ -118,7 +103,7 @@ void main() {
       true,
     );
     await tapConfirmation(tester, 'live-order-review');
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(OrderConfirmationDialog), findsOneWidget);
     expect(orders.submits, 1);
     await cancelConfirmation(tester);
     expect(tester.takeException(), null);
@@ -141,49 +126,10 @@ void main() {
     final container = await launchConfirmation(tester, orders, prefs, closing: true);
     await confirmationField(tester, 'live-order-quantity', '0.001');
     await tapConfirmation(tester, 'live-order-review');
-    expect(find.byType(AlertDialog), findsOneWidget);
-    expect(find.byKey(const Key('live-order-skip-confirmation')), findsNothing);
+    expect(find.byType(OrderConfirmationDialog), findsOneWidget);
     expect(find.byKey(const Key('order-confirmation-market')), findsNothing);
     expect(orders.submits, 0);
     await cancelConfirmation(tester);
-    expect(tester.takeException(), null);
-    await closeConfirmation(tester, container);
-  });
-  testWidgets('failed preference save still submits confirmed intent once; next attempt reviews', (
-    tester,
-  ) async {
-    final orders = TestLiveOrderRepository()..context = liveContext(bid: '80000', ask: '80000');
-    final prefs = MemoryOrderConfirmationPreferences()..failWrite = true;
-    final container = await launchConfirmation(tester, orders, prefs);
-    await fillConfirmation(tester, OrderConfirmationKind.limit);
-    await tapConfirmation(tester, 'live-order-review');
-    await toggleDialogSkip(tester);
-    await confirmDialog(tester);
-    expect(orders.submits, 1);
-    expect(prefs.values[OrderConfirmationKind.limit], null);
-    expect(container.read(orderConfirmationProvider(OrderConfirmationKind.limit)).failure, true);
-    await tapConfirmation(tester, 'live-order-read');
-    await tapConfirmation(tester, 'live-order-review');
-    expect(find.byType(AlertDialog), findsOneWidget);
-    await cancelConfirmation(tester);
-    expect(tester.takeException(), null);
-    await closeConfirmation(tester, container);
-  });
-  testWidgets('slow saving invalidates stale confirmed context; nothing is sent', (tester) async {
-    final orders = TestLiveOrderRepository()..context = liveContext(bid: '80000', ask: '80000');
-    final prefs = GatedMemoryConfirmation()..save = Completer<void>();
-    final container = await launchConfirmation(tester, orders, prefs);
-    await fillConfirmation(tester, OrderConfirmationKind.limit);
-    await tapConfirmation(tester, 'live-order-review');
-    await toggleDialogSkip(tester);
-    await confirmDialog(tester);
-    expect(orders.submits, 0);
-    await container.read(liveOrderProvider.notifier).load('BTCUSDT');
-    await tester.pumpAndSettle();
-    prefs.save!.complete();
-    await tester.pumpAndSettle();
-    expect(orders.submits, 0);
-    expect(prefs.values[OrderConfirmationKind.limit], false);
     expect(tester.takeException(), null);
     await closeConfirmation(tester, container);
   });
@@ -196,7 +142,6 @@ void main() {
     final container = await launchConfirmation(tester, orders, prefs, identity: identity);
     await fillConfirmation(tester, OrderConfirmationKind.limit);
     await tapConfirmation(tester, 'live-order-review');
-    await toggleDialogSkip(tester);
     identity.events.add(null);
     await tester.pumpAndSettle();
     await confirmDialog(tester);
@@ -205,7 +150,7 @@ void main() {
     expect(tester.takeException(), null);
     await closeConfirmation(tester, container);
   });
-  testWidgets('unknown result with opt-out remains locked and only rechecks original ID', (
+  testWidgets('unknown result keeps preferences editable and rechecks the original ID', (
     tester,
   ) async {
     final orders = TestLiveOrderRepository()
@@ -216,12 +161,12 @@ void main() {
     await fillConfirmation(tester, OrderConfirmationKind.limit);
     await tapConfirmation(tester, 'live-order-review');
     expect(orders.submits, 1);
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(OrderConfirmationDialog), findsNothing);
     final id = orders.lastIntent!.clientOrderId;
     final review = find.byKey(const Key('live-order-review'));
     expect(tester.widget<FilledButton>(review).onPressed, null);
     final toggle = find.byKey(const Key('order-confirmation-limit'));
-    expect(tester.widget<SwitchListTile>(toggle).onChanged, null);
+    expect(tester.widget<SwitchListTile>(toggle).onChanged, isNotNull);
     orders.result = LiveOrderResult(
       orderId: '12345',
       status: 'FILLED',

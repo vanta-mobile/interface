@@ -6,6 +6,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../funding/domain/funding_catalog.dart';
 import '../../funding/presentation/funding_screen.dart';
+import '../../funding/presentation/portfolio_funding_activity.dart';
 import '../../subaccounts/presentation/account_transfer_screen.dart';
 import '../../subaccounts/application/account_entries_provider.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
@@ -99,6 +100,7 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
                                     onPressed: () => showAccountSheet(context),
                                   ),
                                 ],
+                                if (active && !preview) PortfolioFundingActivity(hidden: hidden),
                                 const SizedBox(height: 16),
                                 Row(
                                   children: [

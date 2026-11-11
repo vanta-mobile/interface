@@ -1,3 +1,7 @@
+import 'package:fake_async/fake_async.dart';
+import 'package:vanta/core/market_failure.dart';
+import 'package:vanta/core/errors/api_error_details.dart';
+
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -23,6 +27,60 @@ void main() {
   void listen() => subscription = repository.events.listen((_) {});
   Future<void> flush() => Future<void>.delayed(Duration.zero);
 
+  test(
+    'silent stream polls before receipt expiry, deduplicates, preserves API cause and stops',
+    () {
+      fakeAsync((clock) {
+        final service = TestOrderPriceService();
+        final repository = OrderReferencePricesRepository(
+          service,
+          'BTCUSDT',
+          now: () => service.now,
+        );
+        final sub = repository.events.listen((_) {});
+        service.controllers.single.add({'connected': true});
+        clock.flushMicrotasks();
+        service.clocks.single.complete({'serverTime': service.now.millisecondsSinceEpoch});
+        clock.flushMicrotasks();
+        service.books.single.complete(orderBookPayload());
+        service.trades.single.complete(orderTradePayload());
+        clock.flushMicrotasks();
+        expect(repository.state.bookFresh, true);
+        service.now = service.now.add(const Duration(seconds: 6));
+        clock.elapse(const Duration(seconds: 6));
+        expect(service.clocks.length, 2);
+        expect(repository.state.bookFresh, true);
+        clock.elapse(const Duration(seconds: 6));
+        expect(service.clocks.length, 2); // The previous poll is still pending.
+        service.clocks.last.complete({'serverTime': service.now.millisecondsSinceEpoch});
+        clock.flushMicrotasks();
+        service.books.last.completeError(
+          const MarketFailure(
+            'service unavailable',
+            details: ApiErrorDetails(message: 'Book temporarily unavailable', status: 503),
+          ),
+        );
+        service.trades.last.complete(
+          orderTradePayload(id: 202, time: service.now.millisecondsSinceEpoch),
+        );
+        clock.flushMicrotasks();
+        expect(repository.state.bookFailure!.details!.message, 'Book temporarily unavailable');
+        expect(repository.state.bookFailure!.details!.status, 503);
+        expect(repository.state.tradeFresh, true);
+        repository.setActive(false);
+        clock.flushMicrotasks();
+        final requests = service.requests.length;
+        service.now = service.now.add(const Duration(minutes: 1));
+        clock.elapse(const Duration(minutes: 1));
+        expect(service.requests.length, requests);
+        sub.cancel();
+        repository.dispose();
+        service.dispose();
+        clock.flushMicrotasks();
+        expect(clock.periodicTimerCount, 0);
+      });
+    },
+  );
   test('construction and disposal without a consumer never create public requests', () async {
     expect(service.channels, isEmpty);
     expect(service.requests, isEmpty);

@@ -52,6 +52,46 @@ void main() {
     expect(edits, 4);
   });
 
+  testWidgets('BBO replaces the price with a level picker and its sheet note', (tester) async {
+    final price = TextEditingController(text: '100');
+    addTearDown(price.dispose);
+    var picks = 0;
+    await tester.pumpWidget(
+      _app(
+        Builder(
+          builder: (context) => EmbeddedPriceField(
+            controller: price,
+            asset: 'USDT',
+            tick: Decimal.parse('0.1'),
+            enabled: true,
+            onChanged: () {},
+            bboSelected: true,
+            onBbo: () {},
+            bboLevel: 'Queue 1',
+            onBboLevel: () {
+              picks++;
+              showTradeOptionSheet(
+                context,
+                title: 'BBO Mode',
+                selected: 'Queue 1',
+                footer: 'note',
+                options: const [(value: 'Queue 1', label: 'Queue 1', description: null)],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    expect(find.byKey(const Key('live-order-price')), findsNothing);
+    expect(find.byTooltip('Increase price'), findsNothing);
+    expect(find.text('BBO mode'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('live-order-bbo-level')));
+    await tester.pumpAndSettle();
+    expect(picks, 1);
+    expect(find.text('BBO Mode'), findsOneWidget);
+    expect(find.text('note'), findsOneWidget);
+  });
+
   testWidgets('direction card rounds margin up and maximum down without throwing', (tester) async {
     final data = capacityContext();
     final rule = OrderQuantityRule(
@@ -66,6 +106,7 @@ void main() {
           data: data,
           unit: OrderSizeUnit.quote,
           buy: true,
+          hasSize: true,
           onReview: () => reviewed = true,
           value: MainOrderSidePreview(
             capacity: LiveOrderSideCapacity(

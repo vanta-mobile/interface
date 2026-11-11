@@ -10,10 +10,105 @@ import 'package:vanta/core/errors/error_text.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/presentation/account_read_controls.dart';
 import 'package:vanta/features/assistant/domain/assistant_view_state.dart';
+import 'package:vanta/features/portfolio/data/order_response_failure.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 void main() {
   for (final locale in ['en', 'zh']) {
+    testWidgets('quote freshness and time failures retain their concrete cause: $locale', (
+      tester,
+    ) async {
+      late BuildContext context;
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: Locale(locale),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: Builder(
+            builder: (value) {
+              context = value;
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      final l10n = AppLocalizations.of(context);
+      for (final entry in {
+        'livePriceBookStale': l10n.livePriceBookStale,
+        'livePriceLastStale': l10n.livePriceLastStale,
+        'livePriceClockUnavailable': l10n.livePriceClockUnavailable,
+        'livePriceTimestampInvalid': l10n.livePriceTimestampInvalid,
+      }.entries) {
+        final text = accountErrorText(
+          context,
+          AccountReadFailure('liveCapacityPriceUnavailable', reasonKey: entry.key),
+        );
+        expect(text, entry.value);
+        expect(text, isNot(contains(l10n.apiInvalidResponse)));
+      }
+    });
+
+    testWidgets('invalid-response feedback names the failed endpoint: $locale', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: Locale(locale),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: Builder(
+            builder: (context) => Text(
+              accountErrorText(
+                context,
+                const AccountReadFailure(
+                  'accountDataInvalid',
+                  details: ApiErrorDetails(
+                    cause: ApiErrorCause.invalidResponse,
+                    endpoint: '/fapi/v3/commissionRate',
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.textContaining('/fapi/v3/commissionRate'), findsOneWidget);
+    });
+
+    testWidgets('order parsing failure has a concrete localized cause and safe endpoint: $locale', (
+      tester,
+    ) async {
+      late BuildContext context;
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: Locale(locale),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: Builder(
+            builder: (value) {
+              context = value;
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      final l = AppLocalizations.of(context);
+      for (final entry in {
+        'Order identity mismatch': l.orderResponseIdentityMismatch,
+        'Strategy linkage mismatch': l.orderResponseLinkageMismatch,
+        'Strategy decimal mismatch': l.orderResponseTermsMismatch,
+        'Invalid strategy status': l.orderResponseStatusInvalid,
+        'raw sensitive payload': l.orderResponseMalformed,
+      }.entries) {
+        final text = accountErrorText(
+          context,
+          orderResponseFailure(FormatException(entry.key), '/fapi/v3/strategyOpenOrder'),
+        );
+        expect(text, contains(entry.value));
+        expect(text, contains('/fapi/v3/strategyOpenOrder'));
+        expect(text, isNot(contains(l.accountDataInvalid)));
+        expect(text, isNot(contains('raw sensitive payload')));
+      }
+    });
+
     testWidgets('safe server reason reaches existing account error UI: $locale', (tester) async {
       final identity = TestIdentityRepository();
       addTearDown(identity.dispose);
@@ -78,6 +173,14 @@ void main() {
     expect(
       apiErrorText(context, 'accountNetwork', const ApiErrorDetails(cause: ApiErrorCause.timeout)),
       AppLocalizations.of(context).apiRequestTimeout,
+    );
+    expect(
+      apiErrorText(
+        context,
+        'authWalletUnavailable',
+        const ApiErrorDetails(message: 'Invalid parameters: must provide an Ethereum address.'),
+      ),
+      'Wallet response: Invalid parameters: must provide an Ethereum address.',
     );
   });
   test('changing the assistant error key clears previous server details', () {

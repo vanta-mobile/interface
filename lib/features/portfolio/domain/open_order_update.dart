@@ -61,5 +61,8 @@ class OpenOrderUpdate {
     workingType: workingType ?? previous?.workingType,
     pegPriceType: pegPriceType ?? previous?.pegPriceType,
     units: units ?? previous?.units,
+    transactionHash: previous?.transactionHash,
+    clientOrderId: previous?.clientOrderId,
+    strategy: previous?.strategy,
   );
 }

@@ -1,3 +1,5 @@
+import '../../portfolio/domain/account_snapshot.dart';
+
 import 'package:decimal/decimal.dart';
 
 enum OrderPriceConnection { connecting, online, offline }
@@ -44,6 +46,8 @@ class OrderReferencePrices {
     this.trade,
     this.bookFresh = false,
     this.tradeFresh = false,
+    this.bookFailure,
+    this.tradeFailure,
     this.bookFailed = false,
     this.tradeFailed = false,
   });
@@ -52,5 +56,6 @@ class OrderReferencePrices {
   final OrderPriceConnection connection;
   final OrderBookQuote? book;
   final OrderTradeQuote? trade;
+  final AccountReadFailure? bookFailure, tradeFailure;
   final bool bookFresh, tradeFresh, bookFailed, tradeFailed;
 }

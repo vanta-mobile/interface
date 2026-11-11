@@ -1,9 +1,11 @@
+import '../../support/order_confirmation_widget.dart';
 import '../../support/order_mode_widget.dart';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/domain/live_order_time_in_force.dart';
@@ -111,7 +113,10 @@ void main() {
           final l10n = messages(tester);
           await tap(tester, 'live-order-review');
           expect(
-            find.descendant(of: find.byType(AlertDialog), matching: find.text(label(l10n, policy))),
+            find.descendant(
+              of: find.byType(OrderConfirmationDialog),
+              matching: find.text(label(l10n, policy)),
+            ),
             findsOneWidget,
           );
           expect(tester.takeException(), null);
@@ -132,6 +137,7 @@ void main() {
           await tap(tester, 'live-order-review');
           await tester.tap(find.byKey(const Key('live-order-confirm')));
           await tester.pumpAndSettle();
+          await dismissOrderConfirmation(tester);
           expect(repository.lastIntent!.draft.timeInForce, policy);
           expect(repository.submits, 1);
           expect(
@@ -179,13 +185,14 @@ void main() {
       final l10n = messages(tester);
       expect(
         find.descendant(
-          of: find.byType(AlertDialog),
+          of: find.byType(OrderConfirmationDialog),
           matching: find.text(l10n.liveOrderPolicyHidden),
         ),
         findsOneWidget,
       );
       await tester.tap(find.byKey(const Key('live-order-confirm')));
       await tester.pumpAndSettle();
+      await dismissOrderConfirmation(tester);
       expect(repository.lastIncludeFunds, false);
       expect(repository.lastIntent!.parameters['reduceOnly'], 'true');
       expect(repository.lastIntent!.parameters['side'], 'SELL');
@@ -275,11 +282,15 @@ void main() {
     await tap(tester, 'live-order-review');
     final l10n = messages(tester);
     expect(
-      find.descendant(of: find.byType(AlertDialog), matching: find.text(l10n.liveOrderPolicy)),
+      find.descendant(
+        of: find.byType(OrderConfirmationDialog),
+        matching: find.text(l10n.liveOrderPolicy),
+      ),
       findsNothing,
     );
     await tester.tap(find.byKey(const Key('live-order-confirm')));
     await tester.pumpAndSettle();
+    await dismissOrderConfirmation(tester);
     expect(repository.lastIntent!.draft.market, true);
     expect(repository.lastIntent!.parameters.containsKey('timeInForce'), false);
     expect(repository.lastIntent!.parameters.containsKey('price'), false);

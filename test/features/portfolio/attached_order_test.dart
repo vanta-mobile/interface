@@ -34,6 +34,8 @@ void main() {
           expect(legs.length, exits == 'both' ? 3 : 2);
           expect((legs.first as Map)['type'], 'LIMIT');
           expect((legs.first as Map)['timeInForce'], 'GTC');
+          expect((legs.first as Map)['firstDrivenId'], '0');
+          expect((legs.first as Map)['secondDrivenId'], '0');
           for (var i = 1; i < legs.length; i++) {
             final leg = legs[i] as Map;
             expect(leg['quantity'], '0.001');
@@ -45,7 +47,7 @@ void main() {
             expect(leg['firstDrivenId'], '1');
             expect(leg['firstDrivenOn'], 'PARTIALLY_FILLED_OR_FILLED');
             expect(leg['firstTrigger'], 'PLACE_ORDER');
-            expect(leg['secondDrivenId'], exits == 'both' ? (i == 1 ? '3' : '2') : null);
+            expect(leg['secondDrivenId'], exits == 'both' ? (i == 1 ? '3' : '2') : '0');
             expect(leg['secondTrigger'], exits == 'both' ? 'CANCEL_ORDER' : null);
           }
           final result = mapAttachedOrderQuery(attachedQuery(intent), intent, liveOrderClock);
@@ -205,7 +207,11 @@ void main() {
     );
     expect(
       () => checkAttachedOrderAcknowledgement({'strategyId': 9876}),
-      throwsA(isA<AccountReadFailure>()),
+      throwsA(
+        isA<AccountReadFailure>()
+            .having((e) => e.reasonKey, 'reason', 'orderAcknowledgementInvalid')
+            .having((e) => e.details?.endpoint, 'endpoint', '/fapi/v3/placeStrategyOrder'),
+      ),
     );
     checkAttachedOrderAcknowledgement({'failureCode': 0});
   });

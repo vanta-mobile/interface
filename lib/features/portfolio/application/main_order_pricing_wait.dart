@@ -1,3 +1,5 @@
+import '../../../core/errors/api_error_details.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,11 +22,23 @@ class MainOrderPricingWait {
   final _result = Completer<MainOrderRevaluation>();
   ProviderSubscription<MainOrderPricing>? _subscription;
   Timer? _deadline, _checkTimer;
+  AccountReadFailure? _lastFailure;
   Future<MainOrderRevaluation> get future => _result.future;
 
   void start() {
     _subscription = ref.listen(mainOrderPricingProvider, (_, _) => _check());
-    _deadline = Timer(const Duration(seconds: 30), cancel);
+    _deadline = Timer(const Duration(seconds: 30), () {
+      if (!_result.isCompleted) {
+        _result.completeError(
+          _lastFailure ??
+              const AccountReadFailure(
+                'liveCapacityPriceUnavailable',
+                details: ApiErrorDetails(cause: ApiErrorCause.timeout),
+              ),
+        );
+      }
+      _close();
+    });
     // The form can change without producing a provider update.
     _checkTimer = Timer.periodic(const Duration(milliseconds: 100), (_) => _check());
     _check();
@@ -55,6 +69,7 @@ class MainOrderPricingWait {
       _result.complete(value);
       _close();
     } on AccountReadFailure catch (failure) {
+      _lastFailure = failure;
       // Initial public marks/quotes and multi-asset collateral rates may still
       // be in flight; keep waiting until they settle or the deadline expires.
       if (const {

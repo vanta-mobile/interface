@@ -43,6 +43,44 @@ void main() {
     expect(aborted, isFalse);
   });
 
+  for (final headersReceived in [false, true]) {
+    test(
+      'feature-owned read survives caller completion but still cancels its own ${headersReceived ? 'body' : 'headers'}',
+      () async {
+        final transport = _Transport();
+        final ownedClient = ManagedHttpClient(transport);
+        addTearDown(ownedClient.close);
+        var caller = true, owner = true;
+        final request = RequestScope.run(
+          () => caller,
+          () => RequestScope.runOwned(() => owner, () => ownedClient.get(Uri.https('example.com'))),
+        );
+        final failure = expectLater(request, throwsA(isA<http.RequestAbortedException>()));
+        await _turn();
+        final body = StreamController<List<int>>();
+        if (headersReceived) {
+          transport.responses.single.complete(http.StreamedResponse(body.stream, 200));
+          body.add([1]);
+        }
+        caller = false;
+        var aborted = false;
+        (transport.requests.single as http.Abortable).abortTrigger!.then((_) => aborted = true);
+        await Future<void>.delayed(const Duration(milliseconds: 80));
+        expect(aborted, isFalse);
+        owner = false;
+        await failure;
+        await (transport.requests.single as http.Abortable).abortTrigger;
+        await _turn();
+        expect(aborted, isTrue);
+        if (!headersReceived) {
+          transport.responses.single.complete(http.StreamedResponse(body.stream, 200));
+        }
+        await _turn();
+        await body.close();
+      },
+    );
+  }
+
   test('invalid scope prevents any request reaching the transport', () async {
     final transport = _Transport();
     final client = ManagedHttpClient(transport);

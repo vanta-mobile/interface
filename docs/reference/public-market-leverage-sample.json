@@ -1,0 +1,249 @@
+{
+  "code": "000000",
+  "message": null,
+  "messageDetail": null,
+  "data": {
+    "brackets": [
+      {
+        "symbol": "SUSHIUSDT",
+        "riskBrackets": [
+          {
+            "minOpenPosLeverage": 5,
+            "maxOpenPosLeverage": 5
+          },
+          {
+            "minOpenPosLeverage": 4,
+            "maxOpenPosLeverage": 4
+          },
+          {
+            "minOpenPosLeverage": 3,
+            "maxOpenPosLeverage": 3
+          },
+          {
+            "minOpenPosLeverage": 2,
+            "maxOpenPosLeverage": 2
+          },
+          {
+            "minOpenPosLeverage": 1,
+            "maxOpenPosLeverage": 1
+          }
+        ]
+      },
+      {
+        "symbol": "SBETUSDT",
+        "riskBrackets": [
+          {
+            "minOpenPosLeverage": 6,
+            "maxOpenPosLeverage": 10
+          },
+          {
+            "minOpenPosLeverage": 5,
+            "maxOpenPosLeverage": 5
+          },
+          {
+            "minOpenPosLeverage": 4,
+            "maxOpenPosLeverage": 4
+          },
+          {
+            "minOpenPosLeverage": 3,
+            "maxOpenPosLeverage": 3
+          },
+          {
+            "minOpenPosLeverage": 2,
+            "maxOpenPosLeverage": 2
+          },
+          {
+            "minOpenPosLeverage": 1,
+            "maxOpenPosLeverage": 1
+          }
+        ]
+      },
+      {
+        "symbol": "龙虾USDT",
+        "riskBrackets": [
+          {
+            "minOpenPosLeverage": 5,
+            "maxOpenPosLeverage": 5
+          },
+          {
+            "minOpenPosLeverage": 4,
+            "maxOpenPosLeverage": 4
+          },
+          {
+            "minOpenPosLeverage": 3,
+            "maxOpenPosLeverage": 3
+          },
+          {
+            "minOpenPosLeverage": 2,
+            "maxOpenPosLeverage": 2
+          },
+          {
+            "minOpenPosLeverage": 1,
+            "maxOpenPosLeverage": 1
+          }
+        ]
+      },
+      {
+        "symbol": "ETHUSDT",
+        "riskBrackets": [
+          {
+            "minOpenPosLeverage": 151,
+            "maxOpenPosLeverage": 200
+          },
+          {
+            "minOpenPosLeverage": 101,
+            "maxOpenPosLeverage": 150
+          },
+          {
+            "minOpenPosLeverage": 76,
+            "maxOpenPosLeverage": 100
+          },
+          {
+            "minOpenPosLeverage": 51,
+            "maxOpenPosLeverage": 75
+          },
+          {
+            "minOpenPosLeverage": 26,
+            "maxOpenPosLeverage": 50
+          },
+          {
+            "minOpenPosLeverage": 21,
+            "maxOpenPosLeverage": 25
+          },
+          {
+            "minOpenPosLeverage": 11,
+            "maxOpenPosLeverage": 20
+          },
+          {
+            "minOpenPosLeverage": 6,
+            "maxOpenPosLeverage": 10
+          },
+          {
+            "minOpenPosLeverage": 5,
+            "maxOpenPosLeverage": 5
+          },
+          {
+            "minOpenPosLeverage": 4,
+            "maxOpenPosLeverage": 4
+          },
+          {
+            "minOpenPosLeverage": 3,
+            "maxOpenPosLeverage": 3
+          },
+          {
+            "minOpenPosLeverage": 2,
+            "maxOpenPosLeverage": 2
+          },
+          {
+            "minOpenPosLeverage": 1,
+            "maxOpenPosLeverage": 1
+          }
+        ]
+      },
+      {
+        "symbol": "DEFAULT_BRACKETS",
+        "riskBrackets": [
+          {
+            "minOpenPosLeverage": 11,
+            "maxOpenPosLeverage": 25
+          },
+          {
+            "minOpenPosLeverage": 6,
+            "maxOpenPosLeverage": 10
+          },
+          {
+            "minOpenPosLeverage": 5,
+            "maxOpenPosLeverage": 5
+          },
+          {
+            "minOpenPosLeverage": 3,
+            "maxOpenPosLeverage": 4
+          },
+          {
+            "minOpenPosLeverage": 2,
+            "maxOpenPosLeverage": 2
+          },
+          {
+            "minOpenPosLeverage": 1,
+            "maxOpenPosLeverage": 1
+          }
+        ]
+      },
+      {
+        "symbol": "B-MONEYUSDT",
+        "riskBrackets": [
+          {
+            "minOpenPosLeverage": 3,
+            "maxOpenPosLeverage": 3
+          },
+          {
+            "minOpenPosLeverage": 2,
+            "maxOpenPosLeverage": 2
+          },
+          {
+            "minOpenPosLeverage": 1,
+            "maxOpenPosLeverage": 1
+          }
+        ]
+      },
+      {
+        "symbol": "BTCUSDT",
+        "riskBrackets": [
+          {
+            "minOpenPosLeverage": 151,
+            "maxOpenPosLeverage": 200
+          },
+          {
+            "minOpenPosLeverage": 101,
+            "maxOpenPosLeverage": 150
+          },
+          {
+            "minOpenPosLeverage": 76,
+            "maxOpenPosLeverage": 100
+          },
+          {
+            "minOpenPosLeverage": 51,
+            "maxOpenPosLeverage": 75
+          },
+          {
+            "minOpenPosLeverage": 26,
+            "maxOpenPosLeverage": 50
+          },
+          {
+            "minOpenPosLeverage": 21,
+            "maxOpenPosLeverage": 25
+          },
+          {
+            "minOpenPosLeverage": 11,
+            "maxOpenPosLeverage": 20
+          },
+          {
+            "minOpenPosLeverage": 6,
+            "maxOpenPosLeverage": 10
+          },
+          {
+            "minOpenPosLeverage": 5,
+            "maxOpenPosLeverage": 5
+          },
+          {
+            "minOpenPosLeverage": 4,
+            "maxOpenPosLeverage": 4
+          },
+          {
+            "minOpenPosLeverage": 3,
+            "maxOpenPosLeverage": 3
+          },
+          {
+            "minOpenPosLeverage": 2,
+            "maxOpenPosLeverage": 2
+          },
+          {
+            "minOpenPosLeverage": 1,
+            "maxOpenPosLeverage": 1
+          }
+        ]
+      }
+    ]
+  },
+  "success": true
+}

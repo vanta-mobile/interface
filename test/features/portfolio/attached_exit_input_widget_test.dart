@@ -1,15 +1,16 @@
+import '../../support/order_confirmation_widget.dart';
 import '../../support/order_mode_widget.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/attached_exit_input.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/domain/live_order_attachment.dart';
 import 'package:vanta/features/portfolio/domain/live_order_trigger.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
-import 'package:vanta/features/portfolio/presentation/live_order_attachment_summary.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
@@ -116,13 +117,10 @@ void main() {
       await field(tester, 'attached-sl-limit', '79400');
       await choose(tester, 'attached-tp-execution', l10n.attachedOrderAutomaticLimit);
       await tap(tester, 'live-order-review');
-      final dialog = find.byType(AlertDialog);
+      final dialog = find.byType(OrderConfirmationDialog);
       expect(dialog, findsOneWidget);
       expect(
-        find.descendant(
-          of: find.descendant(of: dialog, matching: find.byType(LiveOrderAttachmentSummary)),
-          matching: find.text('0.002 BTC'),
-        ),
+        find.descendant(of: dialog, matching: find.byKey(const Key('order-confirm-quantity'))),
         findsOneWidget,
       );
       expect(
@@ -159,6 +157,7 @@ void main() {
       await tester.ensureVisible(confirm);
       await tester.tap(confirm);
       await tester.pumpAndSettle();
+      await dismissOrderConfirmation(tester);
       final attempted = repository.lastIntent!;
       expect(attempted.draft.quantity, '0.004');
       expect(attempted.draft.attachment!.takeProfit!.executionPrice, '80500');
@@ -167,7 +166,7 @@ void main() {
       await visible(tester, 'attached-sl-limit');
       final limit = tester.widget<TextField>(find.byKey(const Key('attached-sl-limit')));
       expect(limit.controller!.text, '79400');
-      expect(limit.readOnly, true);
+      expect(limit.readOnly, false);
       expect(repository.submits, 1);
       expect(tester.takeException(), null);
       await close(tester, container);
@@ -195,7 +194,7 @@ void main() {
       await tap(tester, 'live-order-review');
       expect(
         find.descendant(
-          of: find.byType(AlertDialog),
+          of: find.byType(OrderConfirmationDialog),
           matching: find.textContaining('≥ 82000 USDT'),
         ),
         findsOneWidget,
@@ -214,7 +213,7 @@ void main() {
       await field(tester, 'attached-tp-limit', '80999.9');
       await tap(tester, 'attached-advanced');
       await tap(tester, 'live-order-review');
-      final dialog = find.byType(AlertDialog);
+      final dialog = find.byType(OrderConfirmationDialog);
       expect(find.descendant(of: dialog, matching: find.textContaining('80999.9')), findsNothing);
       await tester.tap(find.text(l10n.cancel));
       await tester.pumpAndSettle();

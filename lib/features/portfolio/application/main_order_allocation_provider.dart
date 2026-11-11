@@ -7,12 +7,14 @@ import '../domain/live_order.dart';
 import '../domain/live_order_size.dart';
 import '../domain/main_order_allocation.dart';
 import '../domain/main_order_capacity_preview.dart';
+import '../domain/main_order_review_input.dart';
 import 'live_order_provider.dart';
 import 'main_order_capacity_provider.dart';
 import 'main_order_pricing_provider.dart';
 import 'main_order_pricing_wait.dart';
 import 'main_order_refresh_provider.dart';
 import 'symbol_settings_activity.dart';
+import 'order_review_activity_provider.dart';
 
 final mainOrderAllocationProvider =
     NotifierProvider<MainOrderAllocationController, MainOrderAllocationState>(
@@ -81,6 +83,9 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
         _activeClientId = null;
         reset(scope: state.percent != null);
       } else if (before?.context != after.context || after.stale && before?.stale != true) {
+        // An open live review owns raw choices, not an expiring account
+        // snapshot. Keep those choices while background reads renew its facts.
+        if (state.review?.input != null && ref.read(orderReviewActivityProvider) > 0) return;
         reset();
       }
     });
@@ -95,10 +100,7 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
 
   bool get editable {
     final live = ref.read(liveOrderProvider);
-    return !ref.read(mainOrderRefreshProvider).loading &&
-        !state.preparing &&
-        !live.busy &&
-        !live.needsRecheck;
+    return !ref.read(mainOrderRefreshProvider).loading && !state.preparing && !live.busy;
   }
 
   void selectPercent(int percent) {
@@ -123,7 +125,12 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
   }
 
   void manual() {
-    if (!editable) return;
+    // Editing local text during a silent read does not authorize a review.
+    final live = ref.read(liveOrderProvider);
+    final background = ref.read(mainOrderRefreshProvider).background;
+    if (!editable && !(background && !state.preparing && live.intent == null)) {
+      return;
+    }
     _revision++;
     _formCurrent = null;
     state = const MainOrderAllocationState(percent: null);
@@ -142,6 +149,7 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
   Future<MainOrderAllocationReview?> prepare(
     LiveOrderDraft draft, {
     required bool Function() isFormCurrent,
+    MainOrderReviewInput? input,
   }) async {
     final live = ref.read(liveOrderProvider), context = live.context;
     if (!editable ||
@@ -154,15 +162,17 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
       return null;
     }
     String? invalid;
+    AccountReadFailure? pricingFailure;
     try {
       invalid = ref.read(mainOrderPricingProvider).priceContext(context).validate(draft);
     } on AccountReadFailure catch (failure) {
       invalid = failure.key;
+      pricingFailure = failure;
     }
     if (invalid != null) {
       state = MainOrderAllocationState(
         percent: state.percent,
-        failure: AccountReadFailure(invalid),
+        failure: pricingFailure ?? AccountReadFailure(invalid),
       );
       return null;
     }
@@ -177,8 +187,8 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
         ref.read(liveOrderProvider).context == context;
     state = MainOrderAllocationState(percent: percent, preparing: true);
     try {
-      // Freeze draft.quantity before re-reading. A changed maximum must never
-      // silently resize the order which the user clicked.
+      // Legacy fixed-quantity callers retain their captured amount. The main
+      // form carries raw choices so its confirmation can show current results.
       await ref.read(mainOrderCapacityProvider.notifier).load(context.symbol);
       if (!current()) throw const AccountReadFailure('liveAllocationChanged');
       final snapshot = ref.read(mainOrderCapacityProvider.notifier).current;
@@ -192,6 +202,7 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
       final valuation = await waiting.future;
       if (identical(_pricingWait, waiting)) _pricingWait = null;
       if (!current()) throw const AccountReadFailure('liveAllocationChanged');
+      if (input != null) draft = input.resolve(snapshot, valuation).draft;
       final preview = MainOrderCapacityPreview(
         snapshot: snapshot,
         valuation: valuation,
@@ -221,6 +232,7 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
         side: side,
         revision: revision,
         valuation: valuation,
+        input: input,
       );
       _formCurrent = isFormCurrent;
       _identityKey = identity;
@@ -239,11 +251,57 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
     }
   }
 
+  bool _sameReview(MainOrderAllocationReview review) =>
+      state.review?.revision == review.revision &&
+      state.review?.intent.clientOrderId == review.intent.clientOrderId;
+
+  /// Recalculate the dialog's current terms without reading or submitting.
+  /// The returned immutable revision is frozen only when Confirm is pressed.
+  MainOrderAllocationReview reprice(MainOrderAllocationReview review) {
+    if (!_sameReview(review) || _identityKey != _identity()) {
+      throw const AccountReadFailure('authWalletChanged');
+    }
+    if (_formCurrent?.call() != true) {
+      throw const AccountReadFailure('liveAllocationChanged');
+    }
+    final capacity = ref.read(mainOrderCapacityProvider.notifier).current;
+    if (capacity == null) {
+      throw ref.read(mainOrderCapacityProvider).failure ??
+          ref.read(liveOrderProvider).failure ??
+          const AccountReadFailure('liveCapacityStale');
+    }
+    final valuation = ref.read(mainOrderPricingProvider).revalue(capacity);
+    final input =
+        review.input ??
+        MainOrderReviewInput(
+          draft: review.intent.draft,
+          size: LiveOrderSize(unit: OrderSizeUnit.base, text: review.intent.draft.quantity),
+        );
+    final resolved = input.resolve(capacity, valuation);
+    final intent = ref
+        .read(liveOrderProvider.notifier)
+        .prepare(
+          capacity.context.symbol,
+          resolved.draft,
+          pricingContext: valuation.context,
+          clientOrderId: review.intent.clientOrderId,
+        );
+    if (intent == null) throw const AccountReadFailure('liveOrderContextExpired');
+    return MainOrderAllocationReview(
+      intent: intent,
+      capacity: capacity,
+      side: resolved.side,
+      revision: review.revision,
+      valuation: valuation,
+      input: review.input,
+    );
+  }
+
   bool matches(MainOrderAllocationReview review, {bool submitting = false}) {
     if (!ref.mounted ||
         ref.read(mainOrderRefreshProvider).loading ||
         state.preparing ||
-        state.review != review ||
+        !_sameReview(review) ||
         review.revision != _revision ||
         _identityKey != _identity() ||
         _formCurrent?.call() != true) {
@@ -257,18 +315,11 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
         live.context == context &&
         context.symbol == ref.read(symbolProvider) &&
         !live.stale &&
-        !live.needsRecheck &&
         (!live.busy || submitting) &&
         capacity.snapshot == review.capacity &&
         !capacity.stale &&
         !capacity.loading &&
-        (!operation.recoveryBlocked ||
-            submitting &&
-                live.busy &&
-                _activeClientId == review.intent.clientOrderId &&
-                ref
-                    .read(symbolSettingsActivityProvider.notifier)
-                    .canContinueOrder(review.intent.clientOrderId)) &&
+        !operation.recoveryBlocked &&
         !operation.unresolved &&
         (submitting && live.busy
             ? operation.owner == SymbolSetting.order && operation.busy
@@ -298,7 +349,7 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
 
   Future<void> submit(MainOrderAllocationReview review) async {
     if (!matches(review)) {
-      if (ref.mounted && state.review == review) {
+      if (ref.mounted && _sameReview(review)) {
         state = MainOrderAllocationState(
           percent: state.percent,
           failure: const AccountReadFailure('liveAllocationChanged'),

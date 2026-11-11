@@ -1,4 +1,5 @@
 import '../../../core/network/request_scope.dart';
+import '../../../core/errors/api_error_details.dart';
 
 import 'package:decimal/decimal.dart';
 
@@ -11,6 +12,7 @@ import '../domain/aster_open_orders.dart';
 import '../domain/main_order_pending_exposure.dart';
 import 'asset_index_repository.dart';
 import 'aster_account_service.dart';
+import 'aster_read_clock.dart';
 import 'aster_open_orders_mapper.dart';
 import 'capacity_account_mapper.dart';
 import 'futures_asset_mode_mapper.dart';
@@ -41,6 +43,7 @@ class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
     required bool Function() isCurrent,
     required void Function(AccountReadStep) onStep,
   }) => RequestScope.run(isCurrent, () async {
+    final clock = AsterReadClock(service.serverTime);
     void check() {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
       final age = now().difference(context.receivedAt);
@@ -56,7 +59,7 @@ class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
         SignedAccountRequest(
           serverTime: () {
             check();
-            return service.serverTime();
+            return clock.serverTime();
           },
           send: ({required query, required signature}) {
             check();
@@ -77,6 +80,7 @@ class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
             onStep(s);
           },
         );
+    var endpoint = AsterAccountService.accountPath;
     try {
       check();
       if (context.funds == null || context.fundsFailure != null) {
@@ -90,14 +94,18 @@ class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
         throw const AccountReadFailure('liveCapacityChanged');
       }
       validateLeverageSymbol(context.symbol);
+      endpoint = '/fapi/v3/exchangeInfo';
       final units = await service.contractUnits();
       check();
+      endpoint = '/fapi/v3/multiAssetsMargin';
       final assetMode = mapFuturesAssetMode(await read(service.assetMode));
       if (assetMode != context.funds!.assetMode) {
         throw const AccountReadFailure('liveCapacityChanged');
       }
+      endpoint = '/fapi/v3/positionSide/dual';
       final positionMode = mapFuturesPositionMode(await read(service.positionMode));
       if (positionMode != context.mode) throw const AccountReadFailure('liveCapacityChanged');
+      endpoint = AsterAccountService.accountPath;
       final account = mapCapacityAccount(
         await read(service.account),
         address: context.address,
@@ -111,6 +119,7 @@ class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
         positionMode: positionMode,
         now: now(),
       );
+      endpoint = AsterAccountService.openOrdersPath;
       final orders = mapAsterOpenOrders(
         await read(service.openOrders),
         address: context.address,
@@ -124,6 +133,7 @@ class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
         units: orders.units,
       );
       mainOrderPendingExposure(context: context, positions: positions, orders: selectedOrders);
+      endpoint = '/fapi/v3/leverageBrackets';
       final riskPayload = await read(service.leverageBrackets);
       final requiredRiskSymbols = {
         context.symbol,
@@ -135,10 +145,12 @@ class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
         (riskPayload as List).singleWhere((r) => (r as Map)['symbol'] == context.symbol),
         context.symbol,
       );
+      endpoint = '/fapi/v1/assetIndex';
       final indices = assetMode == FuturesAssetMode.multi
           ? mapAssetIndices(await service.assetIndices(), receivedAt: now())
           : null;
       check();
+      endpoint = '/fapi/v3/remainingOpenableNotionalValue';
       final contractCap = mapSymbolOpenableNotional(
         await service.remainingOpenableNotionalValue(
           symbol: context.symbol,
@@ -149,6 +161,7 @@ class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
         receivedAt: now(),
       );
       check();
+      endpoint = '/fapi/v3/commissionRate';
       final feePayload = await read(service.commissionRate, parameters: {'symbol': context.symbol});
       if (feePayload is! Map<String, dynamic> || feePayload['symbol'] != context.symbol) {
         throw const FormatException();
@@ -162,6 +175,7 @@ class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
         throw const FormatException();
       }
       check();
+      endpoint = AsterAccountService.accountPath;
       return assembleMainOrderCapacity(
         context: context,
         account: account,
@@ -175,9 +189,15 @@ class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
         marketFacts: MainOrderAccountFacts(orders: orders, riskTiers: riskTiers, takerFee: fee),
       );
     } on FormatException {
-      throw const AccountReadFailure('accountDataInvalid');
+      throw AccountReadFailure(
+        'accountDataInvalid',
+        details: ApiErrorDetails(cause: ApiErrorCause.invalidResponse, endpoint: endpoint),
+      );
     } on ArgumentError {
-      throw const AccountReadFailure('accountDataInvalid');
+      throw AccountReadFailure(
+        'accountDataInvalid',
+        details: ApiErrorDetails(cause: ApiErrorCause.invalidResponse, endpoint: endpoint),
+      );
     }
   });
 }

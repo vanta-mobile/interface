@@ -209,26 +209,22 @@ void main() {
         await next.close();
       },
     );
-    test('same wallet cannot overwrite pending with same or new client reference', () async {
-      final record = recoveryRecord();
-      await journal.prepare(record);
-      for (final item in [
-        record,
-        recoveryRecord(
-          LiveOrderIntent(
-            context: liveContext(),
-            draft: liveDraft(),
-            clientOrderId: 'different-reference',
-            revision: 0,
-          ),
+    test('same wallet records distinct attempts and duplicate keys are idempotent', () async {
+      final first = recoveryRecord();
+      final second = recoveryRecord(
+        LiveOrderIntent(
+          context: liveContext(),
+          draft: liveDraft(),
+          clientOrderId: 'different-reference',
+          revision: 0,
         ),
-      ]) {
-        await expectLater(
-          journal.prepare(item),
-          throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'orderRecoveryPending')),
-        );
-      }
-      expect(decodeRecoveryJournal(await canonical().readAsString()).single.key, record.key);
+      );
+      await Future.wait([journal.prepare(first), journal.prepare(second)]);
+      await journal.prepare(first);
+      expect(journal.snapshot.records.map((r) => r.key), [first.key, second.key]);
+      expect(decodeRecoveryJournal(await canonical().readAsString()).length, 2);
+      await journal.complete(first.key);
+      expect(journal.snapshot.records.single.key, second.key);
     });
     test('different wallets survive queued writes and scoped removal', () async {
       final first = recoveryRecord();

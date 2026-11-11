@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/data/order_recovery_journal.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/attached_entry_peg.dart';
@@ -23,6 +24,7 @@ import '../../support/order_recovery.dart';
 import '../../support/trade_fixture.dart';
 
 import '../../support/live_order_widget.dart';
+import '../../support/order_confirmation_widget.dart';
 
 void main() {
   Future<void> visible(WidgetTester tester, String key) async {
@@ -144,17 +146,9 @@ void main() {
           'QUEUE_20',
         );
         await tap(tester, 'live-order-review');
-        final dialog = find.byType(AlertDialog);
+        final dialog = find.byType(OrderConfirmationDialog);
         expect(
           find.descendant(of: dialog, matching: find.text(l10n.attachedEntryQueue(20))),
-          findsOneWidget,
-        );
-        expect(
-          find.descendant(of: dialog, matching: find.text(l10n.attachedEntryPegEstimate)),
-          findsOneWidget,
-        );
-        expect(
-          find.descendant(of: dialog, matching: find.text(l10n.attachedEntryPegTiming)),
           findsOneWidget,
         );
         expect(find.descendant(of: dialog, matching: find.text('0')), findsNothing);
@@ -170,6 +164,7 @@ void main() {
         await tester.ensureVisible(confirm);
         await tester.tap(confirm);
         await tester.pumpAndSettle();
+        await dismissOrderConfirmation(tester);
         expect(repository.submits, 1);
         final original = repository.lastIntent!;
         expect(original.draft.attachment!.entryPeg, AttachedEntryPeg.queue20);

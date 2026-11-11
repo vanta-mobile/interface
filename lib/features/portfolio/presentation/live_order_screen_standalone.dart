@@ -19,17 +19,12 @@ extension _LiveOrderStandalone on _LiveOrderScreenState {
       if (identity?.walletAddress case final address?) SelectableText(address),
       FilledButton.icon(
         key: const Key('live-order-read'),
-        onPressed:
-            refresh.loading ||
-                state.busy ||
-                state.needsRecheck ||
-                settings.owner != null ||
-                auth.busy
+        onPressed: refresh.loading || state.busy || settings.owner != null || auth.busy
             ? null
             : identity?.signingAvailable == true && identity?.walletAddress != null
             ? _refresh
             : () => showAccountSheet(context),
-        icon: refresh.loading
+        icon: refresh.showProgress
             ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
             : const Icon(Icons.refresh),
         label: Text(
@@ -48,7 +43,7 @@ extension _LiveOrderStandalone on _LiveOrderScreenState {
         closingSide == null ? l10n.liveCapacityRefreshAccountHint : l10n.liveOrderReadHint,
         style: Theme.of(context).textTheme.bodySmall,
       ),
-      if (refresh.loading)
+      if (refresh.showProgress)
         TextButton(
           key: const Key('live-order-read-stop'),
           onPressed: ref.read(mainOrderRefreshProvider.notifier).stop,
@@ -62,7 +57,10 @@ extension _LiveOrderStandalone on _LiveOrderScreenState {
         ),
       if (settings.owner != null && settings.owner != SymbolSetting.order)
         Text(l10n.liveOrderSettingsBusy, style: const TextStyle(color: AppColors.warning)),
-      if (state.busy) ...[const SizedBox(height: 12), const LinearProgressIndicator()],
+      if (state.busy && (!refresh.background || state.intent != null)) ...[
+        const SizedBox(height: 12),
+        const LinearProgressIndicator(),
+      ],
     ];
   }
 

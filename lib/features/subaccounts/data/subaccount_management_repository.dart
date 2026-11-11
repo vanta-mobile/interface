@@ -1,4 +1,5 @@
 import '../../../core/errors/api_error_details.dart';
+import '../../../core/errors/api_error_parser.dart';
 import '../../../core/network/request_scope.dart';
 
 import 'package:decimal/decimal.dart';
@@ -7,9 +8,11 @@ import '../../../core/data/aster_signature_verifier.dart';
 import '../../../core/data/wallet_operation_journal.dart';
 import '../../../core/domain/wallet_operation.dart';
 import '../../auth/domain/auth_session.dart';
+import '../../auth/domain/wallet_signing_preparation.dart';
 import '../../portfolio/data/aster_account_service.dart';
 import '../../portfolio/data/signed_account_request.dart';
 import '../../portfolio/domain/account_snapshot.dart';
+import '../domain/subaccount_directory.dart';
 import '../domain/subaccount_management.dart';
 import 'signed_subaccount_list_repository.dart';
 
@@ -19,9 +22,25 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
     this.sign,
     this.journal, {
     required this.nonces,
+    this.authorization,
+    this.signingPreparation,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
   final AsterAccountService service;
+
+  /// Signs the qualification directory reads. The list endpoint is signed by
+  /// the authorized signer; only the create/update write needs the owner wallet.
+  final AccountRequestAuthorization? authorization;
+
+  /// Selects the creation signing network before a nonce is issued.
+  final WalletSigningPreparation? signingPreparation;
+
+  /// Compatibility trial: the documented chain 1666 is not a wallet network,
+  /// so external wallets refuse it. The owner signs creation on BNB Chain and
+  /// declares it as signatureChainId, following registerAndApproveAgent; the
+  /// local child proof keeps 1666. Signing both on 56 was refused by Aster.
+  /// Server acceptance is unconfirmed by the V3 creation contract.
+  static const createSignatureChainId = 56;
   final AccountRequestSigner sign;
   final WalletOperationJournal journal;
   final AsterReadNonces nonces;
@@ -31,9 +50,32 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
       throw const AccountReadFailure('walletOperationStorage');
     }
     if (journal.snapshot.records.any(
-      (r) => !r.acknowledged && r.address.toLowerCase() == address.toLowerCase(),
+      (r) =>
+          !r.acknowledged &&
+          r.kind != WalletOperationKind.withdrawal &&
+          r.address.toLowerCase() == address.toLowerCase(),
     )) {
       throw const AccountReadFailure('walletOperationPending');
+    }
+  }
+
+  Future<SubaccountDirectory> _directory(AuthIdentity i, bool Function() current) =>
+      SignedSubaccountListRepository(
+        service,
+        sign,
+        authorization: authorization,
+        nonces: nonces,
+        now: now,
+      ).read(address: i.walletAddress!, isCurrent: current, onStep: (_) {});
+
+  /// Server-state check for a dispatched creation: whether the signed directory
+  /// lists the child wallet. Null when the directory cannot be read.
+  Future<bool?> _childListed(AuthIdentity i, String child, bool Function() current) async {
+    try {
+      final directory = await _directory(i, current);
+      return directory.accounts.any((a) => a.address?.toLowerCase() == child.toLowerCase());
+    } catch (_) {
+      return null;
     }
   }
 
@@ -42,12 +84,7 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
     // Master-only directory reads would reject that supported account scope.
     // Relationship, freeze status and asset limits remain server-enforced.
     if (kind == WalletOperationKind.subaccountTransfer) return;
-    final directory = await SignedSubaccountListRepository(
-      service,
-      sign,
-      nonces: nonces,
-      now: now,
-    ).read(address: i.walletAddress!, isCurrent: current, onStep: (_) {});
+    final directory = await _directory(i, current);
     // The endpoint documents user as the authenticated master. Its successful
     // signed response is the available server qualification, not an ID/address
     // mapping. Never infer a child address or status from a list name.
@@ -90,6 +127,17 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
       _ready(address);
       await _parent(identity, kind, isCurrent);
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
+      final create = kind == WalletOperationKind.createSubaccount;
+      // Network approval may need its own wallet prompt; finish it before the
+      // nonce so it consumes none of the 45-second signing window.
+      if (create) {
+        await signingPreparation?.prepareSigning(
+          expectedAddress: address,
+          chainId: createSignatureChainId,
+          isCurrent: isCurrent,
+        );
+        if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
+      }
       final time = await service.serverTime();
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
       final record = WalletOperationRecord(
@@ -99,9 +147,14 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
         preparedAt: now().toUtc(),
         terms: terms,
       );
-      return SubaccountManagementReview(identity: identity, record: record, query: _query(record));
+      return SubaccountManagementReview(
+        identity: identity,
+        record: record,
+        query: _query(record),
+        signatureChainId: create ? createSignatureChainId : 1666,
+      );
     } on AuthFailure catch (e) {
-      throw AccountReadFailure(e.key);
+      throw AccountReadFailure(e.key, details: ApiErrorDetails(message: e.reason));
     } on FormatException {
       throw const AccountReadFailure('subaccountInputInvalid');
     }
@@ -141,6 +194,7 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
           'nonce': '${r.nonce}',
           'user': r.address,
           'signer': r.address,
+          'signatureChainId': '$createSignatureChainId',
         },
         WalletOperationKind.freezeSubaccount || WalletOperationKind.unfreezeSubaccount => {
           'subSourceAddr': t['child']!,
@@ -161,6 +215,29 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
         _ => throw const FormatException(),
       },
     ).query;
+  }
+
+  @override
+  Future<bool?> settleCreation(
+    SubaccountManagementReview review, {
+    required bool Function() isCurrent,
+  }) async {
+    final r = review.record;
+    if (r.kind != WalletOperationKind.createSubaccount) throw const FormatException();
+    final listed = await _childListed(review.identity, r.terms['child']!, isCurrent);
+    if (listed == true) {
+      await journal.report(r.key);
+      return true;
+    }
+    final elapsed = now().difference(r.preparedAt);
+    if (listed == false && elapsed >= creationSettleWindow) {
+      await journal.removeNotSent(r.key);
+      return false;
+    }
+    if (elapsed >= creationSettleWindow + const Duration(seconds: 30)) {
+      throw const AccountReadFailure('walletOperationUnknown');
+    }
+    return null;
   }
 
   @override
@@ -207,8 +284,8 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
       if ((server * 1000 - r.nonce).abs() >= 45000000) {
         throw const AccountReadFailure('accountSignatureExpired');
       }
-      final data = asterReadTypedData(query),
-          signature = await sign(expectedAddress: r.address, typedData: asterReadTypedData(query));
+      final data = asterReadTypedData(query, chainId: review.signatureChainId),
+          signature = await sign(expectedAddress: r.address, typedData: data);
       current();
       if (!verifyAsterWalletSignature(r.address, data, signature)) {
         throw const AccountReadFailure('authWalletSignature');
@@ -229,7 +306,12 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
         signature: signature,
       );
       if (response is! Map<String, dynamic> || response['code'] != 200) {
-        throw const AccountReadFailure('walletOperationUnknown');
+        final code = response is Map<String, dynamic> ? response['code'] : null;
+        throw AccountReadFailure(
+          code == null ? 'walletOperationUnknown' : 'accountReadFailed',
+          code: code is int ? code : null,
+          details: apiErrorDetails(response, status: 200),
+        );
       }
       await journal.report(r.key);
       return r.reported();
@@ -237,8 +319,25 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
       if (saved && !sent) {
         await journal.removeNotSent(r.key);
       }
+      if (sent && r.kind == WalletOperationKind.createSubaccount) {
+        // The directory is the server's record of children. Check it before
+        // trusting any error text: an internal error may follow a creation.
+        final listed = await _childListed(review.identity, r.terms['child']!, isCurrent);
+        if (listed == true) {
+          await journal.report(r.key);
+          return r.reported();
+        }
+        if (listed == false && _refused(e)) {
+          // An explicit answer and an unlisted child: nothing was created.
+          // Keep Aster's message and clear the record so it blocks nothing.
+          await journal.removeNotSent(r.key);
+          rethrow;
+        }
+      }
       if (sent) throw AccountReadFailure('walletOperationUnknown', details: errorDetailsOf(e));
-      if (e is AuthFailure) throw AccountReadFailure(e.key);
+      if (e is AuthFailure) {
+        throw AccountReadFailure(e.key, details: ApiErrorDetails(message: e.reason));
+      }
       if (e is WalletOperationPending) throw const AccountReadFailure('walletOperationPending');
       if (e is WalletOperationStorageFailure) {
         throw const AccountReadFailure('walletOperationStorage');
@@ -247,4 +346,19 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
       rethrow;
     }
   });
+}
+
+/// A received, parsed Aster error answer: the request was evaluated and
+/// refused. Missing/unparseable bodies, transport loss, redirects, 5xx and
+/// rate limits remain outcome-unknown.
+bool _refused(Object error) {
+  if (error is! AccountReadFailure) return false;
+  final details = error.details, status = details?.status;
+  return status != null &&
+      status >= 200 &&
+      status < 500 &&
+      status != 418 &&
+      status != 429 &&
+      details!.cause != ApiErrorCause.invalidResponse &&
+      (error.code != null || details.message != null);
 }

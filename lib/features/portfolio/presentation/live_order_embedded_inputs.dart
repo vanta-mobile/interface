@@ -21,6 +21,8 @@ class EmbeddedPriceField extends StatelessWidget {
     this.fixedLabel,
     this.bboSelected = false,
     this.onBbo,
+    this.bboLevel,
+    this.onBboLevel,
   });
   final TextEditingController controller;
   final String asset;
@@ -32,6 +34,10 @@ class EmbeddedPriceField extends StatelessWidget {
   final String? fixedLabel;
   final bool bboSelected;
   final VoidCallback? onBbo;
+
+  /// Selected BBO level; when set, the price box becomes the BBO mode picker.
+  final String? bboLevel;
+  final VoidCallback? onBboLevel;
 
   void _step(int direction) {
     final current = parseOrderDecimal(controller.text.trim());
@@ -54,45 +60,50 @@ class EmbeddedPriceField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: EmbeddedInputBox(
-              label: l.tradeOrderPrice(asset),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: fixedLabel != null
-                        ? Text(fixedLabel!, style: TradeTypography.body, maxLines: 1)
-                        : EmbeddedTextInput(
-                            fieldKey: const Key('live-order-price'),
-                            controller: controller,
-                            enabled: enabled,
-                            onChanged: onChanged,
-                          ),
+            child: bboLevel != null
+                ? _BboModeBox(level: bboLevel!, onTap: enabled ? onBboLevel : null)
+                : EmbeddedInputBox(
+                    label: l.tradeOrderPrice(asset),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: fixedLabel != null
+                              ? Text(fixedLabel!, style: TradeTypography.body, maxLines: 1)
+                              : EmbeddedTextInput(
+                                  fieldKey: const Key('live-order-price'),
+                                  controller: controller,
+                                  enabled: enabled,
+                                  onChanged: onChanged,
+                                ),
+                        ),
+                        _StepButton(
+                          icon: Icons.remove,
+                          tooltip: l.tradePriceDown,
+                          onPressed: editable ? () => _step(-1) : null,
+                        ),
+                        _StepButton(
+                          icon: Icons.add,
+                          tooltip: l.tradePriceUp,
+                          onPressed: editable ? () => _step(1) : null,
+                        ),
+                      ],
+                    ),
                   ),
-                  _StepButton(
-                    icon: Icons.remove,
-                    tooltip: l.tradePriceDown,
-                    onPressed: editable ? () => _step(-1) : null,
-                  ),
-                  _StepButton(
-                    icon: Icons.add,
-                    tooltip: l.tradePriceUp,
-                    onPressed: editable ? () => _step(1) : null,
-                  ),
-                ],
-              ),
-            ),
           ),
           if (onBbo != null || bboSelected) ...[
             const SizedBox(width: 4),
             Material(
-              color: bboSelected ? TradeColors.control : TradeColors.card,
-              borderRadius: BorderRadius.circular(12),
+              color: bboSelected ? TradeColors.accentBackground : TradeColors.card,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: bboSelected ? const BorderSide(color: TradeColors.positive) : BorderSide.none,
+              ),
+              clipBehavior: Clip.antiAlias,
               child: InkWell(
                 key: const Key('live-order-bbo'),
-                borderRadius: BorderRadius.circular(12),
                 onTap: enabled ? onBbo : null,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Center(
                     child: Text(
                       l.liveOrderBbo,
@@ -111,6 +122,38 @@ class EmbeddedPriceField extends StatelessWidget {
   }
 }
 
+/// BBO price source from the design: the caption names the mode and the
+/// value opens the level sheet.
+class _BboModeBox extends StatelessWidget {
+  const _BboModeBox({required this.level, required this.onTap});
+  final String level;
+  final VoidCallback? onTap;
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        key: const Key('live-order-bbo-level'),
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: EmbeddedInputBox(
+          label: l.liveOrderBboModeLabel,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 32),
+            child: Row(
+              children: [
+                Expanded(child: Text(level, style: TradeTypography.body, maxLines: 1)),
+                const Icon(Icons.arrow_drop_down, size: 18, color: TradeColors.muted),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class EmbeddedSizeField extends StatelessWidget {
   const EmbeddedSizeField({
     super.key,
@@ -120,6 +163,7 @@ class EmbeddedSizeField extends StatelessWidget {
     required this.enabled,
     required this.onUnit,
     required this.onInput,
+    this.minimumHint,
   });
   final LiveOrderContext data;
   final OrderSizeUnit unit;
@@ -127,6 +171,7 @@ class EmbeddedSizeField extends StatelessWidget {
   final bool enabled;
   final ValueChanged<OrderSizeUnit> onUnit;
   final VoidCallback onInput;
+  final String? minimumHint;
 
   String _label(OrderSizeUnit value) =>
       value == OrderSizeUnit.quote ? data.rules.quoteAsset : data.rules.baseAsset;
@@ -144,6 +189,7 @@ class EmbeddedSizeField extends StatelessWidget {
               controller: controller,
               enabled: enabled,
               onChanged: onInput,
+              hint: minimumHint ?? '',
             ),
           ),
           EmbeddedSelector(

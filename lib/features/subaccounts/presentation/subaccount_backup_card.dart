@@ -12,11 +12,12 @@ class SubaccountBackupCard extends StatelessWidget {
     super.key,
     required this.wallet,
     required this.accepted,
+    this.saved = false,
     required this.privateKey,
     required this.onReveal,
   });
   final GeneratedSubaccount wallet;
-  final bool accepted;
+  final bool accepted, saved;
   final String? privateKey;
   final VoidCallback? onReveal;
 
@@ -36,7 +37,8 @@ class SubaccountBackupCard extends StatelessWidget {
                 constraints: const BoxConstraints(minWidth: 70, minHeight: 24),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
                 decoration: BoxDecoration(
-                  color: PortfolioColors.onAccent,
+                  // The design greys the badge once the key is acknowledged.
+                  color: saved ? PortfolioColors.card : PortfolioColors.onAccent,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -76,10 +78,12 @@ class SubaccountBackupCard extends StatelessWidget {
             SelectableText(
               privateKey!,
               key: const Key('subaccount-revealed-key'),
-              style: AccountTypography.secondary,
+              style: AccountTypography.caption,
             ),
-          const SizedBox(height: 12),
-          Text(l.accountsHiddenKey, style: AccountTypography.caption),
+          if (privateKey == null) ...[
+            const SizedBox(height: 12),
+            Text(l.accountsHiddenKey, style: AccountTypography.caption),
+          ],
         ],
       ),
     );
@@ -88,32 +92,11 @@ class SubaccountBackupCard extends StatelessWidget {
 
 class _HiddenKey extends StatelessWidget {
   const _HiddenKey();
+  static const _line = '•••• •••• •••• ••••';
   @override
-  Widget build(BuildContext context) => Column(
-    children: List.generate(
-      2,
-      (_) => Padding(
-        padding: const EdgeInsets.only(left: 6, right: 24),
-        child: SizedBox(
-          height: 26,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(
-              16,
-              (_) => Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    '•',
-                    style: AccountTypography.heading.copyWith(color: PortfolioColors.secondary),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    ),
+  Widget build(BuildContext context) => Text(
+    '$_line\n$_line',
+    style: AccountTypography.heading.copyWith(color: PortfolioColors.secondary),
   );
 }
 
@@ -131,7 +114,7 @@ class BackupAcknowledgement extends StatelessWidget {
         child: Row(
           children: [
             SizedBox.square(
-              dimension: 24,
+              dimension: saved ? 16 : 22,
               child: Semantics(
                 checked: saved,
                 enabled: onChanged != null,

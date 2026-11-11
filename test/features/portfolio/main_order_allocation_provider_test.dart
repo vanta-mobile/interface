@@ -266,7 +266,7 @@ void main() {
       expect(container.read(mainOrderAllocationProvider).percent, 0);
     });
   }
-  test('settings and recovery locks block submission before a wallet prompt', () async {
+  test('active settings block submission; diagnostic records do not', () async {
     await select();
     final review = (await prepare())!;
     final activity = container.read(symbolSettingsActivityProvider.notifier);
@@ -277,33 +277,31 @@ void main() {
         .read(orderRecoveryJournalProvider)
         .prepare(OrderRecoveryRecord(query: OrderQuery.capture(liveIntent()), createdAt: now));
     await controller().submit(review);
-    expect(orders.submits, 0);
+    expect(orders.submits, 1);
   });
-  test(
-    'unknown result locks editing and only rechecks original ID; accepted recovery clears ratio',
-    () async {
-      await select();
-      final review = (await prepare())!;
-      orders.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
-      await controller().submit(review);
-      expect(container.read(mainOrderAllocationProvider).percent, 20);
-      controller().manual();
-      controller().selectPercent(50);
-      expect(container.read(mainOrderAllocationProvider).percent, 20);
-      expect(await prepare(), null);
-      expect(capacities.reads, 2);
-      orders.result = LiveOrderResult(
-        orderId: '12345',
-        status: 'NEW',
-        executedQuantity: Decimal.zero,
-      );
-      await container.read(liveOrderProvider.notifier).recheck();
-      expect(orders.submits, 1);
-      expect(orders.checks, 1);
-      expect(orders.lastIntent!.clientOrderId, review.intent.clientOrderId);
-      expect(container.read(mainOrderAllocationProvider).percent, 0);
-    },
-  );
+  test('unknown result allows editing; explicit recheck keeps the original ID', () async {
+    await select();
+    final review = (await prepare())!;
+    orders.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
+    await controller().submit(review);
+    expect(container.read(mainOrderAllocationProvider).percent, 20);
+    controller().manual();
+    controller().selectPercent(50);
+    expect(controller().editable, isTrue);
+    expect(container.read(mainOrderAllocationProvider).percent, isNull);
+    expect(await prepare(), null);
+    expect(capacities.reads, 2);
+    orders.result = LiveOrderResult(
+      orderId: '12345',
+      status: 'NEW',
+      executedQuantity: Decimal.zero,
+    );
+    await container.read(liveOrderProvider.notifier).recheck();
+    expect(orders.submits, 1);
+    expect(orders.checks, 1);
+    expect(orders.lastIntent!.clientOrderId, review.intent.clientOrderId);
+    expect(container.read(mainOrderAllocationProvider).percent, isNull);
+  });
   test('refused wallet prompt preserves ratio and does not become an unknown write', () async {
     await select();
     final review = (await prepare())!;

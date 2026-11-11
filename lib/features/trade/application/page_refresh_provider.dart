@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/refresh_batch.dart';
 import '../../market/application/market_providers.dart';
+import '../../market/application/public_leverage_provider.dart';
 import '../../portfolio/application/account_read_provider.dart';
 import '../../portfolio/application/asset_index_provider.dart';
 import '../../portfolio/application/asset_metadata_provider.dart';
@@ -39,6 +40,12 @@ class PageRefreshController {
   Future<void> futures() => _futures.run([
     () => ref.read(assetMetadataRefreshProvider)(),
     () async {
+      if (ref.exists(publicLeverageProvider)) {
+        ref.invalidate(publicLeverageProvider);
+        await ref.read(publicLeverageProvider.future);
+      }
+    },
+    () async {
       if (ref.read(instrumentsProvider).value == null) {
         ref.invalidate(instrumentsProvider);
         await ref.read(instrumentsProvider.future);
@@ -53,7 +60,9 @@ class PageRefreshController {
     },
     // Keep wallet prompts sequential and only refresh previously read data.
     () async {
-      if (ref.read(liveOrderProvider).context?.symbol == ref.read(symbolProvider)) {
+      if (ref.read(liveOrderProvider).context?.symbol == ref.read(symbolProvider) ||
+          ref.read(mainOrderRefreshProvider).failure != null ||
+          ref.read(accountReadProvider).account != null) {
         await ref.read(mainOrderRefreshProvider.notifier).refresh(ref.read(symbolProvider));
       }
       if (!ref.mounted) return;

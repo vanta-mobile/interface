@@ -1,9 +1,11 @@
+import '../../support/order_confirmation_widget.dart';
 import '../../support/order_mode_widget.dart';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/domain/live_order_trigger.dart';
@@ -117,16 +119,12 @@ void main() {
             await field(tester, 'live-order-quantity', '0.001');
             if (!marketOrder) await field(tester, 'live-order-price', '80000');
             await tap(tester, 'live-order-review');
-            final messages = l10n(tester), dialog = find.byType(AlertDialog);
+            final messages = l10n(tester), dialog = find.byType(OrderConfirmationDialog);
             expect(dialog, findsOneWidget);
-            expect(
-              find.descendant(of: dialog, matching: find.text(messages.liveOrderConditionalHint)),
-              findsOneWidget,
-            );
             expect(
               find.descendant(
                 of: dialog,
-                matching: find.text(
+                matching: find.textContaining(
                   '${triggerKind == LiveOrderTriggerKind.stop ? '≥' : '≤'} $trigger USDT',
                 ),
               ),
@@ -142,6 +140,7 @@ void main() {
             await tap(tester, 'live-order-review');
             await tester.tap(find.byKey(const Key('live-order-confirm')));
             await tester.pumpAndSettle();
+            await dismissOrderConfirmation(tester);
             expect(repository.lastIntent!.draft.trigger!.price, trigger);
             expect(repository.lastIntent!.draft.trigger!.basis, LiveOrderTriggerBasis.mark);
             expect(repository.lastIntent!.draft.trigger!.protect, true);
@@ -201,9 +200,10 @@ void main() {
         await field(tester, 'live-order-trigger-price', short ? '81000' : '78000');
         await field(tester, 'live-order-quantity', '0.005');
         await tap(tester, 'live-order-review');
-        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(find.byType(OrderConfirmationDialog), findsOneWidget);
         await tester.tap(find.byKey(const Key('live-order-confirm')));
         await tester.pumpAndSettle();
+        await dismissOrderConfirmation(tester);
         expect(repository.lastIncludeFunds, false);
         expect(repository.lastIntent!.parameters['type'], 'STOP_MARKET');
         expect(repository.lastIntent!.parameters['positionSide'], side);
@@ -309,13 +309,9 @@ void main() {
         true,
       );
       await tap(tester, 'live-order-review');
-      final messages = l10n(tester), dialog = find.byType(AlertDialog);
+      final messages = l10n(tester), dialog = find.byType(OrderConfirmationDialog);
       expect(
         find.descendant(of: dialog, matching: find.text(messages.liveEntireQuantity)),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: dialog, matching: find.text(messages.liveEntireHint)),
         findsOneWidget,
       );
       expect(tester.takeException(), null);
@@ -342,6 +338,7 @@ void main() {
       await tap(tester, 'live-order-review');
       await tester.tap(find.byKey(const Key('live-order-confirm')));
       await tester.pumpAndSettle();
+      await dismissOrderConfirmation(tester);
       expect(repository.lastIntent!.draft.entireClose, true);
       expect(repository.lastIntent!.parameters['quantity'], null);
       final id = repository.lastIntent!.clientOrderId;
@@ -454,7 +451,7 @@ void main() {
       expect(tester.takeException(), null);
       await tap(tester, 'live-trigger-calculation-apply');
       await tap(tester, 'live-order-review');
-      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(OrderConfirmationDialog), findsOneWidget);
       await tester.tap(find.text(l10n(tester).cancel));
       await tester.pumpAndSettle();
       expect(repository.submits, 0);
@@ -482,6 +479,7 @@ void main() {
     await tap(tester, 'live-order-review');
     await tester.tap(find.byKey(const Key('live-order-confirm')));
     await tester.pumpAndSettle();
+    await dismissOrderConfirmation(tester);
     expect(repository.lastIntent!.parameters['type'], 'LIMIT');
     for (final key in ['stopPrice', 'workingType', 'priceProtect']) {
       expect(repository.lastIntent!.parameters.containsKey(key), false);

@@ -9,6 +9,7 @@ import '../../trade/presentation/widgets/account_sheet.dart';
 import '../../portfolio/presentation/portfolio_components.dart';
 import '../application/account_entries_provider.dart';
 import '../application/generated_subaccount_provider.dart';
+import '../application/subaccount_list_load_provider.dart';
 import '../application/subaccount_list_provider.dart';
 import '../domain/account_entry.dart';
 import '../domain/generated_subaccount.dart';
@@ -30,6 +31,8 @@ class AccountManagementScreen extends ConsumerWidget {
     final owner = ref.watch(authProvider.select((s) => s.identity?.walletAddress));
     final wallets = ref.watch(generatedWalletsProvider);
     ref.watch(accountBalancesProvider);
+    ref.watch(subaccountListLoadProvider);
+    final autoLoad = ref.watch(subaccountListAutoLoadProvider);
     final manage = ref.watch(canManageAccountsProvider);
     final count = directory.account?.childCount;
     Future<void> refresh() async {
@@ -71,7 +74,18 @@ class AccountManagementScreen extends ConsumerWidget {
         const SizedBox(height: 22),
         Text(l.accountsSeparateStrategies, style: AccountTypography.secondary),
         const SizedBox(height: 16),
-        if (directory.account == null)
+        if (directory.account == null && directory.busy && autoLoad)
+          const _AccountCardSkeleton()
+        else if (directory.account == null && directory.failure != null)
+          KeyedSubtree(
+            key: const Key('account-read-error'),
+            child: StatusFailureView(
+              message: accountErrorText(context, directory.failure!),
+              retrying: directory.busy,
+              onRetry: ref.watch(canInspectAccountsProvider) ? refresh : null,
+            ),
+          )
+        else if (directory.account == null && !autoLoad)
           AccountAction(
             key: const Key('subaccount-list-refresh'),
             label: l.subaccountRead,
@@ -82,7 +96,8 @@ class AccountManagementScreen extends ConsumerWidget {
                 ? refresh
                 : null,
           ),
-        if (directory.failure != null)
+        // A failed refresh keeps the previous directory visible.
+        if (directory.account != null && directory.failure != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Text(
@@ -90,17 +105,20 @@ class AccountManagementScreen extends ConsumerWidget {
               style: PortfolioTypography.caption.copyWith(color: PortfolioColors.negative),
             ),
           ),
-
         if (!ref.watch(canInspectAccountsProvider)) AccountNotice(l.subaccountMasterRequired),
         for (final entry in entries)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _AccountCard(entry: entry),
           ),
-        // The remote directory does not identify wallet addresses. Keep its
-        // returned IDs copyable; never join those IDs to local wallets by name.
+        // Join directory rows to known accounts only by returned wallet
+        // address, never by name; rows without an address keep their ID.
         if (directory.account != null)
-          for (final account in directory.account!.accounts.where((a) => !a.isParent))
+          for (final account in directory.account!.accounts.where(
+            (a) =>
+                !a.isParent &&
+                !entries.any((e) => e.address.toLowerCase() == a.address?.toLowerCase()),
+          ))
             Padding(padding: const EdgeInsets.only(bottom: 12), child: _DirectoryCard(account)),
         if (count == 0 && entries.isEmpty) StatusEmptyView(message: l.subaccountNoChildren),
         for (final wallet in wallets.value ?? const <GeneratedSubaccount>[])
@@ -165,6 +183,32 @@ class _AccountCard extends StatelessWidget {
   }
 }
 
+class _AccountCardSkeleton extends StatelessWidget {
+  const _AccountCardSkeleton();
+  @override
+  Widget build(BuildContext context) => const PortfolioCard(
+    key: Key('accounts-list-skeleton'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            SkeletonBox.circle(20),
+            SizedBox(width: 8),
+            SkeletonBox(width: 120, height: 16),
+          ],
+        ),
+        SizedBox(height: 8),
+        SkeletonBox(width: 96, height: 12),
+        SizedBox(height: 24),
+        SkeletonBox(height: 12),
+        SizedBox(height: 14),
+        SkeletonBox(height: 12),
+      ],
+    ),
+  );
+}
+
 class _DirectoryCard extends StatelessWidget {
   const _DirectoryCard(this.account);
   final AsterSubaccount account;
@@ -180,7 +224,10 @@ class _DirectoryCard extends StatelessWidget {
             style: PortfolioTypography.heading,
           ),
           AccountValueRow(l.subaccountId, '${account.accountId}', copyable: true),
-          Text(l.accountsUnknownAddress, style: PortfolioTypography.caption),
+          if (account.address case final address?)
+            AccountAddressRow(l.accountsAddress, address, showCopyButton: true)
+          else
+            Text(l.accountsUnknownAddress, style: PortfolioTypography.caption),
         ],
       ),
     );

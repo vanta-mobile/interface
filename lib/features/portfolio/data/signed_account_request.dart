@@ -1,3 +1,4 @@
+import '../../../core/errors/api_error_details.dart';
 import '../../../core/network/request_scope.dart';
 import '../domain/aster_signature.dart';
 export '../domain/aster_signature.dart';
@@ -103,7 +104,7 @@ class SignedAccountRequest {
       }
       rethrow;
     } on AuthFailure catch (failure) {
-      throw AccountReadFailure(failure.key);
+      throw AccountReadFailure(failure.key, details: ApiErrorDetails(message: failure.reason));
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     } catch (_) {

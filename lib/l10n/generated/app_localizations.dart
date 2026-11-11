@@ -159,6 +159,12 @@ abstract class AppLocalizations {
   /// **'Wallet connection failed. Check your wallet app and network, then retry.'**
   String get authWalletUnavailable;
 
+  /// No description provided for @walletResponseReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet response: {reason}'**
+  String walletResponseReason(String reason);
+
   /// No description provided for @authWalletBusy.
   ///
   /// In en, this message translates to:
@@ -168,7 +174,7 @@ abstract class AppLocalizations {
   /// No description provided for @authWalletSigningNetwork.
   ///
   /// In en, this message translates to:
-  /// **'Approve BNB Chain (56) in your wallet and reconnect before enabling trading.'**
+  /// **'Enable and select BNB Chain (chain ID 56) in your wallet, allow this app to connect to it, then reconnect before enabling trading.'**
   String get authWalletSigningNetwork;
 
   /// No description provided for @authWalletConnectionTimeout.
@@ -1797,83 +1803,11 @@ abstract class AppLocalizations {
   /// **'Isolated'**
   String get accountIsolatedMode;
 
-  /// No description provided for @marketCategoryTop.
-  ///
-  /// In en, this message translates to:
-  /// **'Top'**
-  String get marketCategoryTop;
-
-  /// No description provided for @marketCategoryRwa.
-  ///
-  /// In en, this message translates to:
-  /// **'USD1-RWA'**
-  String get marketCategoryRwa;
-
-  /// No description provided for @marketCategoryMeme.
-  ///
-  /// In en, this message translates to:
-  /// **'Meme'**
-  String get marketCategoryMeme;
-
-  /// No description provided for @marketCategoryAi.
-  ///
-  /// In en, this message translates to:
-  /// **'AI'**
-  String get marketCategoryAi;
-
-  /// No description provided for @marketCategoryPreLaunch.
-  ///
-  /// In en, this message translates to:
-  /// **'Pre-launch'**
-  String get marketCategoryPreLaunch;
-
-  /// No description provided for @marketCategoryStocks.
-  ///
-  /// In en, this message translates to:
-  /// **'Stocks'**
-  String get marketCategoryStocks;
-
-  /// No description provided for @marketCategoryEtf.
-  ///
-  /// In en, this message translates to:
-  /// **'ETF'**
-  String get marketCategoryEtf;
-
-  /// No description provided for @marketCategoryCommodities.
-  ///
-  /// In en, this message translates to:
-  /// **'Commodities'**
-  String get marketCategoryCommodities;
-
-  /// No description provided for @marketCategorySemiconductors.
-  ///
-  /// In en, this message translates to:
-  /// **'Semiconductors'**
-  String get marketCategorySemiconductors;
-
-  /// No description provided for @marketNoCategoryResults.
-  ///
-  /// In en, this message translates to:
-  /// **'No contracts in this category match your filters.'**
-  String get marketNoCategoryResults;
-
   /// No description provided for @marketResultsCount.
   ///
   /// In en, this message translates to:
   /// **'{shown} of {total} perpetuals'**
   String marketResultsCount(int shown, int total);
-
-  /// No description provided for @marketCategories.
-  ///
-  /// In en, this message translates to:
-  /// **'Market categories'**
-  String get marketCategories;
-
-  /// No description provided for @marketCategoryAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All categories'**
-  String get marketCategoryAll;
 
   /// No description provided for @accountPerpetualTab.
   ///
@@ -3630,13 +3564,13 @@ abstract class AppLocalizations {
   /// No description provided for @assetModeReadSettings.
   ///
   /// In en, this message translates to:
-  /// **'Read asset mode and positions (2 signatures)'**
+  /// **'Read asset mode, positions and orders'**
   String get assetModeReadSettings;
 
   /// No description provided for @assetModeReadHint.
   ///
   /// In en, this message translates to:
-  /// **'Sign separately to read asset mode and all futures position configurations. Reading submits no changes. The 30-second validity starts at the first response and includes the second signature.'**
+  /// **'Read asset mode, all position configurations and all open orders. Reading submits no changes. The 30-second validity starts at the first response.'**
   String get assetModeReadHint;
 
   /// No description provided for @assetModeCurrentSetting.
@@ -3846,7 +3780,7 @@ abstract class AppLocalizations {
   /// No description provided for @liveOrderOutcomeUnknown.
   ///
   /// In en, this message translates to:
-  /// **'The request may have reached Aster. Query this client reference to verify. Another order is blocked; querying never places it again.'**
+  /// **'Order submission was attempted, but the result is not yet confirmed. Check the original order before placing it again to avoid duplicates. Checking never resubmits the order.'**
   String get liveOrderOutcomeUnknown;
 
   /// No description provided for @liveOrderRecheck.
@@ -3872,6 +3806,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Limit execution policy'**
   String get liveOrderPolicy;
+
+  /// No description provided for @timeInForceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Time In Force'**
+  String get timeInForceTitle;
+
+  /// No description provided for @timeInForceGtc.
+  ///
+  /// In en, this message translates to:
+  /// **'GTC (Good till canceled)'**
+  String get timeInForceGtc;
+
+  /// No description provided for @timeInForceIoc.
+  ///
+  /// In en, this message translates to:
+  /// **'IOC (Immediate or canceled)'**
+  String get timeInForceIoc;
 
   /// No description provided for @liveOrderConditional.
   ///
@@ -4830,13 +4782,13 @@ abstract class AppLocalizations {
   /// No description provided for @orderRecoveryStorage.
   ///
   /// In en, this message translates to:
-  /// **'Pending records could not be read or saved. New live orders and configuration changes are paused. Records are not cleared automatically; retry storage access.'**
+  /// **'Local order records could not be read or saved. Trading remains available.'**
   String get orderRecoveryStorage;
 
   /// No description provided for @orderRecoveryPending.
   ///
   /// In en, this message translates to:
-  /// **'This wallet has an order or strategy to check. Query its original reference first. New live orders and configuration changes are temporarily unavailable.'**
+  /// **'This wallet has order records with unconfirmed results. You can inspect their original references; trading remains available.'**
   String get orderRecoveryPending;
 
   /// No description provided for @orderRecoveryConnect.
@@ -6668,6 +6620,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'BBO'**
   String get liveOrderBbo;
+
+  /// No description provided for @liveOrderBboModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'BBO mode'**
+  String get liveOrderBboModeLabel;
+
+  /// No description provided for @liveOrderBboModeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'BBO Mode'**
+  String get liveOrderBboModeTitle;
+
+  /// No description provided for @liveOrderBboModeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Best-bid-offer places a limit order at the best bid or ask. Post-Only may fail if it immediately takes liquidity.'**
+  String get liveOrderBboModeHint;
+
+  /// No description provided for @liveOrderBboCounterparty.
+  ///
+  /// In en, this message translates to:
+  /// **'Counterparty {depth}'**
+  String liveOrderBboCounterparty(int depth);
+
+  /// No description provided for @liveOrderBboQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'Queue {depth}'**
+  String liveOrderBboQueue(int depth);
 
   /// No description provided for @liveOrderPegInvalid.
   ///
@@ -9945,6 +9927,66 @@ abstract class AppLocalizations {
   /// **'Do not show confirmation again for this order type'**
   String get orderConfirmDoNotShow;
 
+  /// No description provided for @orderConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Confirmation'**
+  String get orderConfirmTitle;
+
+  /// No description provided for @orderConfirmPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Order price'**
+  String get orderConfirmPrice;
+
+  /// No description provided for @orderConfirmQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Qty'**
+  String get orderConfirmQuantity;
+
+  /// No description provided for @orderConfirmMarketPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Market Price'**
+  String get orderConfirmMarketPrice;
+
+  /// No description provided for @orderConfirmTakeProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Profit'**
+  String get orderConfirmTakeProfit;
+
+  /// No description provided for @orderConfirmStopLoss.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Loss'**
+  String get orderConfirmStopLoss;
+
+  /// No description provided for @orderConfirmBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy/Long'**
+  String get orderConfirmBuy;
+
+  /// No description provided for @orderConfirmSell.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell/Short'**
+  String get orderConfirmSell;
+
+  /// No description provided for @orderConfirmSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Order submitted'**
+  String get orderConfirmSubmitted;
+
+  /// No description provided for @orderConfirmExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Order details are no longer current. Close this dialog and place the order again.'**
+  String get orderConfirmExpired;
+
   /// No description provided for @orderConfirmWalletHint.
   ///
   /// In en, this message translates to:
@@ -10118,6 +10160,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AI'**
   String get assistantNavigation;
+
+  /// No description provided for @orderTypeTrailing.
+  ///
+  /// In en, this message translates to:
+  /// **'Trailing Stop'**
+  String get orderTypeTrailing;
+
+  /// No description provided for @orderTypeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Type'**
+  String get orderTypeTitle;
+
+  /// No description provided for @orderTypePostOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Post Only'**
+  String get orderTypePostOnly;
+
+  /// No description provided for @orderTypeStopLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Limit'**
+  String get orderTypeStopLimit;
+
+  /// No description provided for @orderTypeStopMarket.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Market'**
+  String get orderTypeStopMarket;
+
+  /// No description provided for @orderTypeScaled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scaled Order'**
+  String get orderTypeScaled;
 
   /// No description provided for @orderModeLabel.
   ///
@@ -10334,6 +10412,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The request was cancelled.'**
   String get apiRequestCancelled;
+
+  /// No description provided for @apiInvalidResponseAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Aster returned invalid data from {endpoint}. Please retry.'**
+  String apiInvalidResponseAt(String endpoint);
 
   /// No description provided for @apiInvalidResponse.
   ///
@@ -11157,6 +11241,12 @@ abstract class AppLocalizations {
   /// **'Hide private key'**
   String get accountsHideKey;
 
+  /// No description provided for @accountsCopyKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy private key'**
+  String get accountsCopyKey;
+
   /// No description provided for @accountsKeyWarning.
   ///
   /// In en, this message translates to:
@@ -11316,8 +11406,14 @@ abstract class AppLocalizations {
   /// No description provided for @subaccountCreationFailed.
   ///
   /// In en, this message translates to:
-  /// **'The sub-account could not be created. Your generated wallet remains available for backup.'**
+  /// **'The sub-account could not be created. Please try again.'**
   String get subaccountCreationFailed;
+
+  /// No description provided for @subaccountCreationNotCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Aster did not create this sub-account. Please try again.'**
+  String get subaccountCreationNotCompleted;
 
   /// No description provided for @subaccountNativeTransactionUnavailable.
   ///
@@ -12105,6 +12201,90 @@ abstract class AppLocalizations {
   /// **'ROI (%)'**
   String get tradeExitRoi;
 
+  /// No description provided for @livePriceDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Market price connection is disconnected. Reconnecting automatically.'**
+  String get livePriceDisconnected;
+
+  /// No description provided for @livePriceConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to market prices.'**
+  String get livePriceConnecting;
+
+  /// No description provided for @livePriceMarkMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The mark price has not been received. Retrying automatically.'**
+  String get livePriceMarkMissing;
+
+  /// No description provided for @livePriceMarkInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The mark price response is invalid. Retrying automatically.'**
+  String get livePriceMarkInvalid;
+
+  /// No description provided for @livePriceMarkStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark price updates have stopped. Refreshing automatically.'**
+  String get livePriceMarkStale;
+
+  /// No description provided for @livePriceLastMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The latest trade price has not been received. Retrying automatically.'**
+  String get livePriceLastMissing;
+
+  /// No description provided for @livePriceLastInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The latest trade price response is invalid. Retrying automatically.'**
+  String get livePriceLastInvalid;
+
+  /// No description provided for @livePriceLastStale.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent trade price is available. Refreshing automatically.'**
+  String get livePriceLastStale;
+
+  /// No description provided for @livePriceBookMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The best bid and ask have not been received. Retrying automatically.'**
+  String get livePriceBookMissing;
+
+  /// No description provided for @livePriceBookInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The best bid and ask response is invalid. Retrying automatically.'**
+  String get livePriceBookInvalid;
+
+  /// No description provided for @livePriceBookStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Best bid and ask updates have stopped. Refreshing automatically.'**
+  String get livePriceBookStale;
+
+  /// No description provided for @livePriceClockUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The exchange time could not be verified. Retrying automatically.'**
+  String get livePriceClockUnavailable;
+
+  /// No description provided for @livePriceTimestampInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The quote timestamp is ahead of exchange time. Refreshing automatically.'**
+  String get livePriceTimestampInvalid;
+
+  /// No description provided for @liveOrderMinimumPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Min {amount}'**
+  String liveOrderMinimumPlaceholder(String amount);
+
   /// No description provided for @notificationFilterAll.
   ///
   /// In en, this message translates to:
@@ -12196,11 +12376,317 @@ abstract class AppLocalizations {
   /// **'{kind, select, deposit_processing{{amount} deposit to the {market} account is processing. Network: {network}.} deposit_success{{amount} deposited to the {market} account. Network: {network}.} deposit_failed{Your {amount} deposit failed. See details.} withdraw_processing{{amount} withdrawal is processing. Check progress in funding records.} withdraw_success{{amount} withdrawn from the {market} account. Network: {network}.} withdraw_failed{Your {amount} withdrawal failed. See details.} other{{amount} transfer updated.}}'**
   String notificationTransferSummary(String kind, String amount, String market, String network);
 
+  /// No description provided for @livePriceDepthUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected BBO depth has no supported price reference for capacity estimates.'**
+  String get livePriceDepthUnavailable;
+
+  /// No description provided for @livePricePrecisionMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The exchange did not provide price precision for this market order.'**
+  String get livePricePrecisionMissing;
+
+  /// No description provided for @livePriceExecutionInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The calculated reference execution price is not positive. Check this contract’s price precision.'**
+  String get livePriceExecutionInvalid;
+
   /// No description provided for @notificationTransferTitle.
   ///
   /// In en, this message translates to:
   /// **'{type, select, deposit{{status, select, processing{Deposit Processing} success{Deposit Successful} failed{Deposit Failed} other{Deposit Update}}} withdraw{{status, select, processing{Withdrawal Processing} success{Withdrawal Successful} failed{Withdrawal Failed} other{Withdrawal Update}}} other{Transfer Update}}'**
   String notificationTransferTitle(String type, String status);
+
+  /// No description provided for @modeAccountSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Settings'**
+  String get modeAccountSettings;
+
+  /// No description provided for @modeAssetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset Mode'**
+  String get modeAssetTitle;
+
+  /// No description provided for @modePositionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Position Mode'**
+  String get modePositionTitle;
+
+  /// No description provided for @modeSingleShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Single-Asset'**
+  String get modeSingleShort;
+
+  /// No description provided for @modeMultiShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-Asset'**
+  String get modeMultiShort;
+
+  /// No description provided for @modeSingleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Single-Asset Mode'**
+  String get modeSingleTitle;
+
+  /// No description provided for @modeMultiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-Asset Mode'**
+  String get modeMultiTitle;
+
+  /// No description provided for @modeSingleDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the pair’s settlement currency as margin.\nPnL offsets across Cross positions of the same currency.\nSupports Cross and Isolated margin.'**
+  String get modeSingleDescription;
+
+  /// No description provided for @modeMultiDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Contracts can be traded across margin assets. Profits and losses with different margin assets can offset one another. Supports Cross margin.'**
+  String get modeMultiDescription;
+
+  /// No description provided for @modeReadAboutPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Read about '**
+  String get modeReadAboutPrefix;
+
+  /// No description provided for @modeReadAboutSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **' to better manage risk.'**
+  String get modeReadAboutSuffix;
+
+  /// No description provided for @modeOneWayDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold a single net position per market. Orders in the opposite direction reduce or reverse the position.'**
+  String get modeOneWayDescription;
+
+  /// No description provided for @modeHedgeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold long and short positions separately in the same market.'**
+  String get modeHedgeDescription;
+
+  /// No description provided for @modePositionBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Close all open positions and cancel all open orders before switching position mode.'**
+  String get modePositionBlocked;
+
+  /// No description provided for @modeActivateMulti.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate Multi-Asset Mode'**
+  String get modeActivateMulti;
+
+  /// No description provided for @modeMultiRequirements.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-Asset Mode requires all positions to use Cross Margin. Close any open Isolated positions and cancel their open orders before switching.'**
+  String get modeMultiRequirements;
+
+  /// No description provided for @modeAffectedMarkets.
+  ///
+  /// In en, this message translates to:
+  /// **'AFFECTED MARKETS'**
+  String get modeAffectedMarkets;
+
+  /// No description provided for @modeManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get modeManage;
+
+  /// No description provided for @modeSwitchCross.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Cross'**
+  String get modeSwitchCross;
+
+  /// No description provided for @modeRequirementsMet.
+  ///
+  /// In en, this message translates to:
+  /// **'Requirements met'**
+  String get modeRequirementsMet;
+
+  /// No description provided for @modeOpenPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Open position'**
+  String get modeOpenPosition;
+
+  /// No description provided for @modeOpenOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Open orders'**
+  String get modeOpenOrders;
+
+  /// No description provided for @modeIsolatedCollateral.
+  ///
+  /// In en, this message translates to:
+  /// **'Isolated collateral remaining'**
+  String get modeIsolatedCollateral;
+
+  /// No description provided for @modeNoPositionsOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'No open positions or orders'**
+  String get modeNoPositionsOrders;
+
+  /// No description provided for @modeNegativeUsdt.
+  ///
+  /// In en, this message translates to:
+  /// **'Your available USDT assets are negative. Please rebalance your assets before switching asset mode.'**
+  String get modeNegativeUsdt;
+
+  /// No description provided for @modeRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh settings'**
+  String get modeRefresh;
+
+  /// No description provided for @modeConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get modeConfirm;
+
+  /// No description provided for @openOrdersCancelAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel all'**
+  String get openOrdersCancelAll;
+
+  /// No description provided for @openOrdersAmountUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Filled / Total amount ({unit})'**
+  String openOrdersAmountUnit(String unit);
+
+  /// No description provided for @openOrdersTriggerCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'{basis} {operator} {price}'**
+  String openOrdersTriggerCondition(String basis, String operator, String price);
+
+  /// No description provided for @openOrdersYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get openOrdersYes;
+
+  /// No description provided for @openOrdersNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get openOrdersNo;
+
+  /// No description provided for @openOrdersConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get openOrdersConfirm;
+
+  /// No description provided for @openOrdersDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order details'**
+  String get openOrdersDetailsTitle;
+
+  /// No description provided for @openOrdersViewChart.
+  ///
+  /// In en, this message translates to:
+  /// **'View {symbol} chart'**
+  String openOrdersViewChart(String symbol);
+
+  /// No description provided for @openOrdersCancelAllQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel all perpetual orders?'**
+  String get openOrdersCancelAllQuestion;
+
+  /// No description provided for @openOrdersCancelSymbolQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel all {symbol} orders?'**
+  String openOrdersCancelSymbolQuestion(String symbol);
+
+  /// No description provided for @openOrdersSide.
+  ///
+  /// In en, this message translates to:
+  /// **'Side'**
+  String get openOrdersSide;
+
+  /// No description provided for @openOrdersTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get openOrdersTab;
+
+  /// No description provided for @openOrdersViewExplorer.
+  ///
+  /// In en, this message translates to:
+  /// **'View Explorer'**
+  String get openOrdersViewExplorer;
+
+  /// No description provided for @orderResponseIdentityMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Aster returned an order reference, symbol or side that does not match this order.'**
+  String get orderResponseIdentityMismatch;
+
+  /// No description provided for @orderResponseLinkageMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Aster returned TP/SL links that do not match this order.'**
+  String get orderResponseLinkageMismatch;
+
+  /// No description provided for @orderResponseTermsMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Aster returned a price, quantity or execution setting that does not match this order.'**
+  String get orderResponseTermsMismatch;
+
+  /// No description provided for @orderResponseStatusInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Aster returned a missing or unrecognized order status.'**
+  String get orderResponseStatusInvalid;
+
+  /// No description provided for @orderResponseMalformed.
+  ///
+  /// In en, this message translates to:
+  /// **'Aster returned incomplete or invalid order fields; the order could not be verified.'**
+  String get orderResponseMalformed;
+
+  /// No description provided for @orderAcknowledgementInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Aster did not return a valid strategy submission result.'**
+  String get orderAcknowledgementInvalid;
+
+  /// No description provided for @openOrdersTpSl.
+  ///
+  /// In en, this message translates to:
+  /// **'TP/SL'**
+  String get openOrdersTpSl;
+
+  /// No description provided for @openOrdersLinkedOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked order:'**
+  String get openOrdersLinkedOrder;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

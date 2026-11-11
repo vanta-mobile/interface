@@ -3,6 +3,11 @@ import 'package:vanta/features/portfolio/data/futures_asset_mode_mapper.dart';
 import 'package:vanta/features/portfolio/domain/futures_asset_mode.dart';
 
 import '../../support/futures_asset_mode.dart';
+import '../../support/aster_account.dart';
+import '../../support/aster_open_orders.dart';
+
+import 'package:vanta/features/portfolio/data/aster_open_orders_mapper.dart';
+import 'package:vanta/features/portfolio/domain/position_margin_mode.dart';
 
 void main() {
   test('boolean read maps to single/multi with explicit string mutation parameters', () {
@@ -104,6 +109,49 @@ void main() {
       ],
     ]) {
       expect(() => mapAssetModeIsolatedSymbols(payload), throwsFormatException);
+    }
+  });
+
+  test('empty isolated configuration still needs explicit Cross conversion', () {
+    final markets = mapAssetModeMarkets(assetModeRows(margin: 'isolated'));
+    expect(markets.single.requiresCross, true);
+    expect(markets.single.blocked, false);
+    final context = FuturesAssetModeContext(
+      address: accountAddress,
+      current: FuturesAssetMode.single,
+      isolatedSymbols: const [],
+      markets: markets,
+      receivedAt: assetModeClock,
+    );
+    expect(context.blocks(FuturesAssetMode.multi), true);
+    expect(() => markets.clear(), throwsUnsupportedError);
+    expect(() => context.markets.clear(), throwsUnsupportedError);
+  });
+  test('orders-only isolated market is blocked, Cross exposure remains eligible', () {
+    final orders = mapAsterOpenOrders(
+      [openOrder()],
+      address: accountAddress,
+      receivedAt: assetModeClock,
+    );
+    final isolated = mapAssetModeMarkets(assetModeRows(margin: 'isolated'), orders: orders).single;
+    expect(isolated.hasPosition, false);
+    expect(isolated.openOrderCount, 1);
+    expect(isolated.blocked, true);
+    final cross = mapAssetModeMarkets(
+      assetModeRows(quantity: '0.000000000000000001'),
+      orders: orders,
+    ).single;
+    expect(cross.marginMode, PositionMarginMode.cross);
+    expect(cross.requiresCross, false);
+  });
+  test('unknown order market and conflicting order side cannot certify readiness', () {
+    for (final order in [openOrder(symbol: 'ETHUSDT'), openOrder(positionSide: 'LONG')]) {
+      final orders = mapAsterOpenOrders(
+        [order],
+        address: accountAddress,
+        receivedAt: assetModeClock,
+      );
+      expect(() => mapAssetModeMarkets(assetModeRows(), orders: orders), throwsFormatException);
     }
   });
   test('domain context copies blocker list and restricts only multi-assets target', () {

@@ -45,11 +45,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Wallet connection failed. Check your wallet app and network, then retry.';
 
   @override
+  String walletResponseReason(String reason) {
+    return 'Wallet response: $reason';
+  }
+
+  @override
   String get authWalletBusy => 'Another wallet request is pending. Finish it before continuing.';
 
   @override
   String get authWalletSigningNetwork =>
-      'Approve BNB Chain (56) in your wallet and reconnect before enabling trading.';
+      'Enable and select BNB Chain (chain ID 56) in your wallet, allow this app to connect to it, then reconnect before enabling trading.';
 
   @override
   String get authWalletConnectionTimeout =>
@@ -893,45 +898,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountIsolatedMode => 'Isolated';
 
   @override
-  String get marketCategoryTop => 'Top';
-
-  @override
-  String get marketCategoryRwa => 'USD1-RWA';
-
-  @override
-  String get marketCategoryMeme => 'Meme';
-
-  @override
-  String get marketCategoryAi => 'AI';
-
-  @override
-  String get marketCategoryPreLaunch => 'Pre-launch';
-
-  @override
-  String get marketCategoryStocks => 'Stocks';
-
-  @override
-  String get marketCategoryEtf => 'ETF';
-
-  @override
-  String get marketCategoryCommodities => 'Commodities';
-
-  @override
-  String get marketCategorySemiconductors => 'Semiconductors';
-
-  @override
-  String get marketNoCategoryResults => 'No contracts in this category match your filters.';
-
-  @override
   String marketResultsCount(int shown, int total) {
     return '$shown of $total perpetuals';
   }
-
-  @override
-  String get marketCategories => 'Market categories';
-
-  @override
-  String get marketCategoryAll => 'All categories';
 
   @override
   String get accountPerpetualTab => 'Perpetual';
@@ -1937,11 +1906,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Multi-assets mode shares eligible collateral across cross-margin positions. Isolated positions or retained isolated collateral must be handled first. Supported assets, valuations, balance requirements and final eligibility are determined by Aster.';
 
   @override
-  String get assetModeReadSettings => 'Read asset mode and positions (2 signatures)';
+  String get assetModeReadSettings => 'Read asset mode, positions and orders';
 
   @override
   String get assetModeReadHint =>
-      'Sign separately to read asset mode and all futures position configurations. Reading submits no changes. The 30-second validity starts at the first response and includes the second signature.';
+      'Read asset mode, all position configurations and all open orders. Reading submits no changes. The 30-second validity starts at the first response.';
 
   @override
   String get assetModeCurrentSetting => 'Asset mode at last read';
@@ -2072,7 +2041,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveOrderOutcomeUnknown =>
-      'The request may have reached Aster. Query this client reference to verify. Another order is blocked; querying never places it again.';
+      'Order submission was attempted, but the result is not yet confirmed. Check the original order before placing it again to avoid duplicates. Checking never resubmits the order.';
 
   @override
   String get liveOrderRecheck => 'Sign to query this order';
@@ -2086,6 +2055,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveOrderPolicy => 'Limit execution policy';
+
+  @override
+  String get timeInForceTitle => 'Time In Force';
+
+  @override
+  String get timeInForceGtc => 'GTC (Good till canceled)';
+
+  @override
+  String get timeInForceIoc => 'IOC (Immediate or canceled)';
 
   @override
   String get liveOrderConditional => 'Conditional order';
@@ -2654,11 +2632,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get orderRecoveryStorage =>
-      'Pending records could not be read or saved. New live orders and configuration changes are paused. Records are not cleared automatically; retry storage access.';
+      'Local order records could not be read or saved. Trading remains available.';
 
   @override
   String get orderRecoveryPending =>
-      'This wallet has an order or strategy to check. Query its original reference first. New live orders and configuration changes are temporarily unavailable.';
+      'This wallet has order records with unconfirmed results. You can inspect their original references; trading remains available.';
 
   @override
   String get orderRecoveryConnect => 'Sign in or reconnect the original wallet';
@@ -3790,6 +3768,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveOrderBbo => 'BBO';
+
+  @override
+  String get liveOrderBboModeLabel => 'BBO mode';
+
+  @override
+  String get liveOrderBboModeTitle => 'BBO Mode';
+
+  @override
+  String get liveOrderBboModeHint =>
+      'Best-bid-offer places a limit order at the best bid or ask. Post-Only may fail if it immediately takes liquidity.';
+
+  @override
+  String liveOrderBboCounterparty(int depth) {
+    return 'Counterparty $depth';
+  }
+
+  @override
+  String liveOrderBboQueue(int depth) {
+    return 'Queue $depth';
+  }
 
   @override
   String get liveOrderPegInvalid =>
@@ -5694,6 +5692,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orderConfirmDoNotShow => 'Do not show confirmation again for this order type';
 
   @override
+  String get orderConfirmTitle => 'Order Confirmation';
+
+  @override
+  String get orderConfirmPrice => 'Order price';
+
+  @override
+  String get orderConfirmQuantity => 'Order Qty';
+
+  @override
+  String get orderConfirmMarketPrice => 'Market Price';
+
+  @override
+  String get orderConfirmTakeProfit => 'Take Profit';
+
+  @override
+  String get orderConfirmStopLoss => 'Stop Loss';
+
+  @override
+  String get orderConfirmBuy => 'Buy/Long';
+
+  @override
+  String get orderConfirmSell => 'Sell/Short';
+
+  @override
+  String get orderConfirmSubmitted => 'Order submitted';
+
+  @override
+  String get orderConfirmExpired =>
+      'Order details are no longer current. Close this dialog and place the order again.';
+
+  @override
   String get orderConfirmWalletHint =>
       'This setting controls the app review. Wallet signatures and checks before submission still apply.';
 
@@ -5788,6 +5817,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assistantNavigation => 'AI';
+
+  @override
+  String get orderTypeTrailing => 'Trailing Stop';
+
+  @override
+  String get orderTypeTitle => 'Order Type';
+
+  @override
+  String get orderTypePostOnly => 'Post Only';
+
+  @override
+  String get orderTypeStopLimit => 'Stop Limit';
+
+  @override
+  String get orderTypeStopMarket => 'Stop Market';
+
+  @override
+  String get orderTypeScaled => 'Scaled Order';
 
   @override
   String get orderModeLabel => 'Order type';
@@ -5915,6 +5962,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get apiRequestCancelled => 'The request was cancelled.';
+
+  @override
+  String apiInvalidResponseAt(String endpoint) {
+    return 'Aster returned invalid data from $endpoint. Please retry.';
+  }
 
   @override
   String get apiInvalidResponse => 'The server returned an invalid response.';
@@ -6367,6 +6419,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountsHideKey => 'Hide private key';
 
   @override
+  String get accountsCopyKey => 'Copy private key';
+
+  @override
   String get accountsKeyWarning =>
       'Anyone with this key can control the account. Keep it private and store it safely.';
 
@@ -6452,8 +6507,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'The private key is unavailable on this device. Import your backup into an external wallet to use this account.';
 
   @override
-  String get subaccountCreationFailed =>
-      'The sub-account could not be created. Your generated wallet remains available for backup.';
+  String get subaccountCreationFailed => 'The sub-account could not be created. Please try again.';
+
+  @override
+  String get subaccountCreationNotCompleted =>
+      'Aster did not create this sub-account. Please try again.';
 
   @override
   String get subaccountNativeTransactionUnavailable =>
@@ -6910,6 +6968,59 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradeExitRoi => 'ROI (%)';
 
   @override
+  String get livePriceDisconnected =>
+      'Market price connection is disconnected. Reconnecting automatically.';
+
+  @override
+  String get livePriceConnecting => 'Connecting to market prices.';
+
+  @override
+  String get livePriceMarkMissing =>
+      'The mark price has not been received. Retrying automatically.';
+
+  @override
+  String get livePriceMarkInvalid => 'The mark price response is invalid. Retrying automatically.';
+
+  @override
+  String get livePriceMarkStale => 'Mark price updates have stopped. Refreshing automatically.';
+
+  @override
+  String get livePriceLastMissing =>
+      'The latest trade price has not been received. Retrying automatically.';
+
+  @override
+  String get livePriceLastInvalid =>
+      'The latest trade price response is invalid. Retrying automatically.';
+
+  @override
+  String get livePriceLastStale => 'No recent trade price is available. Refreshing automatically.';
+
+  @override
+  String get livePriceBookMissing =>
+      'The best bid and ask have not been received. Retrying automatically.';
+
+  @override
+  String get livePriceBookInvalid =>
+      'The best bid and ask response is invalid. Retrying automatically.';
+
+  @override
+  String get livePriceBookStale =>
+      'Best bid and ask updates have stopped. Refreshing automatically.';
+
+  @override
+  String get livePriceClockUnavailable =>
+      'The exchange time could not be verified. Retrying automatically.';
+
+  @override
+  String get livePriceTimestampInvalid =>
+      'The quote timestamp is ahead of exchange time. Refreshing automatically.';
+
+  @override
+  String liveOrderMinimumPlaceholder(String amount) {
+    return 'Min $amount';
+  }
+
+  @override
   String get notificationFilterAll => 'All';
 
   @override
@@ -6997,6 +7108,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get livePriceDepthUnavailable =>
+      'The selected BBO depth has no supported price reference for capacity estimates.';
+
+  @override
+  String get livePricePrecisionMissing =>
+      'The exchange did not provide price precision for this market order.';
+
+  @override
+  String get livePriceExecutionInvalid =>
+      'The calculated reference execution price is not positive. Check this contract’s price precision.';
+
+  @override
   String notificationTransferTitle(String type, String status) {
     String _temp0 = intl.Intl.selectLogic(status, {
       'processing': 'Deposit Processing',
@@ -7017,4 +7140,167 @@ class AppLocalizationsEn extends AppLocalizations {
     });
     return '$_temp2';
   }
+
+  @override
+  String get modeAccountSettings => 'Account Settings';
+
+  @override
+  String get modeAssetTitle => 'Asset Mode';
+
+  @override
+  String get modePositionTitle => 'Position Mode';
+
+  @override
+  String get modeSingleShort => 'Single-Asset';
+
+  @override
+  String get modeMultiShort => 'Multi-Asset';
+
+  @override
+  String get modeSingleTitle => 'Single-Asset Mode';
+
+  @override
+  String get modeMultiTitle => 'Multi-Asset Mode';
+
+  @override
+  String get modeSingleDescription =>
+      'Use the pair’s settlement currency as margin.\nPnL offsets across Cross positions of the same currency.\nSupports Cross and Isolated margin.';
+
+  @override
+  String get modeMultiDescription =>
+      'Contracts can be traded across margin assets. Profits and losses with different margin assets can offset one another. Supports Cross margin.';
+
+  @override
+  String get modeReadAboutPrefix => 'Read about ';
+
+  @override
+  String get modeReadAboutSuffix => ' to better manage risk.';
+
+  @override
+  String get modeOneWayDescription =>
+      'Hold a single net position per market. Orders in the opposite direction reduce or reverse the position.';
+
+  @override
+  String get modeHedgeDescription => 'Hold long and short positions separately in the same market.';
+
+  @override
+  String get modePositionBlocked =>
+      'Close all open positions and cancel all open orders before switching position mode.';
+
+  @override
+  String get modeActivateMulti => 'Activate Multi-Asset Mode';
+
+  @override
+  String get modeMultiRequirements =>
+      'Multi-Asset Mode requires all positions to use Cross Margin. Close any open Isolated positions and cancel their open orders before switching.';
+
+  @override
+  String get modeAffectedMarkets => 'AFFECTED MARKETS';
+
+  @override
+  String get modeManage => 'Manage';
+
+  @override
+  String get modeSwitchCross => 'Switch to Cross';
+
+  @override
+  String get modeRequirementsMet => 'Requirements met';
+
+  @override
+  String get modeOpenPosition => 'Open position';
+
+  @override
+  String get modeOpenOrders => 'Open orders';
+
+  @override
+  String get modeIsolatedCollateral => 'Isolated collateral remaining';
+
+  @override
+  String get modeNoPositionsOrders => 'No open positions or orders';
+
+  @override
+  String get modeNegativeUsdt =>
+      'Your available USDT assets are negative. Please rebalance your assets before switching asset mode.';
+
+  @override
+  String get modeRefresh => 'Refresh settings';
+
+  @override
+  String get modeConfirm => 'Confirm';
+
+  @override
+  String get openOrdersCancelAll => 'Cancel all';
+
+  @override
+  String openOrdersAmountUnit(String unit) {
+    return 'Filled / Total amount ($unit)';
+  }
+
+  @override
+  String openOrdersTriggerCondition(String basis, String operator, String price) {
+    return '$basis $operator $price';
+  }
+
+  @override
+  String get openOrdersYes => 'Yes';
+
+  @override
+  String get openOrdersNo => 'No';
+
+  @override
+  String get openOrdersConfirm => 'Confirm';
+
+  @override
+  String get openOrdersDetailsTitle => 'Order details';
+
+  @override
+  String openOrdersViewChart(String symbol) {
+    return 'View $symbol chart';
+  }
+
+  @override
+  String get openOrdersCancelAllQuestion => 'Are you sure you want to cancel all perpetual orders?';
+
+  @override
+  String openOrdersCancelSymbolQuestion(String symbol) {
+    return 'Are you sure you want to cancel all $symbol orders?';
+  }
+
+  @override
+  String get openOrdersSide => 'Side';
+
+  @override
+  String get openOrdersTab => 'Open';
+
+  @override
+  String get openOrdersViewExplorer => 'View Explorer';
+
+  @override
+  String get orderResponseIdentityMismatch =>
+      'Aster returned an order reference, symbol or side that does not match this order.';
+
+  @override
+  String get orderResponseLinkageMismatch =>
+      'Aster returned TP/SL links that do not match this order.';
+
+  @override
+  String get orderResponseTermsMismatch =>
+      'Aster returned a price, quantity or execution setting that does not match this order.';
+
+  @override
+  String get orderResponseStatusInvalid => 'Aster returned a missing or unrecognized order status.';
+
+  @override
+  String get orderResponseMalformed =>
+      'Aster returned incomplete or invalid order fields; the order could not be verified.';
+
+  @override
+  String get orderAcknowledgementInvalid =>
+      'Aster did not return a valid strategy submission result.';
+
+  @override
+  String get openOrdersTpSl => 'TP/SL';
+
+  @override
+  String get openOrdersLinkedOrder => 'Linked order:';
 }

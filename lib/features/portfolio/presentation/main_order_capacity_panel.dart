@@ -14,6 +14,8 @@ import '../application/main_order_allocation_provider.dart';
 import '../application/main_order_capacity_provider.dart';
 import '../application/main_order_refresh_provider.dart';
 import '../application/main_order_capacity_preview_provider.dart';
+import '../application/main_order_pricing_provider.dart';
+import '../domain/main_order_pricing.dart';
 import '../application/symbol_settings_activity.dart';
 import '../domain/live_order.dart';
 import '../domain/live_order_size.dart';
@@ -21,12 +23,13 @@ import '../domain/main_order_capacity_preview.dart';
 import 'main_order_direction_card.dart';
 import '../domain/main_order_capacity.dart';
 import '../domain/main_order_allocation.dart';
+import '../domain/account_snapshot.dart';
 
 part 'main_order_capacity_full.dart';
 
 /// Explicit read only. Rebuilding, editing inputs or switching order types
 /// never starts a request or wallet prompt, and failure never edits the draft.
-class MainOrderCapacityPanel extends ConsumerWidget {
+class MainOrderCapacityPanel extends ConsumerStatefulWidget {
   const MainOrderCapacityPanel({
     super.key,
     required this.data,
@@ -39,6 +42,7 @@ class MainOrderCapacityPanel extends ConsumerWidget {
     this.compact = false,
     this.reviewWithoutPreview = false,
     this.onRefresh,
+    this.refreshingReviewDirection,
   });
   final LiveOrderContext data;
   final LiveOrderDraft draft;
@@ -59,74 +63,47 @@ class MainOrderCapacityPanel extends ConsumerWidget {
   /// Compact only: re-reads expired order data before a direction is
   /// reviewed. Returns whether the refresh completed.
   final Future<bool> Function(bool buy)? onRefresh;
+  final bool? refreshingReviewDirection;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(mainOrderCapacityProvider);
-    final allocation = ref.watch(mainOrderAllocationProvider);
-    final live = ref.watch(liveOrderProvider);
-    final operation = ref.watch(symbolSettingsActivityProvider);
-    final auth = ref.watch(authProvider);
-    final selectedSymbol = ref.watch(symbolProvider);
-    final controller = ref.read(mainOrderCapacityProvider.notifier);
-    final preview = ref.watch(
-      mainOrderCapacityPreviewProvider((
-        context: data,
-        draft: draft,
-        unit: unit,
-        input: input,
-        percent: percent,
-      )),
-    );
-    final refreshing = ref.watch(mainOrderRefreshProvider).loading;
-    final ready =
-        !refreshing &&
-        !auth.busy &&
-        auth.identity?.signingAvailable == true &&
-        auth.identity?.walletAddress?.toLowerCase() == data.address.toLowerCase() &&
-        selectedSymbol == data.symbol &&
-        !state.loading &&
-        !allocation.preparing &&
-        !live.busy &&
-        !live.needsRecheck &&
-        live.context == data &&
-        !operation.busy &&
-        operation.owner == null &&
-        !operation.recoveryBlocked &&
-        !operation.unresolved;
-    final enabled = ready && !live.stale;
-    final facts = (
-      state: state,
-      allocation: allocation,
-      live: live,
-      controller: controller,
-      preview: preview,
-      refreshing: refreshing,
-      ready: ready,
-      enabled: enabled,
-    );
-    return compact ? _compactPanel(context, facts) : _fullPanel(context, ref, facts);
-  }
+  ConsumerState<MainOrderCapacityPanel> createState() => _MainOrderCapacityPanelState();
 
-  Widget _compactPanel(BuildContext context, _PanelFacts facts) {
-    final (:state, :allocation, :live, :controller, :preview, :refreshing, :ready, :enabled) =
-        facts;
+  Widget _compactPanel(BuildContext context, _PanelFacts facts, {required bool canRequestReview}) {
+    final (
+      :state,
+      :allocation,
+      :live,
+      :controller,
+      :preview,
+      :refreshing,
+      ready: _,
+      :enabled,
+      resultsPending: _,
+      retainedMaximum: _,
+      :readFailure,
+    ) = facts;
     final expired =
-        live.stale || state.stale || state.snapshot == null || controller.current == null;
+        refreshing ||
+        live.stale ||
+        state.stale ||
+        state.snapshot == null ||
+        controller.current == null;
+    final hasSize = percent != null
+        ? percent! > 0
+        : (parseOrderDecimal(input.trim()) ?? Decimal.zero) > Decimal.zero;
     bool reviewable(MainOrderSidePreview? side) =>
         reviewWithoutPreview ||
         (side?.failure == null || side?.failure?.key == 'liveCapacityAboveMaximum') &&
             (side?.quantity ?? Decimal.zero) > Decimal.zero;
     VoidCallback? action(bool buy) {
-      if (!ready) return null;
-      // Expired data can always be re-read; review follows only when the
-      // form had a reviewable size before the refresh.
+      if (!canRequestReview || !hasSize || onReview == null) return null;
+      // A direction click refreshes pending/stale facts before review.
       if (expired && onRefresh != null) {
         return () async {
           if (await onRefresh!(buy)) onReview?.call(buy);
         };
       }
-      return enabled && onReview != null && reviewable(buy ? preview?.buy : preview?.sell)
+      return enabled && reviewable(buy ? preview?.buy : preview?.sell)
           ? () => onReview!(buy)
           : null;
     }
@@ -135,7 +112,13 @@ class MainOrderCapacityPanel extends ConsumerWidget {
       key: const Key('main-order-capacity'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (state.failure case final failure?)
+        if (readFailure case final failure?
+            when !refreshing &&
+                (hasSize ||
+                    !const {
+                      'liveCapacityPriceUnavailable',
+                      'liveCapacityRatesUnavailable',
+                    }.contains(failure.key)))
           Text(
             accountErrorText(context, failure),
             style: const TextStyle(color: AppColors.negative),
@@ -148,16 +131,129 @@ class MainOrderCapacityPanel extends ConsumerWidget {
               data: data,
               unit: unit,
               buy: buy,
-              showFailure: input.trim().isNotEmpty || (percent ?? 0) > 0,
+              hasSize: hasSize,
+              showFailure: !refreshing && readFailure == null && hasSize,
               showLiquidation: draft.trigger == null && draft.trailing == null,
+              resultsPending: facts.resultsPending,
+              retainedCapacity: buy
+                  ? facts.retainedMaximum?.buy.capacity
+                  : facts.retainedMaximum?.sell.capacity,
               pending:
-                  (allocation.preparing || live.busy || refreshing || state.loading) &&
-                  draft.buy == buy,
+                  refreshingReviewDirection == buy ||
+                  (allocation.preparing || live.busy && live.intent != null) && draft.buy == buy,
               onReview: action(buy),
             ),
           ),
       ],
     );
+  }
+}
+
+/// Retained estimates are presentation only. All review actions still depend
+/// on fresh controller state; changed form terms discard the old estimate.
+class _MainOrderCapacityPanelState extends ConsumerState<MainOrderCapacityPanel> {
+  Object? _previewTerms, _maximumTerms;
+  MainOrderCapacityPreview? _lastPreview;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(mainOrderCapacityProvider);
+    final allocation = ref.watch(mainOrderAllocationProvider);
+    final live = ref.watch(liveOrderProvider);
+    final operation = ref.watch(symbolSettingsActivityProvider);
+    final auth = ref.watch(authProvider);
+    final selectedSymbol = ref.watch(symbolProvider);
+    final controller = ref.read(mainOrderCapacityProvider.notifier);
+    final currentPreview = ref.watch(
+      mainOrderCapacityPreviewProvider((
+        context: widget.data,
+        draft: widget.draft,
+        unit: widget.unit,
+        input: widget.input,
+        percent: widget.percent,
+      )),
+    );
+    final source = ref.watch(mainOrderPricingProvider);
+    final refreshing =
+        ref.watch(mainOrderRefreshProvider).loading ||
+        source is MainOrderMarketData && source.pending;
+    final maximumTerms = (
+      widget.data.address.toLowerCase(),
+      widget.data.symbol,
+      widget.data.leverage,
+      widget.data.mode,
+      widget.data.marginMode,
+      liveOrderDraftKey(widget.draft.withQuantity('').withDirection(true)),
+      widget.unit,
+    );
+    final terms = (maximumTerms, widget.input, widget.percent);
+    final refresh = ref.watch(mainOrderRefreshProvider);
+    final readFailure = refresh.failure ?? live.failure ?? state.failure;
+    final retaining =
+        refreshing ||
+        allocation.preparing ||
+        refresh.background && readFailure != null ||
+        live.stale && (readFailure == null || refresh.background);
+    final preview = retaining && _previewTerms == terms ? _lastPreview : currentPreview;
+    final retainedMaximum = retaining && _maximumTerms == maximumTerms ? _lastPreview : null;
+    if (!retaining &&
+        currentPreview != null &&
+        (currentPreview.buy.capacity != null || currentPreview.sell.capacity != null)) {
+      _maximumTerms = maximumTerms;
+      _previewTerms = terms;
+      _lastPreview = currentPreview;
+    }
+    final resultsPending =
+        retaining && (refreshing || readFailure == null) && _previewTerms != terms;
+    final ready =
+        !refreshing &&
+        !auth.busy &&
+        auth.identity?.signingAvailable == true &&
+        auth.identity?.walletAddress?.toLowerCase() == widget.data.address.toLowerCase() &&
+        selectedSymbol == widget.data.symbol &&
+        !state.loading &&
+        !allocation.preparing &&
+        !live.busy &&
+        live.context == widget.data &&
+        !operation.busy &&
+        operation.owner == null &&
+        !operation.recoveryBlocked &&
+        !operation.unresolved;
+    final enabled = ready && !live.stale;
+    final backgroundRead = refresh.loading && refresh.background && live.intent == null;
+    // A click can take over a silent read and request fresh facts. It is not
+    // evidence that cached estimates are safe to submit.
+    final canRequestReview =
+        widget.refreshingReviewDirection == null &&
+        !auth.busy &&
+        auth.identity?.signingAvailable == true &&
+        auth.identity?.walletAddress?.toLowerCase() == widget.data.address.toLowerCase() &&
+        selectedSymbol == widget.data.symbol &&
+        (!refresh.loading || backgroundRead) &&
+        (!state.loading || backgroundRead) &&
+        (!live.busy || backgroundRead) &&
+        !allocation.preparing &&
+        live.context == widget.data &&
+        (!operation.busy && operation.owner == null ||
+            backgroundRead && operation.owner == SymbolSetting.order) &&
+        !operation.recoveryBlocked &&
+        !operation.unresolved;
+    final facts = (
+      state: state,
+      allocation: allocation,
+      live: live,
+      controller: controller,
+      preview: preview,
+      resultsPending: resultsPending,
+      retainedMaximum: retainedMaximum,
+      refreshing: refreshing,
+      ready: ready,
+      enabled: enabled,
+      readFailure: readFailure,
+    );
+    return widget.compact
+        ? widget._compactPanel(context, facts, canRequestReview: canRequestReview)
+        : widget._fullPanel(context, ref, facts);
   }
 }
 
@@ -167,7 +263,10 @@ typedef _PanelFacts = ({
   LiveOrderState live,
   MainOrderCapacityController controller,
   MainOrderCapacityPreview? preview,
+  bool resultsPending,
+  MainOrderCapacityPreview? retainedMaximum,
   bool refreshing,
   bool ready,
   bool enabled,
+  AccountReadFailure? readFailure,
 });

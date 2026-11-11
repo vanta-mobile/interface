@@ -12,7 +12,8 @@ import 'rebalance_entry.dart';
 import '../application/rebalance_storage_provider.dart';
 
 class OrderRecoveryNotice extends ConsumerWidget {
-  const OrderRecoveryNotice({super.key});
+  const OrderRecoveryNotice({super.key, this.showOrders = true});
+  final bool showOrders;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final storage = ref.watch(orderRecoverySnapshotProvider);
@@ -21,7 +22,8 @@ class OrderRecoveryNotice extends ConsumerWidget {
     final rebalancePending = ref.watch(pendingRebalancesProvider);
     final transferStorage = ref.watch(internalTransferStorageProvider),
         transferPending = ref.watch(pendingInternalTransfersProvider);
-    final ordersNeedRecovery = !storage.ready || storage.failure != null || pending.isNotEmpty;
+    final ordersNeedRecovery =
+        showOrders && (!storage.ready || storage.failure != null || pending.isNotEmpty);
     if (!ordersNeedRecovery &&
         rebalanceStorage.ready &&
         !rebalanceStorage.failure &&

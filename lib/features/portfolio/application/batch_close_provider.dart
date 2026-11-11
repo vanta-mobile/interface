@@ -55,7 +55,6 @@ class BatchCloseController extends Notifier<BatchCloseState> {
     final auth = ref.read(authProvider), risk = ref.read(positionRiskProvider);
     final snapshot = risk.account;
     if (state.busy ||
-        state.needsRecheck ||
         auth.busy ||
         risk.busy ||
         risk.stale ||
@@ -112,8 +111,7 @@ class BatchCloseController extends Notifier<BatchCloseState> {
     }
     if (!checkingOnly) {
       final risk = ref.read(positionRiskProvider);
-      if (state.needsRecheck ||
-          intent.revision != _revision ||
+      if (intent.revision != _revision ||
           risk.busy ||
           risk.stale ||
           risk.failure != null ||

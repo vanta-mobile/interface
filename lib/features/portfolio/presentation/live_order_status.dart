@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../application/live_order_provider.dart';
+import '../application/main_order_refresh_provider.dart';
 import '../../auth/application/auth_provider.dart';
 import '../domain/live_order.dart';
 import 'live_close_result.dart';
@@ -26,7 +27,10 @@ class LiveOrderStatus extends ConsumerWidget {
     final result = state.result, failure = state.failure ?? result?.failure;
     // Reading account facts is represented by the owning section. Financial
     // submissions and unknown outcomes keep their existing recovery controls.
-    if (compact && state.intent == null && result == null && !state.needsRecheck) {
+    if ((compact || ref.watch(mainOrderRefreshProvider).background) &&
+        state.intent == null &&
+        result == null &&
+        !state.needsRecheck) {
       return const SizedBox.shrink();
     }
     return Column(
@@ -82,7 +86,7 @@ class LiveOrderStatus extends ConsumerWidget {
         ],
         const AttachedOrderStatus(),
         if (state.needsRecheck) ...[
-          Text(l10n.liveOrderOutcomeUnknown),
+          if (failure == null) Text(l10n.liveOrderOutcomeUnknown),
           OutlinedButton(
             key: const Key('live-order-recheck'),
             onPressed: state.busy || auth.busy ? null : controller.recheck,

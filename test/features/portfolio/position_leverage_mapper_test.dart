@@ -41,6 +41,18 @@ void main() {
     rows.last['notionalCap'] = 100000.1;
     expect(() => mapLeverageBrackets(data, 'BTCUSDT'), throwsFormatException);
   });
+  test('risk bracket integer strings are exact, bounded and canonical', () {
+    final data = leverageBrackets();
+    for (final row in data['brackets'] as List) {
+      row['bracket'] = '${row['bracket']}';
+      row['initialLeverage'] = '${row['initialLeverage']}';
+    }
+    expect(mapLeverageBrackets(data, 'BTCUSDT').first.maximum, 100);
+    for (final bad in ['1.5', '1e2', '01', ' 100', '10000', 100.0, null]) {
+      (data['brackets'] as List).first['initialLeverage'] = bad;
+      expect(() => mapLeverageBrackets(data, 'BTCUSDT'), throwsFormatException);
+    }
+  });
   test('bracket gaps, duplicates, increasing limits and mismatched symbols fail', () {
     for (final change in <void Function(Map<String, Object?>)>[
       (d) => d['symbol'] = 'ETHUSDT',

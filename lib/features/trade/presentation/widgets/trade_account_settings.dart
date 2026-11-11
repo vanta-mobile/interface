@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../market/application/public_leverage_provider.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../portfolio/domain/futures_asset_mode.dart';
@@ -9,7 +12,7 @@ import '../../../portfolio/presentation/position_leverage_screen.dart';
 import '../../../portfolio/presentation/position_margin_mode_screen.dart';
 import '../trade_theme.dart';
 
-class TradeAccountSettings extends StatelessWidget {
+class TradeAccountSettings extends ConsumerWidget {
   const TradeAccountSettings({
     super.key,
     required this.symbol,
@@ -21,15 +24,18 @@ class TradeAccountSettings extends StatelessWidget {
   final bool enabled;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context), funds = data?.funds;
+    final publicLeverage = data == null
+        ? (ref.watch(publicLeverageProvider).value ?? const {})[symbol]?.defaultLeverage()
+        : null;
     return Row(
       children: [
         for (final entry in [
           (
             l.accountMarginMode,
             data == null
-                ? '—'
+                ? l.cross
                 : data!.marginMode == PositionMarginMode.cross
                 ? l.cross
                 : l.accountIsolatedMode,
@@ -37,13 +43,19 @@ class TradeAccountSettings extends StatelessWidget {
           ),
           (
             l.leverageSettings,
-            data == null ? '—' : '${data!.leverage}×',
+            data != null
+                ? '${data!.leverage}×'
+                : publicLeverage == null
+                ? '—'
+                : '$publicLeverage×',
             () => openLeverageSettings(context, symbol),
           ),
           (
             l.assetModeSettings,
             funds == null
-                ? '—'
+                ? data == null
+                      ? l.assetModeMulti
+                      : '—'
                 : funds.assetMode == FuturesAssetMode.multi
                 ? l.assetModeMulti
                 : l.assetModeSingle,

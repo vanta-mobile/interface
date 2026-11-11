@@ -18,13 +18,20 @@ import 'open_orders_event_status.dart';
 import '../../../core/presentation/status_view.dart';
 
 class AsterOpenOrdersPanel extends ConsumerStatefulWidget {
-  const AsterOpenOrdersPanel({super.key});
+  const AsterOpenOrdersPanel({super.key, this.symbol});
+  final String? symbol;
   @override
   ConsumerState<AsterOpenOrdersPanel> createState() => _AsterOpenOrdersPanelState();
 }
 
 class _AsterOpenOrdersPanelState extends ConsumerState<AsterOpenOrdersPanel> {
   bool currentSymbolOnly = false;
+  @override
+  void initState() {
+    super.initState();
+    currentSymbolOnly = widget.symbol != null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -37,7 +44,7 @@ class _AsterOpenOrdersPanelState extends ConsumerState<AsterOpenOrdersPanel> {
         !state.busy &&
         !cancellation.busy &&
         !cancellation.needsRecheck;
-    final symbol = ref.watch(symbolProvider);
+    final symbol = widget.symbol ?? ref.watch<String>(symbolProvider);
     final all = state.account?.orders;
     final orders = all?.where((order) => !currentSymbolOnly || order.symbol == symbol).toList();
     return Panel(

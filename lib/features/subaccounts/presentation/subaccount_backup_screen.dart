@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/error_text.dart';
@@ -158,10 +159,19 @@ class _SubaccountBackupScreenState extends ConsumerState<SubaccountBackupScreen>
         ),
         const SizedBox(height: 16),
         Text(l.accountsBackupNotice, style: AccountTypography.secondary),
+        if (_key case final key?) ...[
+          const SizedBox(height: 16),
+          AccountAction(
+            key: const Key('subaccount-copy-key'),
+            label: l.accountsCopyKey,
+            onPressed: () => Clipboard.setData(ClipboardData(text: key)),
+          ),
+        ],
         const SizedBox(height: 36),
         SubaccountBackupCard(
           wallet: widget.wallet,
           accepted: widget.accepted,
+          saved: _saved,
           privateKey: _key,
           onReveal: _busy || !_authorized ? null : _reveal,
         ),

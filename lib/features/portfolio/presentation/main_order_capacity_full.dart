@@ -5,8 +5,19 @@ part of 'main_order_capacity_panel.dart';
 extension _MainOrderCapacityFull on MainOrderCapacityPanel {
   Widget _fullPanel(BuildContext context, WidgetRef ref, _PanelFacts facts) {
     final l10n = AppLocalizations.of(context);
-    final (:state, :allocation, :live, :controller, :preview, :refreshing, :ready, :enabled) =
-        facts;
+    final (
+      :state,
+      :allocation,
+      :live,
+      :controller,
+      :preview,
+      :refreshing,
+      :ready,
+      :enabled,
+      resultsPending: _,
+      retainedMaximum: _,
+      readFailure: _,
+    ) = facts;
     return Column(
       key: const Key('main-order-capacity'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -23,7 +34,8 @@ extension _MainOrderCapacityFull on MainOrderCapacityPanel {
               onPressed: enabled ? () => controller.load(data.symbol) : null,
               child: Text(l10n.liveCapacityRead),
             ),
-            if (state.loading || allocation.preparing)
+            if (state.loading && !ref.watch(mainOrderRefreshProvider).background ||
+                allocation.preparing)
               TextButton(
                 key: const Key('main-order-capacity-stop'),
                 onPressed: () {
@@ -38,7 +50,8 @@ extension _MainOrderCapacityFull on MainOrderCapacityPanel {
               ),
           ],
         ),
-        if (state.loading || allocation.preparing) ...[
+        if (state.loading && !ref.watch(mainOrderRefreshProvider).background ||
+            allocation.preparing) ...[
           const LinearProgressIndicator(),
           Text(allocation.preparing ? l10n.liveAllocationChecking : l10n.accountReadLoading),
         ],

@@ -39,6 +39,7 @@ dependencies:
   # Deliver native wallet return payloads to Reown's pending request.
   app_links: ^7.2.2
 dev_dependencies:
+  fake_async: ^1.3.3
   integration_test:
     sdk: flutter
   flutter_test:

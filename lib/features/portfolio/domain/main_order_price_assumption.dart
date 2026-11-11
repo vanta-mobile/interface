@@ -18,7 +18,10 @@ class MainOrderPriceAssumption {
     }
     if (draft.attachment?.entryPeg != null) {
       // Deeper compound pegs require their own depth quote, never level one.
-      throw const AccountReadFailure('liveCapacityPriceUnavailable');
+      throw const AccountReadFailure(
+        'liveCapacityPriceUnavailable',
+        reasonKey: 'livePriceDepthUnavailable',
+      );
     }
     final mark = context.markPrice, bid = context.bid, ask = context.ask;
     if (mark <= Decimal.zero ||
@@ -31,7 +34,12 @@ class MainOrderPriceAssumption {
       final Decimal execution;
       if (draft.buy) {
         final precision = context.rules.pricePrecision;
-        if (precision == null) throw const AccountReadFailure('liveCapacityPriceUnavailable');
+        if (precision == null) {
+          throw const AccountReadFailure(
+            'liveCapacityPriceUnavailable',
+            reasonKey: 'livePricePrecisionMissing',
+          );
+        }
         if (precision < 0 || precision > 80) {
           throw const AccountReadFailure('accountDataInvalid');
         }
@@ -40,7 +48,10 @@ class MainOrderPriceAssumption {
         execution = bid ?? mark;
       }
       if (execution <= Decimal.zero) {
-        throw const AccountReadFailure('liveCapacityPriceUnavailable');
+        throw const AccountReadFailure(
+          'liveCapacityPriceUnavailable',
+          reasonKey: 'livePriceExecutionInvalid',
+        );
       }
       return MainOrderPriceAssumption(margin: execution, loss: execution);
     }
@@ -50,6 +61,7 @@ class MainOrderPriceAssumption {
     if (entered == null || entered <= Decimal.zero) {
       throw AccountReadFailure(
         draft.peg == null ? 'liveOrderInvalidPrice' : 'liveCapacityPriceUnavailable',
+        reasonKey: draft.peg == null ? null : 'livePriceBookMissing',
       );
     }
     var execution = entered;

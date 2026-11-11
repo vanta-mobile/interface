@@ -19,14 +19,32 @@ void openMarginModeSettings(BuildContext context, String symbol) =>
         .push<void>(MaterialPageRoute(builder: (_) => PositionMarginModeScreen(symbol: symbol)));
 
 class PositionMarginModeScreen extends ConsumerStatefulWidget {
-  const PositionMarginModeScreen({super.key, required this.symbol});
+  const PositionMarginModeScreen({
+    super.key,
+    required this.symbol,
+    this.initialTarget,
+    this.readOnOpen = false,
+  });
   final String symbol;
+  final PositionMarginMode? initialTarget;
+  final bool readOnOpen;
   @override
   ConsumerState<PositionMarginModeScreen> createState() => _PositionMarginModeScreenState();
 }
 
 class _PositionMarginModeScreenState extends ConsumerState<PositionMarginModeScreen> {
   PositionMarginMode? target;
+  @override
+  void initState() {
+    super.initState();
+    target = widget.initialTarget;
+    if (widget.readOnOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.read(positionMarginModeProvider.notifier).load(widget.symbol);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(authProvider.select((s) => (s.identity?.id, s.identity?.walletAddress)), (

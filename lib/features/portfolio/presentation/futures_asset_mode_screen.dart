@@ -1,3 +1,5 @@
+import 'futures_asset_mode_sheet.dart';
+import 'mode_settings_sheet.dart';
 import 'order_recovery_notice.dart';
 import 'rebalance_entry.dart';
 
@@ -15,9 +17,8 @@ import 'futures_asset_mode_status.dart';
 import 'futures_asset_mode_form.dart';
 import 'symbol_settings_notice.dart';
 
-void openAssetModeSettings(BuildContext context) =>
-    Navigator.of(context)
-        .push<void>(MaterialPageRoute(builder: (_) => const FuturesAssetModeScreen()));
+Future<void> openAssetModeSettings(BuildContext context) =>
+    showModeSettingsSheet<void>(context, const FuturesAssetModeSheet());
 
 class FuturesAssetModeScreen extends ConsumerStatefulWidget {
   const FuturesAssetModeScreen({super.key});

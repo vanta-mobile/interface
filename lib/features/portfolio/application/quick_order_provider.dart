@@ -65,7 +65,7 @@ class QuickOrderController extends Notifier<QuickOrderState> {
 
   bool get editable {
     final live = ref.read(liveOrderProvider);
-    return !state.loading && !live.busy && !live.needsRecheck;
+    return !state.loading && !live.busy;
   }
 
   void setQuantity(String value) {

@@ -20,6 +20,8 @@ class OrderRecoverySnapshot {
   final AccountReadFailure? failure;
 }
 
+/// Observational order records. Their presence, readiness and storage failures
+/// must never authorize, delay or block a trade or configuration operation.
 abstract interface class OrderRecoveryJournal {
   OrderRecoverySnapshot get snapshot;
   Stream<OrderRecoverySnapshot> get changes;

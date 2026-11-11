@@ -43,10 +43,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authWalletUnavailable => '钱包连接失败，请检查钱包应用和网络后重试。';
 
   @override
+  String walletResponseReason(String reason) {
+    return '钱包返回：$reason';
+  }
+
+  @override
   String get authWalletBusy => '钱包中还有待处理的请求，请完成后再继续。';
 
   @override
-  String get authWalletSigningNetwork => '请在钱包中批准 BNB Chain（56）并重新连接后，再开启交易。';
+  String get authWalletSigningNetwork => '请在钱包中启用并选择 BNB Chain（链 ID 56），允许此应用连接该网络，然后重新连接再开启交易。';
 
   @override
   String get authWalletConnectionTimeout => '钱包连接准备超时，请检查网络后重试。';
@@ -869,45 +874,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountIsolatedMode => '逐仓';
 
   @override
-  String get marketCategoryTop => '热门';
-
-  @override
-  String get marketCategoryRwa => 'USD1-RWA';
-
-  @override
-  String get marketCategoryMeme => 'Meme';
-
-  @override
-  String get marketCategoryAi => 'AI';
-
-  @override
-  String get marketCategoryPreLaunch => '盘前';
-
-  @override
-  String get marketCategoryStocks => '股票';
-
-  @override
-  String get marketCategoryEtf => 'ETF';
-
-  @override
-  String get marketCategoryCommodities => '大宗商品';
-
-  @override
-  String get marketCategorySemiconductors => '半导体';
-
-  @override
-  String get marketNoCategoryResults => '该分类下没有符合筛选条件的合约。';
-
-  @override
   String marketResultsCount(int shown, int total) {
     return '$shown / $total 个永续合约';
   }
-
-  @override
-  String get marketCategories => '市场分类';
-
-  @override
-  String get marketCategoryAll => '全部分类';
 
   @override
   String get accountPerpetualTab => '合约';
@@ -1843,10 +1812,10 @@ class AppLocalizationsZh extends AppLocalizations {
       '多资产模式由全仓仓位共享合格抵押资产。需先处理逐仓仓位或留存的逐仓抵押余额；支持资产、估值、余额要求及最终切换资格由Aster确定。';
 
   @override
-  String get assetModeReadSettings => '读取资产模式及仓位（2次签名）';
+  String get assetModeReadSettings => '读取资产模式、仓位和挂单';
 
   @override
-  String get assetModeReadHint => '分别签名读取资产模式和全部合约仓位配置，读取不会提交修改。配置从首个响应起30秒有效，包含等待第二次签名的时间。';
+  String get assetModeReadHint => '读取资产模式、所有仓位配置和全部挂单。查询不会提交修改，数据有效期从首次响应起为 30 秒。';
 
   @override
   String get assetModeCurrentSetting => '读取时资产模式';
@@ -1967,7 +1936,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get liveOrderQueryScope => '以上为查询时的快照。只有 FILLED 代表所请求数量全部成交；后续变更需再次读取账户核对。';
 
   @override
-  String get liveOrderOutcomeUnknown => '请求可能已到达 Aster，请使用此客户端编号查询核对。当前禁止再次下单；查询不会重新提交订单。';
+  String get liveOrderOutcomeUnknown => '下单请求已尝试发送，暂未确认是否成功。请先查询原订单，避免重复下单；查询不会重新提交订单。';
 
   @override
   String get liveOrderRecheck => '签名查询此订单';
@@ -1981,6 +1950,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get liveOrderPolicy => '限价成交策略';
+
+  @override
+  String get timeInForceTitle => '有效方式';
+
+  @override
+  String get timeInForceGtc => 'GTC（撤销前有效）';
+
+  @override
+  String get timeInForceIoc => 'IOC（立即成交或取消）';
 
   @override
   String get liveOrderConditional => '条件委托';
@@ -2492,10 +2470,10 @@ class AppLocalizationsZh extends AppLocalizations {
       '这里仅显示当前钱包在此设备保存的未决合约订单或策略。查询需要重新连接同一钱包并签名，不会重新下单。查询不到不代表原单未提交；记录会继续保留。请先核对结果，再进行新的下单或配置修改。清除应用数据或卸载会丢失本地记录。';
 
   @override
-  String get orderRecoveryStorage => '无法读取或保存本地未决记录，已暂停新的实盘下单及配置操作。记录不会自动清除，请重试。';
+  String get orderRecoveryStorage => '无法读取或保存本地订单记录，不影响继续交易。';
 
   @override
-  String get orderRecoveryPending => '当前钱包有待核对的订单或策略，请先查询原编号。新的实盘下单及配置操作暂不可用。';
+  String get orderRecoveryPending => '当前钱包有结果待核对的订单记录，可按原编号查看，不影响继续交易。';
 
   @override
   String get orderRecoveryConnect => '登录或重新连接原钱包';
@@ -3538,6 +3516,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get liveOrderBbo => 'BBO';
+
+  @override
+  String get liveOrderBboModeLabel => 'BBO 模式';
+
+  @override
+  String get liveOrderBboModeTitle => 'BBO 模式';
+
+  @override
+  String get liveOrderBboModeHint => 'BBO 以当前最优买价或卖价下限价单。只做 Maker 订单若会立即吃单，可能下单失败。';
+
+  @override
+  String liveOrderBboCounterparty(int depth) {
+    return '对手价 $depth';
+  }
+
+  @override
+  String liveOrderBboQueue(int depth) {
+    return '排队价 $depth';
+  }
 
   @override
   String get liveOrderPegInvalid =>
@@ -5274,6 +5271,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get orderConfirmDoNotShow => '此订单类型不再显示确认';
 
   @override
+  String get orderConfirmTitle => '下单确认';
+
+  @override
+  String get orderConfirmPrice => '委托价格';
+
+  @override
+  String get orderConfirmQuantity => '委托数量';
+
+  @override
+  String get orderConfirmMarketPrice => '市价';
+
+  @override
+  String get orderConfirmTakeProfit => '止盈';
+
+  @override
+  String get orderConfirmStopLoss => '止损';
+
+  @override
+  String get orderConfirmBuy => '买入/做多';
+
+  @override
+  String get orderConfirmSell => '卖出/做空';
+
+  @override
+  String get orderConfirmSubmitted => '下单成功';
+
+  @override
+  String get orderConfirmExpired => '订单信息已失效，请关闭弹窗后重新下单。';
+
+  @override
   String get orderConfirmWalletHint => '此设置控制应用内确认。提交前检查和钱包签名仍会执行。';
 
   @override
@@ -5362,6 +5389,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get assistantNavigation => 'AI';
+
+  @override
+  String get orderTypeTrailing => '追踪止损';
+
+  @override
+  String get orderTypeTitle => '订单类型';
+
+  @override
+  String get orderTypePostOnly => '只做 Maker';
+
+  @override
+  String get orderTypeStopLimit => '限价止盈止损';
+
+  @override
+  String get orderTypeStopMarket => '市价止盈止损';
+
+  @override
+  String get orderTypeScaled => '分段委托';
 
   @override
   String get orderModeLabel => '下单模式';
@@ -5476,6 +5521,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get apiRequestCancelled => '请求已取消。';
+
+  @override
+  String apiInvalidResponseAt(String endpoint) {
+    return 'Aster 返回的 $endpoint 数据格式无效，请重试。';
+  }
 
   @override
   String get apiInvalidResponse => '服务器返回的数据格式无效。';
@@ -5913,6 +5963,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountsHideKey => '隐藏私钥';
 
   @override
+  String get accountsCopyKey => '复制私钥';
+
+  @override
   String get accountsKeyWarning => '持有私钥即可控制账户，请保密并安全保存。';
 
   @override
@@ -5991,7 +6044,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get subaccountLocalKeyMissing => '此设备没有该账户的私钥，请将备份导入外部钱包后使用。';
 
   @override
-  String get subaccountCreationFailed => '子账户创建失败，生成的钱包仍可备份。';
+  String get subaccountCreationFailed => '子账户创建失败，请重试。';
+
+  @override
+  String get subaccountCreationNotCompleted => 'Aster 未创建该子账户，请重试。';
 
   @override
   String get subaccountNativeTransactionUnavailable => '请将此账户导入外部钱包后发送链上交易。';
@@ -6438,6 +6494,50 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tradeExitRoi => '收益率（%）';
 
   @override
+  String get livePriceDisconnected => '行情连接已断开，正在自动重连。';
+
+  @override
+  String get livePriceConnecting => '正在连接下单行情。';
+
+  @override
+  String get livePriceMarkMissing => '尚未收到标记价格，正在自动重试。';
+
+  @override
+  String get livePriceMarkInvalid => '标记价格数据异常，正在自动重试。';
+
+  @override
+  String get livePriceMarkStale => '标记价格停止更新，正在自动刷新。';
+
+  @override
+  String get livePriceLastMissing => '尚未收到最新成交价，正在自动重试。';
+
+  @override
+  String get livePriceLastInvalid => '最新成交价数据异常，正在自动重试。';
+
+  @override
+  String get livePriceLastStale => '暂无近期成交价格，正在自动刷新。';
+
+  @override
+  String get livePriceBookMissing => '尚未收到买卖一档报价，正在自动重试。';
+
+  @override
+  String get livePriceBookInvalid => '买卖一档报价数据异常，正在自动重试。';
+
+  @override
+  String get livePriceBookStale => '买卖一档报价停止更新，正在自动刷新。';
+
+  @override
+  String get livePriceClockUnavailable => '无法校验交易所时间，正在自动重试。';
+
+  @override
+  String get livePriceTimestampInvalid => '报价时间超前于交易所时间，正在自动刷新。';
+
+  @override
+  String liveOrderMinimumPlaceholder(String amount) {
+    return 'Min $amount';
+  }
+
+  @override
   String get notificationFilterAll => '全部';
 
   @override
@@ -6520,6 +6620,15 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get livePriceDepthUnavailable => '当前所选 BBO 档位尚无可用于额度估算的深度报价。';
+
+  @override
+  String get livePricePrecisionMissing => '交易所未返回此市价委托所需的价格精度。';
+
+  @override
+  String get livePriceExecutionInvalid => '计算所得参考成交价不大于零，请检查该合约价格精度。';
+
+  @override
   String notificationTransferTitle(String type, String status) {
     String _temp0 = intl.Intl.selectLogic(status, {
       'processing': '充值处理中',
@@ -6540,4 +6649,156 @@ class AppLocalizationsZh extends AppLocalizations {
     });
     return '$_temp2';
   }
+
+  @override
+  String get modeAccountSettings => '账户设置';
+
+  @override
+  String get modeAssetTitle => '资产模式';
+
+  @override
+  String get modePositionTitle => '持仓模式';
+
+  @override
+  String get modeSingleShort => '单资产';
+
+  @override
+  String get modeMultiShort => '多资产';
+
+  @override
+  String get modeSingleTitle => '单资产模式';
+
+  @override
+  String get modeMultiTitle => '多资产模式';
+
+  @override
+  String get modeSingleDescription => '使用交易对的结算币种作为保证金。\n相同币种的全仓仓位盈亏可以互相抵扣。\n支持全仓和逐仓保证金。';
+
+  @override
+  String get modeMultiDescription => '支持使用多种保证金资产交易合约，不同保证金资产的盈亏可以互相抵扣。支持全仓保证金。';
+
+  @override
+  String get modeReadAboutPrefix => '了解';
+
+  @override
+  String get modeReadAboutSuffix => '，更好地管理风险。';
+
+  @override
+  String get modeOneWayDescription => '每个市场仅持有一个净仓位，反方向订单会减少或反转现有仓位。';
+
+  @override
+  String get modeHedgeDescription => '在同一市场分别持有多头和空头仓位。';
+
+  @override
+  String get modePositionBlocked => '切换持仓模式前，请先平掉所有仓位并取消所有挂单。';
+
+  @override
+  String get modeActivateMulti => '开启多资产模式';
+
+  @override
+  String get modeMultiRequirements => '多资产模式要求所有仓位使用全仓保证金。切换前，请平掉逐仓仓位并取消其挂单。';
+
+  @override
+  String get modeAffectedMarkets => '受影响的市场';
+
+  @override
+  String get modeManage => '管理';
+
+  @override
+  String get modeSwitchCross => '切换为全仓';
+
+  @override
+  String get modeRequirementsMet => '已满足条件';
+
+  @override
+  String get modeOpenPosition => '有未平仓位';
+
+  @override
+  String get modeOpenOrders => '有未成交挂单';
+
+  @override
+  String get modeIsolatedCollateral => '仍有逐仓保证金';
+
+  @override
+  String get modeNoPositionsOrders => '无持仓或挂单';
+
+  @override
+  String get modeNegativeUsdt => '您的可用 USDT 资产为负，请先平衡资产，再切换资产模式。';
+
+  @override
+  String get modeRefresh => '刷新设置';
+
+  @override
+  String get modeConfirm => '确认';
+
+  @override
+  String get openOrdersCancelAll => '全部撤单';
+
+  @override
+  String openOrdersAmountUnit(String unit) {
+    return '已成交 / 总数量（$unit）';
+  }
+
+  @override
+  String openOrdersTriggerCondition(String basis, String operator, String price) {
+    return '$basis $operator $price';
+  }
+
+  @override
+  String get openOrdersYes => '是';
+
+  @override
+  String get openOrdersNo => '否';
+
+  @override
+  String get openOrdersConfirm => '确认';
+
+  @override
+  String get openOrdersDetailsTitle => '订单详情';
+
+  @override
+  String openOrdersViewChart(String symbol) {
+    return '查看 $symbol 图表';
+  }
+
+  @override
+  String get openOrdersCancelAllQuestion => '确定要撤销全部合约挂单吗？';
+
+  @override
+  String openOrdersCancelSymbolQuestion(String symbol) {
+    return '确定要撤销 $symbol 的全部挂单吗？';
+  }
+
+  @override
+  String get openOrdersSide => '方向';
+
+  @override
+  String get openOrdersTab => '挂单';
+
+  @override
+  String get openOrdersViewExplorer => '查看浏览器';
+
+  @override
+  String get orderResponseIdentityMismatch => 'Aster 返回的订单编号、交易对或方向与本次委托不一致。';
+
+  @override
+  String get orderResponseLinkageMismatch => 'Aster 返回的止盈止损关联关系与本次委托不一致。';
+
+  @override
+  String get orderResponseTermsMismatch => 'Aster 返回的价格、数量或执行设置与本次委托不一致。';
+
+  @override
+  String get orderResponseStatusInvalid => 'Aster 返回的订单状态缺失或无法识别。';
+
+  @override
+  String get orderResponseMalformed => 'Aster 返回的订单字段缺失或格式不正确，暂时无法核对订单。';
+
+  @override
+  String get orderAcknowledgementInvalid => 'Aster 未返回有效的策略下单处理结果。';
+
+  @override
+  String get openOrdersTpSl => '止盈/止损';
+
+  @override
+  String get openOrdersLinkedOrder => '关联订单：';
 }

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
 import 'package:vanta/features/trade/application/providers.dart';
-import 'package:vanta/features/portfolio/domain/live_order_entry_mode.dart';
 import 'package:vanta/features/auth/presentation/login_screen.dart';
 
 import 'performance_fixture.dart';
@@ -216,9 +215,7 @@ Future<void> runPerformanceScenarios(
             await tester.pumpAndSettle();
             await tester.tap(selector);
             await tester.pumpAndSettle();
-            await tester.tap(
-              find.widgetWithText(PopupMenuItem<LiveOrderEntryMode>, isMarket ? '市价' : '限价'),
-            );
+            await tester.tap(find.byKey(Key('order-mode-option-${isMarket ? 'market' : 'limit'}')));
             await tester.pumpAndSettle();
           });
           await measure('${prefix}_disabled', '$label has no unsigned submission', () async {

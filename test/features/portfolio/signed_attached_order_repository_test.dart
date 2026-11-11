@@ -28,6 +28,7 @@ void main() {
   late List<LiveOrderStep> steps;
   late bool current, canSend, postTimeout, openMissing, historyMissing;
   late int refusedAt, failureCode;
+  Object? postRejection;
   late Object? query, positions;
   void Function(int)? afterSign;
   setUp(() {
@@ -38,6 +39,7 @@ void main() {
     current = canSend = true;
     postTimeout = openMissing = historyMissing = false;
     refusedAt = failureCode = 0;
+    postRejection = null;
     query = attachedQuery(intent);
     positions = livePositionPayload(intent.context);
     afterSign = null;
@@ -59,6 +61,7 @@ void main() {
             expect(request.method, 'POST');
             expect(request.url.query, '');
             if (postTimeout) throw TimeoutException('fixture');
+            if (postRejection != null) return http.Response(jsonEncode(postRejection), 400);
             return http.Response(
               jsonEncode({
                 'failureCode': failureCode,
@@ -104,6 +107,58 @@ void main() {
   Future<LiveOrderResult> check() =>
       repository.recheck(intent: intent, isCurrent: () => current, onStep: steps.add);
   List<http.Request> getSigned() => requests.where((r) => !r.url.path.endsWith('/time')).toList();
+
+  for (final exits in ['tp', 'sl', 'both']) {
+    test('signed $exits strategy supplies explicit driver IDs on every leg', () async {
+      intent = attachedIntent(tp: exits != 'sl', sl: exits != 'tp');
+      query = attachedQuery(intent);
+      expect((await submit()).needsRecheck, isFalse);
+      final request = requests.singleWhere((r) => r.method == 'POST');
+      final legs = jsonDecode(Uri.splitQueryString(request.body)['subOrderList']!) as List;
+      for (var index = 0; index < legs.length; index++) {
+        final leg = legs[index] as Map;
+        expect(leg['firstDrivenId'], index == 0 ? '0' : '1');
+        expect(
+          leg['secondDrivenId'],
+          index == 0 || exits != 'both'
+              ? '0'
+              : index == 1
+              ? '3'
+              : '2',
+        );
+      }
+      expect(request.body, '${signatures[1]}&signature=${TestWalletConnection.signature}');
+      expect(requests.where((r) => r.method == 'POST').length, 1);
+    });
+  }
+
+  test('gateway -1102 retains the rejection without a recovery query', () async {
+    const message =
+        "Mandatory parameter 'firstDrivenId' was not sent, was empty/null, or malformed.";
+    postRejection = {'code': -1102, 'msg': message};
+    final result = await submit();
+    expect(result.rejected, isTrue);
+    expect(result.needsRecheck, isFalse);
+    expect(result.failure!.code, -1102);
+    expect(result.failure!.details!.message, message);
+    expect(result.failure!.details!.status, 400);
+    expect(result.strategy, isNull);
+    expect(requests.where((r) => r.url.path.contains('strategyOpenOrder')), isEmpty);
+    expect(requests.where((r) => r.url.path.contains('strategyHistoryOrder')), isEmpty);
+    expect(requests.where((r) => r.method == 'POST').length, 1);
+    expect(signatures.length, 2);
+  });
+
+  test('transport timeout without a matching query remains unknown', () async {
+    postTimeout = openMissing = historyMissing = true;
+    final result = await submit();
+    expect(result.rejected, isFalse);
+    expect(result.needsRecheck, isTrue);
+    expect(result.failure, isNotNull);
+    expect(requests.where((r) => r.url.path.contains('strategyOpenOrder')), hasLength(1));
+    expect(requests.where((r) => r.url.path.contains('strategyHistoryOrder')), hasLength(1));
+    expect(requests.where((r) => r.method == 'POST'), hasLength(1));
+  });
 
   for (final execution in AttachedExitExecution.values) {
     test('advanced exit signs exact terms and never replays after timeout $execution', () async {
@@ -173,7 +228,10 @@ void main() {
     intent = attachedIntent(peg: AttachedEntryPeg.queue1);
     query = attachedQuery(intent);
     (((query as Map)['subOrders'] as List).first as Map)['pegPriceType'] = 'COUNTERPARTY_1';
-    expect((await submit()).needsRecheck, true);
+    final result = await submit();
+    expect(result.needsRecheck, true);
+    expect(result.failure?.reasonKey, 'orderResponseTermsMismatch');
+    expect(result.failure?.details?.endpoint, '/fapi/v3/strategyOpenOrder');
     query = attachedQuery(intent);
     expect((await check()).needsRecheck, false);
     expect(requests.where((r) => r.method == 'POST').length, 1);
@@ -235,6 +293,8 @@ void main() {
     final legs = jsonDecode(post['subOrderList']!) as List;
     expect(legs[0], {
       'strategySubId': '1',
+      'firstDrivenId': '0',
+      'secondDrivenId': '0',
       'securityType': 'USDT_FUTURES',
       'symbol': 'BTCUSDT',
       'side': 'BUY',

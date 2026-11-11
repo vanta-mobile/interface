@@ -59,6 +59,18 @@ class LiveOrderRules {
           priceMaximum > Decimal.zero && price > priceMaximum ||
           priceTick > Decimal.zero && (price - priceMinimum) % priceTick != Decimal.zero);
 
+  /// Shared notional-filter basis for validation and minimum-input estimates.
+  Decimal? notionalReference(LiveOrderDraft draft, Decimal markPrice, {Decimal? pegReference}) =>
+      draft.peg != null && pegReference != null
+      ? pegReference
+      : draft.pegged
+      ? draft.trigger == null
+            ? markPrice
+            : parseOrderDecimal(draft.trigger!.price)
+      : draft.market
+      ? markPrice
+      : parseOrderDecimal(draft.price);
+
   String? validate(
     LiveOrderDraft draft,
     Decimal markPrice, {
@@ -81,15 +93,7 @@ class LiveOrderRules {
       if (!quantityRule(draft).accepts(quantity)) return 'liveOrderQuantityFilter';
     }
     final pegged = draft.pegged;
-    final price = draft.peg != null && pegReference != null
-        ? pegReference
-        : pegged
-        ? draft.trigger == null
-              ? markPrice
-              : parseOrderDecimal(draft.trigger!.price)
-        : draft.market
-        ? markPrice
-        : parseOrderDecimal(draft.price);
+    final price = notionalReference(draft, markPrice, pegReference: pegReference);
     if (price == null || price <= Decimal.zero) return 'liveOrderInvalidPrice';
     if (!draft.market && !pegged && !acceptsPrice(price)) {
       return 'liveOrderPriceFilter';

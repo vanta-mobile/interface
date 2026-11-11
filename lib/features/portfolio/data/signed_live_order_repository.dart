@@ -7,6 +7,8 @@ import '../domain/futures_position_mode.dart';
 import '../domain/live_order.dart';
 import '../domain/position_margin_mode.dart';
 import 'aster_account_service.dart';
+import 'aster_read_clock.dart';
+import '../../../core/errors/api_error_details.dart';
 import 'futures_position_mode_mapper.dart';
 import 'live_order_mapper.dart';
 import 'position_configuration_rows.dart';
@@ -40,9 +42,10 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
   final OrderRecoveryJournal? journal;
 
   SignedAccountRequest _request(
-    Future<Object?> Function({required String query, required String signature}) send,
-  ) => SignedAccountRequest(
-    serverTime: service.serverTime,
+    Future<Object?> Function({required String query, required String signature}) send, {
+    Future<int> Function()? serverTime,
+  }) => SignedAccountRequest(
+    serverTime: serverTime ?? service.serverTime,
     send: send,
     sign: sign,
     authorization: authorization,
@@ -57,44 +60,51 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
     required void Function(LiveOrderStep) onStep,
     bool includeFunds = true,
   }) => RequestScope.run(isCurrent, () async {
+    var endpoint = '/fapi/v3/exchangeInfo';
+    AccountReadFailure invalidData() => AccountReadFailure(
+      'accountDataInvalid',
+      details: ApiErrorDetails(cause: ApiErrorCause.invalidResponse, endpoint: endpoint),
+    );
     try {
       validatePositionSymbol(symbol);
       onStep(LiveOrderStep.preparing);
-      final rules = mapLiveOrderRules(await service.get('/fapi/v3/exchangeInfo'), symbol);
-      if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
-      final markPayload = await service.get(
-        '/fapi/v3/premiumIndex',
-        query: Uri(queryParameters: {'symbol': symbol}).query,
-      );
+      final clock = AsterReadClock(service.serverTime);
+      final query = Uri(queryParameters: {'symbol': symbol}).query;
+      Future<Object?> optional(String path) async {
+        try {
+          return await service.get(path, query: query);
+        } catch (_) {
+          // These channels remain unavailable without substituting a basis.
+          return null;
+        }
+      }
+
+      // Public reads have no signing or ordering dependency. Await every
+      // branch so failures/cancellation cannot leave unobserved work behind.
       final receivedAt = now();
-      final serverMilliseconds = await service.serverTime();
-      final mark = mapLiveMarkPrice(markPayload, symbol, serverMilliseconds);
+      final payloads = await Future.wait<Object?>([
+        service.get('/fapi/v3/exchangeInfo'),
+        service.get('/fapi/v3/premiumIndex', query: query),
+        clock.serverTime(),
+        optional('/fapi/v3/ticker/price'),
+        optional('/fapi/v3/ticker/bookTicker'),
+      ]);
+      if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
+      final rules = mapLiveOrderRules(payloads[0], symbol);
+      final serverMilliseconds = await clock.serverTime();
+      endpoint = '/fapi/v3/premiumIndex';
+      final mark = mapLiveMarkPrice(payloads[1], symbol, serverMilliseconds);
       Decimal? lastPrice;
       try {
-        lastPrice = mapLiveLastPrice(
-          await service.get(
-            '/fapi/v3/ticker/price',
-            query: Uri(queryParameters: {'symbol': symbol}).query,
-          ),
-          symbol,
-          serverMilliseconds,
-        );
-      } catch (_) {
-        // Only Last-based triggers are unavailable. Mark and ordinary orders
-        // must not silently use another price basis.
+        lastPrice = mapLiveLastPrice(payloads[3], symbol, serverMilliseconds);
+      } on FormatException {
+        // Missing Last does not invalidate an independently available Mark.
       }
       ({Decimal bid, Decimal ask})? book;
       try {
-        book = mapLiveCloseBook(
-          await service.get(
-            '/fapi/v3/ticker/bookTicker',
-            query: Uri(queryParameters: {'symbol': symbol}).query,
-          ),
-          symbol,
-        );
-      } catch (_) {
-        // Missing book suppresses market close PnL and attached-entry previews.
-        // Other ordinary orders can still use their documented references.
+        book = mapLiveCloseBook(payloads[4], symbol);
+      } on FormatException {
+        // Preserve ordinary entries when a separate BBO channel is absent.
       }
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
       void progress(AccountReadStep step) {
@@ -109,12 +119,16 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
         });
       }
 
+      endpoint = '/fapi/v3/positionSide/dual';
       final mode = mapFuturesPositionMode(
-        await _request(service.positionMode)
-            .read(address: address, isCurrent: isCurrent, onStep: progress),
+        await _request(
+          service.positionMode,
+          serverTime: clock.serverTime,
+        ).read(address: address, isCurrent: isCurrent, onStep: progress),
       );
+      endpoint = '/fapi/v3/positionRisk';
       final rows = positionConfigurationRows(
-        await _request(service.positionRisk).read(
+        await _request(service.positionRisk, serverTime: clock.serverTime).read(
           address: address,
           parameters: {'symbol': symbol},
           isCurrent: isCurrent,
@@ -154,13 +168,19 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
       AccountReadFailure? fundsFailure;
       if (includeFunds) {
         try {
+          endpoint = '/fapi/v3/multiAssetsMargin';
           final assetMode = mapFuturesAssetMode(
-            await _request(service.assetMode)
-                .read(address: address, isCurrent: isCurrent, onStep: progress),
+            await _request(
+              service.assetMode,
+              serverTime: clock.serverTime,
+            ).read(address: address, isCurrent: isCurrent, onStep: progress),
           );
+          endpoint = AsterAccountService.accountPath;
           funds = mapLiveOrderFunds(
-            await _request(service.account)
-                .read(address: address, isCurrent: isCurrent, onStep: progress),
+            await _request(
+              service.account,
+              serverTime: clock.serverTime,
+            ).read(address: address, isCurrent: isCurrent, onStep: progress),
             address: address,
             symbol: symbol,
             receivedAt: now(),
@@ -173,7 +193,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
           if (!isCurrent()) rethrow;
           fundsFailure = failure;
         } on FormatException {
-          fundsFailure = const AccountReadFailure('accountDataInvalid');
+          fundsFailure = invalidData();
         }
       }
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
@@ -193,7 +213,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
         lastPrice: lastPrice,
       );
     } on FormatException {
-      throw const AccountReadFailure('accountDataInvalid');
+      throw invalidData();
     }
   });
 
@@ -230,7 +250,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
       await _request(({required query, required signature}) async {
         // Check again after the wallet prompt, immediately before the POST.
         if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
-        await persistOrderBeforePost(journal, intent, now(), canSubmit);
+        recordOrderAttempt(journal, intent, now());
         if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
         submitted = true;
         onStep(LiveOrderStep.submitting);
@@ -253,9 +273,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
       // only query the frozen client ID; never repeat the placement request.
       if (!submitted || !isCurrent()) rethrow;
       final checked = await recheck(intent: intent, isCurrent: isCurrent, onStep: onStep);
-      return checked.orderId == null
-          ? LiveOrderResult(failure: checked.failure ?? failure)
-          : checked;
+      return checked.orderId == null ? LiveOrderResult(failure: failure) : checked;
     }
     return recheck(intent: intent, isCurrent: isCurrent, onStep: onStep);
   });

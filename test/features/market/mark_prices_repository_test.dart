@@ -1,3 +1,5 @@
+import 'package:fake_async/fake_async.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/market/data/mark_prices_repository.dart';
 import 'package:vanta/features/market/domain/mark_prices.dart';
@@ -5,6 +7,35 @@ import 'package:vanta/features/market/domain/mark_prices.dart';
 import '../../support/mark_prices.dart';
 
 void main() {
+  test('silent marks poll before expiry and a late poll cannot replace newer socket data', () {
+    fakeAsync((clock) {
+      final service = TestMarkService();
+      final repository = MarkPricesRepository(service, {'BTCUSDT'}, now: () => service.now);
+      final sub = repository.events.listen((_) {});
+      service.controllers.single.add({'connected': true});
+      service.snapshots.single.complete([markPayload()]);
+      clock.flushMicrotasks();
+      service.now = service.now.add(const Duration(seconds: 5));
+      clock.elapse(const Duration(seconds: 5));
+      expect(service.snapshots.length, 2);
+      expect(repository.state.fresh, {'BTCUSDT'});
+      service.controllers.single.add(markEvent(time: service.serverNow, price: '123'));
+      clock.flushMicrotasks();
+      service.snapshots.last.complete([markPayload(time: service.serverNow + 1, price: '124')]);
+      clock.flushMicrotasks();
+      expect(repository.state.quotes['BTCUSDT']!.price.toString(), '123');
+      repository.setActive(false);
+      clock.flushMicrotasks();
+      final requests = service.snapshots.length;
+      clock.elapse(const Duration(minutes: 1));
+      expect(service.snapshots.length, requests);
+      sub.cancel();
+      repository.dispose();
+      service.dispose();
+      clock.flushMicrotasks();
+      expect(clock.periodicTimerCount, 0);
+    });
+  });
   test('event age limits freshness even when the delayed REST response just arrived', () async {
     final service = TestMarkService()..now = markClock.add(const Duration(seconds: 9));
     final repository = MarkPricesRepository(service, {'BTCUSDT'}, now: () => service.now);

@@ -48,7 +48,7 @@ class SignedAttachedOrderRepository {
       final payload =
           await _request(({required query, required signature}) async {
             if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
-            await persistOrderBeforePost(journal, intent, now(), canSubmit);
+            recordOrderAttempt(journal, intent, now());
             if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
             submitted = true;
             onStep(LiveOrderStep.submitting);
@@ -69,6 +69,15 @@ class SignedAttachedOrderRepository {
       checkAttachedOrderAcknowledgement(payload);
     } on AccountReadFailure catch (failure) {
       if (!submitted || !isCurrent()) rethrow;
+      // -1102 is a concrete gateway parameter-validation rejection. It is
+      // not the ambiguous transport/acknowledgement case below, and querying
+      // an order that could not be created must not turn it into "unknown".
+      if (failure.code == -1102 &&
+          failure.details?.status == 400 &&
+          failure.details?.cause == null) {
+        completeOrderRecord(journal, OrderQuery.capture(intent).key);
+        return LiveOrderResult(failure: failure, rejected: true);
+      }
       postFailure = failure;
     }
     // A failed acknowledgement can still follow an accepted request. Only

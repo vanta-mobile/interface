@@ -77,6 +77,7 @@ extension _LiveOrderFullLayout on _LiveOrderFormState {
           ),
         if (!entireClose)
           LiveOrderSizeField(
+            pricingData: _pricingContext,
             data: contextData,
             draft: draft,
             unit: sizeUnit,
@@ -118,12 +119,14 @@ extension _LiveOrderFullLayout on _LiveOrderFormState {
           onChanged: (value) => _render(() => attachment = value),
         ),
         const SizedBox(height: 8),
-        if (invalid != null &&
+        if (!ref.watch(mainOrderRefreshProvider).loading &&
+            !_pricingPending &&
+            invalid != null &&
             (sizeInput.text.isNotEmpty ||
                 triggerPrice.text.isNotEmpty ||
                 trailingRate.text.isNotEmpty ||
                 trailingActivation.text.isNotEmpty))
-          Text(tr(context, invalid), style: const TextStyle(color: AppColors.negative)),
+          Text(_validationText(invalid), style: const TextStyle(color: AppColors.negative)),
         if (widget.closingSide != null && contextData.reductionPosition(draft)?.quantity == null)
           Text(l10n.liveClosePositionChanged, style: const TextStyle(color: AppColors.warning)),
         LiveOrderSizePreview(value: size, data: contextData),

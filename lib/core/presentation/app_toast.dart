@@ -9,22 +9,25 @@ enum AppToastType { success, failure }
 
 /// Application-level status message shown at the top of the root overlay.
 ///
-/// Toasts dismiss automatically after [autoDismissDuration]. A persistent
-/// failure stays visible until the user closes it, another toast replaces it,
-/// or [dismiss] is called.
+/// Success dismisses after [autoDismissDuration]. Failures default to manual
+/// dismissal, and success feedback cannot replace a visible failure.
 abstract final class AppToast {
   static const autoDismissDuration = Duration(seconds: 3);
   static OverlayEntry? _currentEntry;
+  static AppToastType? _currentType;
 
-  static void showSuccess(BuildContext context, String message) =>
-      _show(context, message, AppToastType.success, persistent: false);
+  static void showSuccess(BuildContext context, String message) {
+    if (_currentType == AppToastType.failure) return;
+    _show(context, message, AppToastType.success, persistent: false);
+  }
 
-  static void showFailure(BuildContext context, String message, {bool persistent = false}) =>
+  static void showFailure(BuildContext context, String message, {bool persistent = true}) =>
       _show(context, message, AppToastType.failure, persistent: persistent);
 
   static void dismiss() {
     _currentEntry?.remove();
     _currentEntry = null;
+    _currentType = null;
   }
 
   static void _show(
@@ -37,20 +40,35 @@ abstract final class AppToast {
     final overlay = Overlay.maybeOf(context, rootOverlay: true);
     if (overlay == null) return;
     dismiss();
-    final entry = OverlayEntry(
-      builder: (_) => _AppToastMessage(message: message, type: type, persistent: persistent),
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => _AppToastMessage(
+        message: message,
+        type: type,
+        persistent: persistent,
+        onExpired: () {
+          if (identical(_currentEntry, entry)) dismiss();
+        },
+      ),
     );
     _currentEntry = entry;
+    _currentType = type;
     overlay.insert(entry);
   }
 }
 
 class _AppToastMessage extends StatefulWidget {
-  const _AppToastMessage({required this.message, required this.type, required this.persistent});
+  const _AppToastMessage({
+    required this.message,
+    required this.type,
+    required this.persistent,
+    required this.onExpired,
+  });
 
   final String message;
   final AppToastType type;
   final bool persistent;
+  final VoidCallback onExpired;
 
   @override
   State<_AppToastMessage> createState() => _AppToastMessageState();
@@ -64,7 +82,7 @@ class _AppToastMessageState extends State<_AppToastMessage> {
   void initState() {
     super.initState();
     if (!widget.persistent) {
-      _dismissTimer = Timer(AppToast.autoDismissDuration, AppToast.dismiss);
+      _dismissTimer = Timer(AppToast.autoDismissDuration, widget.onExpired);
     }
   }
 

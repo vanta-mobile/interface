@@ -1,3 +1,5 @@
+import 'package:vanta/core/errors/api_error_details.dart';
+
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +9,7 @@ import 'package:vanta/features/market/domain/mark_prices.dart';
 import 'package:vanta/features/market/domain/order_reference_prices.dart';
 import 'package:vanta/features/portfolio/application/live_order_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_allocation_provider.dart';
+import 'package:vanta/features/portfolio/application/main_order_refresh_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_capacity_preview_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_pricing_provider.dart';
 import 'package:vanta/features/portfolio/application/symbol_settings_activity.dart';
@@ -28,6 +31,58 @@ void main() {
   Matcher fails(String key) =>
       throwsA(isA<AccountReadFailure>().having((e) => e.key, 'failure', key));
 
+  test(
+    'account renewal retains related subscriptions and can finish without replaying feed snapshots',
+    () async {
+      (f.payload['positions'] as List).add(capacityPosition(symbol: 'ETHUSDT', quantity: '1'));
+      await f.open();
+      final scopes = List.of(f.markScopes);
+      final quoteScopes = List.of(f.quoteScopes);
+      f.now = f.now.add(const Duration(seconds: 3));
+      f.orders.context = capacityContext(time: f.now);
+      f.orders.readGate = Completer<void>();
+      f.capacities.gate = Completer<void>();
+      final renewal = f.container
+          .read(mainOrderRefreshProvider.notifier)
+          .refresh('BTCUSDT', reconnectPrices: false, background: true);
+      await f.flush();
+      expect(f.marks.listeners, 1);
+      expect(f.quotes['BTCUSDT']!.listeners, 1);
+      expect(f.quotes['ETHUSDT']!.listeners, 1);
+      expect(f.markScopes, scopes);
+      f.orders.readGate!.complete();
+      await f.flush();
+      expect(f.markScopes, scopes);
+      expect(f.quoteScopes, quoteScopes);
+      expect(f.quotes['ETHUSDT']!.listeners, 1);
+      f.capacities.gate!.complete();
+      expect(await renewal, isTrue);
+      expect(f.markScopes, scopes);
+      expect(f.quoteScopes, quoteScopes);
+      expect(f.container.read(mainOrderRefreshProvider).failure, isNull);
+    },
+  );
+
+  test(
+    'failed account renewal keeps its typed server reason across an already stale anchor',
+    () async {
+      await f.open();
+      f.container.read(liveOrderProvider.notifier).markStale();
+      await f.flush();
+      const failure = AccountReadFailure(
+        'accountNetwork',
+        code: -1001,
+        details: ApiErrorDetails(message: 'Account service unavailable', status: 503),
+      );
+      f.orders.readFailure = failure;
+      await f.container.read(liveOrderProvider.notifier).load('BTCUSDT');
+      await f.flush();
+      expect(
+        () => f.container.read(mainOrderPricingProvider).priceContext(f.orders.context),
+        throwsA(same(failure)),
+      );
+    },
+  );
   test(
     'no account means no public subscriptions; selected pricing precedes explicit capacity',
     () async {

@@ -1,3 +1,7 @@
+import 'package:vanta/core/errors/api_error_details.dart';
+import 'package:vanta/features/market/domain/order_reference_prices.dart';
+import 'package:vanta/features/portfolio/application/live_order_provider.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -170,6 +174,61 @@ void main() {
       expect(raw(tester), '202.000');
       expect(f.orders.submits, 0);
       expect(tester.takeException(), isNull);
+    } finally {
+      await tester.pumpWidget(const SizedBox());
+      f.disposeContainer();
+    }
+  });
+  for (final locale in ['en', 'zh']) {
+    testWidgets('form preserves the actual price API failure in $locale', (tester) async {
+      try {
+        await open(tester, locale: locale);
+        await enter(tester);
+        final old = f.quotes['BTCUSDT']!.value;
+        f.quotes['BTCUSDT']!.emit(
+          OrderReferencePrices(
+            symbol: old.symbol,
+            checkedAt: f.now,
+            connection: OrderPriceConnection.online,
+            tradeFailed: true,
+            tradeFailure: const AccountReadFailure(
+              'liveCapacityPriceUnavailable',
+              reasonKey: 'livePriceLastMissing',
+              details: ApiErrorDetails(message: 'Price feed temporarily unavailable', status: 503),
+            ),
+          ),
+        );
+        await tester.runAsync(f.flush);
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Price feed temporarily unavailable'), findsWidgets);
+        final l = AppLocalizations.of(tester.element(find.byType(LiveOrderScreen)));
+        expect(find.text(l.liveCapacityPriceUnavailable), findsNothing);
+        expect(raw(tester), '202.000');
+        expect(
+          tester
+              .widget<TextField>(find.byKey(const Key('live-order-quantity')))
+              .decoration!
+              .hintText,
+          isNull,
+        );
+      } finally {
+        await tester.pumpWidget(const SizedBox());
+        f.disposeContainer();
+      }
+    });
+  }
+  testWidgets('account invalidation retains its own cause instead of a price error', (
+    tester,
+  ) async {
+    try {
+      await open(tester);
+      await enter(tester);
+      f.container.read(liveOrderProvider.notifier).markStale();
+      await tester.pumpAndSettle();
+      final l = AppLocalizations.of(tester.element(find.byType(LiveOrderScreen)));
+      expect(find.text(l.liveOrderContextExpired), findsWidgets);
+      expect(find.text(l.liveCapacityPriceUnavailable), findsNothing);
+      expect(raw(tester), '202.000');
     } finally {
       await tester.pumpWidget(const SizedBox());
       f.disposeContainer();

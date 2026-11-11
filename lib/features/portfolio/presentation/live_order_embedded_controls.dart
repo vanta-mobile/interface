@@ -48,6 +48,7 @@ class EmbeddedCheckRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = onChanged != null;
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Flexible(
           child: Semantics(
@@ -94,7 +95,7 @@ class EmbeddedCheckRow extends StatelessWidget {
             ),
           ),
         ),
-        if (trailing != null) ...[const SizedBox(width: 8), const Spacer(), trailing!],
+        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
       ],
     );
   }

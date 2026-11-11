@@ -7,6 +7,8 @@ import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../application/order_cancellation_provider.dart';
 import '../domain/aster_open_orders.dart';
+import '../../trade/presentation/trade_theme.dart';
+import 'open_order_cancel_prompts.dart';
 import 'order_cancel_progress.dart';
 
 Future<void> confirmOrderCancellation(
@@ -17,40 +19,25 @@ Future<void> confirmOrderCancellation(
   final controller = ref.read(orderCancellationProvider.notifier);
   final intent = controller.prepare(order);
   if (intent == null) return;
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) {
-      final l10n = AppLocalizations.of(context);
-      return AlertDialog(
-        title: Text(l10n.orderCancelTitle),
-        scrollable: true,
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.orderCancelConfirmHint),
-            const SizedBox(height: 12),
-            SelectableText(intent.address),
-            const SizedBox(height: 8),
-            SelectableText(order.symbol),
-            SelectableText(order.orderId),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.orderCancelKeep),
-          ),
-          FilledButton(
-            key: const Key('confirm-order-cancel'),
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.orderCancelConfirm),
-          ),
-        ],
-      );
-    },
+  final l10n = AppLocalizations.of(context);
+  final confirmed = await showOpenOrderCancelDialog(
+    context,
+    title: l10n.orderCancelTitle,
+    confirmKey: const Key('confirm-order-cancel'),
+    content: [
+      Text(
+        l10n.orderCancelConfirmHint,
+        style: TradeTypography.option.copyWith(color: TradeColors.muted),
+      ),
+      const SizedBox(height: 12),
+      SelectableText('${order.symbol} · ${order.orderId}', style: TradeTypography.body),
+      SelectableText(
+        intent.address,
+        style: TradeTypography.body.copyWith(color: TradeColors.muted),
+      ),
+    ],
   );
-  if (confirmed == true && context.mounted) await controller.cancel(intent);
+  if (confirmed && context.mounted) await controller.cancel(intent);
 }
 
 class OrderCancellationStatus extends ConsumerWidget {

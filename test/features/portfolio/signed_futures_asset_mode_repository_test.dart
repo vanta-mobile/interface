@@ -12,6 +12,7 @@ import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/futures_asset_mode.dart';
 
 import '../../support/aster_account.dart';
+import '../../support/aster_open_orders.dart';
 import '../../support/futures_asset_mode.dart';
 import '../../support/wallet_connection.dart';
 
@@ -20,7 +21,7 @@ void main() {
   late SignedFuturesAssetModeRepository repository;
   late List<http.Request> requests;
   late List<String> messages;
-  late Object? positions, mode;
+  late Object? positions, mode, orders;
   late int postStatus, getStatus, refuse;
   late String postBody;
   late bool current, canSubmit;
@@ -37,6 +38,7 @@ void main() {
     requests = [];
     messages = [];
     positions = assetModeRows();
+    orders = <Object?>[];
     mode = {'multiAssetsMargin': true};
     postStatus = getStatus = 200;
     postBody = '{}';
@@ -63,6 +65,9 @@ void main() {
         }
         if (request.url.path == AsterAccountService.accountPath) {
           return http.Response(jsonEncode(accountPayload()), getStatus);
+        }
+        if (request.url.path.endsWith('/openOrders')) {
+          return http.Response(jsonEncode(orders), getStatus);
         }
         expect(request.url.path, '/fapi/v3/positionRisk');
         return http.Response(jsonEncode(positions), getStatus);
@@ -107,6 +112,7 @@ void main() {
     expect(signed.map((r) => r.url.path), [
       '/fapi/v3/multiAssetsMargin',
       '/fapi/v3/positionRisk',
+      '/fapi/v3/openOrders',
       AsterAccountService.accountPath,
     ]);
     for (var i = 0; i < signed.length; i++) {
@@ -114,6 +120,46 @@ void main() {
       expect(signed[i].url.query.split('&signature=').first, messages[i]);
       expect(signed[i].url.queryParameters.containsKey('symbol'), false);
     }
+  });
+
+  test('isolated order without a position remains blocked and cannot be submitted', () async {
+    mode = {'multiAssetsMargin': false};
+    positions = assetModeRows(margin: 'isolated');
+    orders = [openOrder()];
+    final context = await repository.read(
+      address: accountAddress,
+      isCurrent: () => current,
+      onStep: (_) {},
+    );
+    expect(context.markets.single.openOrderCount, 1);
+    expect(context.markets.single.hasPosition, false);
+    expect(context.blocks(FuturesAssetMode.multi), true);
+    await expectLater(
+      repository.change(
+        intent: AssetModeIntent(context: context, target: FuturesAssetMode.multi, revision: 0),
+        isCurrent: () => current,
+        canSubmit: () => canSubmit,
+        onStep: (_) {},
+      ),
+      throwsA(isA<AccountReadFailure>()),
+    );
+    expect(requests.where((r) => r.method == 'POST'), isEmpty);
+  });
+  test('malformed or refused order read never certifies readiness', () async {
+    mode = {'multiAssetsMargin': false};
+    orders = {};
+    await expectLater(
+      repository.read(address: accountAddress, isCurrent: () => current, onStep: (_) {}),
+      throwsA(isA<AccountReadFailure>()),
+    );
+    messages.clear();
+    orders = [];
+    refuse = 3;
+    await expectLater(
+      repository.read(address: accountAddress, isCurrent: () => current, onStep: (_) {}),
+      throwsA(isA<AccountReadFailure>().having((f) => f.key, 'key', 'authWalletRejected')),
+    );
+    expect(requests.where((r) => r.method == 'POST'), isEmpty);
   });
   test('POST exact signed body then fresh signed GET; same EOA with distinct nonces', () async {
     final result = await change();

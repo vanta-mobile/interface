@@ -1,9 +1,11 @@
+import '../../support/order_confirmation_widget.dart';
 import '../../support/order_mode_widget.dart';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/domain/live_order_peg.dart';
@@ -114,13 +116,9 @@ void main() {
       await choose(tester, l10n.attachedEntryQueue(1));
       expect(find.byKey(const Key('live-order-price')), findsNothing);
       await tap(tester, 'live-order-review');
-      final dialog = find.byType(AlertDialog);
+      final dialog = find.byType(OrderConfirmationDialog);
       expect(
         find.descendant(of: dialog, matching: find.text(l10n.attachedEntryQueue(1))),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: dialog, matching: find.text(l10n.liveOrderPegHint)),
         findsOneWidget,
       );
       expect(find.descendant(of: dialog, matching: find.text('0')), findsNothing);
@@ -138,6 +136,7 @@ void main() {
       await tester.ensureVisible(find.byKey(const Key('live-order-confirm')));
       await tester.tap(find.byKey(const Key('live-order-confirm')));
       await tester.pumpAndSettle();
+      await dismissOrderConfirmation(tester);
       expect(repository.submits, 1);
       final frozen = repository.lastIntent!;
       expect(frozen.draft.peg, LiveOrderPeg.queue);
@@ -192,7 +191,10 @@ void main() {
         expect(find.byKey(const Key('live-order-pricing')), findsNothing);
         await tap(tester, 'live-order-review');
         expect(
-          find.descendant(of: find.byType(AlertDialog), matching: find.text(l10n.liveOrderPegHint)),
+          find.descendant(
+            of: find.byType(OrderConfirmationDialog),
+            matching: find.text(l10n.liveOrderPegHint),
+          ),
           findsNothing,
         );
         await tester.ensureVisible(find.text(l10n.cancel));

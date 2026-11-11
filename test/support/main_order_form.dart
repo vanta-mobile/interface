@@ -1,5 +1,9 @@
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/application/main_order_pricing_provider.dart';
 import 'package:flutter/material.dart';
+
+import 'order_confirmation_widget.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/theme.dart';
@@ -143,12 +147,13 @@ class MainOrderFormFixture {
     await tester.ensureVisible(find.byKey(const Key('live-order-confirm')));
     await tester.tap(find.byKey(const Key('live-order-confirm')));
     await tester.pumpAndSettle();
+    await dismissOrderConfirmation(tester);
   }
 
   Future<void> cancel(WidgetTester tester) async {
-    final l10n = AppLocalizations.of(tester.element(find.byType(AlertDialog)));
+    final l10n = AppLocalizations.of(tester.element(find.byType(OrderConfirmationDialog)));
     await tester.tap(
-      find.descendant(of: find.byType(AlertDialog), matching: find.text(l10n.cancel)),
+      find.descendant(of: find.byType(OrderConfirmationDialog), matching: find.text(l10n.cancel)),
     );
     await tester.pumpAndSettle();
   }

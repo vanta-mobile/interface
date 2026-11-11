@@ -22,6 +22,7 @@ class MainOrderMarketData implements MainOrderPricing {
     required this.active,
     required this.now,
     this.pending = false,
+    this.failure,
   }) : references = Map.unmodifiable(references);
   final LiveOrderContext? anchor;
   final MarkPrices marks;
@@ -29,11 +30,16 @@ class MainOrderMarketData implements MainOrderPricing {
   final AssetIndexSnapshot? indices;
   final bool active;
   final bool pending;
+  final AccountReadFailure? failure;
   final DateTime Function() now;
 
   void _check(LiveOrderContext context) {
+    if (failure != null) throw failure!;
     if (!active || context != anchor) {
-      throw const AccountReadFailure('liveCapacityPriceUnavailable');
+      throw const AccountReadFailure(
+        'liveCapacityPriceUnavailable',
+        reasonKey: 'livePriceDisconnected',
+      );
     }
     final age = now().difference(context.receivedAt);
     if (age.isNegative || age >= const Duration(seconds: 30)) {

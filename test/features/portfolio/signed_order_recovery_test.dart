@@ -7,7 +7,6 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/portfolio/data/aster_account_service.dart';
-import 'package:vanta/features/portfolio/data/order_recovery_codec.dart';
 import 'package:vanta/features/portfolio/data/order_recovery_journal.dart';
 import 'package:vanta/features/portfolio/data/signed_account_request.dart';
 import 'package:vanta/features/portfolio/data/signed_live_order_repository.dart';
@@ -30,9 +29,32 @@ class DelayedJournal extends MemoryOrderRecoveryJournal {
   }
 }
 
+class _DelayedCompletionJournal extends MemoryOrderRecoveryJournal {
+  final gate = Completer<void>();
+  Future<void>? completion;
+  @override
+  Future<void> complete(String key) => completion = gate.future.then((_) => super.complete(key));
+}
+
+class _TrackingJournal extends FileOrderRecoveryJournal {
+  _TrackingJournal(super.directory);
+  Future<void> pending = Future.value();
+  @override
+  Future<void> prepare(OrderRecoveryRecord record) => pending = super.prepare(record);
+  @override
+  Future<void> complete(String key) => pending = super.complete(key);
+  Future<void> settle() async {
+    try {
+      await pending;
+    } on AccountReadFailure {
+      /* Diagnostic failure. */
+    }
+  }
+}
+
 void main() {
   late Directory directory;
-  late FileOrderRecoveryJournal journal;
+  late _TrackingJournal journal;
   late AsterAccountService service;
   late LiveOrderIntent intent;
   late List<http.Request> requests;
@@ -42,7 +64,7 @@ void main() {
   void Function()? afterSign;
   setUp(() async {
     directory = await Directory.systemTemp.createTemp('vanta-order-boundary-');
-    journal = FileOrderRecoveryJournal(() async => directory);
+    journal = _TrackingJournal(() async => directory);
     await journal.reload();
     intent = liveIntent();
     requests = [];
@@ -65,11 +87,6 @@ void main() {
           return http.Response(jsonEncode(livePositionPayload(intent.context)), 200);
         }
         if (request.method == 'POST') {
-          final persisted = decodeRecoveryJournal(
-            await File('${directory.path}/pending-futures-orders-v1.json').readAsString(),
-          );
-          expect(persisted.single.query.clientOrderId, intent.clientOrderId);
-          expect(persisted.single.query.address, intent.context.address);
           if (postTimeout) throw TimeoutException('fixture');
           return http.Response('{"failureCode":0}', 200);
         }
@@ -109,11 +126,17 @@ void main() {
     now: () => liveOrderClock,
     journal: storage ?? journal,
   );
-  Future<LiveOrderResult> submit([OrderRecoveryJournal? storage]) => writer(storage)
-      .submit(intent: intent, isCurrent: () => current, canSubmit: () => canSend, onStep: (_) {});
+  Future<LiveOrderResult> submit([OrderRecoveryJournal? storage]) async {
+    final result = await writer(storage)
+        .submit(intent: intent, isCurrent: () => current, canSubmit: () => canSend, onStep: (_) {});
+    // Synchronize diagnostics only in the test; placement never awaits disk.
+    await journal.settle();
+    return result;
+  }
+
   int posts() => requests.where((r) => r.method == 'POST').length;
   for (final kind in ['ordinary', 'close', 'attached', 'attached-bbo']) {
-    test('persist before POST; a fresh process recovers $kind with GET only', () async {
+    test('record asynchronously; a fresh process queries $kind with GET only', () async {
       intent = switch (kind) {
         'close' => liveCloseIntent(),
         'attached' => attachedIntent(),
@@ -144,6 +167,7 @@ void main() {
       expect(recovered.needsRecheck, false);
       expect(requests.skip(before).every((r) => r.method == 'GET'), true);
       expect(posts(), 1);
+      await restarted.reload();
       expect(restarted.snapshot.records, isEmpty);
       final latest = Uri.splitQueryString(signatures.last);
       expect(
@@ -165,41 +189,60 @@ void main() {
     expect(journal.snapshot.records, isEmpty);
     expect(posts(), 0);
   });
-  test(
-    'confirmation expiring during disk write is rechecked and rolled back before POST',
-    () async {
-      final delayed = DelayedJournal();
-      final pending = submit(delayed);
-      while (delayed.snapshot.records.isEmpty) {
-        await Future<void>.delayed(Duration.zero);
-      }
-      canSend = false;
-      delayed.gate.complete();
-      await expectLater(pending, throwsA(isA<AccountReadFailure>()));
-      expect(posts(), 0);
-      expect(delayed.snapshot.records, isEmpty);
-      await delayed.close();
-    },
-  );
-  test('failed persistence prevents POST even after wallet signature', () async {
-    await Directory('${directory.path}/pending-futures-orders-v1.json.tmp').create();
-    await expectLater(
-      submit(),
-      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'orderRecoveryStorage')),
-    );
-    expect(signatures.length, 1);
-    expect(posts(), 0);
+  test('slow recording does not delay submission or its settled result', () async {
+    final delayed = DelayedJournal();
+    final result = await submit(delayed);
+    expect(posts(), 1);
+    expect(result.needsRecheck, isTrue);
+    expect(delayed.gate.isCompleted, isFalse);
+    delayed.gate.complete();
+    await delayed.close();
   });
-  test('POST timeout retains original record and cannot be repeated', () async {
+  test('slow record cleanup does not delay a verified order result', () async {
+    final delayed = _DelayedCompletionJournal();
+    validQuery = true;
+    final result = await submit(delayed);
+    expect(result.orderId, '12345');
+    expect(result.needsRecheck, isFalse);
+    expect(posts(), 1);
+    expect(delayed.gate.isCompleted, isFalse);
+    expect(delayed.snapshot.records.length, 1);
+    delayed.gate.complete();
+    await delayed.completion;
+    expect(delayed.snapshot.records, isEmpty);
+    await delayed.close();
+  });
+  test('failed persistence does not prevent POST', () async {
+    await Directory('${directory.path}/pending-futures-orders-v1.json.tmp').create();
+    final result = await submit();
+    expect(posts(), 1);
+    expect(result.needsRecheck, isTrue);
+    expect(journal.snapshot.failure?.key, 'orderRecoveryStorage');
+  });
+  test('POST timeout keeps its cause when follow-up query data is invalid', () async {
     postTimeout = true;
-    expect((await submit()).needsRecheck, true);
+    final result = await submit();
+    expect(result.needsRecheck, isTrue);
+    expect(result.failure?.key, 'accountNetwork');
     expect(posts(), 1);
     expect(journal.snapshot.records.single.query.clientOrderId, intent.clientOrderId);
-    await expectLater(
-      submit(),
-      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'orderRecoveryPending')),
+  });
+  test('unknown attempts remain recorded without blocking an explicitly new order', () async {
+    postTimeout = true;
+    expect((await submit()).needsRecheck, true);
+    final firstId = intent.clientOrderId;
+    intent = LiveOrderIntent(
+      context: intent.context,
+      draft: intent.draft,
+      clientOrderId: 'vanta-explicit-next-attempt',
+      revision: 1,
     );
-    expect(posts(), 1);
+    expect((await submit()).needsRecheck, true);
+    expect(posts(), 2);
+    expect(journal.snapshot.records.map((r) => r.query.clientOrderId), [
+      firstId,
+      intent.clientOrderId,
+    ]);
   });
   test('mismatched or missing original query does not delete a durable pending record', () async {
     await submit();
@@ -266,6 +309,7 @@ void main() {
       expect(result.orderId, '12345');
       expect(result.needsRecheck, false);
       expect(journal.snapshot.records.length, 1);
+      await journal.settle();
       expect(journal.snapshot.failure!.key, 'orderRecoveryStorage');
     },
   );

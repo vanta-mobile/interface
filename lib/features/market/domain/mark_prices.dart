@@ -1,3 +1,5 @@
+import '../../portfolio/domain/account_snapshot.dart';
+
 import 'package:decimal/decimal.dart';
 
 enum MarkPriceConnection { connecting, online, offline }
@@ -23,6 +25,7 @@ class MarkPrices {
     Set<String> invalid = const {},
     this.connection = MarkPriceConnection.connecting,
     this.snapshotFailed = false,
+    this.failure,
   }) : quotes = Map.unmodifiable(quotes),
        fresh = Set.unmodifiable(fresh),
        invalid = Set.unmodifiable(invalid);
@@ -30,4 +33,5 @@ class MarkPrices {
   final Set<String> fresh, invalid;
   final MarkPriceConnection connection;
   final bool snapshotFailed;
+  final AccountReadFailure? failure;
 }

@@ -7,6 +7,8 @@ import 'aster_account_service.dart';
 import 'attached_order_mapper.dart';
 import 'live_order_mapper.dart';
 import 'signed_account_request.dart';
+import 'order_recovery_boundary.dart';
+import 'order_response_failure.dart';
 
 /// All paths here are GET-only, using original public IDs with fresh signatures.
 class SignedOrderQueryRepository implements OrderRecoveryRepository {
@@ -50,27 +52,25 @@ class SignedOrderQueryRepository implements OrderRecoveryRepository {
             step == AccountReadStep.signing ? LiveOrderStep.checkSigning : LiveOrderStep.checking,
           ),
         );
+    var endpoint = strategy == null ? '/fapi/v3/order' : '/fapi/v3/strategyOpenOrder';
     try {
       Object? payload;
       try {
         payload = await read(strategy == null ? service.queryOrder : service.strategyOpenOrder);
       } on AccountReadFailure catch (failure) {
         if (strategy == null || failure.code != -2013 || !isCurrent()) rethrow;
+        endpoint = '/fapi/v3/strategyHistoryOrder';
         payload = await read(service.strategyHistoryOrder);
       }
       final result = strategy == null
           ? mapRecoveredOrderQuery(payload, query, checkedAt: now())
           : mapRecoveredStrategyQuery(payload, query, now());
       if (!result.needsRecheck) {
-        try {
-          await journal?.complete(query.key);
-        } on AccountReadFailure {
-          /* Keep the verified result and the durable pending entry. */
-        }
+        completeOrderRecord(journal, query.key);
       }
       return result;
-    } on FormatException {
-      return const LiveOrderResult(failure: AccountReadFailure('accountDataInvalid'));
+    } on FormatException catch (failure) {
+      return LiveOrderResult(failure: orderResponseFailure(failure, endpoint));
     } on AccountReadFailure catch (failure) {
       if (!isCurrent()) rethrow;
       return LiveOrderResult(failure: failure);

@@ -7,46 +7,23 @@ import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../application/order_cancellation_provider.dart';
+import 'open_order_cancel_prompts.dart';
 import 'order_cancel_progress.dart';
 
 Future<void> confirmBatchCancellation(BuildContext context, WidgetRef ref, {String? symbol}) async {
   final controller = ref.read(orderCancellationProvider.notifier);
   final intent = controller.prepareBatch(symbol: symbol);
   if (intent == null) return;
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) {
-      final l10n = AppLocalizations.of(context);
-      return AlertDialog(
-        title: Text(l10n.batchCancelTitle),
-        scrollable: true,
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.batchCancelHint),
-            const SizedBox(height: 12),
-            SelectableText(intent.address),
-            const SizedBox(height: 8),
-            Text(l10n.batchCancelScopeCount(intent.orderCount, intent.symbols.length)),
-            for (final target in intent.symbols) SelectableText(target),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.orderCancelKeep),
-          ),
-          FilledButton(
-            key: const Key('confirm-batch-cancel'),
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.batchCancelConfirm),
-          ),
-        ],
-      );
-    },
+  final l10n = AppLocalizations.of(context);
+  final confirmed = await showCancelAllOrdersSheet(
+    context,
+    message: symbol == null
+        ? l10n.openOrdersCancelAllQuestion
+        : l10n.openOrdersCancelSymbolQuestion(symbol),
+    note:
+        '${l10n.batchCancelScopeCount(intent.orderCount, intent.symbols.length)}\n\n${l10n.batchCancelHint}',
   );
-  if (confirmed == true && context.mounted) await controller.cancelBatch(intent);
+  if (confirmed && context.mounted) await controller.cancelBatch(intent);
 }
 
 class BatchOrderCancellationStatus extends ConsumerWidget {

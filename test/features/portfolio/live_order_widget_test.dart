@@ -1,9 +1,11 @@
+import '../../support/order_confirmation_widget.dart';
 import '../../support/order_mode_widget.dart';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
@@ -74,7 +76,7 @@ void main() {
       await visible(tester, 'live-order-review');
       await tester.tap(find.byKey(const Key('live-order-review')));
       await tester.pumpAndSettle();
-      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(OrderConfirmationDialog), findsOneWidget);
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(repository.submits, 0);
@@ -90,7 +92,7 @@ void main() {
       await visible(tester, 'live-order-review');
       await tester.tap(find.byKey(const Key('live-order-review')));
       await tester.pumpAndSettle();
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(OrderConfirmationDialog), findsNothing);
       expect(repository.submits, 1);
       expect(repository.lastIntent!.parameters['type'], 'MARKET');
       expect(tester.takeException(), null);
@@ -139,8 +141,8 @@ void main() {
       await visible(tester, 'live-order-review');
       await tester.tap(find.byKey(const Key('live-order-review')));
       await tester.pumpAndSettle();
-      final dialog = find.byType(AlertDialog);
-      for (final text in [accountAddress, 'BTCUSDT', '0.001', '80000', 'One-way', 'Cross']) {
+      final dialog = find.byType(OrderConfirmationDialog);
+      for (final text in ['BTCUSDT', '0.001 BTC', '80000 USDT']) {
         expect(
           find.descendant(of: dialog, matching: find.text(text)),
           findsOneWidget,
@@ -158,6 +160,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('live-order-confirm')));
       await tester.pumpAndSettle();
+      await dismissOrderConfirmation(tester);
       expect(repository.submits, 1);
       expect(
         tester.widget<TextField>(find.byKey(const Key('live-order-quantity'))).controller!.text,
@@ -203,7 +206,7 @@ void main() {
       await visible(tester, 'live-order-review');
       await tester.tap(find.byKey(const Key('live-order-review')));
       await tester.pumpAndSettle();
-      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(OrderConfirmationDialog), findsOneWidget);
       expect(tester.takeException(), null);
       tester.view.physicalSize = const Size(844, 390);
       await tester.pumpAndSettle();

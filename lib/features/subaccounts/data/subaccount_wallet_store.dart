@@ -173,6 +173,13 @@ class DeviceSubaccountWalletStore implements SubaccountWalletStore {
   });
 
   @override
+  Future<void> discard(String address) => _serialized(() async {
+    final entries = await _entries();
+    final kept = entries.where((e) => e['address'] != address || e['backedUp'] == true).toList();
+    if (kept.length != entries.length) await _save(kept);
+  });
+
+  @override
   WalletConnection connection(GeneratedSubaccount account) => _DeviceWalletConnection(
     account.address,
     (data) => sign(account.address, data),

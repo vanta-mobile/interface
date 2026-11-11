@@ -1,3 +1,5 @@
+import 'futures_position_mode_sheet.dart';
+import 'mode_settings_sheet.dart';
 import 'order_recovery_notice.dart';
 
 import 'package:flutter/material.dart';
@@ -14,9 +16,8 @@ import 'futures_position_mode_status.dart';
 import 'futures_position_mode_form.dart';
 import 'symbol_settings_notice.dart';
 
-void openPositionModeSettings(BuildContext context) =>
-    Navigator.of(context)
-        .push<void>(MaterialPageRoute(builder: (_) => const FuturesPositionModeScreen()));
+Future<void> openPositionModeSettings(BuildContext context) =>
+    showModeSettingsSheet<void>(context, const FuturesPositionModeSheet());
 
 class FuturesPositionModeScreen extends ConsumerStatefulWidget {
   const FuturesPositionModeScreen({super.key});

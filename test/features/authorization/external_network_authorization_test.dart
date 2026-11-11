@@ -20,7 +20,7 @@ import '../../support/reown_modal.dart';
 import '../../support/wallet_connection.dart';
 
 void main() {
-  for (final outcome in ['approved', 'rejected', 'cancelled', 'unknown']) {
+  for (final outcome in ['approved', 'rejected', 'cancelled', 'unknown', 'added', 'addRejected']) {
     test(
       'Arbitrum EOA approval $outcome precedes nonce, one signature and financial dispatch',
       () async {
@@ -39,15 +39,29 @@ void main() {
         final now = DateTime.utc(2026, 11, 9);
         final operations = <String>[];
         final gate = Completer<void>();
+        final addGate = Completer<void>();
+        final needsAdd = outcome == 'added' || outcome == 'addRejected';
+        var switches = 0;
         modal.onRequest = (request) async {
           operations.add(request.method);
           if (request.method == 'wallet_switchEthereumChain') {
+            switches++;
             await gate.future;
+            if (needsAdd && switches == 1) {
+              throw JsonRpcError(code: 4902, message: 'Invalid chainId');
+            }
             if (outcome == 'rejected') throw JsonRpcError(code: 4001, message: 'Switch declined');
             if (outcome == 'cancelled') current = false;
             modal.approvedAccounts = ['eip155:42161:$fixtureMaster', 'eip155:56:$fixtureMaster'];
             modal.selectedChainId = '56';
             modal.changed();
+            return null;
+          }
+          if (request.method == 'wallet_addEthereumChain') {
+            await addGate.future;
+            if (outcome == 'addRejected') {
+              throw JsonRpcError(code: 4001, message: 'Add network declined');
+            }
             return null;
           }
           expect(modal.chain, 'eip155:56');
@@ -93,14 +107,16 @@ void main() {
           ),
           isCurrent: () => current,
         );
-        final verification = outcome == 'rejected' || outcome == 'cancelled'
+        final rejected = outcome == 'rejected' || outcome == 'addRejected';
+        final failed = rejected || outcome == 'cancelled';
+        final verification = failed
             ? expectLater(
                 pending,
                 throwsA(
                   isA<AccountReadFailure>().having(
                     (e) => e.key,
                     'key',
-                    outcome == 'rejected' ? 'authWalletRejected' : 'authWalletChanged',
+                    rejected ? 'authWalletRejected' : 'authWalletChanged',
                   ),
                 ),
               )
@@ -115,13 +131,18 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         expect(operations, ['wallet_switchEthereumChain']);
         gate.complete();
+        if (needsAdd) {
+          await Future<void>.delayed(Duration.zero);
+          expect(operations, ['wallet_switchEthereumChain', 'wallet_addEthereumChain']);
+          addGate.complete();
+        }
         await verification;
-        expect(
-          operations,
-          outcome == 'rejected' || outcome == 'cancelled'
-              ? ['wallet_switchEthereumChain']
-              : ['wallet_switchEthereumChain', 'time', 'eth_signTypedData_v4', 'POST'],
-        );
+        expect(operations, [
+          'wallet_switchEthereumChain',
+          if (needsAdd) 'wallet_addEthereumChain',
+          if (outcome == 'added') 'wallet_switchEthereumChain',
+          if (!failed) ...['time', 'eth_signTypedData_v4', 'POST'],
+        ]);
       },
     );
   }

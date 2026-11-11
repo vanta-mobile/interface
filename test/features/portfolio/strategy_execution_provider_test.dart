@@ -69,7 +69,7 @@ void main() {
       expect(repository.calls, 1);
       expect(state().snapshot, isNotNull);
       expect(journal.snapshot.records.length, 1);
-      expect(container.read(symbolSettingsActivityProvider).recoveryBlocked, true);
+      expect(container.read(symbolSettingsActivityProvider).recoveryBlocked, false);
       expect(container.read(symbolSettingsActivityProvider).owner, null);
       expect(identity.wallets, 0);
     },
@@ -99,17 +99,17 @@ void main() {
     expect(container.read(symbolSettingsActivityProvider).owner, SymbolSetting.order);
     activity.finish(lease, unresolved: true);
     await controller().read();
-    expect(repository.calls, 0);
-    expect(container.read(symbolSettingsActivityProvider).unresolved, true);
+    expect(repository.calls, 1);
+    expect(container.read(symbolSettingsActivityProvider).unresolved, false);
   });
-  test('corrupt storage blocks signatures and remains blocking', () async {
+  test('corrupt diagnostic storage does not block explicit reads', () async {
     await setup();
     journal.publish(
       OrderRecoverySnapshot(failure: const AccountReadFailure('orderRecoveryStorage')),
     );
     await controller().read();
-    expect(repository.calls, 0);
-    expect(container.read(symbolSettingsActivityProvider).recoveryBlocked, true);
+    expect(repository.calls, 1);
+    expect(container.read(symbolSettingsActivityProvider).recoveryBlocked, false);
   });
   test('refresh failure preserves the prior snapshot, stale and retryable', () async {
     await setup();

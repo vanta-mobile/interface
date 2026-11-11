@@ -1,8 +1,10 @@
+import '../../support/order_confirmation_widget.dart';
 import '../../support/order_mode_widget.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/domain/live_order_attachment.dart';
@@ -107,18 +109,12 @@ void main() {
           }
           await fill(tester);
           await tap(tester, 'live-order-review');
-          final messages = l10n(tester), dialog = find.byType(AlertDialog);
+          final messages = l10n(tester), dialog = find.byType(OrderConfirmationDialog);
           expect(dialog, findsOneWidget); // default opening-mode preference requires review
           expect(repository.submits, 0);
-          expect(find.descendant(of: dialog, matching: find.text('OTOCO')), findsOneWidget);
-          expect(
-            find.descendant(of: dialog, matching: find.text(messages.attachedOrderLifecycle)),
-            findsOneWidget,
-          );
-          expect(
-            find.descendant(of: dialog, matching: find.text(messages.attachedOrderClientId)),
-            findsOneWidget,
-          );
+          for (final label in [messages.orderConfirmTakeProfit, messages.orderConfirmStopLoss]) {
+            expect(find.descendant(of: dialog, matching: find.text(label)), findsOneWidget);
+          }
           expect(
             find.descendant(of: dialog, matching: find.textContaining('≥ 81000 USDT')),
             findsOneWidget,
@@ -143,6 +139,7 @@ void main() {
           await tester.ensureVisible(confirm);
           await tester.tap(confirm);
           await tester.pumpAndSettle();
+          await dismissOrderConfirmation(tester);
           expect(repository.submits, 1);
           final attempted = repository.lastIntent!;
           expect(attempted.draft.attachment!.takeProfit!.price, '81000');
@@ -215,6 +212,7 @@ void main() {
     await tester.ensureVisible(confirm);
     await tester.tap(confirm);
     await tester.pumpAndSettle();
+    await dismissOrderConfirmation(tester);
     expect(repository.lastIntent!.draft.attachment, null);
     expect(repository.lastIntent!.draft.trailing!.callbackRate, '1');
     expect(tester.takeException(), null);

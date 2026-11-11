@@ -8,12 +8,14 @@ import 'trade_icon.dart';
 typedef TradeOption<T> = ({T value, String label, String? description});
 
 /// Single-choice action sheet from the Futures design (price type, units).
-/// Resolves to the chosen value, or null when dismissed.
+/// Resolves to the chosen value, or null when dismissed. [footer] is an
+/// optional explanatory note below the choices.
 Future<T?> showTradeOptionSheet<T>(
   BuildContext context, {
   required String title,
   required T selected,
   required List<TradeOption<T>> options,
+  String? footer,
   Key? key,
 }) => showModalBottomSheet<T>(
   context: context,
@@ -49,21 +51,32 @@ Future<T?> showTradeOptionSheet<T>(
           const Divider(height: 1, thickness: 1, color: TradeColors.line),
           const SizedBox(height: 8),
           for (final option in options)
-            _OptionRow(
+            TradeOptionRow(
               option: option,
               selected: option.value == selected,
               onTap: () => Navigator.pop(context, option.value),
             ),
+          if (footer != null) ...[
+            const SizedBox(height: 8),
+            Text(footer, style: TradeTypography.body.copyWith(color: TradeColors.muted)),
+          ],
         ],
       ),
     ),
   ),
 );
 
-class _OptionRow<T> extends StatelessWidget {
-  const _OptionRow({required this.option, required this.selected, required this.onTap});
+class TradeOptionRow<T> extends StatelessWidget {
+  const TradeOptionRow({
+    super.key,
+    required this.option,
+    required this.selected,
+    required this.onTap,
+    this.emphasizeSelected = true,
+  });
   final TradeOption<T> option;
   final bool selected;
+  final bool emphasizeSelected;
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => Semantics(
@@ -86,7 +99,7 @@ class _OptionRow<T> extends StatelessWidget {
                     Text(
                       option.label,
                       style: TradeTypography.option.copyWith(
-                        fontWeight: selected && option.description == null
+                        fontWeight: selected && emphasizeSelected && option.description == null
                             ? FontWeight.w700
                             : FontWeight.w500,
                       ),

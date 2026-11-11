@@ -75,7 +75,13 @@ class _AttachedExitInputControlsState extends State<AttachedExitInputControls> {
     final resolved = effective.resolve(widget.data, widget.entry);
     final reference = attachedEntryReference(widget.data, widget.entry);
     final label = name == 'tp' ? l10n.attachedOrderTakeProfit : l10n.attachedOrderStopLoss;
-    final issue = values[mode]!.text.isNotEmpty && resolved.failure != null
+    // Missing entry quantity/prices belong to the entry form, not to this
+    // already filled exit. Quote renewal must not flash a "please fill" error.
+    final needsEntry = const {
+      'attachedOrderPreviewUnavailable',
+      'liveOrderInvalidQuantity',
+    }.contains(resolved.failure);
+    final issue = values[mode]!.text.isNotEmpty && resolved.failure != null && !needsEntry
         ? l10n.attachedOrderExitIssue(
             label,
             resolved.failure == 'attachedOrderPriceDirection' && reference != null

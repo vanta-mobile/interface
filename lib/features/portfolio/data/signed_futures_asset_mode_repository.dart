@@ -7,6 +7,7 @@ import 'aster_account_mapper.dart';
 import 'package:decimal/decimal.dart';
 
 import 'futures_asset_mode_mapper.dart';
+import 'aster_open_orders_mapper.dart';
 import 'signed_account_request.dart';
 
 class SignedFuturesAssetModeRepository implements FuturesAssetModeRepository {
@@ -49,10 +50,15 @@ class SignedFuturesAssetModeRepository implements FuturesAssetModeRepository {
             .read(address: address, isCurrent: isCurrent, onStep: progress),
       );
       final receivedAt = now();
-      final isolatedSymbols = mapAssetModeIsolatedSymbols(
-        await _request(service.positionRisk)
+      final positionPayload = await _request(service.positionRisk)
+          .read(address: address, isCurrent: isCurrent, onStep: progress);
+      final orders = mapAsterOpenOrders(
+        await _request(service.openOrders)
             .read(address: address, isCurrent: isCurrent, onStep: progress),
+        address: address,
+        receivedAt: now(),
       );
+      final markets = mapAssetModeMarkets(positionPayload, orders: orders);
       Decimal? usdt;
       if (mode == FuturesAssetMode.multi) {
         final account = mapAsterAccount(
@@ -66,7 +72,11 @@ class SignedFuturesAssetModeRepository implements FuturesAssetModeRepository {
       return FuturesAssetModeContext(
         address: address,
         current: mode,
-        isolatedSymbols: isolatedSymbols,
+        isolatedSymbols: markets
+            .where((m) => m.requiresCross && m.blocked)
+            .map((m) => m.symbol)
+            .toList(),
+        markets: markets,
         receivedAt: receivedAt,
         usdtWalletBalance: usdt,
       );

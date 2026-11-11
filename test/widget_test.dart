@@ -22,7 +22,7 @@ void main() {
       expect(tester.getSize(find.byKey(const Key('chart-canvas-area'))).height, lessThan(400));
       expect(chart.volHidden, false);
       await selectWorkspace(tester, chart: false);
-      await tester.ensureVisible(find.byKey(const Key('live-order-read')));
+      await tester.ensureVisible(find.byKey(const Key('trade-pending-quantity')));
       await tester.pumpAndSettle();
       expect(tester.takeException(), null);
       await selectWorkspace(tester, chart: true);

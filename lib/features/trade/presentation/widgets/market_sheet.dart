@@ -11,7 +11,6 @@ import '../../../../l10n/generated/app_localizations.dart';
 import '../../../market/application/market_providers.dart';
 import '../../../market/application/market_selection_provider.dart';
 import '../../../market/domain/market_quote.dart';
-import '../../../market/domain/market_descriptor.dart';
 import '../../application/providers.dart';
 import 'market_list_row.dart';
 import 'market_list_skeleton.dart';
@@ -166,8 +165,6 @@ class MarketSheet extends ConsumerWidget {
             children: [
               if (selection.onlyFavorites && favorites.isEmpty)
                 StatusEmptyView(title: tr(context, 'emptyFavorites'))
-              else if (selection.category != MarketCategory.all && selection.query.trim().isEmpty)
-                StatusEmptyView(title: l10n.marketNoCategoryResults)
               else
                 StatusEmptyView(
                   title: l10n.statusNoResultsTitle,

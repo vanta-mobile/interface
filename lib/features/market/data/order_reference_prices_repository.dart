@@ -1,3 +1,6 @@
+import '../domain/market_price_failure.dart';
+import '../../portfolio/domain/account_snapshot.dart';
+
 import '../../../core/network/request_scope.dart';
 
 import 'dart:async';
@@ -28,6 +31,9 @@ class OrderReferencePricesRepository {
   late final StreamController<OrderReferencePrices> _output;
   StreamSubscription<Map<String, Object?>>? _subscription;
   Timer? _publishTimer, _freshnessTimer;
+  int? _loadingRevision;
+  DateTime? _lastRefresh;
+  AccountReadFailure? _bookFailure, _tradeFailure;
   OrderBookQuote? _book;
   OrderTradeQuote? _trade;
   int? _bookId, _serverTime;
@@ -67,6 +73,8 @@ class OrderReferencePricesRepository {
         : OrderPriceConnection.connecting,
     bookFresh: _bookVerified && _book != null && _fresh(_book!.eventTime, _book!.receivedAt),
     tradeFresh: _tradeVerified && _trade != null && _fresh(_trade!.eventTime, _trade!.receivedAt),
+    bookFailure: _bookFailure,
+    tradeFailure: _tradeFailure,
     bookFailed: _bookFailed,
     tradeFailed: _tradeFailed,
   );
@@ -99,7 +107,23 @@ class OrderReferencePricesRepository {
               if (current()) _disconnect();
             },
           );
-      _freshnessTimer = Timer.periodic(const Duration(seconds: 1), (_) => _publish());
+      _freshnessTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _publish();
+        // Supplement a silent channel before the ten-second receipt deadline.
+        // A REST response must still pass its original server event-age checks.
+        if (_connected &&
+            (_lastRefresh == null ||
+                _now().difference(_lastRefresh!) >= const Duration(seconds: 5))) {
+          final cutoff = _now().subtract(const Duration(seconds: 5));
+          if (_trade == null ||
+              _trade!.receivedAt.isBefore(cutoff) ||
+              !_tradeVerified ||
+              includeBook &&
+                  (_book == null || _book!.receivedAt.isBefore(cutoff) || !_bookVerified)) {
+            unawaited(_refresh(_revision));
+          }
+        }
+      });
     } catch (_) {
       _connected = _connecting = false;
     }
@@ -142,8 +166,10 @@ class OrderReferencePricesRepository {
           _bookId = quote.updateId;
           _bookVerified = true;
           _bookFailed = false;
+          _bookFailure = null;
         }
-      } on FormatException {
+      } on FormatException catch (error) {
+        _bookFailure = marketPriceFailure(error, 'livePriceBookInvalid');
         _bookVerified = false;
         _bookFailed = true;
       }
@@ -155,8 +181,10 @@ class OrderReferencePricesRepository {
           _trade = quote;
           _tradeVerified = true;
           _tradeFailed = false;
+          _tradeFailure = null;
         }
-      } on FormatException {
+      } on FormatException catch (error) {
+        _tradeFailure = marketPriceFailure(error, 'livePriceLastInvalid');
         _tradeVerified = false;
         _tradeFailed = true;
       }
@@ -191,19 +219,29 @@ class OrderReferencePricesRepository {
 
   Future<void> _refresh(int revision) async {
     bool current() => !_disposed && _active && _connected && revision == _revision;
+    if (!current() || _loadingRevision == revision) return;
+    _loadingRevision = revision;
+    _lastRefresh = _now();
     final baselineBook = _book, baselineTrade = _trade;
     try {
       final startedAt = _now();
-      final clock = await RequestScope.run(current, () => service.request('/fapi/v3/time'));
+      final clock = await RequestScope.runOwned(current, () => service.request('/fapi/v3/time'));
       if (!current()) return;
       final elapsed = _now().difference(startedAt);
       if (clock is! Map<String, dynamic> ||
           clock['serverTime'] is! int ||
           (clock['serverTime'] as int) <= 0 ||
-          (clock['serverTime'] as int) > 253402300799999 ||
-          elapsed.isNegative ||
-          elapsed >= const Duration(seconds: 10)) {
+          (clock['serverTime'] as int) > 253402300799999) {
         throw const FormatException();
+      }
+      if (elapsed.isNegative) {
+        throw const AccountReadFailure(
+          'liveCapacityPriceUnavailable',
+          reasonKey: 'livePriceClockUnavailable',
+        );
+      }
+      if (elapsed >= const Duration(seconds: 10)) {
+        throw TimeoutException('Public clock verification exceeded its freshness budget');
       }
       _serverTime = clock['serverTime'] as int;
       _clockAt = _now();
@@ -214,53 +252,94 @@ class OrderReferencePricesRepository {
         if (includeBook) _readBook(current, baselineBook, _bookRevision),
         _readTrade(current, baselineTrade, _tradeRevision),
       ]);
-    } catch (_) {
-      if (current()) _bookFailed = _tradeFailed = true;
+    } catch (error) {
+      if (current()) {
+        _bookFailed = _tradeFailed = true;
+        _bookFailure = _tradeFailure = marketPriceFailure(
+          error,
+          'livePriceClockUnavailable',
+          endpoint: '/fapi/v3/time',
+        );
+      }
     } finally {
+      if (_loadingRevision == revision) _loadingRevision = null;
       if (current()) _publish();
     }
   }
 
   Future<void> _readBook(bool Function() current, OrderBookQuote? baseline, int revision) async {
     try {
-      final raw = await RequestScope.run(
+      final raw = await RequestScope.runOwned(
         current,
         () => service.request('/fapi/v3/ticker/bookTicker', {'symbol': symbol}),
       );
       if (!current()) return;
       final quote = mapOrderBookQuote(raw, symbol: symbol, receivedAt: _now());
       if (!identical(_book, baseline) || revision != _bookRevision) return;
-      if (!_acceptBook(quote, rest: true)) throw const FormatException();
+      if (!_acceptBook(quote, rest: true)) {
+        // REST may lag the socket. Do not invalidate a still-usable quote or
+        // renew its receipt merely because a well-formed older snapshot arrived.
+        if (state.bookFresh) return;
+        throw _unusableQuote(quote.eventTime, 'livePriceBookStale');
+      }
       _book = quote;
       _bookVerified = true;
       _bookFailed = false;
-    } catch (_) {
+      _bookFailure = null;
+    } catch (error) {
       if (current() && identical(_book, baseline) && revision == _bookRevision) {
         _bookVerified = false;
         _bookFailed = true;
+        _bookFailure = marketPriceFailure(
+          error,
+          'livePriceBookInvalid',
+          endpoint: '/fapi/v3/ticker/bookTicker',
+        );
       }
     }
   }
 
   Future<void> _readTrade(bool Function() current, OrderTradeQuote? baseline, int revision) async {
     try {
-      final raw = await RequestScope.run(
+      final raw = await RequestScope.runOwned(
         current,
         () => service.request('/fapi/v3/trades', {'symbol': symbol, 'limit': '1'}),
       );
       if (!current()) return;
       final quote = mapOrderTradeQuote(raw, symbol: symbol, receivedAt: _now());
       if (!identical(_trade, baseline) || revision != _tradeRevision) return;
-      if (!_acceptTrade(quote, rest: true)) throw const FormatException();
+      if (!_acceptTrade(quote, rest: true)) {
+        if (state.tradeFresh) return;
+        throw _unusableQuote(quote.eventTime, 'livePriceLastStale');
+      }
       _trade = quote;
       _tradeVerified = true;
       _tradeFailed = false;
-    } catch (_) {
+      _tradeFailure = null;
+    } catch (error) {
       if (current() && identical(_trade, baseline) && revision == _tradeRevision) {
         _tradeVerified = false;
         _tradeFailed = true;
+        _tradeFailure = marketPriceFailure(
+          error,
+          'livePriceLastInvalid',
+          endpoint: '/fapi/v3/trades',
+        );
       }
     }
+  }
+
+  AccountReadFailure _unusableQuote(DateTime eventTime, String staleReason) {
+    final elapsed = _now().difference(_clockAt!);
+    final serverAge = _serverTime! + elapsed.inMilliseconds - eventTime.millisecondsSinceEpoch;
+    return AccountReadFailure(
+      'liveCapacityPriceUnavailable',
+      reasonKey: elapsed.isNegative
+          ? 'livePriceClockUnavailable'
+          : serverAge < -10000
+          ? 'livePriceTimestampInvalid'
+          : staleReason,
+    );
   }
 
   Future<void> _stop() async {

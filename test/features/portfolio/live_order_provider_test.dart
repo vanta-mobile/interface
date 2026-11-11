@@ -187,15 +187,14 @@ void main() {
     expect(container.read(liveOrderProvider).stale, true);
     expect(container.read(symbolSettingsActivityProvider).owner, null);
   });
-  test('unknown outcome holds lease and recheck retains ID without resubmission', () async {
+  test('unknown outcome releases lease and explicit recheck retains original ID', () async {
     await controller().load('BTCUSDT');
     final old = intent();
     repository.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
     await controller().submit(old);
     expect(container.read(liveOrderProvider).needsRecheck, true);
-    expect(container.read(symbolSettingsActivityProvider).unresolved, true);
-    await controller().load('BTCUSDT');
-    expect(repository.reads, 1);
+    expect(container.read(symbolSettingsActivityProvider).unresolved, false);
+    expect(container.read(symbolSettingsActivityProvider).owner, isNull);
     repository.result = LiveOrderResult(
       orderId: '12345',
       status: 'NEW',
@@ -207,13 +206,26 @@ void main() {
     expect(repository.checks, 1);
     expect(container.read(symbolSettingsActivityProvider).owner, null);
   });
+  test('unknown order permits a fresh read and a newly confirmed intent', () async {
+    await controller().load('BTCUSDT');
+    final original = intent();
+    repository.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
+    await controller().submit(original);
+    await controller().load('BTCUSDT');
+    final next = intent();
+    expect(next.clientOrderId, isNot(original.clientOrderId));
+    expect(repository.reads, 2);
+    expect(repository.submits, 1);
+    await controller().submit(next);
+    expect(repository.submits, 2);
+  });
   test('unexpected exception after submission also stays query-only', () async {
     await controller().load('BTCUSDT');
     repository.failure = const AccountReadFailure('accountNetwork');
     repository.throwAfterSubmit = true;
     await controller().submit(intent());
     expect(container.read(liveOrderProvider).needsRecheck, true);
-    expect(container.read(symbolSettingsActivityProvider).unresolved, true);
+    expect(container.read(symbolSettingsActivityProvider).unresolved, false);
   });
   test('wallet change discards late callbacks and creates no extra wallet', () async {
     await controller().load('BTCUSDT');

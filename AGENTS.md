@@ -51,7 +51,8 @@ Adapted from `/data/dodo/rwa-interface/.specify/memory/constitution.md` v1.1.1 a
 ## Verification and dependencies
 - Supported application platforms are Android and iOS only. Keep responsive layouts for phones, tablets, and landscape; Web is not a build or acceptance target.
 - Record behavior, boundaries, and acceptance checks in `docs/implementation.md`.
-- Before completion run formatting, static analysis, relevant unit/widget tests, and an Android build. Verify native layouts visually when device tooling is available. Verify iOS builds when macOS / Xcode is available and record any environment limitation.
+- Before completion run formatting, static analysis, and relevant unit/widget tests.
+- Unless the user explicitly requests it, do not launch, hot reload, hot restart, or package/build the app for testing, and do not test on physical devices or emulators. Run native visual checks and Android/iOS builds only when explicitly requested; record actual verification and any environment limitations.
 - Dependencies need a specific purpose. `k_chart_plus` is required for the candlestick chart; Riverpod owns application state, HTTP/WebSocket clients own public market transport, and decimal owns financial arithmetic.
 
 ## Git commit messages

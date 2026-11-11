@@ -43,12 +43,19 @@ List<LeverageBracket> mapLeverageBrackets(Object? payload, String symbol) {
 
   final result = <LeverageBracket>[];
   for (final row in data['brackets'] as List) {
-    if (row is! Map<String, dynamic> ||
-        row['bracket'] != result.length + 1 ||
-        row['initialLeverage'] is! int) {
+    if (row is! Map<String, dynamic>) throw const FormatException('Invalid bracket');
+    int whole(Object? value) {
+      if (value is int) return value;
+      if (value is String && RegExp(r'^[1-9]\d{0,3}$').hasMatch(value)) {
+        return int.parse(value);
+      }
+      throw const FormatException('Invalid bracket integer');
+    }
+
+    if (whole(row['bracket']) != result.length + 1) {
       throw const FormatException('Invalid bracket');
     }
-    final maximum = row['initialLeverage'] as int;
+    final maximum = whole(row['initialLeverage']);
     final floor = amount(row['notionalFloor']), cap = amount(row['notionalCap']);
     if (maximum < 1 ||
         maximum > 9999 ||

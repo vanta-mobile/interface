@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/core/errors/api_error_details.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
@@ -13,6 +14,50 @@ import '../../support/aster_account.dart';
 import '../../support/wallet_connection.dart';
 
 void main() {
+  test('malformed JSON identifies its endpoint without carrying signed query bytes', () async {
+    final service = AsterAccountService(
+      client: MockClient((_) async => http.Response('<html>', 200)),
+    );
+    addTearDown(service.close);
+    await expectLater(
+      service.account(
+        query: 'nonce=1&user=private-owner',
+        signature: TestWalletConnection.signature,
+      ),
+      throwsA(
+        isA<AccountReadFailure>()
+            .having((e) => e.details?.cause, 'cause', ApiErrorCause.invalidResponse)
+            .having((e) => e.details?.status, 'status', 200)
+            .having((e) => e.details?.endpoint, 'safe endpoint', AsterAccountService.accountPath)
+            .having((e) => e.details?.message, 'no raw body', isNull),
+      ),
+    );
+  });
+
+  test('deposit-required account stops before dependent contract metadata is queried', () async {
+    final paths = <String>[];
+    final service = AsterAccountService(
+      client: MockClient((request) async {
+        paths.add(request.url.path);
+        return switch (request.url.path) {
+          '/fapi/v3/time' => http.Response('{"serverTime":1793620800123}', 200),
+          AsterAccountService.accountPath => http.Response('{"code":-5050}', 400),
+          _ => throw StateError('Unexpected request'),
+        };
+      }),
+    );
+    addTearDown(service.close);
+    final repository = SignedAccountRepository(
+      service,
+      ({required expectedAddress, required typedData}) async => TestWalletConnection.signature,
+    );
+    await expectLater(
+      repository.read(address: accountAddress, isCurrent: () => true, onStep: (_) {}),
+      throwsA(isA<AccountReadFailure>().having((e) => e.requiresDeposit, 'requiresDeposit', true)),
+    );
+    expect(paths, ['/fapi/v3/time', AsterAccountService.accountPath]);
+  });
+
   test('account without positions still loads metadata for later account events', () async {
     final payload = accountPayload()..['positions'] = <Object?>[];
     final service = AsterAccountService(

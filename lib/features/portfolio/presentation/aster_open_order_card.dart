@@ -1,97 +1,262 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../market/domain/market_precision.dart';
-import '../../trade/presentation/widgets/primitives.dart';
+import '../../trade/presentation/trade_theme.dart';
+import '../../trade/presentation/widgets/coin_icon.dart';
+import '../../trade/presentation/widgets/trade_icon.dart';
+import '../application/order_explorer_provider.dart';
 import '../domain/aster_open_orders.dart';
+import 'open_order_details_sheet.dart';
+import 'open_order_labels.dart';
+import 'portfolio_components.dart';
 
 class AsterOpenOrderCard extends StatelessWidget {
-  const AsterOpenOrderCard({super.key, required this.order, this.onCancel});
+  const AsterOpenOrderCard({
+    super.key,
+    required this.order,
+    this.leverage,
+    this.strategy,
+    this.onCancel,
+    this.onViewChart,
+  });
   final AsterOpenOrder order;
+  final int? leverage;
+
+  /// OTO/OTOCO linkage: entry orders show their TP/SL, exit legs their strategy.
+  final OpenOrderStrategy? strategy;
   final VoidCallback? onCancel;
+
+  /// Shown only while the chart displays a different symbol.
+  final VoidCallback? onViewChart;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final base = order.units?.base ?? l10n.accountUnitUnavailable;
     final quote = order.units?.quote ?? l10n.accountUnitUnavailable;
-    String amount(Decimal value, String unit) => '${marketNumber(value)} $unit';
-    return Panel(
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Wrap(
-            spacing: 12,
-            runSpacing: 6,
-            crossAxisAlignment: WrapCrossAlignment.center,
+    final trailing = isTrailingOrder(order);
+    final value = order.limitNotional;
+    return Material(
+      key: Key('open-order-${order.symbol}-${order.orderId}'),
+      type: MaterialType.transparency,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => showOpenOrderDetails(context, order),
+        child: PortfolioCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SelectableText(order.symbol, style: Theme.of(context).textTheme.titleMedium),
-              Text(
-                order.side == 'BUY' ? l10n.openOrdersBuy : l10n.openOrdersSell,
-                style: TextStyle(
-                  color: order.side == 'BUY' ? AppColors.positive : AppColors.negative,
-                ),
+              _Header(order: order, onViewChart: onViewChart),
+              const SizedBox(height: 8),
+              _Tags(order: order, leverage: leverage),
+              const SizedBox(height: 20),
+              _AmountBlock(
+                label: l10n.openOrdersAmountUnit(base),
+                amount: order.closePosition
+                    ? l10n.openOrdersClosePosition
+                    : '${marketNumber(order.executedQty)} / ${marketNumber(order.origQty)}',
+                priceLabel: l10n.openOrdersOrderPrice,
+                price: openOrderPrice(l10n, order),
               ),
-              Text(_positionSide(l10n, order.positionSide)),
+              _Row(
+                l10n.openOrdersOrderValue,
+                value == null ? openOrderPlaceholder : '${marketNumber(value)} $quote',
+              ),
+              if (trailing) ...[
+                if (order.activatePrice case final price? when price > Decimal.zero)
+                  _Row(l10n.openOrdersActivationPrice, '${marketNumber(price)} $quote'),
+                if (order.priceRate case final rate?)
+                  _Row(l10n.openOrdersCallbackRate, '${marketNumber(rate)}%'),
+              ] else
+                _Row(
+                  l10n.openOrdersTriggerPrice,
+                  openOrderTrigger(l10n, order) ?? openOrderPlaceholder,
+                ),
+              if (isConditionalOrder(order) || order.reduceOnly)
+                _Row(
+                  l10n.openOrdersReduceOnly,
+                  order.reduceOnly || order.closePosition ? l10n.openOrdersYes : l10n.openOrdersNo,
+                ),
+              if (strategy case final linked? when linked.entry && linked.hasExits)
+                _TpSlRow(label: l10n.openOrdersTpSl, strategy: linked),
+              if (strategy case final linked? when !linked.entry)
+                _Row(
+                  l10n.openOrdersLinkedOrder,
+                  linked.strategyId,
+                  color: TradeColors.warning,
+                  copyable: true,
+                ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: Consumer(
+                      builder: (context, ref, _) => OpenOrderChipButton(
+                        key: Key('open-order-explorer-${order.symbol}-${order.orderId}'),
+                        label: l10n.openOrdersViewExplorer,
+                        onPressed: order.transactionHash == null
+                            ? null
+                            : () => ref.read(orderExplorerLauncherProvider)(
+                                orderExplorerUri(order.transactionHash!),
+                              ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OpenOrderChipButton(
+                      key: Key('cancel-order-${order.symbol}-${order.orderId}'),
+                      label: l10n.cancel,
+                      onPressed: onCancel,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: 8),
-          ValueRow(l10n.openOrdersOrderType, _orderType(l10n, order)),
-          ValueRow(
-            l10n.openOrdersStatus,
-            order.status == 'NEW' ? l10n.openOrdersNew : l10n.openOrdersPartiallyFilled,
-          ),
-          ValueRow(
-            l10n.openOrdersCreatedLocal,
-            order.time == null
-                ? l10n.openOrdersCreationUnknown
-                : DateFormat('MM-dd HH:mm:ss').format(order.time!.toLocal()),
-          ),
-          if (order.updatedAt case final time?)
-            ValueRow(
-              l10n.openOrdersUpdatedUTC,
-              DateFormat('yyyy-MM-dd HH:mm:ss').format(time.toUtc()),
+        ),
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({required this.order, required this.onViewChart});
+  final AsterOpenOrder order;
+  final VoidCallback? onViewChart;
+  @override
+  Widget build(BuildContext context) {
+    final units = order.units;
+    final base = units?.base;
+    final quote = units != null && order.symbol == '${units.base}${units.quote}'
+        ? units.quote
+        : null;
+    return Row(
+      children: [
+        CoinIcon(base: base ?? order.symbol, size: 24),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(text: quote == null ? order.symbol : base),
+                if (quote != null)
+                  TextSpan(
+                    text: quote,
+                    style: const TextStyle(color: TradeColors.secondary),
+                  ),
+              ],
             ),
-          ValueRow(
-            l10n.openOrdersFilledTotal,
-            order.closePosition
-                ? l10n.openOrdersClosePosition
-                : '${amount(order.executedQty, base)} / ${amount(order.origQty, base)}',
+            style: TradeTypography.heading,
+            overflow: TextOverflow.ellipsis,
           ),
-          ValueRow(
-            l10n.openOrdersRemaining,
-            order.closePosition ? '—' : amount(order.remainingQty, base),
+        ),
+        if (onViewChart != null)
+          IconButton(
+            key: Key('open-order-chart-${order.symbol}-${order.orderId}'),
+            tooltip: AppLocalizations.of(context).openOrdersViewChart(order.symbol),
+            onPressed: onViewChart,
+            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+            padding: EdgeInsets.zero,
+            icon: const TradeIcon('order-chart', color: TradeColors.text),
           ),
-          ValueRow(l10n.openOrdersOrderPrice, _price(l10n, order, quote)),
-          if (order.limitNotional case final value?)
-            ValueRow(l10n.openOrdersOrderValue, amount(value, quote)),
-          if ((order.originalType ?? order.type) == 'TRAILING_STOP_MARKET') ...[
-            if (order.activatePrice case final value? when value > Decimal.zero)
-              ValueRow(l10n.openOrdersActivationPrice, amount(value, quote)),
-            if (order.priceRate case final value?)
-              ValueRow(l10n.openOrdersCallbackRate, '${marketNumber(value)}%'),
-          ] else if (order.stopPrice case final value? when value > Decimal.zero)
-            ValueRow(
-              l10n.openOrdersTriggerPrice,
-              '${amount(value, quote)} · ${switch (order.workingType) {
-                'MARK_PRICE' => l10n.openOrdersMarkPrice,
-                'CONTRACT_PRICE' => l10n.openOrdersLastPrice,
-                _ => l10n.openOrdersUnknownTrigger,
-              }}',
+      ],
+    );
+  }
+}
+
+class _Tags extends StatelessWidget {
+  const _Tags({required this.order, required this.leverage});
+  final AsterOpenOrder order;
+  final int? leverage;
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final buy = order.side == 'BUY';
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _Tag(
+          buy ? l10n.openOrdersBuy : l10n.openOrdersSell,
+          color: buy ? TradeColors.positive : TradeColors.negative,
+          background: buy ? TradeColors.buyLabel : TradeColors.sellLabel,
+        ),
+        _Tag(openOrderType(l10n, order)),
+        if (leverage case final value?) _Tag('${value}x'),
+        Text(
+          order.time == null
+              ? l10n.openOrdersCreationUnknown
+              : DateFormat('MM-dd HH:mm:ss').format(order.time!.toLocal()),
+          style: TradeTypography.tag.copyWith(color: TradeColors.secondary),
+        ),
+      ],
+    );
+  }
+}
+
+class _Tag extends StatelessWidget {
+  const _Tag(this.label, {this.color = TradeColors.text, this.background = TradeColors.card});
+  final String label;
+  final Color color, background;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+    decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(8)),
+    child: Text(label, style: TradeTypography.tag.copyWith(color: color)),
+  );
+}
+
+class _AmountBlock extends StatelessWidget {
+  const _AmountBlock({
+    required this.label,
+    required this.amount,
+    required this.priceLabel,
+    required this.price,
+  });
+  final String label, amount, priceLabel, price;
+  static const _value = TextStyle(
+    fontFamily: 'Inter',
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w500,
+    color: TradeColors.text,
+  );
+  @override
+  Widget build(BuildContext context) {
+    final caption = TradeTypography.body.copyWith(color: TradeColors.secondary);
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(color: TradeColors.sheet, borderRadius: BorderRadius.circular(8)),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: caption),
+                const SizedBox(height: 4),
+                Text(amount, style: _value),
+              ],
             ),
-          if (order.reduceOnly)
-            Text(l10n.openOrdersReduceOnly, style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 8),
-          Text(l10n.orderId, style: Theme.of(context).textTheme.bodySmall),
-          SelectableText(order.orderId, key: Key('open-order-${order.symbol}-${order.orderId}')),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            key: Key('cancel-order-${order.symbol}-${order.orderId}'),
-            onPressed: onCancel,
-            child: Text(l10n.orderCancelTitle),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(priceLabel, style: caption, textAlign: TextAlign.end),
+                const SizedBox(height: 4),
+                Text(price, style: _value, textAlign: TextAlign.end),
+              ],
+            ),
           ),
         ],
       ),
@@ -99,33 +264,98 @@ class AsterOpenOrderCard extends StatelessWidget {
   }
 }
 
-String _positionSide(AppLocalizations l10n, String value) => switch (value) {
-  'LONG' => l10n.openOrdersLongSide,
-  'SHORT' => l10n.openOrdersShortSide,
-  _ => l10n.openOrdersOneWay,
-};
-
-String _orderType(AppLocalizations l10n, AsterOpenOrder order) {
-  if (order.timeInForce == 'HIDDEN') return l10n.openOrdersHidden;
-  return switch (order.originalType ?? order.type) {
-    'LIMIT' => l10n.openOrdersLimit,
-    'MARKET' => l10n.openOrdersMarket,
-    'STOP' => l10n.openOrdersStopLimit,
-    'STOP_MARKET' => l10n.openOrdersStopMarket,
-    'TAKE_PROFIT' => l10n.openOrdersTakeProfitLimit,
-    'TAKE_PROFIT_MARKET' => l10n.openOrdersTakeProfitMarket,
-    'TRAILING_STOP_MARKET' => l10n.openOrdersTrailingStop,
-    _ => l10n.openOrdersOtherType,
-  };
+class _Row extends StatelessWidget {
+  const _Row(this.label, this.value, {this.color, this.copyable = false});
+  final String label, value;
+  final Color? color;
+  final bool copyable;
+  @override
+  Widget build(BuildContext context) {
+    final style = TradeTypography.body.copyWith(color: color);
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(label, style: TradeTypography.body.copyWith(color: TradeColors.secondary)),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: copyable
+                ? SelectableText(value, style: style, textAlign: TextAlign.end)
+                : Text(value, style: style, textAlign: TextAlign.end),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-String _price(AppLocalizations l10n, AsterOpenOrder order, String quote) {
-  if (order.pegPriceType != null && order.price == Decimal.zero) {
-    return l10n.openOrdersBbo;
+class _TpSlRow extends StatelessWidget {
+  const _TpSlRow({required this.label, required this.strategy});
+  final String label;
+  final OpenOrderStrategy strategy;
+  @override
+  Widget build(BuildContext context) {
+    TextSpan price(Decimal? value, Color color) => TextSpan(
+      text: value == null ? openOrderPlaceholder : marketNumber(value),
+      style: TextStyle(color: value == null ? TradeColors.text : color),
+    );
+    return Padding(
+      key: const Key('open-order-tpsl'),
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(label, style: TradeTypography.body.copyWith(color: TradeColors.secondary)),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  price(strategy.takeProfit, TradeColors.positive),
+                  const TextSpan(text: ' / '),
+                  price(strategy.stopLoss, TradeColors.negative),
+                ],
+              ),
+              style: TradeTypography.body,
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
+    );
   }
-  if (order.price > Decimal.zero) return '${marketNumber(order.price)} $quote';
-  if (order.type == 'MARKET' || order.type.endsWith('_MARKET')) {
-    return l10n.openOrdersMarket;
-  }
-  return '—';
+}
+
+/// Full-width card action from the design ("Chip"): 32 px tall, raised fill.
+class OpenOrderChipButton extends StatelessWidget {
+  const OpenOrderChipButton({super.key, required this.label, required this.onPressed});
+  final String label;
+  final VoidCallback? onPressed;
+  @override
+  Widget build(BuildContext context) => OutlinedButton(
+    onPressed: onPressed,
+    style: OutlinedButton.styleFrom(
+      minimumSize: const Size.fromHeight(32),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      tapTargetSize: MaterialTapTargetSize.padded,
+      backgroundColor: TradeColors.control,
+      foregroundColor: TradeColors.text,
+      disabledBackgroundColor: TradeColors.control.withValues(alpha: .5),
+      disabledForegroundColor: TradeColors.muted,
+      side: const BorderSide(color: TradeColors.line),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      textStyle: const TextStyle(
+        fontFamily: 'Inter',
+        fontSize: 13,
+        height: 18 / 13,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+    child: Text(label),
+  );
 }

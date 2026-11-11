@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/core/errors/api_error_details.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:vanta/features/portfolio/data/aster_account_service.dart';
@@ -33,11 +34,15 @@ void main() {
   late bool current, multi, dual;
   late int reject;
   late DateTime clock;
+  late int metadataPadding;
+  String? malformedAt;
   void Function()? afterSign;
   void Function(http.Request)? afterHttp;
   Matcher failure(String key) =>
       throwsA(isA<AccountReadFailure>().having((e) => e.key, 'safe failure', key));
   setUp(() {
+    metadataPadding = 0;
+    malformedAt = null;
     requests = [];
     messages = [];
     context = capacityContext();
@@ -82,12 +87,14 @@ void main() {
         expect(r.url.origin, 'https://fapi.asterdex.com');
         expect(r.followRedirects, false);
         expect(r.body, isEmpty);
+        if (r.url.path == malformedAt) return http.Response('invalid json', 200);
         Object? payload;
         switch (r.url.path) {
           case '/fapi/v3/time':
             payload = {'serverTime': liveOrderClock.millisecondsSinceEpoch};
           case '/fapi/v3/exchangeInfo':
             payload = {
+              'metadata': 'x' * metadataPadding,
               'symbols': [
                 for (final e in capacityUnits().entries)
                   {
@@ -169,6 +176,7 @@ void main() {
         '/fapi/v3/commissionRate',
       ]);
       expect(messages.length, 6);
+      expect(requests.where((r) => r.url.path.endsWith('/time')).length, 1);
       expect(result.marketFacts!.takerFee, Decimal.parse('0.0004'));
       for (var i = 0; i < signed.length; i++) {
         final p = signed[i].url.queryParameters;
@@ -191,6 +199,22 @@ void main() {
       expect(requests.any((r) => r.url.path.contains('assetIndex')), false);
     },
   );
+  test('account-wide exchange metadata above 256 KB completes capacity read', () async {
+    metadataPadding = 900000;
+    ((risks as List).first['brackets'] as List).last['cum'] = '49.99';
+    for (final row in ((risks as List).first as Map)['brackets'] as List) {
+      row['initialLeverage'] = '${row['initialLeverage']}';
+      row['bracket'] = '${row['bracket']}';
+    }
+    final snapshot = await repository.read(
+      context: context,
+      isCurrent: () => current,
+      onStep: (_) {},
+    );
+    expect(snapshot.context.symbol, 'BTCUSDT');
+    expect(requests.any((r) => r.url.path.endsWith('/commissionRate')), true);
+  });
+
   test('actual signed snapshot feeds both production liquidation previews', () async {
     final snapshot = await repository.read(
       context: context,
@@ -225,10 +249,38 @@ void main() {
   ]) {
     test('invalid signed commission data fails safely: $invalid', () async {
       commission = invalid;
-      await expectLater(read(), failure('accountDataInvalid'));
+      await expectLater(
+        read(),
+        throwsA(
+          isA<AccountReadFailure>()
+              .having((e) => e.key, 'failure', 'accountDataInvalid')
+              .having((e) => e.details?.cause, 'cause', ApiErrorCause.invalidResponse)
+              .having((e) => e.details?.endpoint, 'endpoint', '/fapi/v3/commissionRate'),
+        ),
+      );
       expect(messages.length, 6);
     });
   }
+  for (final endpoint in [
+    '/fapi/v3/exchangeInfo',
+    AsterAccountService.accountPath,
+    '/fapi/v3/leverageBrackets',
+    '/fapi/v3/commissionRate',
+  ]) {
+    test('malformed read response names $endpoint and never writes an order', () async {
+      malformedAt = endpoint;
+      await expectLater(
+        read(),
+        throwsA(
+          isA<AccountReadFailure>()
+              .having((e) => e.details?.cause, 'cause', ApiErrorCause.invalidResponse)
+              .having((e) => e.details?.endpoint, 'endpoint', endpoint),
+        ),
+      );
+      expect(requests.every((r) => r.method == 'GET'), isTrue);
+    });
+  }
+
   test('numeric JSON commission is preserved by exact financial decoding', () async {
     commission = {'symbol': 'BTCUSDT', 'takerCommissionRate': 0.001};
     final snapshot = await repository.read(

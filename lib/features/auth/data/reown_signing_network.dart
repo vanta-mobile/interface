@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:reown_appkit/reown_appkit.dart';
 
 import '../domain/auth_session.dart';
+import 'reown_wallet_namespaces.dart';
 
-/// One network request, followed by approval reconciliation. No add-chain or
-/// signature retry is inferred from a failed switch.
+/// Prepare the signing network before obtaining a short-lived authorization
+/// nonce. Only explicit 4902 permits adding the known BNB network once.
 Future<void> prepareReownSigningNetwork({
   required ReownAppKitModal modal,
   required String address,
@@ -38,19 +39,49 @@ Future<void> prepareReownSigningNetwork({
     throw const AuthFailure('authWalletSigningNetwork');
   }
   final clock = Stopwatch()..start();
-  await modal
-      .request(
-        topic: topic,
-        chainId: 'eip155:$fromChain',
-        switchToChainId: target,
-        request: SessionRequestParams(
-          method: 'wallet_switchEthereumChain',
-          params: [
-            {'chainId': '0x${chainId.toRadixString(16)}'},
-          ],
-        ),
-      )
-      .timeout(timeout);
+  Future<dynamic> request(String method, List<Object?> params) async {
+    current();
+    final remaining = timeout - clock.elapsed;
+    if (remaining <= Duration.zero) throw TimeoutException('Wallet network approval timed out');
+    return modal
+        .request(
+          topic: topic,
+          chainId: approved() && modal.selectedChain?.chainId == target
+              ? target
+              : 'eip155:$fromChain',
+          switchToChainId: target,
+          request: SessionRequestParams(method: method, params: params),
+        )
+        .timeout(remaining);
+  }
+
+  Future<dynamic> switchNetwork() => request('wallet_switchEthereumChain', [
+    {'chainId': '0x${chainId.toRadixString(16)}'},
+  ]);
+  try {
+    await switchNetwork();
+  } catch (error) {
+    current();
+    final code = switch (error) {
+      JsonRpcError(:final code) => code,
+      ReownSignError(:final code) => code,
+      _ => null,
+    };
+    if (code != 4902) rethrow;
+    final parameters = signingNetworkParameters(chainId);
+    if (parameters == null ||
+        modal.session
+                ?.getApprovedMethods(namespace: 'eip155')
+                ?.contains('wallet_addEthereumChain') !=
+            true) {
+      throw const AuthFailure('authWalletSigningNetwork');
+    }
+    await request('wallet_addEthereumChain', [parameters]);
+    current();
+    // Adding a chain is not proof that it is selected or authorized. Some
+    // wallets select it during approval; others require an explicit switch.
+    if (!approved() || modal.selectedChain?.chainId != target) await switchNetwork();
+  }
   current();
   // WalletConnect session approval may arrive after the switch RPC response.
   while (!approved()) {

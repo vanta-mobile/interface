@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/refresh_batch.dart';
 import '../../auth/application/auth_provider.dart';
+import '../../funding/application/funding_activity_poll_provider.dart';
 import '../data/portfolio_preview.dart';
 import '../domain/portfolio_overview.dart';
 import '../domain/asset_valuation.dart';
@@ -83,7 +84,10 @@ final portfolioRefreshProvider = Provider<Future<void> Function()>((ref) {
     if (ref.read(portfolioPreviewProvider)) return;
     await batch.run([
       if (!ref.read(authProvider).needsWalletConnection)
-        ref.read(accountReadProvider.notifier).refresh,
+        () async {
+          await ref.read(accountReadProvider.notifier).refresh();
+          if (ref.mounted) await ref.read(refreshFundingActivityProvider)();
+        },
       if (!ref.read(authProvider).needsWalletConnection)
         ref.read(assetIndexProvider.notifier).refresh,
       ref.read(assetMetadataRefreshProvider),

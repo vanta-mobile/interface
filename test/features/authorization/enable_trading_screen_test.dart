@@ -96,6 +96,54 @@ Future<ProviderContainer> _launch(
 }
 
 void main() {
+  testWidgets('wallet change while awaiting a callback leaves the next sign button responsive', (
+    tester,
+  ) async {
+    final identity = _IdentityRepository()
+      ..restored = const AuthIdentity(
+        id: 'first-external',
+        walletAddress: '0x1111111111111111111111111111111111111111',
+        walletKind: WalletKind.external,
+        signingAvailable: true,
+      );
+    final oldGate = Completer<void>();
+    final authorization = TestTradingAuthorizationRepository()..enableGate = oldGate;
+    final container = await _launch(
+      tester,
+      identity: identity,
+      authorization: authorization,
+      direct: true,
+    );
+    final sign = find.byKey(const Key('enable-trading-sign'));
+    await tester.tap(sign);
+    await tester.pump();
+    expect(tester.widget<AuthActionButton>(sign).busy, true);
+    identity.events.add(
+      const AuthIdentity(
+        id: 'second-external',
+        walletAddress: '0x2222222222222222222222222222222222222222',
+        walletKind: WalletKind.external,
+        signingAvailable: true,
+      ),
+    );
+    await tester.pump();
+    expect(tester.widget<AuthActionButton>(sign).busy, false);
+    final nextGate = authorization.enableGate = Completer<void>();
+    await tester.tap(sign);
+    await tester.pump();
+    expect(authorization.enables, 2);
+    expect(tester.widget<AuthActionButton>(sign).busy, true);
+    oldGate.complete();
+    await tester.pump();
+    expect(container.read(tradingAuthorizationProvider).busy, true);
+    await tester.tap(sign);
+    await tester.pump();
+    expect(authorization.enables, 2);
+    nextGate.complete();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('enable-trading-page')), findsNothing);
+  });
+
   for (final social in SocialLoginProvider.values) {
     testWidgets('$social login automatically enables trading and returns home', (tester) async {
       final identity = _IdentityRepository();
@@ -167,7 +215,7 @@ void main() {
     await _launch(tester, identity: identity, authorization: authorization, direct: true);
     await tester.tap(find.byKey(const Key('enable-trading-sign')));
     await tester.pumpAndSettle();
-    expect(find.text('Signature declined'), findsOneWidget);
+    expect(find.text('Wallet response: Signature declined'), findsOneWidget);
     expect(find.textContaining('0x1111…1111'), findsOneWidget);
     authorization.failure = null;
     await tester.tap(find.byKey(const Key('enable-trading-sign')));

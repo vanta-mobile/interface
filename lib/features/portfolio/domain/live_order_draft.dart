@@ -59,6 +59,21 @@ class LiveOrderDraft {
     attachment: attachment,
     peg: peg,
   );
+  LiveOrderDraft withAttachment(LiveOrderAttachment? value) => LiveOrderDraft(
+    buy: buy,
+    market: market,
+    quantity: quantity,
+    price: price,
+    reduceOnly: reduceOnly,
+    closingSide: closingSide,
+    timeInForce: timeInForce,
+    trigger: trigger,
+    entireClose: entireClose,
+    trailing: trailing,
+    quickEntry: quickEntry,
+    attachment: value,
+    peg: peg,
+  );
   final bool buy, market;
   final String quantity, price;
   final bool reduceOnly;

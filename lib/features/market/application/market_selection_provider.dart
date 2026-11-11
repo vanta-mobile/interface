@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../domain/market_descriptor.dart';
 import '../domain/market_quote.dart';
 import '../domain/market_selection.dart';
 import 'market_providers.dart';
@@ -14,21 +13,10 @@ final marketSelectionProvider =
 class MarketSelectionController extends Notifier<MarketSelection> {
   @override
   MarketSelection build() => const MarketSelection();
-  void search(String query) => state = MarketSelection(
-    query: query,
-    category: state.category,
-    onlyFavorites: state.onlyFavorites,
-  );
-  void category(MarketCategory category) => state = MarketSelection(
-    query: state.query,
-    category: category,
-    onlyFavorites: state.onlyFavorites,
-  );
-  void favorites(bool onlyFavorites) => state = MarketSelection(
-    query: state.query,
-    category: state.category,
-    onlyFavorites: onlyFavorites,
-  );
+  void search(String query) =>
+      state = MarketSelection(query: query, onlyFavorites: state.onlyFavorites);
+  void favorites(bool onlyFavorites) =>
+      state = MarketSelection(query: state.query, onlyFavorites: onlyFavorites);
 }
 
 final selectedMarketsProvider = Provider.autoDispose<AsyncValue<List<MarketQuote>>>((ref) {

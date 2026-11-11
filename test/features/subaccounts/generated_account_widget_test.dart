@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/domain/wallet_operation.dart';
+import 'package:vanta/core/errors/api_error_details.dart';
+import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/subaccounts/application/subaccount_list_provider.dart';
 import 'package:vanta/features/subaccounts/presentation/account_management_screen.dart';
@@ -15,7 +17,34 @@ import '../../support/aster_account.dart';
 import '../../support/generated_accounts.dart';
 
 void main() {
-  testWidgets('leaving creation during preflight retains the key and prevents a late POST', (
+  testWidgets(
+    'leaving creation during preflight discards the unsent key and prevents a late POST',
+    (t) async {
+      final f = GeneratedAccountsFixture(t);
+      await f.mount(t, const AccountManagementScreen());
+      await tapAccountControl(t, 'subaccount-list-refresh');
+      await tapAccountControl(t, 'accounts-create-entry');
+      await t.enterText(find.byKey(const Key('generated-subaccount-name')), 'Desk');
+      await tapAccountControl(t, 'generated-subaccount-create');
+      f.repository.gate = Completer<void>();
+      await t.ensureVisible(find.byKey(const Key('accounts-open-wallet')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('accounts-open-wallet')));
+      await t.pump();
+      expect((await f.wallets.list()).length, 1);
+      await t.pumpWidget(
+        UncontrolledProviderScope(container: f.container, child: const SizedBox()),
+      );
+      await t.pumpAndSettle();
+      expect(f.repository.latestCurrent!(), false);
+      f.repository.gate!.complete();
+      await t.pumpAndSettle();
+      expect(f.repository.sends, 0);
+      expect(await f.wallets.list(), isEmpty);
+      await f.close(t);
+    },
+  );
+  testWidgets('wallet failure stays on the review with its reason and never opens backup', (
     t,
   ) async {
     final f = GeneratedAccountsFixture(t);
@@ -24,19 +53,19 @@ void main() {
     await tapAccountControl(t, 'accounts-create-entry');
     await t.enterText(find.byKey(const Key('generated-subaccount-name')), 'Desk');
     await tapAccountControl(t, 'generated-subaccount-create');
-    f.repository.gate = Completer<void>();
-    await t.ensureVisible(find.byKey(const Key('accounts-open-wallet')));
-    await t.pumpAndSettle();
-    await t.tap(find.byKey(const Key('accounts-open-wallet')));
-    await t.pump();
-    expect((await f.wallets.list()).length, 1);
-    await t.pumpWidget(UncontrolledProviderScope(container: f.container, child: const SizedBox()));
-    await t.pumpAndSettle();
-    expect(f.repository.latestCurrent!(), false);
-    f.repository.gate!.complete();
-    await t.pumpAndSettle();
+    f.repository.failure = const AccountReadFailure(
+      'authWalletUnavailable',
+      details: ApiErrorDetails(message: 'Invalid parameters: must provide an Ethereum address.'),
+    );
+    await tapAccountControl(t, 'accounts-open-wallet');
+    expect(find.byType(SubaccountBackupScreen), findsNothing);
+    expect(find.byKey(const Key('accounts-open-wallet')), findsOneWidget);
+    expect(
+      find.text('Wallet response: Invalid parameters: must provide an Ethereum address.'),
+      findsOneWidget,
+    );
     expect(f.repository.sends, 0);
-    expect((await f.wallets.list()).length, 1);
+    expect(await f.wallets.list(), isEmpty);
     await f.close(t);
   });
   testWidgets('disposing a pending freeze sheet cancels its preflight', (t) async {

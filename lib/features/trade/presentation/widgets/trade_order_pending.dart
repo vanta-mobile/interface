@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/presentation/status_view.dart';
 import '../../../market/application/market_providers.dart';
 import '../../../market/domain/market.dart';
 import '../../application/providers.dart';
@@ -14,9 +15,15 @@ import 'primitives.dart';
 
 /// Unknown account facts remain unavailable until the explicit signed read.
 class TradeOrderPending extends ConsumerWidget {
-  const TradeOrderPending({super.key, required this.symbol, required this.market});
+  const TradeOrderPending({
+    super.key,
+    required this.symbol,
+    required this.market,
+    this.loading = false,
+  });
   final String symbol;
   final bool market;
+  final bool loading;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -65,11 +72,22 @@ class TradeOrderPending extends ConsumerWidget {
           ),
           child: const SizedBox(height: 20, child: Slider(value: 0, divisions: 4, onChanged: null)),
         ),
-        ValueRow(l.available, '—', key: const Key('trade-available')),
+        if (loading)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Row(
+              children: [
+                Expanded(child: Text(l.available, style: TradeTypography.caption)),
+                const SkeletonBox(key: Key('trade-available-pending'), width: 72, height: 14),
+              ],
+            ),
+          )
+        else
+          ValueRow(l.available, '—', key: const Key('trade-available')),
         for (final buy in [true, if (gate == OrderEntryGate.ready) false])
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: _PendingDirection(buy: buy, gate: gate),
+            child: _PendingDirection(buy: buy, gate: gate, loading: loading),
           ),
       ],
     );
@@ -77,9 +95,10 @@ class TradeOrderPending extends ConsumerWidget {
 }
 
 class _PendingDirection extends StatelessWidget {
-  const _PendingDirection({required this.buy, required this.gate});
+  const _PendingDirection({required this.buy, required this.gate, required this.loading});
   final bool buy;
   final OrderEntryGate gate;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -95,15 +114,23 @@ class _PendingDirection extends StatelessWidget {
           ),
           child: Column(
             children: [
-              for (final label in [l.tradeEstimatedLiquidation, l.tradeMargin, l.accountsMax])
+              for (final (label, name) in [
+                (l.tradeEstimatedLiquidation, 'liquidation'),
+                (l.tradeMargin, 'cost'),
+                (l.accountsMax, 'maximum'),
+              ])
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),
                   child: Row(
+                    key: Key('trade-pending-$name-${buy ? 'buy' : 'sell'}'),
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(child: Text(label, style: TradeTypography.caption)),
                       const SizedBox(width: 4),
-                      Text('—', style: TradeTypography.caption.copyWith(color: TradeColors.text)),
+                      if (loading && name == 'maximum')
+                        const SkeletonBox(width: 72, height: 14)
+                      else
+                        Text('—', style: TradeTypography.caption.copyWith(color: TradeColors.text)),
                     ],
                   ),
                 ),

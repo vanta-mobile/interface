@@ -28,6 +28,9 @@ final portfolioAccountLoadProvider = Provider.autoDispose<void>((ref) {
       return;
     }
     final account = ref.read(accountReadProvider);
+    // Keep this owner-scoped result until an explicit refresh checks again.
+    // Navigation must not repeatedly query an account Aster says is uncreated.
+    if (account.failure?.requiresDeposit == true) return;
     if (!account.busy && (account.account == null || account.stale || account.failure != null)) {
       unawaited(ref.read(portfolioRefreshProvider)());
     }

@@ -73,11 +73,30 @@ final embeddedLoginTradingAuthorizationProvider = Provider.autoDispose.family<vo
 
 class TradingAuthorizationController extends Notifier<TradingAuthorizationState> {
   int _generation = 0;
-  bool _working = false;
+  Completer<void>? _interrupted;
+  bool get _working => _interrupted != null;
   bool _submitting = false;
+
+  // Stop waiting locally when the request loses its identity/scope. The wallet
+  // RPC may still return later; repository guards prevent its continuation.
+  void _interrupt() {
+    _generation++;
+    final interrupted = _interrupted;
+    _interrupted = null;
+    _submitting = false;
+    if (interrupted != null && !interrupted.isCompleted) interrupted.complete();
+  }
+
+  Future<T> _wait<T>(Future<T> operation, Completer<void> interrupted) => Future.any([
+    operation,
+    interrupted.future.then<T>((_) => throw const AccountReadFailure('authWalletChanged')),
+  ]);
+
   @override
   TradingAuthorizationState build() {
-    ref.watch(tradingAuthorizationRepositoryProvider);
+    // A dependency rebuild must interrupt the old operation, not reset its
+    // visible busy state while retaining an independent private lock.
+    ref.listen(tradingAuthorizationRepositoryProvider, (_, _) => stop());
     ref.listen(tradingAgentProvider, (previous, next) {
       if (_working || !next.hasValue || next.isLoading) return;
       final before = previous?.asData?.value;
@@ -106,18 +125,19 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
       ),
       (a, b) {
         if (a != b) {
-          _generation++;
+          final submitting = _submitting;
+          _interrupt();
           final sameWallet = a != null && a.$1 == b.$1 && a.$2 == b.$2 && a.$3 == b.$3;
           state = sameWallet
               ? TradingAuthorizationState(
-                  result: state.result ?? (_submitting ? TradingAuthorizationResult.unknown : null),
+                  result: state.result ?? (submitting ? TradingAuthorizationResult.unknown : null),
                   check: state.check,
                 )
               : const TradingAuthorizationState();
         }
       },
     );
-    ref.onDispose(() => _generation++);
+    ref.onDispose(_interrupt);
     return const TradingAuthorizationState();
   }
 
@@ -170,9 +190,10 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
   }
 
   void stop() {
-    _generation++;
+    final submitting = _submitting;
+    _interrupt();
     state = TradingAuthorizationState(
-      result: state.result ?? (_submitting ? TradingAuthorizationResult.unknown : null),
+      result: state.result ?? (submitting ? TradingAuthorizationResult.unknown : null),
       check: state.check,
     );
   }
@@ -181,13 +202,16 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
     if (_working || !identical(state.review, review)) return;
     final g = ++_generation;
     if (!_current(review.identity, g)) return;
-    _working = true;
+    final interrupted = _interrupted = Completer<void>();
     _submitting = true;
     state = const TradingAuthorizationState(busy: true);
     try {
-      final result = await ref
-          .read(tradingAuthorizationRepositoryProvider)
-          .enable(review: review, isCurrent: () => _current(review.identity, g));
+      final result = await _wait(
+        ref
+            .read(tradingAuthorizationRepositoryProvider)
+            .enable(review: review, isCurrent: () => _current(review.identity, g)),
+        interrupted,
+      );
       if (_current(review.identity, g)) state = TradingAuthorizationState(result: result);
     } catch (e) {
       if (_current(review.identity, g)) {
@@ -198,8 +222,10 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
       }
     } finally {
       if (ref.mounted) ref.invalidate(tradingAgentProvider);
-      _submitting = false;
-      _working = false;
+      if (identical(_interrupted, interrupted)) {
+        _interrupted = null;
+        _submitting = false;
+      }
     }
   }
 
@@ -215,12 +241,15 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
       return;
     }
     final g = ++_generation, previous = state;
-    _working = true;
+    final interrupted = _interrupted = Completer<void>();
     state = TradingAuthorizationState(busy: true, result: previous.result, check: previous.check);
     try {
-      final result = await ref
-          .read(tradingAuthorizationRepositoryProvider)
-          .check(address: identity.walletAddress!, isCurrent: () => _current(identity, g));
+      final result = await _wait(
+        ref
+            .read(tradingAuthorizationRepositoryProvider)
+            .check(address: identity.walletAddress!, isCurrent: () => _current(identity, g)),
+        interrupted,
+      );
       if (_current(identity, g)) {
         state = TradingAuthorizationState(result: previous.result, check: result);
       }
@@ -234,7 +263,7 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
         );
       }
     } finally {
-      _working = false;
+      if (identical(_interrupted, interrupted)) _interrupted = null;
     }
   }
 }

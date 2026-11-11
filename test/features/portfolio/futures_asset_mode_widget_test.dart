@@ -18,7 +18,8 @@ import '../../support/trade_fixture.dart';
 void main() {
   Future<void> open(WidgetTester tester, ProviderContainer container) async {
     await launch(tester, container);
-    openAssetModeSettings(tester.element(find.byType(Navigator).first));
+    Navigator.of(tester.element(find.byType(Navigator).first))
+        .push<void>(MaterialPageRoute(builder: (_) => const FuturesAssetModeScreen()));
     await tester.pumpAndSettle();
   }
 

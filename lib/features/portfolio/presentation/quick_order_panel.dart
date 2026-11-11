@@ -43,7 +43,7 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
     final controller = ref.read(quickOrderProvider.notifier), l10n = AppLocalizations.of(context);
     final data = live.context?.symbol == ref.watch(symbolProvider) ? live.context : null;
     final baseAsset = data?.rules.baseAsset ?? ref.watch(selectedInstrumentProvider)?.base;
-    final disabled = state.loading || live.busy || live.needsRecheck || auth.busy || activity.busy;
+    final disabled = state.loading || live.busy || auth.busy || activity.busy;
     final preference = ref.watch(marketOrderConfirmationProvider);
     if (quantity.text != state.quantity) quantity.text = state.quantity;
     return Panel(
@@ -54,7 +54,7 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
           key: const Key('quick-order-panel'),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const OrderRecoveryNotice(),
+            const OrderRecoveryNotice(showOrders: false),
             Text(l10n.quickOrderTitle, style: Theme.of(context).textTheme.titleMedium),
             Text(l10n.quickOrderHint),
             SelectableText(ref.watch(symbolProvider)),

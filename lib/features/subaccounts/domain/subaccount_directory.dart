@@ -1,12 +1,19 @@
 import '../../portfolio/domain/account_snapshot.dart';
 
-/// The documented list contains IDs and names only. An ID is not a wallet
-/// address, a signing grant, an active-account selection or a freeze status.
+/// The live list returns `address` and may omit the documented
+/// `subAccountName`. An ID is not a signing grant, an active-account
+/// selection or a freeze status.
 class AsterSubaccount {
-  const AsterSubaccount({required this.accountId, required this.name, required this.isParent});
+  const AsterSubaccount({
+    required this.accountId,
+    required this.name,
+    required this.isParent,
+    this.address,
+  });
   final int accountId;
   final String name;
   final bool isParent;
+  final String? address;
 }
 
 class SubaccountDirectory implements WalletAccountSnapshot {

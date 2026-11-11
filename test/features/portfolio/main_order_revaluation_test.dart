@@ -320,6 +320,37 @@ void main() {
       expect(() => value(), fails('liveCapacityPriceUnavailable'));
     });
   }
+  for (final (channel, reason) in [
+    ('mark', 'livePriceMarkStale'),
+    ('trade', 'livePriceLastStale'),
+    ('book', 'livePriceBookStale'),
+  ]) {
+    test('$channel retains a concrete localized cause', () {
+      final prices = references();
+      final old = revaluationReference(time: now.subtract(const Duration(seconds: 10)));
+      final fresh = prices['BTCUSDT']!;
+      if (channel != 'mark') {
+        prices['BTCUSDT'] = OrderReferencePrices(
+          symbol: 'BTCUSDT',
+          checkedAt: now,
+          connection: OrderPriceConnection.online,
+          tradeFresh: true,
+          bookFresh: true,
+          book: channel == 'book' ? old.book : fresh.book,
+          trade: channel == 'trade' ? old.trade : fresh.trade,
+        );
+      }
+      expect(
+        () => value(
+          prices: prices,
+          marks: channel == 'mark'
+              ? revaluationMarks(markValues, time: now.subtract(const Duration(seconds: 10)))
+              : null,
+        ),
+        throwsA(isA<AccountReadFailure>().having((e) => e.reasonKey, 'reason', reason)),
+      );
+    });
+  }
   test('fresh public prices do not extend the signed account 30s lease', () {
     now = now.add(const Duration(seconds: 30));
     expect(() => value(), fails('liveOrderContextExpired'));

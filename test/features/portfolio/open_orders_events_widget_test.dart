@@ -67,8 +67,8 @@ void main() {
         container.read(openOrdersReadProvider).account!.orders.last.executedQty.toString(),
         '0.1',
       );
-      expect(find.text('0.10 BTC / 0.40 BTC'), findsOneWidget);
-      expect(find.text('0.30 BTC'), findsOneWidget);
+      expect(find.text('0.10 / 0.40'), findsOneWidget);
+      expect(find.text('Filled / Total amount (BTC)'), findsWidgets);
       expect(find.byKey(const Key('open-orders-event-time')), findsOneWidget);
       expect(find.byKey(const Key('open-orders-snapshot-stale')), findsOneWidget);
       final newOrder = orderUpdate(

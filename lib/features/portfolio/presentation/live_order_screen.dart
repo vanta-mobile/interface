@@ -87,10 +87,10 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
   void _selectMode(LiveOrderEntryMode next) {
     if (!mounted) return;
     final live = ref.read(liveOrderProvider), activity = ref.read(symbolSettingsActivityProvider);
-    if (ref.read(mainOrderRefreshProvider).loading ||
-        live.busy ||
-        live.needsRecheck ||
-        activity.owner != null ||
+    final background = ref.read(mainOrderRefreshProvider).background;
+    if ((!background && (ref.read(mainOrderRefreshProvider).loading || live.busy)) ||
+        live.intent != null && live.busy ||
+        !background && activity.owner != null ||
         activity.recoveryBlocked ||
         ref.read(authProvider).busy) {
       return;
@@ -187,11 +187,9 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
     final readFailure = gate == OrderEntryGate.ready && state.intent == null
         ? refresh.failure ?? state.failure ?? data?.fundsFailure ?? capacity.failure
         : null;
-    final failed = widget.embedded && readFailure != null;
-    final initialLoading =
-        widget.embedded && reading && (data == null || capacity.snapshot == null) && !failed;
+    final failed = widget.embedded && readFailure != null && data == null;
     final children = <Widget>[
-      const OrderRecoveryNotice(),
+      const OrderRecoveryNotice(showOrders: false),
       if (widget.embedded) ...[
         TradeAccountSettings(
           symbol: symbol,
@@ -199,7 +197,6 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
           enabled:
               !refresh.loading &&
               !state.busy &&
-              !state.needsRecheck &&
               !auth.busy &&
               !settings.busy &&
               settings.owner == null &&
@@ -212,10 +209,9 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
           selected: mode,
           remembered: remembered,
           enabled:
-              !refresh.loading &&
-              !state.busy &&
-              !state.needsRecheck &&
-              settings.owner == null &&
+              (!refresh.loading || refresh.background) &&
+              (!state.busy || refresh.background && state.intent == null) &&
+              (settings.owner == null || refresh.background) &&
               !settings.recoveryBlocked &&
               !auth.busy,
           onSelected: _selectMode,
@@ -225,11 +221,14 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
         ..._standaloneHeader(state: state, auth: auth, settings: settings, refresh: refresh),
       if (data != null) ...[
         const SizedBox(height: 16),
-        if (!widget.embedded) ..._contextSummary(data, stale: state.stale),
-        _orderForm(data, visible: !failed && !initialLoading),
-      ] else if (widget.embedded && !failed && !initialLoading)
-        TradeOrderPending(symbol: symbol, market: mode.marketExecution),
-      if (initialLoading) const EmbeddedOrderSkeleton(),
+        if (!widget.embedded) ..._contextSummary(data, stale: state.stale && !refresh.loading),
+        _orderForm(data, visible: !failed),
+      ] else if (widget.embedded && !failed)
+        TradeOrderPending(
+          symbol: symbol,
+          market: mode.marketExecution,
+          loading: reading && gate == OrderEntryGate.ready,
+        ),
       if (failed) EmbeddedOrderFailure(failure: readFailure, retry: _refresh, loading: reading),
       LiveOrderStatus(compact: widget.embedded),
     ];

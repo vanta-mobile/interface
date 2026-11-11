@@ -3,13 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
+import 'package:vanta/features/authorization/domain/trading_agent.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/subaccounts/application/subaccount_list_provider.dart';
 import 'package:vanta/features/subaccounts/presentation/account_management_screen.dart';
 import 'package:vanta/features/subaccounts/presentation/subaccount_list_screen.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
+import '../../support/aster_account.dart';
 import '../../support/generated_accounts.dart';
+import '../../support/trading_agents.dart';
 
 void main() {
   for (final spec in [
@@ -41,6 +44,31 @@ void main() {
       await f.close(t);
     });
   }
+  testWidgets('active device grant loads the directory on entry without the read action', (
+    t,
+  ) async {
+    final agents = MemoryTradingAgentStorage().store(DateTime.now);
+    final agent = await agents.prepare(
+      signingIdentity.id,
+      accountAddress,
+      DateTime.now().add(const Duration(days: 30)),
+    );
+    await agents.setStatus(agent, TradingAgentStatus.unknown);
+    await agents.setStatus(agent, TradingAgentStatus.active);
+    final f = GeneratedAccountsFixture(t, agents: agents);
+    f.directory.gate = Completer<void>();
+    await f.mount(t, const AccountManagementScreen());
+    expect(f.directory.calls, 1);
+    expect(find.byKey(const Key('accounts-list-skeleton')), findsOneWidget);
+    expect(find.byKey(const Key('subaccount-list-refresh')), findsNothing);
+    f.directory.gate!.complete();
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('accounts-list-skeleton')), findsNothing);
+    expect(find.text('Main account · 0x2222…2222'), findsOneWidget);
+    expect(find.text('1 / 10'), findsOneWidget);
+    expect(f.identity.wallets, 0);
+    await f.close(t);
+  });
   testWidgets('public entry opens the designed screen without signing automatically', (t) async {
     final f = GeneratedAccountsFixture(t);
     await f.mount(

@@ -12,7 +12,7 @@ final instruments = [
   AsterInstrument(
     symbol: 'BTCUSDT',
     base: 'BTC',
-    descriptor: MarketDescriptor(name: 'Bitcoin', aliases: ['比特币'], categories: ['Top', 'AI']),
+    descriptor: MarketDescriptor(name: 'Bitcoin', aliases: ['比特币']),
     ticker: {
       'lastPrice': '100',
       'priceChangePercent': '1',
@@ -110,7 +110,6 @@ void main() {
     expect(result.quotes.first.funding, Decimal.parse('-0.000345'));
     expect(result.quotes.first.descriptor.name, 'Bitcoin');
     expect(result.quotes.first.descriptor.aliases, ['比特币']);
-    expect(result.quotes.first.descriptor.categories, {'Top', 'AI'});
     expect(result.quotes.last.price, Decimal.fromInt(200));
     expect(result.connection, QuoteConnection.live);
     expect(result.updatedAt, isNotNull);

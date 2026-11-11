@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/features/portfolio/application/position_risk_provider.dart';
 import 'package:vanta/features/portfolio/data/position_risk_mapper.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
@@ -9,6 +10,7 @@ import 'package:vanta/features/portfolio/domain/position_risk.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
 import 'package:vanta/features/portfolio/presentation/position_risk_card.dart';
 
+import '../../support/order_confirmation_widget.dart';
 import '../../support/aster_account.dart';
 import '../../support/identity_repository.dart';
 import '../../support/live_order.dart';
@@ -99,11 +101,7 @@ void main() {
     await tester.enterText(find.byKey(const Key('live-order-price')), '80000');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tap(tester, 'live-order-review');
-    expect(find.byType(AlertDialog), findsOneWidget);
-    expect(
-      find.descendant(of: find.byType(AlertDialog), matching: find.text('BOTH')),
-      findsOneWidget,
-    );
+    expect(find.byType(OrderConfirmationDialog), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(repository.submits, 0);
@@ -142,6 +140,7 @@ void main() {
       await tap(tester, 'live-order-review');
       await tester.tap(find.byKey(const Key('live-order-confirm')));
       await tester.pumpAndSettle();
+      await dismissOrderConfirmation(tester);
       expect(repository.lastIntent!.side, 'BUY');
       expect(repository.lastIntent!.positionSide, 'SHORT');
       expect(repository.lastIntent!.parameters['reduceOnly'], null);
@@ -266,13 +265,14 @@ void main() {
       await open(tester, container);
       await tap(tester, 'live-close-fraction-25');
       await tap(tester, 'live-order-review');
-      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(OrderConfirmationDialog), findsOneWidget);
       expect(tester.takeException(), null);
       tester.view.physicalSize = const Size(844, 390);
       await tester.pumpAndSettle();
       expect(tester.takeException(), null);
       await tester.tap(find.byKey(const Key('live-order-confirm')));
       await tester.pumpAndSettle();
+      await dismissOrderConfirmation(tester);
       await visible(tester, 'live-close-read-remaining');
       expect(tester.takeException(), null);
       expect(repository.submits, 1);
