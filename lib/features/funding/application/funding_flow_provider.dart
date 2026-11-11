@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/wallet_operation.dart';
@@ -20,19 +21,36 @@ import 'transfer_history_provider.dart';
 import 'withdraw_info_provider.dart';
 
 /// Public RPC reads only: the deposit form keeps its wallet balance and
-/// allowance current while visible. Failures wait for an explicit refresh.
+/// allowance current while visible and on return from a wallet. A receipt or
+/// local approval record never establishes the current spending allowance.
 final depositWalletAutoReadProvider = Provider.autoDispose.family<void, DepositWalletQuery>((
   ref,
   query,
 ) {
-  final address = ref.watch(authProvider.select((s) => s.identity?.walletAddress));
-  final wallet = ref.watch(depositWalletProvider(query));
-  if (address == null || wallet.busy || wallet.failure != null) return;
-  if (wallet.account != null && !wallet.stale) return;
-  scheduleMicrotask(() {
-    if (ref.mounted) unawaited(ref.read(depositWalletProvider(query).notifier).refresh());
+  ref.watch(authProvider.select((s) => (s.identity?.id, s.identity?.walletAddress)));
+  void read({bool force = false}) {
+    if (!ref.mounted || !_foreground()) return;
+    final wallet = ref.read(depositWalletProvider(query));
+    if (wallet.busy || ref.read(authProvider).identity?.walletAddress == null) return;
+    if (!force && (wallet.failure != null || wallet.account != null && !wallet.stale)) return;
+    unawaited(ref.read(depositWalletProvider(query).notifier).refresh());
+  }
+
+  ref.listen(depositWalletProvider(query), (before, after) {
+    if (before?.stale == false && after.stale && !after.busy) scheduleMicrotask(read);
   });
+  final lifecycle = AppLifecycleListener(onResume: () => read(force: true));
+  final timer = Timer.periodic(ref.watch(depositAllowancePollIntervalProvider), (_) {
+    if (ref.read(depositWalletProvider(query)).failure == null) read(force: true);
+  });
+  ref.onDispose(() {
+    lifecycle.dispose();
+    timer.cancel();
+  });
+  scheduleMicrotask(read);
 });
+
+final depositAllowancePollIntervalProvider = Provider<Duration>((_) => const Duration(seconds: 6));
 
 /// Whether private account reads can run without opening the wallet.
 final fundingSilentReadsProvider = Provider.autoDispose<bool>((ref) {
@@ -66,14 +84,15 @@ final depositReceiptPollIntervalProvider = Provider<Duration>((_) => const Durat
 /// records while a funding page is visible. It never signs, resends or drops
 /// a record; a controller in review or send is left untouched.
 final depositReceiptWatchProvider = Provider.autoDispose<void>((ref) {
-  var turn = 0;
+  var turn = 0, approvalTurn = 0;
   void poll() {
     if (!ref.mounted || !_foreground()) return;
     final approval = ref.read(depositApprovalProvider);
-    final pendingApproval = ref
+    final approvals = ref
         .read(pendingDepositApprovalsProvider)
         .where((r) => r.hash != null)
-        .firstOrNull;
+        .toList();
+    final pendingApproval = approvals.isEmpty ? null : approvals[approvalTurn++ % approvals.length];
     if (pendingApproval != null && approval.step == DepositApprovalStep.idle) {
       unawaited(ref.read(depositApprovalProvider.notifier).check(pendingApproval.key, ''));
     }

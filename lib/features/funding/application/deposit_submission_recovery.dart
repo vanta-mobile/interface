@@ -64,7 +64,7 @@ mixin _DepositSubmissionRecovery on Notifier<DepositSubmissionState> {
         );
       }
     } finally {
-      _working = false;
+      if (generation == _generation) _working = false;
     }
   }
 
@@ -150,7 +150,7 @@ mixin _DepositSubmissionRecovery on Notifier<DepositSubmissionState> {
         );
       }
     } finally {
-      _working = false;
+      if (generation == _generation) _working = false;
     }
   }
 }

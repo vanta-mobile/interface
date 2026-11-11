@@ -135,7 +135,7 @@ void main() {
     expect(find.byType(ApprovalConfirmScreen), findsOneWidget);
     expect(find.text(l.fundingApproveTitle('USDT')), findsOneWidget);
     await tester.tap(find.byKey(const Key('funding-open-wallet')));
-    // The pending approval keeps a spinner running, so pump fixed frames.
+    // This page waits for the allowance after its own hashed approval.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(ApprovalConfirmScreen), findsNothing);

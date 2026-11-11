@@ -27,7 +27,8 @@ class MemoryDepositApprovalJournal implements DepositApprovalJournal {
   }
 
   void checkNew(List<DepositApprovalRecord> records, DepositApprovalRecord r) {
-    if (records.any((v) => v.transaction.from.toLowerCase() == r.transaction.from.toLowerCase())) {
+    if (records.length >= 100) throw const AccountReadFailure('depositApprovalStorage');
+    if (records.any((v) => v.key == r.key)) {
       throw const AccountReadFailure('depositApprovalPending');
     }
   }

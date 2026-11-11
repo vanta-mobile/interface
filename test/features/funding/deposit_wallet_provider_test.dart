@@ -57,7 +57,7 @@ void main() {
     expect(identity.wallets, 0);
     expect(container.read(authProvider).identity!.signingAvailable, false);
   });
-  walletTest('pending duplicate reads ignored, failed refresh retains snapshot and retries', (
+  walletTest('duplicate reads await the same operation; failed refresh retains data and retries', (
     tester,
   ) async {
     final controller = container.read(depositWalletProvider(query).notifier);
@@ -68,6 +68,7 @@ void main() {
     final duplicate = controller.refresh();
     var duplicateDone = false;
     duplicate.then((_) => duplicateDone = true);
+    await tester.pump();
     expect(duplicateDone, isFalse);
     expect(repository.calls.length, 2);
     repository.failure = const FormatException();

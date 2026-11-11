@@ -27,6 +27,7 @@ class DepositWalletController extends Notifier<AccountSnapshotState<DepositWalle
   final DepositWalletQuery query;
   int _generation = 0;
   Timer? _expiry;
+  Future<void>? _refreshing;
   @override
   AccountSnapshotState<DepositWalletSnapshot> build() {
     ref.watch(depositWalletRepositoryProvider);
@@ -42,6 +43,7 @@ class DepositWalletController extends Notifier<AccountSnapshotState<DepositWalle
       (before, after) {
         if (before == after) return;
         _generation++;
+        _refreshing = null;
         _expiry?.cancel();
         state = const AccountSnapshotState();
       },
@@ -53,8 +55,16 @@ class DepositWalletController extends Notifier<AccountSnapshotState<DepositWalle
     return const AccountSnapshotState();
   }
 
-  Future<void> refresh() async {
-    if (state.busy) return;
+  Future<void> refresh() {
+    if (_refreshing case final pending?) return pending;
+    final operation = _refresh();
+    _refreshing = operation;
+    return operation.whenComplete(() {
+      if (identical(_refreshing, operation)) _refreshing = null;
+    });
+  }
+
+  Future<void> _refresh() async {
     final identity = ref.read(authProvider).identity;
     final address = identity?.walletAddress;
     if (identity == null || address == null) return;
@@ -68,6 +78,7 @@ class DepositWalletController extends Notifier<AccountSnapshotState<DepositWalle
       account: state.account,
       step: AccountReadStep.loading,
       stale: state.account != null,
+      failure: state.failure,
     );
     try {
       final snapshot = await ref
@@ -105,6 +116,7 @@ class DepositWalletController extends Notifier<AccountSnapshotState<DepositWalle
   void stop() {
     if (!state.busy) return;
     _generation++;
+    _refreshing = null;
     _expiry?.cancel();
     state = AccountSnapshotState(account: state.account, stale: state.account != null);
   }

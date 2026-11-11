@@ -56,7 +56,7 @@ class RpcDepositGasRepository implements DepositGasRepository {
         await service.read(chain, 'eth_getTransactionCount', [address, 'pending']),
       );
       current();
-      if (nonce != latest) throw const AccountReadFailure('depositGasPendingTransactions');
+      if (nonce < latest) throw const AccountReadFailure('depositRpcInvalid');
       if (price <= BigInt.zero || nonce >= (BigInt.one << 64) - BigInt.one) {
         throw const FormatException();
       }

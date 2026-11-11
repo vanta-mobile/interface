@@ -42,14 +42,9 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
 
   /// Withdrawal limits keep reported numbers exact; see [decodeWithdrawInfoJson].
   final AsterAccountService infoService;
-  void _ready(String address) {
+  void _ready() {
     if (!journal.snapshot.ready || journal.snapshot.failed) {
       throw const AccountReadFailure('walletOperationStorage');
-    }
-    if (journal.snapshot.records.any(
-      (r) => !r.acknowledged && r.address.toLowerCase() == address.toLowerCase(),
-    )) {
-      throw const AccountReadFailure('walletOperationPending');
     }
   }
 
@@ -80,7 +75,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
           asset.routeType != 'autoWithdraw') {
         throw const FormatException();
       }
-      _ready(address);
+      _ready();
       final started = now().toUtc();
       final assets = await catalog.read(
         FundingCatalogQuery(query.market, FundingOperation.withdraw),
@@ -150,7 +145,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
       current();
       validateWithdrawalReview(review, now().toUtc());
       final address = review.identity.walletAddress!;
-      _ready(address);
+      _ready();
       final fresh = await prepare(
         identity: review.identity,
         query: review.query,

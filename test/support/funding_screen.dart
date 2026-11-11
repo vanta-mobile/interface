@@ -120,15 +120,15 @@ const fundingCaptureKey = Key('funding-design-render');
 
 /// Funding screen with every repository replaced; nothing reaches a network.
 class FundingHarness {
-  FundingHarness() {
+  FundingHarness({FundingIdentity? identity}) : identity = identity ?? FundingIdentity() {
     catalog.rows = [
       fundingAssetRow()..['minDeposit'] = '0.01',
       fundingAssetRow(asset: 'BNB', native: true)..['minDeposit'] = '0.01',
       fundingAssetRow(asset: 'ETH', chain: 1, native: true)..['minDeposit'] = '0.01',
     ];
-    identity.restored = signingIdentity;
+    this.identity.restored = signingIdentity;
   }
-  final identity = FundingIdentity();
+  final FundingIdentity identity;
   final catalog = TestFundingCatalogRepository();
   final icons = FundingIconFixture();
   final wallet = TestDepositWalletRepository();

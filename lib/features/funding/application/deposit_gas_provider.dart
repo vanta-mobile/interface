@@ -70,6 +70,7 @@ class DepositGasController extends Notifier<AccountSnapshotState<DepositGasQuote
       account: state.account,
       step: AccountReadStep.loading,
       stale: state.account != null,
+      failure: state.failure,
     );
     try {
       final quote = await ref
@@ -111,6 +112,10 @@ class DepositGasController extends Notifier<AccountSnapshotState<DepositGasQuote
     if (!ref.mounted || !state.busy) return;
     _generation++;
     _expiry?.cancel();
-    state = AccountSnapshotState(account: state.account, stale: state.account != null);
+    state = AccountSnapshotState(
+      account: state.account,
+      stale: state.account != null,
+      failure: state.failure,
+    );
   }
 }

@@ -14,6 +14,7 @@ class DepositApprovalRecord {
     required this.baseBlock,
     required this.baseBlockHash,
     this.hash,
+    this.attemptId,
   }) {
     final asset = query.asset;
     if (asset.isNative ||
@@ -26,6 +27,7 @@ class DepositApprovalRecord {
         baseBlock < BigInt.zero ||
         baseBlock >= BigInt.one << 256 ||
         !validFundingHash(baseBlockHash) ||
+        attemptId != null && !RegExp(r'^[a-f0-9]{32}$').hasMatch(attemptId!) ||
         hash != null && !validFundingHash(hash!) ||
         !RegExp(r'^[A-Za-z0-9_.-]{1,40}$').hasMatch(asset.asset)) {
       throw const FormatException();
@@ -57,8 +59,10 @@ class DepositApprovalRecord {
   final EvmWalletTransaction transaction;
   final DateTime preparedAt;
   final String baseBlockHash;
-  final String? hash;
-  String get key => '${transaction.chainId}:${transaction.from.toLowerCase()}:${transaction.nonce}';
+  final String? hash, attemptId;
+  String get nonceKey =>
+      '${transaction.chainId}:${transaction.from.toLowerCase()}:${transaction.nonce}';
+  String get key => attemptId == null ? nonceKey : '$nonceKey:$attemptId';
   DepositApprovalRecord withHash(String value) {
     if (hash != null && hash!.toLowerCase() != value.toLowerCase()) throw const FormatException();
     return DepositApprovalRecord(
@@ -70,6 +74,7 @@ class DepositApprovalRecord {
       baseBlock: baseBlock,
       baseBlockHash: baseBlockHash,
       hash: value,
+      attemptId: attemptId,
     );
   }
 }

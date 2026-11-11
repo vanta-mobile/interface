@@ -5,25 +5,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:reown_appkit/reown_appkit.dart';
 import 'package:vanta/features/auth/data/reown_wallet_connector.dart';
 import 'package:vanta/features/auth/data/wallet_configuration.dart';
+import 'package:vanta/features/auth/data/wallet_redirect_handler.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 
 void main() {
   late _Modal modal;
   late ReownWalletConnector connector;
   late BuildContext host;
+  late StreamController<Uri> links;
 
   setUp(() {
     modal = _Modal();
+    links = StreamController<Uri>(sync: true);
     connector = ReownWalletConnector(
       const WalletConfiguration(projectId: 'test'),
       createModal: (_) => modal,
       preparationTimeout: const Duration(seconds: 1),
+      redirects: WalletRedirectHandler(links: links.stream, initialLink: () async => null),
     );
   });
 
   tearDown(() async {
     if (modal.initGate case final gate? when !gate.isCompleted) gate.complete();
     await connector.dispose();
+    await links.close();
   });
 
   Future<void> mount(WidgetTester tester) async {
@@ -101,6 +106,49 @@ void main() {
     expect(modal.calls, ['init']);
   });
 
+  testWidgets('wallet return received during init is delivered only after SDK is ready', (
+    tester,
+  ) async {
+    await mount(tester);
+    modal.isConnected = true;
+    modal.initGate = Completer<void>();
+    final pending = connector.restore(host, expectedAddress: modal.address);
+    await tester.pump();
+    expect(links.hasListener, isTrue);
+    final response = Uri.parse('vanta://wallet?topic=topic&wc_ev=encrypted');
+    links.add(response);
+    expect(modal.envelopes, isEmpty);
+    modal.initGate!.complete();
+    final connection = await pending;
+    await tester.pump();
+    expect(modal.envelopes, [response.toString()]);
+    expect(modal.calls, ['init']);
+    await connection!.release();
+  });
+
+  testWidgets('resume retries an unconsumed return and dispose stops link delivery', (
+    tester,
+  ) async {
+    await mount(tester);
+    modal.isConnected = true;
+    final connection = await connector.restore(host, expectedAddress: modal.address);
+    modal.acceptEnvelope = false;
+    final response = Uri.parse('vanta://wallet?topic=topic&wc_ev=encrypted');
+    links.add(response);
+    await tester.pump();
+    expect(modal.envelopes, hasLength(1));
+    modal.acceptEnvelope = true;
+    connector.didChangeAppLifecycleState(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(modal.envelopes, hasLength(2));
+    await connection!.release();
+    await tester.runAsync(connector.dispose);
+    expect(links.hasListener, isFalse);
+    links.add(Uri.parse('vanta://wallet?topic=topic&wc_ev=late'));
+    await tester.pump();
+    expect(modal.envelopes, hasLength(2));
+  });
+
   testWidgets('connection cleanup event settles before wallet selection opens', (tester) async {
     await mount(tester);
     modal.isConnected = true;
@@ -145,7 +193,7 @@ void main() {
       throwsA(isA<AuthFailure>().having((e) => e.key, 'key', 'authWalletCancelled')),
     );
     await tester.pump();
-    final disposal = connector.dispose();
+    final disposal = tester.runAsync(connector.dispose);
     modal.initGate!.complete();
     modal.initGate = null;
     await pending;
@@ -156,6 +204,8 @@ void main() {
 
 class _Modal extends ChangeNotifier implements ReownAppKitModal {
   final calls = <String>[];
+  final envelopes = <String>[];
+  bool acceptEnvelope = true;
   final address = '0x2222222222222222222222222222222222222222';
   int expiry = 9999999999;
   BuildContext? host;
@@ -175,6 +225,13 @@ class _Modal extends ChangeNotifier implements ReownAppKitModal {
     calls.add('init');
     await initGate?.future;
     status = ReownAppKitModalStatus.initialized;
+  }
+
+  @override
+  Future<bool> dispatchEnvelope(String url) async {
+    expect(status, ReownAppKitModalStatus.initialized);
+    envelopes.add(url);
+    return acceptEnvelope;
   }
 
   @override

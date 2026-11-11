@@ -36,6 +36,8 @@ dependencies:
   flutter_markdown: 0.7.7+1
   firebase_core: ^5.1.0
   firebase_messaging: ^17.0.1
+  # Deliver native wallet return payloads to Reown's pending request.
+  app_links: ^7.2.2
 dev_dependencies:
   integration_test:
     sdk: flutter

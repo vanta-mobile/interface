@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reown_appkit/reown_appkit.dart';
+import 'package:vanta/core/network/request_scope.dart';
 import 'package:vanta/features/auth/data/reown_wallet_connector.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/auth/domain/wallet_transaction.dart';
@@ -95,6 +96,47 @@ void main() {
     final result = await pending;
     expect(result.hash, '0x${'b' * 64}');
     expect(connection.isCurrent, false);
+  });
+  test('stopped send yields to a new request without releasing its lease on late return', () async {
+    var current = true;
+    modal.result = '0x${'b' * 64}';
+    final firstGate = Completer<void>(), secondGate = Completer<void>();
+    modal.gate = firstGate;
+    final first = connection.sendTransaction(
+      transaction: walletTransaction(),
+      isCurrent: () => current,
+    );
+    current = false;
+    modal.gate = secondGate;
+    final second = connection.sendTransaction(
+      transaction: walletTransaction(),
+      isCurrent: () => true,
+    );
+    firstGate.complete();
+    expect((await first).hash, modal.result);
+    await expectLater(
+      connection.sendTransaction(transaction: walletTransaction(), isCurrent: () => true),
+      throwsA(isA<WalletTransactionNotSent>()),
+    );
+    expect(modal.requests, hasLength(2));
+    secondGate.complete();
+    expect((await second).hash, modal.result);
+  });
+  test('abandoned signature scope yields while its late signature cannot continue', () async {
+    var current = true;
+    final firstGate = Completer<void>(), secondGate = Completer<void>();
+    modal.gate = firstGate;
+    final first = RequestScope.run(() => current, () => connection.signTypedData({}));
+    final firstFailure = expectLater(first, throwsA(isA<AuthFailure>()));
+    current = false;
+    modal.gate = secondGate;
+    final second = RequestScope.run(() => true, () => connection.signTypedData({}));
+    firstGate.complete();
+    await firstFailure;
+    await expectLater(connection.signTypedData({}), throwsA(isA<AuthFailure>()));
+    expect(modal.requests, hasLength(2));
+    secondGate.complete();
+    expect(await second, modal.result);
   });
   for (final error in [JsonRpcError(code: 4001, message: 'refused'), StateError('4001 rejected')]) {
     test(

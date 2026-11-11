@@ -37,6 +37,44 @@ void main() {
     expect(j.snapshot.records.length, 2);
     expect(j.snapshot.records.first.acknowledged, true);
   });
+  test(
+    'multiple unknown withdrawals survive restart and late IDs bind to their original keys',
+    () async {
+      final directory = await Directory.systemTemp.createTemp('vanta-withdrawal-attempts-');
+      addTearDown(() => directory.delete(recursive: true));
+      WalletOperationRecord withdrawal(int nonce) => WalletOperationRecord(
+        kind: WalletOperationKind.withdrawal,
+        address: fixtureMaster,
+        nonce: nonce,
+        preparedAt: now,
+        terms: {
+          'chain': '56',
+          'market': 'perp',
+          'asset': 'USDT',
+          'amount': '$nonce',
+          'fee': '0',
+          'receiver': fixtureMaster,
+        },
+      );
+      final first = withdrawal(1), second = withdrawal(2);
+      final journal = FileWalletOperationJournal(() async => directory);
+      await journal.reload();
+      await journal.prepare(first);
+      await journal.prepare(second);
+      await journal.close();
+      final restored = FileWalletOperationJournal(() async => directory);
+      addTearDown(restored.close);
+      await restored.reload();
+      expect(restored.snapshot.records, hasLength(2));
+      await restored.report(first.key, 'first-id');
+      expect(restored.snapshot.records.first.reference, 'first-id');
+      expect(restored.snapshot.records.last.acknowledged, false);
+      // Unknown withdrawals cannot lock an unrelated, newly validated operation.
+      await restored.prepare(record(nonce: 3));
+      expect(restored.snapshot.records, hasLength(3));
+      await expectLater(restored.prepare(second), throwsA(isA<WalletOperationPending>()));
+    },
+  );
   for (final mutation in <String Function(String)>[
     (s) => s.replaceFirst('"version":"1"', '"version":"2"'),
     (s) => s.replaceFirst('"nonce":"1"', '"nonce":"01"'),

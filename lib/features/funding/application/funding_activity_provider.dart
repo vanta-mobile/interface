@@ -86,7 +86,15 @@ class FundingActivityController extends Notifier<FundingActivityState> {
 
     for (final r in ref.read(pendingDepositSubmissionsProvider)) {
       if (r.hash != null && r.transaction.from.toLowerCase() == address) {
-        add(FundingActivity.fromDeposit(r));
+        final activity = FundingActivity.fromDeposit(r);
+        // Two explicit attempts can return the same transaction hash (for
+        // example when the wallet returns a late response to the first send).
+        // Retain both journals, but display and notify the chain transfer once.
+        final chainKey =
+            'chain:${r.nonceKey}:${r.hash!.toLowerCase()}:${r.transaction.to}:${r.transaction.data}:${r.transaction.value}';
+        final key = _aliases.putIfAbsent(chainKey, () => activity.key);
+        _aliases[activity.key] = key;
+        if (key == activity.key) add(activity);
       }
     }
     for (final r in ref.read(currentWalletOperationsProvider)) {
@@ -106,11 +114,13 @@ class FundingActivityController extends Notifier<FundingActivityState> {
     final deposit = ref.read(depositSubmissionProvider);
     final localDeposit = deposit.record;
     if (localDeposit?.transaction.from.toLowerCase() == address) {
+      final recordKey = 'deposit:${localDeposit!.key}';
+      final key = _aliases[recordKey] ?? recordKey;
       if (deposit.credited) {
-        finish('deposit:${localDeposit!.key}', TransferStatus.success);
+        finish(key, TransferStatus.success);
       } else if (deposit.receipt?.status == DepositReceiptStatus.reverted ||
           deposit.receipt?.status == DepositReceiptStatus.replaced) {
-        finish('deposit:${localDeposit!.key}', TransferStatus.failed);
+        finish(key, TransferStatus.failed);
       }
     }
     final snapshot = ref.read(transferHistoryProvider);

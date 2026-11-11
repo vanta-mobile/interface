@@ -178,6 +178,18 @@ void main() {
     final quote = await estimate('1');
     expect(quote.nativeRequired, native);
   });
+  test('an earlier pending transaction uses the next pending nonce after simulation', () async {
+    response = (req) {
+      if (req['method'] == 'eth_getTransactionCount' && (req['params'] as List).last == 'pending') {
+        return '0x8';
+      }
+      return normal(req);
+    };
+    final quote = await estimate();
+    expect(quote.nonce, BigInt.from(8));
+    final simulation = calls.singleWhere((r) => r['method'] == 'eth_estimateGas');
+    expect(((simulation['params'] as List).first as Map)['nonce'], '0x8');
+  });
   test('unsupported route rejected before any RPC', () async {
     query = depositQuery(route: 'bridge');
     await expectLater(estimate(), fails('depositGasRouteUnsupported'));
@@ -190,7 +202,7 @@ void main() {
     });
   }
   for (final issue in [
-    'pending',
+    'nonceBehind',
     'nonceChanged',
     'nonceOverflow',
     'zeroPrice',
@@ -225,7 +237,9 @@ void main() {
         if (req['method'] == 'eth_getTransactionCount') {
           if ((req['params'] as List).last == 'pending') pendingCalls++;
           if (issue == 'nonceOverflow') return '0xffffffffffffffff';
-          if (issue == 'pending' && pendingCalls == 1) return '0x8';
+          if (issue == 'nonceBehind') {
+            return (req['params'] as List).last == 'pending' ? '0x6' : '0x7';
+          }
           if (issue == 'nonceChanged' && pendingCalls == 2) return '0x8';
         }
         if (req['method'] == 'eth_gasPrice') {
@@ -244,7 +258,7 @@ void main() {
       await expectLater(
         estimate(),
         fails(switch (issue) {
-          'pending' || 'nonceChanged' => 'depositGasPendingTransactions',
+          'nonceChanged' => 'depositGasPendingTransactions',
           'gasLimit' => 'depositGasBlockLimit',
           'reorg' => 'depositRpcReorg',
           'oldBlock' || 'slow' || 'clockBackwards' => 'depositReadStale',

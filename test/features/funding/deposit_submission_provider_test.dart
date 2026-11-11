@@ -130,12 +130,21 @@ void main() {
     expect(gas.calls, isEmpty);
     expect(state().failure, 'depositLimitsAcknowledgement');
   });
-  flow('pending approval blocks deposit before fresh reads', (t) async {
+  flow('old approval does not block a deposit with freshly sufficient allowance', (t) async {
     await c.read(depositApprovalJournalProvider).prepare(approvalRecord(now: now));
-    expect(await controller().prepare(query, '1', acknowledgeUnknownLimits: true), null);
-    expect(state().failure, 'depositApprovalPending');
-    expect(gas.calls, isEmpty);
+    await controller().confirm(await review());
+    expect(state().failure, isNull);
+    expect(gas.calls, hasLength(2));
+    expect(identity.transactions, hasLength(1));
+    expect(identity.transactions.single.data.startsWith('0xcf4a0c5e'), isTrue);
+  });
+  flow('a fresh allowance decrease blocks deposit despite the earlier review', (t) async {
+    final prepared = await review();
+    gas.result = approvalQuote(now: now);
+    await controller().confirm(prepared);
+    expect(state().failure, 'depositSubmissionChanged');
     expect(identity.transactions, isEmpty);
+    expect(journal.snapshot.records, isEmpty);
   });
   flow('a deposit awaiting credit does not block the next deposit at a new nonce', (t) async {
     await controller().confirm(await review());
@@ -148,7 +157,7 @@ void main() {
       BigInt.from(8),
     ]);
   });
-  flow('approval flush and deposit share dispatch lock even after stop', (t) async {
+  flow('stopped approval flush yields the dispatch lock to a fresh deposit', (t) async {
     gas.result = approvalQuote(now: now);
     final approval = c.read(depositApprovalProvider.notifier);
     final a = (await approval.prepare(query, '1'))!;
@@ -178,12 +187,13 @@ void main() {
     final pending = ac.confirm(ar);
     await t.pump();
     ac.stop();
+    gas.result = gasQuote(query: query, receivedAt: now);
     await dc.confirm(dr);
-    expect(other.read(depositSubmissionProvider).failure, 'depositTransactionBusy');
-    expect(identity.transactions, isEmpty);
+    expect(other.read(depositSubmissionProvider).failure, isNull);
+    expect(identity.transactions, hasLength(1));
     approvalJournal.gate!.complete();
     await pending;
-    expect(identity.transactions, isEmpty);
+    expect(identity.transactions, hasLength(1));
     expect(approvalJournal.snapshot.records, isEmpty);
     // Reviews in the original scope remain unsigned.
     expect(a.transaction.from, d.transaction.from);
@@ -249,16 +259,60 @@ void main() {
     expect(journal.snapshot.records, isEmpty);
     expect(state().failure, 'authWalletRejected');
   });
-  flow('unknown response stays durable; its unused nonce is never sent again', (t) async {
-    final r = await review();
+  flow('unknown response preserves its attempt without blocking the same fresh nonce', (t) async {
     identity.transactionResult = const WalletTransactionResult.unknown();
-    await controller().confirm(r);
-    expect(journal.snapshot.records.single.hash, null);
-    // The chain still reports the same next nonce, so it may be the same request.
+    await controller().confirm(await review());
+    final original = journal.snapshot.records.single;
+    expect(original.hash, null);
+    identity.transactionResult = WalletTransactionResult.fromResponse(hash);
+    await controller().confirm(await review());
+    expect(state().failure, isNull);
+    expect(identity.transactions, hasLength(2));
+    expect(journal.snapshot.records, hasLength(2));
+    expect(journal.snapshot.records.first.key, original.key);
+    expect(journal.snapshot.records.first.hash, null);
+    expect(journal.snapshot.records.last.hash, hash);
+    expect(journal.snapshot.records.last.key, isNot(original.key));
+    // A known submitted attempt at this nonce is visible and pollable.
     await controller().confirm(await review());
     expect(state().failure, 'depositSubmissionPending');
-    expect(identity.transactions.length, 1);
-    expect(journal.snapshot.records, hasLength(1));
+    expect(identity.transactions, hasLength(2));
+  });
+  flow('receipt polling yields to a new deposit and cannot overwrite its review', (t) async {
+    await controller().confirm(await review());
+    receipts.gate = Completer<void>();
+    final polling = controller().check(journal.snapshot.records.single.key, '');
+    await t.pump();
+    gas.result = gasQuote(query: query, receivedAt: now, nonce: BigInt.from(8));
+    final next = await review();
+    receipts.gate!.complete();
+    await polling;
+    expect(state().review, same(next));
+    await controller().confirm(next);
+    expect(identity.transactions, hasLength(2));
+  });
+  flow('stopped wallet request preserves late hash without releasing the next send', (t) async {
+    identity.transactionGate = Completer<void>();
+    final originalGate = identity.transactionGate!;
+    final original = controller().confirm(await review());
+    await t.pump();
+    final originalKey = journal.snapshot.records.single.key;
+    controller().stop();
+    identity.transactionGate = Completer<void>();
+    final nextGate = identity.transactionGate!;
+    final next = controller().confirm(await review());
+    await t.pump();
+    expect(identity.transactions, hasLength(2));
+    originalGate.complete();
+    await original;
+    expect(journal.snapshot.records.first.key, originalKey);
+    expect(journal.snapshot.records.first.hash, hash);
+    expect(journal.snapshot.records.last.hash, null);
+    expect(state().step, DepositSubmissionStep.sending);
+    expect(await controller().prepare(query, '1', acknowledgeUnknownLimits: true), null);
+    nextGate.complete();
+    await next;
+    expect(journal.snapshot.records.last.hash, hash);
   });
   flow('scope loss during flush removes unsubmitted record', (t) async {
     final r = await review();
@@ -363,6 +417,37 @@ void main() {
       records.single.transaction.parameters,
       journal.snapshot.records.single.transaction.parameters,
     );
+  });
+  flow('same-nonce unknown attempts survive restart and retain independent late hashes', (t) async {
+    identity.transactionResult = const WalletTransactionResult.unknown();
+    await controller().confirm(await review());
+    await controller().confirm(await review());
+    final records = journal.snapshot.records;
+    expect(records, hasLength(2));
+    await t.runAsync(() async {
+      final directory = await Directory.systemTemp.createTemp('vanta-deposit-attempts-');
+      try {
+        final original = FileDepositSubmissionJournal(() async => directory);
+        await original.reload();
+        for (final record in records) {
+          await original.prepare(record);
+        }
+        await original.close();
+        final restored = FileDepositSubmissionJournal(() async => directory);
+        try {
+          await restored.reload();
+          await restored.attachHash(records.first.key, hash);
+          expect(restored.snapshot.records.first.hash, hash);
+          expect(restored.snapshot.records.last.hash, null);
+          await restored.attachHash(records.last.key, '0x${'c' * 64}');
+          expect(restored.snapshot.records.last.hash, '0x${'c' * 64}');
+        } finally {
+          await restored.close();
+        }
+      } finally {
+        await directory.delete(recursive: true);
+      }
+    });
   });
   flow('file-backed deposit survives process restart', (t) async {
     await controller().confirm(await review());

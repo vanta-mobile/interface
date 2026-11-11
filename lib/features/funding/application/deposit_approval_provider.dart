@@ -19,6 +19,7 @@ import '../domain/deposit_approval.dart';
 import '../domain/deposit_quote_validation.dart';
 import '../domain/deposit_transaction.dart';
 import '../domain/deposit_wallet.dart';
+import '../domain/funding_transaction_attempt.dart';
 import 'deposit_gas_provider.dart';
 
 final depositApprovalJournalProvider = Provider<DepositApprovalJournal>((ref) {
@@ -123,6 +124,7 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
       (a, b) {
         if (a != b) {
           _generation++;
+          _working = false;
           state = const DepositApprovalState();
         }
       },
@@ -137,7 +139,7 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
       ref.read(authProvider).identity?.id == identity.id &&
       ref.read(authProvider).identity?.walletAddress?.toLowerCase() ==
           identity.walletAddress?.toLowerCase();
-  void _storageReady(DepositApprovalJournal journal, String address) {
+  void _storageReady(DepositApprovalJournal journal) {
     final other = ref.read(depositSubmissionJournalProvider).snapshot;
     if (!other.ready || other.failure != null) {
       throw const AccountReadFailure('depositSubmissionStorage');
@@ -145,11 +147,6 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
 
     if (!journal.snapshot.ready || journal.snapshot.failure != null) {
       throw const AccountReadFailure('depositApprovalStorage');
-    }
-    if (journal.snapshot.records.any(
-      (r) => r.transaction.from.toLowerCase() == address.toLowerCase(),
-    )) {
-      throw const AccountReadFailure('depositApprovalPending');
     }
   }
 
@@ -160,6 +157,7 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
     _ => 'depositRpcFailed',
   };
   Future<DepositApprovalReview?> prepare(DepositWalletQuery query, String amount) async {
+    if (state.step == DepositApprovalStep.checking) stop();
     final auth = ref.read(authProvider), identity = auth.identity;
     if (_working || auth.busy || identity?.walletAddress == null) return null;
     if (!identity!.signingAvailable) {
@@ -171,7 +169,7 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
     _working = true;
     state = const DepositApprovalState(step: DepositApprovalStep.preparing);
     try {
-      _storageReady(ref.read(depositApprovalJournalProvider), identity.walletAddress!);
+      _storageReady(ref.read(depositApprovalJournalProvider));
       final quote = await ref
           .read(depositGasRepositoryProvider)
           .estimate(
@@ -200,7 +198,7 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
       }
       return null;
     } finally {
-      _working = false;
+      if (generation == _generation) _working = false;
     }
   }
 
@@ -213,6 +211,7 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
 
   void stop() {
     _generation++;
+    _working = false;
     if (ref.mounted) state = const DepositApprovalState();
   }
 
@@ -223,12 +222,12 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
       return;
     }
     final activity = ref.read(fundingTransactionActivityProvider), owner = Object();
-    if (!activity.acquire(owner)) {
+    final generation = _generation;
+    bool current() => _scope(review.identity, generation);
+    if (!activity.acquire(owner, isCurrent: current)) {
       state = const DepositApprovalState(failure: 'depositTransactionBusy');
       return;
     }
-    final generation = _generation;
-    bool current() => _scope(review.identity, generation);
     final journal = ref.read(depositApprovalJournalProvider),
         repository = ref.read(depositGasRepositoryProvider);
     final sender = ref.read(identityRepositoryProvider), clock = ref.read(depositGasClockProvider);
@@ -245,7 +244,7 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
         amount: review.amount,
         now: clock().toUtc(),
       );
-      _storageReady(journal, review.transaction.from);
+      _storageReady(journal);
       final quote = await repository.estimate(
         address: review.transaction.from,
         query: review.query,
@@ -273,7 +272,9 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
         preparedAt: clock().toUtc(),
         baseBlock: quote.wallet.blockNumber,
         baseBlockHash: quote.wallet.blockHash,
+        attemptId: newFundingTransactionAttempt(),
       );
+      // Keep earlier unsigned attempts so late hashes remain correctly attributed.
       await journal.prepare(record);
       prepared = true;
       if (!current()) throw const WalletTransactionNotSent('authWalletChanged');
@@ -323,7 +324,7 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
         );
       }
     } finally {
-      _working = false;
+      if (generation == _generation) _working = false;
       activity.release(owner);
     }
   }
@@ -379,7 +380,7 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
         );
       }
     } finally {
-      _working = false;
+      if (generation == _generation) _working = false;
     }
   }
 }

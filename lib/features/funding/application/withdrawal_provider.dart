@@ -70,6 +70,7 @@ class WithdrawalController extends Notifier<WithdrawalState> {
       (a, b) {
         if (a != b) {
           _generation++;
+          _working = false;
           state = const WithdrawalState();
         }
       },
@@ -85,6 +86,7 @@ class WithdrawalController extends Notifier<WithdrawalState> {
       ref.read(authProvider).identity?.walletAddress == i.walletAddress;
   void stop() {
     _generation++;
+    _working = false;
     state = const WithdrawalState();
   }
 
@@ -92,9 +94,9 @@ class WithdrawalController extends Notifier<WithdrawalState> {
     if (ref.mounted && !_working) state = const WithdrawalState();
   }
 
-  Future<void> prepare(DepositWalletQuery query, String amount) async {
+  Future<WithdrawalReview?> prepare(DepositWalletQuery query, String amount) async {
     final auth = ref.read(authProvider), i = auth.identity;
-    if (_working || auth.busy || i?.walletAddress == null) return;
+    if (_working || auth.busy || i?.walletAddress == null) return null;
     final g = ++_generation;
     _working = true;
     state = const WithdrawalState(busy: true);
@@ -102,7 +104,10 @@ class WithdrawalController extends Notifier<WithdrawalState> {
       final r = await ref
           .read(withdrawalRepositoryProvider)
           .prepare(identity: i!, query: query, amount: amount, isCurrent: () => _current(i, g));
-      if (_current(i, g)) state = WithdrawalState(review: r);
+      if (_current(i, g)) {
+        state = WithdrawalState(review: r);
+        return r;
+      }
     } catch (e) {
       if (_current(i!, g)) {
         state = WithdrawalState(
@@ -111,15 +116,15 @@ class WithdrawalController extends Notifier<WithdrawalState> {
         );
       }
     } finally {
-      _working = false;
+      if (g == _generation) _working = false;
     }
+    return null;
   }
 
   /// Prepares and signs in one wallet step only when the fresh platform fee
   /// equals the fee the user saw; a changed fee stops before any signature.
   Future<void> submit(DepositWalletQuery query, String amount, {required Decimal shownFee}) async {
-    await prepare(query, amount);
-    final review = state.review;
+    final review = await prepare(query, amount);
     if (!ref.mounted || review == null) return;
     if (review.fee.assetFee != shownFee) {
       state = const WithdrawalState(failure: 'withdrawalFeeChanged');
@@ -147,7 +152,7 @@ class WithdrawalController extends Notifier<WithdrawalState> {
         );
       }
     } finally {
-      _working = false;
+      if (g == _generation) _working = false;
     }
   }
 }

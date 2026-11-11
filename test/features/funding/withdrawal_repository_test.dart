@@ -93,7 +93,7 @@ void main() {
       }
       if (r.url.path.endsWith('/user-withdraw-info')) return http.Response(jsonEncode(info), 200);
       expect(r.url.path.endsWith('/user-withdraw'), true);
-      expect(journal.snapshot.records.single.acknowledged, false);
+      expect(journal.snapshot.records.last.acknowledged, false);
       expect(encodeWalletOperations(journal.snapshot.records).contains('Signature'), false);
       await postHook?.call();
       if (postFailure != null) throw postFailure!;
@@ -223,7 +223,7 @@ void main() {
     );
     expect(signed, isEmpty);
   });
-  test('unknown result is durable, never retried and blocks new operations', () async {
+  test('unknown result stays durable without blocking a separately signed withdrawal', () async {
     final r = await prepare();
     postFailure = TimeoutException('fixture');
     await expectLater(
@@ -234,12 +234,18 @@ void main() {
             .having((e) => e.details?.cause, 'cause', ApiErrorCause.timeout),
       ),
     );
-    expect(journal.snapshot.records.single.acknowledged, false);
-    await expectLater(
-      prepare(),
-      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'walletOperationPending')),
-    );
+    expect(journal.snapshot.records.last.acknowledged, false);
+    final next = await prepare();
     expect(requests.where((r) => r.url.path.endsWith('/user-withdraw')).length, 1);
+    postFailure = null;
+    reply = {'withdrawId': 'new-withdrawal', 'hash': '0x${'d' * 64}'};
+    final submitted = await repo.submit(next, isCurrent: () => current);
+    expect(submitted.reference, 'new-withdrawal');
+    expect(journal.snapshot.records, hasLength(2));
+    expect(journal.snapshot.records.first.acknowledged, false);
+    expect(journal.snapshot.records.last.acknowledged, true);
+    expect(journal.snapshot.records.map((r) => r.key).toSet(), hasLength(2));
+    expect(requests.where((r) => r.url.path.endsWith('/user-withdraw')).length, 2);
   });
   test('scope lost during business signing never submits or persists', () async {
     final r = await prepare();

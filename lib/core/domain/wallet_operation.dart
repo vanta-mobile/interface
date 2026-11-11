@@ -171,7 +171,7 @@ List<WalletOperationRecord> decodeWalletOperations(String source) {
   final records = (value['records'] as List).map(WalletOperationRecord.fromJson).toList();
   if (records.map((r) => r.key).toSet().length != records.length) throw const FormatException();
   final pending = records
-      .where((r) => !r.acknowledged)
+      .where((r) => !r.acknowledged && r.kind != WalletOperationKind.withdrawal)
       .map((r) => r.address.toLowerCase())
       .toList();
   if (pending.toSet().length != pending.length) throw const FormatException();

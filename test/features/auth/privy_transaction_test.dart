@@ -177,6 +177,27 @@ void main() {
     await pending;
     expect(calls.length, 1);
   });
+  test('abandoned native request yields its lease and retains its own late hash', () async {
+    await repository.initialize();
+    var current = true;
+    final firstGate = Completer<Object?>(), secondGate = Completer<Object?>();
+    response = (_) => calls.length == 1 ? firstGate.future : secondGate.future;
+    final first = repository.sendWalletTransaction(
+      transaction: walletTransaction(from: _User.address),
+      isCurrent: () => current,
+    );
+    await Future<void>.delayed(Duration.zero);
+    current = false;
+    final second = send();
+    await Future<void>.delayed(Duration.zero);
+    expect(calls, hasLength(2));
+    firstGate.complete({'method': 'eth_sendTransaction', 'data': '0x${'b' * 64}'});
+    expect((await first).hash, '0x${'b' * 64}');
+    await expectLater(send(), throwsA(isA<WalletTransactionNotSent>()));
+    expect(calls, hasLength(2));
+    secondGate.complete({'method': 'eth_sendTransaction', 'data': '0x${'c' * 64}'});
+    expect((await second).hash, '0x${'c' * 64}');
+  });
   test('same-user SDK refresh preserves pending transaction result', () async {
     await repository.initialize();
     final gate = Completer<Object?>();

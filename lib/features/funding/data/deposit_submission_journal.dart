@@ -27,9 +27,8 @@ class MemoryDepositSubmissionJournal implements DepositSubmissionJournal {
   }
 
   void checkNew(List<DepositSubmissionRecord> records, DepositSubmissionRecord r) {
-    // A deposit awaiting credit no longer blocks the next one; the same
-    // chain/sender/nonce is never recorded twice.
-    if (records.any((v) => v.key == r.key)) {
+    if (records.length >= 100) throw const AccountReadFailure('depositSubmissionStorage');
+    if (records.any((v) => v.key == r.key || (v.hash != null && v.nonceKey == r.nonceKey))) {
       throw const AccountReadFailure('depositSubmissionPending');
     }
   }

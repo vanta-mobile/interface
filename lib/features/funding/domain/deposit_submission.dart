@@ -17,6 +17,7 @@ class DepositSubmissionRecord {
     required this.baseBlock,
     required this.baseBlockHash,
     this.hash,
+    this.attemptId,
   }) {
     final asset = query.asset;
     if (query.verifiedMinimumDeposit != null && query.verifiedMinimumDeposit! < Decimal.zero ||
@@ -28,6 +29,7 @@ class DepositSubmissionRecord {
         baseBlock < BigInt.zero ||
         baseBlock >= BigInt.one << 256 ||
         !validSubmissionHash(baseBlockHash) ||
+        attemptId != null && !RegExp(r'^[a-f0-9]{32}$').hasMatch(attemptId!) ||
         hash != null && !validSubmissionHash(hash!) ||
         !RegExp(r'^[A-Za-z0-9_.-]{1,40}$').hasMatch(asset.asset)) {
       throw const FormatException();
@@ -59,8 +61,10 @@ class DepositSubmissionRecord {
   final EvmWalletTransaction transaction;
   final DateTime preparedAt;
   final String baseBlockHash;
-  final String? hash;
-  String get key => '${transaction.chainId}:${transaction.from.toLowerCase()}:${transaction.nonce}';
+  final String? hash, attemptId;
+  String get nonceKey =>
+      '${transaction.chainId}:${transaction.from.toLowerCase()}:${transaction.nonce}';
+  String get key => attemptId == null ? nonceKey : '$nonceKey:$attemptId';
   DepositSubmissionRecord withHash(String value) {
     if (hash != null && hash!.toLowerCase() != value.toLowerCase()) throw const FormatException();
     return DepositSubmissionRecord(
@@ -72,6 +76,7 @@ class DepositSubmissionRecord {
       baseBlock: baseBlock,
       baseBlockHash: baseBlockHash,
       hash: value,
+      attemptId: attemptId,
     );
   }
 }

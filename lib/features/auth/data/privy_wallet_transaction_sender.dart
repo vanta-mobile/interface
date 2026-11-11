@@ -8,12 +8,12 @@ import '../domain/wallet_transaction.dart';
 import 'privy_wallet_signer.dart';
 import 'wallet_transaction_dispatch.dart';
 
-/// Transaction-only adapter; its lock spans wallet prompts and session changes.
+/// Transaction-only adapter; the active caller owns its prompt lease.
 /// Returned hashes belong to the original request even after a scope change.
 class PrivyWalletTransactionSender {
   PrivyWalletTransactionSender(this._request);
   final PrivyTypedDataRequester _request;
-  bool _pending = false;
+  bool Function()? _pending;
 
   Future<WalletTransactionResult> send({
     required PrivyUser? user,
@@ -31,7 +31,7 @@ class PrivyWalletTransactionSender {
     if (identity == null || !isCurrent()) {
       throw const WalletTransactionNotSent('authSessionUnavailable');
     }
-    if (_pending) throw const WalletTransactionNotSent('walletTransactionBusy');
+    if (_pending?.call() ?? false) throw const WalletTransactionNotSent('walletTransactionBusy');
     if (identity.walletAddress?.toLowerCase() != transaction.from.toLowerCase()) {
       throw const WalletTransactionNotSent('authWalletChanged');
     }
@@ -52,7 +52,8 @@ class PrivyWalletTransactionSender {
       throw const WalletTransactionNotSent('authWalletChanged');
     }
     if (!isCurrent()) throw const WalletTransactionNotSent('authWalletChanged');
-    _pending = true;
+    final owner = isCurrent;
+    _pending = owner;
     try {
       if (identity.walletKind == WalletKind.external) {
         try {
@@ -75,7 +76,7 @@ class PrivyWalletTransactionSender {
         };
       });
     } finally {
-      _pending = false;
+      if (identical(_pending, owner)) _pending = null;
     }
   }
 }

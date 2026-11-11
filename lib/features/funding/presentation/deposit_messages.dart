@@ -46,6 +46,7 @@ String depositMessage(BuildContext context, String key) {
     'depositApprovalReceiptPending' => l10n.depositApprovalReceiptPending,
     'depositApprovalReceiptSucceeded' => l10n.depositApprovalReceiptSucceeded,
     'depositApprovalReceiptReverted' => l10n.depositApprovalReceiptReverted,
+    'depositApprovalReceiptReplaced' => l10n.depositApprovalReceiptReplaced,
     'depositApprovalConfirmations' => l10n.depositApprovalConfirmations,
     'depositApprovalGasFee' => l10n.depositApprovalGasFee,
     'depositApprovalFeeScope' => l10n.depositApprovalFeeScope,

@@ -10,7 +10,9 @@ import '../../subaccounts/application/account_entries_provider.dart';
 import '../../subaccounts/presentation/account_components.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
 import '../application/deposit_approval_provider.dart';
+import '../application/deposit_approval_wait_provider.dart';
 import '../application/deposit_gas_provider.dart';
+import '../application/deposit_entry_provider.dart';
 import '../application/deposit_submission_provider.dart';
 import '../application/deposit_wallet_provider.dart';
 import '../application/funding_catalog_provider.dart';
@@ -47,6 +49,8 @@ class _DepositPageState extends ConsumerState<DepositPage> {
   (DepositWalletQuery, String)? estimated;
   DepositWalletQuery? estimatingQuery;
   int estimateRevision = 0;
+  int inputRevision = 0;
+  final approvalWaitScope = Object();
   void _selectionChanged() => setState(() {});
   @override
   void initState() {
@@ -63,6 +67,7 @@ class _DepositPageState extends ConsumerState<DepositPage> {
   }
 
   void _edited(DepositWalletQuery? query) {
+    inputRevision++;
     estimateRevision++;
     gasTimer?.cancel();
     if (estimatingQuery case final previous?) {
@@ -78,66 +83,83 @@ class _DepositPageState extends ConsumerState<DepositPage> {
   /// Public RPC gas estimate, so a Max native amount reports missing fees early.
   void _estimateLater(DepositWalletQuery query) {
     gasTimer?.cancel();
-    gasTimer = Timer(const Duration(milliseconds: 400), () async {
-      if (!mounted) return;
-      final amount = selection.amount.text.trim(), wallet = ref.read(depositWalletProvider(query));
-      final check = checkDepositAmount(
-        input: amount,
-        query: query,
-        snapshot: wallet.account,
-        stale: wallet.stale,
-      );
-      if (check.units == null || wallet.busy) return;
-      final revision = ++estimateRevision;
-      estimatingQuery = query;
-      final controller = ref.read(depositGasProvider(query).notifier);
-      controller.stop();
-      await controller.estimate(amount);
-      if (mounted && revision == estimateRevision && selection.amount.text.trim() == amount) {
-        setState(() => estimated = (query, amount));
-      }
-    });
+    gasTimer = Timer(const Duration(milliseconds: 400), () => unawaited(_estimateNow(query)));
   }
 
-  Future<void> _deposit(DepositWalletQuery query) async {
-    setState(() => actionError = null);
-    final controller = ref.read(depositSubmissionProvider.notifier);
-    // Platform caps are not readable here; the confirm screen is the review.
-    final review = await controller.prepare(
-      query,
-      selection.amount.text.trim(),
-      acknowledgeUnknownLimits: true,
-    );
+  Future<void> _estimateNow(DepositWalletQuery query) async {
+    gasTimer?.cancel();
     if (!mounted) return;
-    final state = ref.read(depositSubmissionProvider);
-    if (review == null) {
-      if (state.failure case final key?) {
-        setState(() => actionError = FundingActionError(key, state.errorDetails));
+    final amount = selection.amount.text.trim(), wallet = ref.read(depositWalletProvider(query));
+    final check = checkDepositAmount(
+      input: amount,
+      query: query,
+      snapshot: wallet.account,
+      stale: wallet.stale,
+    );
+    if (check.units == null || wallet.busy) return;
+    final revision = ++estimateRevision;
+    estimatingQuery = query;
+    final controller = ref.read(depositGasProvider(query).notifier);
+    controller.stop();
+    await controller.estimate(amount);
+    if (mounted && revision == estimateRevision && selection.amount.text.trim() == amount) {
+      setState(() => estimated = (query, amount));
+    }
+  }
+
+  Future<void> _submit(DepositWalletQuery query) async {
+    setState(() => actionError = null);
+    ref.read(depositApprovalWaitProvider((approvalWaitScope, query)).notifier).clear();
+    final amount = selection.amount.text.trim(), revision = inputRevision;
+    final review = await ref.read(depositEntryProvider.notifier).prepare(query, amount);
+    if (!mounted) return;
+    if (revision != inputRevision || selection.amount.text.trim() != amount) {
+      if (review?.approval case final approval?) {
+        ref.read(depositApprovalProvider.notifier).cancel(approval);
+      }
+      if (review?.deposit case final deposit?) {
+        ref.read(depositSubmissionProvider.notifier).cancel(deposit);
       }
       return;
     }
-    final error = await Navigator.of(context).push<FundingActionError>(
-      MaterialPageRoute(builder: (_) => DepositConfirmScreen(review: review)),
-    );
-    if (mounted && error != null) setState(() => actionError = error);
-  }
-
-  Future<void> _approve(DepositWalletQuery query) async {
-    setState(() => actionError = null);
-    final controller = ref.read(depositApprovalProvider.notifier);
-    final review = await controller.prepare(query, selection.amount.text.trim());
-    if (!mounted) return;
-    final state = ref.read(depositApprovalProvider);
-    if (review == null) {
-      if (state.failure case final key?) {
-        setState(() => actionError = FundingActionError(key, state.errorDetails));
-      }
+    if (review?.failure case final failure?) {
+      setState(() => actionError = FundingActionError(failure.key, failure.details));
       return;
     }
-    final error = await Navigator.of(context).push<FundingActionError>(
-      MaterialPageRoute(builder: (_) => ApprovalConfirmScreen(review: review)),
-    );
-    if (mounted && error != null) setState(() => actionError = error);
+    final Widget screen;
+    if (review?.approval case final approval?) {
+      screen = ApprovalConfirmScreen(review: approval);
+    } else if (review?.deposit case final deposit?) {
+      screen = DepositConfirmScreen(review: deposit);
+    } else {
+      return;
+    }
+    final error = await Navigator.of(context)
+        .push<FundingActionError>(MaterialPageRoute(builder: (_) => screen));
+    if (!mounted) return;
+    // Returning from a wallet prompt never proves approval; reread allowance.
+    if (review?.approval != null && error == null) {
+      final approval = ref.read(depositApprovalProvider);
+      final record = ref
+          .read(pendingDepositApprovalsProvider)
+          .where((r) => r.key == approval.record?.key && r.hash != null)
+          .firstOrNull;
+      if (record != null && approval.failure == null) {
+        ref
+            .read(depositApprovalWaitProvider((approvalWaitScope, query)).notifier)
+            .start(approval.record!.withHash(record.hash!));
+      }
+    }
+    if (error != null &&
+        !{
+          'depositApprovalChanged',
+          'depositApprovalNotNeeded',
+          'depositSubmissionChanged',
+          'depositSubmissionApprovalNeeded',
+        }.contains(error.key)) {
+      setState(() => actionError = error);
+    }
+    await ref.read(depositWalletProvider(query).notifier).refresh();
   }
 
   Future<void> _refresh(DepositWalletQuery? query) async {
@@ -146,7 +168,7 @@ class _DepositPageState extends ConsumerState<DepositPage> {
       ref.read(fundingCatalogProvider(_depositCatalog).notifier).refresh(),
       if (query != null) ref.read(depositWalletProvider(query).notifier).refresh(),
     ]);
-    if (mounted && query != null) _estimateLater(query);
+    if (mounted && query != null) await _estimateNow(query);
   }
 
   @override
@@ -257,20 +279,24 @@ class _DepositPageState extends ConsumerState<DepositPage> {
 
   Widget _footer(AppLocalizations l, DepositWalletQuery? query, _DepositModel? model) {
     final identity = ref.watch(authProvider.select((s) => s.identity));
+    final preparingEntry = ref.watch(depositEntryProvider);
     final approving = model?.approving ?? false, approval = model?.needsApproval ?? false;
     final ready = query != null && model!.ready && !ref.watch(authProvider).busy;
     return AccountAction(
       fadeDisabled: true,
       key: const Key('funding-deposit-submit'),
       label: approval ? l.fundingApproveAsset(query!.asset.asset) : l.fundingDeposit,
-      busy: approving || (model?.preparing ?? false),
+      busy:
+          (model?.initialLoading ?? false) ||
+          (model?.waitingApproval ?? false) ||
+          approving ||
+          (model?.preparing ?? false) ||
+          preparingEntry,
       onPressed: identity?.walletAddress == null
           ? () => showAccountSheet(context)
           : !ready
           ? null
-          : approval
-          ? () => _approve(query)
-          : () => _deposit(query),
+          : () => _submit(query),
     );
   }
 
@@ -278,35 +304,26 @@ class _DepositPageState extends ConsumerState<DepositPage> {
     ref.watch(depositWalletAutoReadProvider(query));
     final wallet = ref.watch(depositWalletProvider(query)),
         gas = ref.watch(depositGasProvider(query));
+    final approvalWait = ref.watch(depositApprovalWaitProvider((approvalWaitScope, query)));
     ref.listen(depositWalletProvider(query).select((s) => s.account), (_, _) {
       _estimateLater(query);
-    });
-    ref.listen(pendingDepositApprovalsProvider.select((r) => r.length), (before, after) {
-      if ((before ?? 0) > after) {
-        unawaited(ref.read(depositWalletProvider(query).notifier).refresh());
-      }
     });
     final amount = selection.amount.text.trim();
     final check = checkDepositAmount(
       input: amount,
       query: query,
       snapshot: wallet.account,
-      stale: wallet.stale,
+      // A background read retains the last observation for presentation.
+      // The explicit entry/confirm controllers still await fresh preflight.
+      stale: wallet.stale && !wallet.busy,
     );
     final estimateMatches = estimated == (query, amount);
-    final gasFailure = estimateMatches ? gas.failure : null;
-    final gasReady =
+    final hasEstimate =
         estimateMatches &&
-        !gas.busy &&
-        gas.failure == null &&
+        check.units != null &&
         gas.account?.transaction.amountUnits == check.units;
-    final approving = ref
-        .watch(pendingDepositApprovalsProvider)
-        .any(
-          (r) =>
-              r.query.asset.asset == query.asset.asset &&
-              r.query.asset.chainId == query.asset.chainId,
-        );
+    final gasFailure = estimateMatches ? gas.failure : null;
+    final gasReady = hasEstimate && (gas.busy || !gas.stale) && gas.failure == null;
     final transient = {'depositReadRequired', 'depositReadStale'}.contains(check.errorKey);
     final amountError =
         check.errorKey != null && !transient ||
@@ -324,7 +341,7 @@ class _DepositPageState extends ConsumerState<DepositPage> {
       error = apiErrorText(context, e.key, e.details, fallbackText: depositMessage(context, e.key));
     } else if (check.errorKey case final key? when !transient) {
       error = depositMessage(context, key);
-    } else if (gasFailure ?? (wallet.account == null ? wallet.failure : null) case final f?) {
+    } else if (approvalWait.failure ?? gasFailure ?? wallet.failure case final f?) {
       error = apiErrorText(context, f.key, f.details, fallbackText: depositMessage(context, f.key));
     }
     final snapshot = wallet.account?.query.sameAsset(query) == true ? wallet.account : null;
@@ -333,14 +350,16 @@ class _DepositPageState extends ConsumerState<DepositPage> {
           ? null
           : fundingAmountText(snapshot.assetBalance.toString(), query.asset.asset),
       max: snapshot == null || wallet.stale ? null : snapshot.assetBalance.toString(),
-      loading: wallet.busy,
+      loading: wallet.busy && wallet.account == null,
+      initialLoading:
+          wallet.busy && wallet.account == null || gas.busy && check.units != null && !hasEstimate,
       error: error,
       amountError: amountError,
-      approving:
-          approving || ref.watch(depositApprovalProvider).step == DepositApprovalStep.preparing,
-      needsApproval: approving || check.allowanceSufficient == false,
+      approving: ref.watch(depositApprovalProvider).step == DepositApprovalStep.preparing,
+      needsApproval: check.allowanceSufficient == false,
       preparing: ref.watch(depositSubmissionProvider).step == DepositSubmissionStep.preparing,
-      ready: check.units != null && !amountError && !wallet.busy && gasReady,
+      waitingApproval: approvalWait.busy,
+      ready: check.units != null && !amountError && wallet.failure == null && gasReady,
     );
   }
 }
@@ -350,13 +369,22 @@ class _DepositModel {
     required this.balance,
     required this.max,
     required this.loading,
+    required this.initialLoading,
     required this.error,
     required this.amountError,
     required this.approving,
     required this.needsApproval,
     required this.preparing,
+    required this.waitingApproval,
     required this.ready,
   });
   final String? balance, max, error;
-  final bool loading, amountError, approving, needsApproval, preparing, ready;
+  final bool loading,
+      initialLoading,
+      amountError,
+      approving,
+      needsApproval,
+      preparing,
+      waitingApproval,
+      ready;
 }

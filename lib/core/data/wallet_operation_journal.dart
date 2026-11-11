@@ -31,7 +31,14 @@ class MemoryWalletOperationJournal implements WalletOperationJournal {
 
   List<WalletOperationRecord> add(List<WalletOperationRecord> records, WalletOperationRecord r) {
     if (records.length >= 100) throw const WalletOperationStorageFailure();
-    if (records.any((v) => !v.acknowledged && v.address.toLowerCase() == r.address.toLowerCase())) {
+    if (records.any((v) => v.key == r.key) ||
+        r.kind != WalletOperationKind.withdrawal &&
+            records.any(
+              (v) =>
+                  !v.acknowledged &&
+                  v.kind != WalletOperationKind.withdrawal &&
+                  v.address.toLowerCase() == r.address.toLowerCase(),
+            )) {
       throw const WalletOperationPending();
     }
     return decodeWalletOperations(encodeWalletOperations([...records, r]));

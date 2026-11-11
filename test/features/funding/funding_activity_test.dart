@@ -124,6 +124,46 @@ void main() {
     );
   }
 
+  testWidgets('unknown attempts stay invisible; the same late hash displays and completes once', (
+    tester,
+  ) async {
+    await start(tester);
+    final template = localDeposit();
+    DepositSubmissionRecord attempt(String id) => DepositSubmissionRecord(
+      query: template.query,
+      kind: template.kind,
+      amountUnits: template.amountUnits,
+      transaction: template.transaction,
+      preparedAt: template.preparedAt,
+      baseBlock: template.baseBlock,
+      baseBlockHash: template.baseBlockHash,
+      attemptId: id * 32,
+    );
+    final first = attempt('a'), second = attempt('b');
+    await deposits.prepare(first);
+    await deposits.prepare(second);
+    await tester.pump();
+    expect(state().pending, isEmpty);
+    await deposits.attachHash(second.key, template.hash!);
+    await tester.pump();
+    expect(state().pending, hasLength(1));
+    await deposits.attachHash(first.key, template.hash!);
+    await tester.pump();
+    expect(state().pending, hasLength(1));
+    receipts.result = DepositApprovalReceipt(
+      hash: template.hash!,
+      bound: true,
+      status: DepositReceiptStatus.reverted,
+      confirmations: 2,
+      blockNumber: template.baseBlock,
+    );
+    final controller = c.read(depositSubmissionProvider.notifier);
+    await controller.check(first.key, '');
+    await controller.check(second.key, '');
+    await tester.pump();
+    expect(state().pending, isEmpty);
+    expect(state().completions, hasLength(1));
+  });
   testWidgets('without an active device grant polling never requests wallet signing', (
     tester,
   ) async {

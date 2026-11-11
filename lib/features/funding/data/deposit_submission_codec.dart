@@ -31,6 +31,7 @@ Map<String, Object?> encodeSubmissionRecord(DepositSubmissionRecord r) => {
   'baseBlock': '${r.baseBlock}',
   'baseHash': r.baseBlockHash,
   'hash': r.hash,
+  if (r.attemptId != null) 'attemptId': r.attemptId,
 };
 
 Map<String, dynamic> _map(Object? value, Set<String> keys) {
@@ -67,6 +68,7 @@ int _int(Object? v) =>
 
 DepositSubmissionRecord decodeSubmissionRecord(Object? value) {
   final m = _map(value, {
+    if (value is Map<String, dynamic> && value.containsKey('attemptId')) 'attemptId',
     'native',
     'verifiedMinimum',
     'market',
@@ -124,6 +126,7 @@ DepositSubmissionRecord decodeSubmissionRecord(Object? value) {
     baseBlock: _uint(m['baseBlock']),
     baseBlockHash: _text(m['baseHash']),
     hash: m['hash'] == null ? null : _text(m['hash']),
+    attemptId: m['attemptId'] == null ? null : _text(m['attemptId']),
   );
 }
 
@@ -134,7 +137,7 @@ List<DepositSubmissionRecord> decodeSubmissionJournal(String source) {
   final map = _map(decodeFundingJson(source), {'version', 'records'}), raw = map['records'];
   if (_int(map['version']) != 1 || raw is! List || raw.length > 100) throw const FormatException();
   final records = raw.map(decodeSubmissionRecord).toList();
-  // Several deposits of one wallet may await credit; each nonce is recorded once.
+  // Preserve each explicit attempt, including unresolved requests at the same nonce.
   if (records.map((r) => r.key).toSet().length != records.length) {
     throw const FormatException();
   }

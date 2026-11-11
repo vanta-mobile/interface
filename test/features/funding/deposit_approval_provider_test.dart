@@ -7,6 +7,7 @@ import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/auth/domain/wallet_transaction.dart';
 import 'package:vanta/features/funding/application/deposit_approval_provider.dart';
+import 'package:vanta/features/funding/application/funding_flow_provider.dart';
 import 'package:vanta/features/funding/application/deposit_gas_provider.dart';
 import 'package:vanta/features/funding/data/deposit_approval_codec.dart';
 import 'package:vanta/features/funding/data/deposit_approval_journal.dart';
@@ -86,10 +87,67 @@ void main() {
       expect(receipts.calls, isEmpty);
       await controller().confirm(prepared);
       expect(identity.transactions.length, 1);
-      expect(await controller().prepare(query, '1'), null);
-      expect(state().failure, 'depositApprovalPending');
+      expect(await controller().prepare(query, '1'), isNotNull);
+      expect(state().failure, isNull);
+      expect(identity.transactions, hasLength(1));
     },
   );
+  approvalTest('old unknown approval does not gate a fresh explicit approval', (tester) async {
+    await journal.prepare(approvalRecord(now: now));
+    await controller().confirm(await review());
+    expect(identity.transactions, hasLength(1));
+    expect(journal.snapshot.records, hasLength(2));
+    expect(journal.snapshot.records.first.hash, isNull);
+    expect(journal.snapshot.records.last.hash, hash);
+    expect(state().failure, isNull);
+  });
+  approvalTest('receipt polling visits newer approvals while an older hash is still pending', (
+    tester,
+  ) async {
+    final first = approvalRecord(now: now).withHash(hash);
+    final second = DepositApprovalRecord(
+      query: first.query,
+      kind: first.kind,
+      amountUnits: first.amountUnits,
+      transaction: first.transaction,
+      preparedAt: first.preparedAt,
+      baseBlock: first.baseBlock,
+      baseBlockHash: first.baseBlockHash,
+      attemptId: 'a' * 32,
+      hash: '0x${'c' * 64}',
+    );
+    await journal.prepare(first);
+    await journal.prepare(second);
+    final subscription = container.listen(depositReceiptWatchProvider, (_, _) {});
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pump();
+    expect(receipts.calls.map((c) => c.$1.key), [first.key, second.key]);
+    subscription.close();
+  });
+  approvalTest('approval polling yields to a new explicit review', (tester) async {
+    await journal.prepare(approvalRecord(now: now).withHash(hash));
+    receipts.gate = Completer<void>();
+    final polling = controller().check(journal.snapshot.records.single.key, '');
+    await tester.pump();
+    final next = await review();
+    receipts.gate!.complete();
+    await polling;
+    expect(state().review, same(next));
+    await controller().confirm(next);
+    expect(identity.transactions, hasLength(1));
+  });
+  approvalTest('fresh sufficient allowance prevents a redundant approval at confirm', (
+    tester,
+  ) async {
+    final prepared = await review();
+    gas.result = gasQuote(query: query, receivedAt: now);
+    await controller().confirm(prepared);
+    expect(state().failure, 'depositApprovalChanged');
+    expect(identity.transactions, isEmpty);
+    expect(journal.snapshot.records, isEmpty);
+  });
   approvalTest(
     'reset approval sends only zero; next step requires new balance read and confirmation',
     (tester) async {
@@ -204,7 +262,7 @@ void main() {
   }
   for (final change in ['stop', 'logout', 'dispose']) {
     approvalTest(
-      'hash after $change stays under original wallet and duplicate dispatch is blocked',
+      'hash after $change stays under original wallet without replaying the old review',
       (tester) async {
         final prepared = await review();
         identity.transactionGate = Completer();
@@ -218,7 +276,10 @@ void main() {
         await tester.pump();
         if (change != 'dispose') {
           await originalController.confirm(prepared);
-          expect(await originalController.prepare(query, '1'), null);
+          expect(
+            await originalController.prepare(query, '1'),
+            change == 'stop' ? isNotNull : isNull,
+          );
         }
         identity.transactionGate!.complete();
         await pending;
@@ -228,16 +289,19 @@ void main() {
       },
     );
   }
-  approvalTest('stop during prepare discards late review and blocks overlap until completion', (
+  approvalTest('stop during prepare discards late review and permits a new prepare', (
     tester,
   ) async {
     gas.gate = Completer();
     final pending = controller().prepare(query, '1');
     controller().stop();
-    expect(await controller().prepare(query, '1'), null);
-    gas.gate!.complete();
+    final oldGate = gas.gate!;
+    gas.gate = null;
+    final next = await controller().prepare(query, '1');
+    expect(next, isNotNull);
+    oldGate.complete();
     expect(await pending, null);
-    expect(state().review, null);
+    expect(state().review, same(next));
     expect(identity.transactions, isEmpty);
   });
   approvalTest('wallet change before durable save completes never dispatches', (tester) async {
@@ -287,18 +351,17 @@ void main() {
       },
     );
   }
-  approvalTest(
-    'manual original hash adopted only after matching transaction, pending stays blocked',
-    (tester) async {
-      final record = approvalRecord(now: now);
-      await journal.prepare(record);
-      await controller().check(record.key, hash);
-      expect(journal.snapshot.records.single.hash, hash);
-      expect(state().receipt!.status, DepositReceiptStatus.pending);
-      expect(await controller().prepare(query, '1'), null);
-      expect(identity.transactions, isEmpty);
-    },
-  );
+  approvalTest('manual original hash is adopted without gating fresh approval preparation', (
+    tester,
+  ) async {
+    final record = approvalRecord(now: now);
+    await journal.prepare(record);
+    await controller().check(record.key, hash);
+    expect(journal.snapshot.records.single.hash, hash);
+    expect(state().receipt!.status, DepositReceiptStatus.pending);
+    expect(await controller().prepare(query, '1'), isNotNull);
+    expect(identity.transactions, isEmpty);
+  });
   for (final intent in [true, false]) {
     approvalTest('unbound or replacement pending $intent never poisons original hash', (
       tester,
