@@ -117,5 +117,6 @@ MainOrderCapacitySnapshot assembleMainOrderCapacity({
     contractCap: contractCap,
     receivedAt: now,
     marketFacts: marketFacts,
+    maximumLeverage: brackets.map((b) => b.maximum).reduce((a, b) => a > b ? a : b),
   );
 }

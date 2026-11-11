@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/trade/presentation/trade_theme.dart';
 import 'package:vanta/features/market/domain/market.dart';
 import 'package:vanta/features/trade/application/providers.dart';
-import 'package:vanta/features/trade/presentation/widgets/order_book.dart';
+import 'package:vanta/features/trade/presentation/widgets/compact_order_book.dart';
 
 import 'support/trade_fixture.dart';
 import 'support/workspace_navigation.dart';
@@ -23,12 +23,15 @@ void main() {
     await launch(tester, container);
     await selectWorkspace(tester, chart: false);
     final price = find
-        .descendant(of: find.byType(OrderBookPanel), matching: find.text('80,001'))
+        .descendant(of: find.byType(CompactOrderBook), matching: find.text('80,001'))
         .first;
     await tester.ensureVisible(price);
     await tester.pumpAndSettle();
     final row = find.ancestor(of: price, matching: find.byType(InkWell)).first;
-    final bar = find.descendant(of: row, matching: find.byType(ColoredBox));
+    final bar = find.descendant(
+      of: row,
+      matching: find.byKey(const Key('order-book-quantity-bar')),
+    );
     expect(tester.getSize(bar).height, greaterThan(10));
     expect(tester.getSize(bar).width, greaterThan(0));
     expect(tester.takeException(), null);
@@ -75,7 +78,8 @@ void main() {
     expect(tester.getSize(bar).width, lessThan(width * .75));
     await tester.pumpAndSettle();
     expect(tester.getSize(bar).width, closeTo(width * .75, .01));
-    expect(find.descendant(of: row, matching: find.text('6')), findsOneWidget);
+    // The compact book shows level notional in USDT by default: 6 × 80001.
+    expect(find.descendant(of: row, matching: find.text('480.01K')), findsOneWidget);
     updates.add(
       const OrderBook(
         asks: [BookLevel(80001, 6), BookLevel(80002, 4), BookLevel(80003, 16)],

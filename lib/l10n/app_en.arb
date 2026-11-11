@@ -2974,5 +2974,45 @@
         "type": "String"
       }
     }
-  }
+  },
+  "tradeOrderPrice": "Price ({asset})",
+  "@tradeOrderPrice": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "tradeOrderSize": "Size",
+  "tradeAdvanced": "Advanced",
+  "tradePriceDown": "Decrease price",
+  "tradePriceUp": "Increase price",
+  "tradeTpSl": "TP/SL",
+  "tradeHiddenOrder": "Hidden Order",
+  "tradeSelectPriceType": "Select Price Type",
+  "tradeSelectUnitType": "Select Unit Type",
+  "tradeTriggerByLast": "Trigger by Last Price",
+  "tradeTriggerByMark": "Trigger by Mark Price",
+  "tradeTakeProfit": "Take Profit",
+  "tradeStopLoss": "Stop Loss",
+  "tradeTp": "TP",
+  "tradeSl": "SL",
+  "tradeSelectExitMode": "Select Input Type",
+  "tradeExitPnl": "PnL ({asset})",
+  "@tradeExitPnl": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "tradeExitPrice": "Price ({asset})",
+  "@tradeExitPrice": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "tradeExitRoi": "ROI (%)"
 }

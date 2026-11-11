@@ -22,9 +22,13 @@ class MainOrderPercentageControl extends ConsumerWidget {
     super.key,
     this.unit = OrderSizeUnit.quote,
     this.manualCheck = true,
+    this.compact = false,
   });
   final OrderSizeUnit unit;
   final bool manualCheck;
+
+  /// Trade-workspace slider: five stops and failures only, as designed.
+  final bool compact;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -45,6 +49,43 @@ class MainOrderPercentageControl extends ConsumerWidget {
         /* Missing prices keep the slider disabled. */
       }
     }
+    final onChanged = available && controller.editable
+        ? (double value) => controller.selectPercent(value.round())
+        : null;
+    final failure = state.failure == null ? null : _failureText(context, state.failure!);
+    if (compact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 4,
+              thumbShape: const RoundSliderThumbShape(
+                enabledThumbRadius: 6,
+                disabledThumbRadius: 6,
+              ),
+              overlayShape: SliderComponentShape.noOverlay,
+            ),
+            child: SizedBox(
+              height: 24,
+              child: Semantics(
+                container: true,
+                child: Slider(
+                  key: const Key('main-order-percentage'),
+                  max: 100,
+                  divisions: 4,
+                  value: (state.percent ?? 0).clamp(0, 100).toDouble(),
+                  label: '${state.percent ?? 0}%',
+                  semanticFormatterCallback: (value) => l10n.liveAllocationPercent(value.round()),
+                  onChanged: onChanged,
+                ),
+              ),
+            ),
+          ),
+          ?failure,
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -61,9 +102,7 @@ class MainOrderPercentageControl extends ConsumerWidget {
             value: (state.percent ?? 0).toDouble(),
             label: '${state.percent ?? 0}%',
             semanticFormatterCallback: (value) => l10n.liveAllocationPercent(value.round()),
-            onChanged: available && controller.editable
-                ? (value) => controller.selectPercent(value.round())
-                : null,
+            onChanged: onChanged,
           ),
         ),
         if (state.percent == null) Text(l10n.liveAllocationManual),
@@ -74,23 +113,27 @@ class MainOrderPercentageControl extends ConsumerWidget {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         if (state.preparing) Text(l10n.liveAllocationChecking),
-        if (state.failure case final failure?)
-          Text(
-            failure is MainOrderCapacityExceeded
-                ? l10n.liveAllocationMaximumChanged(
-                    failure.capacity.buy ? l10n.long : l10n.short,
-                    unit == OrderSizeUnit.quote
-                        ? '≈ ${failure.capacity.maximumQuote}'
-                        : '${failure.capacity.maximum}',
-                    unit == OrderSizeUnit.quote
-                        ? failure.context.rules.quoteAsset
-                        : failure.context.rules.baseAsset,
-                  )
-                : accountErrorText(context, failure),
-            key: const Key('main-order-allocation-failure'),
-            style: const TextStyle(color: AppColors.negative),
-          ),
+        ?failure,
       ],
+    );
+  }
+
+  Widget _failureText(BuildContext context, AccountReadFailure failure) {
+    final l10n = AppLocalizations.of(context);
+    return Text(
+      failure is MainOrderCapacityExceeded
+          ? l10n.liveAllocationMaximumChanged(
+              failure.capacity.buy ? l10n.long : l10n.short,
+              unit == OrderSizeUnit.quote
+                  ? '≈ ${failure.capacity.maximumQuote}'
+                  : '${failure.capacity.maximum}',
+              unit == OrderSizeUnit.quote
+                  ? failure.context.rules.quoteAsset
+                  : failure.context.rules.baseAsset,
+            )
+          : accountErrorText(context, failure),
+      key: const Key('main-order-allocation-failure'),
+      style: const TextStyle(color: AppColors.negative),
     );
   }
 }

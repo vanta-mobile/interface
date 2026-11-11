@@ -9,7 +9,7 @@ import '../../../market/domain/market.dart';
 import '../../application/providers.dart';
 import '../trade_theme.dart';
 import 'book_skeleton.dart';
-import 'order_book.dart';
+import 'book_feed_state.dart';
 import 'order_book_row.dart';
 
 /// The chart page consumes the same shared public feed as the trade book.

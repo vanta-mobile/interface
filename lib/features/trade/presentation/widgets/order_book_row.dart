@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme.dart';
 import '../trade_theme.dart';
 import '../../../market/domain/market.dart';
+import '../../../market/domain/market.dart' as format show compact;
 import '../../application/providers.dart';
 
 class OrderBookRow extends ConsumerWidget {
@@ -15,8 +16,16 @@ class OrderBookRow extends ConsumerWidget {
     this.precision = const MarketPrecision(),
     this.compact = false,
     this.reversed = false,
+    this.cumulative,
+    this.quoteSize = false,
   });
   final bool compact;
+
+  /// Compact book only: cumulative depth share drawn behind the level bar.
+  final double? cumulative;
+
+  /// Shows the level's quote notional instead of its base quantity.
+  final bool quoteSize;
   final bool reversed;
   final BookLevel level;
   final bool buy;
@@ -28,6 +37,19 @@ class OrderBookRow extends ConsumerWidget {
     onTap: () => ref.read(orderPriceProvider.notifier).setPrice(marketInput(level.price)),
     child: Stack(
       children: [
+        if (cumulative case final share?)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: FractionallySizedBox(
+                alignment: Alignment.centerRight,
+                widthFactor: share.clamp(0, 1),
+                child: ColoredBox(
+                  key: const Key('order-book-cumulative-bar'),
+                  color: (buy ? TradeColors.positive : TradeColors.negative).withValues(alpha: .07),
+                ),
+              ),
+            ),
+          ),
         Positioned.fill(
           child: IgnorePointer(
             child: AnimatedFractionallySizedBox(
@@ -50,7 +72,10 @@ class OrderBookRow extends ConsumerWidget {
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 10, vertical: compact ? 3 : 4.5),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 0 : 10,
+            vertical: compact ? 3.5 : 4.5,
+          ),
           child: Row(
             textDirection: reversed ? TextDirection.rtl : TextDirection.ltr,
             children: [
@@ -63,6 +88,7 @@ class OrderBookRow extends ConsumerWidget {
                     marketNumber(level.price, minimumDecimals: precision.priceDecimals),
                     style: TextStyle(
                       fontSize: compact ? 11 : 10,
+                      height: compact ? 16 / 11 : null,
                       color: compact
                           ? (buy ? TradeColors.accent : TradeColors.negative)
                           : (buy ? AppColors.positive : AppColors.negative),
@@ -78,9 +104,12 @@ class OrderBookRow extends ConsumerWidget {
                   fit: BoxFit.scaleDown,
                   alignment: reversed ? Alignment.centerLeft : Alignment.centerRight,
                   child: Text(
-                    marketNumber(level.quantity, minimumDecimals: precision.quantityDecimals),
+                    quoteSize
+                        ? format.compact(level.quantity * level.price)
+                        : marketNumber(level.quantity, minimumDecimals: precision.quantityDecimals),
                     style: TextStyle(
-                      fontSize: compact ? 11 : 10,
+                      fontSize: 10,
+                      height: compact ? 16 / 10 : null,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),

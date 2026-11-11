@@ -9,6 +9,7 @@ import '../domain/account_change_stream.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/futures_asset_mode.dart';
 import 'account_change_provider.dart';
+import 'account_read_provider.dart';
 import 'asset_index_provider.dart';
 import 'live_order_provider.dart';
 import 'main_order_capacity_provider.dart';
@@ -29,8 +30,8 @@ final mainOrderRefreshProvider =
       MainOrderRefreshController.new,
     );
 
-/// One explicit intent restores all facts needed by the opening form. Reading
-/// this provider, receiving an event or reconnecting never requests signatures.
+/// One refresh restores all facts needed by the opening form. The authorized
+/// login coordinator or an explicit refresh initiates it; quotes never do.
 class MainOrderRefreshController extends Notifier<MainOrderRefreshState> {
   int _revision = 0;
   Completer<bool>? _cancel;
@@ -39,7 +40,29 @@ class MainOrderRefreshController extends Notifier<MainOrderRefreshState> {
   @override
   MainOrderRefreshState build() {
     ref.listen(authProvider.select((s) => (s.identity, s.busy)), (a, b) {
-      if (a != b) stop();
+      if (a != b) {
+        stop();
+        if (a?.$1 != b.$1) state = const MainOrderRefreshState();
+      }
+    });
+    ref.listen(accountReadProvider, (previous, next) {
+      // An explicit successful account read verifies the prerequisite again.
+      // Opening funding or dispatching a deposit is never such evidence.
+      if (next.account != null &&
+          !next.stale &&
+          next.failure == null &&
+          (previous?.failure?.requiresDeposit == true ||
+              state.failure?.requiresDeposit == true ||
+              ref.read(liveOrderProvider).failure?.requiresDeposit == true ||
+              ref.read(mainOrderCapacityProvider).failure?.requiresDeposit == true)) {
+        state = const MainOrderRefreshState();
+        if (ref.read(liveOrderProvider).failure?.requiresDeposit == true) {
+          ref.invalidate(liveOrderProvider);
+        }
+        if (ref.read(mainOrderCapacityProvider).failure?.requiresDeposit == true) {
+          ref.invalidate(mainOrderCapacityProvider);
+        }
+      }
     });
     ref.listen(symbolProvider, (a, b) {
       if (a != b) stop();
@@ -70,7 +93,11 @@ class MainOrderRefreshController extends Notifier<MainOrderRefreshState> {
   Future<bool> refresh(String symbol) async {
     final auth = ref.read(authProvider), identity = auth.identity;
     final live = ref.read(liveOrderProvider), activity = ref.read(symbolSettingsActivityProvider);
-    if (state.loading ||
+    if (state.failure?.requiresDeposit == true ||
+        ref.read(accountReadProvider).failure?.requiresDeposit == true ||
+        live.failure?.requiresDeposit == true ||
+        ref.read(mainOrderCapacityProvider).failure?.requiresDeposit == true ||
+        state.loading ||
         live.busy ||
         live.needsRecheck ||
         auth.busy ||

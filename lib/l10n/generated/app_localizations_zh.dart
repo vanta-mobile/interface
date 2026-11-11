@@ -6385,4 +6385,67 @@ class AppLocalizationsZh extends AppLocalizations {
   String fundingWithdrawalFeeInsufficient(String asset) {
     return '$asset 不足以支付提现金额及手续费，请输入更小的金额。';
   }
+
+  @override
+  String tradeOrderPrice(String asset) {
+    return '价格（$asset）';
+  }
+
+  @override
+  String get tradeOrderSize => '数量';
+
+  @override
+  String get tradeAdvanced => '高级设置';
+
+  @override
+  String get tradePriceDown => '降低价格';
+
+  @override
+  String get tradePriceUp => '提高价格';
+
+  @override
+  String get tradeTpSl => '止盈止损';
+
+  @override
+  String get tradeHiddenOrder => '隐藏委托';
+
+  @override
+  String get tradeSelectPriceType => '选择价格类型';
+
+  @override
+  String get tradeSelectUnitType => '选择单位';
+
+  @override
+  String get tradeTriggerByLast => '按最新成交价触发';
+
+  @override
+  String get tradeTriggerByMark => '按标记价触发';
+
+  @override
+  String get tradeTakeProfit => '止盈';
+
+  @override
+  String get tradeStopLoss => '止损';
+
+  @override
+  String get tradeTp => '止盈';
+
+  @override
+  String get tradeSl => '止损';
+
+  @override
+  String get tradeSelectExitMode => '选择输入方式';
+
+  @override
+  String tradeExitPnl(String asset) {
+    return '盈亏（$asset）';
+  }
+
+  @override
+  String tradeExitPrice(String asset) {
+    return '价格（$asset）';
+  }
+
+  @override
+  String get tradeExitRoi => '收益率（%）';
 }

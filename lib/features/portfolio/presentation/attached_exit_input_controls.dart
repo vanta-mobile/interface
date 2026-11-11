@@ -9,6 +9,7 @@ import '../domain/live_order.dart';
 import '../domain/live_order_attachment.dart';
 import '../domain/live_order_trigger.dart';
 import 'attached_exit_preview.dart';
+import 'live_order_embedded_triggers.dart';
 
 class AttachedExitInputControls extends StatefulWidget {
   const AttachedExitInputControls({
@@ -19,8 +20,12 @@ class AttachedExitInputControls extends StatefulWidget {
     required this.data,
     required this.entry,
     required this.onChanged,
+    this.compact = false,
   });
   final LiveOrderTriggerKind kind;
+
+  /// Trade-workspace box: active once a value is entered, market execution.
+  final bool compact;
   final bool enabled, advanced;
   final LiveOrderContext data;
   final LiveOrderDraft entry;
@@ -47,7 +52,8 @@ class _AttachedExitInputControlsState extends State<AttachedExitInputControls> {
     limitPrice: limitPrice.text.trim(),
     protect: protect,
   );
-  void emit() => widget.onChanged(selected ? input : null);
+  bool get active => widget.compact ? values[mode]!.text.trim().isNotEmpty : selected;
+  void emit() => widget.onChanged(active ? input : null);
   @override
   void dispose() {
     for (final value in values.values) {
@@ -69,6 +75,41 @@ class _AttachedExitInputControlsState extends State<AttachedExitInputControls> {
     final resolved = effective.resolve(widget.data, widget.entry);
     final reference = attachedEntryReference(widget.data, widget.entry);
     final label = name == 'tp' ? l10n.attachedOrderTakeProfit : l10n.attachedOrderStopLoss;
+    final issue = values[mode]!.text.isNotEmpty && resolved.failure != null
+        ? l10n.attachedOrderExitIssue(
+            label,
+            resolved.failure == 'attachedOrderPriceDirection' && reference != null
+                ? l10n.attachedOrderDirectionHint(
+                    resolved.exit.rises(!widget.entry.buy) ? '>' : '<',
+                    reference.toString(),
+                    widget.data.rules.quoteAsset,
+                  )
+                : tr(context, resolved.failure!),
+          )
+        : null;
+    if (widget.compact) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: EmbeddedExitField(
+          kind: widget.kind,
+          controller: values[mode]!,
+          mode: mode,
+          basis: basis,
+          asset: widget.data.rules.quoteAsset,
+          enabled: widget.enabled,
+          issue: issue,
+          onValue: changed,
+          onMode: (value) {
+            mode = value;
+            changed();
+          },
+          onBasis: (value) {
+            basis = value;
+            changed();
+          },
+        ),
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -94,20 +135,7 @@ class _AttachedExitInputControlsState extends State<AttachedExitInputControls> {
             resolution: resolved,
             derived: mode != AttachedExitInputMode.price,
           ),
-          if (values[mode]!.text.isNotEmpty && resolved.failure != null)
-            Text(
-              l10n.attachedOrderExitIssue(
-                label,
-                resolved.failure == 'attachedOrderPriceDirection' && reference != null
-                    ? l10n.attachedOrderDirectionHint(
-                        resolved.exit.rises(!widget.entry.buy) ? '>' : '<',
-                        reference.toString(),
-                        widget.data.rules.quoteAsset,
-                      )
-                    : tr(context, resolved.failure!),
-              ),
-              style: const TextStyle(color: AppColors.negative),
-            ),
+          if (issue != null) Text(issue, style: const TextStyle(color: AppColors.negative)),
           CheckboxListTile(
             key: Key('attached-$name-protect'),
             contentPadding: EdgeInsets.zero,

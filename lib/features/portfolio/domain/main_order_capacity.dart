@@ -74,8 +74,13 @@ class MainOrderCapacitySnapshot {
     required this.contractCap,
     required this.receivedAt,
     this.marketFacts,
+    this.maximumLeverage,
   });
   final LiveOrderContext context;
+
+  /// Highest initial leverage among the symbol's signed brackets. Display
+  /// only; it is not a mutation bound and says nothing about this account.
+  final int? maximumLeverage;
   final CapacityAccount account;
   final FuturesAssetMode assetMode;
   final Rational availableMargin;

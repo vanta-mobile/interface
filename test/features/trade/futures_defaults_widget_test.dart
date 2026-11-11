@@ -16,7 +16,6 @@ import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/domain/position_margin_mode.dart';
 import 'package:vanta/features/portfolio/presentation/quick_order_panel.dart';
 import 'package:vanta/features/trade/application/providers.dart';
-import 'package:vanta/features/trade/presentation/widgets/order_form.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/live_order.dart';
@@ -52,7 +51,6 @@ void main() {
             expect(fixture.container.read(symbolProvider), 'BTCUSDT');
             expect(fixture.container.read(futuresWorkspaceTabProvider), FuturesWorkspaceTab.chart);
             expect(find.byType(QuickOrderPanel), findsOneWidget);
-            expect(find.byType(OrderForm), findsNothing);
             expect(find.byType(PointsPage), findsNothing);
             expect(quickQuantity(tester), '');
             expect(quantityLabel(tester), messages(tester).liveOrderQuantity('BTC'));

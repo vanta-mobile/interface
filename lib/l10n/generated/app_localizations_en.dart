@@ -6860,4 +6860,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String fundingWithdrawalFeeInsufficient(String asset) {
     return 'Insufficient $asset for the withdrawal amount and fee. Enter a smaller amount.';
   }
+
+  @override
+  String tradeOrderPrice(String asset) {
+    return 'Price ($asset)';
+  }
+
+  @override
+  String get tradeOrderSize => 'Size';
+
+  @override
+  String get tradeAdvanced => 'Advanced';
+
+  @override
+  String get tradePriceDown => 'Decrease price';
+
+  @override
+  String get tradePriceUp => 'Increase price';
+
+  @override
+  String get tradeTpSl => 'TP/SL';
+
+  @override
+  String get tradeHiddenOrder => 'Hidden Order';
+
+  @override
+  String get tradeSelectPriceType => 'Select Price Type';
+
+  @override
+  String get tradeSelectUnitType => 'Select Unit Type';
+
+  @override
+  String get tradeTriggerByLast => 'Trigger by Last Price';
+
+  @override
+  String get tradeTriggerByMark => 'Trigger by Mark Price';
+
+  @override
+  String get tradeTakeProfit => 'Take Profit';
+
+  @override
+  String get tradeStopLoss => 'Stop Loss';
+
+  @override
+  String get tradeTp => 'TP';
+
+  @override
+  String get tradeSl => 'SL';
+
+  @override
+  String get tradeSelectExitMode => 'Select Input Type';
+
+  @override
+  String tradeExitPnl(String asset) {
+    return 'PnL ($asset)';
+  }
+
+  @override
+  String tradeExitPrice(String asset) {
+    return 'Price ($asset)';
+  }
+
+  @override
+  String get tradeExitRoi => 'ROI (%)';
 }

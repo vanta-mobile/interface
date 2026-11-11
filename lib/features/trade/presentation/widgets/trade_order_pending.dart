@@ -5,6 +5,10 @@ import '../../../../l10n/generated/app_localizations.dart';
 import '../../../market/application/market_providers.dart';
 import '../../../market/domain/market.dart';
 import '../../application/providers.dart';
+import '../../../portfolio/application/order_entry_gate_provider.dart';
+import '../../../funding/domain/funding_catalog.dart';
+import '../../../funding/presentation/funding_screen.dart';
+import 'account_sheet.dart';
 import '../trade_theme.dart';
 import 'primitives.dart';
 
@@ -17,6 +21,7 @@ class TradeOrderPending extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
+    final gate = ref.watch(orderEntryGateProvider);
     final instrument = ref.watch(selectedInstrumentProvider);
     final base = instrument?.symbol == symbol ? instrument!.base : '—';
     final quote = ref.watch(currentMarketProvider);
@@ -61,10 +66,10 @@ class TradeOrderPending extends ConsumerWidget {
           child: const SizedBox(height: 20, child: Slider(value: 0, divisions: 4, onChanged: null)),
         ),
         ValueRow(l.available, '—', key: const Key('trade-available')),
-        for (final buy in [true, false])
+        for (final buy in [true, if (gate == OrderEntryGate.ready) false])
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: _PendingDirection(buy: buy),
+            child: _PendingDirection(buy: buy, gate: gate),
           ),
       ],
     );
@@ -72,8 +77,9 @@ class TradeOrderPending extends ConsumerWidget {
 }
 
 class _PendingDirection extends StatelessWidget {
-  const _PendingDirection({required this.buy});
+  const _PendingDirection({required this.buy, required this.gate});
   final bool buy;
+  final OrderEntryGate gate;
 
   @override
   Widget build(BuildContext context) {
@@ -106,9 +112,15 @@ class _PendingDirection extends StatelessWidget {
         ),
         FilledButton(
           key: ValueKey('trade-pending-${buy ? 'buy' : 'sell'}'),
-          onPressed: null,
+          onPressed: gate == OrderEntryGate.connect
+              ? () => showAccountSheet(context)
+              : gate == OrderEntryGate.deposit
+              ? () => openFunding(context, FundingOperation.deposit)
+              : null,
           style: FilledButton.styleFrom(
             minimumSize: const Size(44, 36),
+            backgroundColor: TradeColors.positive,
+            foregroundColor: TradeColors.text,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             disabledBackgroundColor: (buy ? TradeColors.positive : TradeColors.negative).withValues(
               alpha: .35,
@@ -117,7 +129,11 @@ class _PendingDirection extends StatelessWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             textStyle: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
           ),
-          child: Text(buy ? l.long : l.short),
+          child: Text(switch (gate) {
+            OrderEntryGate.connect => l.connect,
+            OrderEntryGate.deposit => l.fundingDeposit,
+            OrderEntryGate.ready => buy ? l.long : l.short,
+          }),
         ),
       ],
     );

@@ -16,13 +16,19 @@ import 'attached_order_status.dart';
 import 'live_order_pricing.dart';
 
 class LiveOrderStatus extends ConsumerWidget {
-  const LiveOrderStatus({super.key});
+  const LiveOrderStatus({super.key, this.compact = false});
+  final bool compact;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context), state = ref.watch(liveOrderProvider);
     final auth = ref.watch(authProvider);
     final controller = ref.read(liveOrderProvider.notifier);
     final result = state.result, failure = state.failure ?? result?.failure;
+    // Reading account facts is represented by the owning section. Financial
+    // submissions and unknown outcomes keep their existing recovery controls.
+    if (compact && state.intent == null && result == null && !state.needsRecheck) {
+      return const SizedBox.shrink();
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -83,7 +89,7 @@ class LiveOrderStatus extends ConsumerWidget {
             child: Text(l10n.liveOrderRecheck),
           ),
         ],
-        if (failure != null)
+        if (failure != null && !failure.requiresDeposit)
           Text(
             accountErrorText(context, failure),
             key: const Key('live-order-error'),

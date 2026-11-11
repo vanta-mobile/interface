@@ -26,3 +26,14 @@ class FuturesWorkspaceTabController extends Notifier<FuturesWorkspaceTab> {
   FuturesWorkspaceTab build() => FuturesWorkspaceTab.trade;
   void select(FuturesWorkspaceTab value) => state = value;
 }
+
+/// Compact K-line above the order book and form; session-only view state.
+final tradeKlineVisibleProvider = NotifierProvider<TradeKlineVisibleController, bool>(
+  TradeKlineVisibleController.new,
+);
+
+class TradeKlineVisibleController extends Notifier<bool> {
+  @override
+  bool build() => false;
+  void toggle() => state = !state;
+}

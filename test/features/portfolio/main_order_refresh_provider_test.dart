@@ -47,6 +47,20 @@ void main() {
     expect(f.container.read(mainOrderCapacityProvider.notifier).current, isNotNull);
     expect(f.orders.submits, 0);
   });
+  test('deposit prerequisite suppresses subsequent account and capacity reads', () async {
+    state();
+    await f.flush();
+    f.orders.readFailure = const AccountReadFailure('accountDepositRequired', code: -5050);
+    expect(await controller().refresh('BTCUSDT'), false);
+    expect(f.orders.reads, 1);
+    expect(f.capacities.reads, 0);
+    expect(state().failure?.requiresDeposit, true);
+    expect(await controller().refresh('BTCUSDT'), false);
+    f.container.read(symbolProvider.notifier).select('ETHUSDT');
+    expect(await controller().refresh('ETHUSDT'), false);
+    expect(f.orders.reads, 1);
+    expect(f.capacities.reads, 0);
+  });
   test('stale/expired account is completely re-read using a new original lease', () async {
     await f.open();
     final previous = f.orders.context;

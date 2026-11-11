@@ -7,6 +7,7 @@ import '../../../../l10n/generated/app_localizations.dart';
 import '../../../market/domain/market.dart';
 import '../../application/navigation_provider.dart';
 import '../../application/providers.dart';
+import '../../../portfolio/application/symbol_maximum_leverage_provider.dart';
 import '../trade_theme.dart';
 import 'market_sheet.dart';
 import 'primitives.dart';
@@ -18,7 +19,7 @@ class MarketHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final market = ref.watch(currentMarketProvider);
-    final base = ref.watch(symbolProvider).replaceAll('USDT', '');
+    final symbol = ref.watch(symbolProvider), base = symbol.replaceAll('USDT', '');
     final chart = ref.watch(futuresWorkspaceTabProvider) == FuturesWorkspaceTab.chart;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -69,7 +70,17 @@ class MarketHeader extends ConsumerWidget {
                               ],
                             ),
                             if (!chart)
-                              _Change(market: market)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (ref.watch(symbolMaximumLeverageProvider)[symbol]
+                                      case final leverage?) ...[
+                                    _LeverageBadge(leverage),
+                                    const SizedBox(width: 4),
+                                  ],
+                                  Flexible(child: _Change(market: market)),
+                                ],
+                              )
                             else
                               Text(tr(context, 'perpetual'), style: TradeTypography.small),
                           ],
@@ -88,6 +99,22 @@ class MarketHeader extends ConsumerWidget {
       ],
     );
   }
+}
+
+/// Exchange-advertised maximum, not the account's current leverage setting.
+class _LeverageBadge extends StatelessWidget {
+  const _LeverageBadge(this.leverage);
+  final int leverage;
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const Key('trade-max-leverage'),
+    height: 16,
+    constraints: const BoxConstraints(minWidth: 40),
+    padding: const EdgeInsets.symmetric(horizontal: 6),
+    alignment: Alignment.center,
+    decoration: BoxDecoration(color: TradeColors.card, borderRadius: BorderRadius.circular(8)),
+    child: Text('${leverage}x', style: TradeTypography.small.copyWith(color: TradeColors.text)),
+  );
 }
 
 class _ChartSummary extends StatelessWidget {

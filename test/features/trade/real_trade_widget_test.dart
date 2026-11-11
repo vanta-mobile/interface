@@ -5,7 +5,6 @@ import 'package:vanta/features/portfolio/application/live_order_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_form.dart';
 import 'package:vanta/features/trade/application/providers.dart';
-import 'package:vanta/features/trade/presentation/widgets/order_form.dart';
 import 'package:vanta/features/trade/presentation/widgets/positions_panel.dart';
 
 import '../../support/navigation_fixture.dart';
@@ -20,7 +19,6 @@ void main() {
         t.view.physicalSize = Size(spec.$1, spec.$2);
         await launch(t, f.container);
         await selectWorkspace(t, chart: false);
-        expect(find.byType(OrderForm), findsNothing);
         expect(find.byType(PositionsPanel), findsNothing);
         expect(find.byKey(const Key('enter-demo')), findsNothing);
         f.expectNoAccountMutation();

@@ -13,16 +13,19 @@ import '../application/page_refresh_provider.dart';
 import '../application/providers.dart';
 import 'widgets/candle_chart.dart';
 import 'widgets/market_header.dart';
-import 'widgets/order_book.dart';
+import 'widgets/compact_order_book.dart';
+import 'widgets/trade_kline_panel.dart';
 import '../../portfolio/presentation/aster_account_panel.dart';
 import '../../portfolio/presentation/position_risk_screen.dart';
 import 'widgets/primitives.dart';
 import 'trade_theme.dart';
+import '../../portfolio/application/automatic_order_refresh_provider.dart';
 
 class FuturesWorkspace extends ConsumerWidget {
   const FuturesWorkspace({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(automaticOrderRefreshProvider);
     final chart = ref.watch(futuresWorkspaceTabProvider) == FuturesWorkspaceTab.chart;
     return LayoutBuilder(
       builder: (context, constraints) => RefreshIndicator(
@@ -93,23 +96,23 @@ class TradeOrderWorkspace extends ConsumerWidget {
       ),
       child: LiveOrderScreen(symbol: ref.watch(symbolProvider), embedded: true),
     );
-    return LayoutBuilder(
+    final body = LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 340 && MediaQuery.textScalerOf(context).scale(12) > 16) {
-          return Column(
-            children: [form, const SizedBox(height: 20), const OrderBookPanel(compact: true)],
-          );
+          return Column(children: [form, const SizedBox(height: 20), const CompactOrderBook()]);
         }
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Expanded(flex: 147, child: OrderBookPanel(compact: true)),
+            const Expanded(flex: 147, child: CompactOrderBook()),
             const SizedBox(width: 12),
             Expanded(flex: 202, child: form),
           ],
         );
       },
     );
+    if (!ref.watch(tradeKlineVisibleProvider)) return body;
+    return Column(children: [const TradeKlinePanel(), const SizedBox(height: 16), body]);
   }
 }
 

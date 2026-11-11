@@ -2820,5 +2820,24 @@
         "type": "String"
       }
     }
-  }
+  },
+  "tradeOrderPrice": "价格（{asset}）",
+  "tradeOrderSize": "数量",
+  "tradeAdvanced": "高级设置",
+  "tradePriceDown": "降低价格",
+  "tradePriceUp": "提高价格",
+  "tradeTpSl": "止盈止损",
+  "tradeHiddenOrder": "隐藏委托",
+  "tradeSelectPriceType": "选择价格类型",
+  "tradeSelectUnitType": "选择单位",
+  "tradeTriggerByLast": "按最新成交价触发",
+  "tradeTriggerByMark": "按标记价触发",
+  "tradeTakeProfit": "止盈",
+  "tradeStopLoss": "止损",
+  "tradeTp": "止盈",
+  "tradeSl": "止损",
+  "tradeSelectExitMode": "选择输入方式",
+  "tradeExitPnl": "盈亏（{asset}）",
+  "tradeExitPrice": "价格（{asset}）",
+  "tradeExitRoi": "收益率（%）"
 }

@@ -18,6 +18,9 @@ abstract final class TradeColors {
   static const transparent = AppColors.transparent;
   static const switchBackground = AppColors.authOverlay;
   static const assetIconBackground = AppColors.authText;
+  static const sheet = PortfolioColors.inset;
+  static const ratioBuy = Color(0xFF013220);
+  static const ratioSell = PortfolioColors.negativeSurface;
 }
 
 abstract final class TradeTypography {
@@ -48,6 +51,13 @@ abstract final class TradeTypography {
     height: 16 / 11,
     fontWeight: FontWeight.w500,
     color: TradeColors.muted,
+  );
+  static const option = TextStyle(
+    fontFamily: 'Inter',
+    fontSize: 16,
+    height: 24 / 16,
+    fontWeight: FontWeight.w500,
+    color: TradeColors.text,
   );
   static const small = TextStyle(
     fontFamily: 'Inter',

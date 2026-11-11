@@ -1,3 +1,45 @@
+## 2026-11-11 多资产抵押汇率不再因订阅空档报“缺失或已过期”
+
+交易页偶尔出现“抵押资产换算价格缺失或已过期，请刷新后重新计算额度”。核查公开 `/fapi/v1/assetIndex` 时，各资产 `time` 均在 1 秒内，接口本身已按 30 秒轮询，原因在客户端的两个空档：
+- `assetIndexProvider` 是自动释放的。下单签名上下文每 30 秒过期一次，过期时定价 provider 提前返回、不再订阅汇率，控制器随即被释放、快照清空；重新读取后，在首次拉取完成前，额度计算就报“缺失”。现在无人订阅时保留 60 秒并继续轮询，60 秒内重新订阅会直接使用当前汇率。
+- 某次拉取失败时，定价 provider 会丢弃仍在有效期内的上一份快照，并要等 30 秒才重试。现在失败后继续提供旧快照（每个汇率的 60 秒接收期和 90 秒数据时间限制仍在计算时校验），并在 5 秒后重试。拉取中或首次未返回时视为等待，刷新流程会继续等待而不是立即报错。
+- 汇率超过有效期仍拿不到新数据时，照常提示，不隐藏真实的不可用状态。
+
+验证：`asset_index_provider_test` 按 60 秒保留期更新了 2 项，新增“保留期内重新订阅沿用汇率”和“失败保留旧快照、5 秒重试”2 项；asset index、实时定价与主下单刷新相关测试共 54 项全部通过。按用户要求，本次未做真机验证。
+
+## 2026-11-11 交易页代码按职责拆分（行为不变）
+
+- 删除无引用代码：旧演示下单表单 `trade/presentation/widgets/order_form.dart`，及只被它使用的 `order_controls.dart`、`order_review.dart`。`OrderBookPanel` 只剩紧凑用法，交易页改为直接使用 `CompactOrderBook`。原 `order_book.dart` 里共享的 `BookFeedState` 和 `retryOrderBook` 移到 `book_feed_state.dart`，非紧凑盘口和成交列表的死代码一并删除。两个测试中对 `OrderForm` 的“不存在”断言随之移除。
+- `live_order_form.dart`（505→350 行，build 约 220→67 行）：独立下单页、平仓页、持仓条件单的布局移到 `part 'live_order_form_full.dart'`，与已有的 `live_order_form_embedded.dart` 对称；身份变化时的重置逻辑抽成 `_resetForIdentity`。表单状态仍集中在一个 State 中，两种布局共用。
+- `live_order_screen.dart`（328→239 行，build 约 210→70 行）：独立页专用的标题、读取按钮、提示、上下文摘要和 Scaffold 移到 `part 'live_order_screen_standalone.dart'`；共用的表单区块抽成 `_orderForm`，监听抽成 `_listenSelection`。
+- `main_order_capacity_panel.dart`（326→173 行，build 45 行）：完整面板和 `_Side` 卡片移到 `part 'main_order_capacity_full.dart'`。主文件负责计算可用性和预览，再按 `compact` 分发；分发时传入的数据集中在 `_PanelFacts` 记录类型中。
+
+验证：格式化零改动；lib 与 test 静态分析无新增问题。portfolio、trade 与盘口测试的结果与拆分前一致，仍失败的 10 项均为既有失败（`main_order_risk_mapper_test` 1、`real_response_audit_test` 1、`price_precision_widget_test` 2、`real_trade_widget_test` 6）。Android 12 真机冷启动后，交易页显示与拆分前相同。
+
+## 2026-11-11 交易页盘口列、K线辅助、最大杠杆与下单弹窗按设计稿补齐
+
+参照设计稿 331:47488（高级设置展开）、331:47291（K线辅助）、331:57082（选择价格类型）、331:60809（选择单位）、331:62597（止损市价＋止盈止损）。
+- 最大杠杆徽标：交易对名称下、涨跌幅前显示 `200x`。公开 `exchangeInfo` 的 `requiredMarginPercent` 换算为 20x，与实际不符，不能使用。现在从签名 `leverageBrackets` 读取的最大 initialLeverage 写入 `MainOrderCapacitySnapshot.maximumLeverage`，再由 `symbolMaximumLeverageProvider` 按交易对缓存本会话的值。未连接或尚未读取过的交易对不显示徽标，不展示未确认的数值。该值仅用于展示，不是修改杠杆时的上限（仍为 125 与档位的较小值）。
+- 盘口列（`CompactOrderBook`）：顶部为收藏星标与 K 线开关（设计稿 SVG：`assets/trade/favorite.svg`、`chart-on.svg`、`chart-off.svg`）。下面依次为资金费率、“价格/USDT”“数量/USDT▾”表头，以及每侧 8 档、开启 K 线时 6 档的档位。每档有两层深度条：累计深度 7%，本档 15%。数量默认按 USDT 名义值紧凑显示，可在单位弹窗中切换为基础币。最新价为 18px 粗体，按涨跌着色；标记价为 10px 灰色，按价格精度取整，不再显示旗帜图标。B/S 比例为上方两段细条（#013220／#4E210F）加下方两端标签。
+- K 线辅助（`TradeKlinePanel`）：点击 K 线图标后，在下单区上方插入 200px 通栏 K 线，包含 时间/1m/3m/5m/15m/30m/1h 周期行和 MA 主图。与完整图表共享行情流、周期和指标参数，不另开订阅；MA 周期沿用共享设置（5/10/30/60）。开关状态只在会话内保存。
+- 选项弹窗（`showTradeOptionSheet`）：圆角 24 底部弹窗，含标题、关闭按钮、分隔线，选项为标题加可选说明，选中项右侧为 20px 圆角主题色勾选框（`assets/trade/check.svg`）。触发价格类型（最新成交价/标记价）、下单数量单位、盘口数量单位、止盈止损输入方式均使用该弹窗。
+- 高级设置：止盈止损、隐藏委托、仅减仓三个 11px 勾选框，仅减仓行右侧为 TIF 下拉（GTC/IOC/GTX）。隐藏委托即 `HIDDEN` 时间策略，只对限价且交易所支持时显示。勾选止盈止损后显示两个设计稿输入框：标签旁为“标记价▾”，右侧为“盈亏（USDT）▾”（可切换价格或收益率）；有值的那一腿才会提交，出场按市价执行。嵌入表单不再提供限价出场、触发保护和免确认开关，独立下单页仍保留。
+- 条件单：止损/止盈市价只显示“触发价格＋价格类型”输入框，不显示限价框。条件单和跟踪单的方向卡片不显示预估强平价，只保留保证金和最大。
+- 做多/做空按钮有数量时，第二行显示“≈数量 基础币”。
+
+验证：`order_book_test` 按双层深度条和默认 USDT 名义值更新断言；`live_order_embedded_layout_test` 新增选项弹窗（选择/关闭）与勾选框行 2 项。portfolio、trade 与盘口测试中，除既有失败（`main_order_risk_mapper_test` 1 项、`real_response_audit_test` 1 项、`price_precision_widget_test` 2 项、`real_trade_widget_test` 6 项）外全部通过。lib 与 test 静态分析的剩余提示均来自他人未提交的文件。Android 12 真机目视核对：最大杠杆徽标、盘口列、K 线开关与通栏 K 线、单位弹窗、价格类型弹窗（切换后显示“最新成交价”）、止损市价布局、高级设置及止盈止损输入框。未提交真实订单。
+
+## 2026-11-10 交易页已连接下单表单按设计稿重排
+
+修复右侧"加载失败"后，已连接钱包时显示的 `LiveOrderForm` 仍是独立下单页的长表单：快照时间、资金范围说明、读取额度按钮、方向切换、仅减仓说明和 0–100 比例滑块等，与设计稿 331:52901 不符。现在 `LiveOrderScreen(embedded: true)` 给开仓表单传入 `embedded`，改用与未连接态相同的设计布局，并填入真实数据。平仓、持仓条件单和独立下单页保持原布局。
+- 主流程：价格框（`价格（USDT）`，−／+ 按 `priceTick` 步进，偏离 tick 的价格先下取整再步进；市价或 BBO 时显示对应文字）＋ BBO 按钮（切换普通 BBO 档位；开启附加 TP/SL 时切换入场档位，Post Only 时使用排队一档）；数量框（右侧单位下拉 USDT／基础币）；五档滑块（0/25/50/75/100%，沿用 `mainOrderAllocationProvider` 与原可用性判断）；`可用余额`（合约 USDT 可用，紧凑格式）及充值入口；`高级设置` 折叠区；做多、做空两张卡片（预估强平价、保证金、最大）及其按钮。
+- 高级设置折叠区收纳设计稿主界面没有的现有功能：仅减仓、TIF、BBO 档位选择、附加 TP/SL、按模式免确认开关。条件／跟踪模式的触发价、回调率等输入仍直接显示在价格框上方。
+- 卡片数值来自原 `mainOrderCapacityPreviewProvider`。保证金按两位小数向上取整，最大可开向下取整，强平价按合约价格精度。未输入数量时不显示预览的临时失败；输入后在卡片内显示。做多／做空走原有复核路径：分配复核在签名前重新校验额度，入场 BBO 走原意图复核。资金读取失败、账户禁止交易和表单校验错误仍显示原因。
+- 下单上下文和额度有效期为 30 秒，嵌入表单不再显示"读取额度"按钮。数据过期后，点击做多／做空会先执行与下拉刷新相同的完整刷新，成功并重建表单后，如原本有可复核数量则继续进入复核。不做定时自动刷新，因为外部钱包读取可能需要签名。
+- 定价等待修正：行情重连后，最近 10 秒内收到但尚未重新校验的标记价／成交价／盘口仍算"等待中"，不再立即报 `liveCapacityPriceUnavailable`。超过 10 秒的旧值仍视为不可用。
+
+验证：新增 `test/features/portfolio/live_order_embedded_layout_test.dart` 2 项（价格步进与取整；卡片舍入方向、不抛异常、按钮回调）。portfolio、trade 测试中，`order_confirmation`、`live_order_mode` 回归通过。仍失败的有：`main_order_risk_mapper_test` 1 项、`real_response_audit_test` 1 项、`price_precision_widget_test` 2 项、`real_trade_widget_test` 6 项。在撤掉本次 UI 改动的临时副本中，后两者同样失败（工作区其他未提交改动导致）；前两者为既有失败。lib 静态分析仅剩 `position_margin_mapper.dart` 一条他人未提交改动的 info。Android 12 真机热重载目视核对布局与设计稿一致，并验证过期后点击按钮触发刷新、刷新完成后按钮恢复。本轮未提交真实订单。
+
 ## 2026-11-10 状态组件扩展接入
 
 在上一节公用组件基础上扩展到其他页面。`StatusFailureView` 新增 `retryKey`、`StatusEmptyView` 新增 `actionKey`，接入处保留原有按钮 Key。

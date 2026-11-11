@@ -12014,6 +12014,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Insufficient {asset} for the withdrawal amount and fee. Enter a smaller amount.'**
   String fundingWithdrawalFeeInsufficient(String asset);
+
+  /// No description provided for @tradeOrderPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price ({asset})'**
+  String tradeOrderPrice(String asset);
+
+  /// No description provided for @tradeOrderSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get tradeOrderSize;
+
+  /// No description provided for @tradeAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get tradeAdvanced;
+
+  /// No description provided for @tradePriceDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrease price'**
+  String get tradePriceDown;
+
+  /// No description provided for @tradePriceUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase price'**
+  String get tradePriceUp;
+
+  /// No description provided for @tradeTpSl.
+  ///
+  /// In en, this message translates to:
+  /// **'TP/SL'**
+  String get tradeTpSl;
+
+  /// No description provided for @tradeHiddenOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden Order'**
+  String get tradeHiddenOrder;
+
+  /// No description provided for @tradeSelectPriceType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Price Type'**
+  String get tradeSelectPriceType;
+
+  /// No description provided for @tradeSelectUnitType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Unit Type'**
+  String get tradeSelectUnitType;
+
+  /// No description provided for @tradeTriggerByLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Trigger by Last Price'**
+  String get tradeTriggerByLast;
+
+  /// No description provided for @tradeTriggerByMark.
+  ///
+  /// In en, this message translates to:
+  /// **'Trigger by Mark Price'**
+  String get tradeTriggerByMark;
+
+  /// No description provided for @tradeTakeProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Profit'**
+  String get tradeTakeProfit;
+
+  /// No description provided for @tradeStopLoss.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Loss'**
+  String get tradeStopLoss;
+
+  /// No description provided for @tradeTp.
+  ///
+  /// In en, this message translates to:
+  /// **'TP'**
+  String get tradeTp;
+
+  /// No description provided for @tradeSl.
+  ///
+  /// In en, this message translates to:
+  /// **'SL'**
+  String get tradeSl;
+
+  /// No description provided for @tradeSelectExitMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Input Type'**
+  String get tradeSelectExitMode;
+
+  /// No description provided for @tradeExitPnl.
+  ///
+  /// In en, this message translates to:
+  /// **'PnL ({asset})'**
+  String tradeExitPnl(String asset);
+
+  /// No description provided for @tradeExitPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price ({asset})'**
+  String tradeExitPrice(String asset);
+
+  /// No description provided for @tradeExitRoi.
+  ///
+  /// In en, this message translates to:
+  /// **'ROI (%)'**
+  String get tradeExitRoi;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
