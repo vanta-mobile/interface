@@ -86,7 +86,7 @@ void main() {
     );
     await t.tap(find.text('open'));
     await t.pumpAndSettle();
-    expect(find.byKey(const Key('portfolio-subaccounts')), findsOneWidget);
+    expect(find.byKey(const Key('portfolio-subaccounts')), findsNothing);
     await tapAccountControl(t, 'account-choice-$generatedChildAddress');
     expect(find.byType(AccountSwitchScreen), findsOneWidget);
     expect(f.identity.externalLogins, 0);

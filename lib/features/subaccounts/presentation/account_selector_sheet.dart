@@ -14,7 +14,6 @@ import '../application/account_entries_provider.dart';
 import '../domain/account_entry.dart';
 import 'account_components.dart';
 import 'account_balance_text.dart';
-import 'account_management_screen.dart';
 import 'account_switch_screen.dart';
 
 Future<void> showAccountSelector(BuildContext context) => showGeneralDialog<void>(
@@ -116,22 +115,6 @@ class _AccountSelectorSheet extends ConsumerWidget {
                           );
                         },
                 ),
-              if (ref.watch(canInspectAccountsProvider)) ...[
-                AccountAction(
-                  key: const Key('portfolio-subaccounts'),
-                  label: l.accountsManage,
-                  onPressed: auth.busy
-                      ? null
-                      : () {
-                          final navigator = Navigator.of(context);
-                          navigator.pop();
-                          navigator.push<void>(
-                            MaterialPageRoute(builder: (_) => const AccountManagementScreen()),
-                          );
-                        },
-                ),
-              ],
-              if (ref.watch(canInspectAccountsProvider)) const SizedBox(height: 8),
               AccountAction(
                 key: const Key('accounts-logout'),
                 label: tr(context, 'logout'),

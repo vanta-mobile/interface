@@ -5,7 +5,6 @@ import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../funding/presentation/transfer_history_screen.dart';
-import '../../subaccounts/presentation/subaccount_list_screen.dart';
 import '../../subaccounts/presentation/account_selector_sheet.dart';
 import '../../subaccounts/presentation/account_components.dart';
 import '../../subaccounts/application/account_entries_provider.dart';
@@ -108,11 +107,6 @@ class PortfolioHeader extends ConsumerWidget {
                   onTap: () => Navigator.pop(context, 'preview'),
                 ),
                 ListTile(
-                  key: const Key('portfolio-subaccounts'),
-                  title: Text(l.subaccountManagement),
-                  onTap: () => Navigator.pop(context, 'subaccounts'),
-                ),
-                ListTile(
                   key: const Key('portfolio-account-details'),
                   title: Text(l.account),
                   onTap: () => Navigator.pop(context, 'details'),
@@ -129,8 +123,6 @@ class PortfolioHeader extends ConsumerWidget {
         ref.read(portfolioPreviewProvider.notifier).select(true);
       case 'main':
         ref.read(portfolioPreviewProvider.notifier).select(false);
-      case 'subaccounts':
-        openSubaccountList(context);
       case 'details':
         Navigator.of(context)
             .push<void>(MaterialPageRoute(builder: (_) => const PortfolioAccountDetails()));
