@@ -1,12 +1,25 @@
 import 'package:decimal/decimal.dart';
 
 import '../domain/account_notification.dart';
+import '../../portfolio/data/account_update_mapper.dart';
 
 AccountNotification? mapFuturesNotification(Map<String, dynamic> payload) => switch (payload['e']) {
   'ORDER_TRADE_UPDATE' => _order(payload),
   'MARGIN_CALL' => _margin(payload),
+  'ACCOUNT_UPDATE' => _balances(payload),
   _ => null,
 };
+
+BalanceNotification? _balances(Map<String, dynamic> payload) {
+  final update = mapAccountUpdate(payload);
+  if (update.balances.isEmpty) return null;
+  return BalanceNotification(
+    eventTime: update.eventTime,
+    transactionTime: update.transactionTime,
+    reason: update.reason!,
+    balances: update.balances,
+  );
+}
 
 OrderNotification _order(Map<String, dynamic> payload) {
   final raw = payload['o'];

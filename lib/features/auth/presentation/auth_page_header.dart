@@ -5,9 +5,10 @@ import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
 class AuthPageHeader extends StatelessWidget {
-  const AuthPageHeader({required this.title, required this.onBack, super.key});
+  const AuthPageHeader({required this.title, required this.onBack, this.onClose, super.key});
   final String title;
   final VoidCallback onBack;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +32,7 @@ class AuthPageHeader extends StatelessWidget {
           IconButton(
             key: const Key('auth-close'),
             tooltip: l10n.authClose,
-            onPressed: () => Navigator.of(context).maybePop(),
+            onPressed: onClose ?? () => Navigator.of(context).maybePop(),
             icon: SvgPicture.asset(
               'assets/auth/close.svg',
               width: 24,

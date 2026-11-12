@@ -56,20 +56,20 @@ void main() {
       await flush();
       expect(changes.authorizations, 0);
       expect(changes.channels, isEmpty);
-      expect(container.read(unreadNotificationsProvider), 0);
+      expect(container.read(localJournalUnreadNotificationsProvider), 0);
       await container.read(accountChangeProvider.notifier).authorize();
       final event = notificationOrder();
       changes.channels.last.add(
         AccountChangeEvent.changed(AccountChangeKind.order, event.eventTime, notification: event),
       );
       await flush();
-      expect(container.read(unreadNotificationsProvider), 1);
+      expect(container.read(localJournalUnreadNotificationsProvider), 1);
       await container.read(notificationInboxProvider.notifier).markRead();
       changes.channels.last.add(
         AccountChangeEvent.changed(AccountChangeKind.order, event.eventTime, notification: event),
       );
       await flush();
-      expect(container.read(unreadNotificationsProvider), 0);
+      expect(container.read(localJournalUnreadNotificationsProvider), 0);
       expect(container.read(walletNotificationsProvider).length, 1);
       expect(changes.authorizations, 1);
       expect(identity.wallets, 0);
@@ -89,7 +89,7 @@ void main() {
     }
     await flush();
     expect(container.read(walletNotificationsProvider).length, 3);
-    expect(container.read(unreadNotificationsProvider), 3);
+    expect(container.read(localJournalUnreadNotificationsProvider), 3);
     expect(changes.authorizations, 1);
   });
   test(
@@ -121,7 +121,7 @@ void main() {
       expect(container.read(walletNotificationsProvider).single.address, other.walletAddress);
       await container.read(notificationInboxProvider.notifier).markRead();
       identity.events.add(signingIdentity);
-      expect(container.read(unreadNotificationsProvider), 1);
+      expect(container.read(localJournalUnreadNotificationsProvider), 1);
       identity.events.add(null);
       expect(container.read(walletNotificationsProvider), isEmpty);
       expect(repository.snapshot.entries.length, 2);

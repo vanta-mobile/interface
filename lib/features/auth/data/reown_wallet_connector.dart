@@ -9,10 +9,12 @@ import '../domain/auth_session.dart';
 import '../domain/wallet_connection.dart';
 import '../domain/wallet_transaction.dart';
 import '../domain/wallet_signing_preparation.dart';
+import '../domain/wallet_session_verification.dart';
 import 'evm_account_address.dart';
 import 'wallet_transaction_dispatch.dart';
 import 'wallet_configuration.dart';
 import 'reown_auth_failure.dart';
+import 'reown_signature_request.dart';
 import 'reown_signing_network.dart';
 import 'reown_wallet_namespaces.dart';
 import 'wallet_redirect_handler.dart';
@@ -100,6 +102,8 @@ class ReownWalletConnector
             expiry <= DateTime.now().millisecondsSinceEpoch ~/ 1000) {
           return null;
         }
+        // A sleeping wallet cannot answer a ping, so restoring never probes the
+        // peer. The next signing request verifies it once the wallet is open.
         return ReownWalletConnection(modal, address, chain.substring(7));
       });
 

@@ -12,6 +12,7 @@ import '../../support/reown_modal.dart';
 import '../../support/wallet_transaction.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late TestReownModal modal;
   late ReownWalletConnection connection;
   setUp(() {
@@ -128,9 +129,11 @@ void main() {
     modal.gate = firstGate;
     final first = RequestScope.run(() => current, () => connection.signTypedData({}));
     final firstFailure = expectLater(first, throwsA(isA<AuthFailure>()));
+    await pumpEventQueue();
     current = false;
     modal.gate = secondGate;
     final second = RequestScope.run(() => true, () => connection.signTypedData({}));
+    await pumpEventQueue();
     firstGate.complete();
     await firstFailure;
     await expectLater(connection.signTypedData({}), throwsA(isA<AuthFailure>()));

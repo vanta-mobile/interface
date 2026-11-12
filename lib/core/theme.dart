@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
+  static const launchBackground = Color(0xFFFFFFFF);
   static const background = Color(0xFF0B0E13);
   static const surface = Color(0xFF11151D);
   static const raised = Color(0xFF1A202B);
@@ -291,6 +292,9 @@ abstract final class StatusColors {
   static const message = PortfolioColors.muted;
   static const actionBorder = AppColors.authLine;
   static const skeleton = AppColors.authCard;
+
+  /// Placeholder on a card surface, where [skeleton] would match the card.
+  static const skeletonOnCard = AppColors.authButton;
 }
 
 abstract final class StatusTypography {
@@ -323,6 +327,7 @@ abstract final class StatusTypography {
 
 /// Notification center tokens from the supplied mobile frames.
 abstract final class NotificationColors {
+  static const detailValue = PortfolioColors.text;
   static const background = PortfolioColors.background;
   static const unread = PortfolioColors.card;
   static const divider = PortfolioColors.line;
@@ -342,6 +347,37 @@ abstract final class NotificationColors {
 }
 
 abstract final class NotificationTypography {
+  static const detailLabel = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w500,
+    color: NotificationColors.body,
+  );
+  static const detailValue = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w500,
+    color: NotificationColors.detailValue,
+  );
+  static const detailSection = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w500,
+    color: NotificationColors.detailValue,
+  );
+  static const detailSummaryLabel = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w500,
+    color: NotificationColors.body,
+  );
+  static const detailSummaryValue = TextStyle(
+    fontSize: 20,
+    height: 28 / 20,
+    fontWeight: FontWeight.w700,
+    color: NotificationColors.detailValue,
+  );
+  static const detailStatus = TextStyle(fontSize: 11, height: 16 / 11, fontWeight: FontWeight.w500);
   static const heading = PortfolioTypography.heading;
   static const action = TextStyle(
     fontSize: 12,
@@ -381,4 +417,134 @@ abstract final class NotificationTypography {
     color: NotificationColors.body,
   );
   static const chip = TextStyle(fontSize: 11, height: 16 / 11, fontWeight: FontWeight.w700);
+}
+
+/// Primary navigation tokens beyond the shared tab label style.
+abstract final class NavigationTypography {
+  static const badge = TextStyle(
+    fontSize: 9,
+    fontWeight: FontWeight.w500,
+    color: AppColors.authSecondary,
+  );
+  static const selectedPoints = TextStyle(
+    fontSize: 10,
+    height: 16 / 10,
+    fontWeight: FontWeight.w700,
+    color: AppColors.authAccent,
+  );
+}
+
+/// Points page tokens from the supplied mobile frames.
+abstract final class PointsColors {
+  static const background = AppColors.authBackground;
+  static const text = AppColors.authText;
+  static const secondary = AppColors.authSecondary;
+  static const accent = AppColors.authAccent;
+  static const card = AppColors.authCard;
+  static const section = PortfolioColors.inset;
+  static const divider = AppColors.authLine;
+  static const summaryStart = Color(0xFF0E4033);
+  static const summaryEnd = Color(0xFF0B1F1B);
+  static const rankBadge = Color(0x1AFFFFFF);
+  static const leaderPoints = AppColors.authOnAccent;
+  static const loadingValue = Color(0x19FFFFFF);
+  static const activeTint = Color(0x1A00E4AB);
+  static const neutralTint = Color(0x1AE6E8E8);
+  static const scrim = Color(0x9E000000);
+  static const numeralTop = Color(0xEBE3F2ED);
+  static const numeralMiddle = Color(0xA6A8C4BA);
+  static const numeralBottom = Color(0x298AA89E);
+}
+
+abstract final class PointsTypography {
+  static const header = TextStyle(
+    fontSize: 16,
+    height: 24 / 16,
+    fontWeight: FontWeight.w700,
+    color: PointsColors.text,
+  );
+  static const heading = PortfolioTypography.heading;
+  static const summaryLabel = TextStyle(
+    fontSize: 13,
+    height: 18 / 13,
+    fontWeight: FontWeight.w500,
+    color: PointsColors.accent,
+  );
+  static const total = PortfolioTypography.value;
+  static const section = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w500,
+    color: PointsColors.text,
+  );
+  static const campaign = TextStyle(
+    fontSize: 16,
+    height: 24 / 16,
+    fontWeight: FontWeight.w500,
+    color: PointsColors.text,
+  );
+  static const label = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w500,
+    color: PointsColors.secondary,
+  );
+  static const labelPrimary = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w500,
+    color: PointsColors.text,
+  );
+  static const scope = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w400,
+    color: PointsColors.secondary,
+  );
+  static const caption = TextStyle(
+    fontSize: 11,
+    height: 16 / 11,
+    fontWeight: FontWeight.w400,
+    color: PointsColors.secondary,
+  );
+  static const status = TextStyle(fontSize: 11, height: 16 / 11, fontWeight: FontWeight.w500);
+  static const metric = PortfolioTypography.metric;
+  static const option = TextStyle(
+    fontSize: 13,
+    height: 18 / 13,
+    fontWeight: FontWeight.w500,
+    color: PointsColors.text,
+  );
+  static const rank = TextStyle(
+    fontSize: 13,
+    height: 18 / 13,
+    fontWeight: FontWeight.w500,
+    color: PointsColors.secondary,
+  );
+  static const address = TextStyle(
+    fontSize: 13,
+    height: 18 / 13,
+    fontWeight: FontWeight.w400,
+    color: PointsColors.text,
+  );
+  static const points = TextStyle(
+    fontSize: 13,
+    height: 18 / 13,
+    fontWeight: FontWeight.w500,
+    color: PointsColors.text,
+  );
+  static const podiumPoints = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w700,
+    color: PointsColors.text,
+  );
+  static const unit = TextStyle(
+    fontSize: 10,
+    height: 16 / 10,
+    fontWeight: FontWeight.w400,
+    color: PointsColors.secondary,
+  );
+  static const numeral = TextStyle(fontSize: 28, height: 36 / 28, fontWeight: FontWeight.w700);
+  static const emptyTitle = section;
 }

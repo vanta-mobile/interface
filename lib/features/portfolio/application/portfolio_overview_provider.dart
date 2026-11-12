@@ -1,4 +1,3 @@
-import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/refresh_batch.dart';
@@ -10,6 +9,10 @@ import '../domain/asset_valuation.dart';
 import 'account_read_provider.dart';
 import 'asset_index_provider.dart';
 import 'asset_metadata_refresh_provider.dart';
+import 'open_orders_provider.dart';
+import 'position_risk_provider.dart';
+import '../domain/position_risk.dart';
+import 'portfolio_stats_provider.dart';
 
 final portfolioPreviewProvider = NotifierProvider<PortfolioPreviewController, bool>(
   PortfolioPreviewController.new,
@@ -58,35 +61,41 @@ final portfolioOverviewProvider = Provider<PortfolioOverview>((ref) {
     staleValue: accountState.stale || wallet.stale > 0,
     performance: PortfolioPerformance(),
     assets: assets,
-    positions: [
-      for (final p in account.positions.where((p) => p.quantity != Decimal.zero))
-        PortfolioPosition(
-          symbol: p.symbol,
-          side: p.side,
-          long: p.long,
-          quantity: p.quantity.abs(),
-          base: p.units?.base,
-          quote: p.units?.quote,
-          marginAsset: p.units?.margin,
-          entry: p.entryPrice,
-          pnl: p.unrealizedProfit,
-          margin: p.initialMargin,
-          leverage: p.leverage,
-          isolated: p.isolated,
-        ),
-    ],
   );
 });
 
-final portfolioRefreshProvider = Provider<Future<void> Function()>((ref) {
+/// Open positions on the Portfolio page come from the same position-risk read
+/// as the Futures Positions tab, so both pages render one card. Null while the
+/// first read is pending or failed.
+final portfolioPositionsProvider = Provider<List<PositionRisk>?>((ref) {
+  if (ref.watch(portfolioPreviewProvider)) return portfolioPreviewPositions();
+  if (ref.watch(authProvider.select((s) => s.identity)) == null) return const [];
+  return ref
+      .watch(positionRiskProvider.select((s) => s.account?.positions))
+      ?.where((p) => !p.balanceOnly)
+      .toList();
+});
+
+/// [calendarMonth] is the PnL calendar month currently shown, if any.
+final portfolioRefreshProvider = Provider<Future<void> Function({DateTime? calendarMonth})>((ref) {
   final batch = RefreshBatch();
-  return () async {
+  return ({calendarMonth}) async {
     if (ref.read(portfolioPreviewProvider)) return;
     await batch.run([
+      () => refreshPortfolioStats(ref, calendarMonth: calendarMonth),
       if (!ref.read(authProvider).needsWalletConnection)
         () async {
           await ref.read(accountReadProvider.notifier).refresh();
           if (ref.mounted) await ref.read(refreshFundingActivityProvider)();
+          // Position cards also show open-order TP/SL; refresh reads already made.
+          if (ref.mounted && ref.read(openOrdersReadProvider).account != null) {
+            await ref.read(openOrdersReadProvider.notifier).refresh();
+          }
+          if (ref.mounted &&
+              (ref.read(positionRiskProvider).account != null ||
+                  ref.read(positionRiskProvider).failure != null)) {
+            await ref.read(positionRiskProvider.notifier).refresh();
+          }
         },
       if (!ref.read(authProvider).needsWalletConnection)
         ref.read(assetIndexProvider.notifier).refresh,

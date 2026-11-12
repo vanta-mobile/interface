@@ -84,7 +84,6 @@ void main() {
             expect(orders.reads, 0);
             expect(sizing.reads, 0);
             expect(quantity(tester), '');
-            await tap(tester, 'quick-order-read');
             await field(tester, '0.001');
             final key = buy ? 'quick-order-buy' : 'quick-order-sell';
             await tap(tester, key);
@@ -106,7 +105,6 @@ void main() {
             await tester.tap(find.text(messages.cancel));
             await tester.pumpAndSettle();
             expect(orders.submits, 0);
-            await tap(tester, 'quick-order-read');
             expect(quantity(tester), '0.001');
             await tap(tester, key);
             await tester.tap(find.byKey(const Key('quick-order-confirm')));
@@ -160,18 +158,13 @@ void main() {
         liveClock: () => liveOrderClock,
       );
       await open(tester, container);
-      await tap(tester, 'quick-order-read');
+      expect(find.byKey(const Key('quick-order-percent-50')), findsNothing);
+      await tap(tester, 'quick-order-quantity');
       await tap(tester, 'quick-order-percent-50');
-      expect(quantity(tester), '');
-      expect(
-        tester.widget<ChoiceChip>(find.byKey(const Key('quick-order-percent-50'))).selected,
-        true,
-      );
+      expect(sizing.reads, 1);
+      expect(quantity(tester), '50%');
       await field(tester, '0.001');
-      expect(
-        tester.widget<ChoiceChip>(find.byKey(const Key('quick-order-percent-50'))).selected,
-        false,
-      );
+      expect(quantity(tester), '0.001');
       await tap(tester, 'quick-order-buy');
       await tap(tester, 'quick-order-skip-confirmation');
       await tester.tap(find.text(l10n(tester).cancel));
@@ -184,7 +177,6 @@ void main() {
       expect(preference.required, false);
       expect(orders.submits, 1);
       expect(quantity(tester), '');
-      await tap(tester, 'quick-order-read');
       await field(tester, '0.001');
       await tap(tester, 'quick-order-sell');
       expect(find.byType(AlertDialog), findsNothing);
@@ -210,20 +202,21 @@ void main() {
     );
     await open(tester, container);
     await field(tester, '0.001');
-    await tap(tester, 'quick-order-read');
+    await tap(tester, 'quick-order-quantity');
+    await tap(tester, 'quick-order-percent-50');
     expect(quantity(tester), '0.001');
-    expect(
-      tester.widget<ChoiceChip>(find.byKey(const Key('quick-order-percent-50'))).onSelected,
-      null,
-    );
-    await visible(tester, 'quick-order-buy');
-    expect(
-      tester.widget<FilledButton>(find.byKey(const Key('quick-order-buy'))).onPressed,
-      isNotNull,
-    );
+    expect(find.byType(SnackBar), findsOneWidget);
+    ScaffoldMessenger.of(tester.element(find.byType(QuickOrderPanel))).hideCurrentSnackBar();
+    await tester.pumpAndSettle();
+    await tap(tester, 'quick-order-buy');
+    expect(find.byType(AlertDialog), findsOneWidget);
+    await tester.tap(find.text(l10n(tester).cancel));
+    await tester.pumpAndSettle();
+    expect(orders.submits, 0);
     sizing.failure = null;
-    await tap(tester, 'quick-order-read');
+    await tap(tester, 'quick-order-quantity');
     await tap(tester, 'quick-order-percent-25');
+    expect(quantity(tester), '25%');
     await tap(tester, 'quick-order-buy');
     await tester.tap(find.byKey(const Key('quick-order-confirm')));
     await tester.pumpAndSettle();

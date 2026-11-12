@@ -24,6 +24,7 @@ env:
   PRIVY_CLIENT_ID: ${{ vars.PRIVY_CLIENT_ID }}
   REOWN_PROJECT_ID: ${{ vars.REOWN_PROJECT_ID }}
   WALLET_LOGIN_ORIGIN: ${{ vars.WALLET_LOGIN_ORIGIN || 'https://app.vanta.exchange' }}
+  VANTA_API_ORIGIN: ${{ vars.VANTA_API_ORIGIN }}
 
 jobs:
   detect-release:

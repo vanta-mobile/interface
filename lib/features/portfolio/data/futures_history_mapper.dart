@@ -40,6 +40,29 @@ FuturesHistoryPage mapFuturesHistory(
   );
 }
 
+/// An order-filtered request has no time window. Validate every row against
+/// its exact symbol/order and optional continuation ID instead.
+List<FuturesTradeRecord> mapFuturesOrderFills(
+  Object? payload, {
+  required String symbol,
+  required String orderId,
+  String? fromId,
+}) {
+  if (payload is! List || payload.length > FuturesHistoryPage.limit) throw const FormatException();
+  final rows = <FuturesTradeRecord>[];
+  for (final item in payload) {
+    if (item is! Map<String, dynamic>) throw const FormatException();
+    final r = _trade(item, _time(item['time']), const {});
+    if (r.symbol != symbol ||
+        r.orderId != orderId ||
+        fromId != null && BigInt.parse(r.tradeId) < BigInt.parse(fromId)) {
+      throw const FormatException();
+    }
+    rows.add(r);
+  }
+  return mergeFuturesHistory(const [], rows).cast<FuturesTradeRecord>();
+}
+
 FuturesOrderRecord _order(
   Map<String, dynamic> row,
   DateTime time,
@@ -51,7 +74,9 @@ FuturesOrderRecord _order(
   final updated = _time(row['updateTime']);
   final status = _code(row['status']);
   final quote = _optionalAmount(row['cumQuote']), average = _optionalAmount(row['avgPrice']);
-  if (updated.isBefore(time) ||
+  // Aster can report updateTime slightly before time for filled orders.
+  // These are independent exchange timestamps; preserve both as reported.
+  if (updated.millisecondsSinceEpoch <= 0 ||
       quantity == Decimal.zero && close != true ||
       close != true && executed > quantity ||
       status == 'NEW' && executed != Decimal.zero ||

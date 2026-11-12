@@ -10,6 +10,7 @@ enum NotificationTone { neutral, positive, warning, negative }
 enum NotificationFilter { all, transfers, orders }
 
 NotificationStatusIcon notificationStatusIcon(AccountNotification event) => switch (event) {
+  BalanceNotification() => NotificationStatusIcon.info,
   TransferNotification(:final record) => switch (record.status) {
     TransferStatus.processing => NotificationStatusIcon.pending,
     TransferStatus.success => NotificationStatusIcon.success,
@@ -27,6 +28,7 @@ NotificationStatusIcon notificationStatusIcon(AccountNotification event) => swit
 };
 
 NotificationTone notificationTone(AccountNotification event) => switch (event) {
+  BalanceNotification() => NotificationTone.neutral,
   TransferNotification(:final record) => switch (record.status) {
     TransferStatus.processing => NotificationTone.warning,
     TransferStatus.success => NotificationTone.positive,

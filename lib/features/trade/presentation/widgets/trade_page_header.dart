@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
-import '../../../notifications/application/notification_provider.dart';
+import '../../../notifications/application/api_notification_provider.dart';
 import '../../../notifications/presentation/notification_screen.dart';
 import '../../application/navigation_provider.dart';
 import '../trade_theme.dart';
@@ -18,7 +18,7 @@ class TradePageHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final unread = ref.watch(unreadNotificationsProvider);
+    final unread = ref.watch(serverUnreadNotificationsProvider);
     return Row(
       children: [
         Image.asset('assets/branding/mark.webp', width: 22, height: 22),

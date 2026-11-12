@@ -1,88 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:k_chart_plus/k_chart_plus.dart';
 
 import '../../../../core/strings.dart';
 import '../../../../core/theme.dart';
 import '../../../market/domain/candle_series.dart';
 import '../../application/chart_preferences.dart';
 import '../../application/providers.dart';
-import 'chart_indicator_sheet.dart';
-import 'primitives.dart';
 
-class ChartToolbar extends ConsumerWidget {
-  const ChartToolbar({
-    super.key,
-    required this.depth,
-    required this.onDepth,
-    required this.onExpand,
-    required this.expanded,
-  });
-  final bool depth, expanded;
-  final ValueChanged<bool> onDepth;
-  final VoidCallback onExpand;
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final preferences = ref.watch(chartPreferencesProvider);
-    return Row(
-      children: [
-        Expanded(
-          child: TabChoices(
-            items: [tr(context, 'chart'), tr(context, 'depth')],
-            selected: depth ? 1 : 0,
-            onSelect: (index) => onDepth(index == 1),
-            underlined: true,
-          ),
-        ),
-        if (!depth) ...[
-          PopupMenuButton<KChartType>(
-            key: const Key('chart-type'),
-            tooltip: tr(context, 'chartType'),
-            icon: Icon(
-              preferences.line
-                  ? Icons.stacked_line_chart_rounded
-                  : Icons.candlestick_chart_outlined,
-              size: 19,
-            ),
-            onSelected: ref.read(chartPreferencesProvider.notifier).setChartType,
-            itemBuilder: (context) => [
-              for (final type in KChartType.values)
-                CheckedPopupMenuItem(
-                  key: ValueKey('chart-type-${type.name}'),
-                  value: type,
-                  checked: preferences.chartType == type,
-                  child: Text(tr(context, 'type-${type.name}')),
-                ),
-            ],
-          ),
-          IconButton(
-            key: const Key('chart-indicators'),
-            tooltip: tr(context, 'indicators'),
-            onPressed: () => showAppSheet<void>(context, const ChartIndicatorSheet()),
-            icon: const Icon(Icons.functions_rounded, size: 19),
-          ),
-        ],
-        IconButton(
-          key: const Key('chart-expand'),
-          tooltip: tr(context, expanded ? 'exitFullscreen' : 'fullscreen'),
-          onPressed: onExpand,
-          icon: Icon(
-            expanded ? Icons.close_fullscreen_rounded : Icons.fullscreen_rounded,
-            size: 21,
-          ),
-        ),
-        const SizedBox(width: 4),
-      ],
-    );
-  }
-}
-
+/// Timeframe row; [trailing] holds the fullscreen entry or exit, as designed.
 class ChartTimeframes extends ConsumerWidget {
-  const ChartTimeframes({super.key});
+  const ChartTimeframes({super.key, this.trailing});
+  final Widget? trailing;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final interval = ref.watch(intervalProvider);
-    return SingleChildScrollView(
+    final row = SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Row(
@@ -139,6 +71,13 @@ class ChartTimeframes extends ConsumerWidget {
           ),
         ],
       ),
+    );
+    if (trailing == null) return row;
+    return Row(
+      children: [
+        Expanded(child: row),
+        trailing!,
+      ],
     );
   }
 }

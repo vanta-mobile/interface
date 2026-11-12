@@ -90,6 +90,23 @@ String encodeNotifications(Iterable<InboxEntry> entries) => jsonEncode({
 });
 
 Map<String, dynamic> notificationPayload(AccountNotification event) => switch (event) {
+  BalanceNotification e => {
+    'e': 'ACCOUNT_UPDATE',
+    'E': e.eventTime.millisecondsSinceEpoch,
+    'T': e.transactionTime.millisecondsSinceEpoch,
+    'a': <String, dynamic>{
+      'm': e.reason,
+      'B': [
+        for (final b in e.balances)
+          <String, dynamic>{
+            'a': b.asset,
+            'wb': b.walletBalance.toString(),
+            'cw': b.crossWalletBalance.toString(),
+            if (b.change != null) 'bc': b.change.toString(),
+          },
+      ],
+    },
+  },
   TransferNotification e => {
     'e': 'FUND_TRANSFER',
     'E': e.eventTime.millisecondsSinceEpoch,

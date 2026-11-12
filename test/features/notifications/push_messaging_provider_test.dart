@@ -16,7 +16,7 @@ void main() {
   });
   tearDown(() async {
     container.dispose();
-    await repository.installationIds.close();
+    await repository.tokens.close();
   });
 
   test('previews and tests without a native repository remain available', () async {
@@ -33,12 +33,9 @@ void main() {
     final second = container.listen(pushRegistrationProvider, (_, _) {});
     final initial = container.read(pushRegistrationProvider.future);
     repository.registration.complete(authorized);
-    expect((await initial).installationId, 'initial-installationId');
-    repository.installationIds.add('rotated-installationId');
-    expect(
-      container.read(pushRegistrationProvider).requireValue.installationId,
-      'rotated-installationId',
-    );
+    expect((await initial).token, 'initial-token');
+    repository.tokens.add('rotated-token');
+    expect(container.read(pushRegistrationProvider).requireValue.token, 'rotated-token');
     expect(repository.calls, 1);
     first.close();
     second.close();
@@ -46,30 +43,27 @@ void main() {
 
   test('registration updates during initialization win over the initial result', () async {
     final pending = container.read(pushRegistrationProvider.future);
-    repository.installationIds.add('newer-installationId');
+    repository.tokens.add('newer-token');
     repository.registration.complete(authorized);
-    expect((await pending).installationId, 'newer-installationId');
+    expect((await pending).token, 'newer-token');
   });
 
   test('permission denial cannot be overridden by a native registration event', () async {
     final pending = container.read(pushRegistrationProvider.future);
-    repository.installationIds.add('early-installationId');
+    repository.tokens.add('early-token');
     repository.registration.complete(const PushRegistration(permission: PushPermission.denied));
-    expect((await pending).installationId, isNull);
-    repository.installationIds.add('later-installationId');
-    expect(container.read(pushRegistrationProvider).requireValue.installationId, isNull);
+    expect((await pending).token, isNull);
+    repository.tokens.add('later-token');
+    expect(container.read(pushRegistrationProvider).requireValue.token, isNull);
     expect(container.read(pushRegistrationProvider).requireValue.permission, PushPermission.denied);
   });
 
   test('late APNs registration supplies an ID without restarting registration', () async {
     final pending = container.read(pushRegistrationProvider.future);
     repository.registration.complete(const PushRegistration(permission: PushPermission.authorized));
-    expect((await pending).installationId, isNull);
-    repository.installationIds.add('apns-ready-installationId');
-    expect(
-      container.read(pushRegistrationProvider).requireValue.installationId,
-      'apns-ready-installationId',
-    );
+    expect((await pending).token, isNull);
+    repository.tokens.add('apns-ready-token');
+    expect(container.read(pushRegistrationProvider).requireValue.token, 'apns-ready-token');
     expect(repository.calls, 1);
   });
 
@@ -77,12 +71,9 @@ void main() {
     final pending = container.read(pushRegistrationProvider.future);
     repository.registration.complete(authorized);
     await pending;
-    repository.installationIds.add(' ');
-    repository.installationIds.addError(StateError('temporary refresh failure'));
-    expect(
-      container.read(pushRegistrationProvider).requireValue.installationId,
-      'initial-installationId',
-    );
+    repository.tokens.add(' ');
+    repository.tokens.addError(StateError('temporary refresh failure'));
+    expect(container.read(pushRegistrationProvider).requireValue.token, 'initial-token');
   });
 
   test('initial errors remain observable and disposal cancels listeners', () async {
@@ -93,45 +84,36 @@ void main() {
     expect(container.read(pushRegistrationProvider).hasError, isTrue);
     container.dispose();
     container = ProviderContainer();
-    expect(repository.installationIds.hasListener, isFalse);
+    expect(repository.tokens.hasListener, isFalse);
   });
 
   test('replacing a repository cancels old listeners and ignores its pending result', () async {
     container.listen(pushRegistrationProvider, (_, _) {});
     final old = repository;
     final replacement = TestPushRepository();
-    addTearDown(replacement.installationIds.close);
+    addTearDown(replacement.tokens.close);
     container.updateOverrides([pushMessagingRepositoryProvider.overrideWithValue(replacement)]);
     final pending = container.read(pushRegistrationProvider.future);
     replacement.registration.complete(
-      const PushRegistration(
-        permission: PushPermission.authorized,
-        installationId: 'replacement-installationId',
-      ),
+      const PushRegistration(permission: PushPermission.authorized, token: 'replacement-token'),
     );
     await pending;
     old.registration.complete(authorized);
-    old.installationIds.add('stale-installationId');
+    old.tokens.add('stale-token');
     await Future<void>.delayed(Duration.zero);
-    expect(old.installationIds.hasListener, isFalse);
-    expect(
-      container.read(pushRegistrationProvider).requireValue.installationId,
-      'replacement-installationId',
-    );
+    expect(old.tokens.hasListener, isFalse);
+    expect(container.read(pushRegistrationProvider).requireValue.token, 'replacement-token');
   });
 }
 
-const authorized = PushRegistration(
-  permission: PushPermission.authorized,
-  installationId: 'initial-installationId',
-);
+const authorized = PushRegistration(permission: PushPermission.authorized, token: 'initial-token');
 
 class TestPushRepository implements PushMessagingRepository {
   final registration = Completer<PushRegistration>();
-  final installationIds = StreamController<String>.broadcast(sync: true);
+  final tokens = StreamController<String>.broadcast(sync: true);
   int calls = 0;
   @override
-  Stream<String> get registrationChanges => installationIds.stream;
+  Stream<String> get registrationChanges => tokens.stream;
   @override
   Future<PushRegistration> register() {
     calls++;

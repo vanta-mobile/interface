@@ -4,7 +4,9 @@ import '../../../core/motion/animated_number_text.dart';
 import '../../../core/presentation/status_view.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../application/portfolio_stats_provider.dart';
 import '../domain/portfolio_overview.dart';
+import 'portfolio_stats_error.dart';
 import 'portfolio_components.dart';
 import 'portfolio_history_chart.dart';
 
@@ -12,22 +14,22 @@ class PortfolioAccountValue extends StatelessWidget {
   const PortfolioAccountValue({
     super.key,
     required this.overview,
+    required this.stats,
     required this.visible,
     required this.active,
     required this.historyExpanded,
-    required this.period,
     required this.onToggleVisibility,
     required this.onToggleHistory,
     this.loading = false,
   });
   final PortfolioOverview overview;
+  final PortfolioStatsView stats;
   final bool visible, active, historyExpanded, loading;
-  final String period;
   final VoidCallback onToggleVisibility, onToggleHistory;
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context), p = overview.performance;
+    final l = AppLocalizations.of(context), p = stats.performance;
     final total = visible ? portfolioUsd(overview.totalUsd) : '••••••';
     final today = visible
         ? '${portfolioUsd(p.todayPnl, signed: true)} (${portfolioPercent(p.todayPercent)})'
@@ -97,10 +99,19 @@ class PortfolioAccountValue extends StatelessWidget {
           },
         ),
         const SizedBox(height: 4),
-        Text(
-          '${l.portfolioTodayPnl} $today',
-          style: PortfolioTypography.caption.copyWith(color: portfolioPnlColor(p.todayPnl)),
-        ),
+        if (stats.loading && visible)
+          Row(
+            children: [
+              Text(l.portfolioTodayPnl, style: PortfolioTypography.caption),
+              const SizedBox(width: 6),
+              const SkeletonBox(key: Key('portfolio-today-loading'), width: 96, height: 14),
+            ],
+          )
+        else
+          Text(
+            '${l.portfolioTodayPnl} $today',
+            style: PortfolioTypography.caption.copyWith(color: portfolioPnlColor(p.todayPnl)),
+          ),
         if (visible &&
             p.history.length >= 2 &&
             (MediaQuery.sizeOf(context).width < 382 ||
@@ -110,16 +121,6 @@ class PortfolioAccountValue extends StatelessWidget {
             onPressed: onToggleHistory,
             child: Text(historyExpanded ? l.portfolioCollapseHistory : l.portfolioOpenHistory),
           ),
-        if (overview.partialValue && !loading)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(l.assetValueUnavailable, style: PortfolioTypography.caption),
-          ),
-        if (overview.staleValue)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(l.assetValueStale, style: PortfolioTypography.caption),
-          ),
       ],
     );
   }
@@ -128,12 +129,12 @@ class PortfolioAccountValue extends StatelessWidget {
 class PortfolioValueHistory extends StatelessWidget {
   const PortfolioValueHistory({
     super.key,
-    required this.overview,
+    required this.stats,
     required this.period,
     required this.onPeriod,
     required this.onCollapse,
   });
-  final PortfolioOverview overview;
+  final PortfolioStatsView stats;
   final String period;
   final ValueChanged<String> onPeriod;
   final VoidCallback onCollapse;
@@ -156,11 +157,14 @@ class PortfolioValueHistory extends StatelessWidget {
             ),
           ],
         ),
-        PortfolioHistoryChart(
-          performance: overview.performance,
-          period: period,
-          unavailable: l.portfolioMissingValue,
-        ),
+        if (stats.block != null && stats.block != PortfolioStatsBlock.unavailable)
+          PortfolioCard(radius: 14, border: false, child: PortfolioStatsBlocked(stats))
+        else
+          PortfolioHistoryChart(
+            performance: stats.performance,
+            loading: stats.historyLoading,
+            unavailable: l.portfolioMissingValue,
+          ),
         PortfolioPeriods(selected: period, onChanged: onPeriod),
       ],
     );
@@ -170,23 +174,37 @@ class PortfolioValueHistory extends StatelessWidget {
 class PortfolioPerformanceCard extends StatelessWidget {
   const PortfolioPerformanceCard({
     super.key,
-    required this.overview,
-    required this.preview,
+    required this.stats,
     required this.hidden,
+    this.active = true,
   });
-  final PortfolioOverview overview;
-  final bool preview, hidden;
+  final PortfolioStatsView stats;
+
+  /// Signed-out pages keep their login entry; no statistics failure is shown.
+  final bool hidden, active;
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context), p = overview.performance;
+    final l = AppLocalizations.of(context), p = stats.performance;
+    // A build without the API keeps the placeholders here; PnL details explain it.
+    if (active && stats.block != null && stats.block != PortfolioStatsBlock.unavailable) {
+      return PortfolioCard(child: PortfolioStatsBlocked(stats));
+    }
+    final loading = stats.loading && !hidden;
     final metrics = [
       PortfolioMetric(
         label: l.portfolioPnl7d,
         value: hidden ? '••••' : portfolioUsd(p.pnl, signed: true),
         note: hidden ? '••••' : portfolioPercent(p.returnPercent),
         color: portfolioPnlColor(p.pnl),
+        loading: loading,
+        skeletonColor: StatusColors.skeletonOnCard,
       ),
-      PortfolioMetric(label: l.portfolioVolume7d, value: hidden ? '••••' : portfolioUsd(p.volume)),
+      PortfolioMetric(
+        label: l.portfolioVolume7d,
+        value: hidden ? '••••' : portfolioUsd(p.volume),
+        loading: loading,
+        skeletonColor: StatusColors.skeletonOnCard,
+      ),
     ];
     return PortfolioCard(
       child: LayoutBuilder(

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/presentation/live_order_embedded_inputs.dart';
 import 'package:vanta/core/errors/api_error_details.dart';
 import 'package:vanta/core/theme.dart';
 import 'package:vanta/features/portfolio/application/main_order_allocation_provider.dart';
@@ -122,7 +123,9 @@ void main() {
         await tester.enterText(price, '100');
         await tester.enterText(quantity, '10');
         await tester.pump();
-        expect(find.textContaining(l.livePriceLastStale), findsWidgets);
+        // Stale facts stay silent; a direction click refreshes them first.
+        expect(find.textContaining(l.livePriceLastStale), findsNothing);
+        expect(tester.widget<FilledButton>(button('buy')).onPressed, isNotNull);
         final accountReads = f.orders.reads, capacityReads = f.capacities.reads;
         f.prices();
         await flush(tester);
@@ -157,9 +160,10 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(StatusFailureView), findsNothing);
         expect(quantity, findsOneWidget);
+        // A refresh failure not started by a direction click is not shown.
         expect(
           find.textContaining(AppLocalizations.of(tester.element(quantity)).apiRequestCancelled),
-          findsWidgets,
+          findsNothing,
         );
         f.container.read(symbolProvider.notifier).select('ETHUSDT');
         await tester.pump();
@@ -202,7 +206,7 @@ void main() {
         expect(f.container.read(mainOrderRefreshProvider).stage, MainOrderRefreshStage.account);
         expect(find.byKey(const Key('trade-order-skeleton')), findsNothing);
         expect(find.byKey(const Key('trade-pending-quantity')), findsOneWidget);
-        expect(find.byType(TextFormField), findsOneWidget);
+        expect(find.byType(EmbeddedPriceField), findsOneWidget);
         expect(find.byKey(const Key('trade-available-pending')), findsOneWidget);
         for (final side in ['buy', 'sell']) {
           for (final name in ['liquidation', 'cost']) {

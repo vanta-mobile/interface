@@ -153,6 +153,12 @@ abstract class AppLocalizations {
   /// **'Wallet request rejected. You can retry.'**
   String get authWalletRejected;
 
+  /// No description provided for @authWalletOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open your connected wallet. Check that the wallet app is installed, then retry.'**
+  String get authWalletOpenFailed;
+
   /// No description provided for @authWalletUnavailable.
   ///
   /// In en, this message translates to:
@@ -194,6 +200,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Wallet account or network changed. Reconnect and sign in again.'**
   String get authWalletChanged;
+
+  /// No description provided for @authWalletSessionUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'The wallet session could not be confirmed. Open your wallet, check its connection, and reconnect to continue.'**
+  String get authWalletSessionUnverified;
+
+  /// No description provided for @authWalletResponseTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The wallet did not return a signature. Open your wallet to check the request, then retry.'**
+  String get authWalletResponseTimeout;
 
   /// No description provided for @authWalletReconnect.
   ///
@@ -4521,59 +4539,11 @@ abstract class AppLocalizations {
   /// **'Quick entry must be an ordinary market order without reduction, a fixed price or attached conditions.'**
   String get quickOrderInvalid;
 
-  /// No description provided for @quickOrderTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Chart quick market entry'**
-  String get quickOrderTitle;
-
   /// No description provided for @quickOrderHint.
   ///
   /// In en, this message translates to:
   /// **'Real wallet orders. Quantity is independent of the trade form. One-way orders can reduce or reverse an existing position. Quotes are references, not execution prices. This order has no attached TP/SL or user slippage setting.'**
   String get quickOrderHint;
-
-  /// No description provided for @quickOrderRead.
-  ///
-  /// In en, this message translates to:
-  /// **'Read wallet and sizing inputs'**
-  String get quickOrderRead;
-
-  /// No description provided for @quickOrderReadHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Explicitly sign four account/configuration reads, then three separate fee, risk-bracket and open-order reads for percentage sizing. No order is sent by reading. The first price snapshot expires in 30 seconds.'**
-  String get quickOrderReadHint;
-
-  /// No description provided for @quickOrderIndependent.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter base-asset quantity, or choose a percentage. Starts empty; no default percentage.'**
-  String get quickOrderIndependent;
-
-  /// No description provided for @quickOrderPercentSelected.
-  ///
-  /// In en, this message translates to:
-  /// **'{percent}% selected. Buy and sell reference quantities are shown separately. Type a quantity to replace the percentage.'**
-  String quickOrderPercentSelected(int percent);
-
-  /// No description provided for @quickOrderBuyQuantity.
-  ///
-  /// In en, this message translates to:
-  /// **'Reference buy quantity'**
-  String get quickOrderBuyQuantity;
-
-  /// No description provided for @quickOrderSellQuantity.
-  ///
-  /// In en, this message translates to:
-  /// **'Reference sell quantity'**
-  String get quickOrderSellQuantity;
-
-  /// No description provided for @quickOrderSizingHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Percentages use the read-time USDT available margin, leverage, taker fee, risk brackets, existing positions, same-direction pending quantity and bid/ask, rounded down to the market step. They exclude released margin and other-asset collateral. These are reference budgets, not guaranteed maximum quantities; prices, orders and exchange limits can change.'**
-  String get quickOrderSizingHint;
 
   /// No description provided for @quickOrderSizingFailure.
   ///
@@ -4616,6 +4586,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirmation preference could not be read or saved. The last saved choice is retained; orders require review until a choice is saved successfully.'**
   String get quickOrderPreferenceFailure;
+
+  /// No description provided for @quickOrderMarketBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Market Buy'**
+  String get quickOrderMarketBuy;
+
+  /// No description provided for @quickOrderMarketSell.
+  ///
+  /// In en, this message translates to:
+  /// **'Market Sell'**
+  String get quickOrderMarketSell;
+
+  /// No description provided for @quickOrderAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount({asset})'**
+  String quickOrderAmount(String asset);
+
+  /// No description provided for @quickOrderAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Avbl. {value}'**
+  String quickOrderAvailable(String value);
 
   /// No description provided for @quickOrderChartTab.
   ///
@@ -7053,35 +7047,17 @@ abstract class AppLocalizations {
   /// **'Refresh yield data'**
   String get assetYieldRefresh;
 
-  /// No description provided for @pointsProgramTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Vanta Genesis Points'**
-  String get pointsProgramTitle;
-
   /// No description provided for @pointsProgramScope.
   ///
   /// In en, this message translates to:
   /// **'Published by Vanta for its Orderly broker program. These points are separate from Aster balances and trading; this app does not assume Aster activity qualifies for rewards.'**
   String get pointsProgramScope;
 
-  /// No description provided for @pointsCurrentCampaign.
-  ///
-  /// In en, this message translates to:
-  /// **'Current campaign'**
-  String get pointsCurrentCampaign;
-
   /// No description provided for @pointsCycleNumber.
   ///
   /// In en, this message translates to:
   /// **'Campaign {number}'**
   String pointsCycleNumber(String number);
-
-  /// No description provided for @pointsCycleId.
-  ///
-  /// In en, this message translates to:
-  /// **'Campaign ID'**
-  String get pointsCycleId;
 
   /// No description provided for @pointsStatus.
   ///
@@ -7119,12 +7095,6 @@ abstract class AppLocalizations {
   /// **'Unknown'**
   String get pointsStatusUnknown;
 
-  /// No description provided for @pointsPool.
-  ///
-  /// In en, this message translates to:
-  /// **'Total points pool'**
-  String get pointsPool;
-
   /// No description provided for @pointsPeriodStart.
   ///
   /// In en, this message translates to:
@@ -7148,12 +7118,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No current campaign is published.'**
   String get pointsNoCurrentCampaign;
-
-  /// No description provided for @pointsNotRead.
-  ///
-  /// In en, this message translates to:
-  /// **'No verified data yet.'**
-  String get pointsNotRead;
 
   /// No description provided for @pointsLoading.
   ///
@@ -7227,35 +7191,11 @@ abstract class AppLocalizations {
   /// **'Points leaderboard'**
   String get pointsLeaderboard;
 
-  /// No description provided for @pointsLeaderboardScope.
-  ///
-  /// In en, this message translates to:
-  /// **'Shows up to the first 100 returned rows, 20 per page, with ranks reported by the service. Absence does not establish a full ranking or zero points.'**
-  String get pointsLeaderboardScope;
-
-  /// No description provided for @pointsSelectLeaderboard.
-  ///
-  /// In en, this message translates to:
-  /// **'Leaderboard scope'**
-  String get pointsSelectLeaderboard;
-
-  /// No description provided for @pointsTotalLeaderboard.
-  ///
-  /// In en, this message translates to:
-  /// **'Total points leaderboard'**
-  String get pointsTotalLeaderboard;
-
   /// No description provided for @pointsNoRankings.
   ///
   /// In en, this message translates to:
   /// **'No ranking rows were returned for this scope.'**
   String get pointsNoRankings;
-
-  /// No description provided for @pointsReturnedCount.
-  ///
-  /// In en, this message translates to:
-  /// **'Showing {count} returned ranking row(s).'**
-  String pointsReturnedCount(int count);
 
   /// No description provided for @pointsPrevious.
   ///
@@ -7281,41 +7221,11 @@ abstract class AppLocalizations {
   /// **'Rank #{number}'**
   String pointsRankNumber(String number);
 
-  /// No description provided for @pointsScore.
-  ///
-  /// In en, this message translates to:
-  /// **'Points'**
-  String get pointsScore;
-
-  /// No description provided for @pointsSettled.
-  ///
-  /// In en, this message translates to:
-  /// **'Settled points'**
-  String get pointsSettled;
-
-  /// No description provided for @pointsSpecial.
-  ///
-  /// In en, this message translates to:
-  /// **'Special points'**
-  String get pointsSpecial;
-
-  /// No description provided for @pointsCurrentScore.
-  ///
-  /// In en, this message translates to:
-  /// **'Current campaign points (as reported)'**
-  String get pointsCurrentScore;
-
   /// No description provided for @pointsMyPoints.
   ///
   /// In en, this message translates to:
   /// **'My points'**
   String get pointsMyPoints;
-
-  /// No description provided for @pointsWalletReadScope.
-  ///
-  /// In en, this message translates to:
-  /// **'Read sends this wallet address to Vanta’s points service without a signature. It does not change the active Aster account.'**
-  String get pointsWalletReadScope;
 
   /// No description provided for @pointsConnectWallet.
   ///
@@ -7334,36 +7244,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not found in the returned total leaderboard; the full rank is unknown.'**
   String get pointsRankUnknown;
-
-  /// No description provided for @pointsReadWallet.
-  ///
-  /// In en, this message translates to:
-  /// **'Read my points and history'**
-  String get pointsReadWallet;
-
-  /// No description provided for @pointsSelectHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'Past points scope'**
-  String get pointsSelectHistory;
-
-  /// No description provided for @pointsAccumulated.
-  ///
-  /// In en, this message translates to:
-  /// **'Accumulated points'**
-  String get pointsAccumulated;
-
-  /// No description provided for @pointsSelectedHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'Points in selected scope'**
-  String get pointsSelectedHistory;
-
-  /// No description provided for @pointsNoHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'No campaign history was returned. Missing campaign rows remain unknown.'**
-  String get pointsNoHistory;
 
   /// No description provided for @eventsTitle.
   ///
@@ -10155,12 +10035,6 @@ abstract class AppLocalizations {
   /// **'2–110'**
   String get scaledCountRange;
 
-  /// No description provided for @assistantNavigation.
-  ///
-  /// In en, this message translates to:
-  /// **'AI'**
-  String get assistantNavigation;
-
   /// No description provided for @orderTypeTrailing.
   ///
   /// In en, this message translates to:
@@ -10620,7 +10494,7 @@ abstract class AppLocalizations {
   /// No description provided for @enableTradingScope.
   ///
   /// In en, this message translates to:
-  /// **'Authorize a device signing key for 30 days of account queries and gas-free Spot and Futures trading without repeated wallet prompts. Withdrawal access is not granted.'**
+  /// **'This signature opens a decentralized channel for gas-free, instant trading. Sign to continue.'**
   String get enableTradingScope;
 
   /// No description provided for @enableTradingReturnHint.
@@ -10664,12 +10538,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trade'**
   String get tradeNavigation;
-
-  /// No description provided for @exploreNavigation.
-  ///
-  /// In en, this message translates to:
-  /// **'Explore'**
-  String get exploreNavigation;
 
   /// No description provided for @portfolioTotalValue.
   ///
@@ -10827,6 +10695,66 @@ abstract class AppLocalizations {
   /// **'Monthly PnL'**
   String get portfolioMonthlyPnl;
 
+  /// No description provided for @vantaApiSignInAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign'**
+  String get vantaApiSignInAction;
+
+  /// No description provided for @vantaApiSignInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet signature required'**
+  String get vantaApiSignInTitle;
+
+  /// No description provided for @vantaApiSigningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for wallet signature'**
+  String get vantaApiSigningTitle;
+
+  /// No description provided for @vantaApiSigning.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the signature request in your wallet to view account statistics.'**
+  String get vantaApiSigning;
+
+  /// No description provided for @vantaApiUnavailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics unavailable'**
+  String get vantaApiUnavailableTitle;
+
+  /// No description provided for @vantaApiUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Account statistics are not available in this build.'**
+  String get vantaApiUnavailable;
+
+  /// No description provided for @vantaApiSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign the message in your wallet to view account statistics.'**
+  String get vantaApiSignIn;
+
+  /// No description provided for @vantaApiFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Account statistics could not be loaded. Please retry.'**
+  String get vantaApiFailed;
+
+  /// No description provided for @vantaApiInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The statistics service returned invalid data. Please retry.'**
+  String get vantaApiInvalid;
+
+  /// No description provided for @vantaApiRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics requests are temporarily limited. Try again shortly.'**
+  String get vantaApiRateLimited;
+
   /// No description provided for @portfolioCalendarNote.
   ///
   /// In en, this message translates to:
@@ -10910,6 +10838,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Positions({count})'**
   String portfolioPositionsCount(int count);
+
+  /// No description provided for @portfolioAvailableForOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Available for order'**
+  String get portfolioAvailableForOrder;
 
   /// No description provided for @portfolioAvailable.
   ///
@@ -12687,6 +12621,846 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Linked order:'**
   String get openOrdersLinkedOrder;
+
+  /// No description provided for @tradeTabCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} ({count})'**
+  String tradeTabCount(String label, int count);
+
+  /// No description provided for @positionsCloseAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Close all'**
+  String get positionsCloseAll;
+
+  /// No description provided for @positionsEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry'**
+  String get positionsEntry;
+
+  /// No description provided for @positionsMargin.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin'**
+  String get positionsMargin;
+
+  /// No description provided for @positionsEntireTpsl.
+  ///
+  /// In en, this message translates to:
+  /// **'Entire TP/SL'**
+  String get positionsEntireTpsl;
+
+  /// No description provided for @positionsPartialTpsl.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial TP/SL ({count})'**
+  String positionsPartialTpsl(int count);
+
+  /// No description provided for @positionsMarginRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin ratio {value}'**
+  String positionsMarginRatio(String value);
+
+  /// No description provided for @positionsMarginRatioTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin ratio = Maintenance margin / Margin balance. Your positions will be liquidated once the margin ratio reaches 100%.'**
+  String get positionsMarginRatioTip;
+
+  /// No description provided for @positionsLiquidationProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark price progress toward liquidation price'**
+  String get positionsLiquidationProgress;
+
+  /// No description provided for @positionsEditPartialTpsl.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit partial TP/SL'**
+  String get positionsEditPartialTpsl;
+
+  /// No description provided for @positionTpslTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set TP/SL'**
+  String get positionTpslTitle;
+
+  /// No description provided for @positionTpslPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial close'**
+  String get positionTpslPartial;
+
+  /// No description provided for @positionTpslEntire.
+  ///
+  /// In en, this message translates to:
+  /// **'Entire close'**
+  String get positionTpslEntire;
+
+  /// No description provided for @positionTpslTakeProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Profit with Trigger Order'**
+  String get positionTpslTakeProfit;
+
+  /// No description provided for @positionTpslStopLoss.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Loss'**
+  String get positionTpslStopLoss;
+
+  /// No description provided for @positionTpslLimitOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit order'**
+  String get positionTpslLimitOrder;
+
+  /// No description provided for @positionTpslTriggerPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Trigger price'**
+  String get positionTpslTriggerPrice;
+
+  /// No description provided for @positionTpslMarkPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark price'**
+  String get positionTpslMarkPrice;
+
+  /// No description provided for @positionTpslSwitchBasis.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch take-profit trigger price type'**
+  String get positionTpslSwitchBasis;
+
+  /// No description provided for @positionTpslPnl.
+  ///
+  /// In en, this message translates to:
+  /// **'Pnl'**
+  String get positionTpslPnl;
+
+  /// No description provided for @positionTpslRoi.
+  ///
+  /// In en, this message translates to:
+  /// **'ROI'**
+  String get positionTpslRoi;
+
+  /// No description provided for @positionTpslAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get positionTpslAmount;
+
+  /// No description provided for @positionTpslPositionAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Position Amount'**
+  String get positionTpslPositionAmount;
+
+  /// No description provided for @positionTpslEntryPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry price'**
+  String get positionTpslEntryPrice;
+
+  /// No description provided for @positionTpslLiqPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Est. liq. price'**
+  String get positionTpslLiqPrice;
+
+  /// No description provided for @positionTpslEstimatedPnl.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated Pnl'**
+  String get positionTpslEstimatedPnl;
+
+  /// No description provided for @positionTpslConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get positionTpslConfirm;
+
+  /// No description provided for @positionTpslTriggerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Trigger Type'**
+  String get positionTpslTriggerTitle;
+
+  /// No description provided for @positionTpslSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'TP/SL Settings'**
+  String get positionTpslSettingsTitle;
+
+  /// No description provided for @positionTpslPnlHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Set by Estimated P&L'**
+  String get positionTpslPnlHint;
+
+  /// No description provided for @positionTpslRoiHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Set by Estimated ROI'**
+  String get positionTpslRoiHint;
+
+  /// No description provided for @positionTpslMissingTrigger.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a take-profit or stop-loss trigger price.'**
+  String get positionTpslMissingTrigger;
+
+  /// No description provided for @positionTpslMissingAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount no larger than the position.'**
+  String get positionTpslMissingAmount;
+
+  /// No description provided for @positionTpslMissingLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a limit price or choose BBO.'**
+  String get positionTpslMissingLimit;
+
+  /// No description provided for @positionTpslPlaced.
+  ///
+  /// In en, this message translates to:
+  /// **'TP/SL orders placed.'**
+  String get positionTpslPlaced;
+
+  /// No description provided for @positionTpslLegFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{leg} not placed: {reason}'**
+  String positionTpslLegFailed(String leg, String reason);
+
+  /// No description provided for @positionTpslLegUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'{leg} result is unconfirmed. Check open orders before trying again; it is never resubmitted automatically.'**
+  String positionTpslLegUnknown(String leg);
+
+  /// No description provided for @positionTpslNotSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'{leg} was not submitted.'**
+  String positionTpslNotSubmitted(String leg);
+
+  /// No description provided for @positionTpslLegPlaced.
+  ///
+  /// In en, this message translates to:
+  /// **'{leg} placed.'**
+  String positionTpslLegPlaced(String leg);
+
+  /// No description provided for @positionOrderPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Order price'**
+  String get positionOrderPrice;
+
+  /// No description provided for @positionCloseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Position'**
+  String get positionCloseTitle;
+
+  /// No description provided for @positionCloseMarket.
+  ///
+  /// In en, this message translates to:
+  /// **'Market close'**
+  String get positionCloseMarket;
+
+  /// No description provided for @positionCloseLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit close'**
+  String get positionCloseLimit;
+
+  /// No description provided for @positionClosePositionAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Position amount'**
+  String get positionClosePositionAmount;
+
+  /// No description provided for @positionClosePlaced.
+  ///
+  /// In en, this message translates to:
+  /// **'Close order placed.'**
+  String get positionClosePlaced;
+
+  /// No description provided for @positionCloseLimitPlaced.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit close order placed. The position reduces only after it fills.'**
+  String get positionCloseLimitPlaced;
+
+  /// No description provided for @positionCloseFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Close order not placed: {reason}'**
+  String positionCloseFailed(String reason);
+
+  /// No description provided for @positionCloseUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'The close order result is unconfirmed. Check open orders and positions before trying again; it is never resubmitted automatically.'**
+  String get positionCloseUnknown;
+
+  /// No description provided for @positionClosePriceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The {type} price is not available yet. Try again shortly or enter a price.'**
+  String positionClosePriceUnavailable(String type);
+
+  /// No description provided for @tradingHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get tradingHistoryTitle;
+
+  /// No description provided for @tradingHistoryTab.
+  ///
+  /// In en, this message translates to:
+  /// **'{tab, select, orders{Order} positions{Position} trades{Trade} transactions{Transaction} other{History}}'**
+  String tradingHistoryTab(String tab);
+
+  /// No description provided for @tradingHistoryHideCanceled.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide canceled'**
+  String get tradingHistoryHideCanceled;
+
+  /// No description provided for @tradingHistoryDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get tradingHistoryDetails;
+
+  /// No description provided for @tradingHistoryOpenLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Long'**
+  String get tradingHistoryOpenLong;
+
+  /// No description provided for @tradingHistoryCloseLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Long'**
+  String get tradingHistoryCloseLong;
+
+  /// No description provided for @tradingHistoryOpenShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Short'**
+  String get tradingHistoryOpenShort;
+
+  /// No description provided for @tradingHistoryCloseShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Short'**
+  String get tradingHistoryCloseShort;
+
+  /// No description provided for @tradingHistoryFilledPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Filled / Order price'**
+  String get tradingHistoryFilledPrice;
+
+  /// No description provided for @tradingHistoryFilledValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Filled / Total amount ({unit})'**
+  String tradingHistoryFilledValue(String unit);
+
+  /// No description provided for @tradingHistoryFilledTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Filled / Total amount'**
+  String get tradingHistoryFilledTotal;
+
+  /// No description provided for @tradingHistoryRealizedPnl.
+  ///
+  /// In en, this message translates to:
+  /// **'Realized PNL'**
+  String get tradingHistoryRealizedPnl;
+
+  /// No description provided for @tradingHistoryRealizedProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Realized profit'**
+  String get tradingHistoryRealizedProfit;
+
+  /// No description provided for @tradingHistoryRoe.
+  ///
+  /// In en, this message translates to:
+  /// **'Realized ROE%'**
+  String get tradingHistoryRoe;
+
+  /// No description provided for @tradingHistoryClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get tradingHistoryClosed;
+
+  /// No description provided for @tradingHistoryOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get tradingHistoryOpen;
+
+  /// No description provided for @tradingHistoryLiquidated.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquidated'**
+  String get tradingHistoryLiquidated;
+
+  /// No description provided for @tradingHistoryClosePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg. close price'**
+  String get tradingHistoryClosePrice;
+
+  /// No description provided for @tradingHistoryMaxHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Max held'**
+  String get tradingHistoryMaxHeld;
+
+  /// No description provided for @tradingHistoryOpenedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Time opened'**
+  String get tradingHistoryOpenedAt;
+
+  /// No description provided for @tradingHistoryClosedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Time closed'**
+  String get tradingHistoryClosedAt;
+
+  /// No description provided for @tradingHistoryPerp.
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} Perp'**
+  String tradingHistoryPerp(String symbol);
+
+  /// No description provided for @tradingHistoryExecutedAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Executed amount'**
+  String get tradingHistoryExecutedAmount;
+
+  /// No description provided for @tradingHistoryExecutedValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Executed value'**
+  String get tradingHistoryExecutedValue;
+
+  /// No description provided for @tradingHistoryRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get tradingHistoryRole;
+
+  /// No description provided for @tradingHistoryOrderDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Details'**
+  String get tradingHistoryOrderDetails;
+
+  /// No description provided for @tradingHistoryTradeDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade Details'**
+  String get tradingHistoryTradeDetails;
+
+  /// No description provided for @tradingHistoryRelatedOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Related Orders'**
+  String get tradingHistoryRelatedOrders;
+
+  /// No description provided for @tradingHistoryRelatedUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Related orders are unavailable for this position because the history service does not provide position-to-order links.'**
+  String get tradingHistoryRelatedUnavailable;
+
+  /// No description provided for @tradingHistoryNoTrades.
+  ///
+  /// In en, this message translates to:
+  /// **'No trades found'**
+  String get tradingHistoryNoTrades;
+
+  /// No description provided for @tradingHistoryFillsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The reported fills could not be found in the available history.'**
+  String get tradingHistoryFillsUnavailable;
+
+  /// No description provided for @tradingHistoryIncompleteFills.
+  ///
+  /// In en, this message translates to:
+  /// **'Some reported fills are unavailable. Fee and profit totals remain unavailable until all fills are matched.'**
+  String get tradingHistoryIncompleteFills;
+
+  /// No description provided for @tradingHistoryPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'History is incomplete. Some records may be unavailable.'**
+  String get tradingHistoryPartial;
+
+  /// No description provided for @tradingHistoryFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Fee'**
+  String get tradingHistoryFee;
+
+  /// No description provided for @tradingHistoryUpdatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Time'**
+  String get tradingHistoryUpdatedAt;
+
+  /// No description provided for @tradingHistoryDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get tradingHistoryDate;
+
+  /// No description provided for @tradingHistoryQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get tradingHistoryQuantity;
+
+  /// No description provided for @walletVerificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Wallet'**
+  String get walletVerificationTitle;
+
+  /// No description provided for @walletVerificationStep.
+  ///
+  /// In en, this message translates to:
+  /// **'3'**
+  String get walletVerificationStep;
+
+  /// No description provided for @walletVerificationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign a message to verify your wallet and view your portfolio.'**
+  String get walletVerificationHint;
+
+  /// No description provided for @walletSignatureCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet signature completed.'**
+  String get walletSignatureCompleted;
+
+  /// No description provided for @walletOnboardingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your wallet, enable trading, and verify your wallet to continue. Check your wallet app if no request appears.'**
+  String get walletOnboardingHint;
+
+  /// No description provided for @notificationDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification Details'**
+  String get notificationDetailsTitle;
+
+  /// No description provided for @notificationCopyField.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy {field}'**
+  String notificationCopyField(String field);
+
+  /// No description provided for @notificationRiskOrderDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk Order Details'**
+  String get notificationRiskOrderDetails;
+
+  /// No description provided for @notificationRiskType.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk Type'**
+  String get notificationRiskType;
+
+  /// No description provided for @notificationRiskLiquidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquidation'**
+  String get notificationRiskLiquidation;
+
+  /// No description provided for @notificationPositionSide.
+  ///
+  /// In en, this message translates to:
+  /// **'Position Side'**
+  String get notificationPositionSide;
+
+  /// No description provided for @notificationExecutionType.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution Type'**
+  String get notificationExecutionType;
+
+  /// No description provided for @notificationWorkingType.
+  ///
+  /// In en, this message translates to:
+  /// **'Working Type'**
+  String get notificationWorkingType;
+
+  /// No description provided for @notificationExecutionDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution Details'**
+  String get notificationExecutionDetails;
+
+  /// No description provided for @notificationAffectedPositions.
+  ///
+  /// In en, this message translates to:
+  /// **'Affected Positions'**
+  String get notificationAffectedPositions;
+
+  /// No description provided for @notificationBalanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Perps Balance Updated'**
+  String get notificationBalanceTitle;
+
+  /// No description provided for @notificationBalanceChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance Changes'**
+  String get notificationBalanceChanges;
+
+  /// No description provided for @notificationWalletBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet Balance'**
+  String get notificationWalletBalance;
+
+  /// No description provided for @notificationAssetsChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 asset changed} other{{count} assets changed}}'**
+  String notificationAssetsChanged(int count);
+
+  /// No description provided for @tradingHistoryRecentDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Aster records from the last {days} days'**
+  String tradingHistoryRecentDays(int days);
+
+  /// No description provided for @navigationFutures.
+  ///
+  /// In en, this message translates to:
+  /// **'Futures'**
+  String get navigationFutures;
+
+  /// No description provided for @navigationSpots.
+  ///
+  /// In en, this message translates to:
+  /// **'Spots'**
+  String get navigationSpots;
+
+  /// No description provided for @navigationSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Soon'**
+  String get navigationSoon;
+
+  /// No description provided for @navigationAskAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI'**
+  String get navigationAskAi;
+
+  /// No description provided for @pointsRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Points rules'**
+  String get pointsRules;
+
+  /// No description provided for @pointsTotalRank.
+  ///
+  /// In en, this message translates to:
+  /// **'Total rank'**
+  String get pointsTotalRank;
+
+  /// No description provided for @pointsYourRank.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rank'**
+  String get pointsYourRank;
+
+  /// No description provided for @pointsNotRanked.
+  ///
+  /// In en, this message translates to:
+  /// **'Not ranked'**
+  String get pointsNotRanked;
+
+  /// No description provided for @pointsOutsideTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Not in top 100'**
+  String get pointsOutsideTop;
+
+  /// No description provided for @pointsViewTotalLeaderboard.
+  ///
+  /// In en, this message translates to:
+  /// **'View total leaderboard'**
+  String get pointsViewTotalLeaderboard;
+
+  /// No description provided for @pointsByPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Points by period'**
+  String get pointsByPeriod;
+
+  /// No description provided for @pointsSelectPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Select period'**
+  String get pointsSelectPeriod;
+
+  /// No description provided for @pointsPeriodPool.
+  ///
+  /// In en, this message translates to:
+  /// **'Points pool'**
+  String get pointsPeriodPool;
+
+  /// No description provided for @pointsUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Points'**
+  String get pointsUnit;
+
+  /// No description provided for @pointsHistoricalPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Historical period'**
+  String get pointsHistoricalPeriod;
+
+  /// No description provided for @pointsPeriodDates.
+  ///
+  /// In en, this message translates to:
+  /// **'{start} – {end} · UTC+0'**
+  String pointsPeriodDates(String start, String end);
+
+  /// intl DateFormat pattern for points period start/end in UTC; keep month names out of non-English patterns.
+  ///
+  /// In en, this message translates to:
+  /// **'d MMM, HH:mm'**
+  String get pointsDatePattern;
+
+  /// No description provided for @pointsPeriodLeaderboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Period leaderboard'**
+  String get pointsPeriodLeaderboard;
+
+  /// No description provided for @pointsNoRankingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No rankings yet'**
+  String get pointsNoRankingsTitle;
+
+  /// No description provided for @pointsNoRankingsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No points recorded for this period.'**
+  String get pointsNoRankingsMessage;
+
+  /// No description provided for @pointsRankAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Rank / Address'**
+  String get pointsRankAddress;
+
+  /// No description provided for @pointsTotalCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Total / Current points'**
+  String get pointsTotalCurrent;
+
+  /// No description provided for @pointsCurrentValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Current {value}'**
+  String pointsCurrentValue(String value);
+
+  /// No description provided for @pointsYouSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'{address} · You'**
+  String pointsYouSuffix(String address);
+
+  /// No description provided for @pointsTotalLeaderboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Total leaderboard'**
+  String get pointsTotalLeaderboardTitle;
+
+  /// No description provided for @pointsPageIndicator.
+  ///
+  /// In en, this message translates to:
+  /// **'{page} / {pages}'**
+  String pointsPageIndicator(int page, int pages);
+
+  /// No description provided for @pointsLoginHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in to view your points'**
+  String get pointsLoginHint;
+
+  /// No description provided for @pointsRefreshMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh my points'**
+  String get pointsRefreshMine;
+
+  /// No description provided for @pointsAddressCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Address copied'**
+  String get pointsAddressCopied;
+
+  /// No description provided for @pointsNoPeriods.
+  ///
+  /// In en, this message translates to:
+  /// **'No points periods are published yet.'**
+  String get pointsNoPeriods;
+
+  /// No description provided for @notificationApiType.
+  ///
+  /// In en, this message translates to:
+  /// **'{type, select, fill{Order Filled} trigger{Conditional Order Triggered} order{Order Updated} liquidation{Liquidation} marginCall{Margin Call} funding{Funding Fee} transfer{Transfer Update} announce{Announcement} maintenance{Maintenance} other{Notification}}'**
+  String notificationApiType(String type);
+
+  /// No description provided for @notificationApiField.
+  ///
+  /// In en, this message translates to:
+  /// **'{field, select, price{Price} quantity{Quantity} fee{Fee} markPrice{Mark Price} liquidationPrice{Liquidation Price} distance{Distance} amount{Amount} symbol{Symbol} market{Market} side{Side} orderId{Order ID} transactionHash{Transaction Hash} createdAt{Time} eventKey{Reference} other{Details}}'**
+  String notificationApiField(String field);
+
+  /// No description provided for @pushVisibilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Background notifications unavailable'**
+  String get pushVisibilityTitle;
+
+  /// No description provided for @pushNoServerVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'The notification server cannot observe this account. You will not receive account notifications while the app is closed.'**
+  String get pushNoServerVisibility;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

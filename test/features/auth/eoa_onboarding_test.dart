@@ -1,3 +1,9 @@
+import 'package:vanta/features/auth/application/vanta_api_session_provider.dart';
+import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
+
+import '../../support/onboarding.dart';
+import '../../support/trading_agents.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -63,6 +69,10 @@ void main() {
     );
     final container = ProviderContainer(
       overrides: [
+        vantaApiSessionProvider.overrideWith(VerifiedVantaSession.new),
+        tradingAgentStoreProvider.overrideWithValue(
+          MemoryTradingAgentStorage().store(DateTime.now),
+        ),
         identityRepositoryProvider.overrideWithValue(identity),
         walletConnectorProvider.overrideWithValue(TestWalletConnector(wallet)),
         privyConfigurationProvider.overrideWithValue(

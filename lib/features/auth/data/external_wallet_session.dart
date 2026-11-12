@@ -3,6 +3,7 @@ import 'dart:async';
 import '../domain/auth_session.dart';
 import '../domain/wallet_connection.dart';
 import '../domain/wallet_signing_preparation.dart';
+import '../domain/wallet_session_verification.dart';
 import 'evm_account_address.dart';
 import 'wallet_configuration.dart';
 import 'wallet_preference_store.dart';
@@ -68,7 +69,18 @@ class ExternalWalletSession {
     _subscription = connection.invalidations.listen((_) {
       if (_disposed || !identical(_connection, connection)) return;
       _revision++;
-      _identity = null;
+      final previous = _identity;
+      _identity =
+          connection is WalletSessionVerification &&
+              (connection as WalletSessionVerification).needsReconnect &&
+              previous != null
+          ? AuthIdentity(
+              id: previous.id,
+              walletAddress: previous.walletAddress,
+              walletKind: WalletKind.external,
+              walletName: previous.walletName,
+            )
+          : null;
       onInvalidated();
     });
     unawaited(_release(previousSubscription, identical(previous, connection) ? null : previous));

@@ -7,18 +7,18 @@ enum PushPermission {
   provisional,
 }
 
-/// Device registration only; a Firebase Installation ID does not authorize a wallet.
+/// APNs/FCM delivery tokens identify an app instance, not a wallet.
 class PushRegistration {
-  const PushRegistration({required this.permission, this.installationId});
+  const PushRegistration({required this.permission, this.token});
 
   final PushPermission permission;
-  final String? installationId;
+  final String? token;
 
   bool get canReceive =>
       permission == PushPermission.authorized || permission == PushPermission.provisional;
 
-  PushRegistration withInstallationId(String value) =>
-      PushRegistration(permission: permission, installationId: value);
+  PushRegistration withToken(String value) =>
+      PushRegistration(permission: permission, token: value);
 }
 
 abstract interface class PushMessagingRepository {

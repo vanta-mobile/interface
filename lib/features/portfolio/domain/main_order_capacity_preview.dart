@@ -145,16 +145,22 @@ MainOrderSidePreview _side(
     }
     final OrderSizeResolution size;
     if (percent != null) {
-      final amount = capacity.quantityAt(percent);
       if (unit == OrderSizeUnit.quote && (conversion == null || conversion <= Decimal.zero)) {
         return MainOrderSidePreview(
           capacity: capacity,
           failure: const AccountReadFailure('liveAmountReferenceUnavailable'),
         );
       }
+      // The shown quote budget follows the whole-unit stop rule; base converts from it.
+      final budget = unit == OrderSizeUnit.quote ? capacity.quoteAt(percent) : null;
+      final amount = budget == null
+          ? capacity.quantityAt(percent)
+          : percent == 100
+          ? capacity.maximum
+          : capacity.quantityForQuote(budget);
       size = OrderSizeResolution(
         quantity: '$amount',
-        input: unit == OrderSizeUnit.quote ? amount * conversion! : null,
+        input: budget,
         reference: unit == OrderSizeUnit.quote ? conversion : null,
         basis: unit == OrderSizeUnit.quote ? basis : null,
         referenceAt: orderSizeReferenceAt(context, basis),
@@ -169,7 +175,10 @@ MainOrderSidePreview _side(
         capacity: capacity,
         quantity: percent != null ? quantity : null,
         size: size,
-        failure: AccountReadFailure(size.failure ?? 'liveOrderInvalidQuantity'),
+        // A ratio stop that floors to zero is below one step, not a typo.
+        failure: AccountReadFailure(
+          size.failure ?? (percent != null ? 'liveAmountBelowStep' : 'liveOrderInvalidQuantity'),
+        ),
       );
     }
     // Opposite-side protection exits may have been resolved for the selected

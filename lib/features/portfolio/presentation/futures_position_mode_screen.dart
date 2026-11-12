@@ -1,6 +1,5 @@
 import 'futures_position_mode_sheet.dart';
 import 'mode_settings_sheet.dart';
-import 'order_recovery_notice.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,7 +49,6 @@ class _FuturesPositionModeScreenState extends ConsumerState<FuturesPositionModeS
           key: const Key('position-mode-page'),
           padding: const EdgeInsets.all(16),
           children: [
-            const OrderRecoveryNotice(),
             Text(l10n.positionModeAllSymbols, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
             Text(l10n.positionModeSettingsScope),

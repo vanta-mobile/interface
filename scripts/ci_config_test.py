@@ -9,7 +9,8 @@ class ConfigurationTests(unittest.TestCase):
                                     REOWN_PROJECT_ID='project', UNUSED_SECRET='sensitive'))
         self.assertEqual(values, dict(PRIVY_APP_ID='app', PRIVY_CLIENT_ID='client',
                                      REOWN_PROJECT_ID='project',
-                                     WALLET_LOGIN_ORIGIN='https://app.vanta.exchange'))
+                                     WALLET_LOGIN_ORIGIN='https://app.vanta.exchange',
+                                     VANTA_API_ORIGIN=''))
 
     def test_missing_variables_fail_without_exposing_values(self):
         with self.assertRaisesRegex(ValueError, 'PRIVY_CLIENT_ID, REOWN_PROJECT_ID') as error:

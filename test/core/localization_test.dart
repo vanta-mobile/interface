@@ -66,7 +66,7 @@ void main() {
     await launch(tester, container);
     container.read(symbolProvider.notifier).select('ETHUSDT');
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('navigation-markets')));
+    await tester.tap(find.byKey(const Key('navigation-assistant')));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('语言'));
     await tester.pumpAndSettle();

@@ -47,23 +47,31 @@ _WalletScope? _scope(AuthIdentity? identity) {
   return (id: identity.id, address: address.toLowerCase(), kind: identity.walletKind);
 }
 
-/// Feature-local common lifecycle for five real readers. Public data loads on
-/// display; address-bearing data always requires an explicit user refresh.
+/// Feature-local common lifecycle for the points and event readers. Public data
+/// loads on display. Address-bearing data needs an explicit refresh unless the
+/// reader opts into [autoLoadWallet], which reads for the signed-in EVM wallet
+/// and reloads when that identity changes. Reads are unsigned public GETs.
 abstract class PointsLoadController<T> extends Notifier<PointsLoadState<T>> {
   Timer? _expiry;
   int _generation = 0;
   bool get walletScoped => false;
+  bool get autoLoadWallet => false;
   bool get _active => ref.read(quoteUpdatesActiveProvider);
+  bool get _autoLoad =>
+      !walletScoped || autoLoadWallet && _scope(ref.read(authProvider).identity) != null;
   DateTime get _now => ref.read(pointsClockProvider)().toUtc();
   Future<PointsSnapshot<T>> read(PointsRepository repository, String? address);
   @override
   PointsLoadState<T> build() {
     ref.watch(pointsRepositoryProvider);
     if (walletScoped) {
-      ref.listen(authProvider.select((s) => _scope(s.identity)), (_, _) {
+      ref.listen(authProvider.select((s) => _scope(s.identity)), (_, scope) {
         _generation++;
         _expiry?.cancel();
         state = PointsLoadState(active: _active);
+        Future.microtask(() {
+          if (ref.mounted && autoLoadWallet && scope != null && _active) unawaited(refresh());
+        });
       });
     }
     ref.listen(quoteUpdatesActiveProvider, (_, active) {
@@ -76,14 +84,14 @@ abstract class PointsLoadController<T> extends Notifier<PointsLoadState<T>> {
         failureKey: state.failureKey,
         errorDetails: state.errorDetails,
       );
-      if (active && !walletScoped) unawaited(refresh());
+      if (active && _autoLoad) unawaited(refresh());
     });
     ref.onDispose(() {
       _generation++;
       _expiry?.cancel();
     });
     Future.microtask(() {
-      if (ref.mounted && _active && !walletScoped) unawaited(refresh());
+      if (ref.mounted && _active && _autoLoad) unawaited(refresh());
     });
     return PointsLoadState(active: _active);
   }
@@ -200,6 +208,8 @@ class WalletPointsController extends PointsLoadController<WalletPoints> {
   @override
   bool get walletScoped => true;
   @override
+  bool get autoLoadWallet => true;
+  @override
   Future<PointsSnapshot<WalletPoints>> read(PointsRepository repository, String? address) async {
     final snapshot = await repository.wallet(address!);
     if (pointsAddressKey(snapshot.value.address) != address) {
@@ -213,6 +223,8 @@ class WalletPointsHistoryController extends PointsLoadController<WalletPointsHis
   @override
   bool get walletScoped => true;
   @override
+  bool get autoLoadWallet => true;
+  @override
   Future<PointsSnapshot<WalletPointsHistory>> read(
     PointsRepository repository,
     String? address,
@@ -225,6 +237,7 @@ class WalletPointsHistoryController extends PointsLoadController<WalletPointsHis
   }
 }
 
+/// The user's explicit period choice; null follows the default period.
 final selectedPointsCampaignProvider = NotifierProvider.autoDispose<SelectedPointsCampaign, int?>(
   SelectedPointsCampaign.new,
 );
@@ -235,13 +248,55 @@ class SelectedPointsCampaign extends Notifier<int?> {
   void select(int? campaign) => state = campaign;
 }
 
+/// Period shown by "Points by period": the explicit choice, else the current
+/// campaign, else the latest published one. Null until either list is read.
+final pointsPeriodProvider = Provider.autoDispose<int?>((ref) {
+  final selected = ref.watch(selectedPointsCampaignProvider);
+  if (selected != null) return selected;
+  final current = ref.watch(currentPointsCampaignProvider.select((s) => s.snapshot?.value?.number));
+  if (current != null) return current;
+  final campaigns = ref.watch(pointsCampaignsProvider.select((s) => s.snapshot?.value));
+  if (campaigns == null || campaigns.isEmpty) return null;
+  return campaigns.map((c) => c.number).reduce((a, b) => a > b ? a : b);
+});
+
+bool _walletReadable(Ref ref) => _scope(ref.read(authProvider).identity) != null;
+
+/// Pull-to-refresh for the Points page: every section it shows.
 final pointsPageRefreshProvider = Provider.autoDispose<Future<void> Function()>((ref) {
   final batch = RefreshBatch();
+  return () {
+    final period = ref.read(pointsPeriodProvider);
+    return batch.run([
+      ref.read(currentPointsCampaignProvider.notifier).refresh,
+      ref.read(pointsCampaignsProvider.notifier).refresh,
+      ref.read(pointsLeaderboardProvider(null).notifier).refresh,
+      if (period != null) ref.read(pointsLeaderboardProvider(period).notifier).refresh,
+      if (_walletReadable(ref)) ...[
+        ref.read(walletPointsProvider.notifier).refresh,
+        ref.read(walletPointsHistoryProvider.notifier).refresh,
+      ],
+    ]);
+  };
+});
+
+/// The summary card's refresh: the wallet's points and its total rank only.
+final pointsSummaryRefreshProvider = Provider.autoDispose<Future<void> Function()>((ref) {
+  final batch = RefreshBatch();
   return () => batch.run([
-    ref.read(currentPointsCampaignProvider.notifier).refresh,
-    ref.read(pointsCampaignsProvider.notifier).refresh,
-    ref.read(pointsLeaderboardProvider(ref.read(selectedPointsCampaignProvider)).notifier).refresh,
-    if (ref.read(walletPointsProvider).snapshot != null)
+    ref.read(pointsLeaderboardProvider(null).notifier).refresh,
+    if (_walletReadable(ref)) ...[
       ref.read(walletPointsProvider.notifier).refresh,
+      ref.read(walletPointsHistoryProvider.notifier).refresh,
+    ],
+  ]);
+});
+
+/// Pull-to-refresh for the total leaderboard page.
+final pointsTotalRefreshProvider = Provider.autoDispose<Future<void> Function()>((ref) {
+  final batch = RefreshBatch();
+  return () => batch.run([
+    ref.read(pointsLeaderboardProvider(null).notifier).refresh,
+    if (_walletReadable(ref)) ref.read(walletPointsProvider.notifier).refresh,
   ]);
 });

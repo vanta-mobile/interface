@@ -87,8 +87,9 @@ void main() {
       '0.005',
     );
     final slider = tester.widget<Slider>(find.byKey(const Key('live-close-percentage')));
-    expect(slider.value, 50);
-    slider.onChanged!(75);
+    expect(slider.value, 0.5);
+    slider.onChanged!(0.75);
+    slider.onChangeEnd!(0.75);
     await tester.pumpAndSettle();
     expect(
       tester.widget<TextField>(find.byKey(const Key('live-order-quantity'))).controller!.text,

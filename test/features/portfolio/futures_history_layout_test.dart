@@ -1,82 +1,107 @@
-import '../../support/aster_account.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vanta/features/portfolio/application/futures_history_provider.dart';
-import 'package:vanta/features/portfolio/domain/futures_history.dart';
-import 'package:vanta/features/portfolio/presentation/futures_history_record_card.dart';
-import 'package:vanta/features/trade/application/providers.dart';
+import 'package:vanta/features/portfolio/domain/trading_history.dart';
+import 'package:vanta/features/portfolio/data/trading_history_mapper.dart';
+import 'package:vanta/features/portfolio/presentation/trading_history_components.dart';
+import 'package:vanta/features/portfolio/presentation/trading_history_fill_card.dart';
+import 'package:vanta/features/portfolio/presentation/trading_history_order_card.dart';
+import 'package:vanta/features/portfolio/presentation/trading_history_position_card.dart';
+import 'package:vanta/features/portfolio/presentation/trading_history_transaction_row.dart';
 
-import '../../support/futures_history.dart';
-import '../../support/futures_history_widget.dart';
-import '../../support/identity_repository.dart';
+import '../../support/trading_history.dart';
 
 void main() {
-  for (final shape in [(320.0, 844.0, 1.5), (844.0, 390.0, 1.5), (768.0, 1024.0, 1.0)]) {
-    for (final language in ['en', 'zh']) {
-      for (final kind in FuturesHistoryKind.values) {
-        testWidgets(
-          'history $kind fits ${shape.$1}x${shape.$2} $language, translates, expires and logs out',
-          (tester) async {
-            final identity = TestIdentityRepository()..restored = signingIdentity;
-            final repository = TestFuturesHistoryRepository();
-            final container = await launchFuturesHistory(
-              tester,
-              repository,
-              identity: identity,
-              width: shape.$1,
-              height: shape.$2,
-              scale: shape.$3,
-              language: language,
-            );
-            await chooseFuturesKind(tester, kind);
-            if (kind == FuturesHistoryKind.trades) await setFuturesSymbol(tester, 'BTCUSDT');
-            await tapFutures(tester, 'read-futures-history');
-            final card = find.byType(FuturesHistoryRecordCard);
-            expect(card, findsOneWidget);
-            await revealFutures(tester, card);
-            await tester.pumpAndSettle();
-            expect(tester.takeException(), null);
-            final snapshot = container.read(futuresHistoryProvider).account;
-            container.read(localeProvider.notifier).select(language == 'en' ? 'zh' : 'en');
-            await tester.pumpAndSettle();
-            expect(container.read(futuresHistoryProvider).account, same(snapshot));
-            expect(repository.queries, hasLength(1));
-            expect(tester.takeException(), null);
-            await tester.pump(const Duration(seconds: 31));
-            expect(find.byKey(const Key('futures-history-snapshot-stale')), findsOneWidget);
-            identity.events.add(null);
-            await tester.pumpAndSettle();
-            expect(find.byKey(const Key('futures-history-wallet')), findsNothing);
-            expect(find.byType(FuturesHistoryRecordCard), findsNothing);
-            expect(container.read(futuresHistoryProvider).query.symbol, isEmpty);
-            expect(container.read(futuresHistoryProvider).query.incomeType, isEmpty);
-            expect(repository.queries, hasLength(1));
-            expect(tester.takeException(), null);
-            await closeFuturesHistory(tester, container);
-          },
+  for (final shape in [
+    (320.0, 844.0, 2.0),
+    (393.0, 852.0, 1.0),
+    (844.0, 390.0, 1.5),
+    (768.0, 1024.0, 1.0),
+  ]) {
+    for (final locale in ['en', 'zh']) {
+      testWidgets('history tabs and details fit $shape $locale', (t) async {
+        await launchTradingHistory(
+          t,
+          HistoryRepository(),
+          width: shape.$1,
+          height: shape.$2,
+          scale: shape.$3,
+          locale: locale,
         );
-      }
+        // Compact tab rows still start at the page inset on wide layouts.
+        expect(t.getTopLeft(find.byKey(const Key('history-tab-orders'))).dx, closeTo(16, 0.01));
+        for (final card in find.byType(TradingHistoryOrderCard).evaluate()) {
+          final parent = find.byWidget(card.widget);
+          final arrow = find.descendant(of: parent, matching: find.byType(HistoryExpand));
+          expect(t.getRect(arrow).right, closeTo(shape.$1 - 16, 0.01));
+        }
+        await historyTap(t, 'history-expand-order:AAPLUSDT:123');
+        expectHistoryValuesAtRight(t, right: shape.$1 - 28);
+        expect(t.takeException(), isNull);
+        await historyTap(t, 'history-details-123');
+        expectHistoryValuesAtRight(t, parent: find.byKey(const Key('history-order-details')));
+        expect(t.takeException(), isNull);
+        await t.tap(find.byTooltip(locale == 'en' ? 'Close' : '关闭'));
+        await t.pumpAndSettle();
+        for (final tab in TradingHistoryTab.values.skip(1)) {
+          await historyTap(t, 'history-tab-${tab.name}');
+          if (tab == TradingHistoryTab.positions) {
+            await historyTap(t, 'history-expand-position:7');
+            final card = find.byType(TradingHistoryPositionCard);
+            final right = t.getRect(card).right - 17; // Card padding plus border.
+            expectHistoryValuesAtRight(t, parent: card, right: right);
+            final roe = find.descendant(
+              of: card,
+              matching: find.text(locale == 'en' ? 'Realized ROE%' : '已实现收益率'),
+            );
+            expect(roe, findsOneWidget);
+            expect(t.getRect(roe).right, closeTo(right - 8, 0.01));
+          } else if (tab == TradingHistoryTab.trades) {
+            final card = find.byType(TradingHistoryFillCard);
+            final right = t.getRect(card).right - 17;
+            expectHistoryValuesAtRight(t, parent: card, right: right);
+            expect(t.getRect(find.text('0.00 USDT')).right, closeTo(right, 0.01));
+          } else {
+            final symbol = find.descendant(
+              of: find.byType(TradingHistoryTransactionRow),
+              matching: find.text('AAPLUSDT'),
+            );
+            expect(t.getRect(symbol).right, closeTo(shape.$1 - 16, 0.01));
+            expect(t.getRect(find.byType(HistoryTag)).right, closeTo(shape.$1 - 16, 0.01));
+          }
+          expect(t.takeException(), isNull);
+        }
+      });
     }
   }
-  testWidgets('background/resume retains stale history without automatic reread', (tester) async {
-    final repository = TestFuturesHistoryRepository();
-    final container = await launchFuturesHistory(tester, repository);
-    await tapFutures(tester, 'read-futures-history');
-    final snapshot = container.read(futuresHistoryProvider).account;
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-    await tester.pump();
-    expect(container.read(futuresHistoryProvider).stale, false);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-    await tester.pumpAndSettle();
-    expect(container.read(futuresHistoryProvider).account, same(snapshot));
-    expect(find.byKey(const Key('futures-history-snapshot-stale')), findsOneWidget);
-    expect(repository.queries, hasLength(1));
-    expect(tester.takeException(), null);
-    await closeFuturesHistory(tester, container);
+  testWidgets('inferred position never presents snapshot entry or open time as fact', (t) async {
+    final repository = HistoryRepository();
+    repository.rows[TradingHistoryTab.positions] = mapTradingHistory([
+      historyPosition(inferred: true),
+    ], TradingHistoryTab.positions);
+    await launchTradingHistory(t, repository);
+    await historyTap(t, 'history-tab-positions');
+    await historyTap(t, 'history-expand-position:7');
+    expect(find.text('189.200000'), findsNothing);
+    expect(find.textContaining('09:18:06'), findsNothing);
+    expect(find.text('194.600000'), findsOneWidget);
   });
+}
+
+void expectHistoryValuesAtRight(WidgetTester tester, {Finder? parent, double? right}) {
+  final rows = parent == null
+      ? find.byType(HistoryRow)
+      : find.descendant(of: parent, matching: find.byType(HistoryRow));
+  expect(rows, findsWidgets);
+  for (final element in rows.evaluate()) {
+    final row = element.widget as HistoryRow;
+    final finder = find.byWidget(row);
+    final edge = tester.getRect(finder).right;
+    if (right != null) expect(edge, closeTo(right, 0.01));
+    final value = find.descendant(
+      of: finder,
+      matching: row.copyable ? find.byType(IconButton) : find.text(row.value),
+    );
+    expect(tester.getRect(value).right, closeTo(edge, 0.01), reason: row.label);
+    if (!row.copyable) expect(tester.widget<Text>(value).textAlign, TextAlign.end);
+  }
 }

@@ -46,7 +46,7 @@ void main() {
       },
     );
   }
-  testWidgets('market choice saved in main form applies to chart; chart can restore confirmation', (
+  testWidgets('market choice saved in main form applies to chart and restoring it applies again', (
     tester,
   ) async {
     final prefs = MemoryOrderConfirmationPreferences();
@@ -65,23 +65,18 @@ void main() {
     await tester.ensureVisible(tabs);
     final l10n = AppLocalizations.of(tester.element(tabs));
     await selectWorkspace(tester, chart: true);
-    await quickTap(tester, 'quick-order-read');
     final qty = find.byKey(const Key('quick-order-quantity'));
     await tester.ensureVisible(qty);
     await tester.enterText(qty, '0.001');
     tester.testTextInput.hide();
     await tester.pumpAndSettle();
-    expect(
-      tester
-          .widget<SwitchListTile>(find.byKey(const Key('quick-order-confirmation-preference')))
-          .value,
-      false,
-    );
     await quickTap(tester, 'quick-order-buy');
     expect(find.byType(AlertDialog), findsNothing);
     expect(orders.submits, 2);
-    await quickTap(tester, 'quick-order-read');
-    await quickTap(tester, 'quick-order-confirmation-preference');
+    await container
+        .read(orderConfirmationProvider(OrderConfirmationKind.market).notifier)
+        .select(true);
+    await tester.pumpAndSettle();
     expect(container.read(orderConfirmationProvider(OrderConfirmationKind.market)).required, true);
     expect(container.read(orderConfirmationProvider(OrderConfirmationKind.limit)).required, true);
     expect(prefs.required, true);

@@ -26,12 +26,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), null);
       await selectWorkspace(tester, chart: true);
-      await tester.ensureVisible(find.text('深度图'));
-      await tester.tap(find.text('深度图'));
-      await tester.pumpAndSettle();
-      expect(find.byType(KChartWidget), findsNothing);
-      await tester.ensureVisible(find.byType(DepthChart));
-      await tester.pumpAndSettle();
+      expect(find.text('深度图'), findsNothing);
       expect(tester.takeException(), null);
       await tester.pumpWidget(const SizedBox());
     });
@@ -57,9 +52,7 @@ void main() {
     final container = setup(tester);
     await launch(tester, container);
     await selectWorkspace(tester, chart: true);
-    await tester.tap(find.byKey(const Key('chart-type')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(CheckedPopupMenuItem<KChartType>, '折线图'));
+    container.read(chartPreferencesProvider.notifier).setChartType(KChartType.line);
     await tester.pumpAndSettle();
     expect(tester.widget<KChartWidget>(find.byType(KChartWidget)).isLine, true);
     await selectWorkspace(tester, chart: false);
@@ -154,43 +147,95 @@ void main() {
     expect(tester.takeException(), null);
     await tester.pumpWidget(const SizedBox());
   });
-  testWidgets('indicator sheet exposes all five indicators and updates fullscreen preferences', (
+  testWidgets('indicator shortcuts carry into fullscreen; header tabs and actions are gone', (
     tester,
   ) async {
     final container = setup(tester);
     await launch(tester, container);
     await selectWorkspace(tester, chart: true);
-    await tester.tap(find.byKey(const Key('chart-indicators')));
-    await tester.pumpAndSettle();
-    for (final value in ['MACD', 'KDJ', 'RSI', 'WR', 'CCI']) {
-      await tester.tap(find.widgetWithText(ChoiceChip, value));
-      await tester.pumpAndSettle();
-      expect(container.read(chartPreferencesProvider).secondary, value);
+    for (final key in ['chart-type', 'chart-indicators']) {
+      expect(find.byKey(Key(key)), findsNothing);
     }
-    await tester.tap(find.widgetWithText(ChoiceChip, 'BOLL'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('chart-volume-switch')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('完成'));
-    await tester.pumpAndSettle();
-    final chart = tester.widget<KChartWidget>(find.byType(KChartWidget));
+    for (final value in ['CCI', 'BOLL', 'VOL']) {
+      await tester.ensureVisible(find.byKey(Key('chart-quick-$value')));
+      await tester.tap(find.byKey(Key('chart-quick-$value')));
+      await tester.pumpAndSettle();
+    }
+    var chart = tester.widget<KChartWidget>(find.byType(KChartWidget));
     expect(chart.secondaryIndicators.map((i) => i.shortName), ['CCI']);
     expect(chart.mainIndicators.map((i) => i.shortName), ['BOLL']);
     expect(chart.volHidden, true);
+    await tester.ensureVisible(find.byKey(const Key('chart-expand')));
+    await tester.pumpAndSettle();
+    final orientations = recordOrientationRequests(tester);
     await tester.tap(find.byKey(const Key('chart-expand')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('trade-settings')), findsNothing);
-    expect(
-      tester.widget<KChartWidget>(find.byType(KChartWidget)).secondaryIndicators.single.shortName,
-      'CCI',
-    );
+    expect(find.byKey(const Key('chart-fullscreen')), findsOneWidget);
+    // The phone is asked to turn landscape; the layout itself is not turned.
+    expect(orientations, [landscapeOnly]);
+    expect(fullscreenTurns(tester), 0);
     tester.view.physicalSize = const Size(844, 390);
     await tester.pumpAndSettle();
+    final canvas = tester.getSize(find.byKey(const Key('chart-canvas-area')).last);
+    expect(canvas.width, greaterThan(canvas.height));
+    expect(find.byKey(const Key('trade-settings')), findsNothing);
+    chart = tester.widget<KChartWidget>(find.byType(KChartWidget).last);
+    expect(chart.secondaryIndicators.single.shortName, 'CCI');
     expect(tester.takeException(), null);
+    await tester.tap(find.byKey(const Key('chart-expand')).last);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('chart-fullscreen')), findsNothing);
+    // Leaving restores the app's normal rotation instead of keeping a lock.
+    expect(orientations, [landscapeOnly, <String>[]]);
+    expect(container.read(chartPreferencesProvider).main, 'BOLL');
+    await tester.pumpWidget(const SizedBox());
+  });
+  testWidgets('phone landscape enters fullscreen; exit stays until portrait, which re-arms it', (
+    tester,
+  ) async {
+    final container = setup(tester);
+    await launch(tester, container);
+    await selectWorkspace(tester, chart: true);
+    tester.view.physicalSize = const Size(844, 390);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('chart-fullscreen')), findsOneWidget);
+    expect(fullscreenTurns(tester), 0);
+    expect(find.byKey(const Key('trade-settings')), findsNothing);
+    await tester.tap(find.byKey(const Key('chart-expand')).last);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('chart-fullscreen')), findsNothing);
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    tester.view.physicalSize = const Size(844, 390);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('chart-fullscreen')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('chart-expand')).last);
+    await tester.pumpAndSettle();
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('chart-fullscreen')), findsNothing);
+    await selectWorkspace(tester, chart: false);
+    tester.view.physicalSize = const Size(844, 390);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('chart-fullscreen')), findsNothing);
+    expect(tester.takeException(), null);
+    await tester.pumpWidget(const SizedBox());
+  });
+  testWidgets('tablet split view that keeps portrait turns the landscape layout instead', (
+    tester,
+  ) async {
+    final container = setup(tester, width: 768);
+    tester.view.physicalSize = const Size(768, 1024);
+    await launch(tester, container);
+    await selectWorkspace(tester, chart: true);
+    await tester.ensureVisible(find.byKey(const Key('chart-expand')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('chart-expand')));
     await tester.pumpAndSettle();
-    expect(container.read(chartPreferencesProvider).main, 'BOLL');
-    expect(find.byKey(const Key('trade-settings')), findsOneWidget);
+    expect(fullscreenTurns(tester), 1);
+    final canvas = tester.getSize(find.byKey(const Key('chart-canvas-area')).last);
+    expect(canvas.width, greaterThan(canvas.height));
+    expect(tester.takeException(), null);
     await tester.pumpWidget(const SizedBox());
   });
   testWidgets('long press shows a bounded crosshair tooltip without scrolling the page', (
@@ -216,19 +261,11 @@ void main() {
     expect(find.byKey(const Key('candle-detail')), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
-  testWidgets('depth and price reuse one workspace and preserve selected indicator', (
-    tester,
-  ) async {
+  testWidgets('chart keeps the selected indicator and opens market details', (tester) async {
     final container = setup(tester);
     await launch(tester, container);
     await selectWorkspace(tester, chart: true);
     await tester.tap(find.byKey(const Key('chart-quick-MACD')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('深度图'));
-    await tester.pumpAndSettle();
-    expect(find.byType(DepthChart), findsOneWidget);
-    expect(find.byType(KChartWidget), findsNothing);
-    await tester.tap(find.text('图表'));
     await tester.pumpAndSettle();
     expect(find.byType(DepthChart), findsNothing);
     expect(

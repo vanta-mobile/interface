@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
+import 'package:vanta/features/portfolio/presentation/live_order_embedded_inputs.dart';
 import 'package:vanta/features/market/domain/market.dart';
 import 'package:vanta/features/trade/application/providers.dart';
 
@@ -77,7 +78,10 @@ void main() {
       await tester.tap(row);
       await tester.pumpAndSettle();
       expect(container.read(orderPriceProvider), '0.0000010203');
-      expect(tester.widget<TextFormField>(find.byType(TextFormField)).initialValue, '0.0000010203');
+      expect(
+        tester.widget<EmbeddedPriceField>(find.byType(EmbeddedPriceField)).fixedLabel,
+        '0.0000010203',
+      );
       expect(
         tester.widget<FilledButton>(find.byKey(const Key('trade-pending-buy'))).onPressed,
         null,

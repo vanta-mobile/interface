@@ -90,21 +90,21 @@ void main() {
       send(spot);
       send(spot, tradeId: 43);
       await flush();
-      expect(container.read(unreadNotificationsProvider), 2);
+      expect(container.read(localJournalUnreadNotificationsProvider), 2);
       expect(container.read(spotAccountReadProvider).stale, true);
       expect(container.read(spotHistoryProvider).stale, true);
       expect(perp.authorizations, 0);
       await container.read(accountChangeProvider.notifier).authorize();
       send(perp, spotEvent: false);
       await flush();
-      expect(container.read(unreadNotificationsProvider), 3);
+      expect(container.read(localJournalUnreadNotificationsProvider), 3);
       expect(spot.authorizations, 1);
       expect(perp.authorizations, 1);
       expect(identity.wallets, 0);
       await container.read(notificationInboxProvider.notifier).markRead();
       send(spot);
       await flush();
-      expect(container.read(unreadNotificationsProvider), 0);
+      expect(container.read(localJournalUnreadNotificationsProvider), 0);
     },
   );
   test(
@@ -165,7 +165,7 @@ void main() {
       expect(container.read(walletNotificationsProvider), isEmpty);
       identity.restored = signingIdentity;
       await container.read(authProvider.notifier).bootstrap();
-      expect(container.read(unreadNotificationsProvider), 1);
+      expect(container.read(localJournalUnreadNotificationsProvider), 1);
       expect(identity.wallets, 0);
     },
   );

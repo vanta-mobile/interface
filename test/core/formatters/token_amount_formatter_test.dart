@@ -157,6 +157,10 @@ void main() {
       expect(TokenAmountFormatter.formatFixed(DecimalValue('188'), decimals: 2), '188.00');
       expect(TokenAmountFormatter.formatFixed(DecimalValue('-0.5'), decimals: 2), '-0.50');
       expect(
+        TokenAmountFormatter.formatFixed(DecimalValue('1140.60'), decimals: 2, grouping: true),
+        '1,140.60',
+      );
+      expect(
         () => TokenAmountFormatter.formatFixed(DecimalValue('1.001'), decimals: 2),
         throwsFormatException,
       );
@@ -219,6 +223,22 @@ void main() {
         r'$12,345,678,901,234,567,890.02',
       );
       expect(TokenAmountFormatter.sumUsd(const []), '—');
+    });
+
+    test('rounds display values to a fraction limit and trims zeros', () {
+      String rounded(String value) =>
+          TokenAmountFormatter.formatRounded(DecimalValue(value), maxFractionDigits: 1);
+      expect(rounded('643289.9013747723'), '643,289.9');
+      expect(rounded('640480.48798292'), '640,480.5');
+      expect(rounded('1000000'), '1,000,000');
+      expect(rounded('8420.04'), '8,420');
+      expect(rounded('0'), '0');
+      // Non-zero values do not collapse to zero.
+      expect(rounded('0.03'), '0.03');
+      expect(
+        () => TokenAmountFormatter.formatRounded(DecimalValue('1'), maxFractionDigits: -1),
+        throwsRangeError,
+      );
     });
   });
 }

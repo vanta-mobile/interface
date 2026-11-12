@@ -1,5 +1,3 @@
-import 'order_recovery_notice.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -66,7 +64,6 @@ class _PositionMarginModeScreenState extends ConsumerState<PositionMarginModeScr
           key: const Key('margin-mode-page'),
           padding: const EdgeInsets.all(16),
           children: [
-            const OrderRecoveryNotice(),
             SelectableText(widget.symbol, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
             Text(l10n.marginModeSettingsScope),

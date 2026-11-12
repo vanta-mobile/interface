@@ -8,7 +8,9 @@ import sys
 from ci_config import configuration
 
 
-PUBLIC_KEYS = {"PRIVY_APP_ID", "PRIVY_CLIENT_ID", "REOWN_PROJECT_ID", "WALLET_LOGIN_ORIGIN"}
+PUBLIC_KEYS = {
+    "PRIVY_APP_ID", "PRIVY_CLIENT_ID", "REOWN_PROJECT_ID", "WALLET_LOGIN_ORIGIN", "VANTA_API_ORIGIN",
+}
 
 
 def check_environment(path):

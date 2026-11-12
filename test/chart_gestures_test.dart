@@ -48,6 +48,10 @@ void main() {
       if (start == 'fullscreen') {
         await tester.tap(find.byKey(const Key('chart-expand')));
         await tester.pumpAndSettle();
+        // Fullscreen is read with the phone turned; the layout is then unrotated.
+        tester.view.physicalSize = const Size(844, 390);
+        await tester.pumpAndSettle();
+        expect(fullscreenTurns(tester), 0);
       }
       ChartPainter painter() => tester
           .widgetList<CustomPaint>(

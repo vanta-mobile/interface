@@ -27,18 +27,9 @@ void main() {
         await selectWorkspace(tester, chart: chart);
         fixture.container.read(symbolProvider.notifier).select('ETHUSDT');
         await tester.pumpAndSettle();
-        for (final destination in ['markets', 'portfolio', 'assistant', 'points']) {
-          if (destination == 'assistant' || destination == 'points') {
-            await tapNavigationControl(tester, 'navigation-explore');
-            await tapNavigationControl(tester, 'explore-$destination');
-          } else {
-            await tapNavigationControl(tester, 'navigation-$destination');
-          }
-          final navigation = find.byKey(
-            Key(
-              'navigation-${destination == 'assistant' || destination == 'points' ? 'explore' : destination}',
-            ),
-          );
+        for (final destination in ['points', 'portfolio', 'assistant']) {
+          await tapNavigationControl(tester, 'navigation-$destination');
+          final navigation = find.byKey(Key('navigation-$destination'));
           expect(tester.getSize(navigation).height, greaterThanOrEqualTo(48));
           final semantics = tester.widget<Semantics>(
             find.ancestor(of: navigation, matching: find.byType(Semantics)).first,
@@ -68,25 +59,6 @@ void main() {
     }
   }
 
-  for (final chart in [true, false]) {
-    testWidgets('Markets selection returns to chosen futures workspace $chart', (tester) async {
-      final fixture = NavigationFixture(tester);
-      await launch(tester, fixture.container);
-      await selectWorkspace(tester, chart: chart);
-      await tapNavigationControl(tester, 'navigation-markets');
-      await tapNavigationControl(tester, 'market-ETHUSDT');
-      expect(fixture.container.read(symbolProvider), 'ETHUSDT');
-      expect(
-        fixture.container.read(futuresWorkspaceTabProvider),
-        chart ? FuturesWorkspaceTab.chart : FuturesWorkspaceTab.trade,
-      );
-      expect(find.byType(QuickOrderPanel), chart ? findsOneWidget : findsNothing);
-      fixture.expectNoAccountMutation();
-      expect(tester.takeException(), null);
-      await fixture.close(tester);
-    });
-  }
-
   testWidgets('fresh session resets navigation; quick input survives same-session return', (
     tester,
   ) async {
@@ -98,11 +70,11 @@ void main() {
     await tester.enterText(quantity, '0.001');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
-    await tapNavigationControl(tester, 'navigation-markets');
+    await tapNavigationControl(tester, 'navigation-assistant');
     await tapNavigationControl(tester, 'navigation-futures');
     expect(quickQuantity(tester), '0.001');
     await selectWorkspace(tester, chart: false);
-    await tapNavigationControl(tester, 'navigation-markets');
+    await tapNavigationControl(tester, 'navigation-assistant');
     fixture.container.read(symbolProvider.notifier).select('ETHUSDT');
     fixture.expectNoAccountMutation();
     await fixture.close(tester);

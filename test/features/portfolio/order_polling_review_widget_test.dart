@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
 import 'package:vanta/core/errors/api_error_details.dart';
 import 'package:vanta/core/theme.dart';
+import 'package:vanta/features/portfolio/application/main_order_allocation_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_refresh_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_pricing_provider.dart';
 import 'package:vanta/features/portfolio/application/live_order_provider.dart';
@@ -272,7 +273,8 @@ void main() {
         expect(tester.widget<TextField>(quantity).controller!.text, '10');
         expect(result(tester, 'cost'), beforeCost);
         expect(result(tester, 'maximum'), beforeMax);
-        expect(find.textContaining('/fapi/v3/commissionRate'), findsWidgets);
+        // Background failures stay silent until a direction click needs them.
+        expect(find.textContaining('/fapi/v3/commissionRate'), findsNothing);
         for (final side in ['buy', 'sell']) {
           expect(tester.widget<FilledButton>(button(side)).onPressed, isNotNull);
           expect(spinner(side), findsNothing);
@@ -335,4 +337,112 @@ void main() {
       }
     });
   }
+  testWidgets('slider drags continuously in whole units; only its end is the maximum', (
+    tester,
+  ) async {
+    try {
+      await open(tester, 'en');
+      final key = find.byKey(const Key('main-order-percentage'));
+      Slider slider() => tester.widget<Slider>(key);
+      String text() => tester.widget<TextField>(quantity).controller!.text;
+      expect(slider().divisions, isNull);
+      await tester.ensureVisible(key);
+      var last = 0;
+      for (final position in [0.37, 0.731]) {
+        slider().onChanged!(position);
+        slider().onChangeEnd!(position);
+        await tester.pumpAndSettle();
+        expect(f.container.read(mainOrderAllocationProvider).percent, isNull);
+        expect(text(), matches(RegExp(r'^[1-9][0-9]*$')));
+        expect(slider().value, inInclusiveRange(position - 0.01, position));
+        last = int.parse(text());
+      }
+      slider().onChanged!(1);
+      slider().onChangeEnd!(1);
+      await tester.pumpAndSettle();
+      expect(f.container.read(mainOrderAllocationProvider).percent, 100);
+      expect(slider().value, 1);
+      expect(double.parse(text()), greaterThan(last));
+      slider().onChanged!(0);
+      slider().onChangeEnd!(0);
+      await tester.pumpAndSettle();
+      expect(f.container.read(mainOrderAllocationProvider).percent, 0);
+      expect(text(), '');
+      expect(f.orders.submits, 0);
+    } finally {
+      f.container.read(mainOrderRefreshProvider.notifier).stop();
+      await tester.pumpWidget(const SizedBox());
+      f.disposeContainer();
+    }
+  });
+  testWidgets('silent polling neither disables nor interrupts the slider', (tester) async {
+    try {
+      await open(tester, 'en');
+      final key = find.byKey(const Key('main-order-percentage'));
+      Slider slider() => tester.widget<Slider>(key);
+      String text() => tester.widget<TextField>(quantity).controller!.text;
+      await tester.ensureVisible(key);
+      final gate = f.orders.readGate = Completer<void>();
+      final polling = f.container
+          .read(mainOrderRefreshProvider.notifier)
+          .refresh('BTCUSDT', reconnectPrices: false, background: true);
+      await flush(tester);
+      expect(f.container.read(mainOrderRefreshProvider).loading, true);
+      expect(slider().onChanged, isNotNull);
+      slider().onChanged!(0.4);
+      await tester.pump();
+      expect(slider().value, 0.4);
+      slider().onChangeEnd!(0.4);
+      await tester.pump();
+      expect(text(), matches(RegExp(r'^[1-9][0-9]*$')));
+      gate.complete();
+      expect(await polling, isTrue);
+      await flush(tester);
+      await tester.pumpAndSettle();
+      expect(slider().onChanged, isNotNull);
+      expect(text(), matches(RegExp(r'^[1-9][0-9]*$')));
+      expect(f.orders.submits, 0);
+    } finally {
+      f.container.read(mainOrderRefreshProvider.notifier).stop();
+      await tester.pumpWidget(const SizedBox());
+      f.disposeContainer();
+    }
+  });
+  testWidgets('a failed direction click reports its cause until the form changes', (tester) async {
+    try {
+      await open(tester, 'en');
+      final gate = f.orders.readGate = Completer<void>();
+      final polling = f.container
+          .read(mainOrderRefreshProvider.notifier)
+          .refresh('BTCUSDT', reconnectPrices: false, background: true);
+      await flush(tester);
+      f.orders.readGate = null;
+      f.orders.readFailure = const AccountReadFailure(
+        'accountDataInvalid',
+        details: ApiErrorDetails(
+          cause: ApiErrorCause.invalidResponse,
+          endpoint: '/fapi/v3/commissionRate',
+        ),
+      );
+      await tester.ensureVisible(button('buy'));
+      await tester.tap(button('buy'));
+      await flush(tester);
+      gate.complete();
+      expect(await polling, isFalse);
+      await flush(tester);
+      await tester.pumpAndSettle();
+      final failure = find.byKey(const Key('main-order-review-failure'));
+      expect(failure, findsOneWidget);
+      expect(tester.widget<Text>(failure).data, contains('/fapi/v3/commissionRate'));
+      expect(find.byType(OrderConfirmationDialog), findsNothing);
+      await tester.enterText(quantity, '11');
+      await tester.pump();
+      expect(failure, findsNothing);
+      expect(f.orders.submits, 0);
+    } finally {
+      f.container.read(mainOrderRefreshProvider.notifier).stop();
+      await tester.pumpWidget(const SizedBox());
+      f.disposeContainer();
+    }
+  });
 }

@@ -19,6 +19,7 @@ import '../../support/aster_open_orders.dart';
 import '../../support/identity_repository.dart';
 import '../../support/trade_fixture.dart';
 import '../../support/trading_agents.dart';
+import '../../support/workspace_navigation.dart';
 
 Future<TradingAgentStore> _activeStore() async {
   final store = MemoryTradingAgentStorage().store(DateTime.now);
@@ -52,6 +53,7 @@ void main() {
     addTearDown(identity.dispose);
     final container = setup(tester, identityRepository: identity, openOrdersRepository: orders);
     await launch(tester, container);
+    await revealFuturesAccountTabs(tester);
     container.read(accountProvider.notifier).connect();
     await tester.pumpAndSettle();
     expect(find.byType(TradeOpenOrdersSection), findsOneWidget);
@@ -75,6 +77,7 @@ void main() {
       language: const Locale('en'),
     );
     await launch(tester, container);
+    await revealFuturesAccountTabs(tester);
     await _awaitAgent(tester, container);
     await tester.pump();
     await tester.pump();
@@ -120,6 +123,7 @@ void main() {
       language: const Locale('en'),
     );
     await launch(tester, container);
+    await revealFuturesAccountTabs(tester);
     await _awaitAgent(tester, container);
     await tester.pumpAndSettle();
     expect(orders.calls, 1);
@@ -136,6 +140,7 @@ void main() {
         orders: [],
       );
     await tester.ensureVisible(_inOrders(find.byKey(const Key('status-retry'))));
+    await tester.pumpAndSettle();
     await tester.tap(_inOrders(find.byKey(const Key('status-retry'))));
     await tester.pumpAndSettle();
     expect(orders.calls, 2);
@@ -176,6 +181,7 @@ void main() {
       language: const Locale('en'),
     );
     await launch(tester, container);
+    await revealFuturesAccountTabs(tester);
     await _awaitAgent(tester, container);
     await tester.pumpAndSettle();
     expect(strategies.queries.single.parameters, {'clientStrategyId': 'vanta-abc-def'});
@@ -207,6 +213,7 @@ void main() {
       );
       tester.view.physicalSize = Size(spec.$1, spec.$2);
       await launch(tester, container);
+      await revealFuturesAccountTabs(tester);
       await container.read(openOrdersReadProvider.notifier).refresh();
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.byKey(const Key('open-order-BTCUSDT-1917641')));

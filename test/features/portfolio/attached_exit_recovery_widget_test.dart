@@ -7,9 +7,8 @@ import 'package:vanta/features/portfolio/domain/live_order_attachment.dart';
 import 'package:vanta/features/portfolio/domain/live_order_trigger.dart';
 import 'package:vanta/features/portfolio/domain/order_query.dart';
 import 'package:vanta/features/portfolio/domain/order_recovery.dart';
-import 'package:vanta/features/portfolio/presentation/order_recovery_screen.dart';
+import 'package:vanta/features/portfolio/application/order_recovery_provider.dart';
 import 'package:vanta/features/portfolio/presentation/strategy_execution_screen.dart';
-import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
 import '../../support/attached_order.dart';
@@ -22,7 +21,7 @@ void main() {
   for (final locale in ['en', 'zh']) {
     for (final legacy in [true, false]) {
       testWidgets(
-        'recovery shows original quantity, execution and lifecycle $locale legacy=$legacy',
+        'internal verification preserves original quantity, execution and lifecycle $locale legacy=$legacy',
         (tester) async {
           final intent = attachedIntent(
             quantity: '0.003',
@@ -69,31 +68,8 @@ void main() {
             recoveryRepository: repository,
           );
           await launch(tester, container);
-          openOrderRecovery(tester.element(find.byType(Navigator).first));
-          await tester.pumpAndSettle();
-          final l10n = AppLocalizations.of(tester.element(find.byType(OrderRecoveryScreen)));
           expect(repository.calls, 0);
-          final scroll = find
-              .descendant(
-                of: find.byKey(const Key('order-recovery-list')),
-                matching: find.byType(Scrollable),
-              )
-              .first;
-          final quantity = find.text(legacy ? '0.001' : '0.003');
-          await tester.scrollUntilVisible(quantity, 160, scrollable: scroll);
-          expect(quantity, findsOneWidget);
-          expect(find.text(legacy ? l10n.market : l10n.attachedOrderManualLimit), findsOneWidget);
-          if (!legacy) expect(find.text('78999.9'), findsOneWidget);
-          final lifecycle = find.text(
-            legacy ? l10n.attachedOrderLegacyLifecycle : l10n.attachedOrderLifecycle,
-          );
-          await tester.scrollUntilVisible(lifecycle, 160, scrollable: scroll);
-          expect(lifecycle, findsOneWidget);
-          final query = find.byKey(ValueKey('recover-${record.key}'));
-          await tester.scrollUntilVisible(query, 160, scrollable: scroll);
-          await Scrollable.ensureVisible(tester.element(query), alignment: .5);
-          await tester.pumpAndSettle();
-          await tester.tap(query);
+          await container.read(orderRecoveryProvider.notifier).query(record.key);
           await tester.pumpAndSettle();
           expect(repository.calls, 1);
           expect(repository.latestQuery!.protectedQuantity, legacy ? '0.001' : '0.003');
@@ -102,11 +78,16 @@ void main() {
             legacy ? AttachedOrderDrivenOn.filled : AttachedOrderDrivenOn.partialOrFilled,
           );
           expect(journal.snapshot.records, isEmpty);
-          final detailsButton = find.byKey(const Key('recovered-strategy-execution'));
-          await tester.scrollUntilVisible(detailsButton, 160, scrollable: scroll);
-          await Scrollable.ensureVisible(tester.element(detailsButton), alignment: .5);
-          await tester.pumpAndSettle();
-          await tester.tap(detailsButton);
+          expect(
+            repository.latestQuery!.draft.attachment!.stopLoss!.execution,
+            legacy ? AttachedExitExecution.market : AttachedExitExecution.manualLimit,
+          );
+          final result = container.read(orderRecoveryProvider).result!;
+          openStrategyExecution(
+            tester.element(find.byType(Navigator).first),
+            record.query,
+            result.strategy!.strategyId,
+          );
           await tester.pumpAndSettle();
           final details = tester.widget<StrategyExecutionScreen>(
             find.byType(StrategyExecutionScreen),

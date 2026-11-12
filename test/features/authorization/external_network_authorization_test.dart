@@ -20,6 +20,7 @@ import '../../support/reown_modal.dart';
 import '../../support/wallet_connection.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   for (final outcome in ['approved', 'rejected', 'cancelled', 'unknown', 'added', 'addRejected']) {
     test(
       'Arbitrum EOA approval $outcome precedes nonce, one signature and financial dispatch',

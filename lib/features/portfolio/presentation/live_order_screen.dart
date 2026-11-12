@@ -1,5 +1,4 @@
 import '../../../core/errors/error_text.dart';
-import 'order_recovery_notice.dart';
 import 'embedded_order_feedback.dart';
 import '../application/main_order_capacity_provider.dart';
 
@@ -189,7 +188,6 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
         : null;
     final failed = widget.embedded && readFailure != null && data == null;
     final children = <Widget>[
-      const OrderRecoveryNotice(showOrders: false),
       if (widget.embedded) ...[
         TradeAccountSettings(
           symbol: symbol,

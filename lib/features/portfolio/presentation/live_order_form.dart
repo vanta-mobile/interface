@@ -1,6 +1,7 @@
 import 'minimum_order_size_hint.dart';
 import 'embedded_time_in_force_selector.dart';
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -39,8 +40,10 @@ import 'live_order_price_inputs.dart';
 import '../domain/live_order_size.dart';
 import '../domain/live_order_entry_mode.dart';
 import 'live_order_size_field.dart';
+import 'main_order_amount_slider.dart';
 import 'main_order_capacity_panel.dart';
 import 'main_order_percentage_control.dart';
+import '../domain/live_order_capacity.dart';
 import '../domain/main_order_capacity_preview.dart';
 import '../domain/main_order_allocation.dart';
 import '../domain/main_order_review_input.dart';
@@ -101,6 +104,10 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
   final triggerPrice = TextEditingController();
   bool buy = true, market = false, reduceOnly = false;
   bool? _refreshingReviewDirection;
+
+  /// Embedded layout: a failure from the last direction click, shown only
+  /// while the form terms it was found for are unchanged.
+  ({AccountReadFailure failure, Object terms})? _reviewFailure;
   bool conditional = false, protect = false;
   bool entireClose = false, trailing = false;
   final trailingRate = TextEditingController(), trailingActivation = TextEditingController();
@@ -295,7 +302,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
         ? controller.prepare(contextData.symbol, draft, pricingContext: _pricingContext)
         : null;
     if (widget.embedded && widget.closingSide == null && !widget.initialConditional) {
-      return _embeddedLayout(contextData: contextData, invalid: invalid, enabled: enabled);
+      return _embeddedLayout(contextData: contextData, enabled: enabled);
     }
     return _fullLayout(
       contextData: contextData,

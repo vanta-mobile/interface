@@ -8,6 +8,7 @@ import '../../funding/presentation/transfer_record_details.dart';
 import '../domain/account_notification.dart';
 
 String notificationTitle(AppLocalizations l10n, AccountNotification event) => switch (event) {
+  BalanceNotification() => l10n.notificationBalanceTitle,
   TransferNotification(:final record) => l10n.notificationTransferTitle(
     record.type.name,
     record.status.name,
@@ -31,6 +32,7 @@ String notificationMarketLabel(AppLocalizations l10n, AccountNotification event)
 };
 
 String notificationStatusLabel(AppLocalizations l10n, AccountNotification event) => switch (event) {
+  BalanceNotification() => l10n.notificationBalanceTitle,
   TransferNotification(:final record) => l10n.assetHistoryStatus(record.status.name),
   MarginNotification() ||
   OrderNotification(risk: OrderRisk.liquidation) => l10n.notificationCritical,
@@ -65,6 +67,7 @@ String notificationSummary(
     amount(average, quote),
   );
   return switch (event) {
+    BalanceNotification(:final balances) => l10n.notificationAssetsChanged(balances.length),
     TransferNotification(:final record) => l10n.notificationTransferSummary(
       '${record.type.name}_${record.status.name}',
       historyAmount(record),

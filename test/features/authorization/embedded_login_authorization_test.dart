@@ -3,146 +3,124 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
+import 'package:vanta/features/auth/application/vanta_api_session_provider.dart';
+import 'package:vanta/features/auth/application/wallet_onboarding_provider.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
+import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
 import 'package:vanta/features/authorization/application/trading_authorization_provider.dart';
 import 'package:vanta/features/authorization/domain/trading_authorization.dart';
-import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 
 import '../../support/identity_repository.dart';
+import '../../support/onboarding.dart';
+import '../../support/trading_agents.dart';
 import '../../support/trading_authorization.dart';
 
-const _identity = AuthIdentity(
-  id: 'user-1',
-  walletAddress: '0x1111111111111111111111111111111111111111',
-  signingAvailable: true,
-);
-
-class _IdentityRepository extends TestIdentityRepository {
+class _CountingSession extends VantaApiSessionController {
+  int signatures = 0;
   @override
-  Future<AuthIdentity> ensureWallet() async {
-    await super.ensureWallet();
-    return _identity;
+  VantaApiSessionState build() => VantaApiSessionState(
+    VantaApiSessionStatus.signedOut,
+    address: ref.watch(authProvider).identity?.walletAddress?.toLowerCase(),
+  );
+  @override
+  Future<void> ensure() async {
+    signatures++;
   }
 }
 
 void main() {
-  late _IdentityRepository identity;
-  late TestTradingAuthorizationRepository repository;
-  late ProviderContainer container;
+  test(
+    'leaving onboarding lets the dispatched grant settle and stops the next signature',
+    () async {
+      final identity = TestIdentityRepository()
+        ..restored = const AuthIdentity(
+          id: 'user',
+          walletAddress: '0x1111111111111111111111111111111111111111',
+          signingAvailable: true,
+        );
+      final repository = TestTradingAuthorizationRepository()..enableGate = Completer<void>();
+      final session = _CountingSession();
+      final container = ProviderContainer(
+        overrides: [
+          identityRepositoryProvider.overrideWithValue(identity),
+          vantaApiSessionProvider.overrideWith(() => session),
+          tradingAgentStoreProvider.overrideWithValue(
+            MemoryTradingAgentStorage().store(DateTime.now),
+          ),
+          tradingAuthorizationRepositoryProvider.overrideWithValue(repository),
+        ],
+      );
+      addTearDown(() async {
+        container.dispose();
+        await identity.dispose();
+      });
+      container.read(authProvider);
+      await Future<void>.delayed(Duration.zero);
+      final owner = container.listen(walletOnboardingProvider, (_, _) {});
+      addTearDown(owner.close);
+      final controller = container.read(walletOnboardingProvider.notifier);
+      final key = onboardingIdentityKey(identity.restored)!;
+      controller.startAutomatic(key);
+      await container.read(tradingAgentProvider.future);
+      await Future<void>.delayed(Duration.zero);
+      expect(repository.enables, 1);
+      controller.stopAutomatic(key);
+      repository.enableGate!.complete();
+      await Future<void>.delayed(Duration.zero);
+      expect(session.signatures, 0);
+      expect(container.read(walletOnboardingProvider).busy, false);
+      expect(
+        container.read(tradingAuthorizationProvider).result,
+        TradingAuthorizationResult.acknowledged,
+      );
+    },
+  );
 
-  setUp(() async {
-    identity = _IdentityRepository();
-    repository = TestTradingAuthorizationRepository();
-    container = ProviderContainer(
-      overrides: [
-        identityRepositoryProvider.overrideWithValue(identity),
-        tradingAuthorizationRepositoryProvider.overrideWithValue(repository),
-      ],
-    );
-    container.read(authProvider);
-    await Future<void>.delayed(Duration.zero);
-  });
-
-  tearDown(() async {
-    container.dispose();
-    await identity.dispose();
-  });
-
-  ProviderSubscription<void> mount([String id = 'user-1']) =>
-      container.listen(embeddedLoginTradingAuthorizationProvider(id), (_, _) {});
-
-  test('waits for wallet creation, signs once, and disables duplicate submission', () async {
-    identity.walletGate = Completer<void>();
-    repository.enableGate = Completer<void>();
-    final owner = mount();
-    final login = container.read(authProvider.notifier).loginWithSocial(SocialLoginProvider.google);
-    await Future<void>.delayed(Duration.zero);
-    expect(identity.wallets, 1);
-    expect(repository.enables, 0);
-    identity.walletGate!.complete();
-    await login;
-    await Future<void>.delayed(Duration.zero);
-    expect(repository.enables, 1);
-    expect(container.read(tradingAuthorizationProvider).busy, true);
-    await container.read(tradingAuthorizationProvider.notifier).enableTrading();
-    identity.events.add(_identity);
-    await Future<void>.delayed(Duration.zero);
-    expect(repository.enables, 1);
-    repository.enableGate!.complete();
-    await Future<void>.delayed(Duration.zero);
-    expect(
-      container.read(tradingAuthorizationProvider).result,
-      TradingAuthorizationResult.acknowledged,
-    );
-    owner.close();
-  });
-
-  test('leaving before wallet creation finishes cancels the automatic intent', () async {
-    identity.walletGate = Completer<void>();
-    final owner = mount();
-    final login = container.read(authProvider.notifier).loginWithSocial(SocialLoginProvider.google);
-    await Future<void>.delayed(Duration.zero);
-    owner.close();
-    await container.pump();
-    identity.walletGate!.complete();
-    await login;
-    await Future<void>.delayed(Duration.zero);
-    expect(repository.enables, 0);
-  });
-
-  test('rejects a different login identity and an external signer', () async {
-    final owner = mount('another-user');
-    await container.read(authProvider.notifier).loginWithSocial(SocialLoginProvider.google);
-    await Future<void>.delayed(Duration.zero);
-    expect(repository.enables, 0);
-    identity.events.add(
-      AuthIdentity(
-        id: 'another-user',
-        walletAddress: _identity.walletAddress,
-        walletKind: WalletKind.external,
-        signingAvailable: true,
-      ),
-    );
-    await Future<void>.delayed(Duration.zero);
-    expect(repository.enables, 0);
-    owner.close();
-  });
-
-  test('signature failure never automatically retries after auth updates', () async {
-    repository.failure = const AccountReadFailure('authWalletRejected');
-    final owner = mount();
-    await container.read(authProvider.notifier).loginWithSocial(SocialLoginProvider.google);
-    await Future<void>.delayed(Duration.zero);
-    expect(repository.enables, 1);
-    expect(container.read(tradingAuthorizationProvider).failure, 'authWalletRejected');
-    identity.events.add(
-      AuthIdentity(
-        id: _identity.id,
-        walletAddress: _identity.walletAddress,
-        signingAvailable: false,
-      ),
-    );
-    identity.events.add(_identity);
-    await Future<void>.delayed(Duration.zero);
-    expect(repository.enables, 1);
-    repository.failure = null;
-    await container.read(tradingAuthorizationProvider.notifier).enableTrading();
-    expect(repository.enables, 2);
-    owner.close();
-  });
-
-  test('unknown outcome survives remounting and prevents automatic replay', () async {
-    repository.result = TradingAuthorizationResult.unknown;
-    final owner = mount();
-    await container.read(authProvider.notifier).loginWithSocial(SocialLoginProvider.google);
-    await Future<void>.delayed(Duration.zero);
-    expect(repository.enables, 1);
-    owner.close();
-    await container.pump();
-    final reopened = mount();
-    await Future<void>.delayed(Duration.zero);
-    expect(repository.enables, 1);
-    expect(container.read(tradingAuthorizationProvider).result, TradingAuthorizationResult.unknown);
-    reopened.close();
-  });
+  for (final kind in WalletKind.values) {
+    test('automatic onboarding runs only for the requested embedded wallet: $kind', () async {
+      final identity = TestIdentityRepository()
+        ..restored = AuthIdentity(
+          id: 'user',
+          walletAddress: '0x1111111111111111111111111111111111111111',
+          signingAvailable: true,
+          walletKind: kind,
+        );
+      final repository = TestTradingAuthorizationRepository()..enableGate = Completer<void>();
+      final container = ProviderContainer(
+        overrides: [
+          identityRepositoryProvider.overrideWithValue(identity),
+          vantaApiSessionProvider.overrideWith(VerifiedVantaSession.new),
+          tradingAgentStoreProvider.overrideWithValue(
+            MemoryTradingAgentStorage().store(DateTime.now),
+          ),
+          tradingAuthorizationRepositoryProvider.overrideWithValue(repository),
+        ],
+      );
+      addTearDown(() async {
+        container.dispose();
+        await identity.dispose();
+      });
+      container.read(authProvider);
+      await Future<void>.delayed(Duration.zero);
+      final subscription = container.listen(walletOnboardingProvider, (_, _) {});
+      addTearDown(subscription.close);
+      final controller = container.read(walletOnboardingProvider.notifier);
+      final key = onboardingIdentityKey(identity.restored)!;
+      controller.startAutomatic(key);
+      await container.read(tradingAgentProvider.future);
+      await Future<void>.delayed(Duration.zero);
+      expect(repository.enables, kind == WalletKind.embedded ? 1 : 0);
+      controller.startAutomatic(key);
+      if (kind == WalletKind.embedded) await controller.continueSigning();
+      expect(repository.enables, kind == WalletKind.embedded ? 1 : 0);
+      repository.enableGate!.complete();
+      await Future<void>.delayed(Duration.zero);
+      if (kind == WalletKind.embedded) {
+        expect(
+          container.read(tradingAuthorizationProvider).result,
+          TradingAuthorizationResult.acknowledged,
+        );
+      }
+    });
+  }
 }

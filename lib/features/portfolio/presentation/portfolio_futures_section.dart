@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/portfolio_loading_provider.dart';
 import '../application/portfolio_overview_provider.dart';
+import '../application/positions_auto_read_provider.dart';
 import 'portfolio_account_feedback.dart';
 import 'portfolio_assets.dart';
 import 'portfolio_loading.dart';
@@ -25,12 +26,16 @@ class _PortfolioFuturesSectionState extends ConsumerState<PortfolioFuturesSectio
     final overview = ref.watch(portfolioOverviewProvider);
     final preview = ref.watch(portfolioPreviewProvider);
     final loading = ref.watch(portfolioLoadingProvider);
+    // Position cards share the Futures tab's reads: positions, account totals
+    // and open orders. Never prompts a wallet.
+    if (!preview) ref.watch(positionsAutoReadProvider);
+    final positions = ref.watch(portfolioPositionsProvider.select((p) => p?.length ?? 0));
     return SliverMainAxisGroup(
       slivers: [
         SliverToBoxAdapter(
           child: PortfolioAssetTabs(
             assets: assets,
-            count: overview.positions.length,
+            count: positions,
             onChanged: (value) => setState(() => assets = value),
           ),
         ),

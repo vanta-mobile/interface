@@ -47,6 +47,25 @@ void main() {
     expect(r.reduceOnly, null);
     expect(r.units, null);
   });
+  test('Aster update timestamp may precede creation without invalidating the page', () {
+    final created = futuresHistoryNow.millisecondsSinceEpoch;
+    final rows = map([
+      {
+        ...futuresOrderRow(),
+        'status': 'FILLED',
+        'executedQty': '0.002',
+        'cumQuote': '160',
+        'updateTime': created - 27,
+      },
+      futuresOrderRow(id: '12346'),
+    ]).records.cast<FuturesOrderRecord>();
+    expect(rows, hasLength(2));
+    final order = rows.singleWhere((r) => r.orderId == '12345');
+    expect(order.time.millisecondsSinceEpoch, created);
+    expect(order.updatedAt.millisecondsSinceEpoch, created - 27);
+    expect(order.status, 'FILLED');
+    expect(order.executed, Decimal.parse('0.002'));
+  });
   test('entire close zero planned quantity can have actual filled quantity', () {
     final r =
         map([

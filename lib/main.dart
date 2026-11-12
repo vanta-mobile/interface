@@ -11,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'features/auth/application/auth_provider.dart';
-import 'features/auth/presentation/wallet_session_host.dart';
+import 'features/auth/presentation/startup_screen.dart';
 import 'features/trade/application/providers.dart';
 import 'features/trade/presentation/trading_screen.dart';
 
@@ -26,6 +26,7 @@ import 'features/portfolio/application/order_recovery_provider.dart';
 import 'features/funding/data/deposit_approval_journal.dart';
 import 'features/funding/application/deposit_approval_provider.dart';
 import 'features/notifications/application/push_messaging_provider.dart';
+import 'features/notifications/application/push_device_provider.dart';
 import 'features/notifications/data/firebase_push_messaging_repository.dart';
 
 Future<void> main() async {
@@ -104,7 +105,7 @@ class VantaApp extends ConsumerWidget {
   const VantaApp({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(pushRegistrationProvider);
+    ref.watch(pushDeviceLifecycleProvider);
     ref.listen(authProvider.select((s) => (s.identity?.id, s.identity?.walletAddress)), (
       previous,
       next,
@@ -118,7 +119,7 @@ class VantaApp extends ConsumerWidget {
       locale: ref.watch(localeProvider),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      home: const WalletSessionHost(child: TradingScreen()),
+      home: const StartupScreen(home: TradingScreen()),
     );
   }
 }

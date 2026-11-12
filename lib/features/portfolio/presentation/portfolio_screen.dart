@@ -12,6 +12,7 @@ import '../../subaccounts/application/account_entries_provider.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
 import '../application/portfolio_overview_provider.dart';
 import '../application/portfolio_account_load_provider.dart';
+import '../application/portfolio_stats_provider.dart';
 import 'portfolio_futures_section.dart';
 import '../application/portfolio_loading_provider.dart';
 import 'portfolio_pnl_screen.dart';
@@ -35,6 +36,7 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
     final active = ref.watch(authProvider.select((s) => !s.needsWalletConnection));
     final preview = ref.watch(portfolioPreviewProvider);
     final overview = ref.watch(portfolioOverviewProvider);
+    final stats = ref.watch(portfolioPerformanceProvider(portfolioStatsPeriod(period)));
     ref.watch(portfolioAccountLoadProvider);
     final valueLoading = ref.watch(portfolioLoadingProvider.select((s) => s.value));
     return Material(
@@ -70,18 +72,18 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
                                   ),
                                 PortfolioAccountValue(
                                   overview: overview,
+                                  stats: stats,
                                   loading: valueLoading,
                                   visible: !hidden,
                                   active: active || preview,
                                   historyExpanded: expanded,
-                                  period: period,
                                   onToggleVisibility: () => setState(() => hidden = !hidden),
                                   onToggleHistory: () => setState(() => expanded = !expanded),
                                 ),
                                 if (expanded && !hidden) ...[
                                   const SizedBox(height: 12),
                                   PortfolioValueHistory(
-                                    overview: overview,
+                                    stats: stats,
                                     period: period,
                                     onPeriod: (value) => setState(() => period = value),
                                     onCollapse: () => setState(() => expanded = false),
@@ -129,9 +131,9 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
                                 ),
                                 const SizedBox(height: 16),
                                 PortfolioPerformanceCard(
-                                  overview: overview,
-                                  preview: preview,
+                                  stats: stats,
                                   hidden: hidden,
+                                  active: active || preview,
                                 ),
                                 const SizedBox(height: 16),
                                 Text(l.portfolioFuturesAssets, style: PortfolioTypography.section),

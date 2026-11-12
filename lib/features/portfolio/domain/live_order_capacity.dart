@@ -3,6 +3,7 @@ import 'package:rational/rational.dart';
 
 import 'live_order_opening_cost.dart';
 import 'live_order_rules.dart';
+import 'percent_share.dart';
 
 /// An anonymous, symbol-level open-interest constraint, not a personal budget.
 /// Null remaining is the documented -1 sentinel, never missing/failed data.
@@ -121,12 +122,24 @@ class LiveOrderSideCapacity {
 
   /// Zero percent is a valid blank-input initial selection at the UI boundary.
   /// Tiny allocations stay zero; never increase them to the exchange minimum.
-  Decimal quantityAt(int percent) {
+  Decimal quantityAt(int percent) =>
+      _floorStep(percentShare(maximum, _checked(percent)).toRational());
+
+  /// Quote budget shown for a percentage stop, with the same whole-unit rule.
+  Decimal quoteAt(int percent) => percentShare(maximumQuote, _checked(percent));
+
+  /// Exact step-floored base quantity a quote budget converts into.
+  Decimal quantityForQuote(Decimal quote) {
+    final quantity = _floorStep(quote.toRational() / conversionPrice.toRational());
+    return quantity > maximum ? maximum : quantity;
+  }
+
+  static int _checked(int percent) {
     if (percent < 0 || percent > 100) throw ArgumentError('Invalid order percentage');
-    final raw =
-        maximum.toRational() *
-        Decimal.fromInt(percent).toRational() /
-        Decimal.fromInt(100).toRational();
+    return percent;
+  }
+
+  Decimal _floorStep(Rational raw) {
     if (raw < rule.minimum.toRational()) return Decimal.zero;
     return rule.minimum +
         Decimal.fromBigInt(((raw - rule.minimum.toRational()) / rule.step.toRational()).floor()) *

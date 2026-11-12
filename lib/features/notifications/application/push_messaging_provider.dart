@@ -22,15 +22,15 @@ class PushRegistrationController extends AsyncNotifier<PushRegistration> {
     }
 
     var active = true;
-    String? latestInstallationId;
+    String? latestToken;
     PushRegistration? registration;
     final subscription = repository.registrationChanges.listen(
-      (installationId) {
-        if (!active || !ref.mounted || installationId.trim().isEmpty) return;
-        latestInstallationId = installationId;
+      (token) {
+        if (!active || !ref.mounted || token.trim().isEmpty) return;
+        latestToken = token;
         final current = registration;
         if (current != null && current.canReceive) {
-          registration = current.withInstallationId(installationId);
+          registration = current.withToken(token);
           state = AsyncData(registration!);
         }
       },
@@ -45,8 +45,8 @@ class PushRegistrationController extends AsyncNotifier<PushRegistration> {
     });
 
     final initial = await repository.register();
-    registration = initial.canReceive && latestInstallationId != null
-        ? initial.withInstallationId(latestInstallationId!)
+    registration = initial.canReceive && latestToken != null
+        ? initial.withToken(latestToken!)
         : initial;
     return registration!;
   }

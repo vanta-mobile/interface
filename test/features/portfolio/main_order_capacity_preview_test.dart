@@ -12,6 +12,24 @@ import '../../support/live_order.dart';
 import '../../support/main_order_capacity.dart';
 
 void main() {
+  test('100 percent shows the exact maximum in either unit', () {
+    for (final unit in OrderSizeUnit.values) {
+      final value = MainOrderCapacityPreview(
+        snapshot: assembledCapacity(),
+        draft: liveDraft(price: '101'),
+        unit: unit,
+        input: '',
+        percent: 100,
+      );
+      expect(value.buy.quantity, value.buy.capacity!.maximum);
+      expect(
+        value.buy.displayInput(unit),
+        unit == OrderSizeUnit.base
+            ? '${value.buy.capacity!.maximum}'
+            : '${value.buy.capacity!.maximumQuote}',
+      );
+    }
+  });
   for (final unit in OrderSizeUnit.values) {
     test('percentage uses independent maxima without round-tripping quote input $unit', () {
       final value = MainOrderCapacityPreview(
@@ -21,11 +39,13 @@ void main() {
         input: 'ignored',
         percent: 20,
       );
-      expect(value.buy.quantity, Decimal.parse('1.801'));
-      expect(value.sell.quantity, Decimal.parse('1.98'));
-      expect(value.buy.displayInput(unit), unit == OrderSizeUnit.base ? '1.801' : '181.901');
-      expect(value.sell.displayInput(unit), unit == OrderSizeUnit.base ? '1.98' : '199.98');
-      expect(value.buy.size!.quantity, '1.801');
+      // Partial stops above one displayed unit are whole numbers in that unit.
+      final base = unit == OrderSizeUnit.base;
+      expect(value.buy.quantity, Decimal.parse(base ? '1' : '1.792'));
+      expect(value.sell.quantity, Decimal.parse(base ? '1' : '1.97'));
+      expect(value.buy.displayInput(unit), base ? '1' : '181');
+      expect(value.sell.displayInput(unit), base ? '1' : '199');
+      expect(value.buy.size!.quantity, base ? '1' : '1.792');
       expect(value.buy.failure, null);
     });
     test(
@@ -74,7 +94,7 @@ void main() {
     expect(value.buy.quantity, Decimal.zero);
     expect(value.buy.cost, null);
     expect(value.buy.size!.quantity, '0');
-    expect(value.buy.failure!.key, 'liveOrderInvalidQuantity');
+    expect(value.buy.failure!.key, 'liveAmountBelowStep');
   });
   MainOrderCapacityPreview preview({
     String input = '',

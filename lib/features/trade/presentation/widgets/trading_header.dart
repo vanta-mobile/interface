@@ -5,10 +5,8 @@ import '../../../../core/strings.dart';
 import '../../../../core/theme.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../auth/application/auth_provider.dart';
-import '../../../notifications/application/notification_provider.dart';
+import '../../../notifications/application/api_notification_provider.dart';
 import '../../../notifications/presentation/notification_screen.dart';
-import '../../../portfolio/application/order_recovery_provider.dart';
-import '../../../portfolio/presentation/order_recovery_screen.dart';
 import '../../application/providers.dart';
 import 'account_sheet.dart';
 
@@ -18,8 +16,7 @@ class TradingHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final recoveryCount = ref.watch(pendingWalletOrdersProvider).length;
-    final unread = ref.watch(unreadNotificationsProvider);
+    final unread = ref.watch(serverUnreadNotificationsProvider);
     final demo = ref.watch(accountProvider.select((a) => a.connected));
     final session = ref.watch(authProvider);
     final identity = session.identity;
@@ -47,16 +44,6 @@ class TradingHeader extends ConsumerWidget {
               isLabelVisible: unread > 0,
               label: Text('$unread'),
               child: const Icon(Icons.notifications_outlined),
-            ),
-          ),
-          IconButton(
-            key: const Key('order-recovery-entry'),
-            tooltip: l10n.orderRecoveryTitle,
-            onPressed: () => openOrderRecovery(context),
-            icon: Badge(
-              isLabelVisible: recoveryCount > 0,
-              label: Text('$recoveryCount'),
-              child: const Icon(Icons.restore),
             ),
           ),
           IconButton(

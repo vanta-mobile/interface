@@ -44,33 +44,6 @@ final tradingAuthorizationProvider =
       TradingAuthorizationController.new,
     );
 
-/// Mounted only for a fresh Privy login, never for a restored session or EOA.
-final embeddedLoginTradingAuthorizationProvider = Provider.autoDispose.family<void, String>((
-  ref,
-  identityId,
-) {
-  var attempted = false;
-  var scheduled = false;
-  bool ready(AuthSession auth) =>
-      !auth.busy &&
-      auth.failure == null &&
-      auth.identity?.id == identityId &&
-      auth.identity?.walletKind == WalletKind.embedded &&
-      auth.identity?.walletAddress != null &&
-      auth.identity!.signingAvailable;
-  ref.listen(authProvider, (_, next) {
-    if (attempted || scheduled || !ready(next)) return;
-    scheduled = true;
-    // Let the login/wallet state and authorization identity guards settle first.
-    scheduleMicrotask(() {
-      scheduled = false;
-      if (!ref.mounted || attempted || !ready(ref.read(authProvider))) return;
-      attempted = true;
-      unawaited(ref.read(tradingAuthorizationProvider.notifier).enableTrading());
-    });
-  }, fireImmediately: true);
-});
-
 class TradingAuthorizationController extends Notifier<TradingAuthorizationState> {
   int _generation = 0;
   Completer<void>? _interrupted;
@@ -106,6 +79,12 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
           result: TradingAuthorizationResult.unknown,
           check: state.check,
         );
+      } else if (agent?.status == TradingAgentStatus.prepared &&
+          state.result == TradingAuthorizationResult.unknown) {
+        // A confirmed prepared journal means the financial write was never
+        // dispatched. Reconnecting after a failed wallet preflight may retry
+        // explicitly; a persisted unknown grant must still never be replayed.
+        state = const TradingAuthorizationState();
       } else if ((agent == null && before != null ||
               agent?.status == TradingAgentStatus.rejected) &&
           (state.result == TradingAuthorizationResult.acknowledged ||

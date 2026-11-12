@@ -1,7 +1,10 @@
 part of 'reown_wallet_connector.dart';
 
-class ReownWalletConnection implements WalletConnection, WalletSigningPreparation {
-  ReownWalletConnection(this.modal, this.address, String chainId) : _chainId = chainId {
+class ReownWalletConnection
+    implements WalletConnection, WalletSigningPreparation, WalletSessionVerification {
+  ReownWalletConnection(this.modal, this.address, String chainId)
+    : _chainId = chainId,
+      _topic = modal.session?.topic {
     modal.addListener(_check);
     _scheduleExpiry();
   }
@@ -18,6 +21,7 @@ class ReownWalletConnection implements WalletConnection, WalletSigningPreparatio
   }
 
   final ReownAppKitModal modal;
+  final String? _topic;
   @override
   final String address;
   @override
@@ -35,12 +39,23 @@ class ReownWalletConnection implements WalletConnection, WalletSigningPreparatio
 
   final _invalidations = StreamController<void>.broadcast(sync: true);
   bool _invalid = false, _closed = false;
+  bool _needsReconnect = false;
+  @override
+  bool get needsReconnect => _needsReconnect;
+
+  void _requireReconnect() {
+    if (_closed || _invalid) return;
+    _needsReconnect = true;
+    _invalidate();
+  }
 
   @override
   bool get isCurrent =>
       !_invalid &&
       !_closed &&
       modal.isConnected &&
+      _topic != null &&
+      modal.session?.topic == _topic &&
       (modal.session?.expiry == null ||
           modal.session!.expiry! > DateTime.now().millisecondsSinceEpoch ~/ 1000) &&
       modal.session?.getAddress('eip155')?.toLowerCase() == address.toLowerCase() &&
@@ -102,10 +117,14 @@ class ReownWalletConnection implements WalletConnection, WalletSigningPreparatio
     if (!owner()) throw const AuthFailure('authWalletChanged');
     _signingOwner = owner;
     try {
-      final result = await modal.request(
-        topic: modal.session!.topic,
+      final result = await requestReownSignature(
+        modal: modal,
         chainId: 'eip155:$chainId',
         request: SessionRequestParams(method: method, params: parameters),
+        isCurrent: owner,
+        invalidations: invalidations,
+        needsReconnect: () => needsReconnect,
+        onUnresponsive: _requireReconnect,
       );
       if (!owner()) throw const AuthFailure('authWalletChanged');
       if (result is! String || !RegExp(r'^0x[a-fA-F0-9]{130}$').hasMatch(result)) {
@@ -175,6 +194,7 @@ class ReownWalletConnection implements WalletConnection, WalletSigningPreparatio
   Future<void> release() async {
     if (_closed) return;
     _closed = true;
+    if (!_invalid) _invalidations.add(null);
     _expiryTimer?.cancel();
     modal.removeListener(_check);
     await _invalidations.close();

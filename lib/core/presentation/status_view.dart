@@ -17,11 +17,12 @@ class StatusFailureView extends StatelessWidget {
     this.message,
     this.onRetry,
     this.retrying = false,
+    this.retryLabel,
     this.retryKey = const Key('status-retry'),
     this.padding = StatusLayout.defaultPadding,
   });
 
-  final String? title, message;
+  final String? title, message, retryLabel;
   final Future<void> Function()? onRetry;
 
   /// Keeps the retry spinner visible while an externally owned request runs.
@@ -39,7 +40,7 @@ class StatusFailureView extends StatelessWidget {
       message: message ?? l10n.statusLoadFailedMessage,
       padding: padding,
       actionKey: retryKey,
-      actionLabel: l10n.statusRetry,
+      actionLabel: retryLabel ?? l10n.statusRetry,
       actionLoading: retrying,
       onAction: onRetry,
     );
@@ -214,22 +215,29 @@ class _StatusActionButtonState extends State<StatusActionButton> {
 
 /// Rounded placeholder bar from the design's loading skeleton component.
 class SkeletonBox extends StatelessWidget {
-  const SkeletonBox({super.key, this.width, required this.height, this.radius = 4});
+  const SkeletonBox({
+    super.key,
+    this.width,
+    required this.height,
+    this.radius = 4,
+    this.color = StatusColors.skeleton,
+  });
   final double? width;
   final double height, radius;
+
+  /// Use [StatusColors.skeletonOnCard] inside a card.
+  final Color color;
 
   const SkeletonBox.circle(double size, {super.key})
     : width = size,
       height = size,
-      radius = size / 2;
+      radius = size / 2,
+      color = StatusColors.skeleton;
 
   @override
   Widget build(BuildContext context) => Container(
     width: width,
     height: height,
-    decoration: BoxDecoration(
-      color: StatusColors.skeleton,
-      borderRadius: BorderRadius.circular(radius),
-    ),
+    decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(radius)),
   );
 }

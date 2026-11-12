@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
+import 'package:vanta/features/auth/domain/auth_session.dart';
 
 import '../../support/identity_repository.dart';
 
@@ -33,6 +34,10 @@ void main() {
         ),
       );
       final l10n = AppLocalizations.of(context);
+      expect(
+        authFailureText(context, const AuthFailure('authWalletSessionUnverified')),
+        l10n.authWalletSessionUnverified,
+      );
       for (final entry in {
         'livePriceBookStale': l10n.livePriceBookStale,
         'livePriceLastStale': l10n.livePriceLastStale,

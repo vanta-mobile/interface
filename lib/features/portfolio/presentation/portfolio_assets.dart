@@ -8,7 +8,14 @@ import '../../trade/application/providers.dart';
 import '../domain/portfolio_overview.dart';
 import 'portfolio_components.dart';
 import 'portfolio_header.dart';
-import 'portfolio_position_card.dart';
+import 'account_position_card.dart';
+import 'portfolio_loading.dart';
+import 'trade_position_card.dart';
+import '../application/portfolio_overview_provider.dart';
+import '../application/position_risk_provider.dart';
+import '../domain/position_card_metrics.dart';
+import '../domain/position_risk.dart';
+import '../../../core/errors/error_text.dart';
 import 'portfolio_asset_row.dart';
 import 'position_risk_screen.dart';
 import '../../../core/presentation/status_view.dart';
@@ -96,21 +103,36 @@ class PortfolioPositionList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
+    final all = ref.watch(portfolioPositionsProvider);
+    final read = ref.watch(positionRiskProvider.select((s) => (s.busy, s.failure)));
     final symbol = hideOther ? ref.watch(symbolProvider) : null;
-    final positions = overview.positions.where((p) => !hideOther || p.symbol == symbol).toList();
-    String rowKey(PortfolioPosition p) => 'portfolio-position-${p.symbol}-${p.side}';
-    final indices = {for (var i = 0; i < positions.length; i++) rowKey(positions[i]): i};
+    final positions = all?.where((p) => !hideOther || p.symbol == symbol).toList();
+    String rowKey(PositionRisk p) => 'portfolio-position-${p.symbol}-${p.side}';
+    final indices = {for (var i = 0; i < (positions?.length ?? 0); i++) rowKey(positions![i]): i};
     return SliverMainAxisGroup(
       slivers: [
         SliverToBoxAdapter(
           child: _PositionControls(
             preview: preview,
-            hasPositions: overview.positions.isNotEmpty,
+            hasPositions: all?.isNotEmpty == true,
             hideOther: hideOther,
             onHideOther: onHideOther,
           ),
         ),
-        if (positions.isEmpty)
+        if (positions == null)
+          SliverToBoxAdapter(
+            child: read.$2 != null && !read.$1
+                ? StatusFailureView(
+                    key: const Key('portfolio-positions-failure'),
+                    message: accountErrorText(context, read.$2!),
+                    onRetry: () => ref.read(positionRiskProvider.notifier).refresh(),
+                  )
+                : const PortfolioListSkeleton(
+                    key: Key('portfolio-positions-loading'),
+                    assets: false,
+                  ),
+          )
+        else if (positions.isEmpty)
           SliverToBoxAdapter(
             child: overview.totalUsd == null
                 ? PortfolioEmpty(l.portfolioNoPositions)
@@ -128,11 +150,34 @@ class PortfolioPositionList extends ConsumerWidget {
               return Padding(
                 key: ValueKey(rowKey(position)),
                 padding: const EdgeInsets.only(bottom: 12),
-                child: PortfolioPositionCard(position: position, preview: preview, hidden: hidden),
+                child: preview
+                    ? _PreviewPositionCard(position: position, hidden: hidden)
+                    : AccountPositionCard(position: position, hidden: hidden),
               );
             },
           ),
       ],
+    );
+  }
+}
+
+/// Labeled preview: the shared card with sample risk and preview-only actions.
+class _PreviewPositionCard extends StatelessWidget {
+  const _PreviewPositionCard({required this.position, required this.hidden});
+  final PositionRisk position;
+  final bool hidden;
+  @override
+  Widget build(BuildContext context) {
+    void notice() => portfolioPreviewNotice(context);
+    return TradePositionCard(
+      position: position,
+      hidden: hidden,
+      marginRatio: Decimal.fromInt(12),
+      exits: const PositionExitOrders(),
+      onTpSl: notice,
+      onEditPartial: notice,
+      onMarket: notice,
+      onLimit: notice,
     );
   }
 }
@@ -204,7 +249,9 @@ class PortfolioAssetList extends StatelessWidget {
     required this.onHideSmall,
     this.sliver = false,
     this.valuationLoading = false,
+    this.header,
   });
+  final Widget? header;
   final PortfolioOverview overview;
   final bool preview, hidden, hideSmall, sliver, valuationLoading;
   final ValueChanged<bool> onHideSmall;
@@ -229,6 +276,7 @@ class PortfolioAssetList extends StatelessWidget {
       return SliverMainAxisGroup(
         slivers: [
           SliverToBoxAdapter(child: filter),
+          if (header != null) SliverToBoxAdapter(child: header),
           if (assets.isEmpty)
             SliverToBoxAdapter(child: _empty(context))
           else
@@ -245,6 +293,7 @@ class PortfolioAssetList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         filter,
+        ?header,
         if (assets.isEmpty) _empty(context),
         for (var i = 0; i < assets.length; i++) ...[if (i > 0) divider, row(i)],
       ],

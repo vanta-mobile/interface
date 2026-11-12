@@ -6,6 +6,7 @@ import '../../../core/theme.dart';
 abstract final class TradeColors {
   static const background = AppColors.authBackground;
   static const card = AppColors.authCard;
+  static const historyTab = Color(0xFF212121);
   static const control = AppColors.authButton;
   static const text = AppColors.authText;
   static const secondary = AppColors.authSecondary;

@@ -66,6 +66,11 @@ void main() {
       expect(events.skip(1).map((e) => e.kind), AccountChangeKind.values);
       expect(events[2].time!.millisecondsSinceEpoch, 100);
       expect(events[1].account?.positions.single.quantity.toString(), '-0.2');
+      expect(events[1].notification, isA<BalanceNotification>());
+      expect(
+        (events[1].notification as BalanceNotification).balances.single.walletBalance.toString(),
+        '102.000000000000000001',
+      );
       expect(events[2].notification, isA<OrderNotification>());
       expect((events[4].notification as MarginNotification).positions.length, 2);
     },

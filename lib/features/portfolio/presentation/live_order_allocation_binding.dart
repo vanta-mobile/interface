@@ -78,6 +78,39 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
     if (text != null && text != _ratioInput.text) _ratioInput.text = text;
   }
 
+  /// The slider's range: the smaller directional maximum in the shown unit,
+  /// from the same preview the direction cards use.
+  MainOrderSliderScale? _sliderScale(LiveOrderDraft entry) {
+    final preview = ref.watch(
+      mainOrderCapacityPreviewProvider((
+        context: widget.data,
+        draft: entry,
+        unit: sizeUnit,
+        input: sizeInput.text,
+        percent: _allocationPercent,
+      )),
+    );
+    final buy = preview?.buy.capacity, sell = preview?.sell.capacity;
+    if (buy == null || sell == null) return null;
+    Decimal shown(LiveOrderSideCapacity side) =>
+        sizeUnit == OrderSizeUnit.base ? side.maximum : side.maximumQuote;
+    final maximum = shown(buy) < shown(sell) ? shown(buy) : shown(sell);
+    if (maximum <= Decimal.zero) return null;
+    return (
+      maximum: maximum,
+      fine: sizeUnit == OrderSizeUnit.base ? buy.rule.step : Decimal.parse('0.01'),
+    );
+  }
+
+  /// An intermediate slider position is a plain amount in the shown unit.
+  void _onSliderAmount(String text) {
+    final field = sizeUnit == OrderSizeUnit.base ? quantity : quoteAmount;
+    if (_allocationPercent == null && field.text == text) return;
+    field.text = text;
+    ref.read(mainOrderAllocationProvider.notifier).manual();
+    _render(() {});
+  }
+
   void _onSizeInput() {
     if (_allocationPercent != null) {
       (sizeUnit == OrderSizeUnit.base ? quantity : quoteAmount).text = _ratioInput.text;

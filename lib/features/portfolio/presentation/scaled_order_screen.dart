@@ -17,7 +17,6 @@ import '../domain/futures_position_mode.dart';
 import '../domain/live_order.dart';
 import '../domain/position_margin_mode.dart';
 import 'live_order_funds_panel.dart';
-import 'order_recovery_notice.dart';
 import 'scaled_order_form.dart';
 import 'scaled_order_status.dart';
 
@@ -68,7 +67,6 @@ class _ScaledOrderScreenState extends ConsumerState<ScaledOrderScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const OrderRecoveryNotice(),
                 SelectableText(widget.symbol, style: Theme.of(context).textTheme.titleLarge),
                 Text(l10n.liveOrderScope),
                 ScaledReadControls(symbol: widget.symbol, locked: locked),

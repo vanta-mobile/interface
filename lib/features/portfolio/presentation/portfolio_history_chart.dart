@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/presentation/status_view.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../domain/portfolio_overview.dart';
@@ -58,15 +59,16 @@ class PortfolioHistoryChart extends StatelessWidget {
     required this.performance,
     this.compact = false,
     this.unavailable,
-    this.period = '7D',
+    this.loading = false,
   });
+
+  /// [PortfolioPerformance.history] already belongs to the selected period.
   final PortfolioPerformance performance;
-  final bool compact;
+  final bool compact, loading;
   final String? unavailable;
-  final String period;
   @override
   Widget build(BuildContext context) {
-    final data = period == '7D' ? performance.history : const <Decimal>[];
+    final data = performance.history;
     final chart = SizedBox(
       height: compact ? 38 : 110,
       width: compact ? 112 : double.infinity,
@@ -77,7 +79,13 @@ class PortfolioHistoryChart extends StatelessWidget {
     return PortfolioCard(
       radius: 14,
       border: false,
-      child: data.isEmpty
+      child: loading && data.isEmpty
+          ? const SkeletonBox(
+              key: Key('portfolio-history-loading'),
+              height: 134,
+              color: StatusColors.skeletonOnCard,
+            )
+          : data.length < 2 || performance.start == null || performance.end == null
           ? PortfolioEmpty(
               unavailable ?? AppLocalizations.of(context).portfolioMissingPnl,
               height: 134,

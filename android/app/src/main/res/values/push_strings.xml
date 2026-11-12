@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="push_channel_risk">Position risk</string>
+    <string name="push_channel_trade">Trading</string>
+    <string name="push_channel_account">Account activity</string>
+    <string name="push_channel_announce">Announcements</string>
+</resources>

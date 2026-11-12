@@ -1,5 +1,3 @@
-import '../application/page_refresh_provider.dart';
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -10,14 +8,12 @@ import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../points/presentation/points_page.dart';
 import '../../assistant/presentation/assistant_page.dart';
-import 'explore_page.dart';
 import '../application/providers.dart';
 import '../application/navigation_provider.dart';
 import '../application/trading_lifecycle_provider.dart';
 import 'futures_workspace.dart';
 import 'widgets/app_bottom_navigation.dart';
 import 'destinations.dart';
-import 'widgets/market_sheet.dart';
 import 'widgets/trading_header.dart';
 import 'widgets/trade_page_header.dart';
 import 'widgets/primitives.dart';
@@ -50,11 +46,13 @@ class _TradingScreenState extends ConsumerState<TradingScreen> with WidgetsBindi
   Widget build(BuildContext context) {
     ref.watch(tradingLifecycleProvider);
     final destination = ref.watch(appDestinationProvider);
-    final portfolio = destination == AppDestination.portfolio;
+    // Portfolio and Points draw their own design headers.
+    final ownHeader =
+        destination == AppDestination.portfolio || destination == AppDestination.points;
     final futures = destination == AppDestination.futures;
     return Scaffold(
-      backgroundColor: portfolio || futures ? AppColors.authBackground : null,
-      appBar: portfolio
+      backgroundColor: ownHeader || futures ? AppColors.authBackground : null,
+      appBar: ownHeader
           ? null
           : PreferredSize(
               preferredSize: Size.fromHeight(futures ? 44 : 60),
@@ -79,15 +77,11 @@ class _TradingScreenState extends ConsumerState<TradingScreen> with WidgetsBindi
               ),
             ),
       body: SafeArea(
-        top: portfolio,
+        top: ownHeader,
         bottom: false,
-        child: switch (ref.watch(appDestinationProvider)) {
+        child: switch (destination) {
           AppDestination.futures => const FuturesWorkspace(),
-          AppDestination.markets => _MarketsPage(
-            onTrade: () => ref.read(appDestinationProvider.notifier).select(AppDestination.futures),
-          ),
           AppDestination.portfolio => const PortfolioPage(),
-          AppDestination.explore => const ExplorePage(),
           AppDestination.assistant => const AssistantPage(),
           AppDestination.points => const PointsPage(),
         },
@@ -127,28 +121,5 @@ class _LanguageSheet extends ConsumerWidget {
         ),
       ],
     ],
-  );
-}
-
-class _MarketsPage extends ConsumerWidget {
-  const _MarketsPage({required this.onTrade});
-  final VoidCallback onTrade;
-  @override
-  Widget build(BuildContext context, WidgetRef ref) => RefreshIndicator(
-    onRefresh: ref.read(pageRefreshProvider).markets,
-    child: ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(20),
-      children: [
-        Text(
-          tr(context, 'markets'),
-          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 20),
-        MarketSheet(embedded: true, onSelect: onTrade),
-        const SizedBox(height: 24),
-        FilledButton(onPressed: onTrade, child: Text(tr(context, 'backToTrade'))),
-      ],
-    ),
   );
 }

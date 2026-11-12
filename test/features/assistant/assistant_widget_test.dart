@@ -222,13 +222,10 @@ void main() {
       await ui.close(tester, h);
     });
   }
-  testWidgets('Explore AI entry opens real page, no request on entry, leaves cleanly', (
-    tester,
-  ) async {
+  testWidgets('Ask AI tab opens real page, no request on entry, leaves cleanly', (tester) async {
     final container = app.setup(tester);
     await app.launch(tester, container);
-    await tapNavigationControl(tester, 'navigation-explore');
-    await tapNavigationControl(tester, 'explore-assistant');
+    await tapNavigationControl(tester, 'navigation-assistant');
     expect(find.byKey(const Key('assistant-page')), findsOneWidget);
     expect(find.byKey(const Key('assistant-connect')), findsOneWidget);
     await tapNavigationControl(tester, 'navigation-futures');

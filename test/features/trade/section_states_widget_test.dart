@@ -66,6 +66,7 @@ void main() {
       language: const Locale('en'),
     );
     await launch(tester, container);
+    await revealFuturesAccountTabs(tester);
     await container.read(openOrdersReadProvider.notifier).refresh();
     await tester.pumpAndSettle();
 
@@ -82,6 +83,7 @@ void main() {
         orders: [],
       );
     await tester.ensureVisible(inOrders(find.byKey(retry)));
+    await tester.pumpAndSettle();
     await tester.tap(inOrders(find.byKey(retry)));
     await tester.pump();
     expect(orders.calls, 2);

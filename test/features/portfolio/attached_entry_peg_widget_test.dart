@@ -13,7 +13,7 @@ import 'package:vanta/features/portfolio/domain/live_order_attachment.dart';
 import 'package:vanta/features/portfolio/domain/order_query.dart';
 import 'package:vanta/features/portfolio/domain/order_recovery.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
-import 'package:vanta/features/portfolio/presentation/order_recovery_screen.dart';
+import 'package:vanta/features/portfolio/application/order_recovery_provider.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
@@ -235,60 +235,37 @@ void main() {
         container.dispose();
       },
     );
-    testWidgets(
-      'durable recovery presents BBO label without a zero price, bilingual large layout $language',
-      (tester) async {
-        final record = OrderRecoveryRecord(
-          query: OrderQuery.capture(attachedIntent(peg: AttachedEntryPeg.counterparty10)),
-          createdAt: liveOrderClock,
-        );
-        final journal = MemoryOrderRecoveryJournal(records: [record]);
-        addTearDown(journal.close);
-        final identity = TestIdentityRepository()..restored = signingIdentity;
-        addTearDown(identity.dispose);
-        final repository = TestOrderRecoveryRepository(journal)..result = verified();
-        final container = setup(
-          tester,
-          width: 320,
-          scale: 1.5,
-          language: Locale(language),
-          identityRepository: identity,
-          recoveryJournal: journal,
-          recoveryRepository: repository,
-        );
-        await launch(tester, container);
-        openOrderRecovery(tester.element(find.byType(Navigator).first));
-        await tester.pumpAndSettle();
-        final l10n = AppLocalizations.of(tester.element(find.byType(OrderRecoveryScreen)));
-        final scroll = find
-            .descendant(
-              of: find.byKey(const Key('order-recovery-list')),
-              matching: find.byType(Scrollable),
-            )
-            .first;
-        await tester.scrollUntilVisible(
-          find.text(l10n.attachedEntryCounterparty(10)),
-          180,
-          scrollable: scroll,
-        );
-        expect(find.text(l10n.attachedEntryCounterparty(10)), findsOneWidget);
-        expect(find.text('0'), findsNothing);
-        expect(repository.calls, 0);
-        final button = find.byKey(ValueKey('recover-${record.key}'));
-        await tester.scrollUntilVisible(button, 180, scrollable: scroll);
-        await tester.ensureVisible(button);
-        await tester.pumpAndSettle();
-        await tester.tap(button);
-        await tester.pumpAndSettle();
-        expect(repository.calls, 1);
-        expect(repository.latestQuery!.draft.attachment!.entryPeg, AttachedEntryPeg.counterparty10);
-        expect(journal.snapshot.records, isEmpty);
-        tester.view.physicalSize = const Size(844, 390);
-        await tester.pumpAndSettle();
-        expect(tester.takeException(), null);
-        await tester.pumpWidget(const SizedBox());
-        container.dispose();
-      },
-    );
+    testWidgets('internal verification preserves durable BBO pricing $language', (tester) async {
+      final record = OrderRecoveryRecord(
+        query: OrderQuery.capture(attachedIntent(peg: AttachedEntryPeg.counterparty10)),
+        createdAt: liveOrderClock,
+      );
+      final journal = MemoryOrderRecoveryJournal(records: [record]);
+      addTearDown(journal.close);
+      final identity = TestIdentityRepository()..restored = signingIdentity;
+      addTearDown(identity.dispose);
+      final repository = TestOrderRecoveryRepository(journal)..result = verified();
+      final container = setup(
+        tester,
+        width: 320,
+        scale: 1.5,
+        language: Locale(language),
+        identityRepository: identity,
+        recoveryJournal: journal,
+        recoveryRepository: repository,
+      );
+      await launch(tester, container);
+      expect(repository.calls, 0);
+      await container.read(orderRecoveryProvider.notifier).query(record.key);
+      await tester.pumpAndSettle();
+      expect(repository.calls, 1);
+      expect(repository.latestQuery!.draft.attachment!.entryPeg, AttachedEntryPeg.counterparty10);
+      expect(journal.snapshot.records, isEmpty);
+      tester.view.physicalSize = const Size(844, 390);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), null);
+      await tester.pumpWidget(const SizedBox());
+      container.dispose();
+    });
   }
 }

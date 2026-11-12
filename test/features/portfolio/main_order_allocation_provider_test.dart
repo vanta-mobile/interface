@@ -72,6 +72,10 @@ void main() {
     expect(capacities.reads, 0);
     controller().selectPercent(20);
     expect(container.read(mainOrderAllocationProvider).percent, 0);
+    // The trade slider may choose a ratio first; a click reads the facts.
+    controller().selectPercent(20, pending: true);
+    expect(container.read(mainOrderAllocationProvider).percent, 20);
+    expect(capacities.reads, 0);
   });
   test('percentage and manual modes switch independently without requests', () async {
     await select();

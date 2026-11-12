@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
+import 'package:vanta/features/portfolio/presentation/live_order_embedded_inputs.dart';
 import 'package:vanta/features/market/domain/market.dart';
 import 'package:vanta/features/trade/application/navigation_provider.dart';
 import 'package:vanta/features/trade/application/page_refresh_provider.dart';
@@ -44,8 +45,12 @@ void main() {
       find.descendant(of: selected, matching: find.byType(IconButton)),
     );
     expect(button.style!.backgroundColor!.resolve({}), TradeColors.card);
-    final field = t.widget<TextFormField>(find.byType(TextFormField));
-    expect(field.initialValue, marketInput(f.container.read(currentMarketProvider)!.price));
+    expect(
+      t.widget<EmbeddedPriceField>(find.byType(EmbeddedPriceField)).fixedLabel,
+      marketInput(f.container.read(currentMarketProvider)!.price),
+    );
+    expect(find.byKey(const Key('live-order-bbo')), findsOneWidget);
+    expect(find.byKey(const Key('live-order-advanced')), findsOneWidget);
     expect(t.widget<ValueRow>(find.byKey(const Key('trade-available'))).value, '—');
     expect(t.widget<TextField>(find.byKey(const Key('trade-pending-quantity'))).enabled, false);
     await selectWorkspace(t, chart: true);
@@ -57,7 +62,7 @@ void main() {
     await selectWorkspace(t, chart: false);
     f.container.read(orderPriceProvider.notifier).setPrice('123.45');
     await t.pumpAndSettle();
-    expect(t.widget<TextFormField>(find.byType(TextFormField)).initialValue, '123.45');
+    expect(t.widget<EmbeddedPriceField>(find.byType(EmbeddedPriceField)).fixedLabel, '123.45');
     f.expectNoAccountMutation();
     expect(t.takeException(), isNull);
     await f.close(t);
@@ -92,6 +97,7 @@ void main() {
         t.view.physicalSize = size;
         await launch(t, f.container);
         await selectWorkspace(t, chart: true);
+        await leaveLandscapeChart(t);
         expect(find.byType(KChartWidget), findsOneWidget);
         expect(find.byKey(const Key('chart-order-book')), findsOneWidget);
         await selectWorkspace(t, chart: false);

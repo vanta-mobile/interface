@@ -15,7 +15,7 @@
 
 ## 本地 make 与 .env
 
-本地使用 `cp -n .env.example .env` 后填写公开 ID，运行 `make env-check`、`make run FLUTTER_ARGS='-d <device-id>'`；构建入口为 `make build-apk-debug`、`make build-apk`、`make build-appbundle`、`make build-ios`（macOS／Xcode，无签名）。可用 `ENV_FILE=.env.staging` 切换配置。所有入口先校验 `.env`，仅允许四个公开应用配置项，不执行文件内容或插值，也不输出配置值。签名环境变量仍由 shell／CI 单独提供，不能放入编译用 `.env`。参考项目的 URL scheme 同步不需要迁入：Vanta 使用固定 `vanta://wallet`。
+本地使用 `cp -n .env.example .env` 后填写公开 ID，运行 `make env-check`、`make run FLUTTER_ARGS='-d <device-id>'`；构建入口为 `make build-apk-debug`、`make build-apk`、`make build-appbundle`、`make build-ios`（macOS／Xcode，无签名）。可用 `ENV_FILE=.env.staging` 切换配置。所有入口先校验 `.env`，仅允许五个公开应用配置项（含可选 `VANTA_API_ORIGIN`），不执行文件内容或插值，也不输出配置值。签名环境变量仍由 shell／CI 单独提供，不能放入编译用 `.env`。参考项目的 URL scheme 同步不需要迁入：Vanta 使用固定 `vanta://wallet`。
 
 本地 `.env` 不自动上传为 GitHub Variables／Secrets；CI 继续从下表的仓库配置读取，不依赖开发机文件。
 
@@ -31,6 +31,7 @@ iOS CI 和 IPA 发布通过共用的 `ios-configuration.yml` 自动检测，无�
 | --- | --- | --- |
 | Variable | `PRIVY_APP_ID`、`PRIVY_CLIENT_ID`、`REOWN_PROJECT_ID` | Release Mobile 必填，当前应用实际使用的公开编译参数 |
 | Variable | `WALLET_LOGIN_ORIGIN` | 可选，默认 `https://app.vanta.exchange`；仅允许无凭据的 HTTPS origin |
+| Variable | `VANTA_API_ORIGIN` | 可选，Vanta API 部署 origin（无路径，路径自带 `/v1`）；为空时资产页统计显示不可用、不发起 SIWE 签名 |
 | Variable | `APPLE_TEAM_ID` | 仅启用 iOS 发布时必填，10 位 Team ID |
 | Variable | `OPENAI_API_BASE` | PR Agent 的模型接口地址，按所用服务配置 |
 | Secret | `OPENAI_KEY` | PR Agent 接口密钥 |

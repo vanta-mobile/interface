@@ -1,5 +1,3 @@
-import 'order_recovery_notice.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,7 +24,6 @@ class BatchCloseControls extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const OrderRecoveryNotice(),
         OutlinedButton.icon(
           key: const Key('batch-close-open'),
           onPressed: enabled ? () => confirmBatchClose(context, ref, symbol: symbol) : null,

@@ -66,7 +66,7 @@ void main() {
     });
   }
 
-  scenario('only displayed public readers auto load; personal data is explicit and unsigned', (
+  scenario('displayed readers auto load public data and the signed-in wallet without signing', (
     tester,
   ) async {
     await tester.pump();
@@ -74,11 +74,17 @@ void main() {
     watchPublic();
     watchWallet();
     await tester.pump();
-    expect(repository.calls, ['current', 'cycles', 'board:total']);
-    expect(container.read(walletPointsProvider).snapshot, null);
-    expect(container.read(walletPointsHistoryProvider).snapshot, null);
-    await readWallet();
-    expect(repository.calls.skip(3), ['wallet:$pointsTestAddress', 'history:$pointsTestAddress']);
+    await tester.pump();
+    expect(
+      repository.calls,
+      unorderedEquals([
+        'current',
+        'cycles',
+        'board:total',
+        'wallet:$pointsTestAddress',
+        'history:$pointsTestAddress',
+      ]),
+    );
     expect(
       container.read(walletPointsProvider).snapshot!.value.total.toString(),
       '123.000000000000000001',
@@ -155,7 +161,7 @@ void main() {
     await controller.refresh();
     expect(container.read(currentPointsCampaignProvider).snapshot, isNot(same(old)));
   });
-  scenario('background discards late personal reads; foreground only reloads public data', (
+  scenario('background discards late personal reads; foreground reloads every reader', (
     tester,
   ) async {
     watchPublic();
@@ -176,8 +182,17 @@ void main() {
     expect(repository.calls.length, before);
     container.read(quoteUpdatesActiveProvider.notifier).setActive(true);
     await tester.pump();
-    expect(repository.calls.skip(before), ['current', 'cycles', 'board:total']);
-    expect(container.read(walletPointsProvider).stale, true);
+    expect(
+      repository.calls.skip(before),
+      unorderedEquals([
+        'current',
+        'cycles',
+        'board:total',
+        'wallet:$pointsTestAddress',
+        'history:$pointsTestAddress',
+      ]),
+    );
+    expect(container.read(walletPointsProvider).stale, false);
   });
   scenario('initial background subscription stays idle until foreground', (tester) async {
     container.read(quoteUpdatesActiveProvider.notifier).setActive(false);
@@ -187,7 +202,16 @@ void main() {
     expect(repository.calls, isEmpty);
     container.read(quoteUpdatesActiveProvider.notifier).setActive(true);
     await tester.pump();
-    expect(repository.calls, ['current', 'cycles', 'board:total']);
+    expect(
+      repository.calls,
+      unorderedEquals([
+        'current',
+        'cycles',
+        'board:total',
+        'wallet:$pointsTestAddress',
+        'history:$pointsTestAddress',
+      ]),
+    );
   });
   for (final next in <AuthIdentity?>[
     null,
@@ -208,24 +232,27 @@ void main() {
     ),
   ]) {
     scenario(
-      'identity/address/kind/logout clears personal scope and ignores old result: ${next?.id}/${next?.walletKind}/${next?.walletAddress}',
+      'identity/address/kind/logout clears personal scope, ignores old result and reads the new wallet: ${next?.id}/${next?.walletKind}/${next?.walletAddress}',
       (tester) async {
         watchWallet();
         await tester.pump();
-        await readWallet();
+        await tester.pump();
         repository.gates['wallet:$pointsTestAddress'] = Completer();
         repository.gates['history:$pointsTestAddress'] = Completer();
+        final previous = container.read(walletPointsProvider).snapshot;
+        expect(previous, isNotNull);
         final pending = readWallet();
         identity.events.add(next);
-        await tester.pump();
         expect(container.read(walletPointsProvider).snapshot, null);
         expect(container.read(walletPointsHistoryProvider).snapshot, null);
         repository.gates.remove('wallet:$pointsTestAddress')!.complete();
         repository.gates.remove('history:$pointsTestAddress')!.complete();
         await pending;
-        expect(container.read(walletPointsProvider).snapshot, null);
-        expect(container.read(walletPointsHistoryProvider).snapshot, null);
-        expect(repository.calls.length, 4);
+        await tester.pump();
+        final address = next?.walletAddress?.toLowerCase();
+        expect(container.read(walletPointsProvider).snapshot?.value.address, address);
+        expect(container.read(walletPointsHistoryProvider).snapshot?.value.address, address);
+        expect(repository.calls.length, next == null ? 4 : 6);
         expect(identity.wallets, 0);
       },
     );
@@ -235,8 +262,9 @@ void main() {
     (tester) async {
       watchWallet();
       await tester.pump();
-      await readWallet();
+      await tester.pump();
       final old = container.read(walletPointsProvider).snapshot;
+      expect(old, isNotNull);
       identity.events.add(
         const AuthIdentity(
           id: 'points-test',

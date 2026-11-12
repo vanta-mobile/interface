@@ -9,6 +9,7 @@ import '../../portfolio/presentation/futures_history_screen.dart';
 import '../../portfolio/presentation/portfolio_components.dart';
 import '../../portfolio/presentation/trade_open_orders_section.dart';
 import '../../portfolio/presentation/live_order_screen.dart';
+import '../../portfolio/presentation/live_order_status.dart';
 import '../../portfolio/presentation/quick_order_panel.dart';
 import '../application/navigation_provider.dart';
 import '../application/page_refresh_provider.dart';
@@ -17,9 +18,12 @@ import 'widgets/candle_chart.dart';
 import 'widgets/market_header.dart';
 import 'widgets/compact_order_book.dart';
 import 'widgets/trade_kline_panel.dart';
-import '../../portfolio/presentation/aster_account_panel.dart';
-import '../../portfolio/presentation/position_risk_screen.dart';
-import 'widgets/primitives.dart';
+import '../../portfolio/presentation/trade_assets_section.dart';
+import '../../portfolio/presentation/trade_positions_section.dart';
+import '../../portfolio/application/open_orders_provider.dart';
+import '../../portfolio/application/open_orders_auto_read_provider.dart';
+import '../../portfolio/application/position_risk_provider.dart';
+import '../../portfolio/application/positions_auto_read_provider.dart';
 import 'trade_theme.dart';
 import '../../portfolio/application/automatic_order_refresh_provider.dart';
 
@@ -28,47 +32,70 @@ class FuturesWorkspace extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(automaticOrderRefreshProvider);
+    ref.watch(positionRiskAutoReadProvider);
+    ref.watch(openOrdersAutoReadProvider);
     final chart = ref.watch(futuresWorkspaceTabProvider) == FuturesWorkspaceTab.chart;
     return LayoutBuilder(
-      builder: (context, constraints) => RefreshIndicator(
-        onRefresh: ref.read(pageRefreshProvider).futures,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          key: const Key('futures-workspace'),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1480),
-              child: Column(
-                children: [
-                  const MarketHeader(),
-                  SizedBox(height: chart ? 20 : 16),
-                  Visibility(
-                    visible: chart,
-                    maintainState: true,
-                    child: const Column(
-                      children: [
-                        CandleChart(flat: true),
-                        SizedBox(height: 20),
-                        ChartOrderBook(),
-                        SizedBox(height: 20),
-                        QuickOrderPanel(),
-                      ],
+      builder: (context, constraints) {
+        final horizontal = constraints.maxWidth > 1512 ? (constraints.maxWidth - 1480) / 2 : 16.0;
+        final page = RefreshIndicator(
+          onRefresh: ref.read(pageRefreshProvider).futures,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            key: const Key('futures-workspace'),
+            slivers: [
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(horizontal, 16, horizontal, 16),
+                sliver: SliverMainAxisGroup(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Column(
+                        children: [
+                          const MarketHeader(),
+                          SizedBox(height: chart ? 20 : 16),
+                          Visibility(
+                            visible: chart,
+                            maintainState: true,
+                            child: const Column(
+                              children: [
+                                CandleChart(flat: true),
+                                SizedBox(height: 20),
+                                ChartOrderBook(),
+                                LiveOrderStatus(compact: true),
+                              ],
+                            ),
+                          ),
+                          Visibility(
+                            visible: !chart,
+                            maintainState: true,
+                            child: const TradeOrderWorkspace(),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
                     ),
-                  ),
-                  Visibility(
-                    visible: !chart,
-                    maintainState: true,
-                    child: const TradeOrderWorkspace(),
-                  ),
-                  const SizedBox(height: 8),
-                  const FuturesAccountSections(),
-                ],
+                    const FuturesAccountSections(),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
-        ),
-      ),
+        );
+        // The chart quick-entry bar stays pinned above the navigation and keyboard.
+        return Column(
+          children: [
+            Expanded(child: page),
+            if (chart)
+              ColoredBox(
+                color: TradeColors.background,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(horizontal, 8, horizontal, 8),
+                  child: const QuickOrderPanel(),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
@@ -126,37 +153,42 @@ class FuturesAccountSections extends ConsumerStatefulWidget {
 
 class _FuturesAccountSectionsState extends ConsumerState<FuturesAccountSections> {
   int tab = 0;
+
+  static String _count(BuildContext context, String label, int? count) =>
+      count == null ? label : AppLocalizations.of(context).tradeTabCount(label, count);
+
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      _AccountTabs(
-        items: [
-          AppLocalizations.of(context).openOrdersTab,
-          tr(context, 'positions'),
-          AppLocalizations.of(context).portfolioAssets,
-        ],
-        selected: tab,
-        onSelect: (value) => setState(() => tab = value),
-      ),
-      const SizedBox(height: 16),
-      switch (tab) {
-        0 => const TradeOpenOrdersSection(),
-        1 => const PositionRiskScreen(embedded: true),
-        _ => const AsterAccountPanel(),
-      },
-      const SizedBox(height: 20),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.asset('assets/branding/mark.webp', width: 12, height: 12),
-          const SizedBox(width: 6),
-          Flexible(child: MutedText(tr(context, 'poweredBy'), size: 8)),
-        ],
-      ),
-      const SizedBox(height: 16),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final openOrders = ref.watch(openOrdersReadProvider.select((s) => s.account?.orders.length));
+    final positions = ref.watch(
+      positionRiskProvider.select((s) => s.account?.positions.where((p) => !p.balanceOnly).length),
+    );
+    return SliverMainAxisGroup(
+      slivers: [
+        SliverToBoxAdapter(
+          child: _AccountTabs(
+            items: [
+              _count(context, AppLocalizations.of(context).openOrdersTab, openOrders),
+              _count(context, tr(context, 'positions'), positions),
+              AppLocalizations.of(context).portfolioAssets,
+            ],
+            selected: tab,
+            onSelect: (value) => setState(() => tab = value),
+          ),
+        ),
+        if (tab == 2)
+          const TradeAssetsSection()
+        else
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: tab == 0 ? const TradeOpenOrdersSection() : const TradePositionsSection(),
+            ),
+          ),
+        const SliverToBoxAdapter(child: SizedBox(height: 16)),
+      ],
+    );
+  }
 }
 
 /// Account tabs from the Futures design with the history shortcut on the right.

@@ -22,13 +22,13 @@ double rightSpace(WidgetTester tester) {
   return chart.mWidth - chart.translateXtoX(chart.getX(chart.datas!.length - 1));
 }
 
+/// Moves along the chart's own x axis, including the turned portrait fullscreen.
 Future<void> pan(WidgetTester tester, double dx) async {
-  final origin = tester.getTopLeft(find.byType(KChartWidget));
-  final chartWidth = tester.getSize(find.byType(KChartWidget)).width;
-  final start = origin + Offset(dx < 0 ? chartWidth * .8 : chartWidth * .2, 90);
-  final gesture = await tester.startGesture(start);
+  final box = tester.renderObject<RenderBox>(find.byType(KChartWidget).last);
+  final x = dx < 0 ? box.size.width * .8 : box.size.width * .2;
+  final gesture = await tester.startGesture(box.localToGlobal(Offset(x, 90)));
   for (var step = 1; step <= 10; step++) {
-    await gesture.moveTo(start + Offset(dx * step / 10, 0));
+    await gesture.moveTo(box.localToGlobal(Offset(x + dx * step / 10, 90)));
     await tester.pump(const Duration(milliseconds: 16));
   }
   await gesture.up();

@@ -1,6 +1,8 @@
 import 'package:decimal/decimal.dart';
 
+import '../domain/aster_account.dart';
 import '../domain/portfolio_overview.dart';
+import '../domain/position_risk.dart';
 
 /// Figma sample values, available only in the explicitly labelled local preview.
 /// This data is never passed to signing, account snapshots or order providers.
@@ -86,27 +88,27 @@ PortfolioOverview portfolioPreview() {
         usd: Decimal.zero,
       ),
     ],
-    positions: [
-      for (final long in [true, false])
-        PortfolioPosition(
-          symbol: 'AAPLUSDT',
-          side: long ? 'LONG' : 'SHORT',
-          long: long,
-          quantity: d('0.04'),
-          base: 'AAPL',
-          quote: 'USDT',
-          marginAsset: 'USDT',
-          entry: d('338.5200'),
-          mark: d('322.0455'),
-          liquidation: d('310.5200'),
-          pnl: d(long ? '0.07' : '-0.07'),
-          margin: d('0.68'),
-          notional: d('13.55'),
-          leverage: 20,
-          isolated: false,
-          returnPercent: d(long ? '10.69' : '-10.69'),
-          riskPercent: d('12'),
-        ),
-    ],
   );
+}
+
+/// Labeled preview positions for the shared position card; never account data.
+List<PositionRisk> portfolioPreviewPositions() {
+  Decimal d(String value) => Decimal.parse(value);
+  return [
+    for (final long in [true, false])
+      PositionRisk(
+        symbol: 'AAPLUSDT',
+        side: long ? 'LONG' : 'SHORT',
+        quantity: d(long ? '0.04' : '-0.04'),
+        entryPrice: d('338.5200'),
+        markPrice: d('322.0455'),
+        liquidationPrice: d('310.5200'),
+        unrealizedProfit: d(long ? '0.07' : '-0.07'),
+        notional: d('13.55'),
+        isolated: false,
+        isolatedWallet: Decimal.zero,
+        leverage: 20,
+        units: const AsterContractUnits(base: 'AAPL', quote: 'USDT', margin: 'USDT'),
+      ),
+  ];
 }

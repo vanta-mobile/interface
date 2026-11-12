@@ -1,5 +1,3 @@
-import 'order_recovery_notice.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -54,7 +52,6 @@ class _PositionLeverageScreenState extends ConsumerState<PositionLeverageScreen>
           key: const Key('leverage-page'),
           padding: const EdgeInsets.all(16),
           children: [
-            const OrderRecoveryNotice(),
             SelectableText(symbol, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
             Text(l10n.leverageSettingsScope),

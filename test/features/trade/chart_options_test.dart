@@ -32,7 +32,7 @@ Future<void> visibleTap(WidgetTester tester, Finder finder) async {
 
 void main() {
   testWidgets(
-    'all intervals and chart styles are selectable; relative axes keep quotes and tooltips raw',
+    'all intervals and stored chart styles render; relative axes keep quotes and tooltips raw',
     (tester) async {
       final container = setup(tester);
       container.read(futuresWorkspaceTabProvider.notifier).select(FuturesWorkspaceTab.chart);
@@ -41,9 +41,6 @@ void main() {
       await visibleTap(tester, find.byKey(const Key('timeframe-option-1M')));
       expect(container.read(intervalProvider), '1M');
       expect(container.read(currentMarketProvider)!.interval, '1M');
-      await visibleTap(tester, find.byKey(const Key('chart-type')));
-      await visibleTap(tester, find.byKey(const Key('chart-type-bars')));
-      expect(tester.widget<KChartWidget>(find.byType(KChartWidget)).chartType, KChartType.bars);
       final price = container.read(currentMarketProvider)!.price;
       for (final type in KChartType.values) {
         container.read(chartPreferencesProvider.notifier).setChartType(type);
@@ -68,49 +65,6 @@ void main() {
         expect(container.read(currentMarketProvider)!.price, price);
         expect(tester.takeException(), null);
       }
-      await tester.pumpWidget(const SizedBox());
-    },
-  );
-
-  testWidgets(
-    'parameter editor validates without losing input, resets, and applies calculation settings',
-    (tester) async {
-      final container = setup(tester);
-      container.read(futuresWorkspaceTabProvider.notifier).select(FuturesWorkspaceTab.chart);
-      await launch(tester, container);
-      container.read(chartPreferencesProvider.notifier).setMain('MA');
-      await tester.pumpAndSettle();
-      await visibleTap(tester, find.byKey(const Key('chart-indicators')));
-      await visibleTap(tester, find.byKey(const Key('chart-parameters')));
-      final first = find.byKey(const Key('parameter-MA-0'));
-      await tester.enterText(first, '0');
-      await visibleTap(tester, find.byKey(const Key('apply-chart-parameters')));
-      expect(find.text('请输入范围内的有效数值'), findsOneWidget);
-      expect(container.read(chartPreferencesProvider).parameters['MA'][0], 5);
-      await visibleTap(tester, find.byKey(const Key('reset-chart-parameters')));
-      expect(tester.widget<TextFormField>(first).controller!.text, '5');
-      await tester.enterText(first, '3');
-      await visibleTap(tester, find.byKey(const Key('apply-chart-parameters')));
-      expect(container.read(chartPreferencesProvider).parameters['MA'], [3, 10, 30, 60]);
-      expect(
-        tester.widget<KChartWidget>(find.byType(KChartWidget)).mainIndicators.single.calcParams,
-        [3, 10, 30, 60],
-      );
-      await visibleTap(tester, find.byKey(const Key('chart-indicators')));
-      await visibleTap(tester, find.byKey(const Key('chart-parameters')));
-      await visibleTap(tester, find.byKey(const Key('parameter-indicator')));
-      await visibleTap(tester, find.text('MACD').last);
-      await tester.enterText(find.byKey(const Key('parameter-MACD-0')), '30');
-      await visibleTap(tester, find.byKey(const Key('apply-chart-parameters')));
-      expect(find.text('快线周期必须小于慢线周期'), findsOneWidget);
-      expect(
-        tester.widget<TextFormField>(find.byKey(const Key('parameter-MACD-0'))).controller!.text,
-        '30',
-      );
-      await tester.enterText(find.byKey(const Key('parameter-MACD-0')), '8');
-      await visibleTap(tester, find.byKey(const Key('apply-chart-parameters')));
-      expect(container.read(chartPreferencesProvider).parameters['MACD'], [8, 26, 9]);
-      expect(tester.takeException(), null);
       await tester.pumpWidget(const SizedBox());
     },
   );

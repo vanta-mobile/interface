@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/presentation/status_view.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../domain/portfolio_overview.dart';
 import '../application/portfolio_overview_provider.dart';
+import '../application/portfolio_stats_provider.dart';
 import '../../auth/application/auth_provider.dart';
 import 'portfolio_history_chart.dart';
 import 'portfolio_components.dart';
 import 'portfolio_calendar.dart';
+import 'portfolio_stats_error.dart';
 
 class PortfolioPnlScreen extends ConsumerStatefulWidget {
   const PortfolioPnlScreen({super.key});
@@ -35,12 +37,17 @@ class _PortfolioPnlScreenState extends ConsumerState<PortfolioPnlScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    // The overview provider supplies a preview only after explicit account selection.
-    final overview = ref.watch(portfolioOverviewProvider);
+    // Statistics providers supply a preview only after explicit account selection.
     final preview = ref.watch(portfolioPreviewProvider);
     final identity = ref.watch(authProvider).identity;
-    final performance = preview ? overview.performance : PortfolioPerformance();
-    final daily = performance.dailyPnl.entries.where(
+    final stats = ref.watch(portfolioPnlPerformanceProvider(portfolioStatsPeriod(_period)));
+    final calendar = _calendar ? ref.watch(portfolioCalendarViewProvider(_month)) : null;
+    final performance = stats.performance;
+    final section = calendar ?? stats;
+    // Without data the section's failure state explains it; a caption is only
+    // for a failed refresh over retained data.
+    final failure = section.block == null ? section.failure : null;
+    final daily = (calendar?.performance.dailyPnl ?? const {}).entries.where(
       (e) => e.key.year == _month.year && e.key.month == _month.month,
     );
     final monthPnl = daily.isEmpty ? null : daily.fold(Decimal.zero, (sum, e) => sum + e.value);
@@ -49,9 +56,11 @@ class _PortfolioPnlScreenState extends ConsumerState<PortfolioPnlScreen> {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final activeDay = _day == null
         ? null
-        : preview
-        ? performance.dailyPnl[DateTime.utc(_month.year, _month.month, _day!)]
-        : null;
+        : calendar?.performance.dailyPnl[DateTime.utc(_month.year, _month.month, _day!)];
+    final range = performance.start == null || performance.end == null
+        ? null
+        : '${DateFormat.MMMd(locale).format(performance.start!)} – '
+              '${DateFormat.MMMd(locale).format(performance.end!)}';
     final monthLabel = DateFormat.yMMMM(Localizations.localeOf(context).toLanguageTag())
         .format(_month);
     final identityLabel = preview
@@ -73,7 +82,8 @@ class _PortfolioPnlScreenState extends ConsumerState<PortfolioPnlScreen> {
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: ref.watch(portfolioRefreshProvider),
+          onRefresh: () =>
+              ref.read(portfolioRefreshProvider)(calendarMonth: _calendar ? _month : null),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final horizontal = constraints.maxWidth > 820
@@ -136,6 +146,14 @@ class _PortfolioPnlScreenState extends ConsumerState<PortfolioPnlScreen> {
                         ),
                     ],
                   ),
+                  if (failure != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      portfolioStatsErrorText(context, failure),
+                      key: const Key('portfolio-stats-error'),
+                      style: PortfolioTypography.caption,
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   if (_calendar) ...[
                     Row(
@@ -170,73 +188,83 @@ class _PortfolioPnlScreenState extends ConsumerState<PortfolioPnlScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    PortfolioMetric(
-                      label: l.portfolioMonthlyPnl,
-                      value: monthPnl == null ? '—' : portfolioUsd(monthPnl, signed: true),
-                      color: portfolioPnlColor(monthPnl),
-                      large: true,
-                    ),
-                    if (activeDay != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          '${DateFormat.MMMd(Localizations.localeOf(context).toLanguageTag()).format(DateTime.utc(_month.year, _month.month, _day!))} · ${portfolioUsd(activeDay, signed: true)}',
-                          style: PortfolioTypography.body,
-                        ),
+                    if (calendar!.block != null)
+                      PortfolioStatsBlocked(calendar, calendarMonth: _month)
+                    else ...[
+                      PortfolioMetric(
+                        label: l.portfolioMonthlyPnl,
+                        value: monthPnl == null ? '—' : portfolioUsd(monthPnl, signed: true),
+                        color: portfolioPnlColor(monthPnl),
+                        large: true,
+                        loading: calendar.loading,
                       ),
-                    const SizedBox(height: 12),
-                    PortfolioCalendar(
-                      month: _month,
-                      performance: performance,
-                      preview: preview,
-                      selectedDay: _day,
-                      onSelectedDay: (day) => setState(() => _day = day),
-                    ),
+                      if (activeDay != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            '${DateFormat.MMMd(Localizations.localeOf(context).toLanguageTag()).format(DateTime.utc(_month.year, _month.month, _day!))} · ${portfolioUsd(activeDay, signed: true)}',
+                            style: PortfolioTypography.body,
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                      PortfolioCalendar(
+                        month: _month,
+                        performance: calendar.performance,
+                        selectedDay: _day,
+                        onSelectedDay: (day) => setState(() => _day = day),
+                      ),
+                    ],
                   ] else ...[
                     Text(l.portfolioPnlPeriod(_period), style: PortfolioTypography.caption),
                     const SizedBox(height: 8),
-                    PortfolioMetric(
-                      label: '',
-                      value: _period == '7D' && preview
-                          ? portfolioUsd(performance.pnl, signed: true)
-                          : '—',
-                      note: _period == '7D' && preview
-                          ? '${portfolioPercent(performance.returnPercent)} · ${DateFormat.MMMd(locale).format(performance.start!)} – ${DateFormat.MMMd(locale).format(performance.end!)}'
-                          : null,
-                      large: true,
-                    ),
-                    const SizedBox(height: 12),
-                    PortfolioHistoryChart(
-                      performance: performance,
-                      period: _period,
-                      unavailable: l.portfolioMissingPnl,
-                    ),
+                    if (stats.block != null)
+                      PortfolioStatsBlocked(stats)
+                    else ...[
+                      PortfolioMetric(
+                        label: '',
+                        value: portfolioUsd(performance.pnl, signed: true),
+                        note: performance.pnl == null
+                            ? null
+                            : [portfolioPercent(performance.returnPercent), ?range].join(' · '),
+                        color: portfolioPnlColor(performance.pnl),
+                        large: true,
+                        loading: stats.loading,
+                      ),
+                      const SizedBox(height: 12),
+                      PortfolioHistoryChart(
+                        performance: performance,
+                        loading: stats.historyLoading,
+                        unavailable: l.portfolioMissingPnl,
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     PortfolioPeriods(
                       selected: _period,
                       onChanged: (period) => setState(() => _period = period),
                     ),
-                    const SizedBox(height: 12),
-                    PortfolioCard(
-                      radius: 14,
-                      border: false,
-                      child: Column(
-                        children: [
-                          _Detail(
-                            label: l.portfolioVolumePeriod(_period),
-                            value: _period == '7D' && preview
-                                ? portfolioUsd(performance.volume)
-                                : '—',
-                          ),
-                          const SizedBox(height: 12),
-                          _Detail(
-                            label: l.portfolioTodayPnl,
-                            value: preview ? portfolioUsd(performance.todayPnl, signed: true) : '—',
-                            color: portfolioPnlColor(preview ? performance.todayPnl : null),
-                          ),
-                        ],
+                    if (stats.block == null) ...[
+                      const SizedBox(height: 12),
+                      PortfolioCard(
+                        radius: 14,
+                        border: false,
+                        child: Column(
+                          children: [
+                            _Detail(
+                              label: l.portfolioVolumePeriod(_period),
+                              value: portfolioUsd(performance.volume),
+                              loading: stats.loading,
+                            ),
+                            const SizedBox(height: 12),
+                            _Detail(
+                              label: l.portfolioTodayPnl,
+                              value: portfolioUsd(performance.todayPnl, signed: true),
+                              color: portfolioPnlColor(performance.todayPnl),
+                              loading: stats.loading,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                     const SizedBox(height: 12),
                     Text(l.portfolioPnlNote, style: PortfolioTypography.caption),
                   ],
@@ -251,14 +279,23 @@ class _PortfolioPnlScreenState extends ConsumerState<PortfolioPnlScreen> {
 }
 
 class _Detail extends StatelessWidget {
-  const _Detail({required this.label, required this.value, this.color = PortfolioColors.text});
+  const _Detail({
+    required this.label,
+    required this.value,
+    this.color = PortfolioColors.text,
+    this.loading = false,
+  });
   final String label, value;
   final Color color;
+  final bool loading;
   @override
   Widget build(BuildContext context) => Row(
     children: [
       Expanded(child: Text(label, style: PortfolioTypography.caption)),
-      Text(value, style: PortfolioTypography.caption.copyWith(color: color)),
+      if (loading)
+        const SkeletonBox(width: 64, height: 14, color: StatusColors.skeletonOnCard)
+      else
+        Text(value, style: PortfolioTypography.caption.copyWith(color: color)),
     ],
   );
 }

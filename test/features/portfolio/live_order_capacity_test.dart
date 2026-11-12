@@ -27,8 +27,14 @@ void main() {
     expect(sell.maximum, Decimal.parse('5.263'));
     expect(buy.maximumQuote, Decimal.parse('523.71'));
     expect(sell.maximumQuote, Decimal.parse('473.67'));
-    expect(buy.quantityAt(20), Decimal.parse('0.952'));
-    expect(sell.quantityAt(20), Decimal.parse('1.052'));
+    // Partial stops of a maximum above one unit are whole; 100% stays exact.
+    expect(buy.quantityAt(20), Decimal.zero);
+    expect(buy.quantityAt(50), Decimal.fromInt(2));
+    expect(sell.quantityAt(25), Decimal.one);
+    expect(buy.quantityAt(100), buy.maximum);
+    expect(buy.quoteAt(20), Decimal.fromInt(104));
+    expect(buy.quantityForQuote(buy.quoteAt(20)), Decimal.parse('0.945'));
+    expect(buy.quoteAt(100), buy.maximumQuote);
   });
   test('one-way position and pending orders change each directional maximum', () {
     final data = orderCapacity(
@@ -167,8 +173,8 @@ void main() {
       step: Decimal.parse('0.00001'),
     );
     for (final (buy, maximum, expected) in [
-      (true, '539.1600', '107.83200'),
-      (false, '574.1346', '114.82692'),
+      (true, '539.1600', '107'),
+      (false, '574.1346', '114'),
     ]) {
       final side = LiveOrderSideCapacity(
         buy: buy,

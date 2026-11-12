@@ -1,3 +1,9 @@
+import 'package:vanta/features/auth/application/vanta_api_session_provider.dart';
+import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
+
+import '../../support/onboarding.dart';
+import '../../support/trading_agents.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -10,7 +16,6 @@ import 'package:vanta/core/theme.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/auth/data/privy_configuration.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
-import 'package:vanta/features/auth/presentation/auth_controls.dart';
 import 'package:vanta/features/auth/presentation/login_screen.dart';
 import 'package:vanta/features/authorization/application/trading_authorization_provider.dart';
 import 'package:vanta/features/authorization/data/trading_authorization_repository.dart';
@@ -100,6 +105,10 @@ void main() {
         );
         final container = ProviderContainer(
           overrides: [
+            vantaApiSessionProvider.overrideWith(VerifiedVantaSession.new),
+            tradingAgentStoreProvider.overrideWithValue(
+              MemoryTradingAgentStorage().store(DateTime.now),
+            ),
             identityRepositoryProvider.overrideWithValue(identity),
             privyConfigurationProvider.overrideWithValue(
               const PrivyConfiguration(appId: 'fixture', clientId: 'fixture'),
@@ -167,9 +176,8 @@ void main() {
         expect(requests.length, 2);
         await tester.pump();
         final enable = find.byKey(const Key('enable-trading-sign'));
-        expect(tester.widget<AuthActionButton>(enable).busy, true);
-        await tester.tap(enable);
-        await tester.pump();
+        expect(find.byKey(const Key('startup-splash')), findsOneWidget);
+        expect(enable, findsNothing);
         expect(identity.signatures, 1);
         submit.complete();
         await tester.pumpAndSettle();

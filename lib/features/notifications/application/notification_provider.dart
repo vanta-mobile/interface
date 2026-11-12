@@ -1,4 +1,5 @@
 import '../../../core/network/network_providers.dart';
+import 'api_notification_provider.dart';
 import '../../portfolio/data/aster_spot_service.dart';
 import '../../portfolio/domain/spot_history.dart';
 
@@ -51,7 +52,11 @@ final walletNotificationsProvider = Provider<List<InboxEntry>>((ref) {
   return List.unmodifiable(entries.where((e) => e.address == address));
 });
 
-final unreadNotificationsProvider = Provider<int>(
+/// The public badge always comes from the backend, independent of filters.
+final unreadNotificationsProvider = serverUnreadNotificationsProvider;
+
+/// Internal journal diagnostics; never use this count for the notification UI.
+final localJournalUnreadNotificationsProvider = Provider<int>(
   (ref) => ref.watch(walletNotificationsProvider).where((e) => !e.read).length,
 );
 

@@ -40,6 +40,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authWalletRejected => '你已拒绝钱包请求，可以重新尝试。';
 
   @override
+  String get authWalletOpenFailed => '无法打开已连接的钱包，请确认钱包应用已安装后重试。';
+
+  @override
   String get authWalletUnavailable => '钱包连接失败，请检查钱包应用和网络后重试。';
 
   @override
@@ -61,6 +64,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authWalletChanged => '钱包账户或网络已变更，请重新连接并登录。';
+
+  @override
+  String get authWalletSessionUnverified => '无法确认钱包会话。请打开钱包检查连接，并重新连接后继续。';
+
+  @override
+  String get authWalletResponseTimeout => '钱包未返回签名结果，请打开钱包确认请求后重试。';
 
   @override
   String get authWalletReconnect => '请先连接钱包后再继续。';
@@ -2330,36 +2339,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quickOrderInvalid => '快捷开仓须为普通市价单，不能包含仅减仓、固定价格或附加条件。';
 
   @override
-  String get quickOrderTitle => 'K 线快捷市价开仓';
-
-  @override
   String get quickOrderHint =>
       '使用真实钱包下单，数量独立于交易表单。单向模式下可能减少或反转现有仓位。报价仅供参考，不保证成交价；此订单不附加止盈止损或用户滑点设置。';
-
-  @override
-  String get quickOrderRead => '读取钱包及数量换算数据';
-
-  @override
-  String get quickOrderReadHint =>
-      '需显式签署四次账户／配置读取，再分别签署费率、风险档位与挂单三次读取以支持比例换算。读取不会下单；首份价格快照 30 秒后过期。';
-
-  @override
-  String get quickOrderIndependent => '输入基础资产数量，或选择比例。初始为空，不默认选择比例。';
-
-  @override
-  String quickOrderPercentSelected(int percent) {
-    return '已选择 $percent%；买卖参考数量分别显示。手输数量可替换比例。';
-  }
-
-  @override
-  String get quickOrderBuyQuantity => '参考买入数量';
-
-  @override
-  String get quickOrderSellQuantity => '参考卖出数量';
-
-  @override
-  String get quickOrderSizingHint =>
-      '比例使用读取时的 USDT 可用保证金、杠杆、吃单费率、风险档位、现有仓位、同向待成交量及买卖报价，按市价数量步长向下取整。不计释放保证金或其他资产抵押价值。这是参考预算，不是保证可成交的最大数量；价格、挂单及交易所限制可能变化。';
 
   @override
   String get quickOrderSizingFailure => '比例换算不可用。请重试读取；账户上下文有效时仍可手输数量，已有输入会保留。';
@@ -2381,6 +2362,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get quickOrderPreferenceFailure => '无法读取或保存确认偏好。保留最后已保存的设置，成功保存设置前仍需确认订单。';
+
+  @override
+  String get quickOrderMarketBuy => '市价买入';
+
+  @override
+  String get quickOrderMarketSell => '市价卖出';
+
+  @override
+  String quickOrderAmount(String asset) {
+    return '数量($asset)';
+  }
+
+  @override
+  String quickOrderAvailable(String value) {
+    return '可用 $value';
+  }
 
   @override
   String get quickOrderChartTab => 'K 线页面';
@@ -3753,22 +3750,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assetYieldRefresh => '刷新收益数据';
 
   @override
-  String get pointsProgramTitle => 'Vanta Genesis 积分';
-
-  @override
   String get pointsProgramScope =>
       '数据来自 Vanta 的 Orderly 经纪商积分计划，与 Aster 余额及交易独立；本应用不会默认 Aster 交易符合该计划的奖励条件。';
-
-  @override
-  String get pointsCurrentCampaign => '当前积分周期';
 
   @override
   String pointsCycleNumber(String number) {
     return '积分周期 $number';
   }
-
-  @override
-  String get pointsCycleId => '周期编号';
 
   @override
   String get pointsStatus => '公布状态';
@@ -3789,9 +3777,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pointsStatusUnknown => '未知';
 
   @override
-  String get pointsPool => '积分总池';
-
-  @override
   String get pointsPeriodStart => '开始时间（UTC）';
 
   @override
@@ -3802,9 +3787,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pointsNoCurrentCampaign => '当前未公布积分周期。';
-
-  @override
-  String get pointsNotRead => '尚无已核实数据。';
 
   @override
   String get pointsLoading => '正在读取积分数据…';
@@ -3845,21 +3827,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pointsLeaderboard => '积分排行榜';
 
   @override
-  String get pointsLeaderboardScope => '每页展示 20 条，最多展示返回列表的前 100 条，保留服务端报告的排名；未出现在榜单中不代表完整排名或零积分。';
-
-  @override
-  String get pointsSelectLeaderboard => '排行榜范围';
-
-  @override
-  String get pointsTotalLeaderboard => '累计积分榜';
-
-  @override
   String get pointsNoRankings => '该范围未返回排名记录。';
-
-  @override
-  String pointsReturnedCount(int count) {
-    return '展示 $count 条返回的排名记录。';
-  }
 
   @override
   String get pointsPrevious => '上一页';
@@ -3878,22 +3846,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get pointsScore => '积分';
-
-  @override
-  String get pointsSettled => '已结算积分';
-
-  @override
-  String get pointsSpecial => '特殊积分';
-
-  @override
-  String get pointsCurrentScore => '当前周期积分（服务端报告）';
-
-  @override
   String get pointsMyPoints => '我的积分';
-
-  @override
-  String get pointsWalletReadScope => '点击查询会向 Vanta 积分服务发送此钱包地址，无需签名，也不会切换当前 Aster 账户。';
 
   @override
   String get pointsConnectWallet => '连接钱包';
@@ -3903,21 +3856,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pointsRankUnknown => '未出现在返回的累计榜单中，完整排名未知。';
-
-  @override
-  String get pointsReadWallet => '查询我的积分与历史';
-
-  @override
-  String get pointsSelectHistory => '历史积分范围';
-
-  @override
-  String get pointsAccumulated => '累计积分';
-
-  @override
-  String get pointsSelectedHistory => '所选范围积分';
-
-  @override
-  String get pointsNoHistory => '未返回周期积分历史；缺失周期的积分保持未知。';
 
   @override
   String get eventsTitle => '交易活动';
@@ -5388,9 +5326,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scaledCountRange => '2–110';
 
   @override
-  String get assistantNavigation => 'AI';
-
-  @override
   String get orderTypeTrailing => '追踪止损';
 
   @override
@@ -5631,7 +5566,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get enableTradingEmbeddedSignHint => '签名以继续。';
 
   @override
-  String get enableTradingScope => '授权设备签名密钥在 30 天内查询账户、进行免 Gas 现货及合约交易，无需反复打开钱包。不授予提现权限。';
+  String get enableTradingScope => '此签名将开启去中心化通道，实现免 Gas 的即时交易。签名以继续。';
 
   @override
   String get enableTradingReturnHint => '如果没有打开钱包，请检查钱包 App，完成签名后返回这里。';
@@ -5653,9 +5588,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tradeNavigation => '交易';
-
-  @override
-  String get exploreNavigation => '探索';
 
   @override
   String get portfolioTotalValue => '总资产';
@@ -5736,6 +5668,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioMonthlyPnl => '月度盈亏';
 
   @override
+  String get vantaApiSignInAction => '签名';
+
+  @override
+  String get vantaApiSignInTitle => '需要钱包签名授权';
+
+  @override
+  String get vantaApiSigningTitle => '等待钱包签名';
+
+  @override
+  String get vantaApiSigning => '请在钱包中确认签名请求，以查看账户统计。';
+
+  @override
+  String get vantaApiUnavailableTitle => '暂不支持账户统计';
+
+  @override
+  String get vantaApiUnavailable => '当前版本未提供账户统计。';
+
+  @override
+  String get vantaApiSignIn => '需要在钱包中签名授权后才能查看账户统计。';
+
+  @override
+  String get vantaApiFailed => '账户统计加载失败，请重试。';
+
+  @override
+  String get vantaApiInvalid => '统计服务返回的数据无效，请重试。';
+
+  @override
+  String get vantaApiRateLimited => '统计请求暂时受限，请稍后重试。';
+
+  @override
   String get portfolioCalendarNote => '每日盈亏采用 UTC · 金额单位为 USD';
 
   @override
@@ -5786,6 +5748,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String portfolioPositionsCount(int count) {
     return '持仓($count)';
   }
+
+  @override
+  String get portfolioAvailableForOrder => '可用于下单';
 
   @override
   String portfolioAvailable(String amount) {
@@ -6801,4 +6766,502 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openOrdersLinkedOrder => '关联订单：';
+
+  @override
+  String tradeTabCount(String label, int count) {
+    return '$label ($count)';
+  }
+
+  @override
+  String get positionsCloseAll => '全部平仓';
+
+  @override
+  String get positionsEntry => '开仓价';
+
+  @override
+  String get positionsMargin => '保证金';
+
+  @override
+  String get positionsEntireTpsl => '全部止盈止损';
+
+  @override
+  String positionsPartialTpsl(int count) {
+    return '部分止盈止损 ($count)';
+  }
+
+  @override
+  String positionsMarginRatio(String value) {
+    return '保证金率 $value';
+  }
+
+  @override
+  String get positionsMarginRatioTip => '保证金率 = 维持保证金 / 保证金余额。保证金率达到 100% 时，您的仓位将被强平。';
+
+  @override
+  String get positionsLiquidationProgress => '标记价格向强平价格移动的进度';
+
+  @override
+  String get positionsEditPartialTpsl => '编辑部分止盈止损';
+
+  @override
+  String get positionTpslTitle => '设置止盈止损';
+
+  @override
+  String get positionTpslPartial => '部分平仓';
+
+  @override
+  String get positionTpslEntire => '全部平仓';
+
+  @override
+  String get positionTpslTakeProfit => '止盈触发单';
+
+  @override
+  String get positionTpslStopLoss => '止损';
+
+  @override
+  String get positionTpslLimitOrder => '限价单';
+
+  @override
+  String get positionTpslTriggerPrice => '触发价格';
+
+  @override
+  String get positionTpslMarkPrice => '标记价格';
+
+  @override
+  String get positionTpslSwitchBasis => '切换止盈触发价格类型';
+
+  @override
+  String get positionTpslPnl => '盈亏';
+
+  @override
+  String get positionTpslRoi => '回报率';
+
+  @override
+  String get positionTpslAmount => '数量';
+
+  @override
+  String get positionTpslPositionAmount => '仓位数量';
+
+  @override
+  String get positionTpslEntryPrice => '开仓价格';
+
+  @override
+  String get positionTpslLiqPrice => '预估强平价格';
+
+  @override
+  String get positionTpslEstimatedPnl => '预估盈亏';
+
+  @override
+  String get positionTpslConfirm => '确认';
+
+  @override
+  String get positionTpslTriggerTitle => '选择触发类型';
+
+  @override
+  String get positionTpslSettingsTitle => '止盈止损设置';
+
+  @override
+  String get positionTpslPnlHint => '按预估盈亏设置';
+
+  @override
+  String get positionTpslRoiHint => '按预估回报率设置';
+
+  @override
+  String get positionTpslMissingTrigger => '请输入止盈或止损触发价格。';
+
+  @override
+  String get positionTpslMissingAmount => '请输入不超过仓位的数量。';
+
+  @override
+  String get positionTpslMissingLimit => '请输入限价或选择 BBO。';
+
+  @override
+  String get positionTpslPlaced => '止盈止损委托已提交。';
+
+  @override
+  String positionTpslLegFailed(String leg, String reason) {
+    return '$leg未提交：$reason';
+  }
+
+  @override
+  String positionTpslLegUnknown(String leg) {
+    return '$leg结果未确认。请先检查当前委托再重试，系统不会自动重新提交。';
+  }
+
+  @override
+  String positionTpslNotSubmitted(String leg) {
+    return '$leg未提交。';
+  }
+
+  @override
+  String positionTpslLegPlaced(String leg) {
+    return '$leg已提交。';
+  }
+
+  @override
+  String get positionOrderPrice => '委托价格';
+
+  @override
+  String get positionCloseTitle => '平仓';
+
+  @override
+  String get positionCloseMarket => '市价平仓';
+
+  @override
+  String get positionCloseLimit => '限价平仓';
+
+  @override
+  String get positionClosePositionAmount => '仓位价值';
+
+  @override
+  String get positionClosePlaced => '平仓委托已提交。';
+
+  @override
+  String get positionCloseLimitPlaced => '限价平仓委托已提交，成交后仓位才会减少。';
+
+  @override
+  String positionCloseFailed(String reason) {
+    return '平仓委托未提交：$reason';
+  }
+
+  @override
+  String get positionCloseUnknown => '平仓委托结果未确认。请先检查当前委托和仓位再重试，系统不会自动重新提交。';
+
+  @override
+  String positionClosePriceUnavailable(String type) {
+    return '$type暂不可用，请稍后再试或手动输入价格。';
+  }
+
+  @override
+  String get tradingHistoryTitle => '历史记录';
+
+  @override
+  String tradingHistoryTab(String tab) {
+    String _temp0 = intl.Intl.selectLogic(tab, {
+      'orders': '订单',
+      'positions': '仓位',
+      'trades': '成交',
+      'transactions': '资金流水',
+      'other': '历史记录',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get tradingHistoryHideCanceled => '隐藏已取消';
+
+  @override
+  String get tradingHistoryDetails => '详情';
+
+  @override
+  String get tradingHistoryOpenLong => '开多';
+
+  @override
+  String get tradingHistoryCloseLong => '平多';
+
+  @override
+  String get tradingHistoryOpenShort => '开空';
+
+  @override
+  String get tradingHistoryCloseShort => '平空';
+
+  @override
+  String get tradingHistoryFilledPrice => '成交价 / 委托价';
+
+  @override
+  String tradingHistoryFilledValue(String unit) {
+    return '已成交 / 委托总额（$unit）';
+  }
+
+  @override
+  String get tradingHistoryFilledTotal => '已成交 / 委托总额';
+
+  @override
+  String get tradingHistoryRealizedPnl => '已实现盈亏';
+
+  @override
+  String get tradingHistoryRealizedProfit => '已实现盈亏';
+
+  @override
+  String get tradingHistoryRoe => '已实现收益率';
+
+  @override
+  String get tradingHistoryClosed => '已平仓';
+
+  @override
+  String get tradingHistoryOpen => '持仓中';
+
+  @override
+  String get tradingHistoryLiquidated => '已强平';
+
+  @override
+  String get tradingHistoryClosePrice => '平均平仓价';
+
+  @override
+  String get tradingHistoryMaxHeld => '最大持仓';
+
+  @override
+  String get tradingHistoryOpenedAt => '开仓时间';
+
+  @override
+  String get tradingHistoryClosedAt => '平仓时间';
+
+  @override
+  String tradingHistoryPerp(String symbol) {
+    return '$symbol 永续';
+  }
+
+  @override
+  String get tradingHistoryExecutedAmount => '成交数量';
+
+  @override
+  String get tradingHistoryExecutedValue => '成交金额';
+
+  @override
+  String get tradingHistoryRole => '角色';
+
+  @override
+  String get tradingHistoryOrderDetails => '订单详情';
+
+  @override
+  String get tradingHistoryTradeDetails => '成交详情';
+
+  @override
+  String get tradingHistoryRelatedOrders => '关联订单';
+
+  @override
+  String get tradingHistoryRelatedUnavailable => '历史服务暂未提供仓位与订单的关联信息，无法读取该仓位的关联订单。';
+
+  @override
+  String get tradingHistoryNoTrades => '暂无成交';
+
+  @override
+  String get tradingHistoryFillsUnavailable => '当前可用历史记录中未找到已报告的成交。';
+
+  @override
+  String get tradingHistoryIncompleteFills => '部分已报告成交暂不可用。完整匹配所有成交后才能显示手续费和盈亏合计。';
+
+  @override
+  String get tradingHistoryPartial => '历史数据不完整，部分记录可能暂不可用。';
+
+  @override
+  String get tradingHistoryFee => '手续费';
+
+  @override
+  String get tradingHistoryUpdatedAt => '更新时间';
+
+  @override
+  String get tradingHistoryDate => '时间';
+
+  @override
+  String get tradingHistoryQuantity => '数量';
+
+  @override
+  String get walletVerificationTitle => '验证钱包';
+
+  @override
+  String get walletVerificationStep => '3';
+
+  @override
+  String get walletVerificationHint => '签署消息以验证钱包并查看资产。';
+
+  @override
+  String get walletSignatureCompleted => '钱包签名已完成。';
+
+  @override
+  String get walletOnboardingHint => '连接钱包、开启交易并验证钱包后即可继续。如果没有弹出请求，请检查钱包 App。';
+
+  @override
+  String get notificationDetailsTitle => '通知详情';
+
+  @override
+  String notificationCopyField(String field) {
+    return '复制$field';
+  }
+
+  @override
+  String get notificationRiskOrderDetails => '风险订单详情';
+
+  @override
+  String get notificationRiskType => '风险类型';
+
+  @override
+  String get notificationRiskLiquidation => '强平';
+
+  @override
+  String get notificationPositionSide => '持仓方向';
+
+  @override
+  String get notificationExecutionType => '执行类型';
+
+  @override
+  String get notificationWorkingType => '触发价格类型';
+
+  @override
+  String get notificationExecutionDetails => '成交详情';
+
+  @override
+  String get notificationAffectedPositions => '受影响仓位';
+
+  @override
+  String get notificationBalanceTitle => '合约余额更新';
+
+  @override
+  String get notificationBalanceChanges => '余额变化';
+
+  @override
+  String get notificationWalletBalance => '钱包余额';
+
+  @override
+  String notificationAssetsChanged(int count) {
+    return '$count 种资产发生变化';
+  }
+
+  @override
+  String tradingHistoryRecentDays(int days) {
+    return 'Aster 最近 $days 天的记录';
+  }
+
+  @override
+  String get navigationFutures => '合约';
+
+  @override
+  String get navigationSpots => '现货';
+
+  @override
+  String get navigationSoon => '即将';
+
+  @override
+  String get navigationAskAi => '问 AI';
+
+  @override
+  String get pointsRules => '积分规则';
+
+  @override
+  String get pointsTotalRank => '总排名';
+
+  @override
+  String get pointsYourRank => '我的排名';
+
+  @override
+  String get pointsNotRanked => '暂无排名';
+
+  @override
+  String get pointsOutsideTop => '未进入前 100';
+
+  @override
+  String get pointsViewTotalLeaderboard => '查看总排行榜';
+
+  @override
+  String get pointsByPeriod => '周期积分';
+
+  @override
+  String get pointsSelectPeriod => '选择周期';
+
+  @override
+  String get pointsPeriodPool => '积分池';
+
+  @override
+  String get pointsUnit => '积分';
+
+  @override
+  String get pointsHistoricalPeriod => '历史周期';
+
+  @override
+  String pointsPeriodDates(String start, String end) {
+    return '$start – $end · UTC+0';
+  }
+
+  @override
+  String get pointsDatePattern => 'M月d日 HH:mm';
+
+  @override
+  String get pointsPeriodLeaderboard => '周期排行榜';
+
+  @override
+  String get pointsNoRankingsTitle => '暂无排名';
+
+  @override
+  String get pointsNoRankingsMessage => '本周期暂无积分记录。';
+
+  @override
+  String get pointsRankAddress => '排名 / 地址';
+
+  @override
+  String get pointsTotalCurrent => '累计 / 当前积分';
+
+  @override
+  String pointsCurrentValue(String value) {
+    return '当前 $value';
+  }
+
+  @override
+  String pointsYouSuffix(String address) {
+    return '$address · 我';
+  }
+
+  @override
+  String get pointsTotalLeaderboardTitle => '总排行榜';
+
+  @override
+  String pointsPageIndicator(int page, int pages) {
+    return '$page / $pages';
+  }
+
+  @override
+  String get pointsLoginHint => '登录查看我的积分';
+
+  @override
+  String get pointsRefreshMine => '刷新我的积分';
+
+  @override
+  String get pointsAddressCopied => '地址已复制';
+
+  @override
+  String get pointsNoPeriods => '暂未发布积分周期。';
+
+  @override
+  String notificationApiType(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'fill': '订单成交',
+      'trigger': '条件单触发',
+      'order': '订单更新',
+      'liquidation': '强平通知',
+      'marginCall': '追加保证金提醒',
+      'funding': '资金费通知',
+      'transfer': '充提通知',
+      'announce': '公告',
+      'maintenance': '维护通知',
+      'other': '通知',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String notificationApiField(String field) {
+    String _temp0 = intl.Intl.selectLogic(field, {
+      'price': '价格',
+      'quantity': '数量',
+      'fee': '手续费',
+      'markPrice': '标记价格',
+      'liquidationPrice': '强平价格',
+      'distance': '距离',
+      'amount': '金额',
+      'symbol': '交易对',
+      'market': '市场',
+      'side': '方向',
+      'orderId': '订单号',
+      'transactionHash': '交易哈希',
+      'createdAt': '时间',
+      'eventKey': '通知编号',
+      'other': '详情',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pushVisibilityTitle => '后台通知暂不可用';
+
+  @override
+  String get pushNoServerVisibility => '通知服务目前无法获取此账户的动态，关闭 App 后将无法接收账户通知。';
 }

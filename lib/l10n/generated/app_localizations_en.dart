@@ -41,6 +41,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authWalletRejected => 'Wallet request rejected. You can retry.';
 
   @override
+  String get authWalletOpenFailed =>
+      'Could not open your connected wallet. Check that the wallet app is installed, then retry.';
+
+  @override
   String get authWalletUnavailable =>
       'Wallet connection failed. Check your wallet app and network, then retry.';
 
@@ -66,6 +70,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authWalletChanged => 'Wallet account or network changed. Reconnect and sign in again.';
+
+  @override
+  String get authWalletSessionUnverified =>
+      'The wallet session could not be confirmed. Open your wallet, check its connection, and reconnect to continue.';
+
+  @override
+  String get authWalletResponseTimeout =>
+      'The wallet did not return a signature. Open your wallet to check the request, then retry.';
 
   @override
   String get authWalletReconnect => 'Connect your wallet to continue.';
@@ -2482,37 +2494,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Quick entry must be an ordinary market order without reduction, a fixed price or attached conditions.';
 
   @override
-  String get quickOrderTitle => 'Chart quick market entry';
-
-  @override
   String get quickOrderHint =>
       'Real wallet orders. Quantity is independent of the trade form. One-way orders can reduce or reverse an existing position. Quotes are references, not execution prices. This order has no attached TP/SL or user slippage setting.';
-
-  @override
-  String get quickOrderRead => 'Read wallet and sizing inputs';
-
-  @override
-  String get quickOrderReadHint =>
-      'Explicitly sign four account/configuration reads, then three separate fee, risk-bracket and open-order reads for percentage sizing. No order is sent by reading. The first price snapshot expires in 30 seconds.';
-
-  @override
-  String get quickOrderIndependent =>
-      'Enter base-asset quantity, or choose a percentage. Starts empty; no default percentage.';
-
-  @override
-  String quickOrderPercentSelected(int percent) {
-    return '$percent% selected. Buy and sell reference quantities are shown separately. Type a quantity to replace the percentage.';
-  }
-
-  @override
-  String get quickOrderBuyQuantity => 'Reference buy quantity';
-
-  @override
-  String get quickOrderSellQuantity => 'Reference sell quantity';
-
-  @override
-  String get quickOrderSizingHint =>
-      'Percentages use the read-time USDT available margin, leverage, taker fee, risk brackets, existing positions, same-direction pending quantity and bid/ask, rounded down to the market step. They exclude released margin and other-asset collateral. These are reference budgets, not guaranteed maximum quantities; prices, orders and exchange limits can change.';
 
   @override
   String get quickOrderSizingFailure =>
@@ -2536,6 +2519,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get quickOrderPreferenceFailure =>
       'Confirmation preference could not be read or saved. The last saved choice is retained; orders require review until a choice is saved successfully.';
+
+  @override
+  String get quickOrderMarketBuy => 'Market Buy';
+
+  @override
+  String get quickOrderMarketSell => 'Market Sell';
+
+  @override
+  String quickOrderAmount(String asset) {
+    return 'Amount($asset)';
+  }
+
+  @override
+  String quickOrderAvailable(String value) {
+    return 'Avbl. $value';
+  }
 
   @override
   String get quickOrderChartTab => 'Chart view';
@@ -4032,22 +4031,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assetYieldRefresh => 'Refresh yield data';
 
   @override
-  String get pointsProgramTitle => 'Vanta Genesis Points';
-
-  @override
   String get pointsProgramScope =>
       'Published by Vanta for its Orderly broker program. These points are separate from Aster balances and trading; this app does not assume Aster activity qualifies for rewards.';
-
-  @override
-  String get pointsCurrentCampaign => 'Current campaign';
 
   @override
   String pointsCycleNumber(String number) {
     return 'Campaign $number';
   }
-
-  @override
-  String get pointsCycleId => 'Campaign ID';
 
   @override
   String get pointsStatus => 'Published status';
@@ -4068,9 +4058,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pointsStatusUnknown => 'Unknown';
 
   @override
-  String get pointsPool => 'Total points pool';
-
-  @override
   String get pointsPeriodStart => 'Start (UTC)';
 
   @override
@@ -4081,9 +4068,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pointsNoCurrentCampaign => 'No current campaign is published.';
-
-  @override
-  String get pointsNotRead => 'No verified data yet.';
 
   @override
   String get pointsLoading => 'Reading points data…';
@@ -4129,22 +4113,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pointsLeaderboard => 'Points leaderboard';
 
   @override
-  String get pointsLeaderboardScope =>
-      'Shows up to the first 100 returned rows, 20 per page, with ranks reported by the service. Absence does not establish a full ranking or zero points.';
-
-  @override
-  String get pointsSelectLeaderboard => 'Leaderboard scope';
-
-  @override
-  String get pointsTotalLeaderboard => 'Total points leaderboard';
-
-  @override
   String get pointsNoRankings => 'No ranking rows were returned for this scope.';
-
-  @override
-  String pointsReturnedCount(int count) {
-    return 'Showing $count returned ranking row(s).';
-  }
 
   @override
   String get pointsPrevious => 'Previous';
@@ -4163,23 +4132,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get pointsScore => 'Points';
-
-  @override
-  String get pointsSettled => 'Settled points';
-
-  @override
-  String get pointsSpecial => 'Special points';
-
-  @override
-  String get pointsCurrentScore => 'Current campaign points (as reported)';
-
-  @override
   String get pointsMyPoints => 'My points';
-
-  @override
-  String get pointsWalletReadScope =>
-      'Read sends this wallet address to Vanta’s points service without a signature. It does not change the active Aster account.';
 
   @override
   String get pointsConnectWallet => 'Connect wallet';
@@ -4190,22 +4143,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pointsRankUnknown =>
       'Not found in the returned total leaderboard; the full rank is unknown.';
-
-  @override
-  String get pointsReadWallet => 'Read my points and history';
-
-  @override
-  String get pointsSelectHistory => 'Past points scope';
-
-  @override
-  String get pointsAccumulated => 'Accumulated points';
-
-  @override
-  String get pointsSelectedHistory => 'Points in selected scope';
-
-  @override
-  String get pointsNoHistory =>
-      'No campaign history was returned. Missing campaign rows remain unknown.';
 
   @override
   String get eventsTitle => 'Trading events';
@@ -5816,9 +5753,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scaledCountRange => '2–110';
 
   @override
-  String get assistantNavigation => 'AI';
-
-  @override
   String get orderTypeTrailing => 'Trailing Stop';
 
   @override
@@ -6075,7 +6009,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get enableTradingScope =>
-      'Authorize a device signing key for 30 days of account queries and gas-free Spot and Futures trading without repeated wallet prompts. Withdrawal access is not granted.';
+      'This signature opens a decentralized channel for gas-free, instant trading. Sign to continue.';
 
   @override
   String get enableTradingReturnHint =>
@@ -6099,9 +6033,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tradeNavigation => 'Trade';
-
-  @override
-  String get exploreNavigation => 'Explore';
 
   @override
   String get portfolioTotalValue => 'Total value';
@@ -6184,6 +6115,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioMonthlyPnl => 'Monthly PnL';
 
   @override
+  String get vantaApiSignInAction => 'Sign';
+
+  @override
+  String get vantaApiSignInTitle => 'Wallet signature required';
+
+  @override
+  String get vantaApiSigningTitle => 'Waiting for wallet signature';
+
+  @override
+  String get vantaApiSigning =>
+      'Confirm the signature request in your wallet to view account statistics.';
+
+  @override
+  String get vantaApiUnavailableTitle => 'Statistics unavailable';
+
+  @override
+  String get vantaApiUnavailable => 'Account statistics are not available in this build.';
+
+  @override
+  String get vantaApiSignIn => 'Sign the message in your wallet to view account statistics.';
+
+  @override
+  String get vantaApiFailed => 'Account statistics could not be loaded. Please retry.';
+
+  @override
+  String get vantaApiInvalid => 'The statistics service returned invalid data. Please retry.';
+
+  @override
+  String get vantaApiRateLimited =>
+      'Statistics requests are temporarily limited. Try again shortly.';
+
+  @override
   String get portfolioCalendarNote => 'Daily PnL uses UTC · Values in USD';
 
   @override
@@ -6234,6 +6197,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String portfolioPositionsCount(int count) {
     return 'Positions($count)';
   }
+
+  @override
+  String get portfolioAvailableForOrder => 'Available for order';
 
   @override
   String portfolioAvailable(String amount) {
@@ -7303,4 +7269,517 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openOrdersLinkedOrder => 'Linked order:';
+
+  @override
+  String tradeTabCount(String label, int count) {
+    return '$label ($count)';
+  }
+
+  @override
+  String get positionsCloseAll => 'Close all';
+
+  @override
+  String get positionsEntry => 'Entry';
+
+  @override
+  String get positionsMargin => 'Margin';
+
+  @override
+  String get positionsEntireTpsl => 'Entire TP/SL';
+
+  @override
+  String positionsPartialTpsl(int count) {
+    return 'Partial TP/SL ($count)';
+  }
+
+  @override
+  String positionsMarginRatio(String value) {
+    return 'Margin ratio $value';
+  }
+
+  @override
+  String get positionsMarginRatioTip =>
+      'Margin ratio = Maintenance margin / Margin balance. Your positions will be liquidated once the margin ratio reaches 100%.';
+
+  @override
+  String get positionsLiquidationProgress => 'Mark price progress toward liquidation price';
+
+  @override
+  String get positionsEditPartialTpsl => 'Edit partial TP/SL';
+
+  @override
+  String get positionTpslTitle => 'Set TP/SL';
+
+  @override
+  String get positionTpslPartial => 'Partial close';
+
+  @override
+  String get positionTpslEntire => 'Entire close';
+
+  @override
+  String get positionTpslTakeProfit => 'Take Profit with Trigger Order';
+
+  @override
+  String get positionTpslStopLoss => 'Stop Loss';
+
+  @override
+  String get positionTpslLimitOrder => 'Limit order';
+
+  @override
+  String get positionTpslTriggerPrice => 'Trigger price';
+
+  @override
+  String get positionTpslMarkPrice => 'Mark price';
+
+  @override
+  String get positionTpslSwitchBasis => 'Switch take-profit trigger price type';
+
+  @override
+  String get positionTpslPnl => 'Pnl';
+
+  @override
+  String get positionTpslRoi => 'ROI';
+
+  @override
+  String get positionTpslAmount => 'Amount';
+
+  @override
+  String get positionTpslPositionAmount => 'Position Amount';
+
+  @override
+  String get positionTpslEntryPrice => 'Entry price';
+
+  @override
+  String get positionTpslLiqPrice => 'Est. liq. price';
+
+  @override
+  String get positionTpslEstimatedPnl => 'Estimated Pnl';
+
+  @override
+  String get positionTpslConfirm => 'Confirm';
+
+  @override
+  String get positionTpslTriggerTitle => 'Select Trigger Type';
+
+  @override
+  String get positionTpslSettingsTitle => 'TP/SL Settings';
+
+  @override
+  String get positionTpslPnlHint => 'Set by Estimated P&L';
+
+  @override
+  String get positionTpslRoiHint => 'Set by Estimated ROI';
+
+  @override
+  String get positionTpslMissingTrigger => 'Enter a take-profit or stop-loss trigger price.';
+
+  @override
+  String get positionTpslMissingAmount => 'Enter an amount no larger than the position.';
+
+  @override
+  String get positionTpslMissingLimit => 'Enter a limit price or choose BBO.';
+
+  @override
+  String get positionTpslPlaced => 'TP/SL orders placed.';
+
+  @override
+  String positionTpslLegFailed(String leg, String reason) {
+    return '$leg not placed: $reason';
+  }
+
+  @override
+  String positionTpslLegUnknown(String leg) {
+    return '$leg result is unconfirmed. Check open orders before trying again; it is never resubmitted automatically.';
+  }
+
+  @override
+  String positionTpslNotSubmitted(String leg) {
+    return '$leg was not submitted.';
+  }
+
+  @override
+  String positionTpslLegPlaced(String leg) {
+    return '$leg placed.';
+  }
+
+  @override
+  String get positionOrderPrice => 'Order price';
+
+  @override
+  String get positionCloseTitle => 'Close Position';
+
+  @override
+  String get positionCloseMarket => 'Market close';
+
+  @override
+  String get positionCloseLimit => 'Limit close';
+
+  @override
+  String get positionClosePositionAmount => 'Position amount';
+
+  @override
+  String get positionClosePlaced => 'Close order placed.';
+
+  @override
+  String get positionCloseLimitPlaced =>
+      'Limit close order placed. The position reduces only after it fills.';
+
+  @override
+  String positionCloseFailed(String reason) {
+    return 'Close order not placed: $reason';
+  }
+
+  @override
+  String get positionCloseUnknown =>
+      'The close order result is unconfirmed. Check open orders and positions before trying again; it is never resubmitted automatically.';
+
+  @override
+  String positionClosePriceUnavailable(String type) {
+    return 'The $type price is not available yet. Try again shortly or enter a price.';
+  }
+
+  @override
+  String get tradingHistoryTitle => 'History';
+
+  @override
+  String tradingHistoryTab(String tab) {
+    String _temp0 = intl.Intl.selectLogic(tab, {
+      'orders': 'Order',
+      'positions': 'Position',
+      'trades': 'Trade',
+      'transactions': 'Transaction',
+      'other': 'History',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get tradingHistoryHideCanceled => 'Hide canceled';
+
+  @override
+  String get tradingHistoryDetails => 'Details';
+
+  @override
+  String get tradingHistoryOpenLong => 'Open Long';
+
+  @override
+  String get tradingHistoryCloseLong => 'Close Long';
+
+  @override
+  String get tradingHistoryOpenShort => 'Open Short';
+
+  @override
+  String get tradingHistoryCloseShort => 'Close Short';
+
+  @override
+  String get tradingHistoryFilledPrice => 'Filled / Order price';
+
+  @override
+  String tradingHistoryFilledValue(String unit) {
+    return 'Filled / Total amount ($unit)';
+  }
+
+  @override
+  String get tradingHistoryFilledTotal => 'Filled / Total amount';
+
+  @override
+  String get tradingHistoryRealizedPnl => 'Realized PNL';
+
+  @override
+  String get tradingHistoryRealizedProfit => 'Realized profit';
+
+  @override
+  String get tradingHistoryRoe => 'Realized ROE%';
+
+  @override
+  String get tradingHistoryClosed => 'Closed';
+
+  @override
+  String get tradingHistoryOpen => 'Open';
+
+  @override
+  String get tradingHistoryLiquidated => 'Liquidated';
+
+  @override
+  String get tradingHistoryClosePrice => 'Avg. close price';
+
+  @override
+  String get tradingHistoryMaxHeld => 'Max held';
+
+  @override
+  String get tradingHistoryOpenedAt => 'Time opened';
+
+  @override
+  String get tradingHistoryClosedAt => 'Time closed';
+
+  @override
+  String tradingHistoryPerp(String symbol) {
+    return '$symbol Perp';
+  }
+
+  @override
+  String get tradingHistoryExecutedAmount => 'Executed amount';
+
+  @override
+  String get tradingHistoryExecutedValue => 'Executed value';
+
+  @override
+  String get tradingHistoryRole => 'Role';
+
+  @override
+  String get tradingHistoryOrderDetails => 'Order Details';
+
+  @override
+  String get tradingHistoryTradeDetails => 'Trade Details';
+
+  @override
+  String get tradingHistoryRelatedOrders => 'Related Orders';
+
+  @override
+  String get tradingHistoryRelatedUnavailable =>
+      'Related orders are unavailable for this position because the history service does not provide position-to-order links.';
+
+  @override
+  String get tradingHistoryNoTrades => 'No trades found';
+
+  @override
+  String get tradingHistoryFillsUnavailable =>
+      'The reported fills could not be found in the available history.';
+
+  @override
+  String get tradingHistoryIncompleteFills =>
+      'Some reported fills are unavailable. Fee and profit totals remain unavailable until all fills are matched.';
+
+  @override
+  String get tradingHistoryPartial => 'History is incomplete. Some records may be unavailable.';
+
+  @override
+  String get tradingHistoryFee => 'Fee';
+
+  @override
+  String get tradingHistoryUpdatedAt => 'Update Time';
+
+  @override
+  String get tradingHistoryDate => 'Date';
+
+  @override
+  String get tradingHistoryQuantity => 'Quantity';
+
+  @override
+  String get walletVerificationTitle => 'Verify Wallet';
+
+  @override
+  String get walletVerificationStep => '3';
+
+  @override
+  String get walletVerificationHint =>
+      'Sign a message to verify your wallet and view your portfolio.';
+
+  @override
+  String get walletSignatureCompleted => 'Wallet signature completed.';
+
+  @override
+  String get walletOnboardingHint =>
+      'Connect your wallet, enable trading, and verify your wallet to continue. Check your wallet app if no request appears.';
+
+  @override
+  String get notificationDetailsTitle => 'Notification Details';
+
+  @override
+  String notificationCopyField(String field) {
+    return 'Copy $field';
+  }
+
+  @override
+  String get notificationRiskOrderDetails => 'Risk Order Details';
+
+  @override
+  String get notificationRiskType => 'Risk Type';
+
+  @override
+  String get notificationRiskLiquidation => 'Liquidation';
+
+  @override
+  String get notificationPositionSide => 'Position Side';
+
+  @override
+  String get notificationExecutionType => 'Execution Type';
+
+  @override
+  String get notificationWorkingType => 'Working Type';
+
+  @override
+  String get notificationExecutionDetails => 'Execution Details';
+
+  @override
+  String get notificationAffectedPositions => 'Affected Positions';
+
+  @override
+  String get notificationBalanceTitle => 'Perps Balance Updated';
+
+  @override
+  String get notificationBalanceChanges => 'Balance Changes';
+
+  @override
+  String get notificationWalletBalance => 'Wallet Balance';
+
+  @override
+  String notificationAssetsChanged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count assets changed',
+      one: '1 asset changed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String tradingHistoryRecentDays(int days) {
+    return 'Aster records from the last $days days';
+  }
+
+  @override
+  String get navigationFutures => 'Futures';
+
+  @override
+  String get navigationSpots => 'Spots';
+
+  @override
+  String get navigationSoon => 'Soon';
+
+  @override
+  String get navigationAskAi => 'Ask AI';
+
+  @override
+  String get pointsRules => 'Points rules';
+
+  @override
+  String get pointsTotalRank => 'Total rank';
+
+  @override
+  String get pointsYourRank => 'Your rank';
+
+  @override
+  String get pointsNotRanked => 'Not ranked';
+
+  @override
+  String get pointsOutsideTop => 'Not in top 100';
+
+  @override
+  String get pointsViewTotalLeaderboard => 'View total leaderboard';
+
+  @override
+  String get pointsByPeriod => 'Points by period';
+
+  @override
+  String get pointsSelectPeriod => 'Select period';
+
+  @override
+  String get pointsPeriodPool => 'Points pool';
+
+  @override
+  String get pointsUnit => 'Points';
+
+  @override
+  String get pointsHistoricalPeriod => 'Historical period';
+
+  @override
+  String pointsPeriodDates(String start, String end) {
+    return '$start – $end · UTC+0';
+  }
+
+  @override
+  String get pointsDatePattern => 'd MMM, HH:mm';
+
+  @override
+  String get pointsPeriodLeaderboard => 'Period leaderboard';
+
+  @override
+  String get pointsNoRankingsTitle => 'No rankings yet';
+
+  @override
+  String get pointsNoRankingsMessage => 'No points recorded for this period.';
+
+  @override
+  String get pointsRankAddress => 'Rank / Address';
+
+  @override
+  String get pointsTotalCurrent => 'Total / Current points';
+
+  @override
+  String pointsCurrentValue(String value) {
+    return 'Current $value';
+  }
+
+  @override
+  String pointsYouSuffix(String address) {
+    return '$address · You';
+  }
+
+  @override
+  String get pointsTotalLeaderboardTitle => 'Total leaderboard';
+
+  @override
+  String pointsPageIndicator(int page, int pages) {
+    return '$page / $pages';
+  }
+
+  @override
+  String get pointsLoginHint => 'Log in to view your points';
+
+  @override
+  String get pointsRefreshMine => 'Refresh my points';
+
+  @override
+  String get pointsAddressCopied => 'Address copied';
+
+  @override
+  String get pointsNoPeriods => 'No points periods are published yet.';
+
+  @override
+  String notificationApiType(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'fill': 'Order Filled',
+      'trigger': 'Conditional Order Triggered',
+      'order': 'Order Updated',
+      'liquidation': 'Liquidation',
+      'marginCall': 'Margin Call',
+      'funding': 'Funding Fee',
+      'transfer': 'Transfer Update',
+      'announce': 'Announcement',
+      'maintenance': 'Maintenance',
+      'other': 'Notification',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String notificationApiField(String field) {
+    String _temp0 = intl.Intl.selectLogic(field, {
+      'price': 'Price',
+      'quantity': 'Quantity',
+      'fee': 'Fee',
+      'markPrice': 'Mark Price',
+      'liquidationPrice': 'Liquidation Price',
+      'distance': 'Distance',
+      'amount': 'Amount',
+      'symbol': 'Symbol',
+      'market': 'Market',
+      'side': 'Side',
+      'orderId': 'Order ID',
+      'transactionHash': 'Transaction Hash',
+      'createdAt': 'Time',
+      'eventKey': 'Reference',
+      'other': 'Details',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pushVisibilityTitle => 'Background notifications unavailable';
+
+  @override
+  String get pushNoServerVisibility =>
+      'The notification server cannot observe this account. You will not receive account notifications while the app is closed.';
 }

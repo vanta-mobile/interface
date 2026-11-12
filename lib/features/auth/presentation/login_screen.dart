@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../authorization/presentation/enable_trading_screen.dart';
+import 'wallet_onboarding_flow.dart';
 import '../application/auth_provider.dart';
 import '../domain/auth_session.dart';
 import 'login_panel.dart';
@@ -20,25 +20,23 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _enableTrading = false;
-  String? _embeddedLoginIdentityId;
 
   @override
   Widget build(BuildContext context) {
     ref.listen(authProvider, (previous, next) {
       if (next.needsWalletConnection) {
-        _embeddedLoginIdentityId = null;
         if (_enableTrading) setState(() => _enableTrading = false);
       } else if (previous?.needsWalletConnection == true &&
           previous?.phase != AuthPhase.initializing) {
-        _embeddedLoginIdentityId = next.identity?.walletKind == WalletKind.embedded
-            ? next.identity!.id
-            : null;
         setState(() => _enableTrading = true);
       }
     });
     final session = ref.watch(authProvider);
     if (_enableTrading && !session.needsWalletConnection) {
-      return EnableTradingScreen(autoEnableForIdentity: _embeddedLoginIdentityId);
+      return WalletOnboardingFlow(
+        onCompleted: () => Navigator.of(context).maybePop(),
+        onCancel: () => Navigator.of(context).maybePop(),
+      );
     }
     final awaitingCode = session.phase == AuthPhase.awaitingCode;
     final signedIn = !session.needsWalletConnection;

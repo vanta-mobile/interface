@@ -46,11 +46,14 @@ class PrivyIdentityRepository
   WalletPreference? _preference;
   StreamSubscription<AuthState>? _sdkSubscription;
   late final _events = StreamController<AuthIdentity?>.broadcast(onListen: _observeSdk);
-  late final _external = ExternalWalletSession(
+  late final ExternalWalletSession _external = ExternalWalletSession(
     onInvalidated: () {
       _sessionGeneration++;
-      unawaited(_remember(const WalletPreference('', WalletKind.external, null)));
-      _events.add(null);
+      final identity = _external.identity;
+      if (identity == null) {
+        unawaited(_remember(const WalletPreference('', WalletKind.external, null)));
+      }
+      _events.add(identity);
     },
   );
   bool _disposed = false;

@@ -82,7 +82,17 @@ void main() {
         expect(await restarted.initialize(), isNull);
       } else if (outcome == 'missing') {
         expect(container.read(authProvider).identity, isNull);
+        expect(container.read(authProvider).failure, isNull);
         expect(preferences.value?.address, isNull);
+        expect(await repository.initialize(), isNull);
+        final restarted = PrivyIdentityRepository(
+          const PrivyConfiguration(appId: '', clientId: ''),
+          preferences: preferences,
+        );
+        addTearDown(restarted.dispose);
+        expect(await restarted.initialize(), isNull);
+        expect(connector.restores, 1);
+        expect(connection.personalSigns + connection.typedSigns, 0);
       } else if (outcome == 'timeout') {
         expect(container.read(authProvider).identity?.walletAddress, connection.address);
         expect(container.read(authProvider).busy, false);

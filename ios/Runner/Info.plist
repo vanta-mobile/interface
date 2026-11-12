@@ -3,7 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>FirebaseMessagingInstallationIdEnabled</key>
-	<true/>
+	<false/>
+	<key>VantaPushEnvironment</key>
+	<string>$(APS_ENVIRONMENT)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

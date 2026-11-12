@@ -13,6 +13,7 @@ import '../../support/reown_modal.dart';
 import '../../support/wallet_transaction.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late TestReownModal modal;
   late ReownWalletConnection connection;
   setUp(() {
@@ -221,6 +222,8 @@ void main() {
         pending,
         throwsA(isA<AuthFailure>().having((e) => e.key, 'key', 'authWalletChanged')),
       );
+      await pumpEventQueue();
+      expect(modal.requests.single.method, 'wallet_switchEthereumChain');
       if (issue == 'dispose') await connection.release();
       gate.complete();
       await check;

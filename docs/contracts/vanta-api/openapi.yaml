@@ -1,0 +1,2958 @@
+---
+openapi: 3.1.0
+info:
+  title: Vanta API
+  version: 0.1.0
+  summary: Vanta 移动端后端（Aster 数据内核 + Vanta 产品逻辑）
+  description: |
+    本文档由当前代码（`services/api-gateway`）整理，是**对外契约**。Aster 官方 API 由 App 直连，不在此列。
+
+    ## 通用约定
+    * **鉴权**：标记 `bearerAuth` 的端点必须带 `Authorization: Bearer <access_token>`；
+    身份只从令牌解出，
+      不接受 URL / body 传地址。没有 `security` 的端点是公开的，按来源 IP 限流。
+    * **时间**：RFC3339 UTC。**金额 / 价格 / 数量**一律是十进制**字符串**（避免浮点），例如
+      `"50000.000000000000000000"`，比较时请按数值而不是按字符串。
+    * **分页**：游标式，`?cursor=&limit=`，`limit` 默认 50、范围 1–200；响应带
+    `next_cursor`（`null` = 到底）。
+      不用 offset；游标失效返回 `invalid_param`，应从头拉取。
+    * **幂等**：标记 `Idempotency-Key` 必填的写接口，重试必须复用**同一个** key。同一个 key 用在不同请求体上返回
+      `invalid_param`；首次请求仍在处理中也返回 `invalid_param`（稍后用同一个 key 重试）。
+    * **错误**：HTTP 状态 + `{"code": "<machine_code>", "message": "<人读文案>"}`。**客户端按
+    `code` 分支**，
+      `message` 只给人看，不保证稳定。不会用 200 包错误。
+    * **数据不完整不是错误**：响应里的 `partial: true` 表示该口径的数据不全（如没有资金费上报），仍是 200。
+    * **缓存**：只有公开的配置类端点带 `Cache-Control: public, max-age=…` + `ETag`（支持
+    `If-None-Match` → 304）；
+      其余一律 `no-store`。
+    * **限流**：每用户（公开端点按 IP）令牌桶；超限 `429` + `Retry-After`。
+    * **请求内不同步调用 Aster**：所有接口读自己的库，Aster 故障时这些接口仍可用，只是数据变旧（看 `as_of`）。
+    * **账户作用域**：历史 / Portfolio / 策略单列表接受 `account_id` 查询参数，必须是会话能操作的已登记账户
+      （主账户或其子账户），否则 `not_found`（不用 403，避免泄露账户是否存在）；缺省 = 当前操作账户
+      （用 `POST /v1/me/account` 切换）。
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+servers:
+  - url: https://{host}
+    description: 部署地址（Base 为空，路径自带 `/v1`）
+    variables:
+      host:
+        default: api.example.invalid
+tags:
+  - name: Ops
+    description: 探活与指标（不属于 `/v1`，不对 App 开放）
+  - name: Config
+    description: 首屏聚合与配置（公开，带 ETag）
+  - name: Auth
+    description: 登录、会话、账户切换、钱包绑定
+  - name: Watchlist
+    description: 交易对收藏（用户级，不随子账户切换）
+  - name: History
+    description: 订单 / 成交 / 持仓周期 / 资金流水 / 强平 / 策略单（TWAP）
+  - name: Account
+    description: 账户快照（回读时刻的观测值，非实时）
+  - name: Report
+    description: 端上报（低信任输入，不覆盖 Builder 回读真值）
+  - name: Notifications
+    description: 通知收件箱与推送设备
+  - name: Portfolio
+    description: 资产曲线、盈亏、分币种、盈亏日历
+  - name: Charts
+    description: 图表 datafeed（路由在、能力不在：一律 501）
+security: []
+paths:
+  /healthz:
+    get:
+      tags: [Ops]
+      operationId: healthz
+      summary: 探活
+      description: |
+        DB 可达即 200。同时报告归档水位落后：落后超 7 天意味着数据已永久丢失，不藏在日志里。
+        DB 不可达返回 503。
+      responses:
+        "200":
+          description: 正常
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, db, archive]
+                properties:
+                  status: {type: string, const: ok}
+                  db: {type: string, const: ok}
+                  archive:
+                    type: object
+                    properties:
+                      streams_behind_over_1d: {type: integer}
+                      streams_permanently_lost: {type: integer}
+        "503":
+          description: DB 不可达
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: {type: string, const: degraded}
+                  db: {type: string, const: down}
+  /metrics:
+    get:
+      tags: [Ops]
+      operationId: metrics
+      summary: Prometheus 抓取端点
+      responses:
+        "200":
+          description: Prometheus 文本格式
+          content:
+            text/plain:
+              schema: {type: string}
+
+  /v1/app/bootstrap:
+    get:
+      tags: [Config]
+      operationId: appBootstrap
+      summary: 首屏聚合
+      description: |
+        交易对目录（内部 id ↔ Aster 交易对映射、分类、精度）、交易时段、维护 / 升级 / 地区配置。
+        **不含任何行情字段**（行情由 App 直连 Aster）。bapi 字段缺失时降级省略，`partial=true`。
+        `Cache-Control: public, max-age=30` + `ETag`。
+      parameters:
+        - name: symbol
+          in: query
+          description: 只返回该交易对相关的时段（内部 id 如 `XAU-PERP` 或 Aster 交易对如 `BTCUSDT`）
+          schema: {type: string}
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: 首屏数据
+          headers:
+            ETag: {$ref: "#/components/headers/ETag"}
+            Cache-Control: {$ref: "#/components/headers/CachePublic"}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Bootstrap"}
+        "304": {$ref: "#/components/responses/NotModified"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+        "500": {$ref: "#/components/responses/ServerError"}
+  /v1/symbols:
+    get:
+      tags: [Config]
+      operationId: listSymbols
+      summary: 归一化交易对目录
+      description: |
+        精度**只从 `filters` 推导**（`PRICE_FILTER.tickSize` / `LOT_SIZE.stepSize` /
+        `MIN_NOTIONAL.notional`），
+        与 App 直连 `exchangeInfo` 同源。`Cache-Control: public, max-age=30` + `ETag`。
+      parameters:
+        - name: enabled_only
+          in: query
+          description: "`true`（默认）只返回可交易交易对"
+          schema: {type: boolean, default: true}
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: 交易对目录
+          headers:
+            ETag: {$ref: "#/components/headers/ETag"}
+            Cache-Control: {$ref: "#/components/headers/CachePublic"}
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, as_of, partial, symbol_count]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: "#/components/schemas/SymbolView"}
+                  as_of: {$ref: "#/components/schemas/SymbolAsOf"}
+                  partial:
+                    type: boolean
+                    description: bapi 侧从未取到过分类 / 时段
+                  symbol_count: {type: integer}
+        "304": {$ref: "#/components/responses/NotModified"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+        "500": {$ref: "#/components/responses/ServerError"}
+  /v1/config/system:
+    get:
+      tags: [Config]
+      operationId: configSystem
+      summary: 维护窗口、功能开关、最低版本
+      description: |
+        `server_time` 每次重算（客户端据此判断时钟偏差）。`feature_flags.privy_login` 表示服务端是否配置了
+        Privy：为 `false` 时客户端应隐藏该入口，而不是点了收到 501。`Cache-Control: public,
+        max-age=300`。
+      parameters:
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: 系统配置
+          headers:
+            ETag: {$ref: "#/components/headers/ETag"}
+            Cache-Control: {$ref: "#/components/headers/CachePublic"}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SystemConfig"}
+        "304": {$ref: "#/components/responses/NotModified"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+        "500": {$ref: "#/components/responses/ServerError"}
+  /v1/config/assets:
+    get:
+      tags: [Config]
+      operationId: configAssets
+      summary: 可充值 / 可提现资产、支持链
+      description: |
+        来自 bapi `deposit/assets`、`withdraw/assets`、
+        `deposit/permit-tokens` 的**落库快照**。上游失败时用旧值
+        （`stale: true`），不省略；从未取到过则返回 `null` + `partial: true`。
+
+        **网络与资产完全跟随上游返回**（含 Solana 等非 EVM 行）：
+        后端不维护“更少或额外扩大”的支持链白名单，也不按
+        `chainIds`/`networks` 过滤，端上不得自行写死链范围。
+
+        **逐笔提现费不在这里**：App 直连 Aster
+        `/aster-chain/v3/withdraw/estimateFee`。
+        `Cache-Control: public, max-age=300`。
+      parameters:
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: 充提资产快照
+          headers:
+            ETag: {$ref: "#/components/headers/ETag"}
+            Cache-Control: {$ref: "#/components/headers/CachePublic"}
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deposit:
+                    description: |
+                      bapi 充值资产快照**原样透传**（未取到为 null）。每行含
+                      `name`/`displayName`/`contractAddress`/`decimals`、
+                      `network`/`chainId`/`depositType`/`isNative`/`minDeposit`；
+                      非 EVM 行另带构建交易所需的网络特有字段（Solana：
+                      `tokenMint`/`tokenVault`/`tokenVaultAuthority`/
+                      `tokenProgram`/`associatedTokenProgram`/`systemProgram`/
+                      `ixSysvar`/`solVault` 等），**后端不裁剪**。
+                    type: [object, array, "null"]
+                  withdraw:
+                    description: bapi 提现资产快照原样透传（未取到为 null），字段口径同 `deposit`
+                    type: [object, array, "null"]
+                  permit_tokens:
+                    description: |
+                      EIP-2612 permit 代币清单快照原样透传（未取到为 null）。每行含
+                      `chainId`/`name`/`version`/`tokenName`/`tokenAddress`
+                      /`available`。端上拼 EIP-712 域时必须用这里的
+                      `name`/`version`，**不得自己猜**（差一字节签名即被拒）。
+                    type: [object, array, "null"]
+                  source: {type: string, const: bapi}
+                  as_of: {$ref: "#/components/schemas/NullableTimestamp"}
+                  stale:
+                    type: boolean
+                    description: 快照超过 15 分钟未刷新
+                  partial: {type: boolean}
+                  note:
+                    type: object
+                    properties:
+                      per_withdrawal_fee:
+                        type: string
+                        const: aster_chain_preferred
+                      follow_aster_networks: {type: string}
+        "304": {$ref: "#/components/responses/NotModified"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+        "500": {$ref: "#/components/responses/ServerError"}
+  /v1/config/chains:
+    get:
+      tags: [Config]
+      operationId: configChains
+      summary: 各链合约地址（充值桥等）
+      description: "bapi 快照，字段语义同 `/v1/config/assets`。`Cache-Control: public,
+        max-age=300`。"
+      parameters:
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: 链合约地址快照
+          headers:
+            ETag: {$ref: "#/components/headers/ETag"}
+            Cache-Control: {$ref: "#/components/headers/CachePublic"}
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chains:
+                    description: bapi 合约地址快照原样透传；从未取到为 null
+                    type: [object, array, "null"]
+                  source: {type: string, const: bapi}
+                  as_of: {$ref: "#/components/schemas/NullableTimestamp"}
+                  stale: {type: boolean}
+                  partial: {type: boolean}
+        "304": {$ref: "#/components/responses/NotModified"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+        "500": {$ref: "#/components/responses/ServerError"}
+  /v1/config/geo:
+    get:
+      tags: [Config]
+      operationId: configGeo
+      summary: 地区限制规则与当前判定
+      description: |
+        规则可匿名读取；**判定基于服务端看到的 IP**（`X-Forwarded-For` 第一段，其次 `X-Real-IP`），
+        客户端自报的 `country` 只落库备查，**不参与判定**。
+        服务端不硬拦，由 App 据 `decision.blocked` 拦截 UI。
+
+        `Cache-Control: public, max-age=300`。
+      parameters:
+        - name: country
+          in: query
+          description: 客户端自报的国家代码（仅辅助，不参与判定）
+          schema: {type: string}
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: 地区规则与判定
+          headers:
+            ETag: {$ref: "#/components/headers/ETag"}
+            Cache-Control: {$ref: "#/components/headers/CachePublic"}
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [rules, decision, evaluated_at]
+                properties:
+                  rules:
+                    type: object
+                    properties:
+                      countries:
+                        type: array
+                        items: {type: string}
+                      cidrs:
+                        type: array
+                        items: {type: string}
+                  decision: {$ref: "#/components/schemas/GeoDecision"}
+                  evaluated_at: {$ref: "#/components/schemas/Timestamp"}
+        "304": {$ref: "#/components/responses/NotModified"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+        "500": {$ref: "#/components/responses/ServerError"}
+
+  /v1/auth/privy:
+    post:
+      tags: [Auth]
+      operationId: authPrivy
+      summary: Privy token 换会话
+      description: |
+        邮箱 / passkey / Google / X 经 Privy 登录。**`privy_token` 必须是 Privy identity
+        token**
+        （Dashboard 需开启 "Return user data in an identity token"），access token 没有
+        `linked_accounts`，
+        会得到 `invalid_param`。token 里要有 EVM 钱包：邮箱首次登录需先创建内嵌钱包，再用新签发的 token 重试。
+        交易账户选择与 Privy 返回顺序无关（内嵌钱包优先）；已绑定的 DID 不能换到另一个钱包（409）。
+        Privy 登录的账户**不支持子账户**。服务端未配置 Privy 时返回 `501`。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PrivyLogin"}
+      responses:
+        "200": {$ref: "#/components/responses/Issued"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401":
+          description: "`privy_token_invalid`：验签失败 / 过期 / aud 或 iss 不符"
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Error"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+        "501": {$ref: "#/components/responses/NotImplemented"}
+        "503": {$ref: "#/components/responses/Unavailable"}
+  /v1/auth/nonce:
+    get:
+      tags: [Auth]
+      operationId: authNonce
+      summary: SIWE 一次性 nonce
+      description: nonce 是一次性凭证的原料，永远 `no-store`。
+      parameters:
+        - name: address
+          in: query
+          required: true
+          description: 将要签名的钱包地址
+          schema:
+            type: string
+            examples: ["0x63dd5acc6b1aa0f563956c0e534dd30b6dcf7c4e"]
+      responses:
+        "200":
+          description: nonce
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [nonce, expires_at]
+                properties:
+                  nonce: {type: string}
+                  expires_at: {$ref: "#/components/schemas/Timestamp"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/auth/siwe:
+    post:
+      tags: [Auth]
+      operationId: authSiwe
+      summary: EIP-4361 签名换会话
+      description: |
+        `message` 是端上签的完整 EIP-4361 消息（**不要单独传 address**：身份只从验签结果取）。
+        nonce 一次性，用过再用返回 `nonce_invalid`。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/SiweLogin"}
+      responses:
+        "200": {$ref: "#/components/responses/Issued"}
+        "400":
+          description: "`nonce_invalid` / `signature_invalid` / `invalid_param`"
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Error"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: authRefresh
+      summary: 刷新令牌轮换
+      description: |
+        用完即废：旧 refresh token 立即失效。**已轮换过的 refresh token 再次出现 = 重放**，整个会话被吊销
+        （之后任何请求都是 `session_revoked`，需重新登录）。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: {type: string}
+      responses:
+        "200": {$ref: "#/components/responses/Issued"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/auth/logout:
+    post:
+      tags: [Auth]
+      operationId: authLogout
+      summary: 注销当前会话
+      description: 会话立即吊销；该会话下的推送设备同时失效（登出即停推，不依赖 App 调 unregister）。
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: 已注销
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: {type: boolean, const: true}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/me:
+    get:
+      tags: [Auth]
+      operationId: getMe
+      summary: 当前用户与四个独立状态
+      description: |
+        四态互相独立：①已登录 ②已授权 agent ③已绑定 builder ④已开启子账户（仅钱包 / SIWE 登录有意义）。
+        状态读我们自己的库，请求路径不调 Aster。`no-store`。
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: 当前用户
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Me"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/me/account:
+    post:
+      tags: [Auth]
+      operationId: switchAccount
+      summary: 切换当前操作账户
+      description: |
+        只改会话、不换令牌。`account_id` 必须是会话能操作的账户（主 + 其子账户），否则 `not_found`。
+        切换后推送设备跟着改挂到新账户（只推当前操作账户）。
+        **签名授权、拒签时的 UI 状态由客户端负责**，服务端不参与钱包签名。
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [account_id]
+              properties:
+                account_id:
+                  type: integer
+                  format: int64
+                  description: "`/v1/me` 的 `accounts[].account_id`（也接受
+                    `accountId`）"
+      responses:
+        "200":
+          description: 已切换
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [active_account_id, token_unchanged]
+                properties:
+                  active_account_id: {type: integer, format: int64}
+                  active_address:
+                    type: [string, "null"]
+                  role: {$ref: "#/components/schemas/AccountRole"}
+                  name: {type: [string, "null"]}
+                  token_unchanged: {type: boolean, const: true}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/identity/link:
+    post:
+      tags: [Auth]
+      operationId: identityLink
+      summary: 绑定钱包 / 登记子账户
+      description: |
+        被绑定的地址**自己签名**证明所有权（`proof` 是完整 EIP-4361 消息 + 签名，nonce 走
+        `/v1/auth/nonce`）。
+
+        * `role=main`（默认）：绑附加钱包，仅 Privy 登录的主体可用；SIWE 会话返回 `invalid_param`。
+        * `role=sub`：登记子账户。`aster_account_id` / `name` / `status` 是**端声明**（响应
+        `source: app_report`），
+          服务端只存不替你创建（创建在 Aster 侧由主账户签名）。每主账户最多 10 个；**Privy 托管钱包登录的账户
+          不允许登记子账户**（`invalid_param`）。同一个子钱包重复登记是幂等成功，不会产生第二个账户。
+
+        同一个钱包只能属于一个登录主体（本期不允许合并）：已属于他人返回 `identity_conflict`。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/IdentityLink"}
+      responses:
+        "200":
+          description: 已绑定 / 已登记
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [linked, address, role, source]
+                properties:
+                  linked: {type: boolean, const: true}
+                  address: {type: string}
+                  role: {$ref: "#/components/schemas/AccountRole"}
+                  source:
+                    type: string
+                    enum: [signature, app_report]
+                    description: 子账户为 `app_report`（端声明），附加钱包为 `signature`
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/identity/unlink:
+    post:
+      tags: [Auth]
+      operationId: identityUnlink
+      summary: 解绑钱包
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider, subject]
+              properties:
+                provider:
+                  type: string
+                  enum: [privy_did, evm_wallet]
+                subject:
+                  type: string
+                  description: 要解绑的地址
+      responses:
+        "200":
+          description: 已解绑
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unlinked: {type: boolean, const: true}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/me/watchlist:
+    get:
+      tags: [Watchlist]
+      operationId: listWatchlist
+      summary: 我的收藏
+      description: 归**登录主体**（用户级），切换子账户不影响；游客本地收藏、登录后合并由客户端负责。
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: 收藏列表
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, count]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: "#/components/schemas/WatchlistItem"}
+                  count: {type: integer}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+    post:
+      tags: [Watchlist]
+      operationId: addWatchlist
+      summary: 添加收藏
+      description: |
+        `symbol` 会被规范成大写；只允许字母数字、≤40 字符，否则 `invalid_param`。
+        重复添加是幂等的（`added=false`）。
+        **不要求** `Idempotency-Key`。
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [symbol]
+              properties:
+                symbol: {type: string, examples: [BTCUSDT]}
+                sort:
+                  type: integer
+                  format: int32
+                  description: 显式排序（缺省排到末尾）
+      responses:
+        "200":
+          description: 结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  symbol: {type: string}
+                  added:
+                    type: boolean
+                    description: 已存在时为 false
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/me/watchlist/{symbol}:
+    delete:
+      tags: [Watchlist]
+      operationId: removeWatchlist
+      summary: 取消收藏
+      description: 幂等：取消一个本来就没收藏的交易对不报错（`removed=false`）。
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: 结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  symbol: {type: string}
+                  removed: {type: boolean}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/history/orders:
+    get:
+      tags: [History]
+      operationId: historyOrders
+      summary: 订单历史
+      description: |
+        来自 Builder 回读归档（含 Aster 公开 API 7 天窗口之外的部分）。`source` 标 `live`（7 天内）/
+        `archive`。
+        一张单的成交量看 `executed_qty`：撤单的单也可能已部分成交。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/AccountId"
+        - $ref: "#/components/parameters/SymbolIgnored"
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          description: 订单页
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/HistoryPage"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items: {$ref: "#/components/schemas/Order"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/history/fills:
+    get:
+      tags: [History]
+      operationId: historyFills
+      summary: 成交历史
+      description: 成交按成交 id 去重，重放不会产生重复行。时间倒序。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/AccountId"
+        - $ref: "#/components/parameters/SymbolIgnored"
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          description: 成交页
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/HistoryPage"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items: {$ref: "#/components/schemas/Fill"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/history/fills/{trade_id}:
+    get:
+      tags: [History]
+      operationId: historyFillDetail
+      summary: 单笔成交详情
+      description: Aster 没有这个查询，只能我们提供。只查当前操作账户；别人的成交返回 `not_found`。
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: trade_id
+          in: path
+          required: true
+          schema: {type: integer, format: int64}
+      responses:
+        "200":
+          description: 成交详情
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [item]
+                properties:
+                  item: {$ref: "#/components/schemas/Fill"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/history/positions:
+    get:
+      tags: [History]
+      operationId: historyPositions
+      summary: 持仓周期
+      description: |
+        由成交重建的「持仓周期」：从开仓到净仓归零。`status` 为 `open` / `closed`；
+        `inferred=true` 表示首次观测时已在持仓中，开仓时间 / 入场价不可信（取首次快照）；`liquidated=true`
+        表示该周期以强平结束。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/AccountId"
+        - $ref: "#/components/parameters/SymbolIgnored"
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          description: 持仓周期页
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/HistoryPage"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items: {$ref: "#/components/schemas/PositionCycle"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/history/income:
+    get:
+      tags: [History]
+      operationId: historyIncome
+      summary: 资金费流水
+      description: |
+        **只来自端上报**（`/v1/report/income`）；没上报的区间是空档，`partial=true`。不支持按交易对过滤
+        （传了 `symbol` 会被忽略，`symbol_filter_ignored=true`）。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/AccountId"
+        - $ref: "#/components/parameters/SymbolIgnored"
+      responses:
+        "200":
+          description: 资金费页
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, next_cursor, partial, symbol_filter_ignored]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: "#/components/schemas/IncomeItem"}
+                  next_cursor: {$ref: "#/components/schemas/NextCursor"}
+                  partial: {type: boolean}
+                  symbol_filter_ignored: {type: boolean}
+                  note: {type: string}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/history/liquidations:
+    get:
+      tags: [History]
+      operationId: historyLiquidations
+      summary: 强平订单
+      description: |
+        订单类型含 `LIQUIDATION` 的订单（字面量待用真实样本冻结，按「包含」匹配）。
+        响应形状同 `/v1/history/orders`。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/AccountId"
+        - $ref: "#/components/parameters/SymbolIgnored"
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          description: 强平订单页
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/HistoryPage"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items: {$ref: "#/components/schemas/Order"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/history/transfers:
+    get:
+      tags: [History]
+      operationId: historyTransfers
+      summary: 充提 / 划转流水
+      description: |
+        只有端上报与 aster-chain 回读两个来源；没上报过就是空，
+        `partial=true`。资金费（`funding`）**不在这里**，在 `/v1/history/income`。
+        同一 `reference` 重复上报只算一笔。
+        支持 `kind` 过滤（PRD「资金变动记录」的 All / Deposit /
+        Withdraw 页签），过滤在 SQL 下推。
+        **注意**：当前没有处理中 / 成功 / 失败状态、网络、链上 txHash
+        字段（待与端侧对齐字段后补）。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/AccountId"
+        - $ref: "#/components/parameters/TransferKindParam"
+      responses:
+        "200":
+          description: 充提流水页
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, next_cursor, partial]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: "#/components/schemas/TransferItem"}
+                  next_cursor: {$ref: "#/components/schemas/NextCursor"}
+                  kind:
+                    description: |
+                      本次生效的 `kind` 过滤；未传为 null（= 三类全出）
+                    type: [string, "null"]
+                    enum: [deposit, withdraw, internal_transfer, null]
+                  partial: {type: boolean}
+                  note: {type: string}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/history/twaps:
+    get:
+      tags: [History]
+      operationId: historyTwaps
+      summary: 策略单（TWAP）列表
+      description: |
+        Aster V3 不暴露 TWAP，**端上报（`/v1/report/twaps`）是唯一真值**。按创建时间倒序。
+        `params` 是端上原样上报的策略参数；**历史杠杆不保证是下单时的值**（端未上报快照时无法还原）。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/AccountId"
+        - $ref: "#/components/parameters/SymbolIgnored"
+      responses:
+        "200":
+          description: 策略单页
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, next_cursor, symbol_filter_ignored]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: "#/components/schemas/Twap"}
+                  next_cursor: {$ref: "#/components/schemas/NextCursor"}
+                  symbol_filter_ignored: {type: boolean}
+                  notes:
+                    type: object
+                    properties:
+                      source: {type: string, const: app_report}
+                      type: {type: string, const: TWAP}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/history/twaps/{strategy_id}/sub_orders:
+    get:
+      tags: [History]
+      operationId: historyTwapSubOrders
+      summary: 策略单子单
+      description: 只查当前操作账户名下的策略；别人的返回 `not_found`。`items` 是端上原样上报的子单快照。
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: strategy_id
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: 子单
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [strategy_id, status, items]
+                properties:
+                  strategy_id: {type: string}
+                  status: {$ref: "#/components/schemas/TwapStatus"}
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/account/summary:
+    get:
+      tags: [Account]
+      operationId: accountSummary
+      summary: 账户快照
+      description: |
+        **回读时刻的观测值，不是实时值**（实时值请直连 Aster `positionRisk` / `balance`）。
+        `equity = 钱包余额(USD) + 未实现盈亏`，不含未结算的 pending 资金费。
+        未绑定 builder 或从未回读过时 `partial=true`，数值字段为 `null`。只看当前操作账户。
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: 账户快照
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AccountSummary"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/report/orders:
+    post:
+      tags: [Report]
+      operationId: reportOrders
+      summary: 上报下单 / 撤单结果
+      description: |
+        **低信任输入，不覆盖 Builder 回读真值**：上报的价值是回读还没跟上时先有数据与通知，
+        所以新出现的 `clientOrderId` 必须被接受；真正的保护是别人不能冒用你的 id。
+
+        * 必须带 `clientOrderId`（对账与幂等的锚点）；已被**另一个用户**上报过 → `invalid_param`。
+        * 推送：带齐 `symbol` / `asterOrderId` / `status` / `origType` 才产生通知，
+        且去重键与回读通道完全一致
+          （同一笔订单两个通道各来一次只推一条）；缺字段只入库不推送。
+        * 下单即把该账户的回读升到 L1，保证 App 被杀后能很快收到成交推送。
+        * `accountId` 缺省 = 当前操作账户；**子账户下的单必须显式给子账户的 id**，否则会计到主账户。
+        * 断网重试请复用同一个 `Idempotency-Key` 与同一个 `clientOrderId`；两台设备同方向同数量下单各带
+          自己的 `clientOrderId`，不会被合并。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ReportPayload"}
+      responses:
+        "200":
+          description: 已接受
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accepted, report_id, verified, pushed]
+                properties:
+                  accepted: {type: boolean, const: true}
+                  report_id: {type: integer, format: int64}
+                  verified:
+                    type: boolean
+                    description: 已能与回读归档对上（端上可少显示一个「待确认」）；冲突由 audit-worker 判定
+                  pushed:
+                    type: boolean
+                    description: 是否产生了新的推送事件（重复上报 / 缺字段 → false）
+                  note: {type: string}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/report/income:
+    post:
+      tags: [Report]
+      operationId: reportIncome
+      summary: 上报资金费流水
+      description: |
+        资金费**只有端上报这一个来源**（服务端回读拿不到逐笔资金费）。只有 `incomeType` 为 `FUNDING_FEE` /
+        `FUNDING`（缺省按资金费）才落库；手续费与已实现盈亏的真值在成交归档里，不在这里重复存。
+        新落库的资金费会产生一条 `FUNDING` 通知，重复上报不再推。必须带 `amount`。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ReportPayload"}
+      responses:
+        "200":
+          description: 已接受
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accepted, report_id, landed, pushed]
+                properties:
+                  accepted: {type: boolean, const: true}
+                  report_id: {type: integer, format: int64}
+                  landed:
+                    type: boolean
+                    description: 是否新落库（重复上报 / 非资金费类型 → false）
+                  pushed: {type: boolean}
+                  note: {type: string}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/report/transfers:
+    post:
+      tags: [Report]
+      operationId: reportTransfers
+      summary: 上报充提 / 划转到账
+      description: |
+        必须带 `amount` 与 `kind`（`deposit` / `withdraw` / `internal_transfer`，其他值
+        `invalid_param`，
+        不会被当成内部划转污染统计）。按 `reference` 去重：同一笔换了 `Idempotency-Key` 重试也只记一笔
+        （`landed=false`）。
+
+        * `deposit` / `withdraw` 新落库会产生一条 `TRANSFER` 通知；`internal_transfer` 不推。
+        * 内部划转只是搬钱：**不计入** `/v1/portfolio/summary` 的 `net_flow_usd`，充值 / 提现才计入。
+        * 没有 `reference` 时以上报 id 兜底做通知键（宁可多一条也不合并两笔不同的充值）。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ReportPayload"}
+      responses:
+        "200":
+          description: 已接受
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accepted, report_id, kind, landed, pushed]
+                properties:
+                  accepted: {type: boolean, const: true}
+                  report_id: {type: integer, format: int64}
+                  kind: {$ref: "#/components/schemas/TransferKind"}
+                  landed:
+                    type: boolean
+                    description: 去重命中（同一笔重复上报）时为 false，这是正常结果
+                  pushed: {type: boolean}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/report/positions:
+    post:
+      tags: [Report]
+      operationId: reportPositions
+      summary: 上报持仓变化（弱网兜底，可选）
+      description: |
+        必须带 `symbol` 与 `positionAmt`；`positionSide` 缺省 `BOTH`。只追加快照，
+        **不改**回读的变化检测基准。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ReportPayload"}
+      responses:
+        "200":
+          description: 已接受
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accepted, report_id]
+                properties:
+                  accepted: {type: boolean, const: true}
+                  report_id: {type: integer, format: int64}
+                  note: {type: string}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/report/twaps:
+    post:
+      tags: [Report]
+      operationId: reportTwaps
+      summary: 上报策略单（TWAP）快照
+      description: |
+        Aster V3 不暴露 TWAP，端是唯一真值。按 (账户, `strategy_id`) **幂等覆盖**，重复上报同一策略是更新。
+        校验：`strategy_id` 非空且 ≤128 字符；`side` ∈ {BUY, SELL}；`status` ∈ {open,
+        closed}；
+        `total_qty > 0`，`executed_qty ∈ [0, total_qty]`。`symbol` 会被规范成大写。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ReportTwap"}
+      responses:
+        "200":
+          description: 已接受
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accepted, strategy_id, status, updated_at]
+                properties:
+                  accepted: {type: boolean, const: true}
+                  strategy_id: {type: string}
+                  status: {$ref: "#/components/schemas/TwapStatus"}
+                  updated_at: {$ref: "#/components/schemas/Timestamp"}
+                  note: {type: string}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/notifications:
+    get:
+      tags: [Notifications]
+      operationId: listNotifications
+      summary: 通知收件箱
+      description: |
+        个人事件 ∪ 公告广播，按时间倒序。**不提供 WebSocket**；前台实时性由 App 直连 Aster 私有 WS 负责。
+        收件箱不依赖推送：没有设备令牌时事件照样入库。
+
+        页签（对应通知中心的 All / Transfers / Orders / Risk）用 `category` 筛：
+
+        | `category` | 包含的事件类型 |
+        |---|---|
+        | `all`（默认） | 全部，**含公告广播** |
+        | `transfers` | `TRANSFER`、`FUNDING` |
+        | `orders` | `FILL`、`TRIGGER`、`ORDER` |
+        | `risk` | `MARGIN_CALL`、`LIQUIDATION` |
+
+        公告广播只出现在 `all`。筛选在服务端 SQL 里做，所以 `limit` / `next_cursor` 对筛选后的结果成立。
+        `unread_only` 可与页签、分页叠加。`unread` 是**全局**未读角标（不随页签变化）。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: unread_only
+          in: query
+          description: 只看未读
+          schema: {type: boolean, default: false}
+        - name: category
+          in: query
+          description: 页签；非法值返回 `invalid_param`（不会静默当成 all）
+          schema:
+            type: string
+            enum: [all, transfers, orders, risk]
+            default: all
+      responses:
+        "200":
+          description: 收件箱页
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, next_cursor, unread]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: "#/components/schemas/Notification"}
+                  next_cursor: {$ref: "#/components/schemas/NextCursor"}
+                  unread:
+                    type: integer
+                    description: 未读事件 + 游标之后的广播（全局角标）
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/notifications/read:
+    post:
+      tags: [Notifications]
+      operationId: markNotificationsRead
+      summary: 标记已读
+      description: |
+        `event_keys`（单条也走数组）、`broadcast_up_to`（公告游标，只进不退）、`all=true` 三选一或组合，
+        全空返回 `invalid_param`。`all=true` 一次性读完当前可见的未读事件与全部已发布公告。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_keys:
+                  type: array
+                  items: {type: string}
+                all: {type: boolean, default: false}
+                broadcast_up_to:
+                  type: integer
+                  format: int64
+                  description: 公告读到哪一条为止（也接受 `broadcastUpTo`）
+      responses:
+        "200":
+          description: 已标记
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  marked:
+                    type: integer
+                    description: 实际受影响条数
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/push/register:
+    post:
+      tags: [Notifications]
+      operationId: pushRegister
+      summary: 注册推送设备
+      description: |
+        **设备跟着会话走**：注册绑到当前会话，登出 / 会话吊销时服务端同事务删除设备；切换账户设备跟着改挂到新账户。
+        `app_id` 必填（iOS bundle id 即 `apns-topic`，如 `exchange.vanta.app`；Android
+        包名）。
+        `environment`：iOS 开发包 → `sandbox`，TestFlight / App Store 包 →
+        `production`，**必须与包类型一致**，
+        否则 Apple 返回 `BadDeviceToken`（设备会被软删）。不带 `utcOffsetMinutes` 则不做静默时段判定
+        （响应 `quiet_hours_need_offset=true`）。Android 需要预先创建通知渠道 `risk` / `trade`
+        / `account` / `announce`。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PushRegister"}
+      responses:
+        "200":
+          description: 已注册
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [registered, device_id, status]
+                properties:
+                  registered: {type: boolean, const: true}
+                  device_id: {type: integer, format: int64}
+                  status: {$ref: "#/components/schemas/PushCapability"}
+                  quiet_hours_need_offset: {type: boolean}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/push/unregister:
+    post:
+      tags: [Notifications]
+      operationId: pushUnregister
+      summary: 解绑推送设备
+      description: 幂等：解绑一个本来就没注册的 token 不报错（`removed=0`）。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: {type: string}
+      responses:
+        "200":
+          description: 结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  removed:
+                    type: integer
+                    description: 解绑的设备数（本来就没注册则为 0）
+                  status: {$ref: "#/components/schemas/PushCapability"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/push/prefs:
+    post:
+      tags: [Notifications]
+      operationId: pushPrefs
+      summary: 更新推送偏好
+      description: |
+        六个类别开关 + 静默时段 + 最小金额阈值；只传要改的字段，其余沿用当前值。
+        **强平与追保没有开关，不可关闭**，也不受静默时段与频控限制。静默时段按**设备**本地时间解释，
+        起止必须同时提供且不能相同；`min_notional` 只对成交类通知生效。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PushPrefsUpdate"}
+      responses:
+        "200":
+          description: 更新后的偏好
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PushPrefs"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/push/status:
+    get:
+      tags: [Notifications]
+      operationId: pushStatus
+      summary: 推送能力状态
+      description: |
+        三种状态：`full`（通道完整）、`inbox_only`（没有有效设备令牌：只进收件箱不投递）、
+        `no_server_visibility`（隐私模式 / 未绑定 builder / 平台查询未开通，对应 `-5052` / `-5053`
+        / `-5049`：
+        服务端看不到该账户，**App 关闭后收不到通知**，端上必须显式提示）。
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: 推送状态
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, devices, prefs]
+                properties:
+                  status: {$ref: "#/components/schemas/PushCapability"}
+                  reason:
+                    type: [string, "null"]
+                    description: 不可见时的上游原因码（如 `-5052`）
+                  devices:
+                    type: integer
+                    description: 当前有效设备数
+                  prefs: {$ref: "#/components/schemas/PushPrefs"}
+                  note: {type: string}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/portfolio/summary:
+    get:
+      tags: [Portfolio]
+      operationId: portfolioSummary
+      summary: 区间汇总
+      description: |
+        **指标口径**：`realized_pnl_usd` / `fees_usd` / `volume_usd` / `trades` /
+        权益来自回读归档；
+        `funding_fee_usd` 与 `net_flow_usd` 来自端上报（见响应 `source`）。
+
+        * `net_flow_usd` = 充值 − 提现。**内部划转不计入**（只是搬钱，不是收益）。
+        * 区间内有成交但没有资金费上报时 `partial=true`：资金费显示 0 **不代表真的是 0**。
+        * 权益 `equity = 钱包余额(USD) + 未实现盈亏`，未实现盈亏是回读时刻的值。
+        * 缺数据不是零收益：没有回读过时 `equity_*` 为 `null`。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/Period"
+        - $ref: "#/components/parameters/AccountId"
+      responses:
+        "200":
+          description: 区间汇总
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PortfolioSummary"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/portfolio/curve:
+    get:
+      tags: [Portfolio]
+      operationId: portfolioCurve
+      summary: 资产 / 盈亏曲线
+      description: |
+        `metric=value`（默认）返回权益序列（含区间最高 / 最低、最大回撤）；`metric=pnl` 返回盈亏序列
+        （已实现盈亏 / 手续费 / 资金费，不含未实现盈亏）。`granularity=day` 直接读日表，`week` / `month`
+        由日表聚合
+        （收盘取桶内最后一天）。**只返回有数据的桶**：没有数据的日子不会被补 0。
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/Period"
+        - $ref: "#/components/parameters/AccountId"
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: day
+        - name: metric
+          in: query
+          schema:
+            type: string
+            enum: [value, pnl]
+            default: value
+      responses:
+        "200":
+          description: 曲线（形状随 `metric` 变化）
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValueCurve"
+                  - $ref: "#/components/schemas/PnlCurve"
+                discriminator:
+                  propertyName: metric
+                  mapping:
+                    value: "#/components/schemas/ValueCurve"
+                    pnl: "#/components/schemas/PnlCurve"
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/portfolio/breakdown:
+    get:
+      tags: [Portfolio]
+      operationId: portfolioBreakdown
+      summary: 按交易对拆分
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/Period"
+        - $ref: "#/components/parameters/AccountId"
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [pnl, volume]
+            default: pnl
+      responses:
+        "200":
+          description: 分交易对汇总
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [account_id, period, from, to, sort, items, partial]
+                properties:
+                  account_id: {type: integer, format: int64}
+                  period: {$ref: "#/components/schemas/PeriodValue"}
+                  from: {$ref: "#/components/schemas/DateString"}
+                  to: {$ref: "#/components/schemas/DateString"}
+                  sort: {type: string, enum: [pnl, volume]}
+                  items:
+                    type: array
+                    items: {$ref: "#/components/schemas/BreakdownItem"}
+                  partial: {type: boolean}
+                  source:
+                    type: object
+                    properties:
+                      funding_fee: {type: string, const: app_report}
+                      others: {type: string, const: archive}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/portfolio/calendar:
+    get:
+      tags: [Portfolio]
+      operationId: portfolioCalendar
+      summary: 盈亏日历
+      description: |
+        跨度 ≤ 90 天（`to − from`），超过 / `from > to` 返回 `invalid_param`。缺省 = 以今天结束的
+        30 天。
+        **只回有数据的天**；没有数据的天不是零收益。资金费只有端上报这一个来源，缺失时 `partial=true`。
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: from
+          in: query
+          description: 起始日（`yyyy-MM-dd`）
+          schema: {$ref: "#/components/schemas/DateString"}
+        - name: to
+          in: query
+          description: 结束日（`yyyy-MM-dd`），缺省今天（UTC）
+          schema: {$ref: "#/components/schemas/DateString"}
+        - $ref: "#/components/parameters/AccountId"
+      responses:
+        "200":
+          description: 日历
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [account_id, from, to, items, partial]
+                properties:
+                  account_id: {type: integer, format: int64}
+                  from: {$ref: "#/components/schemas/DateString"}
+                  to: {$ref: "#/components/schemas/DateString"}
+                  items:
+                    type: array
+                    items: {$ref: "#/components/schemas/CalendarDay"}
+                  partial: {type: boolean}
+                  note: {type: string}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/udf/{kind}:
+    get:
+      tags: [Charts]
+      operationId: udf
+      summary: 图表 datafeed（未实现）
+      description: |
+        路由保留，**一律返回 501 `not_implemented`**（已登录与否都一样）。K 线与图表 datafeed 由 App 直连
+        Aster klines 自实现；是否改为后端提供，以及服务端 K 线数据源，是待定的产品决策。
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [config, symbol_info, history]
+      responses:
+        "501": {$ref: "#/components/responses/NotImplemented"}
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        `Authorization: Bearer <access_token>`（登录接口签发）。access 过期返回
+        `session_expired`：
+        先 `POST /v1/auth/refresh`，**只重试一次**；`session_revoked` /
+        `unauthenticated` 不重试，走登录。
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        写接口必填，缺失返回 `invalid_param`。**重试复用同一个 key**；同一个 key 配不同请求体返回
+        `invalid_param`；
+        重复键返回首次结果。
+      schema: {type: string, minLength: 1}
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      description: 带上次的 `ETag`，内容未变返回 304
+      schema: {type: string}
+    Cursor:
+      name: cursor
+      in: query
+      description: 上一页返回的 `next_cursor`；失效返回 `invalid_param`，应从头拉取
+      schema: {type: string}
+    Limit:
+      name: limit
+      in: query
+      description: 每页条数，默认 50，范围 1–200（超出会被夹到范围内）
+      schema: {type: integer, minimum: 1, maximum: 200, default: 50}
+    AccountId:
+      name: account_id
+      in: query
+      description: |
+        查询哪个账户（也接受 `accountId`）。必须是会话能操作的已登记账户，否则 `not_found`；
+        缺省 = 当前操作账户。
+      schema: {type: integer, format: int64}
+    SymbolIgnored:
+      name: symbol
+      in: query
+      description: 目前**不会按交易对过滤**；传了会在响应里标 `symbol_filter_ignored=true`
+      schema: {type: string}
+    TransferKindParam:
+      name: kind
+      in: query
+      description: |
+        仅 `/v1/history/transfers` 使用：按资金变动类型过滤
+        （`deposit` / `withdraw` / `internal_transfer`），缺省 = 三类全出。
+        非法值返回 `invalid_param`（400）。资金费不在此枚举内
+        （它属于 `/v1/history/income`）。
+      schema: {$ref: "#/components/schemas/TransferKind"}
+    From:
+      name: from
+      in: query
+      description: 当前仅原样回显在响应 `filters.from`，**不参与过滤**
+      schema: {type: string}
+    To:
+      name: to
+      in: query
+      description: 当前仅原样回显在响应 `filters.to`，**不参与过滤**
+      schema: {type: string}
+    Period:
+      name: period
+      in: query
+      description: "`24h` / `7d` / `14d` / `30d`（默认）/ `all`；其他值 `invalid_param`。
+        区间含今天（UTC）往前推。"
+      schema: {$ref: "#/components/schemas/PeriodValue"}
+
+  headers:
+    ETag:
+      description: 内容哈希
+      schema: {type: string}
+    CachePublic:
+      description: "`public, max-age=30`（首屏聚合）或 `public, max-age=300`（配置类）"
+      schema: {type: string}
+    RetryAfter:
+      description: 限流后建议等待的秒数
+      schema: {type: integer}
+
+  responses:
+    NotModified:
+      description: "`If-None-Match` 命中，内容未变（无响应体）"
+    BadRequest:
+      description: "`invalid_param`（含 cursor 失效 / 缺 `Idempotency-Key` / 字段校验失败）等
+        400 类错误"
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+    Unauthorized:
+      description: |
+        `unauthenticated`（未带或无效令牌，不重试，走登录）/ `session_expired`（先 refresh，只重试一次）/
+        `session_revoked`（不重试，重新登录）
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+    NotFound:
+      description: "`not_found`：资源不存在**或不属于当前用户 / 会话**（不泄露存在性）"
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+    Conflict:
+      description: "`identity_conflict`（身份已绑定到另一个用户 / 钱包）/ `wallet_not_linked` /
+        `not_bound`"
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+    RateLimited:
+      description: "`rate_limited`：超出限流"
+      headers:
+        Retry-After: {$ref: "#/components/headers/RetryAfter"}
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+    NotImplemented:
+      description: "`not_implemented`：端点未实现，或能力未配置（如服务端没配 Privy）"
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+    ServerError:
+      description: "`internal_error`：未预期错误（真实原因只进日志）"
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+    Unavailable:
+      description: "`upstream_unavailable`：上游（如 Privy JWKS）暂不可用，客户端应退避重试"
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+    Issued:
+      description: 会话
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Issued"}
+
+  schemas:
+    # ------------------------------------------------------------ 通用 ---
+    ErrorCode:
+      type: string
+      description: 稳定的机器码，**改动即破坏性变更**
+      enum:
+        - unauthenticated
+        - session_expired
+        - session_revoked
+        - privy_token_invalid
+        - nonce_invalid
+        - signature_invalid
+        - invalid_param
+        - region_blocked
+        - wallet_not_linked
+        - identity_conflict
+        - not_bound
+        - not_found
+        - not_implemented
+        - rate_limited
+        - upstream_unavailable
+        - internal_error
+      x-http-status:
+        unauthenticated: 401
+        session_expired: 401
+        session_revoked: 401
+        privy_token_invalid: 401
+        nonce_invalid: 400
+        signature_invalid: 400
+        invalid_param: 400
+        region_blocked: 403
+        wallet_not_linked: 409
+        identity_conflict: 409
+        not_bound: 409
+        not_found: 404
+        not_implemented: 501
+        rate_limited: 429
+        upstream_unavailable: 503
+        internal_error: 500
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: {$ref: "#/components/schemas/ErrorCode"}
+        message:
+          type: string
+          description: 只给人看，不保证稳定
+    Decimal:
+      type: string
+      description: 十进制字符串（`numeric(38,18)`，如 `"0.500000000000000000"`），按数值比较
+      pattern: "^-?[0-9]+(\\.[0-9]+)?$"
+      examples: ["50000.000000000000000000"]
+    NullableDecimal:
+      type: [string, "null"]
+      description: 十进制字符串；没有数据时为 `null`（**缺数据不是 0**）
+    Timestamp:
+      type: string
+      format: date-time
+      description: RFC3339 UTC
+    NullableTimestamp:
+      type: [string, "null"]
+      format: date-time
+    DateString:
+      type: string
+      format: date
+      description: "`yyyy-MM-dd`（UTC）"
+    NextCursor:
+      type: [string, "null"]
+      description: 下一页游标；`null` = 到底
+    PeriodValue:
+      type: string
+      enum: ["24h", "7d", "14d", "30d", all]
+      default: "30d"
+    DataTier:
+      type: string
+      enum: [live, archive]
+      description: "`live` = 7 天内（Aster 公开 API 也查得到），`archive` = 7 天外（只有我们的归档有）"
+    AccountRole:
+      type: string
+      enum: [main, sub]
+    AccountStatus:
+      type: [string, "null"]
+      description: 端声明，只用于展示；真值在 Aster 侧。常见值 `normal` / `frozen` / `unknown`
+    TransferKind:
+      type: string
+      enum: [deposit, withdraw, internal_transfer]
+    TwapStatus:
+      type: string
+      enum: [open, closed]
+    PushCapability:
+      type: string
+      enum: [full, inbox_only, no_server_visibility]
+    HistoryPage:
+      type: object
+      required: [items, next_cursor, partial, symbol_filter_ignored, filters]
+      properties:
+        items:
+          type: array
+          items: {}
+        next_cursor: {$ref: "#/components/schemas/NextCursor"}
+        partial:
+          type: boolean
+          description: 数据不完整（不是错误）
+        symbol_filter_ignored:
+          type: boolean
+          description: 传了 `symbol` 但没有按它过滤
+        filters:
+          type: object
+          description: "`from` / `to` 原样回显，不参与过滤"
+          properties:
+            from: {type: [string, "null"]}
+            to: {type: [string, "null"]}
+
+    # ------------------------------------------------------------ 配置 ---
+    SymbolAsOf:
+      type: object
+      properties:
+        v3: {$ref: "#/components/schemas/NullableTimestamp"}
+        bapi: {$ref: "#/components/schemas/NullableTimestamp"}
+    SymbolView:
+      type: object
+      description: 交易对（内部 id ↔ Aster 交易对、分类、精度）
+      required: [internal_id, aster_symbol, enabled]
+      properties:
+        internal_id: {type: string, examples: [BTC-PERP]}
+        aster_symbol: {type: string, examples: [BTCUSDT]}
+        base_asset: {type: [string, "null"]}
+        quote_asset: {type: [string, "null"]}
+        margin_asset: {type: [string, "null"]}
+        market_type:
+          type: [string, "null"]
+          description: bapi 分类；bapi 缺失时省略 / null
+        source:
+          type: object
+          properties:
+            market_type: {type: string, const: bapi}
+            filters: {type: string, const: v3_exchange_info}
+        as_of: {$ref: "#/components/schemas/SymbolAsOf"}
+        enabled: {type: boolean}
+        tick_size: {$ref: "#/components/schemas/NullableDecimal"}
+        step_size: {$ref: "#/components/schemas/NullableDecimal"}
+        min_notional: {$ref: "#/components/schemas/NullableDecimal"}
+        filters:
+          description: "`exchangeInfo` 的 filters 原样透传"
+          type: [array, object, "null"]
+    SystemConfig:
+      type: object
+      required: [maintenance, min_supported_version, feature_flags, server_time]
+      properties:
+        maintenance:
+          type: object
+          required: [enabled]
+          properties:
+            enabled: {type: boolean}
+            until: {$ref: "#/components/schemas/NullableTimestamp"}
+        min_supported_version: {type: string, examples: ["1.0.0"]}
+        feature_flags:
+          type: object
+          additionalProperties: {type: boolean}
+          description: 含 `privy_login`（服务端是否配置了 Privy）
+        server_time: {$ref: "#/components/schemas/Timestamp"}
+    GeoDecision:
+      type: object
+      required: [allowed, blocked, country_known, enforced_by]
+      properties:
+        allowed: {type: boolean}
+        blocked: {type: boolean}
+        country: {type: [string, "null"]}
+        country_known:
+          type: boolean
+          description: 没配 `GEO_COUNTRY_HEADER` 时国家维度不生效，为 false
+        rule_id: {type: [string, "null"]}
+        client_ip: {type: [string, "null"]}
+        enforced_by:
+          type: string
+          const: server
+          description: 判定源在服务端；服务端不硬拦，App 据此拦截 UI
+    Bootstrap:
+      type: object
+      required: [symbols, sessions, config, source, as_of, partial]
+      properties:
+        symbols:
+          type: array
+          items: {$ref: "#/components/schemas/SymbolView"}
+        sessions:
+          type: array
+          description: bapi 交易时段（按 `symbol` 参数收窄）
+          items:
+            type: object
+            properties:
+              internal_id: {type: string}
+              aster_symbol: {type: string}
+              market_type: {type: [string, "null"]}
+              sessions:
+                description: bapi 时段原样透传
+              source: {type: string, const: bapi}
+              as_of: {$ref: "#/components/schemas/NullableTimestamp"}
+        config:
+          type: object
+          properties:
+            maintenance:
+              type: object
+              properties:
+                enabled: {type: boolean}
+                until: {$ref: "#/components/schemas/NullableTimestamp"}
+            min_supported_version: {type: string}
+            feature_flags:
+              type: object
+              additionalProperties: {type: boolean}
+            geo: {$ref: "#/components/schemas/GeoDecision"}
+        source:
+          type: object
+          properties:
+            symbols: {type: string, const: v3_exchange_info}
+            classification: {type: string, const: bapi}
+        as_of: {$ref: "#/components/schemas/SymbolAsOf"}
+        partial:
+          type: boolean
+          description: bapi 侧从未取到过分类 / 时段
+
+    # ------------------------------------------------------------ 认证 ---
+    PrivyLogin:
+      type: object
+      required: [privy_token]
+      properties:
+        privy_token:
+          type: string
+          description: Privy **identity token**（不是 access token）
+        device_id:
+          type: string
+          description: 端自报的设备 id（会话记录用）
+        platform:
+          type: string
+          enum: [ios, android, web]
+    SiweLogin:
+      type: object
+      required: [message, signature]
+      properties:
+        message:
+          type: string
+          description: 端上签的完整 EIP-4361 消息（不要单独传 address）
+        signature:
+          type: string
+          description: "`0x` + 65 字节签名"
+        device_id:
+          type: string
+        platform:
+          type: string
+          enum: [ios, android, web]
+    Issued:
+      type: object
+      required: [access_token, refresh_token, expires_in, user]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+          description: 只在这里出现一次；用完即废
+        expires_in:
+          type: integer
+          description: access token 有效秒数
+        user:
+          type: object
+          required: [user_id, method]
+          properties:
+            user_id:
+              type: integer
+              format: int64
+            wallet:
+              type: [string, "null"]
+              description: 当前操作钱包（小写）
+            method:
+              type: string
+              enum: [privy, siwe]
+    IdentityLink:
+      type: object
+      required: [provider, subject, proof]
+      properties:
+        provider:
+          type: string
+          const: evm_wallet
+          description: 目前只支持 `evm_wallet`
+        subject:
+          type: string
+          description: 被绑钱包地址（必须与签名地址一致，否则 `signature_invalid`）
+        proof:
+          type: object
+          required: [message, signature]
+          properties:
+            message:
+              type: string
+              description: 完整 EIP-4361 消息（nonce 来自 `/v1/auth/nonce`，一次性）
+            signature:
+              type: string
+        role:
+          type: string
+          enum: [main, sub]
+          default: main
+          description: "`main` 绑附加钱包（仅 Privy 登录的主体）/ `sub` 登记子账户"
+        parent_account_id:
+          type: integer
+          format: int64
+          description: 子账户挂到哪个账户下（缺省 = 当前操作账户；也接受 `parentAccountId`）
+        aster_account_id:
+          type: integer
+          format: int64
+          description: 端上报的 Aster `accountId`（`getSubAccountList`；也接受
+            `asterAccountId`）
+        name:
+          type: string
+          description: 端上报的子账户名称
+        status:
+          type: string
+          description: 端声明的状态，只用于展示（`normal` / `frozen` / `unknown`）
+    AccountItem:
+      type: object
+      required: [account_id, address, role, active]
+      properties:
+        account_id:
+          type: integer
+          format: int64
+        address:
+          type: string
+        role:
+          $ref: "#/components/schemas/AccountRole"
+        parent_account_id:
+          type: [integer, "null"]
+          format: int64
+        aster_account_id:
+          type: [integer, "null"]
+          format: int64
+        name:
+          type: [string, "null"]
+        status:
+          $ref: "#/components/schemas/AccountStatus"
+        source:
+          type: string
+          enum: [app_report, signature]
+          description: >-
+            账户声明字段来源（PRD §1.10）：子账户的 `aster_account_id` / `name` /
+            `parent_account_id` 属端声明（`app_report`），主账户来自钱包签名绑定（`signature`）。
+        active:
+          type: boolean
+          description: 是否是当前操作账户
+    Me:
+      type: object
+      required:
+        - logged_in
+        - session_id
+        - user_id
+        - account_id
+        - method
+        - accounts
+        - sub_accounts
+        - agent
+        - builder
+        - visibility
+      properties:
+        logged_in:
+          type: boolean
+          const: true
+        session_id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        account_id:
+          type: integer
+          format: int64
+          description: 当前操作账户
+        method:
+          type: string
+          enum: [privy, siwe]
+        wallet:
+          type: [string, "null"]
+        wallets:
+          type: array
+          description: 兼容字段，等同 `accounts` 加 `user_id` / `is_primary`
+          items:
+            allOf:
+              - $ref: "#/components/schemas/AccountItem"
+              - type: object
+                properties:
+                  user_id:
+                    type: integer
+                    format: int64
+                  is_primary:
+                    type: boolean
+        accounts:
+          type: array
+          description: 会话能操作的全部账户（主在前、子在后）。切换语义，不是合并视图
+          items:
+            $ref: "#/components/schemas/AccountItem"
+        sub_accounts:
+          type: object
+          description: 第④态。Privy 登录的账户 `enabled=false`（Aster 侧不支持，PRD 禁止）
+          properties:
+            enabled:
+              type: boolean
+            count:
+              type: integer
+            limit:
+              type: integer
+              const: 10
+        agent:
+          type: object
+          description: 第②态：服务端登记表里的 agent（端上直连 Aster 才能拿到实时权限）
+          properties:
+            authorized:
+              type: boolean
+            agents:
+              type: array
+              items:
+                type: object
+                properties:
+                  address:
+                    type: string
+                  can_spot:
+                    type: boolean
+                  can_perp:
+                    type: boolean
+                  can_withdraw:
+                    type: boolean
+                    description: 红线：DB 层强制为 false
+                  expired_at:
+                    $ref: "#/components/schemas/NullableTimestamp"
+            source:
+              type: string
+              const: agent_registry
+        builder:
+          type: object
+          description: 第③态：服务端可见 / 可推送的前提
+          properties:
+            bound:
+              type: boolean
+            status:
+              type: [string, "null"]
+            bound_at:
+              $ref: "#/components/schemas/NullableTimestamp"
+            note:
+              type: [string, "null"]
+        visibility:
+          type: object
+          properties:
+            state:
+              type: string
+              description: "`full` / `no_server_visibility` / `unknown`"
+            reason:
+              type: [string, "null"]
+              description: 上游原因码（`-5049` / `-5052` / `-5053`）
+        unread_notifications:
+          type: integer
+
+    WatchlistItem:
+      type: object
+      required: [symbol, sort, added_at]
+      properties:
+        symbol:
+          type: string
+          examples: [BTCUSDT]
+        sort:
+          type: integer
+        added_at:
+          $ref: "#/components/schemas/Timestamp"
+
+    # ------------------------------------------------------------ 历史 ---
+    Order:
+      type: object
+      required:
+        - order_id
+        - symbol
+        - side
+        - type
+        - status
+        - executed_qty
+        - order_time
+        - source
+      properties:
+        order_id:
+          type: integer
+          format: int64
+        client_order_id:
+          type: [string, "null"]
+        symbol:
+          type: string
+        side:
+          type: string
+          enum: [BUY, SELL]
+        position_side:
+          type: [string, "null"]
+          enum: [BOTH, LONG, SHORT, null]
+        type:
+          type: string
+          description: 订单类型（如 `LIMIT` / `MARKET` / `STOP_MARKET`）
+        orig_type:
+          type: [string, "null"]
+        status:
+          type: string
+          enum: [NEW, PARTIALLY_FILLED, FILLED, CANCELED, REJECTED, EXPIRED]
+        price:
+          $ref: "#/components/schemas/NullableDecimal"
+        orig_qty:
+          $ref: "#/components/schemas/NullableDecimal"
+        executed_qty:
+          $ref: "#/components/schemas/Decimal"
+        avg_price:
+          $ref: "#/components/schemas/NullableDecimal"
+        reduce_only:
+          type: boolean
+        order_time:
+          $ref: "#/components/schemas/Timestamp"
+        update_time:
+          $ref: "#/components/schemas/NullableTimestamp"
+        source:
+          $ref: "#/components/schemas/DataTier"
+    Fill:
+      type: object
+      required: [trade_id, symbol, side, price, qty, fee, trade_time, source]
+      properties:
+        trade_id:
+          type: integer
+          format: int64
+        order_id:
+          type: [integer, "null"]
+          format: int64
+          description: 关联订单（一张单的成交合计应等于订单的 `executed_qty`）
+        symbol:
+          type: string
+        side:
+          type: string
+          enum: [BUY, SELL]
+        position_side:
+          type: [string, "null"]
+        price:
+          $ref: "#/components/schemas/Decimal"
+        qty:
+          $ref: "#/components/schemas/Decimal"
+        notional:
+          $ref: "#/components/schemas/NullableDecimal"
+        fee:
+          $ref: "#/components/schemas/Decimal"
+          description: 口径按 DDL：**负 = 收取**
+        fee_asset:
+          type: [string, "null"]
+        realized_profit:
+          $ref: "#/components/schemas/NullableDecimal"
+        builder_fee:
+          $ref: "#/components/schemas/NullableDecimal"
+        active_buy:
+          type: [boolean, "null"]
+        trade_time:
+          $ref: "#/components/schemas/Timestamp"
+        source:
+          $ref: "#/components/schemas/DataTier"
+    PositionCycle:
+      type: object
+      required:
+        - id
+        - symbol
+        - side
+        - opened_at
+        - entry_price
+        - max_qty
+        - realized_pnl
+        - fees
+        - status
+        - inferred
+        - liquidated
+      properties:
+        id:
+          type: integer
+          format: int64
+        symbol:
+          type: string
+        side:
+          type: string
+          description: 多 / 空
+        opened_at:
+          $ref: "#/components/schemas/Timestamp"
+        closed_at:
+          $ref: "#/components/schemas/NullableTimestamp"
+        entry_price:
+          $ref: "#/components/schemas/Decimal"
+        exit_price:
+          $ref: "#/components/schemas/NullableDecimal"
+        max_qty:
+          $ref: "#/components/schemas/Decimal"
+          description: 峰值仓位（取快照）
+        realized_pnl:
+          $ref: "#/components/schemas/Decimal"
+          description: 由成交重建，不靠上报
+        fees:
+          $ref: "#/components/schemas/Decimal"
+        status:
+          type: string
+          enum: [open, closed]
+        inferred:
+          type: boolean
+          description: 首次观测时已在持仓中，开仓时间 / 入场价不可信
+        liquidated:
+          type: boolean
+          description: 该周期以强平结束
+    IncomeItem:
+      type: object
+      properties:
+        occurred_at:
+          $ref: "#/components/schemas/Timestamp"
+        source:
+          type: string
+          description: 行来源（`app_report` / `balance_diff`）
+        kind:
+          type: string
+          description: 资金费类（`funding`）
+        asset:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Decimal"
+        symbol:
+          type: [string, "null"]
+        balance_after:
+          $ref: "#/components/schemas/NullableDecimal"
+        data_source:
+          type: string
+          const: app_report
+        source_tier:
+          $ref: "#/components/schemas/DataTier"
+    TransferItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        occurred_at:
+          $ref: "#/components/schemas/Timestamp"
+        kind:
+          $ref: "#/components/schemas/TransferKind"
+        asset:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Decimal"
+        symbol:
+          type: [string, "null"]
+        balance_after:
+          $ref: "#/components/schemas/NullableDecimal"
+        reference:
+          type: [string, "null"]
+          description: 外部引用（tx hash / 内部流水号），去重用
+        data_source:
+          type: string
+          enum: [app_report, balance_diff]
+        source_tier:
+          $ref: "#/components/schemas/DataTier"
+    Twap:
+      type: object
+      properties:
+        strategy_id:
+          type: string
+        symbol:
+          type: string
+        side:
+          type: string
+          enum: [BUY, SELL]
+        total_qty:
+          $ref: "#/components/schemas/Decimal"
+        executed_qty:
+          $ref: "#/components/schemas/Decimal"
+        status:
+          $ref: "#/components/schemas/TwapStatus"
+        params:
+          description: 端上原样上报的策略参数
+          type: [object, "null"]
+          additionalProperties: true
+        created_at:
+          $ref: "#/components/schemas/Timestamp"
+        updated_at:
+          $ref: "#/components/schemas/Timestamp"
+        source:
+          type: string
+          const: app_report
+    SnapshotPosition:
+      type: object
+      properties:
+        symbol:
+          type: string
+        position_side:
+          type: string
+        position_amt:
+          $ref: "#/components/schemas/Decimal"
+        entry_price:
+          $ref: "#/components/schemas/NullableDecimal"
+        mark_price:
+          $ref: "#/components/schemas/NullableDecimal"
+        unrealized_pnl:
+          $ref: "#/components/schemas/NullableDecimal"
+        liquidation_price:
+          $ref: "#/components/schemas/NullableDecimal"
+        leverage:
+          $ref: "#/components/schemas/NullableDecimal"
+        margin_type:
+          type: [string, "null"]
+        observed_at:
+          $ref: "#/components/schemas/Timestamp"
+    SnapshotOrder:
+      type: object
+      properties:
+        symbol:
+          type: string
+        order_id:
+          type: integer
+          format: int64
+        client_order_id:
+          type: [string, "null"]
+        side:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        price:
+          $ref: "#/components/schemas/NullableDecimal"
+        orig_qty:
+          $ref: "#/components/schemas/NullableDecimal"
+        executed_qty:
+          $ref: "#/components/schemas/Decimal"
+        update_time:
+          $ref: "#/components/schemas/NullableTimestamp"
+    AccountSummary:
+      type: object
+      required:
+        - account_id
+        - currency
+        - positions
+        - open_orders
+        - builder_bound
+        - partial
+      properties:
+        account_id:
+          type: integer
+          format: int64
+        currency:
+          type: string
+          const: USD
+        wallet_usd:
+          $ref: "#/components/schemas/NullableDecimal"
+        unrealized_usd:
+          $ref: "#/components/schemas/NullableDecimal"
+        equity_usd:
+          $ref: "#/components/schemas/NullableDecimal"
+        positions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SnapshotPosition"
+        open_orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/SnapshotOrder"
+        as_of:
+          $ref: "#/components/schemas/NullableTimestamp"
+        builder_bound:
+          type: boolean
+        partial:
+          type: boolean
+          description: 未绑定 builder 或从未回读
+        note:
+          type: object
+          properties:
+            equity_formula:
+              type: string
+            not_for_trading:
+              type: string
+
+    # ------------------------------------------------------------ 上报 ---
+    ReportPayload:
+      type: object
+      description: |
+        四个 `/v1/report/*`（orders / income / transfers / positions）共用的上报体，**字段名是
+        camelCase**
+        （`account_id` 也接受）；多余字段被容忍。各端点要求的必填字段见各自的说明。
+        金额类字段可以传数字或十进制字符串，**建议传字符串**避免精度丢失。
+      properties:
+        accountId:
+          type: integer
+          format: int64
+          description: 上报归属的账户（缺省 = 当前操作账户；给了就必须属于会话名下的已登记账户，否则 `not_found`）
+        clientOrderId:
+          type: string
+          description: 客户端订单 id（`report/orders` 必填）
+        asterOrderId:
+          type: integer
+          format: int64
+          description: Aster 订单 id
+        status:
+          type: string
+          description: 订单状态（`NEW` 不产生通知）
+        origType:
+          type: string
+          description: 原始订单类型（`STOP_MARKET` / `TAKE_PROFIT_MARKET` …）；推送去重键与「成交
+            vs 触发单」判定靠它
+        executedQty:
+          type: string
+          description: 成交数量（成交类上报才有）
+        avgPrice:
+          type: string
+          description: 成交均价（成交类上报才有）
+        symbol:
+          type: string
+          description: 交易对，**用 Aster 口径**（`BTCUSDT`），两个通道才能算出同一个去重键
+        reportedAt:
+          type: string
+          format: date-time
+          description: 端上的上报时间（RFC3339）；解析不了就用收到的时间
+        asset:
+          type: string
+          description: 资产（缺省 `USDT`）
+        amount:
+          type: string
+          description: 金额（`report/income`、`report/transfers` 必填）
+        incomeType:
+          type: string
+          description: "`FUNDING_FEE` / `FUNDING`（落库）；`COMMISSION` /
+            `REALIZED_PNL` … 只记原始日志"
+        kind:
+          $ref: "#/components/schemas/TransferKind"
+        balanceAfter:
+          type: string
+          description: 划转后的余额
+        reference:
+          type: string
+          description: 外部引用（tx hash / 内部流水号），**去重用**
+        positionSide:
+          type: string
+          enum: [BOTH, LONG, SHORT]
+        positionAmt:
+          type: string
+          description: 持仓量（`report/positions` 必填）
+        entryPrice:
+          type: string
+        markPrice:
+          type: string
+        unrealizedPnl:
+          type: string
+        liquidationPrice:
+          type: string
+        leverage:
+          type: string
+        marginType:
+          type: string
+        isolatedMargin:
+          type: string
+      additionalProperties: true
+    ReportTwap:
+      type: object
+      required: [strategy_id, symbol, side, total_qty, status]
+      description: 字段名 snake_case，也接受对应的 camelCase
+      properties:
+        strategy_id:
+          type: string
+          maxLength: 128
+          description: 也接受 `strategyId`
+        symbol:
+          type: string
+        side:
+          type: string
+          enum: [BUY, SELL]
+        total_qty:
+          type: string
+          description: "> 0（也接受 `totalQty`）"
+        executed_qty:
+          type: string
+          description: "∈ [0, total_qty]，缺省 0（也接受 `executedQty`）"
+        status:
+          $ref: "#/components/schemas/TwapStatus"
+        params:
+          type: object
+          additionalProperties: true
+          description: 策略参数，原样存储并在历史里回显
+        sub_orders:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: 子单快照（也接受 `subOrders`），由 `/sub_orders` 回显
+        account_id:
+          type: integer
+          format: int64
+          description: 也接受 `accountId`
+
+    # ------------------------------------------------------------ 通知 ---
+    EventType:
+      type: string
+      enum: [FILL, TRIGGER, ORDER, LIQUIDATION, MARGIN_CALL, FUNDING, TRANSFER]
+      description: |
+        `FILL` 成交 / `TRIGGER` 条件单触发后成交 / `ORDER` 撤单·拒绝·过期 /
+        `LIQUIDATION` 强平 / `MARGIN_CALL` 追保预警 / `FUNDING` 资金费 / `TRANSFER` 充提到账。
+    Notification:
+      type: object
+      required: [kind, id, event_key, type, severity, payload, read, created_at]
+      properties:
+        kind:
+          type: string
+          enum: [event, broadcast]
+          description: 个人事件 / 公告广播
+        id:
+          type: integer
+          format: int64
+        event_key:
+          type: string
+          description: 用户内唯一的事实去重键（`order:…` / `liq:…` / `margin_call:…` /
+            `transfer:…` / `funding:…`）；公告为 `broadcast:{id}`
+        type:
+          description: 事件为 `EventType`；公告为 `ANNOUNCE` / `MAINTENANCE`
+          anyOf:
+            - $ref: "#/components/schemas/EventType"
+            - type: string
+              enum: [ANNOUNCE, MAINTENANCE]
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+          description: 强平 / 追保 = critical；成交 / 触发 = high；订单 / 充提 = medium；资金费 /
+            公告 = low
+        symbol:
+          type: [string, "null"]
+        payload:
+          type: object
+          additionalProperties: true
+          description: 事件详情（成交含 price / qty / fee；追保含 mark_price /
+            liquidation_price / distance）
+        read:
+          type: boolean
+        read_at:
+          $ref: "#/components/schemas/NullableTimestamp"
+        created_at:
+          $ref: "#/components/schemas/Timestamp"
+    PushRegister:
+      type: object
+      required: [platform, token, app_id]
+      properties:
+        platform:
+          type: string
+          enum: [ios, android]
+          description: "`web` 会被显式拒绝"
+        token:
+          type: string
+          description: APNs / FCM 设备令牌
+        environment:
+          type: string
+          enum: [sandbox, production]
+          default: production
+          description: 仅 iOS 有意义；开发包与正式包的 token 不通用
+        app_id:
+          type: string
+          description: iOS bundle id（= `apns-topic`）/ Android 包名
+        locale:
+          type: string
+        tz:
+          type: string
+          description: IANA 时区名
+        app_version:
+          type: string
+        utcOffsetMinutes:
+          type: integer
+          format: int32
+          description: 设备本地时间相对 UTC 的偏移（分钟；也接受 `utc_offset_minutes`）。
+            静默时段要靠它才能精确判定
+        state:
+          type: string
+          deprecated: true
+          description: 已废弃：服务端接受但忽略
+    PushPrefsUpdate:
+      type: object
+      description: 只传要改的字段，其余沿用当前值
+      properties:
+        fills:
+          type: boolean
+          description: 成交类（`FILL`）
+        triggers:
+          type: boolean
+          description: 触发单（`TRIGGER`）
+        orders:
+          type: boolean
+          description: 订单类（`ORDER`）
+        funding:
+          type: boolean
+          description: 资金费（`FUNDING`）
+        transfers:
+          type: boolean
+          description: 充提（`TRANSFER`）
+        announcements:
+          type: boolean
+          description: 公告
+        quiet_start:
+          type: string
+          description: "`HH:MM` 或 `HH:MM:SS`；与 `quiet_end` 必须同时提供且不能相同"
+        quiet_end:
+          type: string
+        min_notional:
+          type: string
+          description: 非负十进制字符串；低于它的成交类通知不推送
+    PushPrefs:
+      type: object
+      properties:
+        fills:
+          type: boolean
+        triggers:
+          type: boolean
+        orders:
+          type: boolean
+        funding:
+          type: boolean
+        transfers:
+          type: boolean
+        announcements:
+          type: boolean
+        quiet_start:
+          type: [string, "null"]
+          description: "`HH:MM`"
+        quiet_end:
+          type: [string, "null"]
+        min_notional:
+          type: string
+        quiet_timezone:
+          type: string
+          const: device
+          description: 静默时段按设备本地时间解释
+
+    # ------------------------------------------------------------ Portfolio ---
+    PortfolioSummary:
+      type: object
+      required:
+        - account_id
+        - period
+        - from
+        - to
+        - realized_pnl_usd
+        - fees_usd
+        - funding_fee_usd
+        - volume_usd
+        - trades
+        - net_flow_usd
+        - partial
+      properties:
+        account_id:
+          type: integer
+          format: int64
+        period:
+          $ref: "#/components/schemas/PeriodValue"
+        from:
+          $ref: "#/components/schemas/DateString"
+        to:
+          $ref: "#/components/schemas/DateString"
+        equity_start_usd:
+          $ref: "#/components/schemas/NullableDecimal"
+        equity_end_usd:
+          $ref: "#/components/schemas/NullableDecimal"
+        realized_pnl_usd:
+          $ref: "#/components/schemas/Decimal"
+        fees_usd:
+          $ref: "#/components/schemas/Decimal"
+        funding_fee_usd:
+          $ref: "#/components/schemas/Decimal"
+          description: 只来自端上报；`partial=true` 时 0 不代表真的是 0
+        volume_usd:
+          $ref: "#/components/schemas/Decimal"
+        trades:
+          type: integer
+        net_flow_usd:
+          $ref: "#/components/schemas/Decimal"
+          description: 充值 − 提现；**内部划转不计入**
+        as_of:
+          $ref: "#/components/schemas/NullableTimestamp"
+        partial:
+          type: boolean
+          description: 区间内有成交但没有资金费上报
+        source:
+          type: object
+          description: 每个指标的来源（`archive` = Builder 回读，`app_report` = 端上报）
+          properties:
+            realized_pnl:
+              type: string
+            fees:
+              type: string
+            volume:
+              type: string
+            funding_fee:
+              type: string
+            net_flow:
+              type: string
+            equity:
+              type: string
+        note:
+          type: object
+          properties:
+            equity_formula:
+              type: string
+            unrealized_is_snapshot:
+              type: string
+            partial_reason:
+              type: [string, "null"]
+    ValueCurve:
+      type: object
+      required: [account_id, period, from, to, granularity, metric, points]
+      properties:
+        account_id:
+          type: integer
+          format: int64
+        period:
+          $ref: "#/components/schemas/PeriodValue"
+        from:
+          $ref: "#/components/schemas/DateString"
+        to:
+          $ref: "#/components/schemas/DateString"
+        granularity:
+          type: string
+          enum: [day, week, month]
+        metric:
+          type: string
+          const: value
+        points:
+          type: array
+          items:
+            type: object
+            properties:
+              bucket:
+                $ref: "#/components/schemas/Timestamp"
+              equity_close_usd:
+                $ref: "#/components/schemas/Decimal"
+              equity_high_usd:
+                $ref: "#/components/schemas/NullableDecimal"
+              equity_low_usd:
+                $ref: "#/components/schemas/NullableDecimal"
+              net_flow_usd:
+                $ref: "#/components/schemas/Decimal"
+              finalized:
+                type: boolean
+                description: 该桶是否已收盘（当天 / 当周 / 当月为 false）
+        high_usd:
+          $ref: "#/components/schemas/NullableDecimal"
+        low_usd:
+          $ref: "#/components/schemas/NullableDecimal"
+        max_drawdown:
+          type:
+            - object
+            - "null"
+          description: 空序列为 `null`
+          properties:
+            ratio:
+              $ref: "#/components/schemas/Decimal"
+            absolute_usd:
+              $ref: "#/components/schemas/Decimal"
+        as_of:
+          $ref: "#/components/schemas/NullableTimestamp"
+        note:
+          type: object
+          additionalProperties:
+            type: string
+    PnlCurve:
+      type: object
+      required: [account_id, period, from, to, granularity, metric, points]
+      properties:
+        account_id:
+          type: integer
+          format: int64
+        period:
+          $ref: "#/components/schemas/PeriodValue"
+        from:
+          $ref: "#/components/schemas/DateString"
+        to:
+          $ref: "#/components/schemas/DateString"
+        granularity:
+          type: string
+          enum: [day, week, month]
+        metric:
+          type: string
+          const: pnl
+        points:
+          type: array
+          items:
+            type: object
+            properties:
+              bucket:
+                $ref: "#/components/schemas/Timestamp"
+              realized_pnl_usd:
+                $ref: "#/components/schemas/Decimal"
+              fees_usd:
+                $ref: "#/components/schemas/Decimal"
+              funding_fee_usd:
+                $ref: "#/components/schemas/Decimal"
+              volume_usd:
+                $ref: "#/components/schemas/Decimal"
+              trades:
+                type: integer
+        note:
+          type: object
+          additionalProperties: true
+    BreakdownItem:
+      type: object
+      properties:
+        symbol:
+          type: string
+        realized_pnl_usd:
+          $ref: "#/components/schemas/Decimal"
+        fees_usd:
+          $ref: "#/components/schemas/Decimal"
+        funding_fee_usd:
+          $ref: "#/components/schemas/Decimal"
+        volume_usd:
+          $ref: "#/components/schemas/Decimal"
+        trades:
+          type: integer
+    CalendarDay:
+      type: object
+      properties:
+        day:
+          $ref: "#/components/schemas/DateString"
+        realized_pnl_usd:
+          $ref: "#/components/schemas/Decimal"
+        fees_usd:
+          $ref: "#/components/schemas/Decimal"
+        funding_fee_usd:
+          $ref: "#/components/schemas/Decimal"
+        volume_usd:
+          $ref: "#/components/schemas/Decimal"
+        trades:
+          type: integer

@@ -10,6 +10,7 @@
   "authWalletConfiguration": "External wallet sign-in is not available.",
   "authWalletCancelled": "Wallet connection cancelled. You can retry.",
   "authWalletRejected": "Wallet request rejected. You can retry.",
+  "authWalletOpenFailed": "Could not open your connected wallet. Check that the wallet app is installed, then retry.",
   "authWalletUnavailable": "Wallet connection failed. Check your wallet app and network, then retry.",
   "walletResponseReason": "Wallet response: {reason}",
   "@walletResponseReason": {
@@ -24,6 +25,8 @@
   "authWalletConnectionTimeout": "Wallet connection setup timed out. Check your network and retry.",
   "authWalletUnsupported": "Select Ethereum, BNB Chain, Arbitrum, or Base in your wallet.",
   "authWalletChanged": "Wallet account or network changed. Reconnect and sign in again.",
+  "authWalletSessionUnverified": "The wallet session could not be confirmed. Open your wallet, check its connection, and reconnect to continue.",
+  "authWalletResponseTimeout": "The wallet did not return a signature. Open your wallet to check the request, then retry.",
   "authWalletReconnect": "Connect your wallet to continue.",
   "authWalletSignature": "Your wallet did not return a valid signature. Please retry.",
   "quotesConnecting": "Connecting live quotes",
@@ -1102,22 +1105,7 @@
   "liveTrailingSell": "After activation, a sell follows the highest price and triggers on a fall by the callback percentage. Triggering does not guarantee an execution price.",
   "liveTrailingEstimateHint": "There is no fixed execution price. Notional and opening margin use the current mark only as a reference; closing PnL is unavailable. Actual size eligibility, margin and execution depend on exchange state. Fees, funding and slippage are excluded.",
   "quickOrderInvalid": "Quick entry must be an ordinary market order without reduction, a fixed price or attached conditions.",
-  "quickOrderTitle": "Chart quick market entry",
   "quickOrderHint": "Real wallet orders. Quantity is independent of the trade form. One-way orders can reduce or reverse an existing position. Quotes are references, not execution prices. This order has no attached TP/SL or user slippage setting.",
-  "quickOrderRead": "Read wallet and sizing inputs",
-  "quickOrderReadHint": "Explicitly sign four account/configuration reads, then three separate fee, risk-bracket and open-order reads for percentage sizing. No order is sent by reading. The first price snapshot expires in 30 seconds.",
-  "quickOrderIndependent": "Enter base-asset quantity, or choose a percentage. Starts empty; no default percentage.",
-  "quickOrderPercentSelected": "{percent}% selected. Buy and sell reference quantities are shown separately. Type a quantity to replace the percentage.",
-  "@quickOrderPercentSelected": {
-    "placeholders": {
-      "percent": {
-        "type": "int"
-      }
-    }
-  },
-  "quickOrderBuyQuantity": "Reference buy quantity",
-  "quickOrderSellQuantity": "Reference sell quantity",
-  "quickOrderSizingHint": "Percentages use the read-time USDT available margin, leverage, taker fee, risk brackets, existing positions, same-direction pending quantity and bid/ask, rounded down to the market step. They exclude released margin and other-asset collateral. These are reference budgets, not guaranteed maximum quantities; prices, orders and exchange limits can change.",
   "quickOrderSizingFailure": "Percentage sizing is unavailable. Retry the read, or enter a quantity if the account context is valid. Inputs are preserved.",
   "quickOrderBuy": "Market Buy / Long",
   "quickOrderSell": "Market Sell / Short",
@@ -1125,6 +1113,24 @@
   "quickOrderDoNotShow": "Do not show market order confirmation again",
   "quickOrderConfirmPreference": "Confirm market entries",
   "quickOrderPreferenceFailure": "Confirmation preference could not be read or saved. The last saved choice is retained; orders require review until a choice is saved successfully.",
+  "quickOrderMarketBuy": "Market Buy",
+  "quickOrderMarketSell": "Market Sell",
+  "quickOrderAmount": "Amount({asset})",
+  "@quickOrderAmount": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "quickOrderAvailable": "Avbl. {value}",
+  "@quickOrderAvailable": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "quickOrderChartTab": "Chart view",
   "attachedOrderTitle": "Attach take profit / stop loss",
   "attachedOrderTakeProfit": "Attached take profit",
@@ -1733,9 +1739,7 @@
   "assetYieldFailed": "The yield source is unavailable. The previous quote is retained; retry to check again.",
   "assetYieldLoading": "Reading public yield data…",
   "assetYieldRefresh": "Refresh yield data",
-  "pointsProgramTitle": "Vanta Genesis Points",
   "pointsProgramScope": "Published by Vanta for its Orderly broker program. These points are separate from Aster balances and trading; this app does not assume Aster activity qualifies for rewards.",
-  "pointsCurrentCampaign": "Current campaign",
   "pointsCycleNumber": "Campaign {number}",
   "@pointsCycleNumber": {
     "placeholders": {
@@ -1744,19 +1748,16 @@
       }
     }
   },
-  "pointsCycleId": "Campaign ID",
   "pointsStatus": "Published status",
   "pointsStatusDraft": "Draft",
   "pointsStatusActive": "Active",
   "pointsStatusEnded": "Ended",
   "pointsStatusSettled": "Settled",
   "pointsStatusUnknown": "Unknown",
-  "pointsPool": "Total points pool",
   "pointsPeriodStart": "Start (UTC)",
   "pointsPeriodEnd": "End (UTC)",
   "pointsBroker": "Broker ID",
   "pointsNoCurrentCampaign": "No current campaign is published.",
-  "pointsNotRead": "No verified data yet.",
   "pointsLoading": "Reading points data…",
   "pointsPaused": "Updates paused while the app is inactive.",
   "pointsStale": "This is an older or incomplete snapshot. Refresh to check the current data.",
@@ -1776,18 +1777,7 @@
   "pointsRefresh": "Refresh this section",
   "pointsStop": "Stop waiting",
   "pointsLeaderboard": "Points leaderboard",
-  "pointsLeaderboardScope": "Shows up to the first 100 returned rows, 20 per page, with ranks reported by the service. Absence does not establish a full ranking or zero points.",
-  "pointsSelectLeaderboard": "Leaderboard scope",
-  "pointsTotalLeaderboard": "Total points leaderboard",
   "pointsNoRankings": "No ranking rows were returned for this scope.",
-  "pointsReturnedCount": "Showing {count} returned ranking row(s).",
-  "@pointsReturnedCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "pointsPrevious": "Previous",
   "pointsNext": "Next",
   "pointsPageNumber": "Page {page} of {pages}",
@@ -1809,20 +1799,10 @@
       }
     }
   },
-  "pointsScore": "Points",
-  "pointsSettled": "Settled points",
-  "pointsSpecial": "Special points",
-  "pointsCurrentScore": "Current campaign points (as reported)",
   "pointsMyPoints": "My points",
-  "pointsWalletReadScope": "Read sends this wallet address to Vanta’s points service without a signature. It does not change the active Aster account.",
   "pointsConnectWallet": "Connect wallet",
   "pointsMyTotal": "My total points",
   "pointsRankUnknown": "Not found in the returned total leaderboard; the full rank is unknown.",
-  "pointsReadWallet": "Read my points and history",
-  "pointsSelectHistory": "Past points scope",
-  "pointsAccumulated": "Accumulated points",
-  "pointsSelectedHistory": "Points in selected scope",
-  "pointsNoHistory": "No campaign history was returned. Missing campaign rows remain unknown.",
   "eventsTitle": "Trading events",
   "eventsScope": "Vanta Orderly campaigns. Registration, trading volume and rewards belong to this program; Aster trades in this app are not assumed eligible.",
   "eventsEmpty": "No published trading events.",
@@ -2447,7 +2427,6 @@
     }
   },
   "scaledCountRange": "2–110",
-  "assistantNavigation": "AI",
   "orderTypeTrailing": "Trailing Stop",
   "orderTypeTitle": "Order Type",
   "orderTypePostOnly": "Post Only",
@@ -2569,7 +2548,7 @@
   "enableTradingStep": "2",
   "enableTradingSignHint": "Sign in your wallet to continue.",
   "enableTradingEmbeddedSignHint": "Sign to continue.",
-  "enableTradingScope": "Authorize a device signing key for 30 days of account queries and gas-free Spot and Futures trading without repeated wallet prompts. Withdrawal access is not granted.",
+  "enableTradingScope": "This signature opens a decentralized channel for gas-free, instant trading. Sign to continue.",
   "enableTradingReturnHint": "If nothing opens, check your wallet app and return here after signing.",
   "enableTradingEmbeddedReturnHint": "Your connected embedded wallet will sign this trading authorization.",
   "enableTradingOpenWallet": "Open wallet to sign",
@@ -2577,7 +2556,6 @@
   "enableTradingContinue": "Continue",
   "enableTradingWalletSetup": "Wallet setup",
   "tradeNavigation": "Trade",
-  "exploreNavigation": "Explore",
   "portfolioTotalValue": "Total value",
   "portfolioLoginHint": "Log in to view your assets and performance.",
   "portfolioLoginBalances": "Log in to view your balances",
@@ -2604,6 +2582,16 @@
   "portfolioPnlNote": "Historical figures may update after settlement. Missing data is shown as unavailable.",
   "portfolioCalendar": "Calendar",
   "portfolioMonthlyPnl": "Monthly PnL",
+  "vantaApiSignInAction": "Sign",
+  "vantaApiSignInTitle": "Wallet signature required",
+  "vantaApiSigningTitle": "Waiting for wallet signature",
+  "vantaApiSigning": "Confirm the signature request in your wallet to view account statistics.",
+  "vantaApiUnavailableTitle": "Statistics unavailable",
+  "vantaApiUnavailable": "Account statistics are not available in this build.",
+  "vantaApiSignIn": "Sign the message in your wallet to view account statistics.",
+  "vantaApiFailed": "Account statistics could not be loaded. Please retry.",
+  "vantaApiInvalid": "The statistics service returned invalid data. Please retry.",
+  "vantaApiRateLimited": "Statistics requests are temporarily limited. Try again shortly.",
   "portfolioCalendarNote": "Daily PnL uses UTC · Values in USD",
   "portfolioPreviousMonth": "Previous month",
   "portfolioNextMonth": "Next month",
@@ -2653,6 +2641,7 @@
       }
     }
   },
+  "portfolioAvailableForOrder": "Available for order",
   "portfolioAvailable": "Avbl. {amount}",
   "@portfolioAvailable": {
     "placeholders": {
@@ -3258,5 +3247,307 @@
   "orderResponseMalformed": "Aster returned incomplete or invalid order fields; the order could not be verified.",
   "orderAcknowledgementInvalid": "Aster did not return a valid strategy submission result.",
   "openOrdersTpSl": "TP/SL",
-  "openOrdersLinkedOrder": "Linked order:"
+  "openOrdersLinkedOrder": "Linked order:",
+  "tradeTabCount": "{label} ({count})",
+  "@tradeTabCount": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "positionsCloseAll": "Close all",
+  "positionsEntry": "Entry",
+  "positionsMargin": "Margin",
+  "positionsEntireTpsl": "Entire TP/SL",
+  "positionsPartialTpsl": "Partial TP/SL ({count})",
+  "@positionsPartialTpsl": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "positionsMarginRatio": "Margin ratio {value}",
+  "@positionsMarginRatio": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "positionsMarginRatioTip": "Margin ratio = Maintenance margin / Margin balance. Your positions will be liquidated once the margin ratio reaches 100%.",
+  "positionsLiquidationProgress": "Mark price progress toward liquidation price",
+  "positionsEditPartialTpsl": "Edit partial TP/SL",
+  "positionTpslTitle": "Set TP/SL",
+  "positionTpslPartial": "Partial close",
+  "positionTpslEntire": "Entire close",
+  "positionTpslTakeProfit": "Take Profit with Trigger Order",
+  "positionTpslStopLoss": "Stop Loss",
+  "positionTpslLimitOrder": "Limit order",
+  "positionTpslTriggerPrice": "Trigger price",
+  "positionTpslMarkPrice": "Mark price",
+  "positionTpslSwitchBasis": "Switch take-profit trigger price type",
+  "positionTpslPnl": "Pnl",
+  "positionTpslRoi": "ROI",
+  "positionTpslAmount": "Amount",
+  "positionTpslPositionAmount": "Position Amount",
+  "positionTpslEntryPrice": "Entry price",
+  "positionTpslLiqPrice": "Est. liq. price",
+  "positionTpslEstimatedPnl": "Estimated Pnl",
+  "positionTpslConfirm": "Confirm",
+  "positionTpslTriggerTitle": "Select Trigger Type",
+  "positionTpslSettingsTitle": "TP/SL Settings",
+  "positionTpslPnlHint": "Set by Estimated P&L",
+  "positionTpslRoiHint": "Set by Estimated ROI",
+  "positionTpslMissingTrigger": "Enter a take-profit or stop-loss trigger price.",
+  "positionTpslMissingAmount": "Enter an amount no larger than the position.",
+  "positionTpslMissingLimit": "Enter a limit price or choose BBO.",
+  "positionTpslPlaced": "TP/SL orders placed.",
+  "positionTpslLegFailed": "{leg} not placed: {reason}",
+  "@positionTpslLegFailed": {
+    "placeholders": {
+      "leg": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "positionTpslLegUnknown": "{leg} result is unconfirmed. Check open orders before trying again; it is never resubmitted automatically.",
+  "@positionTpslLegUnknown": {
+    "placeholders": {
+      "leg": {
+        "type": "String"
+      }
+    }
+  },
+  "positionTpslNotSubmitted": "{leg} was not submitted.",
+  "@positionTpslNotSubmitted": {
+    "placeholders": {
+      "leg": {
+        "type": "String"
+      }
+    }
+  },
+  "positionTpslLegPlaced": "{leg} placed.",
+  "@positionTpslLegPlaced": {
+    "placeholders": {
+      "leg": {
+        "type": "String"
+      }
+    }
+  },
+  "positionOrderPrice": "Order price",
+  "positionCloseTitle": "Close Position",
+  "positionCloseMarket": "Market close",
+  "positionCloseLimit": "Limit close",
+  "positionClosePositionAmount": "Position amount",
+  "positionClosePlaced": "Close order placed.",
+  "positionCloseLimitPlaced": "Limit close order placed. The position reduces only after it fills.",
+  "positionCloseFailed": "Close order not placed: {reason}",
+  "@positionCloseFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "positionCloseUnknown": "The close order result is unconfirmed. Check open orders and positions before trying again; it is never resubmitted automatically.",
+  "positionClosePriceUnavailable": "The {type} price is not available yet. Try again shortly or enter a price.",
+  "@positionClosePriceUnavailable": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "tradingHistoryTitle": "History",
+  "tradingHistoryTab": "{tab, select, orders{Order} positions{Position} trades{Trade} transactions{Transaction} other{History}}",
+  "tradingHistoryHideCanceled": "Hide canceled",
+  "tradingHistoryDetails": "Details",
+  "tradingHistoryOpenLong": "Open Long",
+  "tradingHistoryCloseLong": "Close Long",
+  "tradingHistoryOpenShort": "Open Short",
+  "tradingHistoryCloseShort": "Close Short",
+  "tradingHistoryFilledPrice": "Filled / Order price",
+  "tradingHistoryFilledValue": "Filled / Total amount ({unit})",
+  "tradingHistoryFilledTotal": "Filled / Total amount",
+  "tradingHistoryRealizedPnl": "Realized PNL",
+  "tradingHistoryRealizedProfit": "Realized profit",
+  "tradingHistoryRoe": "Realized ROE%",
+  "tradingHistoryClosed": "Closed",
+  "tradingHistoryOpen": "Open",
+  "tradingHistoryLiquidated": "Liquidated",
+  "tradingHistoryClosePrice": "Avg. close price",
+  "tradingHistoryMaxHeld": "Max held",
+  "tradingHistoryOpenedAt": "Time opened",
+  "tradingHistoryClosedAt": "Time closed",
+  "tradingHistoryPerp": "{symbol} Perp",
+  "tradingHistoryExecutedAmount": "Executed amount",
+  "tradingHistoryExecutedValue": "Executed value",
+  "tradingHistoryRole": "Role",
+  "tradingHistoryOrderDetails": "Order Details",
+  "tradingHistoryTradeDetails": "Trade Details",
+  "tradingHistoryRelatedOrders": "Related Orders",
+  "tradingHistoryRelatedUnavailable": "Related orders are unavailable for this position because the history service does not provide position-to-order links.",
+  "tradingHistoryNoTrades": "No trades found",
+  "tradingHistoryFillsUnavailable": "The reported fills could not be found in the available history.",
+  "tradingHistoryIncompleteFills": "Some reported fills are unavailable. Fee and profit totals remain unavailable until all fills are matched.",
+  "tradingHistoryPartial": "History is incomplete. Some records may be unavailable.",
+  "tradingHistoryFee": "Fee",
+  "tradingHistoryUpdatedAt": "Update Time",
+  "tradingHistoryDate": "Date",
+  "tradingHistoryQuantity": "Quantity",
+  "@tradingHistoryTab": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "@tradingHistoryFilledValue": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "@tradingHistoryPerp": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "walletVerificationTitle": "Verify Wallet",
+  "walletVerificationStep": "3",
+  "walletVerificationHint": "Sign a message to verify your wallet and view your portfolio.",
+  "walletSignatureCompleted": "Wallet signature completed.",
+  "walletOnboardingHint": "Connect your wallet, enable trading, and verify your wallet to continue. Check your wallet app if no request appears.",
+  "notificationDetailsTitle": "Notification Details",
+  "notificationCopyField": "Copy {field}",
+  "notificationRiskOrderDetails": "Risk Order Details",
+  "notificationRiskType": "Risk Type",
+  "notificationRiskLiquidation": "Liquidation",
+  "notificationPositionSide": "Position Side",
+  "notificationExecutionType": "Execution Type",
+  "notificationWorkingType": "Working Type",
+  "notificationExecutionDetails": "Execution Details",
+  "notificationAffectedPositions": "Affected Positions",
+  "notificationBalanceTitle": "Perps Balance Updated",
+  "notificationBalanceChanges": "Balance Changes",
+  "notificationWalletBalance": "Wallet Balance",
+  "notificationAssetsChanged": "{count, plural, =1{1 asset changed} other{{count} assets changed}}",
+  "@notificationCopyField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "@notificationAssetsChanged": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tradingHistoryRecentDays": "Aster records from the last {days} days",
+  "@tradingHistoryRecentDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "navigationFutures": "Futures",
+  "navigationSpots": "Spots",
+  "navigationSoon": "Soon",
+  "navigationAskAi": "Ask AI",
+  "pointsRules": "Points rules",
+  "pointsTotalRank": "Total rank",
+  "pointsYourRank": "Your rank",
+  "pointsNotRanked": "Not ranked",
+  "pointsOutsideTop": "Not in top 100",
+  "pointsViewTotalLeaderboard": "View total leaderboard",
+  "pointsByPeriod": "Points by period",
+  "pointsSelectPeriod": "Select period",
+  "pointsPeriodPool": "Points pool",
+  "pointsUnit": "Points",
+  "pointsHistoricalPeriod": "Historical period",
+  "pointsPeriodDates": "{start} – {end} · UTC+0",
+  "@pointsPeriodDates": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "pointsDatePattern": "d MMM, HH:mm",
+  "@pointsDatePattern": {
+    "description": "intl DateFormat pattern for points period start/end in UTC; keep month names out of non-English patterns."
+  },
+  "pointsPeriodLeaderboard": "Period leaderboard",
+  "pointsNoRankingsTitle": "No rankings yet",
+  "pointsNoRankingsMessage": "No points recorded for this period.",
+  "pointsRankAddress": "Rank / Address",
+  "pointsTotalCurrent": "Total / Current points",
+  "pointsCurrentValue": "Current {value}",
+  "@pointsCurrentValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pointsYouSuffix": "{address} · You",
+  "@pointsYouSuffix": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "pointsTotalLeaderboardTitle": "Total leaderboard",
+  "pointsPageIndicator": "{page} / {pages}",
+  "@pointsPageIndicator": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "pages": {
+        "type": "int"
+      }
+    }
+  },
+  "pointsLoginHint": "Log in to view your points",
+  "pointsRefreshMine": "Refresh my points",
+  "pointsAddressCopied": "Address copied",
+  "pointsNoPeriods": "No points periods are published yet.",
+  "notificationApiType": "{type, select, fill{Order Filled} trigger{Conditional Order Triggered} order{Order Updated} liquidation{Liquidation} marginCall{Margin Call} funding{Funding Fee} transfer{Transfer Update} announce{Announcement} maintenance{Maintenance} other{Notification}}",
+  "@notificationApiType": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationApiField": "{field, select, price{Price} quantity{Quantity} fee{Fee} markPrice{Mark Price} liquidationPrice{Liquidation Price} distance{Distance} amount{Amount} symbol{Symbol} market{Market} side{Side} orderId{Order ID} transactionHash{Transaction Hash} createdAt{Time} eventKey{Reference} other{Details}}",
+  "@notificationApiField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "pushVisibilityTitle": "Background notifications unavailable",
+  "pushNoServerVisibility": "The notification server cannot observe this account. You will not receive account notifications while the app is closed."
 }

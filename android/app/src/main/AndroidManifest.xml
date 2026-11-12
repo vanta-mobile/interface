@@ -9,7 +9,7 @@
         android:dataExtractionRules="@xml/subaccount_data_extraction_rules">
         <meta-data
             android:name="firebase_messaging_installation_id_enabled"
-            android:value="true" />
+            android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

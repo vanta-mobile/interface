@@ -68,7 +68,8 @@ void main() {
       repository.gates['board:total']!.complete();
       await refresh;
       expect(done, isTrue);
-      expect(repository.calls, unorderedEquals(['current', 'cycles', 'board:total']));
+      // Signed out: the default period board but no wallet reads.
+      expect(repository.calls, unorderedEquals(['current', 'cycles', 'board:total', 'board:17']));
       expect(identity.wallets, 0);
     },
   );

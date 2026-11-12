@@ -16,7 +16,6 @@ import 'package:vanta/features/points/data/event_media_service.dart';
 import 'package:vanta/features/points/data/trading_event_mapper.dart';
 import 'package:vanta/features/points/domain/event_registration.dart';
 import 'package:vanta/features/points/domain/points.dart';
-import 'package:vanta/features/points/presentation/points_page.dart';
 import 'package:vanta/features/points/presentation/trading_event_page.dart';
 import 'package:vanta/features/points/presentation/trading_events_page.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
@@ -160,16 +159,9 @@ void main() {
       await close(tester, container);
     });
   }
-  testWidgets('points entry navigates to real event list and independently fetched detail', (
-    tester,
-  ) async {
+  testWidgets('event list opens independently fetched detail', (tester) async {
     final points = TestPointsRepository(now: () => now);
-    final container = await mount(
-      tester,
-      child: const Scaffold(body: PointsPage()),
-      points: points,
-    );
-    await tap(tester, 'points-open-events');
+    final container = await mount(tester, child: const TradingEventsPage(), points: points);
     expect(find.byKey(const Key('trading-events-page')), findsOneWidget);
     await tap(tester, 'event-open-11');
     expect(find.byKey(const Key('trading-event-11')), findsOneWidget);

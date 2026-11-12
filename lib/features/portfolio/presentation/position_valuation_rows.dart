@@ -10,6 +10,7 @@ import '../../trade/presentation/widgets/primitives.dart';
 import '../application/position_mark_prices_provider.dart';
 import '../application/position_risk_provider.dart';
 import '../domain/position_risk.dart';
+import '../../market/domain/mark_prices.dart';
 import '../domain/position_valuation.dart';
 import 'position_return_rows.dart';
 
@@ -22,22 +23,8 @@ class PositionValuationRows extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final p = position;
     final l10n = AppLocalizations.of(context);
-    final mark = ref.watch(
-      positionMarkPricesProvider.select(
-        (s) => (s.value?.quotes[p.symbol], s.value?.fresh.contains(p.symbol) == true),
-      ),
-    );
-    final account = ref.watch(positionRiskProvider.select((s) => (s.account?.receivedAt, s.stale)));
-    // A newer private snapshot takes precedence until another public price is
-    // received. A retained mark must not silently roll it back after refresh.
-    final quote =
-        p.balanceOnly ||
-            account.$1 == null ||
-            mark.$1 == null ||
-            mark.$1!.receivedAt.isBefore(account.$1!) ||
-            p.eventTime != null && p.updatedAt != null && mark.$1!.eventTime.isBefore(p.updatedAt!)
-        ? null
-        : mark.$1;
+    final (quote, fresh) = watchPositionMark(ref, p);
+    final staleAccount = ref.watch(positionRiskProvider.select((s) => s.stale));
     final values = PositionValuation(position: p, quote: quote);
     final priceUnit = p.units == null ? null : '${p.units!.quote}/${p.units!.base}';
     String amount(Decimal? value, String? unit) =>
@@ -48,7 +35,7 @@ class PositionValuationRows extends ConsumerWidget {
         ValueRow(
           quote == null
               ? l10n.positionMarkSnapshot
-              : mark.$2
+              : fresh
               ? l10n.positionMarkCurrent
               : l10n.positionMarkHistorical,
           amount(values.mark, priceUnit),
@@ -68,7 +55,7 @@ class PositionValuationRows extends ConsumerWidget {
                 ? AppColors.positive
                 : AppColors.negative,
           ),
-          if (!mark.$2 || account.$2)
+          if (!fresh || staleAccount)
             Text(
               l10n.positionEstimateStale,
               key: Key('position-estimate-stale-${p.symbol}-${p.side}'),
@@ -89,4 +76,25 @@ class PositionValuationRows extends ConsumerWidget {
       ],
     );
   }
+}
+
+/// The public mark that may replace [p]'s snapshot values, with its freshness.
+/// A newer private snapshot takes precedence until another public price is
+/// received; a retained mark must not silently roll it back after refresh.
+(MarkPriceQuote?, bool) watchPositionMark(WidgetRef ref, PositionRisk p) {
+  final mark = ref.watch(
+    positionMarkPricesProvider.select(
+      (s) => (s.value?.quotes[p.symbol], s.value?.fresh.contains(p.symbol) == true),
+    ),
+  );
+  final received = ref.watch(positionRiskProvider.select((s) => s.account?.receivedAt));
+  final quote =
+      p.balanceOnly ||
+          received == null ||
+          mark.$1 == null ||
+          mark.$1!.receivedAt.isBefore(received) ||
+          p.eventTime != null && p.updatedAt != null && mark.$1!.eventTime.isBefore(p.updatedAt!)
+      ? null
+      : mark.$1;
+  return (quote, mark.$2);
 }

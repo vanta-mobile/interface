@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/portfolio/application/account_read_provider.dart';
 import 'package:vanta/features/portfolio/application/portfolio_overview_provider.dart';
+import 'package:vanta/features/portfolio/application/position_risk_provider.dart';
 import 'package:vanta/features/portfolio/presentation/portfolio_pnl_screen.dart';
 import 'package:vanta/features/portfolio/presentation/portfolio_history_chart.dart';
 import 'package:vanta/features/trade/presentation/widgets/app_bottom_navigation.dart';
@@ -19,8 +20,9 @@ import '../../support/navigation_fixture.dart';
 import '../../support/trade_fixture.dart';
 
 Future<void> preview(WidgetTester tester) async {
-  await tapNavigationControl(tester, 'navigation-explore');
-  await tapNavigationControl(tester, 'portfolio-preview-entry');
+  await tapNavigationControl(tester, 'navigation-portfolio');
+  await tapNavigationControl(tester, 'portfolio-account-selector');
+  await tapNavigationControl(tester, 'portfolio-select-preview');
 }
 
 Future<void> scrollPortfolioTop(WidgetTester tester) async {
@@ -60,7 +62,7 @@ void main() {
     await fixture.close(tester);
   });
 
-  testWidgets('signed out portfolio follows design with four ordered destinations', (tester) async {
+  testWidgets('signed out portfolio follows design with five ordered destinations', (tester) async {
     final fixture = NavigationFixture(tester, signedIn: false);
     await launch(tester, fixture.container);
     await tapNavigationControl(tester, 'navigation-portfolio');
@@ -76,11 +78,13 @@ void main() {
     expect(destinations, findsNWidgets(4));
     final keys = tester.widgetList<InkWell>(destinations).map((w) => w.key).toList();
     expect(keys, [
-      const ValueKey('navigation-markets'),
       const ValueKey('navigation-futures'),
-      const ValueKey('navigation-explore'),
+      const ValueKey('navigation-points'),
+      const ValueKey('navigation-assistant'),
       const ValueKey('navigation-portfolio'),
     ]);
+    // Spots is announced but not tappable.
+    expect(find.byKey(const ValueKey('navigation-spots')), findsOneWidget);
     fixture.expectNoAccountMutation();
     expect(tester.takeException(), null);
     await fixture.close(tester);
@@ -238,8 +242,9 @@ void main() {
           .first,
     );
     await tapNavigationControl(tester, 'portfolio-pnl-entry');
-    expect(find.text('PnL data unavailable for this account'), findsOneWidget);
-    expect(find.byType(PortfolioHistoryChart), findsOneWidget);
+    // Tests build without VANTA_API_ORIGIN: the section explains it instead of a chart.
+    expect(find.byKey(const ValueKey('portfolio-stats-unavailable')), findsOneWidget);
+    expect(find.byType(PortfolioHistoryChart), findsNothing);
     expect(tester.takeException(), null);
     await fixture.close(tester);
   });
@@ -260,9 +265,12 @@ void main() {
     await tester.pumpAndSettle();
     final actual = fixture.container.read(portfolioOverviewProvider);
     expect(actual.totalUsd, Decimal.parse('100.000000000000000001') * Decimal.parse('0.99836'));
-    expect(actual.positions.single.quantity, Decimal.parse('0.000000000000000001'));
-    expect(actual.positions.single.base, 'BTC');
-    expect(actual.positions.single.long, false);
+    // Portfolio cards use the same position-risk read as the Futures tab.
+    final risk = fixture.container.read(positionRiskProvider).account!.positions;
+    expect(
+      fixture.container.read(portfolioPositionsProvider),
+      risk.where((p) => !p.balanceOnly).toList(),
+    );
     expect(actual.performance.pnl, isNull);
     fixture.account.failure = const AccountReadFailure('accountNetwork');
     indices.gate = null;

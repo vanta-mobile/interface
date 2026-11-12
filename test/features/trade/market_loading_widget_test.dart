@@ -15,8 +15,14 @@ import 'package:vanta/main.dart';
 import '../../support/navigation_fixture.dart';
 import '../../support/trade_fixture.dart';
 
-Finder buttonQuote(String side, String quote) =>
-    find.descendant(of: find.byKey(Key('quick-order-$side')), matching: find.text(quote));
+/// Quick buttons show the bare quote in market number format, as designed.
+Finder buttonQuote(String side, String quote) => find.descendant(
+  of: find.byKey(Key('quick-order-$side')),
+  matching: find.text(switch (double.tryParse(quote.replaceAll(' USDT', ''))) {
+    final price? => marketNumber(price),
+    null => quote,
+  }),
+);
 
 void main() {
   testWidgets('unloaded chart summary has unknown values; data replaces placeholders', (

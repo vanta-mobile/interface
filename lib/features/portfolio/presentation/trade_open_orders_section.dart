@@ -6,7 +6,6 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../trade/application/providers.dart';
 import '../../trade/presentation/trade_theme.dart';
-import '../../trade/presentation/widgets/trade_icon.dart';
 import '../application/open_orders_provider.dart';
 import '../application/order_cancellation_provider.dart';
 import '../application/position_risk_provider.dart';
@@ -16,6 +15,7 @@ import '../application/open_orders_auto_read_provider.dart';
 import 'aster_open_order_card.dart';
 import 'batch_order_cancellation_controls.dart';
 import 'order_cancellation_controls.dart';
+import 'trade_check_option.dart';
 import '../domain/aster_open_orders.dart';
 import '../domain/position_risk.dart';
 
@@ -73,7 +73,9 @@ class _TradeOpenOrdersSectionState extends ConsumerState<TradeOpenOrdersSection>
         Row(
           children: [
             Expanded(
-              child: _SymbolFilter(
+              child: TradeCheckOption(
+                label: l10n.openOrdersCurrentSymbol,
+                tapKey: const Key('open-orders-current-symbol'),
                 value: currentSymbolOnly,
                 onChanged: (value) => setState(() => currentSymbolOnly = value),
               ),
@@ -144,49 +146,4 @@ class _TradeOpenOrdersSectionState extends ConsumerState<TradeOpenOrdersSection>
       ],
     );
   }
-}
-
-class _SymbolFilter extends StatelessWidget {
-  const _SymbolFilter({required this.value, required this.onChanged});
-  final bool value;
-  final ValueChanged<bool> onChanged;
-  @override
-  Widget build(BuildContext context) => Align(
-    alignment: Alignment.centerLeft,
-    child: Semantics(
-      checked: value,
-      child: InkWell(
-        key: const Key('open-orders-current-symbol'),
-        onTap: () => onChanged(!value),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 44),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 14,
-                height: 14,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: value ? TradeColors.accent : null,
-                  border: value ? null : Border.all(color: TradeColors.secondary, width: .7),
-                  borderRadius: BorderRadius.circular(5.6),
-                ),
-                child: value
-                    ? const TradeIcon('check', size: 9, color: TradeColors.background)
-                    : null,
-              ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  AppLocalizations.of(context).openOrdersCurrentSymbol,
-                  style: TradeTypography.body.copyWith(color: TradeColors.secondary),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
 }

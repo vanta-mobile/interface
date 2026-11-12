@@ -7,15 +7,17 @@ import '../../../core/presentation/status_view.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
-import '../../funding/application/transfer_history_load_provider.dart';
-import '../../funding/application/transfer_history_provider.dart';
-import '../../portfolio/presentation/portfolio_components.dart';
+import '../../auth/application/vanta_api_session_provider.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
-import '../application/notification_provider.dart';
-import '../domain/account_notification.dart';
+import '../application/api_notification_provider.dart';
+import '../application/notification_refresh_provider.dart';
+import 'push_visibility_notice.dart';
+import '../domain/api_notification.dart';
 import '../domain/notification_status.dart';
 import 'notification_labels.dart';
-import 'notification_tile.dart';
+import 'api_notification_tile.dart';
+import 'notification_api_error.dart';
+import 'notification_inbox_header.dart';
 
 void openNotifications(BuildContext context) =>
     Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => const NotificationScreen()));
@@ -27,32 +29,21 @@ class NotificationScreen extends ConsumerStatefulWidget {
 }
 
 class _NotificationScreenState extends ConsumerState<NotificationScreen> {
-  NotificationFilter _filter = NotificationFilter.all;
-  bool _unreadOnly = false;
-
-  /// Settles only after storage, transfer status and market units have all finished.
-  Future<void> _refresh() async {
-    Future<void> settle(Future<void> Function() task) => task().catchError((Object _) {});
-    await Future.wait([
-      settle(ref.read(notificationInboxProvider.notifier).retry),
-      if (ref.read(authProvider).identity?.walletAddress != null)
-        settle(ref.read(transferHistoryProvider.notifier).refresh),
-      settle(() {
-        ref.invalidate(notificationUnitsProvider);
-        return ref.read(notificationUnitsProvider.future);
-      }),
-      settle(() {
-        ref.invalidate(spotNotificationUnitsProvider);
-        return ref.read(spotNotificationUnitsProvider.future);
-      }),
-    ]);
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(ref.read(notificationPageRefreshProvider)());
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(transferHistoryLoadProvider);
-    final entries = ref.watch(walletNotificationsProvider);
-    final unread = entries.where((e) => !e.read).length;
+    final inbox = ref.watch(apiNotificationInboxProvider);
+    final entries = inbox.items;
+    final unread = inbox.unread;
+    final filter = inbox.category;
+    final unreadOnly = inbox.unreadOnly;
     return Scaffold(
       backgroundColor: NotificationColors.background,
       body: SafeArea(
@@ -62,122 +53,29 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _NotificationHeader(unread: unread),
+                NotificationInboxHeader(unread: unread),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _NotificationTabs(
-                    selected: _filter,
-                    onChanged: (value) => setState(() => _filter = value),
+                    selected: filter,
+                    onChanged: (value) =>
+                        ref.read(apiNotificationInboxProvider.notifier).filter(value, unreadOnly),
                   ),
                 ),
                 Expanded(
                   child: RefreshIndicator(
-                    onRefresh: _refresh,
+                    onRefresh: ref.read(notificationPageRefreshProvider),
                     child: _NotificationList(
-                      entries: [
-                        for (final entry in entries)
-                          if (notificationMatches(_filter, entry.event) &&
-                              (!_unreadOnly || !entry.read))
-                            entry,
-                      ],
-                      unreadOnly: _unreadOnly,
-                      onUnreadOnly: (value) => setState(() => _unreadOnly = value),
+                      entries: entries,
+                      unreadOnly: unreadOnly,
+                      onUnreadOnly: (value) =>
+                          ref.read(apiNotificationInboxProvider.notifier).filter(filter, value),
                     ),
                   ),
                 ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NotificationHeader extends ConsumerWidget {
-  const _NotificationHeader({required this.unread});
-  final int unread;
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 7, 4, 0),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 44),
-        child: Row(
-          children: [
-            IconButton(
-              key: const Key('notification-back'),
-              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-              onPressed: () => Navigator.maybePop(context),
-              style: IconButton.styleFrom(
-                minimumSize: const Size(40, 44),
-                padding: EdgeInsets.zero,
-              ),
-              icon: const Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: PortfolioIcon('back.svg', size: 24),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      l10n.notificationTitle,
-                      style: NotificationTypography.heading,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (unread > 0) ...[
-                    const SizedBox(width: 8),
-                    Semantics(
-                      label: l10n.notificationUnreadCount(unread),
-                      excludeSemantics: true,
-                      child: Container(
-                        key: const Key('notification-unread-count'),
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: NotificationColors.neutralSurface,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '$unread',
-                          style: NotificationTypography.chip.copyWith(
-                            color: NotificationColors.accent,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            if (unread > 0)
-              Flexible(
-                // Keep unused flex space to the left so the action stays flush right.
-                child: Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: TextButton(
-                    key: const Key('notification-read-all'),
-                    onPressed: () => ref.read(notificationInboxProvider.notifier).markRead(),
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(44, 44),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                    child: Text(
-                      l10n.notificationMarkAllRead,
-                      style: NotificationTypography.action,
-                      textAlign: TextAlign.end,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-              ),
-          ],
         ),
       ),
     );
@@ -257,51 +155,73 @@ class _NotificationList extends ConsumerWidget {
     required this.unreadOnly,
     required this.onUnreadOnly,
   });
-  final List<InboxEntry> entries;
+  final List<ApiNotification> entries;
   final bool unreadOnly;
   final ValueChanged<bool> onUnreadOnly;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context), auth = ref.watch(authProvider);
-    final inbox = ref.watch(notificationInboxProvider);
+    final inbox = ref.watch(apiNotificationInboxProvider);
     final signedIn = auth.identity?.walletAddress != null;
-    final groups = <DateTime, List<InboxEntry>>{};
+    final groups = <DateTime, List<ApiNotification>>{};
     for (final entry in entries) {
-      groups.putIfAbsent(notificationDay(entry.event.eventTime), () => []).add(entry);
+      groups.putIfAbsent(notificationDay(entry.createdAt), () => []).add(entry);
     }
     final now = DateTime.now();
-    return ListView(
-      key: const Key('notification-list'),
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      children: [
-        _UnreadOnlyToggle(value: unreadOnly, onChanged: onUnreadOnly),
-        if (inbox.storageFailed)
-          StatusFailureView(
-            message: l10n.notificationStorageFailed,
-            retryKey: const Key('notification-retry'),
-            onRetry: ref.read(notificationInboxProvider.notifier).retry,
-          ),
-        if (!signedIn)
-          StatusEmptyView(
-            message: l10n.notificationSignIn,
-            actionKey: const Key('notification-sign-in'),
-            actionLabel: l10n.accountSignInToRead,
-            onAction: auth.busy ? null : () => showAccountSheet(context),
-          )
-        else if (!inbox.loaded && !inbox.storageFailed && entries.isEmpty)
-          const _NotificationSkeleton()
-        else if (inbox.loaded && entries.isEmpty)
-          StatusEmptyView(key: const Key('notification-empty'), message: l10n.notificationEmpty)
-        else
-          for (final group in groups.entries) ...[
-            Text(notificationDayLabel(l10n, group.key, now), style: NotificationTypography.group),
-            const SizedBox(height: 8),
-            for (final (index, entry) in group.value.indexed)
-              NotificationTile(entry, divider: index < group.value.length - 1),
-            const SizedBox(height: 8),
-          ],
-      ],
+    return NotificationListener<ScrollNotification>(
+      onNotification: (event) {
+        if (event.metrics.extentAfter < 200 &&
+            inbox.nextCursor != null &&
+            !inbox.loading &&
+            inbox.error == null) {
+          unawaited(ref.read(apiNotificationInboxProvider.notifier).loadMore());
+        }
+        return false;
+      },
+      child: ListView(
+        key: const Key('notification-list'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        children: [
+          _UnreadOnlyToggle(value: unreadOnly, onChanged: onUnreadOnly),
+          const PushVisibilityNotice(),
+          if (inbox.error != null)
+            StatusFailureView(
+              message: notificationApiErrorText(context, inbox.error!),
+              retryKey: const Key('notification-retry'),
+              retrying: inbox.loading,
+              onRetry: inbox.loading
+                  ? null
+                  : ref.read(apiNotificationInboxProvider.notifier).refresh,
+            ),
+          if (!signedIn)
+            StatusEmptyView(
+              message: l10n.notificationSignIn,
+              actionKey: const Key('notification-sign-in'),
+              actionLabel: l10n.accountSignInToRead,
+              onAction: auth.busy ? null : () => showAccountSheet(context),
+            )
+          else if (!ref.watch(vantaApiSessionProvider).ready)
+            const NotificationApiAccess()
+          else if (!inbox.loaded && inbox.loading && entries.isEmpty)
+            const _NotificationSkeleton()
+          else if (inbox.loaded && entries.isEmpty)
+            StatusEmptyView(key: const Key('notification-empty'), message: l10n.notificationEmpty)
+          else
+            for (final group in groups.entries) ...[
+              Text(notificationDayLabel(l10n, group.key, now), style: NotificationTypography.group),
+              const SizedBox(height: 8),
+              for (final (index, entry) in group.value.indexed)
+                ApiNotificationTile(
+                  entry,
+                  ownerAddress: auth.identity!.walletAddress!.toLowerCase(),
+                  divider: index < group.value.length - 1,
+                ),
+              const SizedBox(height: 8),
+            ],
+          if (inbox.loading && entries.isNotEmpty) const Center(child: CircularProgressIndicator()),
+        ],
+      ),
     );
   }
 }

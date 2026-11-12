@@ -34,7 +34,6 @@ class NotificationTile extends ConsumerWidget {
       child: InkWell(
         key: ValueKey('notification-${entry.key}'),
         onTap: () {
-          ref.read(notificationInboxProvider.notifier).markRead(key: entry.key);
           Navigator.of(
             context,
           ).push<void>(MaterialPageRoute(builder: (_) => NotificationDetails(entryKey: entry.key)));
@@ -82,7 +81,8 @@ class NotificationTile extends ConsumerWidget {
                       runSpacing: 4,
                       children: [
                         NotificationChip(notificationMarketLabel(l10n, event), market: true),
-                        NotificationChip(notificationStatusLabel(l10n, event), tone: tone),
+                        if (event is! BalanceNotification)
+                          NotificationChip(notificationStatusLabel(l10n, event), tone: tone),
                       ],
                     ),
                   ],

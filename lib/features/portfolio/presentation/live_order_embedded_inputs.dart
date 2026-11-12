@@ -19,12 +19,15 @@ class EmbeddedPriceField extends StatelessWidget {
     required this.enabled,
     required this.onChanged,
     this.fixedLabel,
+    this.bboVisible = false,
     this.bboSelected = false,
     this.onBbo,
     this.bboLevel,
     this.onBboLevel,
-  });
-  final TextEditingController controller;
+  }) : assert(controller != null || fixedLabel != null);
+
+  /// Null only when [fixedLabel] replaces the editable price.
+  final TextEditingController? controller;
   final String asset;
   final Decimal tick;
   final bool enabled;
@@ -35,11 +38,17 @@ class EmbeddedPriceField extends StatelessWidget {
   final bool bboSelected;
   final VoidCallback? onBbo;
 
+  /// Keeps the BBO control visible without a handler, e.g. before an account
+  /// can price a pegged order.
+  final bool bboVisible;
+
   /// Selected BBO level; when set, the price box becomes the BBO mode picker.
   final String? bboLevel;
   final VoidCallback? onBboLevel;
 
   void _step(int direction) {
+    final controller = this.controller;
+    if (controller == null) return;
     final current = parseOrderDecimal(controller.text.trim());
     if (current == null || tick <= Decimal.zero) return;
     final floor = Decimal.fromBigInt((current / tick).floor()) * tick;
@@ -71,7 +80,7 @@ class EmbeddedPriceField extends StatelessWidget {
                               ? Text(fixedLabel!, style: TradeTypography.body, maxLines: 1)
                               : EmbeddedTextInput(
                                   fieldKey: const Key('live-order-price'),
-                                  controller: controller,
+                                  controller: controller!,
                                   enabled: enabled,
                                   onChanged: onChanged,
                                 ),
@@ -90,7 +99,7 @@ class EmbeddedPriceField extends StatelessWidget {
                     ),
                   ),
           ),
-          if (onBbo != null || bboSelected) ...[
+          if (onBbo != null || bboSelected || bboVisible) ...[
             const SizedBox(width: 4),
             Material(
               color: bboSelected ? TradeColors.accentBackground : TradeColors.card,

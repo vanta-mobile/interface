@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'package:decimal/decimal.dart';
 
 import '../../funding/domain/transfer_history.dart';
+import '../../portfolio/domain/account_update.dart';
 
 part 'spot_order_notification.dart';
 part 'transfer_notification.dart';
+part 'balance_notification.dart';
 
 /// Financial event details validated at the transport/storage boundary.
 sealed class AccountNotification {

@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/presentation/drag_throttle.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/widgets/primitives.dart';
 import '../domain/futures_position_mode.dart';
@@ -19,15 +20,17 @@ class LiveOrderReductionControls extends StatelessWidget {
   final LiveOrderDraft draft;
   final bool enabled;
   final ValueChanged<bool> onReduce;
-  final ValueChanged<int> onFraction;
+
+  /// Position share 0–1; the form turns it into a close amount.
+  final ValueChanged<double> onFraction;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context), position = data.reductionPosition(draft);
     final amount = parseOrderDecimal(draft.quantity) ?? Decimal.zero;
-    final percentage = position == null || position.quantity == Decimal.zero
-        ? 0
-        : ((amount * Decimal.fromInt(100)) / position.quantity.abs()).floor().toInt().clamp(0, 100);
+    final share = position == null || position.quantity == Decimal.zero
+        ? 0.0
+        : (amount / position.quantity.abs()).toDouble().clamp(0.0, 1.0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -51,15 +54,7 @@ class LiveOrderReductionControls extends StatelessWidget {
           if (!draft.entireClose)
             Semantics(
               label: l10n.scalePercentage,
-              child: Slider(
-                key: const Key('live-close-percentage'),
-                value: percentage.toDouble(),
-                min: 0,
-                max: 100,
-                divisions: 100,
-                label: '$percentage%',
-                onChanged: enabled ? (value) => onFraction(value.round()) : null,
-              ),
+              child: _CloseFractionSlider(share: share, onFraction: enabled ? onFraction : null),
             ),
           if (!draft.entireClose)
             Wrap(
@@ -69,7 +64,7 @@ class LiveOrderReductionControls extends StatelessWidget {
                 for (final percent in [25, 50, 75, 100])
                   OutlinedButton(
                     key: ValueKey('live-close-fraction-$percent'),
-                    onPressed: enabled ? () => onFraction(percent) : null,
+                    onPressed: enabled ? () => onFraction(percent / 100) : null,
                     child: Text('$percent%'),
                   ),
               ],
@@ -99,6 +94,60 @@ class LiveOrderReductionControls extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Each committed share rewrites the quantity and rebuilds the whole form, so
+/// the thumb follows the drag continuously and commits are throttled.
+class _CloseFractionSlider extends StatefulWidget {
+  const _CloseFractionSlider({required this.share, required this.onFraction});
+  final double share;
+  final ValueChanged<double>? onFraction;
+
+  @override
+  State<_CloseFractionSlider> createState() => _CloseFractionSliderState();
+}
+
+class _CloseFractionSliderState extends State<_CloseFractionSlider> {
+  late final _throttle = DragThrottle<double>((value) => widget.onFraction?.call(value));
+  double? _drag;
+
+  @override
+  void didUpdateWidget(_CloseFractionSlider old) {
+    super.didUpdateWidget(old);
+    // A drag cut off by disabling never reports its end; drop its local value.
+    if (widget.onFraction == null) {
+      _throttle.cancel();
+      _drag = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _throttle.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = widget.onFraction != null;
+    return Slider(
+      key: const Key('live-close-percentage'),
+      value: _drag ?? widget.share,
+      semanticFormatterCallback: (value) => '${(value * 100).round()}%',
+      onChanged: enabled
+          ? (value) {
+              setState(() => _drag = value);
+              _throttle.add(value);
+            }
+          : null,
+      onChangeEnd: enabled
+          ? (value) {
+              _throttle.end(value);
+              if (mounted) setState(() => _drag = null);
+            }
+          : null,
     );
   }
 }

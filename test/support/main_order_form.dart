@@ -96,6 +96,7 @@ class MainOrderFormFixture {
     await visible(tester, 'main-order-percentage');
     final slider = tester.widget<Slider>(find.byKey(const Key('main-order-percentage')));
     slider.onChanged!(percent.toDouble());
+    slider.onChangeEnd!(percent.toDouble());
     await tester.pumpAndSettle();
   }
 

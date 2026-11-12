@@ -1,3 +1,4 @@
+import '../../../core/errors/api_error_details.dart';
 import '../../../core/errors/error_text.dart';
 
 import 'package:flutter/material.dart';
@@ -16,6 +17,23 @@ String pointsCampaignStatus(String status, AppLocalizations l10n) => switch (sta
   'SETTLED' => l10n.pointsStatusSettled,
   _ => l10n.pointsStatusUnknown,
 };
+
+/// Prefer the service's safe message; otherwise the known points cause.
+String pointsFailureText(BuildContext context, String key, ApiErrorDetails? details) {
+  final l10n = AppLocalizations.of(context);
+  return apiErrorText(
+    context,
+    key,
+    details,
+    fallbackText: switch (key) {
+      'pointsDataInvalid' => l10n.pointsDataInvalid,
+      'pointsNetwork' => l10n.pointsNetwork,
+      'pointsRateLimited' => l10n.pointsRateLimited,
+      'pointsWalletRequired' => l10n.pointsWalletRequired,
+      _ => l10n.pointsUnavailable,
+    },
+  );
+}
 
 class PointsStatus<T> extends StatefulWidget {
   const PointsStatus({
@@ -47,21 +65,8 @@ class _PointsStatusState<T> extends State<PointsStatus<T>> {
     }
   }
 
-  String _failureText(BuildContext context, String key) {
-    final l10n = AppLocalizations.of(context);
-    return apiErrorText(
-      context,
-      key,
-      widget.state.errorDetails,
-      fallbackText: switch (key) {
-        'pointsDataInvalid' => l10n.pointsDataInvalid,
-        'pointsNetwork' => l10n.pointsNetwork,
-        'pointsRateLimited' => l10n.pointsRateLimited,
-        'pointsWalletRequired' => l10n.pointsWalletRequired,
-        _ => l10n.pointsUnavailable,
-      },
-    );
-  }
+  String _failureText(BuildContext context, String key) =>
+      pointsFailureText(context, key, widget.state.errorDetails);
 
   @override
   Widget build(BuildContext context) {

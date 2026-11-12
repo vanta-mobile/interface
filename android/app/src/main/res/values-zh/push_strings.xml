@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="push_channel_risk">仓位风险</string>
+    <string name="push_channel_trade">交易通知</string>
+    <string name="push_channel_account">账户动态</string>
+    <string name="push_channel_announce">公告通知</string>
+</resources>

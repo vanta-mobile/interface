@@ -33,12 +33,12 @@ extension _LiveOrderFullLayout on _LiveOrderFormState {
           draft: draft,
           enabled: enabled,
           onReduce: (value) => _render(() => reduceOnly = value),
-          onFraction: (percent) => _render(() {
+          onFraction: (share) => _render(() {
             sizeUnit = OrderSizeUnit.base;
             quantity.text = contextData
-                .closeFraction(
+                .closeAmount(
                   widget.closingSide!,
-                  percent,
+                  share,
                   market: market,
                   conditional: conditional || trailing,
                 )

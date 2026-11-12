@@ -48,3 +48,11 @@ class LocalEnvironmentTests(unittest.TestCase):
                          "https://example.com")
         with self.assertRaisesRegex(ValueError, "HTTPS origin"):
             self.check("WALLET_LOGIN_ORIGIN=http://example.com")
+
+    def test_vanta_api_origin_is_optional_and_https_only(self):
+        self.assertEqual(self.check()["VANTA_API_ORIGIN"], "")
+        self.assertEqual(self.check("VANTA_API_ORIGIN=https://api.example.com/")["VANTA_API_ORIGIN"],
+                         "https://api.example.com")
+        for value in ["http://api.example.com", "https://api.example.com/v1"]:
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "VANTA_API_ORIGIN"):
+                self.check(f"VANTA_API_ORIGIN={value}")

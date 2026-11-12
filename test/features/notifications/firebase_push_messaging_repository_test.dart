@@ -15,7 +15,8 @@ void main() {
     final id = repository.registrationChanges.first;
     final registration = await repository.register();
     expect(registration.permission, PushPermission.authorized);
-    expect(await id, 'test-installation-id');
+    expect(await id, 'actual-fcm-token');
+    expect(registration.token, 'actual-fcm-token');
     expect(messaging.permissionRequests, 1);
     expect(messaging.registrations, 1);
     expect(messaging.apnsRequests, 0);
@@ -25,7 +26,7 @@ void main() {
     messaging.status = AuthorizationStatus.denied;
     final registration = await FirebasePushMessagingRepository(messaging, isIOS: false).register();
     expect(registration.permission, PushPermission.denied);
-    expect(registration.installationId, isNull);
+    expect(registration.token, isNull);
     expect(messaging.permissionRequests, 0);
     expect(messaging.registrations, 0);
   });
@@ -42,7 +43,7 @@ void main() {
     messaging.status = AuthorizationStatus.deniedPermanently;
     final registration = await FirebasePushMessagingRepository(messaging, isIOS: false).register();
     expect(registration.permission, PushPermission.deniedPermanently);
-    expect(registration.installationId, isNull);
+    expect(registration.token, isNull);
     expect(messaging.permissionRequests, 0);
     expect(messaging.registrations, 0);
   });
@@ -53,21 +54,22 @@ void main() {
     final repository = FirebasePushMessagingRepository(messaging, isIOS: true);
     final registration = await repository.register();
     expect(registration.permission, PushPermission.authorized);
-    expect(registration.installationId, isNull);
+    expect(registration.token, isNull);
     expect(messaging.registrations, 0);
     expect(messaging.foregroundEnabled, isTrue);
     final id = repository.registrationChanges.first;
     messaging.ids.add('');
-    messaging.ids.add('later-installation-id');
-    expect(await id, 'later-installation-id');
+    messaging.apnsToken = 'later-apns-token';
+    messaging.ids.add('some-fcm-token');
+    expect(await id, 'later-apns-token');
   });
 
   test('iOS provisional authorization uses APNs without prompting again', () async {
     messaging.status = AuthorizationStatus.provisional;
     final registration = await FirebasePushMessagingRepository(messaging, isIOS: true).register();
     expect(registration.permission, PushPermission.provisional);
-    expect(registration.installationId, isNull);
-    expect(messaging.registrations, 1);
+    expect(registration.token, 'test-apns-token');
+    expect(messaging.registrations, 0);
     expect(messaging.apnsRequests, 1);
     expect(messaging.permissionRequests, 0);
   });
@@ -99,7 +101,11 @@ class TestMessaging implements FirebaseMessaging {
   final ids = StreamController<String>.broadcast(sync: true);
 
   @override
-  Stream<String> get onRegistered => ids.stream;
+  Stream<String> get onTokenRefresh => ids.stream;
+
+  @override
+  Stream<String> get onRegistered =>
+      throw StateError('FID registration is not compatible with the Vanta contract');
 
   @override
   Future<NotificationSettings> getNotificationSettings() async => settings(status);
@@ -127,10 +133,11 @@ class TestMessaging implements FirebaseMessaging {
   }
 
   @override
-  Future<void> register({String? vapidKey, String? serviceWorkerScriptPath}) async {
+  Future<String?> getToken({String? vapidKey, String? serviceWorkerScriptPath}) async {
     registrations++;
     if (registrationFailure != null) throw registrationFailure!;
-    ids.add('test-installation-id');
+    ids.add('actual-fcm-token');
+    return 'actual-fcm-token';
   }
 
   @override

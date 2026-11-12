@@ -86,6 +86,19 @@ abstract final class TokenAmountFormatter {
     return '${negative ? '-' : ''}${usd ? '\$' : ''}$compact${suffix.label}';
   }
 
+  /// Formats a grouped display value rounded half away from zero to at most
+  /// [maxFractionDigits], trimming trailing fractional zeros. A non-zero value
+  /// that would round to zero keeps the shared adaptive precision instead.
+  static String formatRounded(DecimalValue amount, {required int maxFractionDigits}) {
+    _validateDecimals(maxFractionDigits);
+    final rounded = _roundToFractionDigits(amount.value, maxFractionDigits);
+    if (_isZeroDecimal(rounded) && !_isZeroDecimal(amount.value)) {
+      return formatDecimal(amount);
+    }
+    final trimmed = _trimInsignificantZeros(rounded);
+    return _groupIntegerDigits(trimmed == '-0' ? '0' : trimmed);
+  }
+
   /// Formats a percentage for display with at most two fractional digits.
   ///
   /// Market API values can contain high-precision decimal values, which are
@@ -116,7 +129,7 @@ abstract final class TokenAmountFormatter {
   /// Formats a decimal for an editable financial field without adding a
   /// currency or token symbol. This keeps feature widgets from implementing
   /// their own rounding or zero-padding rules.
-  static String formatFixed(DecimalValue amount, {required int decimals}) {
+  static String formatFixed(DecimalValue amount, {required int decimals, bool grouping = false}) {
     _validateDecimals(decimals);
     final value = _enforceDecimals(amount.value, decimals);
     final negative = value.startsWith('-');
@@ -125,7 +138,8 @@ abstract final class TokenAmountFormatter {
     final integer = parts.first;
     final fraction = parts.length == 1 ? '' : parts.last;
     final fixed = decimals == 0 ? integer : '$integer.${fraction.padRight(decimals, '0')}';
-    return '${negative ? '-' : ''}$fixed';
+    final signed = '${negative ? '-' : ''}$fixed';
+    return grouping ? _groupIntegerDigits(signed) : signed;
   }
 
   /// Adds USD decimal values without passing through binary floating point.

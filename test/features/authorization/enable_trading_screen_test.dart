@@ -1,3 +1,9 @@
+import 'package:vanta/features/auth/application/vanta_api_session_provider.dart';
+import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
+
+import '../../support/onboarding.dart';
+import '../../support/trading_agents.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -50,6 +56,8 @@ Future<ProviderContainer> _launch(
   addTearDown(identity.dispose);
   final container = ProviderContainer(
     overrides: [
+      vantaApiSessionProvider.overrideWith(VerifiedVantaSession.new),
+      tradingAgentStoreProvider.overrideWithValue(MemoryTradingAgentStorage().store(DateTime.now)),
       identityRepositoryProvider.overrideWithValue(identity),
       privyConfigurationProvider.overrideWithValue(
         const PrivyConfiguration(appId: 'fixture', clientId: 'fixture'),
@@ -126,6 +134,7 @@ void main() {
         signingAvailable: true,
       ),
     );
+    await tester.pump();
     await tester.pump();
     expect(tester.widget<AuthActionButton>(sign).busy, false);
     final nextGate = authorization.enableGate = Completer<void>();

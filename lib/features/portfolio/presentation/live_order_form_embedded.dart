@@ -3,11 +3,7 @@ part of 'live_order_form.dart';
 /// Trade-workspace layout from the Futures design. It reuses the form state,
 /// sizing and review paths; optional order settings move into Advanced.
 extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
-  Widget _embeddedLayout({
-    required LiveOrderContext contextData,
-    required String? invalid,
-    required bool enabled,
-  }) {
+  Widget _embeddedLayout({required LiveOrderContext contextData, required bool enabled}) {
     final l10n = AppLocalizations.of(context);
     final entry = draft, postOnly = timeInForce == LiveOrderTimeInForce.postOnly;
     final bboLevel = _bboLevel == null ? null : _bboLevelLabel(l10n, _bboLevel!);
@@ -68,14 +64,12 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
           unit: sizeUnit,
           manualCheck: entry.attachment?.entryPeg == null,
           compact: true,
+          scale: _sliderScale(entry),
+          amount: _allocationPercent == null ? parseOrderDecimal(_manualSizeInput.text) : null,
+          onAmount: _onSliderAmount,
         ),
         _availableRow(contextData),
         EmbeddedAdvancedSection(children: _advancedControls(contextData, entry, enabled)),
-        if (!ref.watch(mainOrderRefreshProvider).loading &&
-            !_pricingPending &&
-            invalid != null &&
-            sizeInput.text.isNotEmpty)
-          _errorText(_validationText(invalid)),
         MainOrderCapacityPanel(
           data: widget.data,
           draft: entry,
@@ -83,6 +77,7 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
           input: sizeInput.text,
           percent: _allocationPercent,
           compact: true,
+          reviewFailure: _reviewFailure?.terms == _formTerms ? _reviewFailure!.failure : null,
           reviewWithoutPreview: entry.attachment?.entryPeg != null,
           onRefresh: _refreshForReview,
           refreshingReviewDirection: _refreshingReviewDirection,
@@ -264,12 +259,18 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
     _render(() {
       buy = direction;
       _refreshingReviewDirection = direction;
+      _reviewFailure = null;
     });
     try {
       final refresh = ref.read(mainOrderRefreshProvider.notifier);
       if (ref.read(mainOrderRefreshProvider).background) refresh.stop();
       final ok = await refresh.refresh(widget.data.symbol);
-      if (!ok || !mounted) return false;
+      if (!mounted) return false;
+      if (!ok) {
+        final failure = ref.read(mainOrderRefreshProvider).failure;
+        if (failure != null) _reviewFailure = (failure: failure, terms: _formTerms);
+        return false;
+      }
       await WidgetsBinding.instance.endOfFrame;
       return mounted;
     } finally {
@@ -280,12 +281,20 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
   /// Compound-entry pegs keep their direct review; others use the allocation
   /// review, which re-checks capacity before any signing.
   Future<void> _reviewDirection(bool direction) async {
+    _render(() {
+      buy = direction;
+      _reviewFailure = null;
+    });
     if (!reducing && draft.attachment?.entryPeg == null) {
       return _reviewAllocated(direction: direction);
     }
-    _render(() => buy = direction);
     final contextData = _pricingContext ?? widget.data, size = sizing;
-    if (size.failure != null || attachmentFailure != null || contextData.validate(draft) != null) {
+    final invalid = size.failure ?? attachmentFailure ?? contextData.validate(draft);
+    if (invalid != null) {
+      final failure = _pricing.failure?.key == invalid ? _pricing.failure! : null;
+      _render(
+        () => _reviewFailure = (failure: failure ?? AccountReadFailure(invalid), terms: _formTerms),
+      );
       return;
     }
     final intent = ref

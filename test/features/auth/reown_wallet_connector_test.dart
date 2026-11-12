@@ -8,6 +8,8 @@ import 'package:vanta/features/auth/data/wallet_configuration.dart';
 import 'package:vanta/features/auth/data/wallet_redirect_handler.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 
+import '../../support/reown_modal.dart';
+
 void main() {
   late _Modal modal;
   late ReownWalletConnector connector;
@@ -84,6 +86,7 @@ void main() {
     final connection = await connector.restore(host, expectedAddress: modal.address);
     expect(connection?.isCurrent, true);
     expect(modal.calls, ['init']);
+    expect(modal.appKit.pings, 0);
     var invalidations = 0;
     final subscription = connection!.invalidations.listen((_) => invalidations++);
     modal.finishDisconnect();
@@ -94,6 +97,20 @@ void main() {
       await subscription.cancel();
       await connection.release();
     });
+  });
+
+  testWidgets('a sleeping wallet peer never blocks or downgrades session restore', (tester) async {
+    await mount(tester);
+    modal.isConnected = true;
+    // Mobile wallets cannot answer pings while backgrounded. Restoring must not
+    // treat that silence as a disconnect; signing verifies the peer instead.
+    modal.appKit.pingGate = Completer<void>();
+    modal.appKit.pingFailure = JsonRpcError(code: 7001, message: 'Session not found');
+    final connection = await connector.restore(host, expectedAddress: modal.address);
+    expect(connection?.isCurrent, true);
+    expect(modal.appKit.pings, 0);
+    expect(modal.calls, ['init']);
+    await connection!.release();
   });
 
   testWidgets('missing, expired and different-address sessions cannot restore', (tester) async {
@@ -203,6 +220,14 @@ void main() {
 }
 
 class _Modal extends ChangeNotifier implements ReownAppKitModal {
+  @override
+  final TestReownAppKit appKit = TestReownAppKit();
+  bool get observesSession => hasListeners;
+  @override
+  Future<void> reconnectRelay() async {
+    calls.add('relay');
+  }
+
   final calls = <String>[];
   final envelopes = <String>[];
   bool acceptEnvelope = true;

@@ -55,7 +55,7 @@ void main() {
         expect(find.text(serverMessage), depositRequired ? findsNothing : findsOneWidget);
         // The original structured server failure remains available to diagnostics.
         expect(container.read(accountReadProvider).failure?.details?.message, serverMessage);
-        await tapNavigationControl(tester, 'navigation-markets');
+        await tapNavigationControl(tester, 'navigation-assistant');
         await tapNavigationControl(tester, 'navigation-portfolio');
         container.invalidate(portfolioAccountLoadProvider);
         await tester.pumpAndSettle();

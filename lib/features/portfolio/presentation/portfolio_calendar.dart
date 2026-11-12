@@ -11,13 +11,13 @@ class PortfolioCalendar extends StatelessWidget {
     super.key,
     required this.month,
     required this.performance,
-    required this.preview,
     required this.selectedDay,
     required this.onSelectedDay,
   });
   final DateTime month;
+
+  /// [PortfolioPerformance.dailyPnl] holds only UTC days that have data.
   final PortfolioPerformance performance;
-  final bool preview;
   final int? selectedDay;
   final ValueChanged<int?> onSelectedDay;
 
@@ -58,7 +58,6 @@ class PortfolioCalendar extends StatelessWidget {
                         valid: offset >= firstWeekday && offset < firstWeekday + days,
                         month: month,
                         performance: performance,
-                        preview: preview,
                         selected: selectedDay == offset - firstWeekday + 1,
                         onTap: () => onSelectedDay(offset - firstWeekday + 1),
                       ),
@@ -73,12 +72,7 @@ class PortfolioCalendar extends StatelessWidget {
           ),
           if (selectedDay != null) ...[
             const SizedBox(height: 12),
-            _SelectedDay(
-              month: month,
-              day: selectedDay!,
-              performance: performance,
-              preview: preview,
-            ),
+            _SelectedDay(month: month, day: selectedDay!, performance: performance),
           ],
         ],
       ),
@@ -92,12 +86,11 @@ class _DayCell extends StatelessWidget {
     required this.valid,
     required this.month,
     required this.performance,
-    required this.preview,
     required this.selected,
     required this.onTap,
   });
   final int day;
-  final bool valid, preview, selected;
+  final bool valid, selected;
   final DateTime month;
   final PortfolioPerformance performance;
   final VoidCallback onTap;
@@ -105,7 +98,7 @@ class _DayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final cellHeight = 48.0 * MediaQuery.textScalerOf(context).scale(1);
     if (!valid) return SizedBox(height: cellHeight);
-    final pnl = preview ? performance.dailyPnl[DateTime.utc(month.year, month.month, day)] : null;
+    final pnl = performance.dailyPnl[DateTime.utc(month.year, month.month, day)];
     final color = portfolioPnlColor(pnl);
     return InkWell(
       onTap: onTap,
@@ -141,20 +134,14 @@ class _DayCell extends StatelessWidget {
 }
 
 class _SelectedDay extends StatelessWidget {
-  const _SelectedDay({
-    required this.month,
-    required this.day,
-    required this.performance,
-    required this.preview,
-  });
+  const _SelectedDay({required this.month, required this.day, required this.performance});
   final DateTime month;
   final int day;
   final PortfolioPerformance performance;
-  final bool preview;
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context), date = DateTime.utc(month.year, month.month, day);
-    final value = preview ? performance.dailyPnl[date] : null;
+    final value = performance.dailyPnl[date];
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),

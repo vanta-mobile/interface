@@ -5,6 +5,8 @@ import 'package:vanta/core/errors/error_text.dart';
 import 'package:flutter/material.dart';
 import 'package:vanta/core/presentation/status_view.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_form.dart';
+import 'package:vanta/features/portfolio/presentation/embedded_time_in_force_selector.dart';
+import 'package:vanta/features/auth/presentation/login_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/portfolio/application/account_read_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_refresh_provider.dart';
@@ -30,6 +32,34 @@ void main() {
     expect(t.widget<FilledButton>(buy).onPressed, isNotNull);
     expect(find.byKey(const Key('trade-pending-sell')), findsNothing);
     expect(find.byKey(const Key('live-order-read')), findsNothing);
+    await f.close(t);
+  });
+  testWidgets('unsigned BBO and advanced options open wallet connection', (t) async {
+    final f = NavigationFixture(t, signedIn: false);
+    await launch(t, f.container);
+    Future<void> expectConnect(Finder control) async {
+      await t.ensureVisible(control);
+      await t.pumpAndSettle();
+      await t.tap(control);
+      await t.pumpAndSettle();
+      expect(find.byType(LoginScreen), findsOneWidget);
+      await t.pageBack();
+      await t.pumpAndSettle();
+      expect(find.byType(LoginScreen), findsNothing);
+    }
+
+    await expectConnect(find.byKey(const Key('live-order-bbo')));
+    final advanced = find.byKey(const Key('live-order-advanced'));
+    await t.ensureVisible(advanced);
+    await t.tap(advanced);
+    await t.pumpAndSettle();
+    for (final key in ['trade-pending-tpsl', 'trade-pending-hidden', 'trade-pending-reduce-only']) {
+      await expectConnect(
+        find.descendant(of: find.byKey(Key(key)), matching: find.byType(InkWell)).first,
+      );
+    }
+    await expectConnect(find.byType(EmbeddedTimeInForceSelector));
+    f.expectNoAccountMutation();
     await f.close(t);
   });
   for (final code in [-5050, -1]) {

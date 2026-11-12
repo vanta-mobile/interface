@@ -49,13 +49,36 @@ void main() {
     expect(f.input(tester), '');
     expect(f.orders.submits, 0);
   });
+  allocationTest('dragging commits throttled percentages and always the final one', (tester) async {
+    await f.open(tester);
+    await f.tap(tester, 'main-order-capacity-read');
+    await f.visible(tester, 'main-order-percentage');
+    Slider slider() => tester.widget<Slider>(find.byKey(const Key('main-order-percentage')));
+    int? percent() => f.container.read(mainOrderAllocationProvider).percent;
+    slider().onChanged!(25);
+    await tester.pump();
+    expect(percent(), 25);
+    slider().onChanged!(50);
+    slider().onChanged!(75);
+    await tester.pump();
+    // The thumb follows the drag; the provider waits for the interval.
+    expect(slider().value, 75);
+    expect(percent(), 25);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(percent(), 75);
+    slider().onChanged!(100);
+    slider().onChangeEnd!(100);
+    await tester.pumpAndSettle();
+    expect(percent(), 100);
+    expect(slider().value, 100);
+  });
   allocationTest(
     '20 percent shows independent quantities and selected quote amount; units preserve exact base',
     (tester) async {
       await f.open(tester);
       await f.tap(tester, 'main-order-capacity-read');
       await f.select(tester);
-      expect(f.input(tester), '181.901');
+      expect(f.input(tester), '181');
       expect(
         find.descendant(
           of: find.byKey(const Key('main-order-maximum-buy')),
@@ -66,14 +89,14 @@ void main() {
       expect(
         find.descendant(
           of: find.byKey(const Key('main-order-review-buy')),
-          matching: find.text('≈ 181.901 USDT'),
+          matching: find.text('≈ 180.992 USDT'),
         ),
         findsOneWidget,
       );
-      expect(find.text('1.801 BTC'), findsWidgets);
-      expect(find.text('1.98 BTC'), findsWidgets);
+      expect(find.text('1.792 BTC'), findsWidgets);
+      expect(find.text('1.97 BTC'), findsWidgets);
       await f.tap(tester, 'live-order-unit-base');
-      expect(f.input(tester), '1.801');
+      expect(f.input(tester), '1');
       expect(
         find.descendant(
           of: find.byKey(const Key('main-order-maximum-buy')),
@@ -82,7 +105,7 @@ void main() {
         findsOneWidget,
       );
       await f.tap(tester, 'live-order-unit-quote');
-      expect(f.input(tester), '181.901');
+      expect(f.input(tester), '181');
       expect(f.capacities.reads, 1);
     },
   );
@@ -115,7 +138,7 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(OrderConfirmationDialog),
-          matching: find.text(buy ? '1.801 BTC' : '1.98 BTC'),
+          matching: find.text(buy ? '1.792 BTC' : '1.97 BTC'),
         ),
         findsOneWidget,
       );
@@ -123,7 +146,7 @@ void main() {
       await f.confirm(tester);
       expect(f.orders.submits, 1);
       expect(f.orders.lastIntent!.draft.buy, buy);
-      expect(f.orders.lastIntent!.draft.quantity, buy ? '1.801' : '1.98');
+      expect(f.orders.lastIntent!.draft.quantity, buy ? '1.792' : '1.97');
       expect(f.orders.lastIntent!.draft.price, '101');
       expect(f.container.read(mainOrderAllocationProvider).percent, 0);
       expect(f.input(tester), '');
@@ -142,11 +165,11 @@ void main() {
     };
     await f.tap(tester, 'main-order-review-buy');
     expect(
-      find.descendant(of: find.byType(OrderConfirmationDialog), matching: find.text('3.603 BTC')),
+      find.descendant(of: find.byType(OrderConfirmationDialog), matching: find.text('3.594 BTC')),
       findsOneWidget,
     );
     await f.confirm(tester);
-    expect(f.orders.lastIntent!.draft.quantity, '3.603');
+    expect(f.orders.lastIntent!.draft.quantity, '3.594');
   });
   allocationTest('cancelling review preserves percentage and never submits', (tester) async {
     await f.open(tester);
@@ -155,7 +178,7 @@ void main() {
     await f.tap(tester, 'main-order-review-buy');
     await f.cancel(tester);
     expect(f.container.read(mainOrderAllocationProvider).percent, 20);
-    expect(f.input(tester), '181.901');
+    expect(f.input(tester), '181');
     expect(f.orders.submits, 0);
   });
   allocationTest('lower percentage amount reports the actual exchange minimum failure', (
@@ -188,7 +211,7 @@ void main() {
     await tester.tap(find.byKey(const Key('main-order-capacity-stop')));
     await tester.pumpAndSettle();
     expect(f.container.read(mainOrderAllocationProvider).preparing, false);
-    expect(f.input(tester), '181.901');
+    expect(f.input(tester), '181');
     f.capacities.gate!.complete();
     await tester.pumpAndSettle();
     expect(find.byType(OrderConfirmationDialog), findsNothing);
@@ -213,7 +236,7 @@ void main() {
     await f.tap(tester, 'main-order-review-sell');
     expect(find.byType(OrderConfirmationDialog), findsNothing);
     expect(f.capacities.reads, 2);
-    expect(f.orders.lastIntent!.draft.quantity, '1.98');
+    expect(f.orders.lastIntent!.draft.quantity, '1.97');
     expect(f.orders.lastIntent!.draft.buy, false);
   });
   allocationTest('unknown result preserves ratio and input without blocking further editing', (
@@ -226,7 +249,7 @@ void main() {
     await f.tap(tester, 'main-order-review-buy');
     await f.confirm(tester);
     expect(f.container.read(mainOrderAllocationProvider).percent, 20);
-    expect(f.input(tester), '181.901');
+    expect(f.input(tester), '181');
     // Ratio calculation needs renewed facts after an uncertain write. The
     // diagnostic record itself must not lock the user's manual input.
     expect(tester.widget<Slider>(find.byKey(const Key('main-order-percentage'))).onChanged, isNull);

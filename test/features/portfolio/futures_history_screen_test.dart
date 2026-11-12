@@ -1,341 +1,316 @@
 import 'dart:async';
 
+import 'package:decimal/decimal.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vanta/features/portfolio/application/futures_history_provider.dart';
-import 'package:vanta/features/portfolio/data/futures_history_mapper.dart';
-import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
+import 'package:vanta/core/errors/api_error_details.dart';
+import 'package:vanta/core/presentation/status_view.dart';
+import 'package:vanta/core/vanta_api/vanta_api_failure.dart';
+import 'package:vanta/features/auth/application/vanta_api_session_provider.dart';
+import 'package:vanta/features/auth/application/auth_provider.dart';
+import 'package:vanta/features/auth/domain/auth_session.dart';
+import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
+import 'package:vanta/features/portfolio/data/aster_trading_history_mapper.dart';
 import 'package:vanta/features/portfolio/domain/futures_history.dart';
-import 'package:vanta/features/portfolio/presentation/futures_history_record_card.dart';
-import 'package:vanta/features/trade/application/providers.dart';
-import 'package:vanta/l10n/generated/app_localizations.dart';
+import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
+import 'package:vanta/features/portfolio/application/trading_history_provider.dart';
+import 'package:vanta/features/portfolio/domain/trading_history.dart';
+import 'package:vanta/features/portfolio/presentation/trading_history_order_card.dart';
+import 'package:vanta/features/portfolio/presentation/trading_history_position_card.dart';
+import 'package:vanta/features/portfolio/presentation/trading_history_fill_card.dart';
+import 'package:vanta/features/portfolio/presentation/trading_history_transaction_row.dart';
 
-import '../../support/aster_account.dart';
-import '../../support/futures_history.dart';
-import '../../support/futures_history_widget.dart';
-import '../../support/identity_repository.dart';
-
-FuturesHistoryPage mapped(FuturesHistoryQuery q, List<Object?> rows, {bool units = true}) =>
-    mapFuturesHistory(
-      rows,
-      address: accountAddress,
-      query: q,
-      receivedAt: futuresHistoryNow,
-      units: units ? futuresHistoryUnits : const {},
-    );
+import '../../support/trading_history.dart';
 
 void main() {
-  for (final fromOrders in [false, true]) {
-    testWidgets('entry opens without reading from ${fromOrders ? 'open orders' : 'portfolio'}', (
-      tester,
+  testWidgets('four tabs read their API and canceled filtering is local', (t) async {
+    final repository = HistoryRepository();
+    await launchTradingHistory(t, repository);
+    expect(find.byType(TradingHistoryOrderCard), findsNWidgets(2));
+    expect(repository.calls, hasLength(1));
+    await historyTap(t, 'history-filter');
+    expect(find.byType(TradingHistoryOrderCard), findsOneWidget);
+    expect(repository.calls, hasLength(1));
+    for (final (tab, type) in [
+      (TradingHistoryTab.positions, TradingHistoryPositionCard),
+      (TradingHistoryTab.trades, TradingHistoryFillCard),
+      (TradingHistoryTab.transactions, TradingHistoryTransactionRow),
+    ]) {
+      await historyTap(t, 'history-tab-${tab.name}');
+      expect(find.byType(type), findsOneWidget);
+      expect(repository.calls.last.$1, tab);
+    }
+    expect(find.byKey(const Key('history-filter')), findsNothing);
+    expect(find.text('-0.00000043 USDT'), findsOneWidget);
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('order expansion, exact linked fills, fee sign and close', (t) async {
+    final repository = HistoryRepository();
+    await launchTradingHistory(t, repository);
+    await historyTap(t, 'history-expand-order:AAPLUSDT:123');
+    expect(find.text('190.100000 / 190.000000'), findsOneWidget);
+    expect(find.text('570.30 / 1,140.00'), findsOneWidget);
+    await historyTap(t, 'history-details-123');
+    expect(find.byKey(const Key('history-order-details')), findsOneWidget);
+    expect(find.text('Order Details'), findsOneWidget);
+    expect(find.text('0.071288 USDT'), findsNWidgets(2));
+    expect(find.widgetWithText(SelectableText, '123'), findsOneWidget);
+    expect(find.widgetWithText(SelectableText, '50'), findsOneWidget);
+    String? copied;
+    t.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (
+      call,
     ) async {
-      final repository = TestFuturesHistoryRepository();
-      final container = await launchFuturesHistory(tester, repository, fromOrders: fromOrders);
-      expect(find.byKey(const Key('futures-history-page')), findsOneWidget);
-      expect(find.widgetWithText(SelectableText, accountAddress), findsOneWidget);
-      expect(find.byType(FuturesHistoryRecordCard), findsNothing);
-      expect(repository.queries, isEmpty);
-      await tapFutures(tester, 'read-futures-history');
-      expect(repository.queries, hasLength(1));
-      expect(find.text('Cancelled'), findsOneWidget);
-      expect(find.text('0.001 BTC'), findsOneWidget);
-      expect(find.text('0.002 BTC'), findsOneWidget);
-      expect(find.text('80.000000000000000001 USDT'), findsOneWidget);
-      expect(find.widgetWithText(SelectableText, '12345'), findsOneWidget);
-      expect(find.text('2026-11-05 06:00:00.000'), findsNWidgets(2));
-      expect(tester.takeException(), null);
-      await closeFuturesHistory(tester, container);
+      if (call.method == 'Clipboard.setData') copied = (call.arguments as Map)['text'] as String;
+      return null;
     });
-  }
-
-  testWidgets('signed out stays separate from demo; explicit read opens login', (tester) async {
-    final repository = TestFuturesHistoryRepository();
-    final container = await launchFuturesHistory(
-      tester,
-      repository,
-      identity: TestIdentityRepository(),
+    addTearDown(
+      () =>
+          t.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null),
     );
-    expect(find.byKey(const Key('futures-history-wallet')), findsNothing);
-    expect(find.byKey(const Key('futures-history-empty')), findsNothing);
-    expect(find.text('10000.00'), findsNothing);
-    await tapFutures(tester, 'read-futures-history');
-    expect(find.byKey(const Key('login-email')), findsOneWidget);
-    expect(repository.queries, isEmpty);
-    expect(tester.takeException(), null);
-    await closeFuturesHistory(tester, container);
+    await t.tap(find.byKey(const ValueKey('history-copy-Order ID')));
+    await t.pump();
+    expect(copied, '123');
+    expect(find.text('Maker'), findsNothing);
+    expect(find.text('Taker'), findsNothing);
+    await t.tap(find.byTooltip('Close'));
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('history-order-details')), findsNothing);
+    expect(t.takeException(), isNull);
   });
 
-  testWidgets('trades require exact symbol; fills and fee/PnL units stay separate', (tester) async {
-    final repository = TestFuturesHistoryRepository()
-      ..respond = (q) => mapped(q, [futuresTradeRow(), futuresTradeRow(id: '98766')]);
-    final container = await launchFuturesHistory(tester, repository);
-    await chooseFuturesKind(tester, FuturesHistoryKind.trades);
-    await revealFutures(tester, find.byKey(const Key('read-futures-history')));
-    expect(
-      tester.widget<FilledButton>(find.byKey(const Key('read-futures-history'))).onPressed,
-      null,
-    );
-    await setFuturesSymbol(tester, ' BTCUSDT ');
-    await tapFutures(tester, 'read-futures-history');
-    expect(repository.queries.single.symbol, 'BTCUSDT');
-    expect(find.byType(FuturesHistoryRecordCard), findsNWidgets(2));
-    expect(find.text('-0.008000000000000001 BNB'), findsNWidgets(2));
-    expect(find.text('-1.250000000000000001 USDT'), findsNWidgets(2));
-    expect(find.widgetWithText(SelectableText, '12345'), findsNWidgets(2));
-    expect(find.widgetWithText(SelectableText, '98765'), findsOneWidget);
-    expect(find.widgetWithText(SelectableText, '98766'), findsOneWidget);
-    final l10n = AppLocalizations.of(tester.element(find.byType(FuturesHistoryRecordCard).first));
-    expect(find.text(l10n.futuresHistoryPnlHint), findsNWidgets(2));
-    expect(tester.takeException(), null);
-    await closeFuturesHistory(tester, container);
-  });
-
-  testWidgets('income type plus ID identity and signed amounts; raw info never rendered', (
-    tester,
+  testWidgets('position details explain unavailable linkage; inferred fields are hidden', (
+    t,
   ) async {
-    final repository = TestFuturesHistoryRepository()
-      ..respond = (q) => mapped(q, [
-        futuresIncomeRow(),
-        {...futuresIncomeRow(), 'incomeType': 'REALIZED_PNL', 'income': '1.000000000000000001'},
-      ]);
-    final container = await launchFuturesHistory(tester, repository);
-    await chooseFuturesKind(tester, FuturesHistoryKind.income);
-    final dropdown = find.byType(DropdownButtonFormField<String>);
-    expect(
-      tester
-          .widget<DropdownButton<String>>(
-            find.descendant(of: dropdown, matching: find.byType(DropdownButton<String>)),
-          )
-          .items,
-      hasLength(18),
-    );
-    await tapFutures(tester, 'read-futures-history');
-    expect(find.byType(FuturesHistoryRecordCard), findsNWidgets(2));
-    expect(find.widgetWithText(SelectableText, '45678'), findsNWidgets(2));
-    expect(find.text('-0.000000000000000001 USDT'), findsOneWidget);
-    expect(find.text('+1.000000000000000001 USDT'), findsOneWidget);
-    expect(find.textContaining('Never render this raw payload'), findsNothing);
-    await revealFutures(tester, dropdown);
-    await tester.tap(dropdown);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Funding fee').last);
-    await tester.pumpAndSettle();
-    expect(container.read(futuresHistoryProvider).query.incomeType, 'FUNDING_FEE');
-    expect(find.byType(FuturesHistoryRecordCard), findsNothing);
-    expect(repository.queries, hasLength(1));
-    repository.respond = (q) => mapped(q, [futuresIncomeRow()]);
-    await tapFutures(tester, 'read-futures-history');
-    expect(repository.queries.last.incomeType, 'FUNDING_FEE');
-    expect(tester.takeException(), null);
-    await closeFuturesHistory(tester, container);
+    final repository = HistoryRepository();
+    await launchTradingHistory(t, repository);
+    await historyTap(t, 'history-tab-positions');
+    expect(find.text('+0.27 USDT'), findsOneWidget);
+    await historyTap(t, 'history-expand-position:7');
+    expect(find.text('189.200000'), findsOneWidget);
+    expect(find.text('194.600000'), findsOneWidget);
+    await historyTap(t, 'history-position-details-7');
+    expect(find.text('Related Orders'), findsOneWidget);
+    expect(find.textContaining('does not provide position-to-order links'), findsOneWidget);
+    expect(t.takeException(), isNull);
   });
 
-  testWidgets('unknown totals and units never inferred from price times quantity', (tester) async {
-    final repository = TestFuturesHistoryRepository()
-      ..respond = (q) => mapped(q, [
-        {...futuresOrderRow(), 'cumQuote': null, 'avgPrice': null},
-      ], units: false);
-    final container = await launchFuturesHistory(tester, repository);
-    await tapFutures(tester, 'read-futures-history');
-    final card = find.byType(FuturesHistoryRecordCard);
-    final l10n = AppLocalizations.of(tester.element(card));
-    expect(find.descendant(of: card, matching: find.text('—')), findsNWidgets(2));
-    expect(find.text('80 USDT'), findsNothing);
-    expect(find.text('0.001 ${l10n.accountUnitUnavailable}'), findsOneWidget);
-    expect(find.text(l10n.accountUnitUnavailable), findsOneWidget);
-    expect(tester.takeException(), null);
-    await closeFuturesHistory(tester, container);
-  });
-
-  testWidgets('entire close keeps actual fills; trailing uses activation not stop price', (
-    tester,
+  testWidgets('pull refresh waits for the request and retains results on server failure', (
+    t,
   ) async {
-    final repository = TestFuturesHistoryRepository()
-      ..respond = (q) => mapped(q, [
-        {
-          ...futuresOrderRow(),
-          'origQty': '0',
-          'closePosition': true,
-          'type': 'MARKET',
-          'origType': 'TRAILING_STOP_MARKET',
-          'stopPrice': '123.456',
-          'activatePrice': '79000',
-          'priceRate': '0.15',
-        },
-      ]);
-    final container = await launchFuturesHistory(tester, repository);
-    await tapFutures(tester, 'read-futures-history');
-    expect(find.text('Close entire position'), findsOneWidget);
-    expect(find.text('0.001 BTC'), findsOneWidget);
-    final l10n = AppLocalizations.of(tester.element(find.byType(FuturesHistoryRecordCard)));
-    expect(find.text(l10n.notificationOrderType('TRAILING_STOP_MARKET')), findsOneWidget);
-    expect(find.text('79,000 USDT'), findsOneWidget);
-    expect(find.text('0.15%'), findsOneWidget);
-    expect(find.text('123.456 USDT'), findsNothing);
-    expect(tester.takeException(), null);
-    await closeFuturesHistory(tester, container);
-  });
-
-  testWidgets('saturated read remains partial and continuation failure preserves rows and window', (
-    tester,
-  ) async {
-    final repository = TestFuturesHistoryRepository();
-    repository.respond = (q) {
-      final p = mapped(q, [futuresOrderRow(time: q.window.end, id: '${q.window.end}')]);
-      return FuturesHistoryPage(
-        address: p.address,
-        query: q,
-        receivedAt: p.receivedAt,
-        records: p.records,
-        rawCount: repository.queries.length == 1 ? 1000 : 1,
-      );
-    };
-    final container = await launchFuturesHistory(tester, repository);
-    await tapFutures(tester, 'read-futures-history');
-    expect(container.read(futuresHistoryProvider).pending, hasLength(2));
-    expect(repository.queries, hasLength(1));
-    expect(find.textContaining('selected range is not fully checked'), findsOneWidget);
-    final snapshot = container.read(futuresHistoryProvider).account;
-    repository.failure = const AccountReadFailure('accountNetwork');
-    await tapFutures(tester, 'continue-futures-history');
-    expect(container.read(futuresHistoryProvider).account, same(snapshot));
-    expect(find.byType(FuturesHistoryRecordCard), findsOneWidget);
-    expect(find.byKey(const Key('futures-history-snapshot-stale')), findsOneWidget);
-    repository.failure = null;
-    await tapFutures(tester, 'continue-futures-history');
-    expect(repository.queries[1], repository.queries[2]);
-    expect(container.read(futuresHistoryProvider).pending, hasLength(1));
-    await tapFutures(tester, 'continue-futures-history');
-    expect(container.read(futuresHistoryProvider).pending, isEmpty);
-    expect(find.byKey(const Key('continue-futures-history')), findsNothing);
-    expect(tester.takeException(), null);
-    await closeFuturesHistory(tester, container);
-  });
-
-  testWidgets('one-millisecond saturated data is explicitly truncated', (tester) async {
-    final repository = TestFuturesHistoryRepository()
-      ..respond = (q) {
-        final p = mapped(q, [futuresOrderRow()]);
-        return FuturesHistoryPage(
-          address: p.address,
-          query: q,
-          receivedAt: p.receivedAt,
-          records: p.records,
-          rawCount: 1000,
-        );
-      };
-    final container = await launchFuturesHistory(tester, repository);
-    final now = futuresHistoryNow.millisecondsSinceEpoch;
-    container.read(futuresHistoryProvider.notifier).setWindow(HistoryWindow(now, now));
-    await tester.pumpAndSettle();
-    await tapFutures(tester, 'read-futures-history');
-    final l10n = AppLocalizations.of(tester.element(find.byType(FuturesHistoryRecordCard)));
-    expect(find.text(l10n.historyTruncated), findsOneWidget);
-    expect(find.byKey(const Key('continue-futures-history')), findsNothing);
-    expect(repository.queries, hasLength(1));
-    expect(tester.takeException(), null);
-    await closeFuturesHistory(tester, container);
-  });
-
-  testWidgets('refresh error retains input and results; new empty read shows explicit empty', (
-    tester,
-  ) async {
-    final repository = TestFuturesHistoryRepository();
-    final container = await launchFuturesHistory(tester, repository);
-    await setFuturesSymbol(tester, 'BTCUSDT');
-    await tapFutures(tester, 'read-futures-history');
-    repository.failure = const AccountReadFailure('accountPermissionRequired', code: -2015);
-    await tapFutures(tester, 'read-futures-history');
-    expect(find.byType(FuturesHistoryRecordCard), findsOneWidget);
-    expect(find.textContaining('Aster error code: -2015'), findsOneWidget);
-    expect(container.read(futuresHistoryProvider).query.symbol, 'BTCUSDT');
-    repository.failure = null;
-    repository.respond = (q) => mapped(q, []);
-    await tapFutures(tester, 'read-futures-history');
-    expect(find.byType(FuturesHistoryRecordCard), findsNothing);
-    expect(find.byKey(const Key('futures-history-empty')), findsOneWidget);
-    expect(tester.takeException(), null);
-    await closeFuturesHistory(tester, container);
-  });
-
-  testWidgets('local ten-row pagination and language switch do not sign', (tester) async {
-    final repository = TestFuturesHistoryRepository()
-      ..respond = (q) => mapped(q, List.generate(21, (i) => futuresOrderRow(id: '${i + 1}')));
-    final container = await launchFuturesHistory(tester, repository);
-    await tapFutures(tester, 'read-futures-history');
-    expect(find.byType(FuturesHistoryRecordCard), findsNWidgets(10));
-    await tapFutures(tester, 'futures-history-next');
-    await tapFutures(tester, 'futures-history-next');
-    expect(find.byType(FuturesHistoryRecordCard), findsOneWidget);
-    expect(find.text('Page 3 of 3 loaded pages'), findsOneWidget);
-    final snapshot = container.read(futuresHistoryProvider).account;
-    container.read(localeProvider.notifier).select('zh');
-    await tester.pumpAndSettle();
-    expect(find.text('已加载记录第3／3页'), findsOneWidget);
-    expect(container.read(futuresHistoryProvider).account, same(snapshot));
-    await tapFutures(tester, 'futures-history-previous');
-    expect(find.byType(FuturesHistoryRecordCard), findsNWidgets(10));
-    expect(repository.queries, hasLength(1));
-    expect(tester.takeException(), null);
-    await closeFuturesHistory(tester, container);
-  });
-
-  testWidgets('stop and back discard late read without another prompt', (tester) async {
-    final repository = TestFuturesHistoryRepository()..gate = Completer<void>();
-    final container = await launchFuturesHistory(tester, repository);
-    await tapFutures(tester, 'read-futures-history', settle: false);
-    expect(
-      tester.widget<FilledButton>(find.byKey(const Key('read-futures-history'))).onPressed,
-      null,
-    );
-    await tapFutures(tester, 'stop-futures-history');
-    repository.gate!.complete();
-    await tester.pumpAndSettle();
-    expect(find.byType(FuturesHistoryRecordCard), findsNothing);
+    final repository = HistoryRepository();
+    final c = await launchTradingHistory(t, repository);
     repository.gate = Completer<void>();
-    await tapFutures(tester, 'read-futures-history', settle: false);
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
+    final indicator = t.widget<RefreshIndicator>(find.byType(RefreshIndicator));
+    var settled = false;
+    final refresh = indicator.onRefresh().then((_) => settled = true);
+    await t.pump();
+    expect(settled, isFalse);
+    expect(find.byType(TradingHistoryOrderCard), findsNWidgets(2));
+    repository.failure = const VantaApiFailure(
+      vantaApiRequestFailed,
+      details: ApiErrorDetails(message: 'History archive is temporarily unavailable', status: 503),
+    );
     repository.gate!.complete();
-    await tester.pumpAndSettle();
-    expect(container.read(futuresHistoryProvider).account, null);
-    expect(container.read(futuresHistoryProvider).busy, false);
-    expect(repository.queries, hasLength(2));
-    expect(tester.takeException(), null);
-    await closeFuturesHistory(tester, container);
+    await refresh;
+    await t.pumpAndSettle();
+    expect(settled, isTrue);
+    expect(find.text('History archive is temporarily unavailable'), findsOneWidget);
+    expect(find.byType(TradingHistoryOrderCard), findsNWidgets(2));
+    expect(c.read(tradingHistoryProvider(TradingHistoryTab.orders)).page, isNotNull);
   });
 
-  testWidgets('date picker uses UTC and does not require trade symbol before choosing dates', (
-    tester,
+  testWidgets('initial loading, failure retry, partial and empty are section scoped', (t) async {
+    final repository = HistoryRepository()..gate = Completer<void>();
+    await launchTradingHistory(t, repository);
+    expect(find.byType(SkeletonBox), findsNWidgets(3));
+    repository.failure = const VantaApiFailure(
+      vantaApiRequestFailed,
+      details: ApiErrorDetails(message: 'Read limit reached', status: 429),
+    );
+    repository.gate!.complete();
+    await t.pumpAndSettle();
+    expect(find.text('Read limit reached'), findsOneWidget);
+    repository.gate = null;
+    repository.failure = null;
+    repository.partial = true;
+    repository.rows[TradingHistoryTab.orders] = [];
+    await t.tap(find.byKey(const Key('status-retry')));
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('futures-history-empty')), findsOneWidget);
+    expect(find.text('History is incomplete. Some records may be unavailable.'), findsOneWidget);
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('refresh waits for contract units as well as history', (t) async {
+    final unitsGate = Completer<void>();
+    var waitForUnits = false;
+    await launchTradingHistory(
+      t,
+      HistoryRepository(),
+      loadUnits: () async {
+        if (waitForUnits) await unitsGate.future;
+        return historyUnits;
+      },
+    );
+    waitForUnits = true;
+    var settled = false;
+    final refresh = t
+        .widget<RefreshIndicator>(find.byType(RefreshIndicator))
+        .onRefresh()
+        .then((_) => settled = true);
+    await t.pump();
+    expect(settled, isFalse);
+    unitsGate.complete();
+    await refresh;
+    expect(settled, isTrue);
+  });
+
+  testWidgets('pull refresh does not request a signature; Sign is explicit', (t) async {
+    final c = await launchTradingHistory(t, HistoryRepository());
+    await historyTap(t, 'history-tab-trades');
+    final session = c.read(vantaApiSessionProvider.notifier) as HistorySession;
+    session.set(
+      const VantaApiSessionState(VantaApiSessionStatus.signedOut, address: historyAddress),
+    );
+    await t.pumpAndSettle();
+    await t.widget<RefreshIndicator>(find.byType(RefreshIndicator)).onRefresh();
+    expect(session.signInCalls, 0);
+    await t.tap(find.byKey(const Key('status-retry')));
+    await t.pumpAndSettle();
+    expect(session.signInCalls, 1);
+    expect(find.byType(TradingHistoryFillCard), findsOneWidget);
+  });
+
+  testWidgets('wallet change clears the list and an already open details sheet', (t) async {
+    final c = await launchTradingHistory(t, HistoryRepository());
+    await historyTap(t, 'history-expand-order:AAPLUSDT:123');
+    await historyTap(t, 'history-details-123');
+    (c.read(authProvider.notifier) as HistoryAuth).set(const AuthSession());
+    await t.pumpAndSettle();
+    expect(find.text('AAPLUSDT'), findsNothing);
+    expect(find.widgetWithText(SelectableText, '123'), findsNothing);
+    expect(find.text('0.071288 USDT'), findsNothing);
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('Aster tabs and order fills work without an OpenAPI session', (t) async {
+    final repository = HistoryRepository();
+    final c = await launchTradingHistory(t, repository);
+    (c.read(vantaApiSessionProvider.notifier) as HistorySession).set(
+      const VantaApiSessionState(VantaApiSessionStatus.unavailable),
+    );
+    await t.pumpAndSettle();
+    expect(find.byType(TradingHistoryOrderCard), findsNWidgets(2));
+    await historyTap(t, 'history-expand-order:AAPLUSDT:123');
+    await historyTap(t, 'history-details-123');
+    expect(repository.orderFillCalls.single.id, '123');
+    expect(find.widgetWithText(SelectableText, '50'), findsOneWidget);
+    await t.tap(find.byTooltip('Close'));
+    await t.pumpAndSettle();
+    await historyTap(t, 'history-tab-transactions');
+    expect(find.byType(TradingHistoryTransactionRow), findsOneWidget);
+    await historyTap(t, 'history-tab-trades');
+    expect(find.byType(TradingHistoryFillCard), findsNothing);
+    expect(find.byKey(const Key('history-failure')), findsOneWidget);
+    await historyTap(t, 'history-tab-positions');
+    expect(find.byType(TradingHistoryPositionCard), findsNothing);
+    expect(find.byKey(const Key('history-failure')), findsOneWidget);
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('revoking the Aster grant clears only direct tabs and does not initiate SIWE', (
+    t,
   ) async {
-    final repository = TestFuturesHistoryRepository();
-    final container = await launchFuturesHistory(tester, repository);
-    await chooseFuturesKind(tester, FuturesHistoryKind.trades);
-    await tapFutures(tester, 'futures-history-dates');
-    await tester.tap(find.byTooltip('Switch to input'));
-    await tester.pumpAndSettle();
-    final fields = find.descendant(
-      of: find.byType(DateRangePickerDialog),
-      matching: find.byType(TextField),
+    var granted = true;
+    final repository = HistoryRepository();
+    final c = await launchTradingHistory(
+      t,
+      repository,
+      loadGrant: () async => granted ? historyGrant : null,
     );
-    await tester.enterText(fields.at(0), '10/01/2026');
-    await tester.enterText(fields.at(1), '11/05/2026');
-    await tester.tap(find.text('OK'));
-    await tester.pumpAndSettle();
-    final query = container.read(futuresHistoryProvider).query;
-    expect(query.window.start, DateTime.utc(2026, 10, 1).millisecondsSinceEpoch);
-    expect(query.window.end, futuresHistoryNow.millisecondsSinceEpoch);
-    expect(query.window.fitsRequest, false);
-    expect(query.symbol, isEmpty);
-    expect(repository.queries, isEmpty);
-    await tapFutures(tester, 'futures-history-day');
-    expect(
-      container.read(futuresHistoryProvider).query.window,
-      HistoryWindow.recent(futuresHistoryNow, const Duration(days: 1)),
+    granted = false;
+    c.invalidate(tradingAgentProvider);
+    await t.pumpAndSettle();
+    expect(find.byType(TradingHistoryOrderCard), findsNothing);
+    expect(find.byKey(const Key('history-failure')), findsOneWidget);
+    await t.widget<RefreshIndicator>(find.byType(RefreshIndicator)).onRefresh();
+    expect(repository.calls, hasLength(1));
+    expect((c.read(vantaApiSessionProvider.notifier) as HistorySession).signInCalls, 0);
+    await historyTap(t, 'history-tab-trades');
+    expect(find.byType(TradingHistoryFillCard), findsOneWidget);
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('Aster trigger terms and actual fill role appear in order details', (t) async {
+    final repository = HistoryRepository();
+    repository.rows[TradingHistoryTab.orders] = [
+      HistoryOrder(
+        symbol: 'AAPLUSDT',
+        time: DateTime.utc(2026, 11, 5),
+        id: '123',
+        side: 'SELL',
+        positionSide: 'SHORT',
+        type: 'STOP_MARKET',
+        status: 'FILLED',
+        executed: Decimal.parse('3'),
+        stopPrice: Decimal.parse('200'),
+        workingType: 'MARK_PRICE',
+      ),
+    ];
+    repository.rows[TradingHistoryTab.trades] = [
+      mapAsterTradingRecord(
+        FuturesTradeRecord(
+          symbol: 'AAPLUSDT',
+          time: DateTime.utc(2026, 11, 5),
+          tradeId: '50',
+          orderId: '123',
+          side: 'SELL',
+          positionSide: 'SHORT',
+          price: Decimal.parse('200'),
+          quantity: Decimal.parse('3'),
+          quoteQuantity: Decimal.parse('600'),
+          commission: Decimal.parse('-0.07'),
+          commissionAsset: 'USDT',
+          realizedPnl: Decimal.zero,
+          maker: true,
+        ),
+      ),
+    ];
+    await launchTradingHistory(t, repository);
+    await historyTap(t, 'history-expand-order:AAPLUSDT:123');
+    expect(find.text('200.000000 (Mark)'), findsOneWidget);
+    await historyTap(t, 'history-details-123');
+    expect(find.text('Maker'), findsOneWidget);
+    expect(find.text('0.07 USDT'), findsNWidgets(2));
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('Aster revocation preserves its concrete failure after the grant clears', (t) async {
+    var granted = true;
+    final repository = HistoryRepository();
+    final c = await launchTradingHistory(
+      t,
+      repository,
+      loadGrant: () async => granted ? historyGrant : null,
     );
-    await tapFutures(tester, 'futures-history-week');
-    expect(container.read(futuresHistoryProvider).query.window, futuresHistoryWindow);
-    expect(tester.takeException(), null);
-    await closeFuturesHistory(tester, container);
+    repository.gate = Completer<void>();
+    repository.failure = const AccountReadFailure(
+      'accountPermissionRequired',
+      code: -2015,
+      details: ApiErrorDetails(message: 'Account access revoked'),
+    );
+    final refresh = t.widget<RefreshIndicator>(find.byType(RefreshIndicator)).onRefresh();
+    granted = false;
+    c.invalidate(tradingAgentProvider);
+    await t.pumpAndSettle();
+    repository.gate!.complete();
+    await refresh;
+    await t.pumpAndSettle();
+    expect(find.textContaining('Account access revoked'), findsOneWidget);
+    expect(find.byType(TradingHistoryOrderCard), findsNothing);
+    expect(t.takeException(), isNull);
   });
 }

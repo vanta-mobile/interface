@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import '../../../firebase_options.dart';
 import '../domain/push_registration.dart';
 
-/// Background payloads have no authenticated account contract yet. Let FCM/the
-/// OS display notification payloads without mutating local financial state.
+/// Let FCM/the OS display background notification payloads. Financial state
+/// always comes from authenticated API reads, never from push contents.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -36,7 +36,12 @@ class FirebasePushMessagingRepository implements PushMessagingRepository {
 
   @override
   Stream<String> get registrationChanges =>
-      _messaging.onRegistered.where((installationId) => installationId.trim().isNotEmpty);
+      // The Vanta contract uses APNs/FCM tokens, not Firebase Installation IDs.
+      // ignore: deprecated_member_use
+      _messaging.onTokenRefresh
+          .asyncMap((fcmToken) async => isIOS ? await _messaging.getAPNSToken() : fcmToken)
+          .where((token) => token != null && token.trim().isNotEmpty)
+          .cast<String>();
 
   @override
   Future<PushRegistration> register() async {
@@ -60,11 +65,13 @@ class FirebasePushMessagingRepository implements PushMessagingRepository {
         badge: true,
         sound: true,
       );
-      // APNs registration can arrive later than notification permission. The
-      // registration stream supplies the FID once APNs is available.
-      if (await _messaging.getAPNSToken() == null) return registration;
+      // APNs may arrive later; token refresh or app resume retries the lookup.
+      final token = await _messaging.getAPNSToken();
+      return PushRegistration(permission: permission, token: token);
     }
-    await _messaging.register();
-    return registration;
+    // This backend requires the legacy FCM token rather than the new FID API.
+    // ignore: deprecated_member_use
+    final token = await _messaging.getToken();
+    return PushRegistration(permission: permission, token: token);
   }
 }

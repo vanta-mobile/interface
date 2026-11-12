@@ -16,10 +16,14 @@ class EmbeddedTimeInForceSelector extends StatelessWidget {
     required this.selected,
     required this.available,
     required this.onChanged,
+    this.onTap,
   });
   final LiveOrderTimeInForce selected;
   final Set<LiveOrderTimeInForce> available;
   final ValueChanged<LiveOrderTimeInForce>? onChanged;
+
+  /// Replaces the choice sheet, e.g. to connect an account first.
+  final VoidCallback? onTap;
 
   Future<void> _select(BuildContext context) async {
     final value = await showModeSettingsSheet<LiveOrderTimeInForce>(
@@ -32,13 +36,13 @@ class EmbeddedTimeInForceSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     button: true,
-    enabled: onChanged != null,
+    enabled: onTap != null || onChanged != null,
     label: AppLocalizations.of(context).timeInForceTitle,
     value: selected.wire,
     child: Tooltip(
       message: AppLocalizations.of(context).timeInForceTitle,
       child: InkWell(
-        onTap: onChanged == null ? null : () => _select(context),
+        onTap: onTap ?? (onChanged == null ? null : () => _select(context)),
         child: ConstrainedBox(
           constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           child: Row(

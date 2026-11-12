@@ -2,11 +2,29 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:reown_appkit/reown_appkit.dart';
+// AppKit exposes the relay client type only through reown_core.
+// ignore: depend_on_referenced_packages, implementation_imports
+import 'package:reown_core/relay_client/i_relay_client.dart';
 
 import 'wallet_connection.dart';
 
 class TestReownModal extends ChangeNotifier implements ReownAppKitModal {
+  @override
+  late final IReownAppKit appKit = TestReownAppKit();
+  TestReownAppKit get sdk => appKit as TestReownAppKit;
   String walletName = 'MetaMask';
+  @override
+  final onModalError = Event<ModalError>();
+  int relayReconnects = 0;
+  Completer<void>? relayGate;
+  Object? relayFailure;
+  @override
+  Future<void> reconnectRelay() async {
+    relayReconnects++;
+    await relayGate?.future;
+    if (relayFailure case final error?) throw error;
+  }
+
   List<String> methods = [
     'eth_sendTransaction',
     'personal_sign',
@@ -24,6 +42,7 @@ class TestReownModal extends ChangeNotifier implements ReownAppKitModal {
   Future<void> dispose() async => super.dispose();
   String address = '0x2222222222222222222222222222222222222222';
   int expiry = 9999999999;
+  String sessionTopic = 'topic';
   static const metadata = ConnectionMetadata(
     publicKey: 'key',
     metadata: PairingMetadata(
@@ -36,7 +55,7 @@ class TestReownModal extends ChangeNotifier implements ReownAppKitModal {
   @override
   ReownAppKitModalSession get session => ReownAppKitModalSession(
     sessionData: SessionData(
-      topic: 'topic',
+      topic: sessionTopic,
       pairingTopic: 'pairing',
       relay: Relay('irn'),
       expiry: expiry,
@@ -106,6 +125,42 @@ class TestReownModal extends ChangeNotifier implements ReownAppKitModal {
     isConnected = false;
     notifyListeners();
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class TestReownAppKit implements IReownAppKit {
+  @override
+  final IReownCore core = TestReownCore();
+  Event<ErrorEvent> get relayErrors => core.relayClient.onRelayClientError;
+  int pings = 0;
+  String? pingTopic;
+  Completer<void>? pingGate;
+  Object? pingFailure;
+  @override
+  Future<void> ping({required String topic}) async {
+    pings++;
+    pingTopic = topic;
+    await pingGate?.future;
+    if (pingFailure case final failure?) throw failure;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class TestReownCore implements IReownCore {
+  @override
+  IRelayClient relayClient = TestRelayClient();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class TestRelayClient implements IRelayClient {
+  @override
+  final onRelayClientError = Event<ErrorEvent>();
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

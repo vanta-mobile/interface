@@ -1,14 +1,18 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../core/presentation/status_view.dart';
-import '../../../market/application/market_providers.dart';
 import '../../../market/domain/market.dart';
 import '../../application/providers.dart';
 import '../../../portfolio/application/order_entry_gate_provider.dart';
 import '../../../funding/domain/funding_catalog.dart';
 import '../../../funding/presentation/funding_screen.dart';
+import '../../../portfolio/domain/live_order_time_in_force.dart';
+import '../../../portfolio/presentation/embedded_time_in_force_selector.dart';
+import '../../../portfolio/presentation/live_order_embedded_controls.dart';
+import '../../../portfolio/presentation/live_order_embedded_inputs.dart';
 import 'account_sheet.dart';
 import '../trade_theme.dart';
 import 'primitives.dart';
@@ -29,8 +33,6 @@ class TradeOrderPending extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final gate = ref.watch(orderEntryGateProvider);
-    final instrument = ref.watch(selectedInstrumentProvider);
-    final base = instrument?.symbol == symbol ? instrument!.base : '—';
     final quote = ref.watch(currentMarketProvider);
     final selectedPrice = ref.watch(orderPriceProvider);
     final referencePrice = selectedPrice.isNotEmpty
@@ -38,32 +40,49 @@ class TradeOrderPending extends ConsumerWidget {
         : quote != null && quote.symbol == symbol
         ? marketInput(quote.price)
         : '';
+    // Order controls are inert until account rules load; without a wallet
+    // they lead to the connection flow instead.
+    final connect = gate == OrderEntryGate.connect ? () => showAccountSheet(context) : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        TextFormField(
-          key: ValueKey(('trade-pending-price', symbol, market, referencePrice)),
-          initialValue: market ? l.market : referencePrice,
-          enabled: false,
-          style: TradeTypography.body,
-          decoration: InputDecoration(
-            labelText: l.liveOrderPrice('USDT'),
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-            hintText: '—',
+        EmbeddedPriceField(
+          key: ValueKey(('trade-pending-price', symbol, market)),
+          controller: null,
+          asset: 'USDT',
+          tick: Decimal.zero,
+          enabled: connect != null,
+          onChanged: () {},
+          fixedLabel: market ? l.market : (referencePrice.isEmpty ? '—' : referencePrice),
+          bboVisible: !market,
+          onBbo: market ? null : connect,
+        ),
+        const SizedBox(height: 8),
+        EmbeddedInputBox(
+          label: l.tradeOrderSize,
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  key: const Key('trade-pending-quantity'),
+                  enabled: false,
+                  style: TradeTypography.body,
+                  decoration: const InputDecoration(
+                    isCollapsed: true,
+                    filled: false,
+                    border: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    hintText: '—',
+                    contentPadding: EdgeInsets.symmetric(vertical: 6),
+                  ),
+                ),
+              ),
+              EmbeddedSelector(label: 'USDT', tooltip: l.tradeSelectUnitType, onTap: connect),
+            ],
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
-          key: const Key('trade-pending-quantity'),
-          enabled: false,
-          style: TradeTypography.body,
-          decoration: InputDecoration(
-            labelText: l.liveOrderQuantity(base),
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-            hintText: '—',
-          ),
-        ),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             trackHeight: 4,
@@ -84,11 +103,57 @@ class TradeOrderPending extends ConsumerWidget {
           )
         else
           ValueRow(l.available, '—', key: const Key('trade-available')),
+        _PendingAdvanced(market: market, onConnect: connect),
         for (final buy in [true, if (gate == OrderEntryGate.ready) false])
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: _PendingDirection(buy: buy, gate: gate, loading: loading),
           ),
+      ],
+    );
+  }
+}
+
+/// Advanced options stay visible before account rules load; without a wallet
+/// each option opens the connection flow.
+class _PendingAdvanced extends StatelessWidget {
+  const _PendingAdvanced({required this.market, required this.onConnect});
+  final bool market;
+  final VoidCallback? onConnect;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final onChanged = onConnect == null ? null : (bool _) => onConnect!();
+    return EmbeddedAdvancedSection(
+      children: [
+        EmbeddedCheckRow(
+          key: const Key('trade-pending-tpsl'),
+          label: l.tradeTpSl,
+          value: false,
+          onChanged: onChanged,
+        ),
+        if (!market)
+          EmbeddedCheckRow(
+            key: const Key('trade-pending-hidden'),
+            label: l.tradeHiddenOrder,
+            value: false,
+            onChanged: onChanged,
+          ),
+        EmbeddedCheckRow(
+          key: const Key('trade-pending-reduce-only'),
+          label: l.reduceOnly,
+          value: false,
+          onChanged: onChanged,
+          trailing: market
+              ? null
+              : EmbeddedTimeInForceSelector(
+                  selected: LiveOrderTimeInForce.gtc,
+                  available: const {LiveOrderTimeInForce.gtc},
+                  onChanged: null,
+                  onTap: onConnect,
+                ),
+        ),
       ],
     );
   }

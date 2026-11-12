@@ -6,6 +6,7 @@ import 'position_margin_mode.dart';
 import 'live_order_funds.dart';
 import 'live_order_draft.dart';
 import 'live_order_rules.dart';
+import 'percent_share.dart';
 import 'live_order_trigger.dart';
 import 'live_order_attachment.dart';
 import 'attached_order.dart';
@@ -79,6 +80,23 @@ class LiveOrderContext {
     if (position == null || percent < 0 || percent > 100) return Decimal.zero;
     final target = position.quantity.abs() * Decimal.fromInt(percent) * Decimal.parse('0.01');
     return (market && !conditional ? rules.marketQuantity : rules.limitQuantity).floor(target);
+  }
+
+  /// Close amount at a continuous slider [position] (0–1). The end is the
+  /// exact position size; earlier positions are whole units above one unit,
+  /// then floored to the order's quantity filter.
+  Decimal closeAmount(
+    String side,
+    double position, {
+    required bool market,
+    bool conditional = false,
+  }) {
+    final open = positions[side];
+    if (open == null) return Decimal.zero;
+    final maximum = open.quantity.abs();
+    if (position >= 1) return maximum;
+    final rule = market && !conditional ? rules.marketQuantity : rules.limitQuantity;
+    return rule.floor(sliderAmount(maximum, position, rule.step));
   }
 
   LiveOrderPosition? reductionPosition(LiveOrderDraft draft) =>

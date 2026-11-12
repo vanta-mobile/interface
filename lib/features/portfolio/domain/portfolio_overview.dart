@@ -38,49 +38,17 @@ class PortfolioAsset {
   final Decimal? pnlUsd;
 }
 
-class PortfolioPosition {
-  const PortfolioPosition({
-    required this.symbol,
-    required this.side,
-    required this.long,
-    required this.quantity,
-    this.base,
-    this.quote,
-    this.marginAsset,
-    this.entry,
-    this.mark,
-    this.liquidation,
-    this.pnl,
-    this.margin,
-    this.notional,
-    this.leverage,
-    this.isolated,
-    this.returnPercent,
-    this.riskPercent,
-  });
-  final String symbol, side;
-  final String? base, quote, marginAsset;
-  final bool long;
-  final bool? isolated;
-  final int? leverage;
-  final Decimal quantity;
-  final Decimal? entry, mark, liquidation, pnl, margin, notional, returnPercent, riskPercent;
-}
-
 class PortfolioOverview {
   PortfolioOverview({
     required this.performance,
     this.totalUsd,
     Iterable<PortfolioAsset> assets = const [],
-    Iterable<PortfolioPosition> positions = const [],
     this.partialValue = false,
     this.staleValue = false,
-  }) : assets = List.unmodifiable(_assetsByUsd(assets)),
-       positions = List.unmodifiable(positions);
+  }) : assets = List.unmodifiable(_assetsByUsd(assets));
   final Decimal? totalUsd;
   final PortfolioPerformance performance;
   final List<PortfolioAsset> assets;
-  final List<PortfolioPosition> positions;
   final bool partialValue, staleValue;
 }
 

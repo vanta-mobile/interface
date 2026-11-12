@@ -43,6 +43,7 @@ class MainOrderCapacityPanel extends ConsumerStatefulWidget {
     this.reviewWithoutPreview = false,
     this.onRefresh,
     this.refreshingReviewDirection,
+    this.reviewFailure,
   });
   final LiveOrderContext data;
   final LiveOrderDraft draft;
@@ -65,6 +66,10 @@ class MainOrderCapacityPanel extends ConsumerStatefulWidget {
   final Future<bool> Function(bool buy)? onRefresh;
   final bool? refreshingReviewDirection;
 
+  /// Compact only: why the last direction click could not be reviewed. Passive
+  /// staleness and preview failures are not shown; a click refreshes first.
+  final AccountReadFailure? reviewFailure;
+
   @override
   ConsumerState<MainOrderCapacityPanel> createState() => _MainOrderCapacityPanelState();
 
@@ -80,7 +85,7 @@ class MainOrderCapacityPanel extends ConsumerStatefulWidget {
       :enabled,
       resultsPending: _,
       retainedMaximum: _,
-      :readFailure,
+      readFailure: _,
     ) = facts;
     final expired =
         refreshing ||
@@ -97,30 +102,25 @@ class MainOrderCapacityPanel extends ConsumerStatefulWidget {
             (side?.quantity ?? Decimal.zero) > Decimal.zero;
     VoidCallback? action(bool buy) {
       if (!canRequestReview || !hasSize || onReview == null) return null;
-      // A direction click refreshes pending/stale facts before review.
-      if (expired && onRefresh != null) {
+      final side = buy ? preview?.buy : preview?.sell;
+      // A click refreshes pending/stale facts, or a failed preview, then
+      // reviews; only a failure of that click is reported.
+      if ((expired || !reviewable(side)) && onRefresh != null) {
         return () async {
           if (await onRefresh!(buy)) onReview?.call(buy);
         };
       }
-      return enabled && reviewable(buy ? preview?.buy : preview?.sell)
-          ? () => onReview!(buy)
-          : null;
+      return enabled && reviewable(side) ? () => onReview!(buy) : null;
     }
 
     return Column(
       key: const Key('main-order-capacity'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (readFailure case final failure?
-            when !refreshing &&
-                (hasSize ||
-                    !const {
-                      'liveCapacityPriceUnavailable',
-                      'liveCapacityRatesUnavailable',
-                    }.contains(failure.key)))
+        if (reviewFailure case final failure? when !refreshing)
           Text(
             accountErrorText(context, failure),
+            key: const Key('main-order-review-failure'),
             style: const TextStyle(color: AppColors.negative),
           ),
         for (final buy in [true, false])
@@ -132,7 +132,6 @@ class MainOrderCapacityPanel extends ConsumerStatefulWidget {
               unit: unit,
               buy: buy,
               hasSize: hasSize,
-              showFailure: !refreshing && readFailure == null && hasSize,
               showLiquidation: draft.trigger == null && draft.trailing == null,
               resultsPending: facts.resultsPending,
               retainedCapacity: buy

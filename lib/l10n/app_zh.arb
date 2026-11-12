@@ -10,6 +10,7 @@
   "authWalletConfiguration": "外部钱包登录暂不可用。",
   "authWalletCancelled": "钱包连接已取消，可以重新尝试。",
   "authWalletRejected": "你已拒绝钱包请求，可以重新尝试。",
+  "authWalletOpenFailed": "无法打开已连接的钱包，请确认钱包应用已安装后重试。",
   "authWalletUnavailable": "钱包连接失败，请检查钱包应用和网络后重试。",
   "walletResponseReason": "钱包返回：{reason}",
   "authWalletBusy": "钱包中还有待处理的请求，请完成后再继续。",
@@ -17,6 +18,8 @@
   "authWalletConnectionTimeout": "钱包连接准备超时，请检查网络后重试。",
   "authWalletUnsupported": "请选择支持的 Ethereum、BNB Chain、Arbitrum 或 Base 钱包网络。",
   "authWalletChanged": "钱包账户或网络已变更，请重新连接并登录。",
+  "authWalletSessionUnverified": "无法确认钱包会话。请打开钱包检查连接，并重新连接后继续。",
+  "authWalletResponseTimeout": "钱包未返回签名结果，请打开钱包确认请求后重试。",
   "authWalletReconnect": "请先连接钱包后再继续。",
   "authWalletSignature": "钱包未返回有效签名，请重试。",
   "quotesConnecting": "正在连接实时报价",
@@ -1017,22 +1020,7 @@
   "liveTrailingSell": "激活后卖单跟踪最高价，价格从最高点下跌达到回调比例后触发；触发不保证成交价格。",
   "liveTrailingEstimateHint": "没有固定成交价；名义金额及开仓保证金仅按当前标记价参考估算，不提供平仓 PnL 估算。实际数量资格、保证金和成交由交易所当时状态决定，不含手续费、资金费和滑点。",
   "quickOrderInvalid": "快捷开仓须为普通市价单，不能包含仅减仓、固定价格或附加条件。",
-  "quickOrderTitle": "K 线快捷市价开仓",
   "quickOrderHint": "使用真实钱包下单，数量独立于交易表单。单向模式下可能减少或反转现有仓位。报价仅供参考，不保证成交价；此订单不附加止盈止损或用户滑点设置。",
-  "quickOrderRead": "读取钱包及数量换算数据",
-  "quickOrderReadHint": "需显式签署四次账户／配置读取，再分别签署费率、风险档位与挂单三次读取以支持比例换算。读取不会下单；首份价格快照 30 秒后过期。",
-  "quickOrderIndependent": "输入基础资产数量，或选择比例。初始为空，不默认选择比例。",
-  "quickOrderPercentSelected": "已选择 {percent}%；买卖参考数量分别显示。手输数量可替换比例。",
-  "@quickOrderPercentSelected": {
-    "placeholders": {
-      "percent": {
-        "type": "int"
-      }
-    }
-  },
-  "quickOrderBuyQuantity": "参考买入数量",
-  "quickOrderSellQuantity": "参考卖出数量",
-  "quickOrderSizingHint": "比例使用读取时的 USDT 可用保证金、杠杆、吃单费率、风险档位、现有仓位、同向待成交量及买卖报价，按市价数量步长向下取整。不计释放保证金或其他资产抵押价值。这是参考预算，不是保证可成交的最大数量；价格、挂单及交易所限制可能变化。",
   "quickOrderSizingFailure": "比例换算不可用。请重试读取；账户上下文有效时仍可手输数量，已有输入会保留。",
   "quickOrderBuy": "市价买入／做多",
   "quickOrderSell": "市价卖出／做空",
@@ -1040,6 +1028,10 @@
   "quickOrderDoNotShow": "不再显示市价单确认",
   "quickOrderConfirmPreference": "市价开仓前确认",
   "quickOrderPreferenceFailure": "无法读取或保存确认偏好。保留最后已保存的设置，成功保存设置前仍需确认订单。",
+  "quickOrderMarketBuy": "市价买入",
+  "quickOrderMarketSell": "市价卖出",
+  "quickOrderAmount": "数量({asset})",
+  "quickOrderAvailable": "可用 {value}",
   "quickOrderChartTab": "K 线页面",
   "attachedOrderTitle": "开仓附加止盈／止损",
   "attachedOrderTakeProfit": "附加止盈",
@@ -1634,9 +1626,7 @@
   "assetYieldFailed": "收益数据来源暂不可用；保留上次数据，请重试核对。",
   "assetYieldLoading": "正在读取公开收益数据…",
   "assetYieldRefresh": "刷新收益数据",
-  "pointsProgramTitle": "Vanta Genesis 积分",
   "pointsProgramScope": "数据来自 Vanta 的 Orderly 经纪商积分计划，与 Aster 余额及交易独立；本应用不会默认 Aster 交易符合该计划的奖励条件。",
-  "pointsCurrentCampaign": "当前积分周期",
   "pointsCycleNumber": "积分周期 {number}",
   "@pointsCycleNumber": {
     "placeholders": {
@@ -1645,19 +1635,16 @@
       }
     }
   },
-  "pointsCycleId": "周期编号",
   "pointsStatus": "公布状态",
   "pointsStatusDraft": "草稿",
   "pointsStatusActive": "进行中",
   "pointsStatusEnded": "已结束",
   "pointsStatusSettled": "已结算",
   "pointsStatusUnknown": "未知",
-  "pointsPool": "积分总池",
   "pointsPeriodStart": "开始时间（UTC）",
   "pointsPeriodEnd": "结束时间（UTC）",
   "pointsBroker": "经纪商编号",
   "pointsNoCurrentCampaign": "当前未公布积分周期。",
-  "pointsNotRead": "尚无已核实数据。",
   "pointsLoading": "正在读取积分数据…",
   "pointsPaused": "应用未处于前台，更新已暂停。",
   "pointsStale": "当前为历史或未完整核实的快照，请刷新核对最新数据。",
@@ -1677,18 +1664,7 @@
   "pointsRefresh": "刷新本区域",
   "pointsStop": "停止等待",
   "pointsLeaderboard": "积分排行榜",
-  "pointsLeaderboardScope": "每页展示 20 条，最多展示返回列表的前 100 条，保留服务端报告的排名；未出现在榜单中不代表完整排名或零积分。",
-  "pointsSelectLeaderboard": "排行榜范围",
-  "pointsTotalLeaderboard": "累计积分榜",
   "pointsNoRankings": "该范围未返回排名记录。",
-  "pointsReturnedCount": "展示 {count} 条返回的排名记录。",
-  "@pointsReturnedCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "pointsPrevious": "上一页",
   "pointsNext": "下一页",
   "pointsPageNumber": "第 {page}／{pages} 页",
@@ -1710,20 +1686,10 @@
       }
     }
   },
-  "pointsScore": "积分",
-  "pointsSettled": "已结算积分",
-  "pointsSpecial": "特殊积分",
-  "pointsCurrentScore": "当前周期积分（服务端报告）",
   "pointsMyPoints": "我的积分",
-  "pointsWalletReadScope": "点击查询会向 Vanta 积分服务发送此钱包地址，无需签名，也不会切换当前 Aster 账户。",
   "pointsConnectWallet": "连接钱包",
   "pointsMyTotal": "我的累计积分",
   "pointsRankUnknown": "未出现在返回的累计榜单中，完整排名未知。",
-  "pointsReadWallet": "查询我的积分与历史",
-  "pointsSelectHistory": "历史积分范围",
-  "pointsAccumulated": "累计积分",
-  "pointsSelectedHistory": "所选范围积分",
-  "pointsNoHistory": "未返回周期积分历史；缺失周期的积分保持未知。",
   "eventsTitle": "交易活动",
   "eventsScope": "Vanta Orderly 活动；报名、成交量和奖励属于该计划，不会默认本应用内的 Aster 交易满足活动条件。",
   "eventsEmpty": "暂无已发布交易活动。",
@@ -2348,7 +2314,6 @@
     }
   },
   "scaledCountRange": "2–110",
-  "assistantNavigation": "AI",
   "orderTypeTrailing": "追踪止损",
   "orderTypeTitle": "订单类型",
   "orderTypePostOnly": "只做 Maker",
@@ -2470,7 +2435,7 @@
   "enableTradingStep": "2",
   "enableTradingSignHint": "在钱包中签名以继续。",
   "enableTradingEmbeddedSignHint": "签名以继续。",
-  "enableTradingScope": "授权设备签名密钥在 30 天内查询账户、进行免 Gas 现货及合约交易，无需反复打开钱包。不授予提现权限。",
+  "enableTradingScope": "此签名将开启去中心化通道，实现免 Gas 的即时交易。签名以继续。",
   "enableTradingReturnHint": "如果没有打开钱包，请检查钱包 App，完成签名后返回这里。",
   "enableTradingEmbeddedReturnHint": "已连接的内置钱包将签署本次交易授权。",
   "enableTradingOpenWallet": "打开钱包签名",
@@ -2478,7 +2443,6 @@
   "enableTradingContinue": "继续",
   "enableTradingWalletSetup": "设置钱包",
   "tradeNavigation": "交易",
-  "exploreNavigation": "探索",
   "portfolioTotalValue": "总资产",
   "portfolioLoginHint": "登录以查看你的资产与收益表现。",
   "portfolioLoginBalances": "登录以查看余额",
@@ -2505,6 +2469,16 @@
   "portfolioPnlNote": "历史数据可能在结算后更新。缺失数据将显示为不可用。",
   "portfolioCalendar": "日历",
   "portfolioMonthlyPnl": "月度盈亏",
+  "vantaApiSignInAction": "签名",
+  "vantaApiSignInTitle": "需要钱包签名授权",
+  "vantaApiSigningTitle": "等待钱包签名",
+  "vantaApiSigning": "请在钱包中确认签名请求，以查看账户统计。",
+  "vantaApiUnavailableTitle": "暂不支持账户统计",
+  "vantaApiUnavailable": "当前版本未提供账户统计。",
+  "vantaApiSignIn": "需要在钱包中签名授权后才能查看账户统计。",
+  "vantaApiFailed": "账户统计加载失败，请重试。",
+  "vantaApiInvalid": "统计服务返回的数据无效，请重试。",
+  "vantaApiRateLimited": "统计请求暂时受限，请稍后重试。",
   "portfolioCalendarNote": "每日盈亏采用 UTC · 金额单位为 USD",
   "portfolioPreviousMonth": "上个月",
   "portfolioNextMonth": "下个月",
@@ -2554,6 +2528,7 @@
       }
     }
   },
+  "portfolioAvailableForOrder": "可用于下单",
   "portfolioAvailable": "可用 {amount}",
   "@portfolioAvailable": {
     "placeholders": {
@@ -2945,5 +2920,201 @@
   "orderResponseMalformed": "Aster 返回的订单字段缺失或格式不正确，暂时无法核对订单。",
   "orderAcknowledgementInvalid": "Aster 未返回有效的策略下单处理结果。",
   "openOrdersTpSl": "止盈/止损",
-  "openOrdersLinkedOrder": "关联订单："
+  "openOrdersLinkedOrder": "关联订单：",
+  "tradeTabCount": "{label} ({count})",
+  "positionsCloseAll": "全部平仓",
+  "positionsEntry": "开仓价",
+  "positionsMargin": "保证金",
+  "positionsEntireTpsl": "全部止盈止损",
+  "positionsPartialTpsl": "部分止盈止损 ({count})",
+  "positionsMarginRatio": "保证金率 {value}",
+  "positionsMarginRatioTip": "保证金率 = 维持保证金 / 保证金余额。保证金率达到 100% 时，您的仓位将被强平。",
+  "positionsLiquidationProgress": "标记价格向强平价格移动的进度",
+  "positionsEditPartialTpsl": "编辑部分止盈止损",
+  "positionTpslTitle": "设置止盈止损",
+  "positionTpslPartial": "部分平仓",
+  "positionTpslEntire": "全部平仓",
+  "positionTpslTakeProfit": "止盈触发单",
+  "positionTpslStopLoss": "止损",
+  "positionTpslLimitOrder": "限价单",
+  "positionTpslTriggerPrice": "触发价格",
+  "positionTpslMarkPrice": "标记价格",
+  "positionTpslSwitchBasis": "切换止盈触发价格类型",
+  "positionTpslPnl": "盈亏",
+  "positionTpslRoi": "回报率",
+  "positionTpslAmount": "数量",
+  "positionTpslPositionAmount": "仓位数量",
+  "positionTpslEntryPrice": "开仓价格",
+  "positionTpslLiqPrice": "预估强平价格",
+  "positionTpslEstimatedPnl": "预估盈亏",
+  "positionTpslConfirm": "确认",
+  "positionTpslTriggerTitle": "选择触发类型",
+  "positionTpslSettingsTitle": "止盈止损设置",
+  "positionTpslPnlHint": "按预估盈亏设置",
+  "positionTpslRoiHint": "按预估回报率设置",
+  "positionTpslMissingTrigger": "请输入止盈或止损触发价格。",
+  "positionTpslMissingAmount": "请输入不超过仓位的数量。",
+  "positionTpslMissingLimit": "请输入限价或选择 BBO。",
+  "positionTpslPlaced": "止盈止损委托已提交。",
+  "positionTpslLegFailed": "{leg}未提交：{reason}",
+  "positionTpslLegUnknown": "{leg}结果未确认。请先检查当前委托再重试，系统不会自动重新提交。",
+  "positionTpslNotSubmitted": "{leg}未提交。",
+  "positionTpslLegPlaced": "{leg}已提交。",
+  "positionOrderPrice": "委托价格",
+  "positionCloseTitle": "平仓",
+  "positionCloseMarket": "市价平仓",
+  "positionCloseLimit": "限价平仓",
+  "positionClosePositionAmount": "仓位价值",
+  "positionClosePlaced": "平仓委托已提交。",
+  "positionCloseLimitPlaced": "限价平仓委托已提交，成交后仓位才会减少。",
+  "positionCloseFailed": "平仓委托未提交：{reason}",
+  "positionCloseUnknown": "平仓委托结果未确认。请先检查当前委托和仓位再重试，系统不会自动重新提交。",
+  "positionClosePriceUnavailable": "{type}暂不可用，请稍后再试或手动输入价格。",
+  "tradingHistoryTitle": "历史记录",
+  "tradingHistoryTab": "{tab, select, orders{订单} positions{仓位} trades{成交} transactions{资金流水} other{历史记录}}",
+  "tradingHistoryHideCanceled": "隐藏已取消",
+  "tradingHistoryDetails": "详情",
+  "tradingHistoryOpenLong": "开多",
+  "tradingHistoryCloseLong": "平多",
+  "tradingHistoryOpenShort": "开空",
+  "tradingHistoryCloseShort": "平空",
+  "tradingHistoryFilledPrice": "成交价 / 委托价",
+  "tradingHistoryFilledValue": "已成交 / 委托总额（{unit}）",
+  "tradingHistoryFilledTotal": "已成交 / 委托总额",
+  "tradingHistoryRealizedPnl": "已实现盈亏",
+  "tradingHistoryRealizedProfit": "已实现盈亏",
+  "tradingHistoryRoe": "已实现收益率",
+  "tradingHistoryClosed": "已平仓",
+  "tradingHistoryOpen": "持仓中",
+  "tradingHistoryLiquidated": "已强平",
+  "tradingHistoryClosePrice": "平均平仓价",
+  "tradingHistoryMaxHeld": "最大持仓",
+  "tradingHistoryOpenedAt": "开仓时间",
+  "tradingHistoryClosedAt": "平仓时间",
+  "tradingHistoryPerp": "{symbol} 永续",
+  "tradingHistoryExecutedAmount": "成交数量",
+  "tradingHistoryExecutedValue": "成交金额",
+  "tradingHistoryRole": "角色",
+  "tradingHistoryOrderDetails": "订单详情",
+  "tradingHistoryTradeDetails": "成交详情",
+  "tradingHistoryRelatedOrders": "关联订单",
+  "tradingHistoryRelatedUnavailable": "历史服务暂未提供仓位与订单的关联信息，无法读取该仓位的关联订单。",
+  "tradingHistoryNoTrades": "暂无成交",
+  "tradingHistoryFillsUnavailable": "当前可用历史记录中未找到已报告的成交。",
+  "tradingHistoryIncompleteFills": "部分已报告成交暂不可用。完整匹配所有成交后才能显示手续费和盈亏合计。",
+  "tradingHistoryPartial": "历史数据不完整，部分记录可能暂不可用。",
+  "tradingHistoryFee": "手续费",
+  "tradingHistoryUpdatedAt": "更新时间",
+  "tradingHistoryDate": "时间",
+  "tradingHistoryQuantity": "数量",
+  "@tradingHistoryTab": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "@tradingHistoryFilledValue": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "@tradingHistoryPerp": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "walletVerificationTitle": "验证钱包",
+  "walletVerificationStep": "3",
+  "walletVerificationHint": "签署消息以验证钱包并查看资产。",
+  "walletSignatureCompleted": "钱包签名已完成。",
+  "walletOnboardingHint": "连接钱包、开启交易并验证钱包后即可继续。如果没有弹出请求，请检查钱包 App。",
+  "notificationDetailsTitle": "通知详情",
+  "notificationCopyField": "复制{field}",
+  "notificationRiskOrderDetails": "风险订单详情",
+  "notificationRiskType": "风险类型",
+  "notificationRiskLiquidation": "强平",
+  "notificationPositionSide": "持仓方向",
+  "notificationExecutionType": "执行类型",
+  "notificationWorkingType": "触发价格类型",
+  "notificationExecutionDetails": "成交详情",
+  "notificationAffectedPositions": "受影响仓位",
+  "notificationBalanceTitle": "合约余额更新",
+  "notificationBalanceChanges": "余额变化",
+  "notificationWalletBalance": "钱包余额",
+  "notificationAssetsChanged": "{count} 种资产发生变化",
+  "@notificationCopyField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "@notificationAssetsChanged": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tradingHistoryRecentDays": "Aster 最近 {days} 天的记录",
+  "@tradingHistoryRecentDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "navigationFutures": "合约",
+  "navigationSpots": "现货",
+  "navigationSoon": "即将",
+  "navigationAskAi": "问 AI",
+  "pointsRules": "积分规则",
+  "pointsTotalRank": "总排名",
+  "pointsYourRank": "我的排名",
+  "pointsNotRanked": "暂无排名",
+  "pointsOutsideTop": "未进入前 100",
+  "pointsViewTotalLeaderboard": "查看总排行榜",
+  "pointsByPeriod": "周期积分",
+  "pointsSelectPeriod": "选择周期",
+  "pointsPeriodPool": "积分池",
+  "pointsUnit": "积分",
+  "pointsHistoricalPeriod": "历史周期",
+  "pointsPeriodDates": "{start} – {end} · UTC+0",
+  "pointsDatePattern": "M月d日 HH:mm",
+  "pointsPeriodLeaderboard": "周期排行榜",
+  "pointsNoRankingsTitle": "暂无排名",
+  "pointsNoRankingsMessage": "本周期暂无积分记录。",
+  "pointsRankAddress": "排名 / 地址",
+  "pointsTotalCurrent": "累计 / 当前积分",
+  "pointsCurrentValue": "当前 {value}",
+  "pointsYouSuffix": "{address} · 我",
+  "pointsTotalLeaderboardTitle": "总排行榜",
+  "pointsPageIndicator": "{page} / {pages}",
+  "pointsLoginHint": "登录查看我的积分",
+  "pointsRefreshMine": "刷新我的积分",
+  "pointsAddressCopied": "地址已复制",
+  "pointsNoPeriods": "暂未发布积分周期。",
+  "notificationApiType": "{type, select, fill{订单成交} trigger{条件单触发} order{订单更新} liquidation{强平通知} marginCall{追加保证金提醒} funding{资金费通知} transfer{充提通知} announce{公告} maintenance{维护通知} other{通知}}",
+  "@notificationApiType": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationApiField": "{field, select, price{价格} quantity{数量} fee{手续费} markPrice{标记价格} liquidationPrice{强平价格} distance{距离} amount{金额} symbol{交易对} market{市场} side{方向} orderId{订单号} transactionHash{交易哈希} createdAt{时间} eventKey{通知编号} other{详情}}",
+  "@notificationApiField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "pushVisibilityTitle": "后台通知暂不可用",
+  "pushNoServerVisibility": "通知服务目前无法获取此账户的动态，关闭 App 后将无法接收账户通知。"
 }

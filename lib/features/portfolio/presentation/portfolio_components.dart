@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/domain/decimal_value.dart';
 import '../../../core/formatters/token_amount_formatter.dart';
 import '../../../core/motion/animated_number_text.dart';
+import '../../../core/presentation/status_view.dart';
 import '../../../core/theme.dart';
 
 String portfolioUsd(Decimal? value, {bool signed = false}) {
@@ -81,25 +82,30 @@ class PortfolioMetric extends StatelessWidget {
     this.note,
     this.color = PortfolioColors.text,
     this.large = false,
+    this.loading = false,
+    this.skeletonColor = StatusColors.skeleton,
   });
   final String label, value;
   final String? note;
-  final Color color;
-  final bool large;
+  final Color color, skeletonColor;
+  final bool large, loading;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(label, style: PortfolioTypography.caption),
       const SizedBox(height: 4),
-      AnimatedNumberText(
-        value,
-        softWrap: true,
-        style: (large ? PortfolioTypography.value : PortfolioTypography.metric).copyWith(
-          color: color,
+      if (loading)
+        SkeletonBox(width: large ? 160 : 96, height: large ? 36 : 22, color: skeletonColor)
+      else
+        AnimatedNumberText(
+          value,
+          softWrap: true,
+          style: (large ? PortfolioTypography.value : PortfolioTypography.metric).copyWith(
+            color: color,
+          ),
         ),
-      ),
-      if (note != null) ...[
+      if (note != null && !loading) ...[
         const SizedBox(height: 4),
         Text(note!, style: PortfolioTypography.caption.copyWith(color: color)),
       ],

@@ -1,4 +1,3 @@
-import '../../../core/errors/error_text.dart';
 import '../../../core/presentation/status_view.dart';
 
 import 'package:decimal/decimal.dart';
@@ -36,7 +35,6 @@ class MainOrderDirectionCard extends StatelessWidget {
     this.pending = false,
     this.resultsPending = false,
     this.retainedCapacity,
-    this.showFailure = true,
     this.showLiquidation = true,
   });
   final MainOrderSidePreview? value;
@@ -48,9 +46,6 @@ class MainOrderDirectionCard extends StatelessWidget {
   final bool pending;
   final bool resultsPending;
   final LiveOrderSideCapacity? retainedCapacity;
-
-  /// Idle forms hide transient preview failures until a size is entered.
-  final bool showFailure;
 
   /// Conditional entries fill later at an unknown price; the design omits it.
   final bool showLiquidation;
@@ -131,14 +126,6 @@ class MainOrderDirectionCard extends StatelessWidget {
                               ),
                       ),
                     ],
-                  ),
-                ),
-              if (value?.failure case final failure? when showFailure)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    accountErrorText(context, failure),
-                    style: TradeTypography.small.copyWith(color: TradeColors.negative),
                   ),
                 ),
             ],

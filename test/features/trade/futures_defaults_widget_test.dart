@@ -6,6 +6,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/core/domain/decimal_value.dart';
+import 'package:vanta/core/formatters/token_amount_formatter.dart';
 import 'package:vanta/features/market/application/market_providers.dart';
 import 'package:vanta/features/market/data/aster_service.dart';
 import 'package:vanta/features/points/presentation/points_page.dart';
@@ -22,8 +24,25 @@ import '../../support/live_order.dart';
 import '../../support/navigation_fixture.dart';
 import '../../support/trade_fixture.dart';
 
-String quantityLabel(WidgetTester tester) =>
-    tester.widget<TextField>(find.byKey(const Key('quick-order-quantity'))).decoration!.labelText!;
+/// The pinned quick-entry label names the base asset, e.g. Amount(BTC).
+String quantityLabel(WidgetTester tester) {
+  final l10n = messages(tester);
+  final label = find.descendant(
+    of: find.byType(QuickOrderPanel),
+    matching: find.textContaining(l10n.quickOrderAmount('').replaceAll('()', '')),
+  );
+  final text = tester.widget<Text>(label).data!;
+  final asset = text.substring(text.indexOf('(') + 1, text.lastIndexOf(')'));
+  return l10n.liveOrderQuantity(asset);
+}
+
+String availableHint(WidgetTester tester) =>
+    tester.widget<TextField>(find.byKey(const Key('quick-order-quantity'))).decoration!.hintText!;
+
+Future<void> readPercent(WidgetTester tester) async {
+  await tapNavigationControl(tester, 'quick-order-quantity');
+  await tapNavigationControl(tester, 'quick-order-percent-25');
+}
 
 AppLocalizations messages(WidgetTester tester) =>
     AppLocalizations.of(tester.element(find.byType(QuickOrderPanel)));
@@ -48,47 +67,17 @@ void main() {
             await launch(tester, fixture.container);
             expect(fixture.container.read(futuresWorkspaceTabProvider), FuturesWorkspaceTab.trade);
             await selectWorkspace(tester, chart: true);
+            await leaveLandscapeChart(tester);
             expect(fixture.container.read(symbolProvider), 'BTCUSDT');
             expect(fixture.container.read(futuresWorkspaceTabProvider), FuturesWorkspaceTab.chart);
             expect(find.byType(QuickOrderPanel), findsOneWidget);
             expect(find.byType(PointsPage), findsNothing);
             expect(quickQuantity(tester), '');
             expect(quantityLabel(tester), messages(tester).liveOrderQuantity('BTC'));
-            for (final percent in [25, 50, 75, 100]) {
-              final chip = tester.widget<ChoiceChip>(
-                find.byKey(Key('quick-order-percent-$percent')),
-              );
-              expect(chip.selected, false);
-              expect(chip.onSelected, null);
-            }
-            for (final side in ['buy', 'sell']) {
-              expect(
-                tester.widget<FilledButton>(find.byKey(Key('quick-order-$side'))).onPressed,
-                null,
-              );
-            }
-            for (final key in [
-              'leverage',
-              'margin-mode',
-              'position-mode',
-              'asset-mode',
-              'available',
-            ]) {
-              expect(quickValue(tester, 'quick-order-$key'), '—');
-            }
-            expect(
-              tester
-                  .widget<SwitchListTile>(
-                    find.byKey(const Key('quick-order-confirmation-preference')),
-                  )
-                  .value,
-              true,
-            );
-            for (final key in [
-              'quick-order-quantity',
-              'quick-order-buy',
-              'quick-order-confirmation-preference',
-            ]) {
+            // Percent shortcuts appear only while the quantity is edited.
+            expect(find.byKey(const Key('quick-order-percent-25')), findsNothing);
+            expect(availableHint(tester), messages(tester).quickOrderAvailable('—'));
+            for (final key in ['quick-order-quantity', 'quick-order-buy', 'quick-order-sell']) {
               await tester.ensureVisible(find.byKey(Key(key)));
               await tester.pumpAndSettle();
               expect(tester.takeException(), null);
@@ -117,7 +106,7 @@ void main() {
 
     for (final assetMode in FuturesAssetMode.values) {
       testWidgets(
-        'explicit read displays actual account settings, no preset writes $language $assetMode',
+        'explicit percent read uses actual available balance, no preset writes $language $assetMode',
         (tester) async {
           final fixture = NavigationFixture(tester, language: language, width: 320, scale: 1.5);
           final original = liveContext(
@@ -147,23 +136,16 @@ void main() {
           expect(fixture.container.read(futuresWorkspaceTabProvider), FuturesWorkspaceTab.trade);
           await selectWorkspace(tester, chart: true);
           fixture.expectNoAccountMutation();
-          await tapNavigationControl(tester, 'quick-order-read');
-          final l10n = messages(tester);
-          expect(quickValue(tester, 'quick-order-leverage'), '37×');
-          expect(quickValue(tester, 'quick-order-position-mode'), l10n.positionModeHedge);
-          expect(
-            quickValue(tester, 'quick-order-margin-mode'),
-            assetMode == FuturesAssetMode.multi ? l10n.cross : l10n.accountIsolatedMode,
+          await readPercent(tester);
+          final available = messages(tester).quickOrderAvailable(
+            '${TokenAmountFormatter.formatCompact(DecimalValue('7.123456789012345678'))} USDT',
           );
-          expect(
-            quickValue(tester, 'quick-order-asset-mode'),
-            assetMode == FuturesAssetMode.multi ? l10n.assetModeMulti : l10n.assetModeSingle,
-          );
-          expect(quickValue(tester, 'quick-order-available'), '7.123456789012345678 USDT');
-          expect(quickQuantity(tester), '');
+          expect(availableHint(tester), available);
+          expect(quickQuantity(tester), '25%');
+          expect(fixture.container.read(liveOrderProvider).context!.leverage, 37);
           await tapNavigationControl(tester, 'navigation-portfolio');
           await tapNavigationControl(tester, 'navigation-futures');
-          expect(quickValue(tester, 'quick-order-leverage'), '37×');
+          expect(availableHint(tester), available);
           fixture.expectNoAccountMutation(contextReads: 1, sizingReads: 1);
           expect(tester.takeException(), null);
           await fixture.close(tester);
@@ -223,9 +205,9 @@ void main() {
     expect(fixture.container.read(futuresWorkspaceTabProvider), FuturesWorkspaceTab.trade);
     await selectWorkspace(tester, chart: true);
     expect(quantityLabel(tester), messages(tester).liveOrderQuantity('PUBLICBTC'));
-    await tapNavigationControl(tester, 'quick-order-read');
+    await readPercent(tester);
     expect(quantityLabel(tester), messages(tester).liveOrderQuantity('BTC'));
-    expect(quickValue(tester, 'quick-order-available'), '—');
+    expect(availableHint(tester), messages(tester).quickOrderAvailable('—'));
     expect(fixture.container.read(liveOrderProvider).context, same(fixture.orders.context));
     fixture.expectNoAccountMutation(contextReads: 1, sizingReads: 1);
     expect(tester.takeException(), null);

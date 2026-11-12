@@ -3,61 +3,72 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../funding/presentation/transfer_history_components.dart' show historyTime;
 import '../application/notification_provider.dart';
 import '../domain/account_notification.dart';
-import 'notification_field.dart';
+import '../domain/notification_status.dart';
+import 'notification_detail_components.dart';
 
 class SpotNotificationDetails extends ConsumerWidget {
   const SpotNotificationDetails(this.event, {super.key});
   final SpotOrderNotification event;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context), e = event;
+    final l = AppLocalizations.of(context), e = event;
     final units = ref.watch(spotNotificationUnitsProvider).asData?.value[e.symbol];
-    String base(Decimal value) => '$value ${units?.base ?? l10n.accountUnitUnavailable}';
-    String quote(Decimal value) => '$value ${units?.quote ?? l10n.accountUnitUnavailable}';
+    String base(Decimal v) => notificationAmount(v, units?.base, l);
+    String quote(Decimal v) => notificationAmount(v, units?.quote, l);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 20,
       children: [
-        Text(l10n.spot),
-        NotificationField(l10n.marketDetails, e.symbol),
-        NotificationField(l10n.orderId, e.orderId),
-        NotificationField(l10n.liveOrderClientId, e.clientOrderId),
-        NotificationField(
-          l10n.accountPositionDirection,
-          e.side == 'BUY' ? l10n.openOrdersBuy : l10n.openOrdersSell,
+        NotificationDetailSummary(
+          title: e.side == 'BUY' ? l.openOrdersBuy : l.openOrdersSell,
+          value: base(e.quantity),
+          status: l.notificationStatus(e.status),
+          tone: notificationTone(e),
         ),
-        NotificationField(l10n.openOrdersStatus, l10n.notificationStatus(e.status)),
-        Text(l10n.notificationExecution(e.executionType)),
-        NotificationField(l10n.openOrdersOrderType, l10n.notificationOrderType(e.orderType)),
-        if (e.originalType != null)
-          NotificationField(
-            l10n.notificationOriginalType,
-            l10n.notificationOrderType(e.originalType!),
-          ),
-        NotificationField(l10n.notificationOriginalQuantity, base(e.quantity)),
-        NotificationField(l10n.notificationLastQuantity, base(e.lastQuantity)),
-        NotificationField(l10n.notificationCumulativeQuantity, base(e.filledQuantity)),
-        NotificationField(l10n.openOrdersOrderPrice, quote(e.price)),
-        NotificationField(l10n.notificationLastPrice, quote(e.lastPrice)),
-        NotificationField(l10n.historyAveragePrice, quote(e.averagePrice)),
-        NotificationField(l10n.spotNotificationLastQuote, quote(e.lastQuoteAmount)),
-        NotificationField(l10n.spotNotificationCumulativeQuote, quote(e.cumulativeQuoteAmount)),
-        if (e.quoteOrderQuantity != null)
-          NotificationField(l10n.spotNotificationQuoteOrderQuantity, quote(e.quoteOrderQuantity!)),
-        if (e.stopPrice != null)
-          NotificationField(l10n.openOrdersTriggerPrice, quote(e.stopPrice!)),
-        NotificationField(l10n.historyTradeId, e.tradeId),
-        if (e.fee != null) NotificationField(l10n.historyCommission, '${e.fee} ${e.feeAsset}'),
-        NotificationField(l10n.notificationTransactionTime, e.transactionTime.toIso8601String()),
-        NotificationField(
-          l10n.spotNotificationCreationTime,
-          e.creationMilliseconds != null && e.creationMilliseconds! > 0
-              ? DateTime.fromMillisecondsSinceEpoch(
-                  e.creationMilliseconds!,
-                  isUtc: true,
-                ).toIso8601String()
-              : l10n.openOrdersCreationUnknown,
+        NotificationDetailSection(l.tradingHistoryOrderDetails),
+        NotificationDetailCard(
+          children: [
+            NotificationDetailRow(l.notificationEventTime, historyTime(e.eventTime)),
+            NotificationDetailRow(l.notificationTradeTime, historyTime(e.transactionTime)),
+            NotificationDetailRow(
+              l.spotNotificationCreationTime,
+              e.creationMilliseconds != null && e.creationMilliseconds! > 0
+                  ? historyTime(
+                      DateTime.fromMillisecondsSinceEpoch(e.creationMilliseconds!, isUtc: true),
+                    )
+                  : l.openOrdersCreationUnknown,
+            ),
+            NotificationDetailRow(l.orderId, e.orderId, copyable: true),
+            NotificationDetailRow(l.liveOrderClientId, e.clientOrderId, copyable: true),
+            NotificationDetailRow(l.openOrdersOrderType, l.notificationOrderType(e.orderType)),
+            NotificationDetailRow(
+              l.notificationExecutionType,
+              l.notificationExecution(e.executionType),
+            ),
+            NotificationDetailRow(l.openOrdersStatus, l.notificationStatus(e.status)),
+            NotificationDetailRow(l.notificationOriginalQuantity, base(e.quantity)),
+            NotificationDetailRow(l.openOrdersOrderPrice, quote(e.price)),
+          ],
+        ),
+        NotificationDetailSection(l.notificationExecutionDetails),
+        NotificationDetailCard(
+          children: [
+            NotificationDetailRow(l.notificationLastQuantity, base(e.lastQuantity)),
+            NotificationDetailRow(l.notificationCumulativeQuantity, base(e.filledQuantity)),
+            NotificationDetailRow(l.notificationLastPrice, quote(e.lastPrice)),
+            NotificationDetailRow(l.historyAveragePrice, quote(e.averagePrice)),
+            NotificationDetailRow(l.spotNotificationLastQuote, quote(e.lastQuoteAmount)),
+            NotificationDetailRow(
+              l.spotNotificationCumulativeQuote,
+              quote(e.cumulativeQuoteAmount),
+            ),
+            NotificationDetailRow(l.historyTradeId, e.tradeId, copyable: true),
+            if (e.fee != null)
+              NotificationDetailRow(l.historyCommission, notificationAmount(e.fee!, e.feeAsset, l)),
+          ],
         ),
       ],
     );

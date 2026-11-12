@@ -1,6 +1,5 @@
 import 'futures_asset_mode_sheet.dart';
 import 'mode_settings_sheet.dart';
-import 'order_recovery_notice.dart';
 import 'rebalance_entry.dart';
 
 import 'package:flutter/material.dart';
@@ -49,7 +48,6 @@ class _FuturesAssetModeScreenState extends ConsumerState<FuturesAssetModeScreen>
           key: const Key('asset-mode-page'),
           padding: const EdgeInsets.all(16),
           children: [
-            const OrderRecoveryNotice(),
             const RebalanceEntry(),
             Text(l10n.assetModeAllSymbols, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),

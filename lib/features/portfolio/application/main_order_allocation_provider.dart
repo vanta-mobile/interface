@@ -103,14 +103,24 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
     return !ref.read(mainOrderRefreshProvider).loading && !state.preparing && !live.busy;
   }
 
-  void selectPercent(int percent) {
-    if (!editable ||
+  /// A ratio is only a choice; a silent background refresh must not block or
+  /// interrupt adjusting it. A clicked review still re-reads everything.
+  bool get adjustable {
+    final refresh = ref.read(mainOrderRefreshProvider), live = ref.read(liveOrderProvider);
+    final silent = refresh.background && live.intent == null;
+    return (!refresh.loading || silent) && !state.preparing && (!live.busy || silent);
+  }
+
+  /// [pending] accepts a ratio before current capacity and prices are known;
+  /// the click's fresh read resolves it, as for any stale facts.
+  void selectPercent(int percent, {bool pending = false}) {
+    if (!(pending ? adjustable : editable) ||
         percent < 0 ||
         percent > 100 ||
-        percent > 0 && ref.read(mainOrderCapacityProvider.notifier).current == null) {
+        !pending && percent > 0 && ref.read(mainOrderCapacityProvider.notifier).current == null) {
       return;
     }
-    if (percent > 0) {
+    if (percent > 0 && !pending) {
       try {
         ref
             .read(mainOrderPricingProvider)
@@ -163,11 +173,15 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
     }
     String? invalid;
     AccountReadFailure? pricingFailure;
-    try {
-      invalid = ref.read(mainOrderPricingProvider).priceContext(context).validate(draft);
-    } on AccountReadFailure catch (failure) {
-      invalid = failure.key;
-      pricingFailure = failure;
+    // Raw form input is resolved and fully validated against the fresh read
+    // below; a stale price or capacity must not reject the click up front.
+    if (input == null) {
+      try {
+        invalid = ref.read(mainOrderPricingProvider).priceContext(context).validate(draft);
+      } on AccountReadFailure catch (failure) {
+        invalid = failure.key;
+        pricingFailure = failure;
+      }
     }
     if (invalid != null) {
       state = MainOrderAllocationState(
