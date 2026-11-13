@@ -52,20 +52,25 @@ class PushPreferencesUpdate {
     this.quietStart,
     this.quietEnd,
     this.minNotional,
+    this.clearQuietHours = false,
   }) : categories = Map.unmodifiable(categories) {
     if ((quietStart == null) != (quietEnd == null) ||
+        clearQuietHours && quietStart != null ||
         quietStart != null &&
             (!validPushTime(quietStart!) ||
                 !validPushTime(quietEnd!) ||
                 _seconds(quietStart!) == _seconds(quietEnd!)) ||
         minNotional != null && minNotional! < Decimal.zero ||
-        categories.isEmpty && quietStart == null && minNotional == null) {
+        categories.isEmpty && quietStart == null && minNotional == null && !clearQuietHours) {
       throw const FormatException('push preferences');
     }
   }
   final Map<PushCategory, bool> categories;
   final String? quietStart, quietEnd;
   final Decimal? minNotional;
+
+  /// Sends explicit `null` quiet hours to switch them off.
+  final bool clearQuietHours;
 }
 
 bool validPushTime(String value) =>

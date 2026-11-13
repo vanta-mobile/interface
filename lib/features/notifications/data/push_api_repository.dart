@@ -83,8 +83,8 @@ class PushApiRepository {
       idempotencyKey: idempotencyKey,
       body: {
         for (final e in update.categories.entries) e.key.name: e.value,
-        if (update.quietStart != null) 'quiet_start': update.quietStart,
-        if (update.quietEnd != null) 'quiet_end': update.quietEnd,
+        if (update.quietStart != null || update.clearQuietHours) 'quiet_start': update.quietStart,
+        if (update.quietEnd != null || update.clearQuietHours) 'quiet_end': update.quietEnd,
         if (update.minNotional != null) 'min_notional': update.minNotional.toString(),
       },
     );

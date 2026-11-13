@@ -192,7 +192,7 @@ class PushDeviceController extends Notifier<PushDeviceState> {
     return refresh();
   }
 
-  /// Ready for a future settings UI; the current design adds no settings page.
+  /// Used by the push notification settings sheet.
   /// Updates are serialized with binding work and cancelled on identity change.
   Future<void> updatePreferences(PushPreferencesUpdate update) {
     final owner = _activeOwner();
@@ -216,6 +216,7 @@ class PushDeviceController extends Notifier<PushDeviceState> {
       update.quietStart,
       update.quietEnd,
       update.minNotional?.toString(),
+      update.clearQuietHours,
     ]);
     bool current() => _current(revision, owner);
     state = PushDeviceState(status: state.status, bound: state.bound, busy: true);

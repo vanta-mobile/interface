@@ -106,6 +106,19 @@ void main() {
     expect(prefs.categories.containsKey(PushCategory.transfers), isFalse);
     expect(PushCategory.values.map((e) => e.name), isNot(contains('liquidation')));
   });
+  test('switching quiet hours off sends explicit null bounds only', () async {
+    f.backend.routes['POST /v1/push/prefs'] = (_) => json({'fills': true});
+    final prefs = await repository.updatePreferences(
+      PushPreferencesUpdate(clearQuietHours: true),
+      idempotencyKey: 'quiet-off',
+    );
+    expect(jsonDecode(f.backend.requests.last.body), {'quiet_start': null, 'quiet_end': null});
+    expect(prefs.quietStart, isNull);
+    expect(
+      () => PushPreferencesUpdate(clearQuietHours: true, quietStart: '22:00', quietEnd: '07:00'),
+      throwsFormatException,
+    );
+  });
   test('invalid quiet intervals, empty changes and negative thresholds fail before transport', () {
     expect(() => PushPreferencesUpdate(), throwsFormatException);
     expect(() => PushPreferencesUpdate(quietStart: '22:00'), throwsFormatException);

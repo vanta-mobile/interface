@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/link.dart';
 
+import '../../../core/legal_links.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
 class AuthLegalNotice extends StatelessWidget {
   const AuthLegalNotice({super.key});
 
-  static final _terms = Uri.parse('https://app.vanta.exchange/docs/reference/terms-of-use');
-  static final _privacy = Uri.parse('https://app.vanta.exchange/docs/reference/privacy-policy');
   static final _links = RegExp(r'\{termsOfUse\}|\{privacyPolicy\}');
 
   @override
@@ -30,7 +29,7 @@ class AuthLegalNotice extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: constraints.maxWidth),
                 child: Link(
-                  uri: terms ? _terms : _privacy,
+                  uri: terms ? LegalLinks.termsOfUse : LegalLinks.privacyPolicy,
                   target: LinkTarget.blank,
                   builder: (context, followLink) => MergeSemantics(
                     key: Key(terms ? 'auth-terms-of-use' : 'auth-privacy-policy'),

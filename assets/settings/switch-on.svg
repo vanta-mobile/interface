@@ -1,0 +1,8 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="46" height="26" viewBox="0 0 46 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Component 1">
+<path d="M0 13C0 5.8203 5.8203 0 13 0H33C40.1797 0 46 5.8203 46 13V13C46 20.1797 40.1797 26 33 26H13C5.8203 26 0 20.1797 0 13V13Z" fill="#013220"/>
+<path d="M13 0.5H33C39.9036 0.5 45.5 6.09644 45.5 13C45.5 19.9036 39.9036 25.5 33 25.5H13C6.09644 25.5 0.5 19.9036 0.5 13C0.5 6.09644 6.09644 0.5 13 0.5Z" stroke="white" stroke-opacity="0.14"/>
+<circle id="Ellipse 4" opacity="0" cx="13" cy="13" r="10" fill="white"/>
+<circle id="Ellipse 3" cx="33" cy="13" r="10" fill="#00E4AB"/>
+</g>
+</svg>
