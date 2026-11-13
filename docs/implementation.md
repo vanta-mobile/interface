@@ -3027,3 +3027,8 @@ Native Performance run `42767110278` 在生成报告时暴露第二个问题：F
   - Only the most recent ratio tap applies; an earlier, slower tap never overrides it.
 - After this, the same device logs showed the first 75% tap applying in 2ms. The temporary diagnostic logs have been removed.
 - Tests: the renewal case now asserts the tap takes effect immediately, and a new test covers "of two taps, only the latest applies". Note: under the new logic, a slow tap only happens when there's no sizing data at all, and the ratio buttons are disabled during that read. So the overwrite seen on the device can no longer happen; this test doesn't prove the guard itself, which is a fallback. Verified passing: quick order, trade and order book, 147 cases. `trade_design_widget_test` has 2 failures in the settings page, which come from the untracked settings feature in the working tree and are unrelated to this change.
+
+### 2026-11-13 — Fix margin mapper CI lint
+
+- Wrapped the decimal-format validation throw in braces to satisfy `curly_braces_in_flow_control_structures`. Validation behavior is unchanged; CI uses `dart analyze --fatal-infos`, so this info-level lint failed the verification step.
+- Verification: the CI formatting command checked 1,314 files with 0 changes; `dart analyze --fatal-infos` reported no issues; all 19 tests in `position_margin_mapper_test.dart` passed. No app launch, native build or device check was performed.

@@ -22,8 +22,9 @@ Object? decodePositionMarginJson(String source) {
 Decimal marginDecimal(Object? value) {
   if (value is! String && value is! int) throw const FormatException();
   final s = '$value';
-  if (s.length > 160 || !RegExp(r'^-?\d+(?:\.\d+)?(?:[eE][+-]?\d{1,3})?$').hasMatch(s))
+  if (s.length > 160 || !RegExp(r'^-?\d+(?:\.\d+)?(?:[eE][+-]?\d{1,3})?$').hasMatch(s)) {
     throw const FormatException();
+  }
   final exponent = s.split(RegExp('[eE]'));
   if (exponent.length > 1 && int.parse(exponent.last).abs() > 160) {
     throw const FormatException();
