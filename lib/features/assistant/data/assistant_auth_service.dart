@@ -105,25 +105,20 @@ class AssistantAuthService {
       },
     );
     cancellation.check();
-    if (rows is! List || rows.length > 100) throw const AssistantFailure('assistantBinding');
-    var matches = 0;
-    for (final row in rows) {
-      if (row is! Map<String, Object?> ||
-          row['user_id'] is! String ||
-          (row['user_id'] as String).toLowerCase() != credentials.userId ||
-          row['address'] is! String) {
-        throw const AssistantFailure('assistantBinding');
-      }
-      if ((row['address'] as String).toLowerCase() != scope.address) continue;
-      final verified = row['verified_at'];
-      if (verified == null) continue;
-      final time = verified is String && verified.length <= 64 ? DateTime.tryParse(verified) : null;
-      if (time == null || time.isAfter(now.toUtc().add(const Duration(seconds: 30)))) {
-        throw const AssistantFailure('assistantBinding');
-      }
-      matches++;
-    }
-    if (matches != 1) throw const AssistantFailure('assistantBinding');
+    if (rows is! List) throw const AssistantFailure('assistantBinding');
+    // Same rule as the website: this user has a verified binding for the
+    // current address. Other or duplicate bindings do not invalidate it.
+    final matched = rows.any(
+      (row) =>
+          row is Map<String, Object?> &&
+          row['user_id'] is String &&
+          (row['user_id'] as String).toLowerCase() == credentials.userId &&
+          row['address'] is String &&
+          (row['address'] as String).trim().toLowerCase() == scope.address &&
+          row['verified_at'] is String &&
+          (row['verified_at'] as String).isNotEmpty,
+    );
+    if (!matched) throw const AssistantFailure('assistantBinding');
   }
 
   Future<AssistantQuota> usage(

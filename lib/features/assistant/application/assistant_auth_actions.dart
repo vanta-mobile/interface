@@ -1,6 +1,44 @@
 part of 'assistant_controller.dart';
 
 extension AssistantAuthActions on AssistantController {
+  /// Page entry: reuse a session stored for this wallet without signing. Having
+  /// no stored session is the normal unauthenticated state, not an error.
+  Future<void> open() async {
+    if (_view.authenticated || _view.busy) return;
+    final epoch = _identityEpoch;
+    if (_identity != null) await restore(silent: true);
+    // A wallet change meanwhile reset the state and starts its own check.
+    if (_mounted && epoch == _identityEpoch && !_view.sessionChecked) {
+      _set(_view.copyWith(sessionChecked: true));
+    }
+  }
+
+  /// Wallet authentication: request the server's message and sign it in the
+  /// current wallet in one explicit action; the wallet shows the exact text.
+  Future<void> authenticate() async {
+    if (_readyIdentity() == null) return;
+    _set(_view.copyWith(authFailureKey: null));
+    await prepare();
+    final challenge = _view.challenge;
+    if (_view.phase != AssistantPhase.review || challenge == null) {
+      _authFailed();
+      return;
+    }
+    await confirm(challenge);
+    _authFailed();
+  }
+
+  void _authFailed() {
+    if (!_mounted || _view.authenticated || _view.failureKey == null) return;
+    _set(
+      _view.copyWith(
+        authFailureKey: _view.failureKey,
+        authErrorDetails: _view.errorDetails,
+        failureKey: null,
+      ),
+    );
+  }
+
   Future<void> prepare() async {
     final identity = _readyIdentity();
     if (identity == null) return;
@@ -51,7 +89,10 @@ extension AssistantAuthActions on AssistantController {
       );
       if (!_alive(generation)) return;
       _allowWalletBackground = false;
-      if (_current(generation)) await _adoptSession(session, generation);
+      if (_current(generation)) {
+        await _adoptSession(session, generation);
+        if (_current(generation)) await readUsage();
+      }
     } catch (error) {
       if (_alive(generation)) {
         _allowWalletBackground = false;
@@ -67,7 +108,7 @@ extension AssistantAuthActions on AssistantController {
     }
   }
 
-  Future<void> restore() async {
+  Future<void> restore({bool silent = false}) async {
     if (_readyIdentity() == null) return;
     _auth.cancel();
     final generation = _begin(AssistantPhase.restoring);
@@ -83,20 +124,23 @@ extension AssistantAuthActions on AssistantController {
           _view.copyWith(
             phase: AssistantPhase.idle,
             challenge: null,
-            failureKey: 'assistantNoSavedSession',
+            failureKey: silent ? null : 'assistantNoSavedSession',
           ),
         );
       } else {
         await _adoptSession(session, generation);
+        if (_current(generation)) await readUsage();
       }
     } catch (error) {
       if (_alive(generation)) {
+        final expired = _failure(error) == 'assistantAuthorization';
         _set(
           _view.copyWith(
             phase: AssistantPhase.idle,
             challenge: null,
+            sessionExpired: expired || _view.sessionExpired,
             errorDetails: error is AssistantFailure ? error.details : null,
-            failureKey: _failure(error),
+            failureKey: silent && expired ? null : _failure(error),
           ),
         );
       }
@@ -116,6 +160,8 @@ extension AssistantAuthActions on AssistantController {
         previous.copyWith(
           phase: AssistantPhase.idle,
           authenticated: true,
+          sessionExpired: false,
+          authFailureKey: null,
           challenge: null,
           failureKey: null,
         ),
@@ -127,6 +173,8 @@ extension AssistantAuthActions on AssistantController {
         _view.copyWith(
           phase: AssistantPhase.loadingHistory,
           authenticated: true,
+          sessionExpired: false,
+          authFailureKey: null,
           historyReady: false,
           messages: const [],
           draft: '',
@@ -161,10 +209,11 @@ extension AssistantAuthActions on AssistantController {
         isCurrent: () => _current(generation),
       );
       if (!_current(generation)) return;
+      // The usage table reports only today's count; keep the known limit.
       _set(
         _view.copyWith(
           phase: AssistantPhase.idle,
-          quota: quota,
+          quota: AssistantQuota(day: quota.day, used: quota.used, limit: _view.dailyLimit),
           quotaReadAt: _clock().toUtc(),
           quotaStale: false,
         ),

@@ -279,18 +279,20 @@ void main() {
     expect(h.auth.requests.where((r) => r.url.path.contains('logout')), isEmpty);
   });
   test(
-    'explicit usage gives used count without guessing remaining and stale on next UTC day',
+    'authentication reads used count; remaining uses the known limit; next UTC day resets',
     () async {
-      await h.login();
       expect(h.state.quota, null);
-      await h.controller.readUsage();
+      await h.login();
       expect(h.state.quota!.used, 2);
       expect(h.state.quota!.remaining, null);
+      expect(h.state.remaining, assistantDefaultDailyLimit - 2);
       expect(h.state.quotaStale, false);
       h.container.read(quoteUpdatesActiveProvider.notifier).setActive(false);
       h.auth.time = DateTime.utc(2026, 11, 5);
       h.container.read(quoteUpdatesActiveProvider.notifier).setActive(true);
       expect(h.state.quotaStale, true);
+      expect(h.state.quota, null);
+      expect(h.state.limitReached, false);
     },
   );
   test('usage failure keeps prior result but labels it stale', () async {

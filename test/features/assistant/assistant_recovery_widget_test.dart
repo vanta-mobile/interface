@@ -58,24 +58,24 @@ void main() {
     expect(tester.takeException(), null);
     await ui.close(tester, h);
   });
-  testWidgets('usage is explicit, unknown remaining is never filled with default five', (
+  testWidgets('header shows read usage against the known limit; refresh reads it again', (
     tester,
   ) async {
     final h = await ui.mount(tester);
     await ui.drive(tester, h.login);
     await tester.pumpAndSettle();
-    final panel = find.text('Daily usage (UTC)');
-    await ui.show(tester, panel);
-    await tester.tap(panel);
-    await tester.pumpAndSettle();
-    expect(find.text('Usage has not been read. Remaining quota is unknown.'), findsOneWidget);
-    await ui.tap(tester, 'assistant-read-usage');
-    expect(find.text('Date 2026-11-04 · Used 2 · Remaining Unknown'), findsOneWidget);
+    expect(find.text('Remaining today: 3/5'), findsOneWidget);
+    final reads = h.auth.requests.where((r) => r.url.path.endsWith('ai_daily_usage')).length;
+    await ui.drive(tester, h.controller.readUsage);
+    expect(
+      h.auth.requests.where((r) => r.url.path.endsWith('ai_daily_usage')),
+      hasLength(reads + 1),
+    );
     h.container.read(quoteUpdatesActiveProvider.notifier).setActive(false);
-    h.auth.time = h.auth.time.add(const Duration(minutes: 6));
+    h.auth.time = DateTime.utc(2026, 11, 5, 1);
     h.container.read(quoteUpdatesActiveProvider.notifier).setActive(true);
     await tester.pumpAndSettle();
-    expect(find.textContaining('snapshot is stale'), findsOneWidget);
+    expect(find.text('Remaining today: –/5'), findsOneWidget);
     expect(tester.takeException(), null);
     await ui.close(tester, h);
   });
@@ -88,8 +88,8 @@ void main() {
     await tester.enterText(input, '😀' * 6001);
     await tester.pump();
     expect(h.state.draft.length, 12002);
-    expect(find.text('12002 / 12,000 UTF-16 characters'), findsOneWidget);
-    expect(tester.widget<FilledButton>(find.byKey(const Key('assistant-send'))).onPressed, null);
+    expect(h.state.canSend, false);
+    expect(tester.widget<InkWell>(find.byKey(const Key('assistant-send'))).onTap, null);
     expect(tester.takeException(), null);
     await ui.close(tester, h);
   });
@@ -123,9 +123,7 @@ void main() {
       await tester.runAsync(() => Future<void>.delayed(Duration.zero));
       await tester.pump();
     }
-    final scroll = tester
-        .widget<CustomScrollView>(find.byKey(const Key('assistant-page')))
-        .controller!;
+    final scroll = ui.scrollController(tester);
     scroll.jumpTo(400);
     await tester.pump();
     final before = scroll.offset;

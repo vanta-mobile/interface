@@ -29,11 +29,17 @@ class AssistantController extends Notifier<AssistantViewState> {
   AssistantHistoryWriter? _writer;
   AssistantHistory _snapshot = AssistantHistory();
   AssistantCancellation? _token;
+  // Request IDs of failed replies in this session; a retry reuses the original.
+  final _requestIds = <String, String>{};
   Completer<void>? _foreground;
   Timer? _tickTimer;
   int _generation = 0;
+
+  /// Advances when the wallet identity changes and the state is reset.
+  int _identityEpoch = 0;
   bool _allowWalletBackground = false;
   AssistantViewState get _view => state;
+  bool get _mounted => ref.mounted;
   AuthIdentity? get _identity => ref.read(authProvider).identity;
   @override
   AssistantViewState build() {
@@ -54,6 +60,8 @@ class AssistantController extends Notifier<AssistantViewState> {
       (_, _) {
         _cancel();
         _closeWriter();
+        _identityEpoch++;
+        _requestIds.clear();
         _session = null;
         _scope = null;
         _snapshot = AssistantHistory();
@@ -182,9 +190,11 @@ class AssistantController extends Notifier<AssistantViewState> {
       );
     }
     final received = _view.quotaReadAt;
-    if (_view.quota != null &&
+    if (_view.quota != null && _view.quota!.day != day) {
+      // A new UTC day resets the allowance; never keep yesterday's limit.
+      _set(_view.copyWith(quota: null, quotaReadAt: null, quotaStale: true, limitReachedAt: null));
+    } else if (_view.quota != null &&
         (received == null ||
-            _view.quota!.day != day ||
             now.isBefore(received) ||
             now.difference(received) >= const Duration(minutes: 5))) {
       _set(_view.copyWith(quotaStale: true));
@@ -270,7 +280,13 @@ class AssistantController extends Notifier<AssistantViewState> {
       if (!_current(generation)) return;
       _session = null;
       _snapshot = AssistantHistory();
-      _set(AssistantViewState(active: _view.active, scopeVersion: scopeVersion + 1));
+      _set(
+        AssistantViewState(
+          active: _view.active,
+          sessionChecked: true,
+          scopeVersion: scopeVersion + 1,
+        ),
+      );
     } catch (error) {
       if (_alive(generation)) {
         _set(

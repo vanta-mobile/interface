@@ -311,28 +311,13 @@ void main() {
     [
       {'user_id': assistantTestUser, 'address': assistantTestAddress, 'verified_at': ''},
     ],
-    [
-      {
-        'user_id': assistantTestUser,
-        'address': assistantTestAddress,
-        'verified_at': '2026-11-04T13:00:00Z',
-      },
-    ],
-    List.generate(
-      2,
-      (_) => {
-        'user_id': assistantTestUser,
-        'address': assistantTestAddress,
-        'verified_at': '2026-11-04T11:00:00Z',
-      },
-    ),
     List.generate(
       101,
       (_) => {'user_id': assistantTestUser, 'address': assistantTestAddress, 'verified_at': null},
     ),
   ];
   for (final (index, bindings) in invalidBindings.indexed) {
-    test('unverified, wrong, duplicate or excessive binding $index never grants session', () async {
+    test('unverified or wrong binding $index never grants session', () async {
       h.respond = (request) async => request.url.path == '/rest/v1/wallet_bindings'
           ? AssistantAuthHarness.response(bindings)
           : null;
@@ -340,4 +325,23 @@ void main() {
       expect(h.store.values, isEmpty);
     });
   }
+  test(
+    'duplicate verified bindings for the current wallet grant a session, like the website',
+    () async {
+      // Observed in production: one wallet with two verified rows for the same address.
+      h.respond = (request) async => request.url.path == '/rest/v1/wallet_bindings'
+          ? AssistantAuthHarness.response([
+              for (final verified in ['2026-11-04T11:00:00Z', '2026-11-04T13:00:00Z'])
+                {
+                  'user_id': assistantTestUser,
+                  'address': assistantTestAddress,
+                  'verified_at': verified,
+                },
+              {'user_id': assistantTestUser, 'address': '0x${'22' * 20}', 'verified_at': null},
+            ])
+          : null;
+      final session = await authorize();
+      expect(session.userId, assistantTestUser);
+    },
+  );
 }

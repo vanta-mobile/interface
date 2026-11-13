@@ -18,12 +18,56 @@ extension AssistantChatActions on AssistantController {
     if (_view.active) _tick();
   }
 
-  Future<void> send() async {
+  /// Sends the draft, or a suggested [prompt] without replacing the draft.
+  Future<void> send({String? prompt}) async {
     _tick();
-    if (_readyIdentity() == null || !_view.canSend || _session == null) return;
-    final prompt = _view.draft, userId = _session!.userId;
+    final text = (prompt ?? _view.draft).trim();
+    final ready = prompt == null
+        ? _view.canSend
+        : _view.copyWith(draft: text).canSend && text.isNotEmpty;
+    if (_readyIdentity() == null || !ready || _session == null) return;
+    final now = _clock().toUtc();
+    final history = <AssistantMessage>[
+      ..._view.messages.skip((_view.messages.length - 198).clamp(0, _view.messages.length)),
+      AssistantMessage(id: _id(), role: AssistantRole.user, content: text, createdAt: now),
+    ];
+    await _exchange(history: history, requestId: _id(), replyId: _id(), draft: prompt == null);
+  }
+
+  /// Retries the failed reply to the same question with its original request
+  /// ID, replacing that reply instead of adding another question.
+  Future<void> retry(String replyId) async {
+    _tick();
+    final index = _view.messages.indexWhere((m) => m.id == replyId);
+    if (_readyIdentity() == null ||
+        _session == null ||
+        _view.phase != AssistantPhase.idle ||
+        !_view.authenticated ||
+        !_view.historyReady ||
+        _view.limitReached ||
+        index < 1 ||
+        index != _view.messages.length - 1 ||
+        _view.messages[index].delivery != AssistantDelivery.failed ||
+        _view.messages[index - 1].role != AssistantRole.user) {
+      return;
+    }
+    await _exchange(
+      history: _view.messages.sublist(0, index),
+      requestId: _requestIds[replyId] ?? _id(),
+      replyId: replyId,
+      draft: false,
+    );
+  }
+
+  Future<void> _exchange({
+    required List<AssistantMessage> history,
+    required String requestId,
+    required String replyId,
+    required bool draft,
+  }) async {
+    final userId = _session!.userId, previous = _view.messages, prompt = history.last.content;
     final generation = _begin(AssistantPhase.restoring);
-    String? replyId;
+    _requestIds[replyId] = requestId;
     try {
       final session = await _auth.restore(
         _scope!,
@@ -35,23 +79,11 @@ extension AssistantChatActions on AssistantController {
         throw const AssistantFailure('assistantAuthorization');
       }
       _session = session;
-      final requestId = _id(), userMessageId = _id();
-      replyId = _id();
-      final now = _clock().toUtc();
-      final history = <AssistantMessage>[
-        ..._view.messages.skip((_view.messages.length - 198).clamp(0, _view.messages.length)),
-        AssistantMessage(
-          id: userMessageId,
-          role: AssistantRole.user,
-          content: prompt.trim(),
-          createdAt: now,
-        ),
-      ];
       final pending = AssistantMessage(
         id: replyId,
         role: AssistantRole.assistant,
         content: '',
-        createdAt: now,
+        createdAt: _clock().toUtc(),
         delivery: AssistantDelivery.streaming,
       );
       // Flush older coalesced draft data before staging this explicit turn.
@@ -59,7 +91,7 @@ extension AssistantChatActions on AssistantController {
       await _vault.saveHistory(
         session.scope,
         session.userId,
-        AssistantHistory(messages: [...history, pending]),
+        AssistantHistory(messages: [...history, pending], draft: draft ? '' : _view.draft),
         isCurrent: () => _current(generation),
       );
       if (!_current(generation)) return;
@@ -67,7 +99,7 @@ extension AssistantChatActions on AssistantController {
         _view.copyWith(
           phase: AssistantPhase.sending,
           quotaStale: true,
-          draft: '',
+          draft: draft ? '' : null,
           messages: [...history, pending],
           storageFailureKey: null,
         ),
@@ -96,32 +128,61 @@ extension AssistantChatActions on AssistantController {
         _writer?.schedule(_snapshot);
       }
       if (!_current(generation)) return;
+      _requestIds.remove(replyId);
       _set(_view.copyWith(phase: AssistantPhase.idle));
       _writer?.schedule(_snapshot);
       _writer?.flush();
+      await readUsage();
     } catch (error) {
       if (!_alive(generation)) return;
-      final quota = error is AssistantFailure ? error.quota : null;
-      _set(
-        _view.copyWith(
-          phase: AssistantPhase.idle,
-          errorDetails: error is AssistantFailure ? error.details : null,
-          failureKey: _failure(error),
-          draft: _view.draft.isEmpty ? prompt : _view.draft,
-          messages: _view.messages.map(
-            (m) => m.id == replyId && m.delivery == AssistantDelivery.streaming
-                ? m.withReply(
-                    content: m.content,
-                    reasoning: m.reasoning,
-                    delivery: AssistantDelivery.failed,
-                  )
-                : m,
+      final key = _failure(error), quota = error is AssistantFailure ? error.quota : null;
+      final restoreDraft = draft && _view.draft.isEmpty;
+      if (key == 'assistantQuotaExceeded') {
+        // The question was refused before it reached the model: drop the
+        // staged turn, keep the input, and show the daily-limit notice.
+        final limit = quota?.limit ?? _view.dailyLimit;
+        final now = _clock().toUtc();
+        _requestIds.remove(replyId);
+        _set(
+          _view.copyWith(
+            phase: AssistantPhase.idle,
+            messages: previous,
+            draft: restoreDraft ? prompt : null,
+            dailyLimit: limit,
+            quota: AssistantQuota(
+              day: quota?.day ?? now.toIso8601String().substring(0, 10),
+              used: quota?.used ?? limit,
+              limit: limit,
+              remaining: 0,
+              resetAt: quota?.resetAt,
+            ),
+            quotaReadAt: now,
+            quotaStale: false,
+            limitReachedAt: now,
+            failureKey: null,
           ),
-          quota: quota ?? _view.quota,
-          quotaReadAt: quota == null ? _view.quotaReadAt : _clock().toUtc(),
-          quotaStale: quota == null ? _view.quotaStale : false,
-        ),
-      );
+        );
+      } else {
+        final expired = key == 'assistantAuthorization';
+        _set(
+          _view.copyWith(
+            phase: AssistantPhase.idle,
+            errorDetails: error is AssistantFailure ? error.details : null,
+            failureKey: key,
+            authenticated: expired ? false : null,
+            sessionExpired: expired ? true : null,
+            messages: _view.messages.map(
+              (m) => m.id == replyId && m.delivery == AssistantDelivery.streaming
+                  ? m.withReply(
+                      content: m.content,
+                      reasoning: m.reasoning,
+                      delivery: AssistantDelivery.failed,
+                    )
+                  : m,
+            ),
+          ),
+        );
+      }
       _writer?.schedule(_snapshot);
       _writer?.flush();
       _tick();

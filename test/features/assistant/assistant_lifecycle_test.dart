@@ -127,6 +127,8 @@ void main() {
   });
   test('wallet switch during read ignores old response and does not adopt history', () async {
     await h.login();
+    bool usage(http.Request r) => r.url.path.endsWith('ai_daily_usage');
+    final reads = h.auth.requests.where(usage).length;
     final gate = Completer<http.Response?>(), started = Completer<void>();
     h.auth.respond = (r) async {
       if (r.url.path == '/auth/v1/user') {
@@ -144,18 +146,20 @@ void main() {
     expect(h.state.authenticated, false);
     expect(h.state.quota, null);
     expect(h.state.messages, isEmpty);
-    expect(h.auth.requests.where((r) => r.url.path.endsWith('ai_daily_usage')), isEmpty);
+    expect(h.auth.requests.where(usage), hasLength(reads));
   });
-  test('sending invalidates previously read usage instead of showing a fresh count', () async {
+  test('a completed send reads usage again instead of guessing the new count', () async {
     await h.login();
-    await h.controller.readUsage();
+    bool usage(http.Request r) => r.url.path.endsWith('ai_daily_usage');
+    final reads = h.auth.requests.where(usage).length;
     expect(h.state.quotaStale, false);
     h.controller.setDraft('next');
     await h.controller.send();
-    expect(h.state.quotaStale, true);
+    expect(h.auth.requests.where(usage), hasLength(reads + 1));
+    expect(h.state.quotaStale, false);
     expect(h.state.quota!.used, 2);
   });
-  test('quota error uses only reported remaining and prevents another fresh-zero send', () async {
+  test('quota error drops the refused turn, keeps the input and blocks another send', () async {
     await h.login();
     h.chat.respond = (_) async* {
       throw const AssistantFailure(
@@ -165,10 +169,14 @@ void main() {
     };
     h.controller.setDraft('question');
     await h.controller.send();
-    expect(h.state.quota!.remaining, 0);
-    expect(h.state.quota!.limit, null);
+    expect(h.state.remaining, 0);
+    // Without a reported limit the website default is kept for display only.
+    expect(h.state.quota!.limit, assistantDefaultDailyLimit);
+    expect(h.state.limitReachedAt, isNotNull);
+    expect(h.state.messages, isEmpty);
     expect(h.state.canSend, false);
     await h.controller.send();
+    await h.controller.send(prompt: 'suggested');
     expect(h.chat.calls, 1);
     expect(h.state.draft, 'question');
   });
