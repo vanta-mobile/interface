@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_functions_display_description">打开 Vanta 合约、委托、持仓、资产、积分、通知和 Vanta AI</string>
+    <string-array name="app_action_feature_futures">
+        <item>合约</item>
+        <item>交易</item>
+        <item>永续合约</item>
+        <item>下单</item>
+    </string-array>
+    <string-array name="app_action_feature_chart">
+        <item>K线</item>
+        <item>行情图</item>
+        <item>图表</item>
+    </string-array>
+    <string-array name="app_action_feature_orders">
+        <item>当前委托</item>
+        <item>委托</item>
+        <item>挂单</item>
+        <item>我的订单</item>
+    </string-array>
+    <string-array name="app_action_feature_positions">
+        <item>持仓</item>
+        <item>仓位</item>
+        <item>我的持仓</item>
+    </string-array>
+    <string-array name="app_action_feature_portfolio">
+        <item>资产</item>
+        <item>余额</item>
+        <item>我的资产</item>
+    </string-array>
+    <string-array name="app_action_feature_points">
+        <item>积分</item>
+        <item>奖励</item>
+        <item>我的积分</item>
+    </string-array>
+    <string-array name="app_action_feature_assistant">
+        <item>Vanta AI</item>
+        <item>AI助手</item>
+        <item>问AI</item>
+    </string-array>
+    <string-array name="app_action_feature_notifications">
+        <item>通知</item>
+        <item>消息</item>
+        <item>提醒</item>
+    </string-array>
+</resources>

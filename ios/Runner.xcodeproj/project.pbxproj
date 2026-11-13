@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D6FA05107FA58B0B01F3C503 /* VantaAppIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E57B4A70DB157EA122DCC9E4 /* VantaAppIntents.swift */; };
+		37CD8EDA224CADD7118E5501 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECEB0045B32141474750EC44 /* AppShortcuts.strings */; };
+		303BE0879719FB7E134376D1 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8C23B7161B2A82A3A38FA47A /* Localizable.strings */; };
 		B543B6539C684AFDB2CB5011 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B543B6539C684AFDB2CB5012 /* GoogleService-Info.plist */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
@@ -43,6 +46,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		E57B4A70DB157EA122DCC9E4 /* VantaAppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VantaAppIntents.swift; sourceTree = "<group>"; };
+		A03B300A5584EAC887761D8E /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/AppShortcuts.strings"; sourceTree = "<group>"; };
+		484C47E7CA23AC97E492E5CF /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		B543B6539C684AFDB2CB5012 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		B543B6539C684AFDB2CB5013 /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
@@ -128,6 +134,9 @@
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
+				E57B4A70DB157EA122DCC9E4 /* VantaAppIntents.swift */,
+				ECEB0045B32141474750EC44 /* AppShortcuts.strings */,
+				8C23B7161B2A82A3A38FA47A /* Localizable.strings */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
 			path = Runner;
@@ -207,6 +216,7 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hans",
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
 			packageReferences = (
@@ -239,6 +249,8 @@
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
+				37CD8EDA224CADD7118E5501 /* AppShortcuts.strings in Resources */,
+				303BE0879719FB7E134376D1 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -294,6 +306,7 @@
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
+				D6FA05107FA58B0B01F3C503 /* VantaAppIntents.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -308,6 +321,22 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		ECEB0045B32141474750EC44 /* AppShortcuts.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A03B300A5584EAC887761D8E /* zh-Hans */,
+			);
+			name = AppShortcuts.strings;
+			sourceTree = "<group>";
+		};
+		8C23B7161B2A82A3A38FA47A /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				484C47E7CA23AC97E492E5CF /* zh-Hans */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
 		97C146FA1CF9000F007C117D /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (

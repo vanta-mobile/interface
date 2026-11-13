@@ -1,0 +1,64 @@
+/* App Intents titles, options and messages (VantaAppIntents.swift). */
+"Open in Vanta" = "在 Vanta 中打开";
+"Opens a Vanta screen: futures, chart, open orders, positions, portfolio, points, Vanta AI or notifications." = "打开 Vanta 的页面：合约、K 线、当前委托、持仓、资产、积分、Vanta AI 或通知。";
+"Page" = "页面";
+"Vanta Page" = "Vanta 页面";
+"Futures" = "合约";
+"Trade" = "交易";
+"Trading" = "下单";
+"Perpetuals" = "永续合约";
+"Chart" = "K线";
+"Price Chart" = "行情图";
+"Candlestick Chart" = "图表";
+"Open Orders" = "当前委托";
+"Orders" = "委托";
+"My Orders" = "我的委托";
+"Positions" = "持仓";
+"My Positions" = "我的持仓";
+"Open Positions" = "仓位";
+"Portfolio" = "资产";
+"Assets" = "余额";
+"Balance" = "账户余额";
+"My Assets" = "我的资产";
+"Points" = "积分";
+"Rewards" = "奖励";
+"My Points" = "我的积分";
+"Vanta AI" = "Vanta AI";
+"AI Assistant" = "AI 助手";
+"Ask AI" = "问 AI";
+"Notifications" = "通知";
+"Inbox" = "消息";
+"Messages" = "消息中心";
+"Alerts" = "提醒";
+
+"Open Vanta Market" = "打开 Vanta 市场";
+"Opens a perpetual futures market such as BTC or ETHUSDT, optionally on its chart or an account section. Unknown markets keep the current one." = "打开永续合约市场，例如 BTC 或 ETHUSDT，可指定 K 线或账户区。未知市场会保持当前市场。";
+"Market" = "市场";
+"Which market?" = "哪个市场？";
+"View" = "视图";
+"Market View" = "市场视图";
+"Order Form" = "下单";
+"Section" = "账户区";
+"Account Section" = "账户区";
+"Futures Assets" = "合约资产";
+
+"Prepare Vanta Order" = "准备 Vanta 订单";
+"Opens the Vanta order form with a market, order type, price and quantity filled in. It never places an order: you choose Long or Short, review and sign in Vanta." = "打开 Vanta 下单页并填好市场、订单类型、价格和数量。不会直接下单：需要你在 Vanta 中选择开多或开空、确认并签名。";
+"Order Type" = "订单类型";
+"Limit" = "限价";
+"Price" = "价格";
+"Quantity" = "数量";
+"Quantity Unit" = "数量单位";
+"USDT" = "USDT";
+"Coin" = "币";
+
+"Ask Vanta AI" = "问 Vanta AI";
+"Opens Vanta AI with your question typed in. It is not sent until you send it." = "打开 Vanta AI 并填好你的问题，你确认后才会发送。";
+"Question" = "问题";
+
+"Open Market" = "打开市场";
+"Prepare Order" = "准备下单";
+
+"Say which market, for example BTC or ETHUSDT." = "请说出市场，例如 BTC 或 ETHUSDT。";
+"Prices and quantities must be plain numbers such as 3200.5." = "价格和数量需要是普通数字，例如 3200.5。";
+"The question must be at most 2000 characters." = "问题最多 2000 个字符。";

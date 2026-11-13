@@ -54,7 +54,8 @@ jobs:
           cache: gradle
       - uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools build-tools;36.0.0'
+          # compileSdk 37 is required by AppFunctions (Gemini).
+          packages: 'platform-tools platforms;android-37.0 build-tools;36.0.0'
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -67,6 +68,7 @@ jobs:
           sdkmanager --version
           test -x "$ANDROID_HOME/build-tools/36.0.0/aapt2"
           test -x "$ANDROID_HOME/build-tools/36.0.0/zipalign"
+          test -d "$ANDROID_HOME/platforms/android-37.0"
       - name: Build APK (development signing, no wallet configuration)
         run: flutter build apk --release --target-platform android-arm64
       - uses: actions/upload-artifact@v4

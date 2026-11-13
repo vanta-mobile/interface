@@ -61,7 +61,7 @@ String notificationSummary(
   ) => l10n.notificationOrderSummary(
     status,
     symbol,
-    l10n.notificationOrderSide(side),
+    side,
     amount(last, base),
     quantity == Decimal.zero ? amount(filled, base) : '$filled / ${amount(quantity, base)}',
     amount(average, quote),
@@ -83,7 +83,7 @@ String notificationSummary(
     OrderNotification e => order(
       e.status,
       e.symbol,
-      e.side,
+      l10n.notificationOrderSide(e.side),
       e.lastQuantity,
       e.filledQuantity,
       e.quantity,
@@ -92,7 +92,7 @@ String notificationSummary(
     SpotOrderNotification e => order(
       e.status,
       e.symbol,
-      e.side,
+      l10n.spotOrderSide(e.side),
       e.lastQuantity,
       e.filledQuantity,
       e.quantity,

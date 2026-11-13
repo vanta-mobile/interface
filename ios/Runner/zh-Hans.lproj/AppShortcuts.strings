@@ -1,0 +1,10 @@
+/* Siri phrases for VantaShortcuts (VantaAppIntents.swift). Every phrase must keep ${applicationName}. */
+"Open ${page} in ${applicationName}" = "用${applicationName}打开${page}";
+"Show ${page} in ${applicationName}" = "在${applicationName}查看${page}";
+"Show my ${page} in ${applicationName}" = "查看我的${applicationName}${page}";
+"Open a market in ${applicationName}" = "用${applicationName}打开市场";
+"Check a market in ${applicationName}" = "在${applicationName}看行情";
+"Prepare an order in ${applicationName}" = "在${applicationName}准备下单";
+"Set up an order in ${applicationName}" = "用${applicationName}挂单";
+"Ask ${applicationName} AI" = "问${applicationName} AI";
+"Open ${applicationName} AI" = "打开${applicationName} AI";

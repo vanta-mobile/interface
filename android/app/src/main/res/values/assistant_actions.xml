@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gemini (AppFunctions) and Google Assistant (App Actions) entry points. -->
+<resources>
+    <string name="app_functions_display_description">Open Vanta futures, orders, positions, portfolio, points, notifications and Vanta AI</string>
+    <!-- Synonyms Assistant matches to each OPEN_APP_FEATURE shortcut (max 20 each). -->
+    <string-array name="app_action_feature_futures">
+        <item>futures</item>
+        <item>trade</item>
+        <item>trading</item>
+        <item>perpetuals</item>
+        <item>order form</item>
+    </string-array>
+    <string-array name="app_action_feature_chart">
+        <item>chart</item>
+        <item>price chart</item>
+        <item>candlestick chart</item>
+        <item>K line</item>
+    </string-array>
+    <string-array name="app_action_feature_orders">
+        <item>open orders</item>
+        <item>orders</item>
+        <item>my orders</item>
+        <item>pending orders</item>
+    </string-array>
+    <string-array name="app_action_feature_positions">
+        <item>positions</item>
+        <item>my positions</item>
+        <item>open positions</item>
+    </string-array>
+    <string-array name="app_action_feature_portfolio">
+        <item>portfolio</item>
+        <item>assets</item>
+        <item>balance</item>
+        <item>my assets</item>
+    </string-array>
+    <string-array name="app_action_feature_points">
+        <item>points</item>
+        <item>rewards</item>
+        <item>my points</item>
+    </string-array>
+    <string-array name="app_action_feature_assistant">
+        <item>Vanta AI</item>
+        <item>Ask AI</item>
+        <item>AI assistant</item>
+    </string-array>
+    <string-array name="app_action_feature_notifications">
+        <item>notifications</item>
+        <item>inbox</item>
+        <item>messages</item>
+        <item>alerts</item>
+    </string-array>
+</resources>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Google Assistant App Actions. Fulfillment uses vantaapp:// links, which the
+     app validates like any other deep link; nothing here can trade or sign.
+     Entity shortcuts below have no intent or labels, so launchers do not show them. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- "Open my positions on Vanta": a feature name maps to vantaapp://open?feature=<shortcutId>. -->
+    <capability android:name="actions.intent.OPEN_APP_FEATURE">
+        <intent>
+            <url-template android:value="vantaapp://open{?feature}" />
+            <parameter
+                android:name="feature"
+                android:key="feature"
+                android:required="true" />
+        </intent>
+        <!-- Required fallback when the query names no known feature: open the app home. -->
+        <intent>
+            <url-template android:value="vantaapp://open" />
+        </intent>
+    </capability>
+
+    <!-- "Show Ethereum on Vanta": the app checks the market against its catalog
+         and keeps the current market when it is unknown. -->
+    <capability android:name="actions.intent.GET_THING">
+        <intent>
+            <url-template android:value="vantaapp://futures{?symbol}" />
+            <parameter
+                android:name="thing.name"
+                android:key="symbol"
+                android:required="true" />
+        </intent>
+        <intent>
+            <url-template android:value="vantaapp://futures" />
+        </intent>
+    </capability>
+
+    <shortcut android:shortcutId="futures">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/app_action_feature_futures" />
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="chart">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/app_action_feature_chart" />
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="orders">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/app_action_feature_orders" />
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="positions">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/app_action_feature_positions" />
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="portfolio">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/app_action_feature_portfolio" />
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="points">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/app_action_feature_points" />
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="assistant">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/app_action_feature_assistant" />
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="notifications">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/app_action_feature_notifications" />
+        </capability-binding>
+    </shortcut>
+</shortcuts>

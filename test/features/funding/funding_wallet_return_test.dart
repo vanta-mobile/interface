@@ -76,7 +76,7 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       _background(tester);
       // A bare return/lifecycle change proves nothing about the transaction.
-      native.links.add(Uri.parse('vanta://wallet'));
+      native.links.add(Uri.parse('vantaapp://wallet'));
       _resume(tester);
       await tester.pump();
       expect(find.byType(DepositConfirmScreen), findsOneWidget);
@@ -219,7 +219,7 @@ class _NativeWallet {
   final identity = _NativeIdentity();
   final modal = _ReturnModal();
   final links = StreamController<Uri>(sync: true);
-  final response = Uri.parse('vanta://wallet?topic=topic&wc_ev=encrypted-response');
+  final response = Uri.parse('vantaapp://wallet?topic=topic&wc_ev=encrypted-response');
   late final connector = ReownWalletConnector(
     const WalletConfiguration(projectId: 'test'),
     createModal: (_) => modal,

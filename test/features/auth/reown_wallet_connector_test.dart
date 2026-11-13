@@ -132,7 +132,7 @@ void main() {
     final pending = connector.restore(host, expectedAddress: modal.address);
     await tester.pump();
     expect(links.hasListener, isTrue);
-    final response = Uri.parse('vanta://wallet?topic=topic&wc_ev=encrypted');
+    final response = Uri.parse('vantaapp://wallet?topic=topic&wc_ev=encrypted');
     links.add(response);
     expect(modal.envelopes, isEmpty);
     modal.initGate!.complete();
@@ -150,7 +150,7 @@ void main() {
     modal.isConnected = true;
     final connection = await connector.restore(host, expectedAddress: modal.address);
     modal.acceptEnvelope = false;
-    final response = Uri.parse('vanta://wallet?topic=topic&wc_ev=encrypted');
+    final response = Uri.parse('vantaapp://wallet?topic=topic&wc_ev=encrypted');
     links.add(response);
     await tester.pump();
     expect(modal.envelopes, hasLength(1));
@@ -161,7 +161,7 @@ void main() {
     await connection!.release();
     await tester.runAsync(connector.dispose);
     expect(links.hasListener, isFalse);
-    links.add(Uri.parse('vanta://wallet?topic=topic&wc_ev=late'));
+    links.add(Uri.parse('vantaapp://wallet?topic=topic&wc_ev=late'));
     await tester.pump();
     expect(modal.envelopes, hasLength(2));
   });

@@ -36,6 +36,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # compileSdk 37 is required by AppFunctions (Gemini); do not rely on the runner image.
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-37.0'
+
       - uses: subosito/flutter-action@v2
         with:
           channel: stable

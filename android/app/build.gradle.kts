@@ -3,6 +3,7 @@ plugins {
     // START: FlutterFire Configuration
     id("com.google.gms.google-services")
     // END: FlutterFire Configuration
+    id("com.google.devtools.ksp")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -22,7 +23,8 @@ if (hasReleaseSigning) {
 
 android {
     namespace = "exchange.vanta.app"
-    compileSdk = flutter.compileSdkVersion
+    // AppFunctions (Gemini) requires compiling against API 37; targetSdk is unchanged.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -72,4 +74,12 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // AppFunctions: navigation functions for Gemini and other system agents (Android 16+).
+    implementation("androidx.appfunctions:appfunctions:1.0.0-rc01")
+    ksp("androidx.appfunctions:appfunctions-compiler:1.0.0-rc01")
+    // Plain JVM tests for the agent link builder.
+    testImplementation("junit:junit:4.13.2")
 }

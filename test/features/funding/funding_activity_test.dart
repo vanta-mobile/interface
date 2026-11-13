@@ -428,6 +428,12 @@ void main() {
       await tester.pump(const Duration(seconds: 11));
       await tester.pumpAndSettle();
       expect(history.calls, 2);
+      if (locale != 'en') {
+        // Failure toasts persist until the user closes them.
+        expect(find.byKey(const Key('app-toast')), findsOneWidget);
+        await tester.tap(find.byKey(const Key('app-toast-close')));
+        await tester.pumpAndSettle();
+      }
       expect(find.byKey(const Key('app-toast')), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());

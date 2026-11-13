@@ -16,7 +16,7 @@
 	<array>
 		<dict>
 			<key>CFBundleURLSchemes</key>
-			<array><string>vanta</string></array>
+			<array><string>vanta</string><string>vantaapp</string></array>
 		</dict>
 	</array>
 	<key>LSApplicationQueriesSchemes</key>

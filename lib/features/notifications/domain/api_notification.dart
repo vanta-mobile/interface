@@ -18,6 +18,19 @@ enum ApiNotificationType {
 
 enum ApiNotificationSeverity { critical, high, medium, low }
 
+/// What `/v1/notifications/read` needs to mark one entry: events by key,
+/// broadcasts by id (a cursor that only moves forward).
+class ApiNotificationReadTarget {
+  const ApiNotificationReadTarget.event(String this.key, {required this.id})
+    : kind = ApiNotificationKind.event;
+  const ApiNotificationReadTarget.broadcast(this.id)
+    : kind = ApiNotificationKind.broadcast,
+      key = null;
+  final ApiNotificationKind kind;
+  final int id;
+  final String? key;
+}
+
 enum NotificationNumber { price, quantity, fee, markPrice, liquidationPrice, distance, amount }
 
 class NotificationPayload {
@@ -63,6 +76,10 @@ class ApiNotification {
   final DateTime createdAt;
   final String? symbol;
   final DateTime? readAt;
+  ApiNotificationReadTarget get readTarget => kind == ApiNotificationKind.event
+      ? ApiNotificationReadTarget.event(key, id: id)
+      : ApiNotificationReadTarget.broadcast(id);
+
   ApiNotification asRead() => ApiNotification(
     kind: kind,
     id: id,

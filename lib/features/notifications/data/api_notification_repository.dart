@@ -31,16 +31,22 @@ class ApiNotificationRepository {
     }
   }
 
-  Future<void> markRead({ApiNotification? entry, required String idempotencyKey}) async {
+  /// Marks [target] (or [entry]); with neither, marks everything read.
+  Future<void> markRead({
+    ApiNotification? entry,
+    ApiNotificationReadTarget? target,
+    required String idempotencyKey,
+  }) async {
+    final read = target ?? entry?.readTarget;
     final result = await session.postIdempotent(
       '/v1/notifications/read',
       body: {
-        if (entry == null)
+        if (read == null)
           'all': true
-        else if (entry.kind == ApiNotificationKind.broadcast)
-          'broadcast_up_to': entry.id
+        else if (read.kind == ApiNotificationKind.broadcast)
+          'broadcast_up_to': read.id
         else
-          'event_keys': [entry.key],
+          'event_keys': [read.key],
       },
       idempotencyKey: idempotencyKey,
     );

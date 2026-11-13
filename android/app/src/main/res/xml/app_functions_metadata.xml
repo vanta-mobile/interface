@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App-level guidance for Gemini and other agents calling Vanta AppFunctions. -->
+<AppFunctionAppMetadata xmlns:appfn="http://schemas.android.com/apk/androidx.appfunctions"
+    appfn:instructions="Vanta is a perpetual futures exchange. Its functions only open screens in the app.
+Operational patterns:
+  - Every function returns a PendingIntent; give it to the user to open Vanta on that screen.
+  - Use 'openFutures' to show a market, its chart, open orders, positions or futures assets.
+  - Use 'prepareFuturesOrder' only when the user asks to set up an order; it fills the order form and never trades.
+Constraints:
+  - No function places, changes or cancels orders, moves funds, signs or reads balances. Never tell the user an order was placed.
+  - The user always chooses Long or Short, reviews a confirmation and signs inside Vanta.
+  - Markets are USDT-margined perpetuals such as BTCUSDT; a bare asset such as ETH is accepted.
+  - Prices and quantities are plain positive decimals such as 3200.5; quantityUnit 'quote' means USDT."
+    appfn:displayDescription="@string/app_functions_display_description" />

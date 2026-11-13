@@ -158,7 +158,7 @@ class ApiNotificationFacts extends StatelessWidget {
             if (p.side != null)
               NotificationDetailRow(
                 l.notificationApiField('side'),
-                l.notificationOrderSide(p.side!),
+                p.market == 'spot' ? l.spotOrderSide(p.side!) : l.notificationOrderSide(p.side!),
               ),
             for (final key in p.numbers.keys)
               NotificationDetailRow(l.notificationApiField(key.name), number(key)),

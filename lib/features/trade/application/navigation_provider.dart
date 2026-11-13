@@ -37,3 +37,24 @@ class TradeKlineVisibleController extends Notifier<bool> {
   bool build() => false;
   void toggle() => state = !state;
 }
+
+enum FuturesAccountTab { orders, positions, assets }
+
+/// One-shot request from outside the page (deep link, push) to show an account
+/// section. The section keeps its own tab state and consumes the request, so
+/// ordinary navigation still opens on its default tab.
+final futuresAccountRequestProvider = NotifierProvider<FuturesAccountRequest, FuturesAccountTab?>(
+  FuturesAccountRequest.new,
+);
+
+class FuturesAccountRequest extends Notifier<FuturesAccountTab?> {
+  @override
+  FuturesAccountTab? build() => null;
+  void show(FuturesAccountTab tab) => state = tab;
+  void clear() => state = null;
+  FuturesAccountTab? take() {
+    final tab = state;
+    state = null;
+    return tab;
+  }
+}

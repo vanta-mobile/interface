@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/data/wallet_redirect_handler.dart';
 
-Uri _response([String value = 'encrypted']) => Uri.parse('vanta://wallet?topic=topic&wc_ev=$value');
+Uri _response([String value = 'encrypted']) =>
+    Uri.parse('vantaapp://wallet?topic=topic&wc_ev=$value');
 Future<void> _flush() => Future<void>.delayed(Duration.zero);
 
 void main() {
@@ -56,17 +57,20 @@ void main() {
     handler.start();
     handler.attach(dispatch);
     for (final value in [
-      'vanta://wallet',
+      'vantaapp://wallet',
       'https://wallet?topic=t&wc_ev=e',
-      'vanta://other?topic=t&wc_ev=e',
-      'vanta://user@wallet?topic=t&wc_ev=e',
-      'vanta://wallet:42?topic=t&wc_ev=e',
-      'vanta://wallet/path?topic=t&wc_ev=e',
-      'vanta://wallet?topic=t&wc_ev=',
-      'vanta://wallet?wc_ev=e',
-      'vanta://wallet?topic=t&wc_ev=e&wc_ev=second',
-      'vanta://wallet?topic=t&wc_ev=%FF',
-      'vanta://wallet?topic=t&wc_ev=${'a' * 262144}',
+      // Privy's OAuth scheme and navigation hosts never carry wallet responses.
+      'vanta://wallet?topic=t&wc_ev=e',
+      'vantaapp://futures?topic=t&wc_ev=e',
+      'vantaapp://other?topic=t&wc_ev=e',
+      'vantaapp://user@wallet?topic=t&wc_ev=e',
+      'vantaapp://wallet:42?topic=t&wc_ev=e',
+      'vantaapp://wallet/path?topic=t&wc_ev=e',
+      'vantaapp://wallet?topic=t&wc_ev=',
+      'vantaapp://wallet?wc_ev=e',
+      'vantaapp://wallet?topic=t&wc_ev=e&wc_ev=second',
+      'vantaapp://wallet?topic=t&wc_ev=%FF',
+      'vantaapp://wallet?topic=t&wc_ev=${'a' * 262144}',
     ]) {
       links.add(Uri.parse(value));
     }
@@ -82,8 +86,8 @@ void main() {
     handler.start();
     handler.attach(dispatch);
     final direct = [
-      Uri.parse('vanta://wallet/?phantomRequest=encrypted'),
-      Uri.parse('vanta://wallet?solflareRequest=encrypted'),
+      Uri.parse('vantaapp://wallet/?phantomRequest=encrypted'),
+      Uri.parse('vantaapp://wallet?solflareRequest=encrypted'),
     ];
     for (final uri in direct) {
       links.add(uri);

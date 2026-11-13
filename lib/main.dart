@@ -12,6 +12,8 @@ import 'core/theme.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'features/auth/application/auth_provider.dart';
 import 'features/auth/presentation/startup_screen.dart';
+import 'features/deep_link/application/deep_link_provider.dart';
+import 'features/deep_link/presentation/deep_link_host.dart';
 import 'features/trade/application/providers.dart';
 import 'features/trade/presentation/trading_screen.dart';
 
@@ -28,6 +30,8 @@ import 'features/funding/application/deposit_approval_provider.dart';
 import 'features/notifications/application/push_messaging_provider.dart';
 import 'features/notifications/application/push_device_provider.dart';
 import 'features/notifications/data/firebase_push_messaging_repository.dart';
+import 'features/notifications/application/push_open_provider.dart';
+import 'features/notifications/data/push_open_source.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,6 +91,10 @@ Future<void> main() async {
     ProviderScope(
       overrides: [
         pushMessagingRepositoryProvider.overrideWithValue(pushMessaging),
+        // Notification taps exist only when Firebase initialized.
+        pushOpenSourceProvider.overrideWithValue(
+          pushMessaging == null ? null : PushOpenSource.firebase(),
+        ),
         initialLocaleProvider.overrideWithValue(localeFromPreference(saved)),
         orderRecoveryJournalProvider.overrideWithValue(recovery),
         rebalanceJournalProvider.overrideWithValue(rebalances),
@@ -106,6 +114,9 @@ class VantaApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(pushDeviceLifecycleProvider);
+    // Start listening at launch so a link that opens the app is kept for the shell.
+    ref.listen(deepLinkInboxProvider, (_, _) {});
+    ref.listen(pushOpenRouterProvider, (_, _) {});
     ref.listen(authProvider.select((s) => (s.identity?.id, s.identity?.walletAddress)), (
       previous,
       next,
@@ -119,7 +130,7 @@ class VantaApp extends ConsumerWidget {
       locale: ref.watch(localeProvider),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      home: const StartupScreen(home: TradingScreen()),
+      home: const StartupScreen(home: DeepLinkHost(child: TradingScreen())),
     );
   }
 }

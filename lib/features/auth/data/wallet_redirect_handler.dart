@@ -3,6 +3,8 @@ import 'dart:collection';
 
 import 'package:app_links/app_links.dart';
 
+import 'wallet_configuration.dart';
+
 /// Native return links can carry the wallet's encrypted response. Opening the
 /// app alone does not deliver that response to Reown's pending request.
 class WalletRedirectHandler {
@@ -95,9 +97,11 @@ class WalletRedirectHandler {
   }
 }
 
+final _redirect = Uri.parse(WalletConfiguration.redirect);
+
 bool _walletResponse(Uri uri) {
-  if (uri.scheme != 'vanta' ||
-      uri.host != 'wallet' ||
+  if (uri.scheme != _redirect.scheme ||
+      uri.host != _redirect.host ||
       uri.userInfo.isNotEmpty ||
       uri.hasPort ||
       uri.path.isNotEmpty && uri.path != '/' ||

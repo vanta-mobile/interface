@@ -23,7 +23,7 @@ class SpotNotificationDetails extends ConsumerWidget {
       spacing: 20,
       children: [
         NotificationDetailSummary(
-          title: e.side == 'BUY' ? l.openOrdersBuy : l.openOrdersSell,
+          title: e.side == 'BUY' ? l.spotSideBuy : l.spotSideSell,
           value: base(e.quantity),
           status: l.notificationStatus(e.status),
           tone: notificationTone(e),

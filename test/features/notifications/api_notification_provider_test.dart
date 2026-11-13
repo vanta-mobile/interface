@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/notifications/domain/api_notification.dart';
 import 'package:vanta/features/auth/application/vanta_api_session_provider.dart';
 import 'package:vanta/features/notifications/application/api_notification_provider.dart';
 import 'package:vanta/features/notifications/application/notification_provider.dart';
@@ -132,6 +133,32 @@ void main() {
       'event_keys': ['event:1'],
     });
     expect(post.headers['Idempotency-Key'], isNotEmpty);
+  });
+  test('a read target marks entries by server identity, loaded or not, once', () async {
+    final f = InboxFixture();
+    addTearDown(f.dispose);
+    f.items.addAll([inboxItem(), inboxItem(id: 3, type: 'ANNOUNCE', broadcast: true)]);
+    await f.start();
+    await f.controller.markReadTarget(const ApiNotificationReadTarget.event('event:9', id: 9));
+    await f.controller.markReadTarget(const ApiNotificationReadTarget.event('event:1', id: 1));
+    await f.controller.markReadTarget(const ApiNotificationReadTarget.broadcast(3));
+    expect(f.state.cache['event:1']!.read, isTrue);
+    expect(f.state.cache['broadcast:3']!.read, isTrue);
+    final posts = f.backend.requests
+        .where((r) => r.method == 'POST')
+        .map((r) => jsonDecode(r.body));
+    expect(posts, [
+      {
+        'event_keys': ['event:9'],
+      },
+      {
+        'event_keys': ['event:1'],
+      },
+      {'broadcast_up_to': 3},
+    ]);
+    await f.controller.markReadTarget(const ApiNotificationReadTarget.event('event:1', id: 1));
+    await f.controller.markReadTarget(const ApiNotificationReadTarget.broadcast(3));
+    expect(f.backend.requests.where((r) => r.method == 'POST'), hasLength(3), reason: 'known read');
   });
   test('broadcast cursor reads earlier broadcasts while keeping personal events unread', () async {
     final f = InboxFixture();

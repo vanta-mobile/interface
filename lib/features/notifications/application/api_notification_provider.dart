@@ -197,16 +197,32 @@ class ApiNotificationInboxController extends Notifier<ApiInboxState> {
   }
 
   Future<void> markRead([ApiNotification? entry]) async {
+    if (entry?.read == true) return;
+    return _markTarget(entry?.readTarget);
+  }
+
+  /// Marks one entry by its server identity, for example a tapped push
+  /// notification whose entry has not been loaded into this inbox.
+  Future<void> markReadTarget(ApiNotificationReadTarget target) => _markTarget(target);
+
+  bool _knownRead(ApiNotificationReadTarget target) => state.cache.values.any(
+    (item) =>
+        item.read &&
+        item.kind == target.kind &&
+        (target.kind == ApiNotificationKind.event ? item.key == target.key : item.id == target.id),
+  );
+
+  Future<void> _markTarget(ApiNotificationReadTarget? target) async {
     final identity = _identityRevision;
     if (!_current(identity)) return;
     if (_writing case final pending?) {
       await pending;
       if (!_current(identity)) return;
-      if (entry != null && state.cache[entry.key]?.read == true) return;
-      return markRead(entry);
+      if (target != null && _knownRead(target)) return;
+      return _markTarget(target);
     }
-    if (entry?.read == true || entry != null && state.cache[entry.key]?.read == true) return;
-    final task = _mark(entry, identity);
+    if (target != null && _knownRead(target)) return;
+    final task = _mark(target, identity);
     _writing = task;
     try {
       await task;
@@ -215,26 +231,30 @@ class ApiNotificationInboxController extends Notifier<ApiInboxState> {
     }
   }
 
-  Future<void> _mark(ApiNotification? entry, int identity) async {
+  Future<void> _mark(ApiNotificationReadTarget? target, int identity) async {
     final repository = ref.read(apiNotificationRepositoryProvider);
     if (repository == null) return;
-    final operation = entry == null ? 'all' : '${entry.kind.name}:${entry.key}';
+    final operation = switch (target) {
+      null => 'all',
+      ApiNotificationReadTarget(kind: ApiNotificationKind.event, :final key) => 'event:$key',
+      ApiNotificationReadTarget(:final id) => 'broadcast:$id',
+    };
     final key = _writeKeys.putIfAbsent(operation, newIdempotencyKey);
     bool current() => _current(identity);
     state = state.copy(marking: true);
     try {
       await RequestScope.runOwned(
         current,
-        () => repository.markRead(entry: entry, idempotencyKey: key),
+        () => repository.markRead(target: target, idempotencyKey: key),
       );
       if (!current()) return;
       _writeKeys.remove(operation);
       ApiNotification updated(ApiNotification item) =>
-          entry == null ||
-              entry.kind == ApiNotificationKind.event && item.key == entry.key ||
-              entry.kind == ApiNotificationKind.broadcast &&
+          target == null ||
+              target.kind == ApiNotificationKind.event && item.key == target.key ||
+              target.kind == ApiNotificationKind.broadcast &&
                   item.kind == ApiNotificationKind.broadcast &&
-                  item.id <= entry.id
+                  item.id <= target.id
           ? item.asRead()
           : item;
       final cache = {for (final item in state.cache.values) item.key: updated(item)};

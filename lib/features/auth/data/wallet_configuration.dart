@@ -8,7 +8,9 @@ class WalletConfiguration {
       );
 
   final String projectId, origin;
-  static const redirect = 'vanta://wallet';
+  // Shares the navigation scheme: Android routes all of `vanta://` to Privy's
+  // OAuth redirect activity, so wallet returns use a scheme only MainActivity owns.
+  static const redirect = 'vantaapp://wallet';
   static const chains = ['1', '56', '42161', '8453'];
   Uri? get relyingParty {
     final uri = Uri.tryParse(origin.trim());
