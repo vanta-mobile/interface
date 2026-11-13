@@ -12,6 +12,7 @@ import '../../../market/application/market_providers.dart';
 import '../../../market/application/market_selection_provider.dart';
 import '../../../market/domain/market_quote.dart';
 import '../../application/providers.dart';
+import 'favorite_toggle.dart';
 import 'market_list_row.dart';
 import 'market_list_skeleton.dart';
 import 'market_quote_status.dart';
@@ -129,7 +130,13 @@ class MarketSheet extends ConsumerWidget {
     AsyncValue<List<MarketQuote>> results,
     Set<String> favorites,
   ) => RefreshIndicator(
-    onRefresh: ref.read(pageRefreshProvider).markets,
+    onRefresh: () async {
+      final markets = ref.read(pageRefreshProvider).markets();
+      // Joins the watchlist read that [markets] starts; reports its failure.
+      final failure = await ref.read(favoriteSymbolsProvider.notifier).refresh();
+      await markets;
+      if (failure != null && context.mounted) showFavoriteFailure(context, failure);
+    },
     child: _results(context, ref, results, favorites),
   );
 

@@ -8,6 +8,7 @@ import '../../../market/application/selection_providers.dart';
 import '../../../market/domain/market.dart';
 import '../../../market/domain/market_quote.dart';
 import '../trade_theme.dart';
+import 'favorite_toggle.dart';
 import 'primitives.dart';
 
 class MarketListRow extends ConsumerWidget {
@@ -41,8 +42,7 @@ class MarketListRow extends ConsumerWidget {
                               '${tr(context, favorite ? 'removeFavorite' : 'addFavorite')} ${quote.symbol}',
                           isSelected: favorite,
                           padding: EdgeInsets.zero,
-                          onPressed: () =>
-                              ref.read(favoriteSymbolsProvider.notifier).toggle(quote.symbol),
+                          onPressed: () => toggleFavorite(context, ref, quote.symbol),
                           icon: const Icon(
                             Icons.star_border_rounded,
                             size: 18,

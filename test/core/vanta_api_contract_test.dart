@@ -81,6 +81,22 @@ void main() {
     },
   );
 
+  test('watchlist list, add and remove match the contract', () {
+    final list = operation('get', '/v1/me/watchlist');
+    expect(list['security'], isNotEmpty);
+    final page = okSchema(list);
+    expect(page['required'], containsAll(['items', 'count']));
+    final item = resolve(((page['properties'] as Json)['items'] as Json)['items']);
+    expect(item['required'], containsAll(['symbol', 'sort', 'added_at']));
+    final add = operation('post', '/v1/me/watchlist');
+    expect(add['security'], isNotEmpty);
+    expect(requestSchema(add)['required'], contains('symbol'));
+    expect(properties(okSchema(add)), containsAll(['symbol', 'added']));
+    final remove = operation('delete', '/v1/me/watchlist/{symbol}');
+    expect(remove['security'], isNotEmpty);
+    expect(properties(okSchema(remove)), containsAll(['symbol', 'removed']));
+  });
+
   test('push registration, unregistration, preferences and capability match the contract', () {
     final register = operation('post', '/v1/push/register');
     expect(requestSchema(register)['required'], containsAll(['platform', 'token', 'app_id']));

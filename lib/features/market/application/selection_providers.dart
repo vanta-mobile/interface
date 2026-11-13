@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 export '../../../core/localization/locale_provider.dart';
+export 'favorite_symbols_provider.dart' show favoriteSymbolsProvider, FavoriteSymbolsController;
 
 final symbolProvider = NotifierProvider<SymbolController, String>(SymbolController.new);
 
@@ -16,21 +17,6 @@ class IntervalController extends Notifier<String> {
   @override
   String build() => '1m';
   void select(String interval) => state = interval;
-}
-
-final favoriteSymbolsProvider = NotifierProvider<FavoriteSymbolsController, Set<String>>(
-  FavoriteSymbolsController.new,
-);
-
-class FavoriteSymbolsController extends Notifier<Set<String>> {
-  @override
-  Set<String> build() => const {};
-
-  void toggle(String symbol) {
-    final next = {...state};
-    if (!next.add(symbol)) next.remove(symbol);
-    state = Set.unmodifiable(next);
-  }
 }
 
 final orderPriceProvider = NotifierProvider<OrderPriceController, String>(OrderPriceController.new);

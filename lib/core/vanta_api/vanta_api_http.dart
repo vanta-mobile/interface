@@ -34,6 +34,9 @@ class VantaApiHttp {
     String? idempotencyKey,
   }) => _send('POST', path, body: body, accessToken: accessToken, idempotencyKey: idempotencyKey);
 
+  Future<Map<String, Object?>> delete(String path, {String? accessToken}) =>
+      _send('DELETE', path, accessToken: accessToken);
+
   Future<Map<String, Object?>> _send(
     String method,
     String path, {

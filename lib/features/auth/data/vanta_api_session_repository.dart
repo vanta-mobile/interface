@@ -127,6 +127,15 @@ class VantaApiSessionRepository {
     (token) => http.post(path, body: body, accessToken: token, idempotencyKey: idempotencyKey),
   );
 
+  /// Writes the contract defines as idempotent by state (for example
+  /// watchlist add/remove), so the single auth-refresh replay is safe without
+  /// an `Idempotency-Key`. Never use for financial writes.
+  Future<Map<String, Object?>> postStateful(String path, {required Map<String, Object?> body}) =>
+      _authorized((token) => http.post(path, body: body, accessToken: token));
+
+  Future<Map<String, Object?>> deleteStateful(String path) =>
+      _authorized((token) => http.delete(path, accessToken: token));
+
   Future<Map<String, Object?>> _authorized(
     Future<Map<String, Object?>> Function(String token) send,
   ) async {

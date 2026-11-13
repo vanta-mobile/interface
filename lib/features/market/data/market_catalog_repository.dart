@@ -46,6 +46,7 @@ class MarketCatalogRepository {
           AsterInstrument(
             symbol: data['symbol'] as String,
             base: data['baseAsset'] as String,
+            quote: data['quoteAsset'] as String,
             ticker: {...ticker, ...?premiums[data['symbol']]},
             precision: MarketPrecision.fromExchange(data),
             descriptor: mapMarketDescriptor(data),

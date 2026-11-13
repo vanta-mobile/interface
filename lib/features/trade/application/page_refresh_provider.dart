@@ -37,6 +37,7 @@ class PageRefreshController {
       final repository = ref.read(marketQuotesRepositoryProvider);
       await repository?.refresh();
     },
+    () => ref.read(favoriteSymbolsProvider.notifier).refresh(),
   ]);
 
   Future<void> futures() => _futures.run([
