@@ -34,6 +34,10 @@ class KChartColors {
   final Color nowPriceUpColor;
   final Color nowPriceDnColor;
 
+  /// Local patch: when set, the current price is a filled badge in the
+  /// up/down color with this bold text color instead of an outlined box.
+  final Color? nowPriceTextColor;
+
   /// trend color
   final Color trendLineColor;
 
@@ -76,6 +80,7 @@ class KChartColors {
     this.defaultTextColor = const Color(0xFF909196),
     this.nowPriceUpColor = const Color(0xFF14AD8F),
     this.nowPriceDnColor = const Color(0xFFD5405D),
+    this.nowPriceTextColor,
 
     /// trend color
     this.trendLineColor = const Color(0xFFF89215),

@@ -13,6 +13,7 @@ import 'package:vanta/features/trade/presentation/widgets/chart_canvas.dart';
 import 'package:vanta/main.dart';
 
 import '../../support/market_service.dart';
+import '../../support/startup_intro.dart';
 import '../../support/trade_fixture.dart';
 
 ChartPainter painter(WidgetTester tester) => tester
@@ -38,7 +39,7 @@ void main() {
       container.read(futuresWorkspaceTabProvider.notifier).select(FuturesWorkspaceTab.chart);
       await launch(tester, container);
       await visibleTap(tester, find.byKey(const Key('chart-more-timeframes')));
-      await visibleTap(tester, find.byKey(const Key('timeframe-option-1M')));
+      await visibleTap(tester, find.byKey(const ValueKey('trade-option-1M')));
       expect(container.read(intervalProvider), '1M');
       expect(container.read(currentMarketProvider)!.interval, '1M');
       final price = container.read(currentMarketProvider)!.price;
@@ -51,15 +52,7 @@ void main() {
       }
       for (final mode in KPriceScale.values) {
         await visibleTap(tester, find.byKey(const Key('chart-price-scale')));
-        await visibleTap(
-          tester,
-          find.widgetWithText(CheckedPopupMenuItem<KPriceScale>, switch (mode) {
-            KPriceScale.regular => '普通',
-            KPriceScale.logarithmic => '对数',
-            KPriceScale.percentage => '百分比',
-            KPriceScale.indexed => '基准100',
-          }),
-        );
+        await visibleTap(tester, find.byKey(ValueKey('trade-option-$mode')));
         expect(painter(tester).priceScale, mode);
         expect(painter(tester).currentPrice, price.toDouble());
         expect(container.read(currentMarketProvider)!.price, price);
@@ -93,6 +86,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(container: container, child: const VantaApp()),
       );
+      await pumpPastStartupIntro(tester);
       for (var i = 0; i < 30 && container.read(currentMarketProvider) == null; i++) {
         await tester.pump(const Duration(milliseconds: 20));
       }

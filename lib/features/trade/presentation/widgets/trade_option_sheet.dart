@@ -73,10 +73,14 @@ class TradeOptionRow<T> extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.emphasizeSelected = true,
+    this.unselectedMark = true,
   });
   final TradeOption<T> option;
   final bool selected;
   final bool emphasizeSelected;
+
+  /// Chart settings lists show only the selected check, as designed.
+  final bool unselectedMark;
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => Semantics(
@@ -122,7 +126,7 @@ class TradeOptionRow<T> extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: selected ? TradeColors.accent : null,
-                  border: selected ? null : Border.all(color: TradeColors.muted),
+                  border: selected || !unselectedMark ? null : Border.all(color: TradeColors.muted),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: selected

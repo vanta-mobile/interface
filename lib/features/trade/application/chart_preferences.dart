@@ -5,7 +5,7 @@ import '../domain/chart_parameters.dart';
 
 class ChartPreferences {
   const ChartPreferences({
-    this.main = 'none',
+    this.main = 'MA',
     this.secondary = 'none',
     this.line = false,
     this.chartType = KChartType.candles,
@@ -19,6 +19,13 @@ class ChartPreferences {
   final KChartType chartType;
   final KPriceScale priceScale;
   final ChartParameters parameters;
+
+  /// Whether a quick indicator shortcut (MA, VOL, MACD, ...) is active.
+  bool shows(String indicator) => indicator == 'VOL'
+      ? volume
+      : mainIndicatorOptions.contains(indicator)
+      ? main == indicator
+      : secondary == indicator;
 
   ChartPreferences copyWith({
     String? main,
@@ -40,6 +47,10 @@ class ChartPreferences {
     parameters: parameters ?? this.parameters,
   );
 }
+
+const mainIndicatorOptions = ['MA', 'BOLL'];
+const secondaryIndicatorOptions = ['MACD', 'KDJ', 'RSI', 'WR', 'CCI'];
+const indicatorShortcuts = [...mainIndicatorOptions, 'VOL', ...secondaryIndicatorOptions];
 
 // Both embedded and fullscreen workspaces share the same display preferences.
 final chartPreferencesProvider = NotifierProvider<ChartPreferencesController, ChartPreferences>(
@@ -68,4 +79,19 @@ class ChartPreferencesController extends Notifier<ChartPreferences> {
       state = state.copyWith(parameters: state.parameters.withValues(indicator, values));
   void resetParameters() => state = state.copyWith(parameters: const ChartParameters());
   void setVolume(bool value) => state = state.copyWith(volume: value);
+
+  /// Quick shortcuts toggle: overlays and the lower pane replace each other.
+  void toggle(String indicator) {
+    final selected = state.shows(indicator);
+    if (indicator == 'VOL') {
+      setVolume(!selected);
+    } else if (mainIndicatorOptions.contains(indicator)) {
+      setMain(selected ? 'none' : indicator);
+    } else {
+      setSecondary(selected ? 'none' : indicator);
+    }
+  }
+
+  void setIndicators({required String main, required String secondary, required bool volume}) =>
+      state = state.copyWith(main: main, secondary: secondary, volume: volume);
 }

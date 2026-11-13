@@ -19,7 +19,8 @@ void main() {
       await selectWorkspace(tester, chart: true);
       final chart = tester.widget<KChartWidget>(find.byType(KChartWidget));
       expect(chart.secondaryIndicators, isEmpty);
-      expect(tester.getSize(find.byKey(const Key('chart-canvas-area'))).height, lessThan(400));
+      // 12.08: 285 main + 12 MA legend + 104 volume on phones; tablets stay bounded.
+      expect(tester.getSize(find.byKey(const Key('chart-canvas-area'))).height, lessThan(480));
       expect(chart.volHidden, false);
       await selectWorkspace(tester, chart: false);
       await tester.ensureVisible(find.byKey(const Key('trade-pending-quantity')));
@@ -128,11 +129,13 @@ void main() {
     await tester.tap(find.byKey(const Key('chart-quick-RSI')));
     await tester.pumpAndSettle();
     expect(chart().secondaryIndicators.map((i) => i.shortName), ['RSI']);
-    await tester.ensureVisible(find.byKey(const Key('chart-quick-MA')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('chart-quick-MA')));
-    await tester.pumpAndSettle();
+    // MA is the default overlay, as designed; BOLL replaces it in the same pane.
     expect(chart().mainIndicators.map((i) => i.shortName), ['MA']);
+    await tester.ensureVisible(find.byKey(const Key('chart-quick-BOLL')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('chart-quick-BOLL')));
+    await tester.pumpAndSettle();
+    expect(chart().mainIndicators.map((i) => i.shortName), ['BOLL']);
     expect(find.byType(KChartWidget), findsOneWidget);
     await tester.ensureVisible(find.byKey(const Key('chart-quick-RSI')));
     await tester.pumpAndSettle();
@@ -153,8 +156,9 @@ void main() {
     final container = setup(tester);
     await launch(tester, container);
     await selectWorkspace(tester, chart: true);
+    // The 12.08 action bar offers chart type and indicator settings again.
     for (final key in ['chart-type', 'chart-indicators']) {
-      expect(find.byKey(Key(key)), findsNothing);
+      expect(find.byKey(Key(key)), findsOneWidget);
     }
     for (final value in ['CCI', 'BOLL', 'VOL']) {
       await tester.ensureVisible(find.byKey(Key('chart-quick-$value')));
@@ -261,7 +265,7 @@ void main() {
     expect(find.byKey(const Key('candle-detail')), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
-  testWidgets('chart keeps the selected indicator and opens market details', (tester) async {
+  testWidgets('chart keeps the selected indicator without a data-source row', (tester) async {
     final container = setup(tester);
     await launch(tester, container);
     await selectWorkspace(tester, chart: true);
@@ -272,16 +276,9 @@ void main() {
       tester.widget<KChartWidget>(find.byType(KChartWidget)).secondaryIndicators.single.shortName,
       'MACD',
     );
-    expect(find.text('Aster · USDT'), findsOneWidget);
-    expect(find.text('形成中'), findsNothing);
-    expect(find.text('已收盘'), findsNothing);
-    await tester.ensureVisible(find.byKey(const Key('chart-market-status')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('chart-market-status')));
-    await tester.pumpAndSettle();
-    expect(find.text('行情详情'), findsOneWidget);
-    expect(find.text('1 / 1'), findsOneWidget);
-    expect(find.text('形成中'), findsOneWidget);
+    // 12.08 has no data-source row under the chart.
+    expect(find.text('Aster · USDT'), findsNothing);
+    expect(find.byKey(const Key('chart-market-status')), findsNothing);
     expect(tester.takeException(), null);
     await tester.pumpWidget(const SizedBox());
   });

@@ -5,6 +5,7 @@ import 'package:k_chart_plus/k_chart_plus.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_embedded_inputs.dart';
 import 'package:vanta/features/market/domain/market.dart';
 import 'package:vanta/features/trade/application/providers.dart';
+import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/trade_fixture.dart';
 import '../../support/workspace_navigation.dart';
@@ -72,7 +73,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await selectWorkspace(tester, chart: false);
-      final row = find.byKey(const ValueKey('BTCUSDT/ask/0.0000010203'));
+      final row = find.byKey(const ValueKey('BTCUSDT/ask/0'));
       await tester.ensureVisible(row);
       await tester.pumpAndSettle();
       await tester.tap(row);
@@ -82,10 +83,11 @@ void main() {
         tester.widget<EmbeddedPriceField>(find.byType(EmbeddedPriceField)).fixedLabel,
         '0.0000010203',
       );
-      expect(
-        tester.widget<FilledButton>(find.byKey(const Key('trade-pending-buy'))).onPressed,
-        null,
-      );
+      // Signed out, the buy action turns into Connect rather than a disabled order.
+      final buy = find.byKey(const Key('trade-pending-buy'));
+      expect(tester.widget<FilledButton>(buy).onPressed, isNotNull);
+      final connect = AppLocalizations.of(tester.element(buy)).connect;
+      expect(find.descendant(of: buy, matching: find.text(connect)), findsOneWidget);
       expect(container.read(accountProvider).connected, false);
       await selectWorkspace(tester, chart: true);
       final trades = find.byKey(const ValueKey('chart-trade/BTC/0'));

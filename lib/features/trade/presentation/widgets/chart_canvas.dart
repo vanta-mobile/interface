@@ -9,6 +9,10 @@ import '../trade_theme.dart';
 import 'chart_touch_scroll.dart';
 import 'chart_entities.dart';
 
+const _maStyle = MAStyle(
+  maColors: [TradeColors.warning, TradeColors.accent, TradeColors.muted, TradeColors.secondary],
+);
+
 /// Package entities are mutable, so they stay confined to this adapter.
 class ChartCanvas extends StatefulWidget {
   const ChartCanvas({
@@ -58,7 +62,7 @@ class _ChartCanvasState extends State<ChartCanvas> {
     final params = widget.preferences.parameters;
     List<int> ints(String name) => params[name].map((value) => value.toInt()).toList();
     indicators = switch (widget.preferences.main) {
-      'MA' => [MAIndicator(calcParams: ints('MA'))],
+      'MA' => [MAIndicator(calcParams: ints('MA'), indicatorStyle: _maStyle)],
       'BOLL' => [
         BOLLIndicator(period: params['BOLL'][0].toInt(), multiplier: params['BOLL'][1].toDouble()),
       ],
@@ -82,26 +86,30 @@ class _ChartCanvasState extends State<ChartCanvas> {
         child: KChartWidget(
           entities,
           const KChartStyle(),
-          const KChartColors(
+          // Figma `chart` component: white axes, #232526 grid, 30% volume
+          // bars and a filled current-price badge.
+          KChartColors(
             bgColor: TradeColors.background,
             upColor: TradeColors.positive,
             dnColor: TradeColors.negative,
-            volUpColor: AppColors.positiveDepth,
-            volDnColor: AppColors.negativeDepth,
-            gridColor: TradeColors.line,
-            defaultTextColor: TradeColors.muted,
+            volColor: TradeColors.accent,
+            volUpColor: TradeColors.positive.withValues(alpha: .3),
+            volDnColor: TradeColors.negative.withValues(alpha: .3),
+            gridColor: TradeColors.card,
+            defaultTextColor: TradeColors.text,
             nowPriceUpColor: TradeColors.positive,
             nowPriceDnColor: TradeColors.negative,
-            maxColor: TradeColors.secondary,
-            minColor: TradeColors.secondary,
-            ma5Color: AppColors.warning,
-            ma10Color: AppColors.accent,
+            nowPriceTextColor: TradeColors.onDirection,
+            maxColor: TradeColors.text,
+            minColor: TradeColors.text,
+            ma5Color: TradeColors.warning,
+            ma10Color: TradeColors.muted,
             crossColor: AppColors.secondary,
             crossTextColor: AppColors.text,
             selectFillColor: AppColors.raised,
             selectBorderColor: AppColors.line,
             kLineColor: AppColors.accent,
-            kLineFillColors: [AppColors.accentSoft, TradeColors.background],
+            kLineFillColors: const [AppColors.accentSoft, TradeColors.background],
           ),
           mainIndicators: indicators,
           secondaryIndicators: secondary,

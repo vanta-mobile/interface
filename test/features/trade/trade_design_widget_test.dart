@@ -137,34 +137,35 @@ void main() {
       await selectWorkspace(t, chart: true);
       final settings = t.getRect(find.byKey(const Key('trade-settings')));
       final bell = t.getRect(find.byKey(const Key('notifications-entry')));
-      final ai = t.getRect(find.byKey(const Key('trade-ask-ai')));
-      expect(ai.right, 393 - 16);
-      expect(ai.height, 44);
-      expect(ai.width, greaterThanOrEqualTo(78));
+      expect(find.byKey(const Key('trade-ask-ai')), findsNothing);
+      expect(bell.right, 393 - 16);
       expect(settings.size, const Size(24, 44));
       expect(bell.size, const Size(24, 44));
       expect(bell.left - settings.right, 8);
-      expect(ai.left - bell.right, 8);
       expect(t.takeException(), null);
       await f.close(t);
     });
-    testWidgets('Trade settings match the two account-mode rows and retain AI entry $language', (
+    testWidgets('Trade settings open the settings page with account-mode rows $language', (
       t,
     ) async {
       final f = NavigationFixture(t, language: language, width: 320, scale: 1.5);
       await launch(t, f.container);
       await selectWorkspace(t, chart: true);
-      expect(find.byType(TradeIcon), findsNWidgets(5));
+      // Header icons plus the chart action bar's caret, type, indicators and fullscreen.
+      expect(find.byType(TradeIcon), findsNWidgets(8));
       await t.tap(find.byKey(const Key('trade-settings')));
       await t.pumpAndSettle();
+      expect(find.byKey(const Key('settings-screen')), findsOneWidget);
       expect(find.byKey(const Key('settings-asset-mode')), findsOneWidget);
       expect(find.byKey(const Key('settings-position-mode')), findsOneWidget);
+      for (final key in ['language', 'push', 'check-update', 'app-version', 'cache', 'terms']) {
+        await t.ensureVisible(find.byKey(Key('settings-$key')));
+        expect(find.byKey(Key('settings-$key')), findsOneWidget);
+      }
       expect(find.byKey(const Key('order-recovery-entry')), findsNothing);
-      Navigator.of(t.element(find.byKey(const Key('settings-asset-mode')))).pop();
+      await t.tap(find.byKey(const Key('settings-back')));
       await t.pumpAndSettle();
-      await t.tap(find.byKey(const Key('trade-ask-ai')));
-      await t.pumpAndSettle();
-      expect(f.container.read(appDestinationProvider), AppDestination.assistant);
+      expect(find.byKey(const Key('settings-screen')), findsNothing);
       expect(t.takeException(), null);
       f.expectNoAccountMutation();
       await f.close(t);

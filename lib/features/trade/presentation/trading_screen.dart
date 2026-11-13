@@ -46,9 +46,11 @@ class _TradingScreenState extends ConsumerState<TradingScreen> with WidgetsBindi
   Widget build(BuildContext context) {
     ref.watch(tradingLifecycleProvider);
     final destination = ref.watch(appDestinationProvider);
-    // Portfolio and Points draw their own design headers.
+    // Portfolio, Points and Vanta AI draw their own design headers.
     final ownHeader =
-        destination == AppDestination.portfolio || destination == AppDestination.points;
+        destination == AppDestination.portfolio ||
+        destination == AppDestination.points ||
+        destination == AppDestination.assistant;
     final futures = destination == AppDestination.futures;
     return Scaffold(
       backgroundColor: ownHeader || futures ? AppColors.authBackground : null,
@@ -67,9 +69,7 @@ class _TradingScreenState extends ConsumerState<TradingScreen> with WidgetsBindi
                           border: Border(bottom: BorderSide(color: AppColors.line)),
                         ),
                   child: futures
-                      ? TradePageHeader(
-                          onLanguage: () => showAppSheet<void>(context, _LanguageSheet()),
-                        )
+                      ? const TradePageHeader()
                       : TradingHeader(
                           onLanguage: () => showAppSheet<void>(context, _LanguageSheet()),
                         ),

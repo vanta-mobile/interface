@@ -10,10 +10,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/market/domain/market.dart';
 import 'package:vanta/features/trade/application/providers.dart';
 import 'package:vanta/features/trade/presentation/widgets/market_header.dart';
-import 'package:vanta/main.dart';
 
 import '../../support/navigation_fixture.dart';
 import '../../support/trade_fixture.dart';
+import '../../support/trading_agents.dart';
 
 /// Quick buttons show the bare quote in market number format, as designed.
 Finder buttonQuote(String side, String quote) => find.descendant(
@@ -32,10 +32,18 @@ void main() {
     final fixture = NavigationFixture(tester, marketStream: markets.stream);
     addTearDown(markets.close);
     fixture.container.read(futuresWorkspaceTabProvider.notifier).select(FuturesWorkspaceTab.chart);
-    await tester.pumpWidget(
-      UncontrolledProviderScope(container: fixture.container, child: const VantaApp()),
-    );
-    await tester.pump(const Duration(milliseconds: 100));
+    // Pass the startup splash and Enable Trading page without settling the
+    // workspace: its loading placeholders animate while the market is empty.
+    await launch(tester, fixture.container, keepTradingOnboarding: true);
+    await awaitTradingAgent(tester, fixture.container);
+    final cancel = find.byKey(const Key('enable-trading-cancel'));
+    if (cancel.evaluate().isNotEmpty) {
+      await tester.ensureVisible(cancel);
+      await tester.pumpAndSettle();
+      await tester.tap(cancel);
+    }
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
     final header = find.byType(MarketHeader);
     expect(find.descendant(of: header, matching: find.text('00:00:00')), findsNothing);
     expect(find.descendant(of: header, matching: find.text('—')), findsWidgets);

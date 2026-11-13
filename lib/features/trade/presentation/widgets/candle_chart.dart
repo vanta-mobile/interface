@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/market_failure.dart';
 import '../../../../core/strings.dart';
-import '../../../../core/theme.dart';
 import '../../../market/application/market_providers.dart';
 import '../../../market/domain/market.dart';
 import '../../application/chart_preferences.dart';
@@ -14,8 +13,7 @@ import '../../application/navigation_provider.dart';
 import '../../application/providers.dart';
 import '../trade_theme.dart';
 import 'chart_price_viewport.dart';
-import 'chart_axis_controls.dart';
-import 'chart_market_status.dart';
+import 'chart_controls.dart';
 import 'chart_toolbar.dart';
 import 'trade_icon.dart';
 import 'primitives.dart';
@@ -77,7 +75,9 @@ class _CandleChartState extends ConsumerState<CandleChart> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 600;
-        final secondaryHeight = wide ? 78.0 : 62.0;
+        // The K-line tab follows the Figma `chart` component (12.08): 104px
+        // lower panes. Fullscreen keeps its own compact panes (02.17).
+        final secondaryHeight = widget.expanded ? (wide ? 78.0 : 62.0) : 104.0;
         final extraHeight =
             (preferences.volume ? secondaryHeight : 0) +
             (preferences.secondary != 'none' ? secondaryHeight : 0) +
@@ -86,81 +86,143 @@ class _CandleChartState extends ConsumerState<CandleChart> {
         final mainHeight = widget.expanded
             ? math.max(150.0, (widget.viewportHeight ?? 640) - 45 - extraHeight)
             : wide
-            ? 300.0
-            : 210.0;
-        final canvasHeight = mainHeight + extraHeight;
-        return Panel(
-          flat: widget.flat,
-          child: Column(
-            children: [
-              ChartTimeframes(trailing: _FullscreenButton(expanded: widget.expanded)),
-              const Divider(),
-              if (!widget.expanded) _CandleLegend(market: quote),
-              if (gap != null || quote?.failure != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-                  child: Text(
-                    quote?.failure ?? tr(context, 'gap'),
-                    style: const TextStyle(fontSize: 10, color: AppColors.warning),
-                  ),
-                ),
-              SizedBox(
-                key: const Key('chart-canvas-area'),
-                height: canvasHeight,
-                child: chartData.when(
-                  skipLoadingOnRefresh: false,
-                  data: (market) => ChartPriceViewport(
-                    market: market,
-                    loading: false,
-                    interval: interval,
-                    preferences: preferences,
-                    mainHeight: mainHeight,
-                    secondaryHeight: secondaryHeight,
-                  ),
-                  loading: () => ChartPriceViewport(
-                    market: previous,
-                    loading: true,
-                    interval: interval,
-                    preferences: preferences,
-                    mainHeight: mainHeight,
-                    secondaryHeight: secondaryHeight,
-                  ),
-                  error: (error, _) => Center(
-                    child: SingleChildScrollView(
-                      child: StatusFailureView(
-                        key: const Key('chart-load-failure'),
-                        padding: const EdgeInsets.all(16),
-                        message: error is MarketFailure
-                            ? error.message
-                            : tr(context, 'marketUnavailable'),
-                        onRetry: () async {
-                          final sync = ref.read(marketSyncProvider);
-                          if (sync == null) {
-                            ref.invalidate(instrumentsProvider);
-                          } else {
-                            sync.retry();
-                          }
-                          ref.invalidate(marketProvider);
-                          await ref.read(marketProvider.future);
-                        },
-                      ),
-                    ),
-                  ),
+            ? 360.0
+            : 285.0;
+        final notice = gap != null || quote?.failure != null
+            ? quote?.failure ?? tr(context, 'gap')
+            : null;
+        final historyFailure = widget.expanded ? null : quote?.historyFailure;
+        final canvas = SizedBox(
+          key: const Key('chart-canvas-area'),
+          height: mainHeight + extraHeight,
+          child: chartData.when(
+            skipLoadingOnRefresh: false,
+            data: (market) => ChartPriceViewport(
+              market: market,
+              loading: false,
+              interval: interval,
+              preferences: preferences,
+              mainHeight: mainHeight,
+              secondaryHeight: secondaryHeight,
+            ),
+            loading: () => ChartPriceViewport(
+              market: previous,
+              loading: true,
+              interval: interval,
+              preferences: preferences,
+              mainHeight: mainHeight,
+              secondaryHeight: secondaryHeight,
+            ),
+            error: (error, _) => Center(
+              child: SingleChildScrollView(
+                child: StatusFailureView(
+                  key: const Key('chart-load-failure'),
+                  padding: const EdgeInsets.all(16),
+                  message: error is MarketFailure
+                      ? error.message
+                      : tr(context, 'marketUnavailable'),
+                  onRetry: () async {
+                    final sync = ref.read(marketSyncProvider);
+                    if (sync == null) {
+                      ref.invalidate(instrumentsProvider);
+                    } else {
+                      sync.retry();
+                    }
+                    ref.invalidate(marketProvider);
+                    await ref.read(marketProvider.future);
+                  },
                 ),
               ),
-              if (!widget.expanded) ...[
+            ),
+          ),
+        );
+        final noticeRow = notice == null
+            ? null
+            : Container(
+                height: _noticeHeight,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  notice,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TradeTypography.small.copyWith(color: TradeColors.warning),
+                ),
+              );
+        if (widget.expanded) {
+          return Panel(
+            flat: widget.flat,
+            child: Column(
+              children: [
+                ChartTimeframes(trailing: _FullscreenButton(expanded: widget.expanded)),
                 const Divider(),
-                const ChartAxisControls(),
-                const ChartIndicatorShortcuts(),
-                const Divider(),
-                const ChartMarketStatus(depth: false),
+                ?noticeRow,
+                canvas,
               ],
-            ],
+            ),
+          );
+        }
+        final height =
+            2 +
+            _timeframeHeight +
+            _ohlcHeight +
+            (noticeRow == null ? 0 : _noticeHeight) +
+            mainHeight +
+            extraHeight +
+            (historyFailure == null ? 0 : _historyHeight) +
+            _indicatorHeight +
+            _actionHeight;
+        return SizedBox(
+          key: const Key('chart-component'),
+          height: height,
+          child: OverflowBox(
+            // Bleed past the workspace's 16px gutters, as designed.
+            minWidth: constraints.maxWidth + 32,
+            maxWidth: constraints.maxWidth + 32,
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                color: TradeColors.background,
+                border: Border.symmetric(horizontal: BorderSide(color: TradeColors.line)),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: _timeframeHeight - 1, child: ChartTimeframeRow()),
+                  const Divider(height: 1, thickness: 1, color: TradeColors.line),
+                  SizedBox(
+                    height: _ohlcHeight,
+                    child: ChartOhlcRow(market: quote),
+                  ),
+                  ?noticeRow,
+                  canvas,
+                  if (historyFailure != null)
+                    SizedBox(
+                      height: _historyHeight,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: ref.read(chartHistoryProvider.notifier).loadOlder,
+                          child: Text(
+                            '$historyFailure · ${tr(context, 'retry')}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TradeTypography.small.copyWith(color: TradeColors.warning),
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: _indicatorHeight, child: ChartIndicatorRow()),
+                  const SizedBox(height: _actionHeight, child: ChartActionBar()),
+                ],
+              ),
+            ),
           ),
         );
       },
     );
   }
+
+  static const _timeframeHeight = 36.0, _ohlcHeight = 28.0, _noticeHeight = 20.0;
+  static const _historyHeight = 36.0, _indicatorHeight = 36.0, _actionHeight = 48.0;
 }
 
 class _FullscreenButton extends StatelessWidget {
@@ -175,61 +237,6 @@ class _FullscreenButton extends StatelessWidget {
         ? const TradeIcon('chart-exit-fullscreen', size: 16, color: TradeColors.text)
         : const Icon(Icons.fullscreen_rounded, size: 18, color: TradeColors.text),
   );
-}
-
-class _CandleLegend extends StatelessWidget {
-  const _CandleLegend({required this.market});
-  final Market? market;
-  @override
-  Widget build(BuildContext context) {
-    final candle = market?.candles.lastOrNull;
-    return SizedBox(
-      height: 28,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
-          children: [
-            for (final value in [
-              ('open', candle?.open),
-              ('candleHigh', candle?.high),
-              ('candleLow', candle?.low),
-              ('candleClose', candle?.close),
-            ])
-              Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '${tr(context, value.$1)} ',
-                        style: const TextStyle(color: AppColors.muted),
-                      ),
-                      TextSpan(
-                        text: value.$2 == null
-                            ? '—'
-                            : marketNumber(
-                                value.$2!,
-                                minimumDecimals: market?.precision.priceDecimals ?? 0,
-                              ),
-                        style: TextStyle(
-                          color: candle == null
-                              ? AppColors.secondary
-                              : candle.close >= candle.open
-                              ? AppColors.positive
-                              : AppColors.negative,
-                        ),
-                      ),
-                    ],
-                  ),
-                  style: const TextStyle(fontSize: 9, fontFeatures: [FontFeature.tabularFigures()]),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 Future<void> openChartFullscreen(BuildContext context) => Navigator.push(

@@ -43,6 +43,9 @@ void main() {
       await launch(tester, container);
       await selectWorkspace(tester, chart: true);
       if (spec.$2) {
+        // The fullscreen action sits in the chart's bottom action bar (12.08).
+        await tester.ensureVisible(find.byKey(const Key('chart-expand')));
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('chart-expand')));
         await tester.pumpAndSettle();
         tester.view.physicalSize = const Size(844, 430);

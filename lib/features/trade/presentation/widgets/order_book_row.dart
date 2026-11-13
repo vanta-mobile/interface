@@ -38,38 +38,21 @@ class OrderBookRow extends ConsumerWidget {
     child: Stack(
       children: [
         if (cumulative case final share?)
-          Positioned.fill(
-            child: IgnorePointer(
-              child: FractionallySizedBox(
-                alignment: Alignment.centerRight,
-                widthFactor: share.clamp(0, 1),
-                child: ColoredBox(
-                  key: const Key('order-book-cumulative-bar'),
-                  color: (buy ? TradeColors.positive : TradeColors.negative).withValues(alpha: .07),
-                ),
-              ),
-            ),
+          _DepthBar(
+            barKey: const Key('order-book-cumulative-bar'),
+            share: share,
+            alignment: Alignment.centerRight,
+            color: (buy ? TradeColors.positive : TradeColors.negative).withValues(alpha: .07),
           ),
-        Positioned.fill(
-          child: IgnorePointer(
-            child: AnimatedFractionallySizedBox(
-              alignment: compact && !reversed ? Alignment.centerRight : Alignment.centerLeft,
-              widthFactor: maximum <= 0 ? 0 : (level.quantity / maximum).clamp(0, 1),
-              heightFactor: 1,
-              duration: MediaQuery.disableAnimationsOf(context)
-                  ? Duration.zero
-                  : const Duration(milliseconds: 180),
-              curve: Curves.easeOut,
-              child: ColoredBox(
-                key: const Key('order-book-quantity-bar'),
-                color: compact
-                    ? (buy ? TradeColors.positive : TradeColors.negative).withValues(alpha: .15)
-                    : buy
-                    ? AppColors.positiveBookDepth
-                    : AppColors.negativeBookDepth,
-              ),
-            ),
-          ),
+        _DepthBar(
+          barKey: const Key('order-book-quantity-bar'),
+          share: maximum <= 0 ? 0 : level.quantity / maximum,
+          alignment: compact && !reversed ? Alignment.centerRight : Alignment.centerLeft,
+          color: compact
+              ? (buy ? TradeColors.positive : TradeColors.negative).withValues(alpha: .15)
+              : buy
+              ? AppColors.positiveBookDepth
+              : AppColors.negativeBookDepth,
         ),
         Padding(
           padding: EdgeInsets.symmetric(
@@ -121,4 +104,41 @@ class OrderBookRow extends ConsumerWidget {
       ],
     ),
   );
+}
+
+/// Depth background that grows from zero when its row slot appears and eases
+/// to each new share, matching the reference book's 300 ms scale transition.
+class _DepthBar extends StatelessWidget {
+  const _DepthBar({
+    required this.barKey,
+    required this.share,
+    required this.alignment,
+    required this.color,
+  });
+  final Key barKey;
+  final double share;
+  final Alignment alignment;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final animate = !MediaQuery.disableAnimationsOf(context);
+    final target = share.isFinite ? share.clamp(0.0, 1.0) : 0.0;
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: animate ? 0 : target, end: target),
+          duration: animate ? const Duration(milliseconds: 300) : Duration.zero,
+          curve: Curves.easeOut,
+          builder: (context, value, child) => FractionallySizedBox(
+            alignment: alignment,
+            widthFactor: value,
+            heightFactor: 1,
+            child: child,
+          ),
+          child: ColoredBox(key: barKey, color: color),
+        ),
+      ),
+    );
+  }
 }

@@ -24,16 +24,15 @@ import '../../support/live_order.dart';
 import '../../support/navigation_fixture.dart';
 import '../../support/trade_fixture.dart';
 
-/// The pinned quick-entry label names the base asset, e.g. Amount(BTC).
-String quantityLabel(WidgetTester tester) {
-  final l10n = messages(tester);
+/// The pinned quick-entry label names the market's quote asset,
+/// e.g. Market · Amount · USDT.
+String amountAsset(WidgetTester tester) {
+  final prefix = messages(tester).quickOrderAmount('');
   final label = find.descendant(
     of: find.byType(QuickOrderPanel),
-    matching: find.textContaining(l10n.quickOrderAmount('').replaceAll('()', '')),
+    matching: find.textContaining(prefix),
   );
-  final text = tester.widget<Text>(label).data!;
-  final asset = text.substring(text.indexOf('(') + 1, text.lastIndexOf(')'));
-  return l10n.liveOrderQuantity(asset);
+  return tester.widget<Text>(label).data!.substring(prefix.length);
 }
 
 String availableHint(WidgetTester tester) =>
@@ -47,7 +46,7 @@ Future<void> readPercent(WidgetTester tester) async {
 AppLocalizations messages(WidgetTester tester) =>
     AppLocalizations.of(tester.element(find.byType(QuickOrderPanel)));
 
-final publicBtc = AsterInstrument(symbol: 'BTCUSDT', base: 'PUBLICBTC', ticker: {});
+final publicBtc = AsterInstrument(symbol: 'BTCUSDT', base: 'BTC', quote: 'PUBLICUSDT', ticker: {});
 
 void main() {
   for (final language in ['en', 'zh']) {
@@ -73,7 +72,7 @@ void main() {
             expect(find.byType(QuickOrderPanel), findsOneWidget);
             expect(find.byType(PointsPage), findsNothing);
             expect(quickQuantity(tester), '');
-            expect(quantityLabel(tester), messages(tester).liveOrderQuantity('BTC'));
+            expect(amountAsset(tester), 'USDT');
             // Percent shortcuts appear only while the quantity is edited.
             expect(find.byKey(const Key('quick-order-percent-25')), findsNothing);
             expect(availableHint(tester), messages(tester).quickOrderAvailable('—'));
@@ -96,7 +95,7 @@ void main() {
       expect(fixture.container.read(futuresWorkspaceTabProvider), FuturesWorkspaceTab.trade);
       await selectWorkspace(tester, chart: true);
       expect(fixture.container.read(symbolProvider), 'ETHUSDT');
-      expect(quantityLabel(tester), messages(tester).liveOrderQuantity('ETH'));
+      expect(amountAsset(tester), 'USDT');
       expect(find.byType(QuickOrderPanel), findsOneWidget);
       expect(quickQuantity(tester), '');
       fixture.expectNoAccountMutation();
@@ -162,13 +161,13 @@ void main() {
     await launch(tester, fixture.container);
     expect(fixture.container.read(futuresWorkspaceTabProvider), FuturesWorkspaceTab.trade);
     await selectWorkspace(tester, chart: true);
-    expect(quantityLabel(tester), messages(tester).liveOrderQuantity('—'));
+    expect(amountAsset(tester), '—');
     gate.complete([publicBtc]);
     await tester.pumpAndSettle();
-    expect(quantityLabel(tester), messages(tester).liveOrderQuantity('PUBLICBTC'));
+    expect(amountAsset(tester), 'PUBLICUSDT');
     fixture.container.read(symbolProvider.notifier).select('ETHUSDT');
     await tester.pumpAndSettle();
-    expect(quantityLabel(tester), messages(tester).liveOrderQuantity('—'));
+    expect(amountAsset(tester), '—');
     fixture.expectNoAccountMutation();
     expect(tester.takeException(), null);
     await fixture.close(tester);
@@ -186,11 +185,11 @@ void main() {
     await launch(tester, fixture.container);
     expect(fixture.container.read(futuresWorkspaceTabProvider), FuturesWorkspaceTab.trade);
     await selectWorkspace(tester, chart: true);
-    expect(quantityLabel(tester), messages(tester).liveOrderQuantity('—'));
+    expect(amountAsset(tester), '—');
     fail = false;
     fixture.container.invalidate(instrumentsProvider);
     await tester.pumpAndSettle();
-    expect(quantityLabel(tester), messages(tester).liveOrderQuantity('PUBLICBTC'));
+    expect(amountAsset(tester), 'PUBLICUSDT');
     fixture.expectNoAccountMutation();
     expect(tester.takeException(), null);
     await fixture.close(tester);
@@ -204,9 +203,9 @@ void main() {
     await launch(tester, fixture.container);
     expect(fixture.container.read(futuresWorkspaceTabProvider), FuturesWorkspaceTab.trade);
     await selectWorkspace(tester, chart: true);
-    expect(quantityLabel(tester), messages(tester).liveOrderQuantity('PUBLICBTC'));
+    expect(amountAsset(tester), 'PUBLICUSDT');
     await readPercent(tester);
-    expect(quantityLabel(tester), messages(tester).liveOrderQuantity('BTC'));
+    expect(amountAsset(tester), 'USDT');
     expect(availableHint(tester), messages(tester).quickOrderAvailable('—'));
     expect(fixture.container.read(liveOrderProvider).context, same(fixture.orders.context));
     fixture.expectNoAccountMutation(contextReads: 1, sizingReads: 1);

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/market/domain/market.dart';
-import 'package:vanta/features/portfolio/application/open_orders_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/aster_open_orders.dart';
 import 'package:vanta/features/portfolio/presentation/trade_open_orders_section.dart';
@@ -13,6 +12,7 @@ import '../../support/aster_account.dart';
 import '../../support/aster_open_orders.dart';
 import '../../support/identity_repository.dart';
 import '../../support/trade_fixture.dart';
+import '../../support/trading_agents.dart';
 import '../../support/workspace_navigation.dart';
 
 Finder inBook(Finder finder) =>
@@ -47,7 +47,13 @@ void main() {
     books.add(const OrderBook(asks: [BookLevel(80001, 1)], bids: [BookLevel(80000, 2)]));
     await tester.pumpAndSettle();
     expect(inBook(find.byKey(const Key('status-failure'))), findsNothing);
-    expect(find.byKey(const ValueKey('BTCUSDT/ask/80001.0')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('BTCUSDT/ask/0')),
+        matching: find.text('80,001'),
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
@@ -64,11 +70,16 @@ void main() {
       identityRepository: identity,
       openOrdersRepository: orders,
       language: const Locale('en'),
+      // Signed-in launches pass trading onboarding before the workspace shows.
+      tradingAgentStore: await tester.runAsync(activeAgentStore),
+      verifiedApiSession: true,
     );
     await launch(tester, container);
+    await awaitTradingAgent(tester, container);
     await revealFuturesAccountTabs(tester);
-    await container.read(openOrdersReadProvider.notifier).refresh();
+    // The active grant makes the first read automatically and silently.
     await tester.pumpAndSettle();
+    expect(orders.calls, 1);
 
     expect(inOrders(find.text('Unable to Load')), findsOneWidget);
     expect(inOrders(find.textContaining('Aster error code: -2015')), findsOneWidget);

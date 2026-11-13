@@ -474,12 +474,21 @@ class ChartPainter extends BaseChartPainter {
     );
 
     //repaint the background and text
-    TextPainter tp = getTextPainter(
-      formatPrice(value),
-      priceColor,
-    );
+    final badgeText = this.chartColors.nowPriceTextColor;
+    TextPainter tp = badgeText == null
+        ? getTextPainter(formatPrice(value), priceColor)
+        : (TextPainter(
+            text: TextSpan(
+              text: formatPrice(value),
+              style: getTextStyle(badgeText).copyWith(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            textDirection: TextDirection.ltr,
+          )..layout());
 
-    double paddingX = 3, paddingY = 1.5;
+    double paddingX = badgeText == null ? 3 : 6, paddingY = 1.5;
     double space = 5.0;
     double offsetX;
     switch (verticalTextAlignment) {
@@ -498,11 +507,15 @@ class ChartPainter extends BaseChartPainter {
       top - paddingY,
       offsetX + tp.width + paddingX * 2,
       top + tp.height + paddingY * 2,
-      Radius.circular(2.0),
+      Radius.circular(badgeText == null ? 2.0 : 8.0),
     );
     canvas.drawRRect(
       rect,
-      nowPriceSelectorPaint,
+      badgeText == null
+          ? nowPriceSelectorPaint
+          : (Paint()
+            ..color = priceColor
+            ..isAntiAlias = true),
     );
     canvas.drawRRect(
       rect,

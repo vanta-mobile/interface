@@ -61,7 +61,7 @@ class FuturesWorkspace extends ConsumerWidget {
                                 CandleChart(flat: true),
                                 SizedBox(height: 20),
                                 ChartOrderBook(),
-                                LiveOrderStatus(compact: true),
+                                LiveOrderStatus(),
                               ],
                             ),
                           ),
@@ -123,7 +123,7 @@ class TradeOrderWorkspace extends ConsumerWidget {
           bodyMedium: TradeTypography.body,
         ),
       ),
-      child: LiveOrderScreen(symbol: ref.watch(symbolProvider), embedded: true),
+      child: LiveOrderScreen(symbol: ref.watch(symbolProvider)),
     );
     final body = LayoutBuilder(
       builder: (context, constraints) {
@@ -153,12 +153,40 @@ class FuturesAccountSections extends ConsumerStatefulWidget {
 
 class _FuturesAccountSectionsState extends ConsumerState<FuturesAccountSections> {
   int tab = 0;
+  final _tabs = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showRequested());
+  }
+
+  /// Opens the section a deep link or notification asked for and scrolls the
+  /// tabs into view, since they sit below the order form.
+  void _showRequested() {
+    if (!mounted) return;
+    final request = ref.read(futuresAccountRequestProvider.notifier).take();
+    if (request == null) return;
+    setState(() => tab = request.index);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = _tabs.currentContext;
+      if (!mounted || target == null || !target.mounted) return;
+      Scrollable.ensureVisible(
+        target,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
 
   static String _count(BuildContext context, String label, int? count) =>
       count == null ? label : AppLocalizations.of(context).tradeTabCount(label, count);
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(futuresAccountRequestProvider, (_, next) {
+      if (next != null) _showRequested();
+    });
     final openOrders = ref.watch(openOrdersReadProvider.select((s) => s.account?.orders.length));
     final positions = ref.watch(
       positionRiskProvider.select((s) => s.account?.positions.where((p) => !p.balanceOnly).length),
@@ -167,6 +195,7 @@ class _FuturesAccountSectionsState extends ConsumerState<FuturesAccountSections>
       slivers: [
         SliverToBoxAdapter(
           child: _AccountTabs(
+            key: _tabs,
             items: [
               _count(context, AppLocalizations.of(context).openOrdersTab, openOrders),
               _count(context, tr(context, 'positions'), positions),
@@ -193,7 +222,12 @@ class _FuturesAccountSectionsState extends ConsumerState<FuturesAccountSections>
 
 /// Account tabs from the Futures design with the history shortcut on the right.
 class _AccountTabs extends StatelessWidget {
-  const _AccountTabs({required this.items, required this.selected, required this.onSelect});
+  const _AccountTabs({
+    required this.items,
+    required this.selected,
+    required this.onSelect,
+    super.key,
+  });
   final List<String> items;
   final int selected;
   final ValueChanged<int> onSelect;

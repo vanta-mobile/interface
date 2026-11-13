@@ -6,6 +6,7 @@ import '../../../core/theme.dart';
 abstract final class TradeColors {
   static const background = AppColors.authBackground;
   static const card = AppColors.authCard;
+  static const input = AppColors.authInput;
   static const historyTab = Color(0xFF212121);
   static const control = AppColors.authButton;
   static const text = AppColors.authText;
@@ -24,11 +25,14 @@ abstract final class TradeColors {
   static const ratioSell = PortfolioColors.negativeSurface;
   static const buyLabel = ratioBuy;
   static const sellLabel = ratioSell;
+  static const errorLabel = PortfolioColors.negativeSurface;
   static const onDirection = AppColors.authText;
   static const scrim = AppColors.authOverlay;
   static const warning = NotificationColors.warning;
   static const warningLabel = NotificationColors.warningSurface;
   static const onAccent = PortfolioColors.inset;
+  static const chipSelected = Color(0xFF09382E);
+  static const chipSelectedText = Color(0xFF00D19E);
 }
 
 abstract final class TradeTypography {

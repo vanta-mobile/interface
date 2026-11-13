@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
 import 'package:vanta/features/trade/application/providers.dart';
 import 'package:vanta/features/auth/presentation/login_screen.dart';
+import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import 'performance_fixture.dart';
 import '../support/workspace_navigation.dart';
@@ -218,19 +219,23 @@ Future<void> runPerformanceScenarios(
             await tester.tap(find.byKey(Key('order-mode-option-${isMarket ? 'market' : 'limit'}')));
             await tester.pumpAndSettle();
           });
+          // Unsigned entry offers a single Connect button in the buy slot; no
+          // Long/Short submission or separate account read is shown.
+          final connect = find.byKey(const Key('trade-pending-buy'));
           await measure('${prefix}_disabled', '$label has no unsigned submission', () async {
-            final submit = find.byKey(Key('trade-pending-${buy ? 'buy' : 'sell'}'));
-            await tester.ensureVisible(submit);
+            await tester.ensureVisible(connect);
             await tester.pumpAndSettle();
-            expect(tester.widget<FilledButton>(submit).onPressed, null);
+            final l = AppLocalizations.of(tester.element(connect));
+            expect(find.descendant(of: connect, matching: find.text(l.connect)), findsOneWidget);
+            expect(find.byKey(const Key('trade-pending-sell')), findsNothing);
+            expect(find.byKey(const Key('live-order-read')), findsNothing);
             expect(tester.widget<TextField>(quantity).enabled, false);
             expect(fixture.container.read(accountProvider).connected, false);
           });
           await measure('${prefix}_connect', '$label account connection entry', () async {
-            final read = find.byKey(const Key('live-order-read'));
-            await tester.ensureVisible(read);
+            await tester.ensureVisible(connect);
             await tester.pumpAndSettle();
-            await tester.tap(read);
+            await tester.tap(connect);
             await tester.pumpAndSettle();
             expect(find.byType(LoginScreen), findsOneWidget);
             expect(find.byKey(const Key('enter-demo')), findsNothing);

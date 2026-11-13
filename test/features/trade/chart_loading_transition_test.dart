@@ -11,6 +11,7 @@ import 'package:vanta/features/trade/presentation/widgets/chart_canvas.dart';
 import 'package:vanta/main.dart';
 
 import '../../support/market_service.dart';
+import '../../support/startup_intro.dart';
 import '../../support/trade_fixture.dart' show book;
 
 void main() {
@@ -102,6 +103,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(container: container, child: const VantaApp()),
       );
+      await pumpPastStartupIntro(tester);
       Future<void> settleData() async {
         for (var i = 0; i < 30; i++) {
           await tester.pump(const Duration(milliseconds: 20));

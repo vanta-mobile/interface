@@ -11,6 +11,7 @@ import '../../application/navigation_provider.dart';
 import '../../application/providers.dart';
 import '../trade_theme.dart';
 import 'book_skeleton.dart';
+import 'favorite_toggle.dart';
 import 'book_feed_state.dart';
 import 'order_book_row.dart';
 import 'trade_funding.dart';
@@ -51,8 +52,10 @@ class _CompactOrderBookState extends ConsumerState<CompactOrderBook> {
     }
 
     final askDepth = running(asks), bidDepth = running(bids);
-    OrderBookRow row(BookLevel level, bool buy, double share) => OrderBookRow(
-      key: ValueKey('$symbol/${buy ? 'bid' : 'ask'}/${level.price}'),
+    // Rows are keyed by slot, not price, so depth bars ease between levels
+    // as the book moves instead of popping in with each new price.
+    OrderBookRow row(int slot, BookLevel level, bool buy, double share) => OrderBookRow(
+      key: ValueKey('$symbol/${buy ? 'bid' : 'ask'}/$slot'),
       level: level,
       buy: buy,
       maximum: maximum,
@@ -79,11 +82,11 @@ class _CompactOrderBookState extends ConsumerState<CompactOrderBook> {
             loading: const BookSkeleton.compact(key: Key('order-book-skeleton')),
           )
         else ...[
-          for (var i = asks.length - 1; i >= 0; i--) row(asks[i], false, askDepth[i]),
+          for (var i = asks.length - 1; i >= 0; i--) row(i, asks[i], false, askDepth[i]),
           const SizedBox(height: 8),
           _LastPrice(market: market),
           const SizedBox(height: 8),
-          for (var i = 0; i < bids.length; i++) row(bids[i], true, bidDepth[i]),
+          for (var i = 0; i < bids.length; i++) row(i, bids[i], true, bidDepth[i]),
           const SizedBox(height: 8),
           _BookRatio(book: book),
         ],
@@ -125,7 +128,7 @@ class _BookTools extends ConsumerWidget {
             key: const Key('trade-book-favorite'),
             tooltip: '${tr(context, favorite ? 'removeFavorite' : 'addFavorite')} $symbol',
             selected: favorite,
-            onPressed: () => ref.read(favoriteSymbolsProvider.notifier).toggle(symbol),
+            onPressed: () => toggleFavorite(context, ref, symbol),
             icon: TradeIcon(
               'favorite',
               size: 16,

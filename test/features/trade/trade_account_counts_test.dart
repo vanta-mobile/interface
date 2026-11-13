@@ -7,6 +7,7 @@ import 'package:vanta/features/authorization/application/trading_agent_provider.
 import 'package:vanta/features/authorization/domain/trading_agent.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/presentation/trade_position_card.dart';
+import 'package:vanta/features/trade/application/navigation_provider.dart';
 
 import '../../support/aster_account.dart';
 import '../../support/aster_open_orders.dart';
@@ -55,6 +56,29 @@ Future<({ProviderContainer container, NavigationIdentity identity})> mount(
 }
 
 void main() {
+  testWidgets('an outside request opens its account tab and scrolls it into view once', (t) async {
+    final f = await mount(
+      t,
+      positions: TestPositionRiskRepository(),
+      orders: TestOpenOrdersRepository(),
+    );
+    final tab = find.byKey(const Key('futures-account-tab-1'));
+    final view = t.getRect(find.byKey(const Key('futures-workspace')));
+    expect(view.contains(t.getCenter(tab)), isFalse, reason: 'tabs start below the form');
+    f.container.read(futuresAccountRequestProvider.notifier).show(FuturesAccountTab.positions);
+    await t.pumpAndSettle();
+    expect(find.byType(TradePositionCard), findsOneWidget);
+    expect(view.contains(t.getCenter(tab)), isTrue);
+    expect(f.container.read(futuresAccountRequestProvider), isNull, reason: 'consumed');
+    await t.tap(find.byKey(const Key('futures-account-tab-0')));
+    await t.pumpAndSettle();
+    expect(find.byType(TradePositionCard), findsNothing, reason: 'user choice still wins');
+    expect(t.takeException(), isNull);
+    await t.pumpWidget(const SizedBox());
+    f.container.dispose();
+    await t.pump();
+  });
+
   testWidgets('entry reads tab counts before selecting Positions without building its cards', (
     t,
   ) async {

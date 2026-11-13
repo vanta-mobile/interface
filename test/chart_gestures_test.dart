@@ -46,6 +46,8 @@ void main() {
       await launch(tester, container);
       await selectWorkspace(tester, chart: true);
       if (start == 'fullscreen') {
+        await tester.ensureVisible(find.byKey(const Key('chart-expand')));
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('chart-expand')));
         await tester.pumpAndSettle();
         // Fullscreen is read with the phone turned; the layout is then unrotated.

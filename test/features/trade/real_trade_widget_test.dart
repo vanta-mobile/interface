@@ -32,6 +32,8 @@ void main() {
         await t.testTextInput.receiveAction(TextInputAction.done);
         await t.pumpAndSettle();
         await selectWorkspace(t, chart: true);
+        // A landscape phone opens the fullscreen chart on the chart tab.
+        await leaveLandscapeChart(t);
         await selectWorkspace(t, chart: false);
         expect(t.widget<TextField>(input).controller!.text, '75.123456');
         f.container.read(orderPriceProvider.notifier).setPrice('79999.1');
@@ -47,7 +49,9 @@ void main() {
         await f.container.read(liveOrderProvider.notifier).load('BTCUSDT');
         await t.pumpAndSettle();
         expect(t.widget<TextField>(input).controller!.text, '75.123456');
-        expect(find.text('Synthetic read failed'), findsOneWidget);
+        // A failed refresh keeps the existing form without interrupting the user.
+        expect(find.byType(LiveOrderForm), findsOneWidget);
+        expect(find.text('Synthetic read failed'), findsNothing);
         f.expectNoAccountMutation(contextReads: 2);
         f.container.read(symbolProvider.notifier).select('ETHUSDT');
         await t.pumpAndSettle();
