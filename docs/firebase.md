@@ -41,8 +41,12 @@ repository and application bundle.
   notification payloads** use the operating system's notification UI. iOS also
   enables foreground alert, badge, and sound presentation. Android foreground
   messages do not display a banner automatically; local foreground notifications
-  are outside this SDK configuration change. Notification taps open the app's
-  normal entry screen; no new deep-link destination is configured.
+  are outside this SDK configuration change. Notification taps
+  (`getInitialMessage` / `onMessageOpenedApp`) are routed by their `data`
+  fields (`kind`, `id`, `event_key`, `type`, `symbol`, `address`) to the matching
+  page and marked read for the owning wallet; see the 2026-11-13 push entry in
+  `docs/implementation.md`. Pushes without those fields open the notification
+  inbox.
 - Data-only background messages currently initialize Firebase and perform no
   business work. No push payload is interpreted as an order, transfer, wallet
   identity, or authenticated inbox entry. Existing Aster/local inbox behavior is

@@ -67,7 +67,7 @@ cp -n .env.example .env
 在 `.env` 中填写 `PRIVY_APP_ID`、`PRIVY_CLIENT_ID` 和 `REOWN_PROJECT_ID`。
 `WALLET_LOGIN_ORIGIN` 默认为 `https://app.vanta.exchange`。
 在 Privy 允许的 URL scheme 中配置 OAuth 回调 `vanta://`；
-外部钱包回调为 `vanta://wallet`。
+外部钱包回调为 `vantaapp://wallet`（与应用内深度链接共用 `vantaapp`，`vanta` 仅留给 Privy）。
 
 Android 和 iOS 已包含 Firebase Cloud Messaging 客户端配置。
 设备要求、iOS APNs 配置及推送验收见 [Firebase 配置](../firebase.md)。

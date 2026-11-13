@@ -1,6 +1,6 @@
 # GitHub Actions
 
-工作流改编自 `/data/dodo/rwa-interface/.github/workflows`，Flutter 固定为当前项目已验证的 **3.47.4 stable / Dart 3.13.3**，应用标识为 `exchange.vanta.app`，钱包回跳为 `vanta://wallet`。
+工作流改编自 `/data/dodo/rwa-interface/.github/workflows`，Flutter 固定为当前项目已验证的 **3.47.4 stable / Dart 3.13.3**，应用标识为 `exchange.vanta.app`，钱包回跳为 `vantaapp://wallet`。
 
 ## 迁移范围
 
@@ -11,11 +11,13 @@
 | `pr-agent.yml` / PR Agent Review | 同仓库非 Bot PR 的 opened/reopened/ready_for_review/synchronize | 沿用源项目固定版本 PR Agent 的自动审查和建议配置 |
 | `release.yml` / Release Mobile | main push 的 CI 成功后、手动 | 按 pubspec 版本判断发布；正式签名 Android 分 ABI APK、AAB，可选 Google Play 内部测试上传；仅 iOS 签名配置齐全时打包签名 iOS IPA、可选 TestFlight；所有启用的平台成功后生成提交说明并发布 GitHub Release |
 
+Android 以 compileSdk 37 编译（Gemini 用的 AppFunctions 要求，`targetSdk` 不变），`ci.yml`、`release.yml`、`performance.yml` 都通过 `android-actions/setup-android` 显式安装 `platforms;android-37.0`，不依赖 runner 镜像自带的 SDK 或 Gradle 构建时自动下载；`ci.yml` 在构建前检查该平台存在。本地 Nix 环境的 Android SDK 同样需要包含 android-37.0。
+
 不迁入 `build-web.yml`、`deploy-web.yml`：不构建／部署 Flutter Web，也不部署私钥导出站点。原项目专用的 API 合约、App Review、Android 认证 Activity 回归、Rive FFI 导出和 Sentry 上传没有对应的 Vanta 实现，不保留这些无效检查，也不为它们新增产品依赖。签名凭据仅用于原生发布，不是钱包私钥导出功能。
 
 ## 本地 make 与 .env
 
-本地使用 `cp -n .env.example .env` 后填写公开 ID，运行 `make env-check`、`make run FLUTTER_ARGS='-d <device-id>'`；构建入口为 `make build-apk-debug`、`make build-apk`、`make build-appbundle`、`make build-ios`（macOS／Xcode，无签名）。可用 `ENV_FILE=.env.staging` 切换配置。所有入口先校验 `.env`，仅允许五个公开应用配置项（含可选 `VANTA_API_ORIGIN`），不执行文件内容或插值，也不输出配置值。签名环境变量仍由 shell／CI 单独提供，不能放入编译用 `.env`。参考项目的 URL scheme 同步不需要迁入：Vanta 使用固定 `vanta://wallet`。
+本地使用 `cp -n .env.example .env` 后填写公开 ID，运行 `make env-check`、`make run FLUTTER_ARGS='-d <device-id>'`；构建入口为 `make build-apk-debug`、`make build-apk`、`make build-appbundle`、`make build-ios`（macOS／Xcode，无签名）。可用 `ENV_FILE=.env.staging` 切换配置。所有入口先校验 `.env`，仅允许五个公开应用配置项（含可选 `VANTA_API_ORIGIN`），不执行文件内容或插值，也不输出配置值。签名环境变量仍由 shell／CI 单独提供，不能放入编译用 `.env`。参考项目的 URL scheme 同步不需要迁入：Vanta 使用固定 `vantaapp://wallet`。
 
 本地 `.env` 不自动上传为 GitHub Variables／Secrets；CI 继续从下表的仓库配置读取，不依赖开发机文件。
 
