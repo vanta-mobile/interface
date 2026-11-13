@@ -66,22 +66,19 @@ void main() {
     await launch(tester, container);
     container.read(symbolProvider.notifier).select('ETHUSDT');
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('navigation-assistant')));
+    // The full-screen AI page no longer carries the language header action.
+    await container.read(localeProvider.notifier).select('en');
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('语言'));
-    await tester.pumpAndSettle();
-    expect(find.text('跟随系统'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('language-en')));
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Language'), findsOneWidget);
+    expect(find.byTooltip('Settings'), findsOneWidget);
     expect(container.read(symbolProvider), 'ETHUSDT');
     expect(store.value, 'en');
-    await tester.tap(find.byKey(const Key('account-button')));
-    await tester.pumpAndSettle();
-    final l10n = AppLocalizations.of(tester.element(find.byKey(const Key('login-email'))));
+    final l10n = AppLocalizations.of(tester.element(find.byKey(const Key('trade-settings'))));
     expect(l10n.localeName, 'en');
-    expect(find.text(l10n.authWelcome), findsOneWidget);
-    expect(find.text(l10n.authWalletContinue), findsOneWidget);
+    expect(find.text(l10n.tradeNavigation), findsOneWidget);
+    // Opening Vanta AI after the switch shows English copy as well.
+    await tester.tap(find.byKey(const Key('navigation-assistant')));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.assistantCopilotTitle), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 

@@ -81,21 +81,15 @@
   "secondaryIndicators": "Lower indicator",
   "volumeBars": "Volume",
   "indicatorHint": "Overlays share the price pane. Show one lower indicator at a time, switch or hide it whenever you need.",
+  "chartSelectTimeframe": "Select timeframe",
+  "chartSettingsConfirm": "Confirm",
   "exitFullscreen": "Exit fullscreen",
   "marketDetails": "Market details",
   "depth": "Depth",
   "candles": "Candles",
   "lineChart": "Line",
-  "sync": "Market cache",
-  "syncing": "History loading / gap repair",
-  "closedCandle": "Closed",
-  "formingCandle": "Forming",
   "eventTime": "Event time",
   "startTime": "Candle start",
-  "chartSource": "Aster Perpetuals · USDT",
-  "chartSourceShort": "Aster · USDT",
-  "marketSource": "Aster Perpetuals",
-  "poweredBy": "VANTA  /  POWERED BY ASTER",
   "gap": "Candle gap detected. Backfilling",
   "connect": "Connect wallet",
   "loginTitle": "Sign in to Vanta",
@@ -142,8 +136,8 @@
   "quantity": "Quantity",
   "total": "Total",
   "time": "Time",
-  "buy": "Buy / Long",
-  "sell": "Sell / Short",
+  "buy": "Long",
+  "sell": "Short",
   "long": "Long",
   "short": "Short",
   "cross": "Cross",
@@ -230,7 +224,6 @@
   "indicators": "Indicators",
   "none": "None",
   "fullscreen": "Expand chart",
-  "chartHint": "Hold for details · Pinch to zoom",
   "network": "Market connection",
   "demoReset": "Leave demo account",
   "demoExitHint": "Leaving clears this session’s local demo positions and orders.",
@@ -345,8 +338,10 @@
   "openOrdersCount": "Open orders ({count})",
   "openOrdersEmpty": "No open perpetual orders in this account.",
   "openOrdersNoCurrentSymbol": "No open orders for the current symbol.",
-  "openOrdersBuy": "Buy",
-  "openOrdersSell": "Sell",
+  "spotSideBuy": "Buy",
+  "spotSideSell": "Sell",
+  "openOrdersBuy": "Long",
+  "openOrdersSell": "Short",
   "openOrdersLongSide": "Long side",
   "openOrdersShortSide": "Short side",
   "openOrdersOneWay": "One-way",
@@ -354,7 +349,6 @@
   "openOrdersStatus": "Status",
   "openOrdersNew": "New",
   "openOrdersPartiallyFilled": "Partially filled",
-  "openOrdersCreatedLocal": "Placed (local time)",
   "openOrdersFilledTotal": "Filled / total",
   "openOrdersRemaining": "Remaining",
   "openOrdersClosePosition": "Close entire position",
@@ -403,7 +397,6 @@
   "batchCancelAll": "Cancel all listed orders",
   "batchCancelCurrent": "Cancel all current-symbol orders",
   "batchCancelTitle": "Cancel all perpetual orders?",
-  "batchCancelHint": "Cancel all orders on the listed futures symbols when Aster processes each request, including orders added on other devices. Other symbols and Spot orders are outside this scope. Each symbol requires cancellation and status-query signatures. Filled positions remain.",
   "batchCancelScopeCount": "Snapshot: {orders, plural, =1{1 order} other{{orders} orders}} across {symbols, plural, =1{1 symbol} other{{symbols} symbols}}",
   "batchCancelConfirm": "Sign and cancel by symbol",
   "batchCancelNotSubmitted": "Not submitted",
@@ -515,75 +508,10 @@
   "historyTradeQuantity": "Filled quantity",
   "historyStop": "Stop waiting",
   "historyReadStopped": "This read was stopped. You can try again.",
-  "positionRiskTitle": "Position risk",
-  "positionRiskScope": "Read positions for the connected wallet. A signed snapshot is the baseline; enabled account monitoring can update individual positions. Public mark prices update estimates separately. Read account balances separately. Closing requires its own confirmation and signatures; TP/SL is not available yet.",
-  "positionRiskRead": "Sign to read position risk",
-  "positionRiskRefresh": "Sign to refresh position risk",
-  "positionRiskCount": "Position records ({count})",
   "positionRiskNoCurrent": "No position records for the selected symbol.",
   "positionRiskBalanceOnly": "Negative isolated balance",
-  "positionRiskSide": "Position side",
   "positionRiskNotional": "Signed notional",
-  "positionRiskLiquidation": "Liquidation price",
   "positionRiskIsolatedWallet": "Isolated wallet balance",
-  "positionRiskIsolatedMargin": "Isolated margin",
-  "positionRiskUpdated": "Position update (UTC)",
-  "positionRiskLiquidationHint": "A missing or zero liquidation price is shown as —. This does not mean the position is free of liquidation risk.",
-  "positionRiskBalanceHint": "The position quantity is zero, but its isolated wallet balance is negative. This record remains visible for review.",
-  "@positionRiskCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "positionAdlTitle": "ADL queue",
-  "positionAdlScope": "Read ADL separately with your wallet. Levels range from 0 to 4, low to high, and the exchange updates them every 30 seconds. Four lit bars indicate the highest queue level. This is not a margin ratio or a liquidation countdown. Refresh positions and ADL to review matching snapshots.",
-  "positionAdlRead": "Sign to read ADL",
-  "positionAdlRefresh": "Sign to refresh ADL",
-  "positionAdlUnknown": "Unknown — read or refresh matching ADL data",
-  "positionAdlNotApplicable": "Not applicable to a zero-quantity balance record",
-  "positionAdlLevel": "Level {level} / 4",
-  "positionAdlHistorical": "Historical level {level} / 4 — refresh",
-  "positionAdlEmpty": "No ADL records returned. Missing positions remain unknown.",
-  "@positionAdlLevel": {
-    "placeholders": {
-      "level": {
-        "type": "int"
-      }
-    }
-  },
-  "@positionAdlHistorical": {
-    "placeholders": {
-      "level": {
-        "type": "int"
-      }
-    }
-  },
-  "positionMarkReadFirst": "Read positions to start public mark prices.",
-  "positionMarkScope": "Estimates use the displayed position quantity and entry price with public mark prices. Fees and funding are excluded. Prices expire after 10 seconds; refreshing prices does not verify the complete position list, margin or liquidation prices.",
-  "positionMarkCoverage": "Fresh mark prices: {fresh} / {total} symbols",
-  "positionMarkSnapshot": "Snapshot mark price",
-  "positionMarkCurrent": "Current mark price",
-  "positionMarkHistorical": "Historical mark price",
-  "positionMarkTime": "Mark event (UTC)",
-  "positionEstimatedNotional": "Estimated signed notional",
-  "positionEstimatedPnl": "Estimated unrealized PnL",
-  "positionEstimateStale": "Historical estimate: positions or mark prices need refreshing.",
-  "positionSnapshotNotional": "Snapshot signed notional",
-  "positionSnapshotPnl": "Snapshot unrealized PnL",
-  "@positionMarkCoverage": {
-    "placeholders": {
-      "fresh": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
-  "positionMarkUnavailable": "Some mark prices are unavailable or stale. Retained values are historical.",
-  "positionMarkRetry": "Retry public mark prices",
   "accountChangeTitle": "Futures change monitor",
   "@accountChangeTitle": {
     "description": "Futures private account change monitor; does not merge partial event payloads into snapshots."
@@ -688,8 +616,6 @@
   "accountEventScope": "Individual records include event updates. Totals and fields missing from events show — until a signed read. Unchanged rows may be historical. Missing rows do not mean closed positions; verify complete lists after interruptions.",
   "accountEventRowTime": "Record event time (UTC)",
   "accountCrossWalletBalance": "Cross wallet balance",
-  "positionEventPnl": "Event unrealized PnL",
-  "positionEventFieldsHint": "Leverage, liquidation price, mark, notional and isolated margin are not provided by this event. Read positions to verify. Public mark estimates use the displayed quantity and entry price; they do not confirm the complete account.",
   "@accountEventTime": {
     "placeholders": {
       "time": {
@@ -697,12 +623,6 @@
       }
     }
   },
-  "positionAllocatedMargin": "Allocated isolated wallet",
-  "positionEstimatedCrossMargin": "Estimated cross position margin",
-  "positionEstimatedInitialMargin": "Estimated initial margin basis",
-  "positionEstimatedRoe": "Estimated ROE (%)",
-  "positionSnapshotRoe": "Snapshot ROE estimate (%)",
-  "positionReturnScope": "Linear contracts: initial margin basis = absolute quantity × mark price ÷ leverage; ROE = unrealized PnL ÷ that basis × 100. Isolated margin allocation uses its wallet balance, not the ROE basis. These estimates exclude fees and funding, are not account returns or available funds, and remain historical when position data or prices are stale. Unknown leverage or units shows —.",
   "leverageSettings": "Futures leverage",
   "leverageSettingsScope": "Set initial leverage for this symbol. In hedge mode both directions share the setting. Changing leverage affects margin requirements and risk.",
   "leverageReadSettings": "Read leverage settings (2 signatures)",
@@ -889,10 +809,8 @@
   "assetModeOutcomeUnknown": "The request may have reached Aster. Its result is unverified; sign to query again. Querying never resubmits the change.",
   "liveOrderEntry": "Place a live futures order",
   "liveOrderEntryHint": "The form above uses local demo funds. Live orders have a separate wallet confirmation.",
-  "liveOrderTitle": "Live futures order",
-  "liveOrderScope": "Use this wallet to place real ordinary, conditional or trailing orders. Limit orders use a supported execution policy. In one-way mode, buying or selling can reduce or reverse an existing position. Hedge mode operates on the selected long or short side. Aster checks fees, available margin and final eligibility.",
+  "liveOrderScope": "Use this wallet to place real ordinary, conditional or trailing orders. Limit orders use a supported execution policy. In one-way mode, a long or short order can reduce or reverse an existing position. Hedge mode operates on the selected long or short side. Aster checks fees, available margin and final eligibility.",
   "liveOrderReadContext": "Read order settings (2 signatures)",
-  "liveOrderReadHint": "Read public trading rules and mark price, then sign separately for position mode and symbol configuration. Settings expire 30 seconds after the mark-price response. Reading places no order.",
   "liveOrderSettingsBusy": "Finish the pending futures settings operation before placing an order.",
   "liveOrderSubmitting": "Submitting the live order…",
   "liveOrderMarkPrice": "Reference mark price",
@@ -905,20 +823,6 @@
       }
     }
   },
-  "liveOrderQuantityBounds": "Minimum {minimum}; maximum {maximum}; step {step}",
-  "@liveOrderQuantityBounds": {
-    "placeholders": {
-      "minimum": {
-        "type": "String"
-      },
-      "maximum": {
-        "type": "String"
-      },
-      "step": {
-        "type": "String"
-      }
-    }
-  },
   "liveOrderPrice": "Limit price ({asset})",
   "@liveOrderPrice": {
     "placeholders": {
@@ -927,16 +831,7 @@
       }
     }
   },
-  "liveOrderPriceTick": "Price increment: {tick}",
-  "@liveOrderPriceTick": {
-    "placeholders": {
-      "tick": {
-        "type": "String"
-      }
-    }
-  },
   "liveOrderEstimatedNotional": "Reference notional",
-  "liveOrderReview": "Review live order",
   "liveOrderClientId": "Client order reference",
   "liveOrderVerifiedResult": "Signed query: {status}; executed quantity {executed}; order {orderId}.",
   "@liveOrderVerifiedResult": {
@@ -961,35 +856,18 @@
   "timeInForceTitle": "Time In Force",
   "timeInForceGtc": "GTC (Good till canceled)",
   "timeInForceIoc": "IOC (Immediate or canceled)",
-  "liveOrderConditional": "Conditional order",
-  "liveOrderPositionTriggers": "Position TP/SL",
-  "liveOrderStop": "Stop",
-  "liveOrderTakeProfit": "Take profit",
   "liveOrderTriggerBasis": "Trigger price basis",
   "liveOrderTriggerReference": "Reference price at read",
-  "liveOrderTriggerRises": "Triggers when the selected price rises to or above the trigger price.",
-  "liveOrderTriggerFalls": "Triggers when the selected price falls to or below the trigger price.",
   "liveOrderTriggerProtect": "Trigger price protection",
   "liveOrderProtectOn": "On",
   "liveOrderProtectOff": "Off",
-  "liveOrderProtectHint": "When enabled, the mark/last price difference must also satisfy the symbol’s threshold at trigger time. This can delay or prevent triggering; it does not protect the execution price.",
-  "liveOrderProtectThreshold": "Allowed price difference at trigger: {percent}%.",
-  "@liveOrderProtectThreshold": {
-    "placeholders": {
-      "percent": {
-        "type": "String"
-      }
-    }
-  },
   "liveOrderConditionalHint": "This submits one independent conditional order for the specified quantity. Triggering does not guarantee a fill. Separate TP and SL orders do not cancel each other automatically. Later position changes can affect execution; review active orders separately.",
-  "liveOrderConditionalEstimateHint": "Reference estimate only: conditional market orders use the trigger price, conditional limit orders use the limit price. Position, leverage and available funds can change before triggering. Fees, funding, depth slippage and execution-time checks are excluded; this is not realized PnL or guaranteed required margin.",
   "liveOrderTypeUnavailable": "The latest symbol rules do not support this order type. Refresh the rules or choose a supported type.",
   "liveOrderInvalidTrigger": "Enter a positive decimal trigger price.",
   "liveOrderTriggerFilter": "Trigger price must satisfy the exchange price range and increment.",
   "liveOrderProtectUnavailable": "The trigger-protection threshold is unavailable in the current symbol rules. Refresh or turn protection off before reviewing.",
   "liveOrderTriggerReferenceUnavailable": "The selected trigger reference is unavailable. Refresh or explicitly choose another price basis; no price is substituted.",
   "liveOrderTriggerImmediate": "The trigger price is already reached at this read. Adjust it according to the displayed direction and review again. Aster checks the actual price at submission.",
-  "liveOrderPolicyChoose": "Choose a supported policy",
   "liveOrderPolicyGtc": "GTC",
   "liveOrderPolicyIoc": "IOC",
   "liveOrderPolicyPostOnly": "Post Only (GTX)",
@@ -1001,36 +879,26 @@
   "liveOrderTimeInForceUnavailable": "The selected limit policy is unavailable in the latest symbol rules. Choose a supported policy or use a market order, then review again.",
   "liveOrderSide": "Direction",
   "liveOrderType": "Order type",
-  "liveOrderSignSubmit": "Sign and place live order",
   "liveOrderInvalidQuantity": "Enter a positive decimal quantity.",
   "liveOrderInvalidPrice": "Enter a positive decimal limit price.",
   "liveOrderQuantityFilter": "Quantity must satisfy the displayed minimum, maximum and increment for this order type.",
   "liveOrderPriceFilter": "Limit price must satisfy the exchange price range and increment.",
   "liveOrderPercentFilter": "Limit price is outside the permitted range for this side at the reference mark price. Refresh settings or adjust the price.",
   "liveOrderNotionalFilter": "Order value is below the exchange minimum notional. Market orders use the reference mark price.",
-  "liveCloseTitle": "Close a live position",
-  "liveCloseScope": "Read this wallet’s current position before choosing an ordinary or trailing close. Position TP/SL supports fixed quantity or entire close at trigger. One-way fixed-quantity closes only reduce positions; hedge closes retain the original LONG/SHORT side. Percentage quantities round down to the order step; 100% can leave a remainder. Existing orders are not cancelled.",
   "liveClosePositionChanged": "The selected position or its configuration is missing or changed. Refresh order settings and review again.",
   "liveCloseTooLarge": "Close quantity cannot exceed the position quantity read for this side.",
-  "liveCloseLong": "Close long · sell",
-  "liveCloseShort": "Close short · buy",
-  "liveClosePositionAmount": "Position quantity at last read",
+  "liveCloseLong": "Close long",
+  "liveCloseShort": "Close short",
   "liveCloseEstimatedPnl": "Estimated close PnL",
-  "liveCloseEstimateHint": "Estimate only: market closes use the read best bid for longs or best ask for shorts; limit closes use the entered price. Fees, funding and depth slippage are excluded. Missing book data shows —. This is not realized PnL.",
   "liveCloseConfirmTitle": "Submit this position reduction?",
   "liveCloseConfirmHint": "This submits a real reduction order. Sign to recheck the position first, then sign to place the order and separately to query it. A changed quantity, entry price or configuration stops submission. Market price can move; limit execution follows the policy shown below. The exchange validates concurrent activity.",
   "liveCloseResultScope": "An order status does not prove that the entire position is closed. Sign separately to read the remaining position. This does not cancel other orders, and later activity can change the position again.",
   "liveCloseReadRemaining": "Sign to read remaining positions",
   "liveCloseRemaining": "Remaining quantity at this read",
-  "liveOrderReduceHint": "Only reduce an existing position; never intentionally open the opposite side. Aster checks the available reducible quantity, including concurrent orders.",
   "liveOrderReduceHedge": "The reduceOnly parameter is unavailable in hedge mode. Use the position’s close action to reduce its LONG or SHORT side.",
   "batchCloseAll": "Close all listed live positions",
   "batchCloseCurrent": "Close all current-symbol live positions",
-  "batchCloseTitle": "Close these live positions at market?",
-  "batchCloseHint": "Only the listed wallet, symbols, sides and exact quantities are included. Submit an opposite MARKET order for each nonzero position, using reduce-only in one-way mode or the original side in hedge mode. Existing orders and Spot are excluded. Each position needs separate setting-read, position-recheck, order and query signatures, followed by a final position-read signature. Changed positions, invalid quantities, refused signatures or unknown results stop further submissions. No automatic resizing or order retry. Later activity can change positions again.",
-  "batchCloseReadFirst": "Read a fresh, complete live position snapshot before closing all. An unresolved trade or configuration change must be checked first.",
   "batchCloseCount": "Confirmed scope: {count} positions",
-  "batchCloseConfirm": "Sign and close each position",
   "batchCloseStopped": "Further submissions stopped. Unsubmitted positions require a fresh read and confirmation.",
   "batchCloseRecheck": "Sign to query unconfirmed orders only",
   "@batchCloseCount": {
@@ -1049,15 +917,8 @@
   "liveOrderFundsMultiHint": "Multi-assets mode: the USDT amount is not a combined collateral total. Other assets retain their own units; no conversion rates or collateral discounts are assumed.",
   "liveOrderFundsAssets": "Available balances and collateral eligibility by asset",
   "liveOrderCollateralUnknown": "Collateral eligibility not provided",
-  "liveOrderOpeningQuantity": "Reference new opening quantity",
-  "liveOrderOpeningMargin": "Estimated additional opening initial margin",
-  "liveOrderMarginEstimateHint": "Reference only: new opening quantity × entered limit price (or reference mark) ÷ read leverage. One-way orders first offset the read opposite position; hedge orders open the selected side. Valid reduce-only closes add no opening exposure. Fees, funding, existing orders, released margin, execution price and risk tiers can change actual requirements.",
   "liveOrderFundsHistorical": "Historical funds snapshot. Refresh before reviewing another opening order.",
-  "liveOrderMarginAboveBalance": "The estimate exceeds the read USDT available balance. Review your funds; released margin and fees are excluded, and Aster makes the final check.",
-  "liveEntireClose": "Close entire position at trigger",
   "liveEntireHint": "The exchange uses the position size at trigger time, which may differ from this snapshot. No fixed quantity or reduceOnly is sent. Independent TP/SL orders do not cancel each other.",
-  "liveEntireMarketOnly": "Entire close is available for conditional market orders only.",
-  "liveEntireEstimateHint": "Estimated using the reviewed position quantity and trigger price. Trigger-time size, execution price, fees and funding may change the result.",
   "liveEntireQuantity": "Entire position size at trigger time",
   "liveEntireQueryScope": "This query verifies this entire-close order and its reported execution only. A filled order does not prove the remaining position is zero; read positions again.",
   "liveEntireInvalid": "Entire close requires a position-side conditional market order without quantity, limit price or reduceOnly.",
@@ -1086,7 +947,7 @@
   "liveTrailingRateInvalid": "Enter a callback rate from 0.1% to 5%.",
   "liveTrailingActivationInvalid": "Enter a positive decimal activation price, or leave it empty for the exchange default.",
   "liveTrailingActivationFilter": "The activation price does not match the exchange price range or step.",
-  "liveTrailingImmediate": "A buy activation price must be below the selected latest price; a sell activation price must be above it.",
+  "liveTrailingImmediate": "A long activation price must be below the selected latest price; a short activation price must be above it.",
   "liveTrailingHint": "The exchange tracks favorable price extremes, then submits market execution after the configured pullback. This uses a fixed quantity, not entire close. It does not continuously reprice a limit order.",
   "liveTrailingRate": "Callback rate (%)",
   "liveTrailingRateBounds": "0.1–5; entering 1 means 1%.",
@@ -1100,22 +961,24 @@
     }
   },
   "liveTrailingDefault": "Leave empty to use the selected price basis at exchange placement time. This snapshot is not submitted as the activation price.",
-  "liveTrailingActivationDirection": "If specified: buy activation below the latest price; sell activation above it. The exchange rechecks at placement.",
-  "liveTrailingBuy": "After activation, a buy follows the lowest price and triggers on a rise by the callback percentage. Triggering does not guarantee an execution price.",
-  "liveTrailingSell": "After activation, a sell follows the highest price and triggers on a fall by the callback percentage. Triggering does not guarantee an execution price.",
+  "liveTrailingActivationDirection": "If specified: long activation below the latest price; short activation above it. The exchange rechecks at placement.",
+  "liveTrailingBuy": "After activation, a long order follows the lowest price and triggers on a rise by the callback percentage. Triggering does not guarantee an execution price.",
+  "liveTrailingSell": "After activation, a short order follows the highest price and triggers on a fall by the callback percentage. Triggering does not guarantee an execution price.",
   "liveTrailingEstimateHint": "There is no fixed execution price. Notional and opening margin use the current mark only as a reference; closing PnL is unavailable. Actual size eligibility, margin and execution depend on exchange state. Fees, funding and slippage are excluded.",
+  "quickOrderInvalidAmount": "Enter a positive decimal amount.",
+  "quickOrderQuoteUnavailable": "Order book price is unavailable, so the amount cannot be converted. Try again shortly.",
+  "quickOrderAmountTooSmall": "The amount is below the minimum order quantity.",
+  "quickOrderInsufficientBalance": "Insufficient balance",
   "quickOrderInvalid": "Quick entry must be an ordinary market order without reduction, a fixed price or attached conditions.",
   "quickOrderHint": "Real wallet orders. Quantity is independent of the trade form. One-way orders can reduce or reverse an existing position. Quotes are references, not execution prices. This order has no attached TP/SL or user slippage setting.",
   "quickOrderSizingFailure": "Percentage sizing is unavailable. Retry the read, or enter a quantity if the account context is valid. Inputs are preserved.",
-  "quickOrderBuy": "Market Buy / Long",
-  "quickOrderSell": "Market Sell / Short",
+  "quickOrderBuy": "Market Long",
+  "quickOrderSell": "Market Short",
   "quickOrderConfirmation": "Quick market order confirmation",
   "quickOrderDoNotShow": "Do not show market order confirmation again",
-  "quickOrderConfirmPreference": "Confirm market entries",
-  "quickOrderPreferenceFailure": "Confirmation preference could not be read or saved. The last saved choice is retained; orders require review until a choice is saved successfully.",
-  "quickOrderMarketBuy": "Market Buy",
-  "quickOrderMarketSell": "Market Sell",
-  "quickOrderAmount": "Amount({asset})",
+  "quickOrderMarketBuy": "Long",
+  "quickOrderMarketSell": "Short",
+  "quickOrderAmount": "Market · Amount · {asset}",
   "@quickOrderAmount": {
     "placeholders": {
       "asset": {
@@ -1471,7 +1334,6 @@
   "depositReadStale": "The wallet snapshot is historical. Refresh before checking the amount.",
   "depositBalanceInsufficient": "The amount exceeds the read wallet asset balance.",
   "attachedEntryPricing": "Entry pricing",
-  "attachedEntryFixed": "Enter a limit price",
   "attachedEntryCounterparty": "BBO · Opposite side, level {depth}",
   "@attachedEntryCounterparty": {
     "placeholders": {
@@ -2317,37 +2179,12 @@
       }
     }
   },
-  "liveAmountUnit": "Order size unit",
-  "liveAmountInput": "Order amount ({asset})",
-  "@liveAmountInput": {
-    "placeholders": {
-      "asset": {
-        "type": "String"
-      }
-    }
-  },
-  "liveAmountHint": "Enter order notional, not margin. The amount is not multiplied by leverage.",
   "liveAmountInvalid": "Enter a positive order amount using decimal digits.",
   "liveAmountBelowStep": "This amount converts to less than the minimum order quantity or one quantity step.",
   "liveAmountReferenceUnavailable": "The required conversion price is unavailable. Refresh the order snapshot or enter a base-asset quantity.",
-  "liveAmountLimitReference": "entered limit price",
-  "liveAmountAskReference": "best ask snapshot",
-  "liveAmountBidReference": "best bid snapshot",
-  "liveAmountTriggerReference": "trigger price estimate",
-  "liveAmountBboReference": "indicative Mark, not an engine BBO price",
-  "liveAmountConversionPrice": "Conversion reference: {basis}",
-  "@liveAmountConversionPrice": {
-    "placeholders": {
-      "basis": {
-        "type": "String"
-      }
-    }
-  },
   "liveAmountResolvedQuantity": "Base quantity to submit",
-  "liveAmountSnapshotTime": "Order snapshot (UTC)",
-  "liveAmountEstimateHint": "Quantity is rounded down to the applicable step and fixed for confirmation. Market, trigger and BBO prices may change; actual spending can exceed this estimate. This amount is not a spending cap.",
   "futuresHistoryTitle": "Futures history",
-  "futuresHistoryScope": "Read this wallet’s futures orders, individual fills and income ledger separately. BUY/SELL alone does not identify opening or closing. Reading never submits or cancels an order.",
+  "futuresHistoryScope": "Read this wallet’s futures orders, individual fills and income ledger separately. Long/Short direction alone does not identify opening or closing. Reading never submits or cancels an order.",
   "futuresHistoryIncome": "Income ledger",
   "futuresHistorySymbol": "Futures symbol (optional)",
   "futuresHistoryTradeSymbol": "Futures symbol (required for fills)",
@@ -2370,11 +2207,6 @@
       }
     }
   },
-  "orderConfirmLimit": "Confirm limit and Post Only entries",
-  "orderConfirmStopLimit": "Confirm conditional limit entries",
-  "orderConfirmStopMarket": "Confirm conditional market entries",
-  "orderConfirmTrailing": "Confirm trailing stop entries",
-  "orderConfirmLimitShared": "Limit and Post Only share this setting.",
   "orderConfirmDoNotShow": "Do not show confirmation again for this order type",
   "orderConfirmTitle": "Order Confirmation",
   "orderConfirmPrice": "Order price",
@@ -2382,11 +2214,10 @@
   "orderConfirmMarketPrice": "Market Price",
   "orderConfirmTakeProfit": "Take Profit",
   "orderConfirmStopLoss": "Stop Loss",
-  "orderConfirmBuy": "Buy/Long",
-  "orderConfirmSell": "Sell/Short",
+  "orderConfirmBuy": "Long",
+  "orderConfirmSell": "Short",
   "orderConfirmSubmitted": "Order submitted",
   "orderConfirmExpired": "Order details are no longer current. Close this dialog and place the order again.",
-  "orderConfirmWalletHint": "This setting controls the app review. Wallet signatures and checks before submission still apply.",
   "scaledTotalAmount": "Total order amount",
   "scaledAmountInvalid": "Enter a positive total order amount.",
   "scaledDistribution": "Quantity distribution",
@@ -2433,8 +2264,6 @@
   "orderTypeStopLimit": "Stop Limit",
   "orderTypeStopMarket": "Stop Market",
   "orderTypeScaled": "Scaled Order",
-  "orderModeLabel": "Order type",
-  "orderModeMore": "More order types",
   "orderModeStopLimit": "TP/SL Limit",
   "orderModeStopMarket": "TP/SL Market",
   "orderModeChase": "Chase",
@@ -2483,8 +2312,6 @@
   "liveCapacityEstimateHint": "Both sides independently assume a full fill using the same account and current prices. Opening cost includes incremental margin and opening loss. Liquidation estimates use the signed taker fee and risk tiers, holding other prices and collateral rates fixed; actual fills, fees and funding can differ. Missing facts or no positive estimate show —.",
   "liveCapacityPendingUnknown": "Capacity is unavailable because the reserved notional of a pending order cannot be verified.",
   "liveCapacityRatesUnavailable": "Fresh collateral conversion rates are unavailable. Refresh before calculating capacity.",
-  "liveCapacityRefreshAccount": "Refresh trading account and limits",
-  "liveCapacityRefreshAccountHint": "Sign separately to read configuration, balances, positions, orders, risk tiers and the symbol fee, with up to ten wallet signatures; also refresh public prices and collateral rates. No order is submitted.",
   "liveCapacityLiquidation": "Estimated liquidation price after fill",
   "apiRequestTimeout": "The request timed out.",
   "apiConnectionFailed": "Unable to connect to the server. Check your network connection.",
@@ -3080,7 +2907,15 @@
       }
     }
   },
-  "notificationOrderSide": "{side, select, BUY{buy order} SELL{sell order} other{order}}",
+  "notificationOrderSide": "{side, select, BUY{long order} SELL{short order} other{order}}",
+  "spotOrderSide": "{side, select, BUY{buy order} SELL{sell order} other{order}}",
+  "@spotOrderSide": {
+    "placeholders": {
+      "side": {
+        "type": "String"
+      }
+    }
+  },
   "@notificationOrderSide": {
     "placeholders": {
       "side": {
@@ -3199,7 +3034,32 @@
   "openOrdersYes": "Yes",
   "openOrdersNo": "No",
   "openOrdersConfirm": "Confirm",
-  "openOrdersDetailsTitle": "Order details",
+  "openOrdersEdit": "Edit",
+  "openOrdersEditTitle": "Edit Price/Amount",
+  "openOrdersEditPrice": "Price",
+  "openOrdersEditAmount": "Amount",
+  "openOrdersEditNote": "After a successful order modification, the order's time priority is reset and it moves to the back of the queue at the same price level.\nNote: This rule also applies when only the quantity is adjusted, not the price.",
+  "openOrdersEditInvalidPrice": "Enter a price greater than 0.",
+  "openOrdersEditInvalidAmount": "Enter an amount greater than the filled amount {filled}.",
+  "@openOrdersEditInvalidAmount": {
+    "placeholders": {
+      "filled": {
+        "type": "String"
+      }
+    }
+  },
+  "openOrdersEditUnchanged": "Change the price or amount before confirming.",
+  "openOrdersEditModified": "Order modified.",
+  "openOrdersEditFailed": "Order not modified: {reason}",
+  "@openOrdersEditFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "openOrdersEditClosed": "The order is no longer open and was not modified.",
+  "openOrdersEditUnknown": "The modification result is unconfirmed. Check open orders before trying again; it is never resubmitted automatically.",
   "openOrdersViewChart": "View {symbol} chart",
   "openOrdersCancelAllQuestion": "Are you sure you want to cancel all perpetual orders?",
   "openOrdersCancelSymbolQuestion": "Are you sure you want to cancel all {symbol} orders?",
@@ -3260,6 +3120,25 @@
     }
   },
   "positionsCloseAll": "Close all",
+  "positionsCloseAllQuestion": "Are you sure you want to close all {count} positions by market orders?",
+  "positionsCloseSymbolQuestion": "Are you sure you want to close all {count} {symbol} positions by market orders?",
+  "@positionsCloseAllQuestion": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@positionsCloseSymbolQuestion": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "positionsEntry": "Entry",
   "positionsMargin": "Margin",
   "positionsEntireTpsl": "Entire TP/SL",
@@ -3299,6 +3178,23 @@
   "positionTpslLiqPrice": "Est. liq. price",
   "positionTpslEstimatedPnl": "Estimated Pnl",
   "positionTpslConfirm": "Confirm",
+  "positionTpslAdd": "Add TP/SL",
+  "positionTpslEstimatedPnlUnit": "Estimated Pnl ({unit})",
+  "@positionTpslEstimatedPnlUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "positionTpslAmountUnit": "Amount ({unit})",
+  "@positionTpslAmountUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
   "positionTpslTriggerTitle": "Select Trigger Type",
   "positionTpslSettingsTitle": "TP/SL Settings",
   "positionTpslPnlHint": "Set by Estimated P&L",
@@ -3549,5 +3445,98 @@
     }
   },
   "pushVisibilityTitle": "Background notifications unavailable",
-  "pushNoServerVisibility": "The notification server cannot observe this account. You will not receive account notifications while the app is closed."
+  "pushNoServerVisibility": "The notification server cannot observe this account. You will not receive account notifications while the app is closed.",
+  "assistantRemainingToday": "Remaining today: {remaining}/{limit}",
+  "@assistantRemainingToday": {
+    "placeholders": {
+      "remaining": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "assistantClearAction": "Clear",
+  "assistantBack": "Back",
+  "assistantCopilotTitle": "Your AI Trading Copilot",
+  "assistantCopilotIntro": "Ask about markets, trends, or risk and reward.",
+  "assistantAuthIntro": "Ask market questions, summarize trends, and explore risk and reward.",
+  "assistantAuthCardTitle": "Authenticate your wallet",
+  "assistantAuthCardBody": "Connect your wallet and complete wallet authentication to use Vanta AI.",
+  "assistantAuthenticate": "Authenticate",
+  "assistantSessionExpired": "Your session has expired. Please re-authenticate your wallet to continue using Vanta AI.",
+  "assistantPromptMarket": "What moved BTC over the last 24h?",
+  "assistantPromptFunding": "How does funding affect risk and reward?",
+  "assistantPromptGuide": "Explain perpetual funding step by step.",
+  "assistantDisclaimer": "AI can make mistakes. Verify important information.",
+  "assistantThinking": "Agent is thinking…",
+  "assistantManuallyInterrupted": "This response was manually interrupted.",
+  "assistantResponseFailedTitle": "Couldn't generate a response",
+  "assistantResponseFailedBody": "Something went wrong. Please try again.",
+  "assistantRetry": "Retry",
+  "assistantLimitTitle": "Daily AI limit reached",
+  "assistantLimitBody": "You've reached today's AI request limit. Please try again after the daily reset.",
+  "assistantWalletAuthTitle": "Wallet authentication",
+  "assistantEnableTitle": "Enable Vanta AI",
+  "assistantStepConnect": "Connect wallet",
+  "assistantStepSign": "Sign message",
+  "assistantConnectTitle": "1. Connect your wallet",
+  "assistantConnectBody": "Connect a wallet, then sign an authentication message to enable Vanta AI.",
+  "assistantConnectWallet": "Connect wallet",
+  "assistantSignTitle": "2. Sign to authenticate",
+  "assistantSignBody": "Wallet connected. Sign the authentication message in your wallet, then return here.",
+  "assistantSignWithWallet": "Sign with wallet",
+  "assistantSignatureCanceledTitle": "Signature canceled",
+  "assistantSignatureCanceledBody": "You need to sign the message to enable Vanta AI.",
+  "assistantTryAgain": "Try Again",
+  "assistantAuthExpiredTitle": "Authentication expired",
+  "assistantAuthExpiredBody": "Your authentication request has expired. Please try again.",
+  "assistantSignAgain": "Sign Again",
+  "assistantAuthFailedTitle": "Authentication failed",
+  "assistantAuthFailedBody": "We couldn't verify your wallet. Please try again.",
+  "settingsChinese": "中文",
+  "settingsPushNotifications": "Push Notifications",
+  "settingsCheckUpdates": "Check for Updates",
+  "settingsCheck": "Check",
+  "settingsAppVersion": "App Version",
+  "settingsCacheSize": "Cache Size",
+  "settingsCacheValue": "{size} · Clear",
+  "@settingsCacheValue": {
+    "description": "Cache size followed by the clear action.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsCacheCleared": "Cache cleared",
+  "settingsCacheClearFailed": "Some cached files could not be cleared. Please retry.",
+  "settingsUpToDate": "No update required for this version",
+  "settingsUpdateRequired": "Please update to version {version} or later",
+  "@settingsUpdateRequired": {
+    "description": "Backend minimum supported version is newer than the installed app.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsVersionUnreadable": "The installed app version could not be read.",
+  "settingsLinkFailed": "The link could not be opened.",
+  "pushQuietHours": "Quiet Hours",
+  "pushNotificationTime": "Notification Time",
+  "pushMinimumTradeValue": "Minimum Trade Value",
+  "pushTradeExecutions": "Trade Executions",
+  "pushConditionalTriggers": "Conditional Order Triggers",
+  "pushOrderUpdates": "Order Updates",
+  "pushFundingFees": "Funding Fees",
+  "pushTransfers": "Deposits & Withdrawals",
+  "pushAnnouncements": "Announcements",
+  "pushStartTime": "Start time",
+  "pushEndTime": "End time",
+  "pushHour": "Hour",
+  "pushMinute": "Minute",
+  "pushConfirm": "Confirm",
+  "pushQuietSameTime": "Start and end time must be different."
 }

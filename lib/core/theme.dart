@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
-  static const launchBackground = Color(0xFFFFFFFF);
+  static const launchBackground = Color(0xFF121215);
   static const background = Color(0xFF0B0E13);
   static const surface = Color(0xFF11151D);
   static const raised = Color(0xFF1A202B);
@@ -547,4 +547,82 @@ abstract final class PointsTypography {
   );
   static const numeral = TextStyle(fontSize: 28, height: 36 / 28, fontWeight: FontWeight.w700);
   static const emptyTitle = section;
+}
+
+/// Vanta AI conversation and wallet-authentication tokens from the AI frames.
+abstract final class AssistantColors {
+  static const background = AppColors.authBackground;
+  static const text = AppColors.authText;
+  static const secondary = AppColors.authSecondary;
+  static const muted = PortfolioColors.muted;
+  static const accent = AppColors.authAccent;
+  static const onAccent = AppColors.authOnAccent;
+  static const error = AppColors.authError;
+  static const card = AppColors.authCard;
+  static const line = AppColors.authLine;
+  static const input = AppColors.authInput;
+  static const inputBorder = AppColors.authCard;
+  static const reply = PortfolioColors.inset;
+  static const onSend = Color(0xFF121215);
+  static const failureSurface = Color(0xFF29171C);
+  static const limitSurface = NotificationColors.warningSurface;
+}
+
+abstract final class AssistantTypography {
+  static const title = PortfolioTypography.heading;
+  static const quota = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w500,
+    color: AssistantColors.muted,
+  );
+  static const clear = TextStyle(
+    fontSize: 13,
+    height: 18 / 13,
+    fontWeight: FontWeight.w400,
+    color: AssistantColors.muted,
+  );
+  static const body = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w500,
+    color: AssistantColors.text,
+  );
+  static const secondary = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w500,
+    color: AssistantColors.secondary,
+  );
+  static const placeholder = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w500,
+    color: AssistantColors.muted,
+  );
+  static const label = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w700,
+    color: AssistantColors.text,
+  );
+  static const caption = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w500,
+    color: AssistantColors.secondary,
+  );
+  static const time = TextStyle(
+    fontSize: 11,
+    height: 16 / 11,
+    fontWeight: FontWeight.w400,
+    color: AssistantColors.muted,
+  );
+  static const disclaimer = TextStyle(
+    fontSize: 10,
+    height: 16 / 10,
+    fontWeight: FontWeight.w500,
+    color: AssistantColors.secondary,
+  );
+  static const button = TextStyle(fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w700);
 }

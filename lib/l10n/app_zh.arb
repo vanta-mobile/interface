@@ -74,21 +74,15 @@
   "secondaryIndicators": "副图指标",
   "volumeBars": "成交量",
   "indicatorHint": "均线叠加在价格主图上，副图每次显示一个，可随时切换或关闭。",
+  "chartSelectTimeframe": "选择周期",
+  "chartSettingsConfirm": "确认",
   "exitFullscreen": "退出全屏",
   "marketDetails": "行情详情",
   "depth": "深度图",
   "candles": "蜡烛图",
   "lineChart": "折线图",
-  "sync": "行情缓存",
-  "syncing": "历史加载 / 缺口修复",
-  "closedCandle": "已收盘",
-  "formingCandle": "形成中",
   "eventTime": "消息时间",
   "startTime": "K 线开始",
-  "chartSource": "Aster 永续合约 · USDT",
-  "chartSourceShort": "Aster · USDT",
-  "marketSource": "Aster 永续合约",
-  "poweredBy": "VANTA  /  行情来自 ASTER",
   "gap": "检测到行情断档，正在补齐",
   "connect": "连接钱包",
   "loginTitle": "登录 Vanta",
@@ -135,8 +129,8 @@
   "quantity": "数量",
   "total": "累计",
   "time": "时间",
-  "buy": "买入 / 做多",
-  "sell": "卖出 / 做空",
+  "buy": "做多",
+  "sell": "做空",
   "long": "做多",
   "short": "做空",
   "cross": "全仓",
@@ -223,7 +217,6 @@
   "indicators": "技术指标",
   "none": "无",
   "fullscreen": "展开图表",
-  "chartHint": "长按查看价格 · 双指缩放",
   "network": "行情连接",
   "demoReset": "退出演示账户",
   "demoExitHint": "退出会清除本次本地演示的持仓和挂单。",
@@ -338,8 +331,10 @@
   "openOrdersCount": "挂单（{count}）",
   "openOrdersEmpty": "该账户暂无合约挂单。",
   "openOrdersNoCurrentSymbol": "当前交易对暂无挂单。",
-  "openOrdersBuy": "买入",
-  "openOrdersSell": "卖出",
+  "spotSideBuy": "买入",
+  "spotSideSell": "卖出",
+  "openOrdersBuy": "做多",
+  "openOrdersSell": "做空",
   "openOrdersLongSide": "多仓方向",
   "openOrdersShortSide": "空仓方向",
   "openOrdersOneWay": "单向持仓",
@@ -347,7 +342,6 @@
   "openOrdersStatus": "状态",
   "openOrdersNew": "未成交",
   "openOrdersPartiallyFilled": "部分成交",
-  "openOrdersCreatedLocal": "下单时间（本地）",
   "openOrdersFilledTotal": "已成交／总数量",
   "openOrdersRemaining": "未成交数量",
   "openOrdersClosePosition": "全部平仓",
@@ -396,7 +390,6 @@
   "batchCancelAll": "撤销列表内全部挂单",
   "batchCancelCurrent": "撤销当前合约全部挂单",
   "batchCancelTitle": "撤销所列合约的全部挂单？",
-  "batchCancelHint": "撤销 Aster 处理请求时所列合约的全部挂单，包括其他设备新建的同合约挂单。范围不含其他合约和现货订单。每个合约均需签名撤单，再签名查询状态。已成交仓位保留。",
   "batchCancelScopeCount": "快照范围：{symbols} 个合约，共 {orders} 笔挂单",
   "batchCancelConfirm": "逐合约签名撤单",
   "batchCancelNotSubmitted": "未提交",
@@ -508,75 +501,10 @@
   "historyTradeQuantity": "成交数量",
   "historyStop": "停止等待",
   "historyReadStopped": "已停止本次读取，可重新尝试。",
-  "positionRiskTitle": "仓位风险",
-  "positionRiskScope": "读取当前连接钱包的仓位。签名快照为基准；启用账户监听后可逐项更新仓位，公开标记价另行更新估值。余额需独立读取。平仓需单独确认和签名，TP/SL 尚未接入。",
-  "positionRiskRead": "签名读取仓位风险",
-  "positionRiskRefresh": "签名刷新仓位风险",
-  "positionRiskCount": "仓位记录（{count}）",
   "positionRiskNoCurrent": "当前交易对没有仓位记录。",
   "positionRiskBalanceOnly": "逐仓负余额",
-  "positionRiskSide": "持仓模式方向",
   "positionRiskNotional": "带方向名义价值",
-  "positionRiskLiquidation": "强平价格",
   "positionRiskIsolatedWallet": "逐仓钱包余额",
-  "positionRiskIsolatedMargin": "逐仓保证金",
-  "positionRiskUpdated": "仓位更新时间（UTC）",
-  "positionRiskLiquidationHint": "强平价缺失或为零时显示 —，不表示仓位没有强平风险。",
-  "positionRiskBalanceHint": "仓位数量为零，但逐仓钱包余额为负，保留此记录以便核查。",
-  "@positionRiskCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "positionAdlTitle": "ADL 自动减仓队列",
-  "positionAdlScope": "使用钱包单独读取 ADL。档位为 0～4，由低到高，交易所约每30秒更新；四格全亮表示最高档位。此指标不是保证金率或强平倒计时。请分别刷新仓位和 ADL，核查对应快照。",
-  "positionAdlRead": "签名读取 ADL",
-  "positionAdlRefresh": "签名刷新 ADL",
-  "positionAdlUnknown": "未知，请读取或刷新匹配的 ADL 数据",
-  "positionAdlNotApplicable": "零数量余额记录不适用",
-  "positionAdlLevel": "档位 {level} / 4",
-  "positionAdlHistorical": "历史档位 {level} / 4，请刷新",
-  "positionAdlEmpty": "接口未返回 ADL 记录，未匹配的仓位保持未知。",
-  "@positionAdlLevel": {
-    "placeholders": {
-      "level": {
-        "type": "int"
-      }
-    }
-  },
-  "@positionAdlHistorical": {
-    "placeholders": {
-      "level": {
-        "type": "int"
-      }
-    }
-  },
-  "positionMarkReadFirst": "读取仓位后自动接收公开标记价。",
-  "positionMarkScope": "估值使用当前显示的仓位数量、开仓均价及公开标记价，不含手续费与资金费用。行情超过10秒视为过期；更新行情不会核对完整仓位列表、保证金或强平价。",
-  "positionMarkCoverage": "新鲜标记行情：{fresh} / {total} 个交易对",
-  "positionMarkSnapshot": "快照标记价",
-  "positionMarkCurrent": "当前标记价",
-  "positionMarkHistorical": "历史标记价",
-  "positionMarkTime": "标记行情时间（UTC）",
-  "positionEstimatedNotional": "估算带方向名义价值",
-  "positionEstimatedPnl": "估算未实现盈亏",
-  "positionEstimateStale": "历史估值：仓位或标记行情需要刷新。",
-  "positionSnapshotNotional": "快照带方向名义价值",
-  "positionSnapshotPnl": "快照未实现盈亏",
-  "@positionMarkCoverage": {
-    "placeholders": {
-      "fresh": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
-  "positionMarkUnavailable": "部分标记行情不可用或已过期，保留值为历史行情。",
-  "positionMarkRetry": "重试公开标记行情",
   "accountChangeTitle": "合约变更监听",
   "accountChangeScope": "使用当前钱包签名监听合约账户。完整签名读取后，已校验事件逐项更新挂单、钱包余额及仓位数量；不代表列表完整，也不补回断线期间的更新。汇总、可用余额、杠杆、强平价及 ADL 仍需签名核对，Spot 需单独读取。启动或续期各需一次签名，不会自动弹出钱包。授权最长 60 分钟。停止仅关闭本机连接。",
   "accountChangeStopped": "未开启监听",
@@ -603,8 +531,6 @@
   "accountEventScope": "部分记录含事件更新。事件未提供的汇总和字段显示 —，需签名读取；未变更记录可能已过期。缺失记录不代表平仓，中断后请重新核对完整列表。",
   "accountEventRowTime": "记录事件时间（UTC）",
   "accountCrossWalletBalance": "全仓钱包余额",
-  "positionEventPnl": "事件未实现盈亏",
-  "positionEventFieldsHint": "此事件未提供杠杆、强平价、标记价、名义价值及逐仓保证金，需重新读取仓位核对。公开标记价估算使用当前显示的数量和开仓均价，不证明账户完整。",
   "@accountEventTime": {
     "placeholders": {
       "time": {
@@ -612,12 +538,6 @@
       }
     }
   },
-  "positionAllocatedMargin": "逐仓钱包分配余额",
-  "positionEstimatedCrossMargin": "估算全仓仓位保证金",
-  "positionEstimatedInitialMargin": "估算初始保证金基数",
-  "positionEstimatedRoe": "估算仓位收益率（ROE）",
-  "positionSnapshotRoe": "快照仓位收益率估算（ROE）",
-  "positionReturnScope": "线性合约：初始保证金基数＝绝对数量×标记价÷杠杆，ROE＝未实现盈亏÷该基数×100。逐仓分配使用钱包余额，与ROE基数分开。估算不含手续费和资金费，不代表账户收益率或可用余额；仓位或行情过期时仅为历史估算。杠杆或单位未知则显示 —。",
   "leverageSettings": "合约杠杆",
   "leverageSettingsScope": "设置此交易对的初始杠杆，双向持仓的两个方向共用此设置。修改杠杆会影响保证金要求和风险。",
   "leverageReadSettings": "读取杠杆配置（2次签名）",
@@ -804,10 +724,8 @@
   "assetModeOutcomeUnknown": "请求可能已到达Aster，结果尚未核实。请签名重新查询，查询不会再次提交切换。",
   "liveOrderEntry": "实盘合约下单",
   "liveOrderEntryHint": "上方表单使用本地演示资金。实盘订单使用独立的钱包确认流程。",
-  "liveOrderTitle": "实盘合约下单",
-  "liveOrderScope": "使用当前钱包提交真实普通单、条件单或跟踪委托；限价使用交易对支持的成交策略。单向模式的买卖可能减仓或反转现有持仓；双向模式操作所选多仓或空仓。费用、可用保证金及最终资格由 Aster 校验。",
+  "liveOrderScope": "使用当前钱包提交真实普通单、条件单或跟踪委托；限价使用交易对支持的成交策略。单向模式的做多／做空订单可能减仓或反转现有持仓；双向模式操作所选多仓或空仓。费用、可用保证金及最终资格由 Aster 校验。",
   "liveOrderReadContext": "读取下单配置（2 次签名）",
-  "liveOrderReadHint": "读取公开交易规则及标记价，再分别签名读取持仓模式和交易对配置。有效期从标记价响应起算 30 秒。读取不会下单。",
   "liveOrderSettingsBusy": "请先完成待处理的合约配置操作，再提交订单。",
   "liveOrderSubmitting": "正在提交实盘订单…",
   "liveOrderMarkPrice": "参考标记价",
@@ -820,20 +738,6 @@
       }
     }
   },
-  "liveOrderQuantityBounds": "最小 {minimum}；最大 {maximum}；步长 {step}",
-  "@liveOrderQuantityBounds": {
-    "placeholders": {
-      "minimum": {
-        "type": "String"
-      },
-      "maximum": {
-        "type": "String"
-      },
-      "step": {
-        "type": "String"
-      }
-    }
-  },
   "liveOrderPrice": "限价（{asset}）",
   "@liveOrderPrice": {
     "placeholders": {
@@ -842,16 +746,7 @@
       }
     }
   },
-  "liveOrderPriceTick": "价格步长：{tick}",
-  "@liveOrderPriceTick": {
-    "placeholders": {
-      "tick": {
-        "type": "String"
-      }
-    }
-  },
   "liveOrderEstimatedNotional": "参考名义价值",
-  "liveOrderReview": "核对实盘订单",
   "liveOrderClientId": "客户端订单编号",
   "liveOrderVerifiedResult": "签名查询状态：{status}；已成交数量 {executed}；订单 {orderId}。",
   "@liveOrderVerifiedResult": {
@@ -876,35 +771,18 @@
   "timeInForceTitle": "有效方式",
   "timeInForceGtc": "GTC（撤销前有效）",
   "timeInForceIoc": "IOC（立即成交或取消）",
-  "liveOrderConditional": "条件委托",
-  "liveOrderPositionTriggers": "仓位止盈止损",
-  "liveOrderStop": "止损／突破",
-  "liveOrderTakeProfit": "止盈",
   "liveOrderTriggerBasis": "触发价格依据",
   "liveOrderTriggerReference": "读取时的参考价格",
-  "liveOrderTriggerRises": "当所选依据价格上涨至触发价或更高时触发。",
-  "liveOrderTriggerFalls": "当所选依据价格下跌至触发价或更低时触发。",
   "liveOrderTriggerProtect": "触发价格保护",
   "liveOrderProtectOn": "开启",
   "liveOrderProtectOff": "关闭",
-  "liveOrderProtectHint": "开启后，触发时标记价与最新价的价差还需满足交易对阈值，可能延迟或阻止触发；该保护不保证成交价格。",
-  "liveOrderProtectThreshold": "触发时允许的价差比例：{percent}%。",
-  "@liveOrderProtectThreshold": {
-    "placeholders": {
-      "percent": {
-        "type": "String"
-      }
-    }
-  },
   "liveOrderConditionalHint": "本次提交一笔指定数量的独立条件单。触发不保证成交；分别设置的止盈和止损不会自动互撤。后续仓位变化可能影响执行，请另行核对已有挂单。",
-  "liveOrderConditionalEstimateHint": "仅供参考：条件市价单按触发价估算，条件限价单按委托价估算。触发前仓位、杠杆及可用资金可能变化；不含手续费、资金费、深度滑点及执行时校验，不代表已实现盈亏或保证金承诺。",
   "liveOrderTypeUnavailable": "最新交易对规则不支持此订单类型，请刷新规则或选择支持的类型。",
   "liveOrderInvalidTrigger": "请输入正数十进制触发价格。",
   "liveOrderTriggerFilter": "触发价格须满足交易所的价格范围及步长。",
   "liveOrderProtectUnavailable": "当前交易对规则未提供触发保护阈值，请刷新或明确关闭保护后再确认。",
   "liveOrderTriggerReferenceUnavailable": "所选触发依据的参考价不可用，请刷新或明确选择其他依据；不会自动替换价格。",
   "liveOrderTriggerImmediate": "按本次读取的参考价，触发条件已达到。请按显示的方向调整触发价后重新确认；提交时实际价格由 Aster 校验。",
-  "liveOrderPolicyChoose": "请选择支持的策略",
   "liveOrderPolicyGtc": "GTC",
   "liveOrderPolicyIoc": "IOC",
   "liveOrderPolicyPostOnly": "只做 Maker（GTX）",
@@ -916,36 +794,26 @@
   "liveOrderTimeInForceUnavailable": "最新交易对规则不支持当前限价策略。请选择支持的策略或改用市价，再重新确认。",
   "liveOrderSide": "方向",
   "liveOrderType": "订单类型",
-  "liveOrderSignSubmit": "签名并提交实盘订单",
   "liveOrderInvalidQuantity": "请输入正数十进制数量。",
   "liveOrderInvalidPrice": "请输入正数十进制限价。",
   "liveOrderQuantityFilter": "数量须符合当前订单类型显示的最小值、最大值及步长。",
   "liveOrderPriceFilter": "限价须符合交易所价格范围及步长。",
   "liveOrderPercentFilter": "限价超出参考标记价下该方向允许的价格范围，请刷新配置或调整价格。",
   "liveOrderNotionalFilter": "订单价值低于交易所最小名义价值；市价单以参考标记价计算。",
-  "liveCloseTitle": "实盘平仓",
-  "liveCloseScope": "选择普通或跟踪平仓前，请读取当前钱包的最新仓位。仓位止盈止损支持固定数量或触发时全部平仓。单向固定数量平仓只减少持仓；双向保留原 LONG／SHORT 方向。比例数量按步长向下取整，100% 仍可能有剩余。已有挂单不会自动撤销。",
   "liveClosePositionChanged": "所选仓位或配置已缺失或发生变化，请刷新下单配置后重新核对。",
   "liveCloseTooLarge": "平仓数量不能超过已读取的该方向仓位数量。",
-  "liveCloseLong": "平多 · 卖出",
-  "liveCloseShort": "平空 · 买入",
-  "liveClosePositionAmount": "上次读取的仓位数量",
+  "liveCloseLong": "平多",
+  "liveCloseShort": "平空",
   "liveCloseEstimatedPnl": "预计平仓盈亏",
-  "liveCloseEstimateHint": "仅为估算：市价平多取读取时买一、平空取卖一；限价按输入价格计算。不含手续费、资金费及深度滑点，缺少盘口时显示 —，不代表已实现盈亏。",
   "liveCloseConfirmTitle": "提交此次减仓订单？",
   "liveCloseConfirmHint": "此操作将提交真实减仓订单。先签名复核仓位，再签名下单，并另行签名查询。数量、开仓均价或配置变化时停止提交。市价可能变化；限价按下方所示策略执行。并发变化由交易所最终校验。",
   "liveCloseResultScope": "订单状态不能证明整个仓位已平掉。请另行签名读取剩余仓位；此操作不撤销其他挂单，后续交易仍可能改变仓位。",
   "liveCloseReadRemaining": "签名读取剩余仓位",
   "liveCloseRemaining": "本次读取的剩余数量",
-  "liveOrderReduceHint": "仅减少已有仓位，不主动开出反向仓位。包含并发挂单在内的可减仓数量由 Aster 校验。",
   "liveOrderReduceHedge": "双向模式不支持 reduceOnly 参数。请使用仓位的平仓入口减少对应多仓或空仓。",
   "batchCloseAll": "平掉全部已列实盘仓位",
   "batchCloseCurrent": "平掉当前交易对全部实盘仓位",
-  "batchCloseTitle": "按市价平掉这些实盘仓位？",
-  "batchCloseHint": "仅包含列出的钱包、交易对、仓位方向与精确数量。逐个非零仓位提交反向市价单：单向仅减仓，双向保留原方向。不含已有挂单和 Spot。每仓需分别签名读取配置、复核仓位、下单及查询，最后再签名读取仓位。仓位变化、数量不符合规则、拒签或结果未确认时停止后续提交，不自动调整数量或重试下单。后续活动仍可能改变仓位。",
-  "batchCloseReadFirst": "全部平仓前请完整读取最新实盘仓位；若有未确认的交易或配置修改，须先核对结果。",
   "batchCloseCount": "已确认范围：{count} 个仓位",
-  "batchCloseConfirm": "签名并逐仓平仓",
   "batchCloseStopped": "已停止后续提交。未提交的仓位需要重新读取并确认。",
   "batchCloseRecheck": "签名查询未确认的订单，不重新下单",
   "@batchCloseCount": {
@@ -964,15 +832,8 @@
   "liveOrderFundsMultiHint": "多资产模式下，USDT 数值不是全部抵押资产合计；其他币种保留各自单位，不假设换算汇率或抵押折扣。",
   "liveOrderFundsAssets": "各资产可用余额及抵押资格",
   "liveOrderCollateralUnknown": "接口未提供抵押资格",
-  "liveOrderOpeningQuantity": "参考新增开仓数量",
-  "liveOrderOpeningMargin": "预计新增开仓初始保证金",
-  "liveOrderMarginEstimateHint": "仅供参考：新增开仓数量 × 输入限价（市价用参考标记价）÷ 已读杠杆。单向订单先抵消已读反向仓位；双向订单开出所选方向。有效仅减仓不新增开仓敞口。手续费、资金费、已有挂单、释放保证金、实际成交价及风险档位均可能改变实际需求。",
   "liveOrderFundsHistorical": "历史资金快照；再次开仓确认前请刷新。",
-  "liveOrderMarginAboveBalance": "估算高于已读 USDT 可用余额，请核对资金；未计释放保证金和手续费，最终由 Aster 校验。",
-  "liveEntireClose": "触发时全部平仓",
   "liveEntireHint": "交易所按触发时的实际仓位全部平仓，可能与当前快照不同。不提交固定数量或 reduceOnly；独立止盈止损单不会自动互撤。",
-  "liveEntireMarketOnly": "全部平仓仅支持条件市价单。",
-  "liveEntireEstimateHint": "按已读取仓位数量和触发价估算；触发时数量、成交价、手续费和资金费会影响结果。",
   "liveEntireQuantity": "触发时的全部仓位数量",
   "liveEntireQueryScope": "此查询仅核对本笔全部平仓单及其已报告成交量。订单已成交不等于剩余仓位为零，请重新读取仓位。",
   "liveEntireInvalid": "全部平仓须使用指定仓位方向的条件市价单，且不填写数量、限价或 reduceOnly。",
@@ -1001,7 +862,7 @@
   "liveTrailingRateInvalid": "请输入 0.1% 至 5% 的回调比例。",
   "liveTrailingActivationInvalid": "请输入正数激活价，或留空使用交易所默认值。",
   "liveTrailingActivationFilter": "激活价不符合交易所价格范围或步长。",
-  "liveTrailingImmediate": "买入激活价须低于所选最新价；卖出激活价须高于所选最新价。",
+  "liveTrailingImmediate": "做多激活价须低于所选最新价；做空激活价须高于所选最新价。",
   "liveTrailingHint": "交易所跟踪有利方向的价格极值，回调达到设定比例后按市价执行。使用固定数量，不是触发时全部平仓，也不会持续修改限价挂单。",
   "liveTrailingRate": "回调比例（%）",
   "liveTrailingRateBounds": "范围 0.1～5；输入 1 表示 1%。",
@@ -1015,22 +876,24 @@
     }
   },
   "liveTrailingDefault": "留空时使用交易所下单时对应价格依据的最新价。不会将当前快照价作为激活价提交。",
-  "liveTrailingActivationDirection": "若填写：买入激活价低于最新价，卖出激活价高于最新价；交易所在下单时再次校验。",
-  "liveTrailingBuy": "激活后买单跟踪最低价，价格从最低点上涨达到回调比例后触发；触发不保证成交价格。",
-  "liveTrailingSell": "激活后卖单跟踪最高价，价格从最高点下跌达到回调比例后触发；触发不保证成交价格。",
+  "liveTrailingActivationDirection": "若填写：做多激活价低于最新价，做空激活价高于最新价；交易所在下单时再次校验。",
+  "liveTrailingBuy": "激活后做多单跟踪最低价，价格从最低点上涨达到回调比例后触发；触发不保证成交价格。",
+  "liveTrailingSell": "激活后做空单跟踪最高价，价格从最高点下跌达到回调比例后触发；触发不保证成交价格。",
   "liveTrailingEstimateHint": "没有固定成交价；名义金额及开仓保证金仅按当前标记价参考估算，不提供平仓 PnL 估算。实际数量资格、保证金和成交由交易所当时状态决定，不含手续费、资金费和滑点。",
+  "quickOrderInvalidAmount": "请输入正数十进制金额。",
+  "quickOrderQuoteUnavailable": "暂无盘口价格，无法换算数量，请稍后重试。",
+  "quickOrderAmountTooSmall": "金额低于最小下单数量。",
+  "quickOrderInsufficientBalance": "余额不足",
   "quickOrderInvalid": "快捷开仓须为普通市价单，不能包含仅减仓、固定价格或附加条件。",
   "quickOrderHint": "使用真实钱包下单，数量独立于交易表单。单向模式下可能减少或反转现有仓位。报价仅供参考，不保证成交价；此订单不附加止盈止损或用户滑点设置。",
   "quickOrderSizingFailure": "比例换算不可用。请重试读取；账户上下文有效时仍可手输数量，已有输入会保留。",
-  "quickOrderBuy": "市价买入／做多",
-  "quickOrderSell": "市价卖出／做空",
+  "quickOrderBuy": "市价做多",
+  "quickOrderSell": "市价做空",
   "quickOrderConfirmation": "快捷市价单确认",
   "quickOrderDoNotShow": "不再显示市价单确认",
-  "quickOrderConfirmPreference": "市价开仓前确认",
-  "quickOrderPreferenceFailure": "无法读取或保存确认偏好。保留最后已保存的设置，成功保存设置前仍需确认订单。",
-  "quickOrderMarketBuy": "市价买入",
-  "quickOrderMarketSell": "市价卖出",
-  "quickOrderAmount": "数量({asset})",
+  "quickOrderMarketBuy": "做多",
+  "quickOrderMarketSell": "做空",
+  "quickOrderAmount": "市价 · 金额 · {asset}",
   "quickOrderAvailable": "可用 {value}",
   "quickOrderChartTab": "K 线页面",
   "attachedOrderTitle": "开仓附加止盈／止损",
@@ -1372,7 +1235,6 @@
   "depositReadStale": "钱包快照已过期，请刷新后再检查数量。",
   "depositBalanceInsufficient": "数量超过已读取的钱包资产余额。",
   "attachedEntryPricing": "主单定价",
-  "attachedEntryFixed": "输入限价",
   "attachedEntryCounterparty": "BBO · 对手方第 {depth} 档",
   "@attachedEntryCounterparty": {
     "placeholders": {
@@ -2204,37 +2066,12 @@
       }
     }
   },
-  "liveAmountUnit": "委托数量单位",
-  "liveAmountInput": "委托金额（{asset}）",
-  "@liveAmountInput": {
-    "placeholders": {
-      "asset": {
-        "type": "String"
-      }
-    }
-  },
-  "liveAmountHint": "填写委托金额，不是保证金；换算时不再乘杠杆。",
   "liveAmountInvalid": "请输入有效的正数委托金额。",
   "liveAmountBelowStep": "金额换算后不足最小委托数量或一个数量步长。",
   "liveAmountReferenceUnavailable": "换算所需的价格不可用，请刷新下单快照或改填基础币数量。",
-  "liveAmountLimitReference": "填写的限价",
-  "liveAmountAskReference": "卖一价快照",
-  "liveAmountBidReference": "买一价快照",
-  "liveAmountTriggerReference": "触发价估算",
-  "liveAmountBboReference": "参考 Mark，非引擎实际 BBO 价格",
-  "liveAmountConversionPrice": "换算参考：{basis}",
-  "@liveAmountConversionPrice": {
-    "placeholders": {
-      "basis": {
-        "type": "String"
-      }
-    }
-  },
   "liveAmountResolvedQuantity": "拟提交的基础币数量",
-  "liveAmountSnapshotTime": "下单快照时间（UTC）",
-  "liveAmountEstimateHint": "数量按适用步长向下取整，并在确认时固定。市价、触发及 BBO 价格可能变化，实际成交金额可能超过估算；输入金额不代表支出上限。",
   "futuresHistoryTitle": "合约历史",
-  "futuresHistoryScope": "分别读取当前钱包的合约订单、逐笔成交与资金流水。仅凭买卖方向不能判断开仓或平仓；读取不会下单或撤单。",
+  "futuresHistoryScope": "分别读取当前钱包的合约订单、逐笔成交与资金流水。仅凭多空方向不能判断开仓或平仓；读取不会下单或撤单。",
   "futuresHistoryIncome": "资金流水",
   "futuresHistorySymbol": "合约交易对（选填）",
   "futuresHistoryTradeSymbol": "合约交易对（成交记录必填）",
@@ -2257,11 +2094,6 @@
       }
     }
   },
-  "orderConfirmLimit": "限价／只做 Maker 开仓前确认",
-  "orderConfirmStopLimit": "条件限价开仓前确认",
-  "orderConfirmStopMarket": "条件市价开仓前确认",
-  "orderConfirmTrailing": "跟踪委托开仓前确认",
-  "orderConfirmLimitShared": "限价与只做 Maker 共用此设置。",
   "orderConfirmDoNotShow": "此订单类型不再显示确认",
   "orderConfirmTitle": "下单确认",
   "orderConfirmPrice": "委托价格",
@@ -2269,11 +2101,10 @@
   "orderConfirmMarketPrice": "市价",
   "orderConfirmTakeProfit": "止盈",
   "orderConfirmStopLoss": "止损",
-  "orderConfirmBuy": "买入/做多",
-  "orderConfirmSell": "卖出/做空",
+  "orderConfirmBuy": "做多",
+  "orderConfirmSell": "做空",
   "orderConfirmSubmitted": "下单成功",
   "orderConfirmExpired": "订单信息已失效，请关闭弹窗后重新下单。",
-  "orderConfirmWalletHint": "此设置控制应用内确认。提交前检查和钱包签名仍会执行。",
   "scaledTotalAmount": "总委托金额",
   "scaledAmountInvalid": "请输入正数总委托金额。",
   "scaledDistribution": "数量分布",
@@ -2320,8 +2151,6 @@
   "orderTypeStopLimit": "限价止盈止损",
   "orderTypeStopMarket": "市价止盈止损",
   "orderTypeScaled": "分段委托",
-  "orderModeLabel": "下单模式",
-  "orderModeMore": "更多下单模式",
   "orderModeStopLimit": "限价止盈止损",
   "orderModeStopMarket": "市价止盈止损",
   "orderModeChase": "追逐限价委托",
@@ -2330,7 +2159,7 @@
   "orderModeTwapUnavailable": "暂不可用，分时委托不在本阶段支持范围内。",
   "liveCapacityChanged": "账户设置、仓位或挂单保证金已变化，请刷新下单数据后重新计算额度。",
   "liveCapacityPriceUnavailable": "暂缺此委托的可靠价格参考，请刷新行情或检查定价方式。",
-  "liveCapacityTitle": "买卖双侧参考额度",
+  "liveCapacityTitle": "多空双侧参考额度",
   "liveAllocationPercent": "下单比例：{percent}%",
   "@liveAllocationPercent": {
     "placeholders": {
@@ -2355,7 +2184,7 @@
       }
     }
   },
-  "liveAllocationHint": "读取额度后可选择比例，买卖两侧分别按各自最大数量计算。确认前会最多请求六次钱包签名刷新额度，并冻结点击时的数量。",
+  "liveAllocationHint": "读取额度后可选择比例，多空两侧分别按各自最大数量计算。确认前会最多请求六次钱包签名刷新额度，并冻结点击时的数量。",
   "liveAllocationChecking": "正在刷新所选方向的额度…",
   "liveAllocationChanged": "下单输入、账户数据或额度已变化，请核对当前值后重试。",
   "liveAllocationFrozen": "本次确认的方向、委托类型和数量已冻结，数据变化或过期会阻止提交。",
@@ -2370,8 +2199,6 @@
   "liveCapacityEstimateHint": "两侧使用同一账户与当前行情，分别假设本单全部成交。开仓成本含增量保证金和开仓损失；强平预估使用签名读取的吃单费率及风险档位，其他价格和抵押汇率保持当前值，实际成交、费用及资金费可能不同。缺少依据或没有有效正数预估时显示 —。",
   "liveCapacityPendingUnknown": "存在无法核实预留名义金额的挂单，暂时无法计算可开额度。",
   "liveCapacityRatesUnavailable": "抵押资产换算价格缺失或已过期，请刷新后重新计算额度。",
-  "liveCapacityRefreshAccount": "刷新交易账户及额度",
-  "liveCapacityRefreshAccountHint": "分别签名读取配置、余额、仓位、挂单、风险档位及合约费率，最多需要十次钱包签名；同时刷新公开行情与抵押汇率。不会下单。",
   "liveCapacityLiquidation": "成交后预估强平价",
   "apiRequestTimeout": "请求超时。",
   "apiConnectionFailed": "无法连接服务器，请检查网络连接。",
@@ -2863,7 +2690,8 @@
   "notificationPerp": "合约",
   "notificationAdlChip": "ADL",
   "notificationUnreadCount": "{count} 条未读",
-  "notificationOrderSide": "{side, select, BUY{买单} SELL{卖单} other{订单}}",
+  "notificationOrderSide": "{side, select, BUY{做多单} SELL{做空单} other{订单}}",
+  "spotOrderSide": "{side, select, BUY{买单} SELL{卖单} other{订单}}",
   "notificationOrderSummary": "{status, select, NEW{{symbol} {side}已创建，等待成交。} PARTIALLY_FILLED{{symbol} {side}本次成交 {last}，累计成交 {progress}。} FILLED{{symbol} {side}已全部成交，成交均价为 {average}。} CANCELED{{symbol} {side}已取消；取消前成交数量仍保留在历史记录。} EXPIRED{{symbol} {side}已过期，未成交部分不再等待执行。} REJECTED{{symbol} {side}被拒绝，请查看订单记录。} other{{symbol} {side}有新的更新，请查看详情。}}",
   "notificationLiquidationSummary": "{symbol} 强平订单发生更新，具体已成交数量请查看详情。",
   "notificationAdlSummary": "{symbol} 自动减仓订单有新的执行记录，请查看仓位及成交结果。",
@@ -2906,7 +2734,18 @@
   "openOrdersYes": "是",
   "openOrdersNo": "否",
   "openOrdersConfirm": "确认",
-  "openOrdersDetailsTitle": "订单详情",
+  "openOrdersEdit": "编辑",
+  "openOrdersEditTitle": "修改价格/数量",
+  "openOrdersEditPrice": "价格",
+  "openOrdersEditAmount": "数量",
+  "openOrdersEditNote": "改单成功后，订单的时间优先级会重置，在同一价格档位排到队尾。\n注意：仅调整数量、不改价格时同样适用。",
+  "openOrdersEditInvalidPrice": "请输入大于 0 的价格。",
+  "openOrdersEditInvalidAmount": "请输入大于已成交数量 {filled} 的数量。",
+  "openOrdersEditUnchanged": "请先修改价格或数量再确认。",
+  "openOrdersEditModified": "订单已修改。",
+  "openOrdersEditFailed": "订单未修改：{reason}",
+  "openOrdersEditClosed": "订单已不在当前委托中，未修改。",
+  "openOrdersEditUnknown": "改单结果未确认。请先检查当前委托再重试，系统不会自动重新提交。",
   "openOrdersViewChart": "查看 {symbol} 图表",
   "openOrdersCancelAllQuestion": "确定要撤销全部合约挂单吗？",
   "openOrdersCancelSymbolQuestion": "确定要撤销 {symbol} 的全部挂单吗？",
@@ -2923,6 +2762,8 @@
   "openOrdersLinkedOrder": "关联订单：",
   "tradeTabCount": "{label} ({count})",
   "positionsCloseAll": "全部平仓",
+  "positionsCloseAllQuestion": "确定要以市价单平掉全部 {count} 个仓位吗？",
+  "positionsCloseSymbolQuestion": "确定要以市价单平掉 {symbol} 的全部 {count} 个仓位吗？",
   "positionsEntry": "开仓价",
   "positionsMargin": "保证金",
   "positionsEntireTpsl": "全部止盈止损",
@@ -2948,6 +2789,9 @@
   "positionTpslLiqPrice": "预估强平价格",
   "positionTpslEstimatedPnl": "预估盈亏",
   "positionTpslConfirm": "确认",
+  "positionTpslAdd": "添加止盈止损",
+  "positionTpslEstimatedPnlUnit": "预估盈亏 ({unit})",
+  "positionTpslAmountUnit": "金额 ({unit})",
   "positionTpslTriggerTitle": "选择触发类型",
   "positionTpslSettingsTitle": "止盈止损设置",
   "positionTpslPnlHint": "按预估盈亏设置",
@@ -3116,5 +2960,72 @@
     }
   },
   "pushVisibilityTitle": "后台通知暂不可用",
-  "pushNoServerVisibility": "通知服务目前无法获取此账户的动态，关闭 App 后将无法接收账户通知。"
+  "pushNoServerVisibility": "通知服务目前无法获取此账户的动态，关闭 App 后将无法接收账户通知。",
+  "assistantRemainingToday": "今日剩余：{remaining}/{limit}",
+  "assistantClearAction": "清空",
+  "assistantBack": "返回",
+  "assistantCopilotTitle": "你的 AI 交易助手",
+  "assistantCopilotIntro": "询问市场、趋势或风险与收益。",
+  "assistantAuthIntro": "提问市场问题、总结趋势，并探索风险与收益。",
+  "assistantAuthCardTitle": "认证你的钱包",
+  "assistantAuthCardBody": "连接钱包并完成钱包认证后即可使用 Vanta AI。",
+  "assistantAuthenticate": "去认证",
+  "assistantSessionExpired": "你的会话已过期，请重新认证钱包以继续使用 Vanta AI。",
+  "assistantPromptMarket": "过去 24 小时是什么推动了 BTC 的走势？",
+  "assistantPromptFunding": "资金费率如何影响风险与收益？",
+  "assistantPromptGuide": "请逐步解释永续合约的资金费率。",
+  "assistantDisclaimer": "AI 可能会出错，请核实重要信息。",
+  "assistantThinking": "AI 正在思考…",
+  "assistantManuallyInterrupted": "此回复已被手动中断。",
+  "assistantResponseFailedTitle": "无法生成回复",
+  "assistantResponseFailedBody": "出现问题，请重试。",
+  "assistantRetry": "重试",
+  "assistantLimitTitle": "已达今日 AI 使用上限",
+  "assistantLimitBody": "你已用完今日的 AI 请求次数，请在每日重置后再试。",
+  "assistantWalletAuthTitle": "钱包认证",
+  "assistantEnableTitle": "启用 Vanta AI",
+  "assistantStepConnect": "连接钱包",
+  "assistantStepSign": "签名消息",
+  "assistantConnectTitle": "1. 连接你的钱包",
+  "assistantConnectBody": "连接钱包后签署一条认证消息，即可启用 Vanta AI。",
+  "assistantConnectWallet": "连接钱包",
+  "assistantSignTitle": "2. 签名完成认证",
+  "assistantSignBody": "钱包已连接。请在钱包中签署认证消息，然后返回此处。",
+  "assistantSignWithWallet": "使用钱包签名",
+  "assistantSignatureCanceledTitle": "签名已取消",
+  "assistantSignatureCanceledBody": "需要签署该消息才能启用 Vanta AI。",
+  "assistantTryAgain": "再试一次",
+  "assistantAuthExpiredTitle": "认证已过期",
+  "assistantAuthExpiredBody": "认证请求已过期，请重试。",
+  "assistantSignAgain": "重新签名",
+  "assistantAuthFailedTitle": "认证失败",
+  "assistantAuthFailedBody": "无法验证你的钱包，请重试。",
+  "settingsChinese": "中文",
+  "settingsPushNotifications": "推送通知",
+  "settingsCheckUpdates": "检查更新",
+  "settingsCheck": "检查",
+  "settingsAppVersion": "App 版本",
+  "settingsCacheSize": "缓存大小",
+  "settingsCacheValue": "{size} · 清除",
+  "settingsCacheCleared": "缓存已清除",
+  "settingsCacheClearFailed": "部分缓存文件未能清除，请重试。",
+  "settingsUpToDate": "当前版本无需更新",
+  "settingsUpdateRequired": "请更新至 {version} 或更高版本",
+  "settingsVersionUnreadable": "无法读取当前安装的 App 版本。",
+  "settingsLinkFailed": "无法打开链接。",
+  "pushQuietHours": "免打扰",
+  "pushNotificationTime": "免打扰时段",
+  "pushMinimumTradeValue": "最小成交金额",
+  "pushTradeExecutions": "成交通知",
+  "pushConditionalTriggers": "条件单触发",
+  "pushOrderUpdates": "订单更新",
+  "pushFundingFees": "资金费",
+  "pushTransfers": "充值与提现",
+  "pushAnnouncements": "公告",
+  "pushStartTime": "开始时间",
+  "pushEndTime": "结束时间",
+  "pushHour": "时",
+  "pushMinute": "分",
+  "pushConfirm": "确认",
+  "pushQuietSameTime": "开始时间和结束时间不能相同。"
 }

@@ -245,6 +245,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Overlays share the price pane. Show one lower indicator at a time, switch or hide it whenever you need.';
 
   @override
+  String get chartSelectTimeframe => 'Select timeframe';
+
+  @override
+  String get chartSettingsConfirm => 'Confirm';
+
+  @override
   String get exitFullscreen => 'Exit fullscreen';
 
   @override
@@ -260,34 +266,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lineChart => 'Line';
 
   @override
-  String get sync => 'Market cache';
-
-  @override
-  String get syncing => 'History loading / gap repair';
-
-  @override
-  String get closedCandle => 'Closed';
-
-  @override
-  String get formingCandle => 'Forming';
-
-  @override
   String get eventTime => 'Event time';
 
   @override
   String get startTime => 'Candle start';
-
-  @override
-  String get chartSource => 'Aster Perpetuals · USDT';
-
-  @override
-  String get chartSourceShort => 'Aster · USDT';
-
-  @override
-  String get marketSource => 'Aster Perpetuals';
-
-  @override
-  String get poweredBy => 'VANTA  /  POWERED BY ASTER';
 
   @override
   String get gap => 'Candle gap detected. Backfilling';
@@ -432,10 +414,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get time => 'Time';
 
   @override
-  String get buy => 'Buy / Long';
+  String get buy => 'Long';
 
   @override
-  String get sell => 'Sell / Short';
+  String get sell => 'Short';
 
   @override
   String get long => 'Long';
@@ -698,9 +680,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fullscreen => 'Expand chart';
-
-  @override
-  String get chartHint => 'Hold for details · Pinch to zoom';
 
   @override
   String get network => 'Market connection';
@@ -967,10 +946,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openOrdersNoCurrentSymbol => 'No open orders for the current symbol.';
 
   @override
-  String get openOrdersBuy => 'Buy';
+  String get spotSideBuy => 'Buy';
 
   @override
-  String get openOrdersSell => 'Sell';
+  String get spotSideSell => 'Sell';
+
+  @override
+  String get openOrdersBuy => 'Long';
+
+  @override
+  String get openOrdersSell => 'Short';
 
   @override
   String get openOrdersLongSide => 'Long side';
@@ -992,9 +977,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openOrdersPartiallyFilled => 'Partially filled';
-
-  @override
-  String get openOrdersCreatedLocal => 'Placed (local time)';
 
   @override
   String get openOrdersFilledTotal => 'Filled / total';
@@ -1127,10 +1109,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get batchCancelTitle => 'Cancel all perpetual orders?';
-
-  @override
-  String get batchCancelHint =>
-      'Cancel all orders on the listed futures symbols when Aster processes each request, including orders added on other devices. Other symbols and Spot orders are outside this scope. Each symbol requires cancellation and status-query signatures. Filled positions remain.';
 
   @override
   String batchCancelScopeCount(int orders, int symbols) {
@@ -1373,133 +1351,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyReadStopped => 'This read was stopped. You can try again.';
 
   @override
-  String get positionRiskTitle => 'Position risk';
-
-  @override
-  String get positionRiskScope =>
-      'Read positions for the connected wallet. A signed snapshot is the baseline; enabled account monitoring can update individual positions. Public mark prices update estimates separately. Read account balances separately. Closing requires its own confirmation and signatures; TP/SL is not available yet.';
-
-  @override
-  String get positionRiskRead => 'Sign to read position risk';
-
-  @override
-  String get positionRiskRefresh => 'Sign to refresh position risk';
-
-  @override
-  String positionRiskCount(int count) {
-    return 'Position records ($count)';
-  }
-
-  @override
   String get positionRiskNoCurrent => 'No position records for the selected symbol.';
 
   @override
   String get positionRiskBalanceOnly => 'Negative isolated balance';
 
   @override
-  String get positionRiskSide => 'Position side';
-
-  @override
   String get positionRiskNotional => 'Signed notional';
 
   @override
-  String get positionRiskLiquidation => 'Liquidation price';
-
-  @override
   String get positionRiskIsolatedWallet => 'Isolated wallet balance';
-
-  @override
-  String get positionRiskIsolatedMargin => 'Isolated margin';
-
-  @override
-  String get positionRiskUpdated => 'Position update (UTC)';
-
-  @override
-  String get positionRiskLiquidationHint =>
-      'A missing or zero liquidation price is shown as —. This does not mean the position is free of liquidation risk.';
-
-  @override
-  String get positionRiskBalanceHint =>
-      'The position quantity is zero, but its isolated wallet balance is negative. This record remains visible for review.';
-
-  @override
-  String get positionAdlTitle => 'ADL queue';
-
-  @override
-  String get positionAdlScope =>
-      'Read ADL separately with your wallet. Levels range from 0 to 4, low to high, and the exchange updates them every 30 seconds. Four lit bars indicate the highest queue level. This is not a margin ratio or a liquidation countdown. Refresh positions and ADL to review matching snapshots.';
-
-  @override
-  String get positionAdlRead => 'Sign to read ADL';
-
-  @override
-  String get positionAdlRefresh => 'Sign to refresh ADL';
-
-  @override
-  String get positionAdlUnknown => 'Unknown — read or refresh matching ADL data';
-
-  @override
-  String get positionAdlNotApplicable => 'Not applicable to a zero-quantity balance record';
-
-  @override
-  String positionAdlLevel(int level) {
-    return 'Level $level / 4';
-  }
-
-  @override
-  String positionAdlHistorical(int level) {
-    return 'Historical level $level / 4 — refresh';
-  }
-
-  @override
-  String get positionAdlEmpty => 'No ADL records returned. Missing positions remain unknown.';
-
-  @override
-  String get positionMarkReadFirst => 'Read positions to start public mark prices.';
-
-  @override
-  String get positionMarkScope =>
-      'Estimates use the displayed position quantity and entry price with public mark prices. Fees and funding are excluded. Prices expire after 10 seconds; refreshing prices does not verify the complete position list, margin or liquidation prices.';
-
-  @override
-  String positionMarkCoverage(int fresh, int total) {
-    return 'Fresh mark prices: $fresh / $total symbols';
-  }
-
-  @override
-  String get positionMarkSnapshot => 'Snapshot mark price';
-
-  @override
-  String get positionMarkCurrent => 'Current mark price';
-
-  @override
-  String get positionMarkHistorical => 'Historical mark price';
-
-  @override
-  String get positionMarkTime => 'Mark event (UTC)';
-
-  @override
-  String get positionEstimatedNotional => 'Estimated signed notional';
-
-  @override
-  String get positionEstimatedPnl => 'Estimated unrealized PnL';
-
-  @override
-  String get positionEstimateStale =>
-      'Historical estimate: positions or mark prices need refreshing.';
-
-  @override
-  String get positionSnapshotNotional => 'Snapshot signed notional';
-
-  @override
-  String get positionSnapshotPnl => 'Snapshot unrealized PnL';
-
-  @override
-  String get positionMarkUnavailable =>
-      'Some mark prices are unavailable or stale. Retained values are historical.';
-
-  @override
-  String get positionMarkRetry => 'Retry public mark prices';
 
   @override
   String get accountChangeTitle => 'Futures change monitor';
@@ -1594,32 +1455,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountCrossWalletBalance => 'Cross wallet balance';
-
-  @override
-  String get positionEventPnl => 'Event unrealized PnL';
-
-  @override
-  String get positionEventFieldsHint =>
-      'Leverage, liquidation price, mark, notional and isolated margin are not provided by this event. Read positions to verify. Public mark estimates use the displayed quantity and entry price; they do not confirm the complete account.';
-
-  @override
-  String get positionAllocatedMargin => 'Allocated isolated wallet';
-
-  @override
-  String get positionEstimatedCrossMargin => 'Estimated cross position margin';
-
-  @override
-  String get positionEstimatedInitialMargin => 'Estimated initial margin basis';
-
-  @override
-  String get positionEstimatedRoe => 'Estimated ROE (%)';
-
-  @override
-  String get positionSnapshotRoe => 'Snapshot ROE estimate (%)';
-
-  @override
-  String get positionReturnScope =>
-      'Linear contracts: initial margin basis = absolute quantity × mark price ÷ leverage; ROE = unrealized PnL ÷ that basis × 100. Isolated margin allocation uses its wallet balance, not the ROE basis. These estimates exclude fees and funding, are not account returns or available funds, and remain historical when position data or prices are stale. Unknown leverage or units shows —.';
 
   @override
   String get leverageSettings => 'Futures leverage';
@@ -1986,18 +1821,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'The form above uses local demo funds. Live orders have a separate wallet confirmation.';
 
   @override
-  String get liveOrderTitle => 'Live futures order';
-
-  @override
   String get liveOrderScope =>
-      'Use this wallet to place real ordinary, conditional or trailing orders. Limit orders use a supported execution policy. In one-way mode, buying or selling can reduce or reverse an existing position. Hedge mode operates on the selected long or short side. Aster checks fees, available margin and final eligibility.';
+      'Use this wallet to place real ordinary, conditional or trailing orders. Limit orders use a supported execution policy. In one-way mode, a long or short order can reduce or reverse an existing position. Hedge mode operates on the selected long or short side. Aster checks fees, available margin and final eligibility.';
 
   @override
   String get liveOrderReadContext => 'Read order settings (2 signatures)';
-
-  @override
-  String get liveOrderReadHint =>
-      'Read public trading rules and mark price, then sign separately for position mode and symbol configuration. Settings expire 30 seconds after the mark-price response. Reading places no order.';
 
   @override
   String get liveOrderSettingsBusy =>
@@ -2019,25 +1847,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String liveOrderQuantityBounds(String minimum, String maximum, String step) {
-    return 'Minimum $minimum; maximum $maximum; step $step';
-  }
-
-  @override
   String liveOrderPrice(String asset) {
     return 'Limit price ($asset)';
   }
 
   @override
-  String liveOrderPriceTick(String tick) {
-    return 'Price increment: $tick';
-  }
-
-  @override
   String get liveOrderEstimatedNotional => 'Reference notional';
-
-  @override
-  String get liveOrderReview => 'Review live order';
 
   @override
   String get liveOrderClientId => 'Client order reference';
@@ -2078,30 +1893,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timeInForceIoc => 'IOC (Immediate or canceled)';
 
   @override
-  String get liveOrderConditional => 'Conditional order';
-
-  @override
-  String get liveOrderPositionTriggers => 'Position TP/SL';
-
-  @override
-  String get liveOrderStop => 'Stop';
-
-  @override
-  String get liveOrderTakeProfit => 'Take profit';
-
-  @override
   String get liveOrderTriggerBasis => 'Trigger price basis';
 
   @override
   String get liveOrderTriggerReference => 'Reference price at read';
-
-  @override
-  String get liveOrderTriggerRises =>
-      'Triggers when the selected price rises to or above the trigger price.';
-
-  @override
-  String get liveOrderTriggerFalls =>
-      'Triggers when the selected price falls to or below the trigger price.';
 
   @override
   String get liveOrderTriggerProtect => 'Trigger price protection';
@@ -2113,21 +1908,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get liveOrderProtectOff => 'Off';
 
   @override
-  String get liveOrderProtectHint =>
-      'When enabled, the mark/last price difference must also satisfy the symbol’s threshold at trigger time. This can delay or prevent triggering; it does not protect the execution price.';
-
-  @override
-  String liveOrderProtectThreshold(String percent) {
-    return 'Allowed price difference at trigger: $percent%.';
-  }
-
-  @override
   String get liveOrderConditionalHint =>
       'This submits one independent conditional order for the specified quantity. Triggering does not guarantee a fill. Separate TP and SL orders do not cancel each other automatically. Later position changes can affect execution; review active orders separately.';
-
-  @override
-  String get liveOrderConditionalEstimateHint =>
-      'Reference estimate only: conditional market orders use the trigger price, conditional limit orders use the limit price. Position, leverage and available funds can change before triggering. Fees, funding, depth slippage and execution-time checks are excluded; this is not realized PnL or guaranteed required margin.';
 
   @override
   String get liveOrderTypeUnavailable =>
@@ -2151,9 +1933,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get liveOrderTriggerImmediate =>
       'The trigger price is already reached at this read. Adjust it according to the displayed direction and review again. Aster checks the actual price at submission.';
-
-  @override
-  String get liveOrderPolicyChoose => 'Choose a supported policy';
 
   @override
   String get liveOrderPolicyGtc => 'GTC';
@@ -2194,9 +1973,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get liveOrderType => 'Order type';
 
   @override
-  String get liveOrderSignSubmit => 'Sign and place live order';
-
-  @override
   String get liveOrderInvalidQuantity => 'Enter a positive decimal quantity.';
 
   @override
@@ -2219,13 +1995,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Order value is below the exchange minimum notional. Market orders use the reference mark price.';
 
   @override
-  String get liveCloseTitle => 'Close a live position';
-
-  @override
-  String get liveCloseScope =>
-      'Read this wallet’s current position before choosing an ordinary or trailing close. Position TP/SL supports fixed quantity or entire close at trigger. One-way fixed-quantity closes only reduce positions; hedge closes retain the original LONG/SHORT side. Percentage quantities round down to the order step; 100% can leave a remainder. Existing orders are not cancelled.';
-
-  @override
   String get liveClosePositionChanged =>
       'The selected position or its configuration is missing or changed. Refresh order settings and review again.';
 
@@ -2234,20 +2003,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Close quantity cannot exceed the position quantity read for this side.';
 
   @override
-  String get liveCloseLong => 'Close long · sell';
+  String get liveCloseLong => 'Close long';
 
   @override
-  String get liveCloseShort => 'Close short · buy';
-
-  @override
-  String get liveClosePositionAmount => 'Position quantity at last read';
+  String get liveCloseShort => 'Close short';
 
   @override
   String get liveCloseEstimatedPnl => 'Estimated close PnL';
-
-  @override
-  String get liveCloseEstimateHint =>
-      'Estimate only: market closes use the read best bid for longs or best ask for shorts; limit closes use the entered price. Fees, funding and depth slippage are excluded. Missing book data shows —. This is not realized PnL.';
 
   @override
   String get liveCloseConfirmTitle => 'Submit this position reduction?';
@@ -2267,10 +2029,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get liveCloseRemaining => 'Remaining quantity at this read';
 
   @override
-  String get liveOrderReduceHint =>
-      'Only reduce an existing position; never intentionally open the opposite side. Aster checks the available reducible quantity, including concurrent orders.';
-
-  @override
   String get liveOrderReduceHedge =>
       'The reduceOnly parameter is unavailable in hedge mode. Use the position’s close action to reduce its LONG or SHORT side.';
 
@@ -2281,23 +2039,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get batchCloseCurrent => 'Close all current-symbol live positions';
 
   @override
-  String get batchCloseTitle => 'Close these live positions at market?';
-
-  @override
-  String get batchCloseHint =>
-      'Only the listed wallet, symbols, sides and exact quantities are included. Submit an opposite MARKET order for each nonzero position, using reduce-only in one-way mode or the original side in hedge mode. Existing orders and Spot are excluded. Each position needs separate setting-read, position-recheck, order and query signatures, followed by a final position-read signature. Changed positions, invalid quantities, refused signatures or unknown results stop further submissions. No automatic resizing or order retry. Later activity can change positions again.';
-
-  @override
-  String get batchCloseReadFirst =>
-      'Read a fresh, complete live position snapshot before closing all. An unresolved trade or configuration change must be checked first.';
-
-  @override
   String batchCloseCount(int count) {
     return 'Confirmed scope: $count positions';
   }
-
-  @override
-  String get batchCloseConfirm => 'Sign and close each position';
 
   @override
   String get batchCloseStopped =>
@@ -2340,37 +2084,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get liveOrderCollateralUnknown => 'Collateral eligibility not provided';
 
   @override
-  String get liveOrderOpeningQuantity => 'Reference new opening quantity';
-
-  @override
-  String get liveOrderOpeningMargin => 'Estimated additional opening initial margin';
-
-  @override
-  String get liveOrderMarginEstimateHint =>
-      'Reference only: new opening quantity × entered limit price (or reference mark) ÷ read leverage. One-way orders first offset the read opposite position; hedge orders open the selected side. Valid reduce-only closes add no opening exposure. Fees, funding, existing orders, released margin, execution price and risk tiers can change actual requirements.';
-
-  @override
   String get liveOrderFundsHistorical =>
       'Historical funds snapshot. Refresh before reviewing another opening order.';
 
   @override
-  String get liveOrderMarginAboveBalance =>
-      'The estimate exceeds the read USDT available balance. Review your funds; released margin and fees are excluded, and Aster makes the final check.';
-
-  @override
-  String get liveEntireClose => 'Close entire position at trigger';
-
-  @override
   String get liveEntireHint =>
       'The exchange uses the position size at trigger time, which may differ from this snapshot. No fixed quantity or reduceOnly is sent. Independent TP/SL orders do not cancel each other.';
-
-  @override
-  String get liveEntireMarketOnly =>
-      'Entire close is available for conditional market orders only.';
-
-  @override
-  String get liveEntireEstimateHint =>
-      'Estimated using the reviewed position quantity and trigger price. Trigger-time size, execution price, fees and funding may change the result.';
 
   @override
   String get liveEntireQuantity => 'Entire position size at trigger time';
@@ -2449,7 +2168,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveTrailingImmediate =>
-      'A buy activation price must be below the selected latest price; a sell activation price must be above it.';
+      'A long activation price must be below the selected latest price; a short activation price must be above it.';
 
   @override
   String get liveTrailingHint =>
@@ -2475,19 +2194,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveTrailingActivationDirection =>
-      'If specified: buy activation below the latest price; sell activation above it. The exchange rechecks at placement.';
+      'If specified: long activation below the latest price; short activation above it. The exchange rechecks at placement.';
 
   @override
   String get liveTrailingBuy =>
-      'After activation, a buy follows the lowest price and triggers on a rise by the callback percentage. Triggering does not guarantee an execution price.';
+      'After activation, a long order follows the lowest price and triggers on a rise by the callback percentage. Triggering does not guarantee an execution price.';
 
   @override
   String get liveTrailingSell =>
-      'After activation, a sell follows the highest price and triggers on a fall by the callback percentage. Triggering does not guarantee an execution price.';
+      'After activation, a short order follows the highest price and triggers on a fall by the callback percentage. Triggering does not guarantee an execution price.';
 
   @override
   String get liveTrailingEstimateHint =>
       'There is no fixed execution price. Notional and opening margin use the current mark only as a reference; closing PnL is unavailable. Actual size eligibility, margin and execution depend on exchange state. Fees, funding and slippage are excluded.';
+
+  @override
+  String get quickOrderInvalidAmount => 'Enter a positive decimal amount.';
+
+  @override
+  String get quickOrderQuoteUnavailable =>
+      'Order book price is unavailable, so the amount cannot be converted. Try again shortly.';
+
+  @override
+  String get quickOrderAmountTooSmall => 'The amount is below the minimum order quantity.';
+
+  @override
+  String get quickOrderInsufficientBalance => 'Insufficient balance';
 
   @override
   String get quickOrderInvalid =>
@@ -2502,10 +2234,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Percentage sizing is unavailable. Retry the read, or enter a quantity if the account context is valid. Inputs are preserved.';
 
   @override
-  String get quickOrderBuy => 'Market Buy / Long';
+  String get quickOrderBuy => 'Market Long';
 
   @override
-  String get quickOrderSell => 'Market Sell / Short';
+  String get quickOrderSell => 'Market Short';
 
   @override
   String get quickOrderConfirmation => 'Quick market order confirmation';
@@ -2514,21 +2246,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickOrderDoNotShow => 'Do not show market order confirmation again';
 
   @override
-  String get quickOrderConfirmPreference => 'Confirm market entries';
+  String get quickOrderMarketBuy => 'Long';
 
   @override
-  String get quickOrderPreferenceFailure =>
-      'Confirmation preference could not be read or saved. The last saved choice is retained; orders require review until a choice is saved successfully.';
-
-  @override
-  String get quickOrderMarketBuy => 'Market Buy';
-
-  @override
-  String get quickOrderMarketSell => 'Market Sell';
+  String get quickOrderMarketSell => 'Short';
 
   @override
   String quickOrderAmount(String asset) {
-    return 'Amount($asset)';
+    return 'Market · Amount · $asset';
   }
 
   @override
@@ -3359,9 +3084,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get attachedEntryPricing => 'Entry pricing';
-
-  @override
-  String get attachedEntryFixed => 'Enter a limit price';
 
   @override
   String attachedEntryCounterparty(int depth) {
@@ -5478,18 +5200,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'The current quantity or price differs from the original strategy terms. Values above are from this order report; automatic replenishment is not inferred.';
 
   @override
-  String get liveAmountUnit => 'Order size unit';
-
-  @override
-  String liveAmountInput(String asset) {
-    return 'Order amount ($asset)';
-  }
-
-  @override
-  String get liveAmountHint =>
-      'Enter order notional, not margin. The amount is not multiplied by leverage.';
-
-  @override
   String get liveAmountInvalid => 'Enter a positive order amount using decimal digits.';
 
   @override
@@ -5501,41 +5211,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'The required conversion price is unavailable. Refresh the order snapshot or enter a base-asset quantity.';
 
   @override
-  String get liveAmountLimitReference => 'entered limit price';
-
-  @override
-  String get liveAmountAskReference => 'best ask snapshot';
-
-  @override
-  String get liveAmountBidReference => 'best bid snapshot';
-
-  @override
-  String get liveAmountTriggerReference => 'trigger price estimate';
-
-  @override
-  String get liveAmountBboReference => 'indicative Mark, not an engine BBO price';
-
-  @override
-  String liveAmountConversionPrice(String basis) {
-    return 'Conversion reference: $basis';
-  }
-
-  @override
   String get liveAmountResolvedQuantity => 'Base quantity to submit';
-
-  @override
-  String get liveAmountSnapshotTime => 'Order snapshot (UTC)';
-
-  @override
-  String get liveAmountEstimateHint =>
-      'Quantity is rounded down to the applicable step and fixed for confirmation. Market, trigger and BBO prices may change; actual spending can exceed this estimate. This amount is not a spending cap.';
 
   @override
   String get futuresHistoryTitle => 'Futures history';
 
   @override
   String get futuresHistoryScope =>
-      'Read this wallet’s futures orders, individual fills and income ledger separately. BUY/SELL alone does not identify opening or closing. Reading never submits or cancels an order.';
+      'Read this wallet’s futures orders, individual fills and income ledger separately. Long/Short direction alone does not identify opening or closing. Reading never submits or cancels an order.';
 
   @override
   String get futuresHistoryIncome => 'Income ledger';
@@ -5611,21 +5294,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get orderConfirmLimit => 'Confirm limit and Post Only entries';
-
-  @override
-  String get orderConfirmStopLimit => 'Confirm conditional limit entries';
-
-  @override
-  String get orderConfirmStopMarket => 'Confirm conditional market entries';
-
-  @override
-  String get orderConfirmTrailing => 'Confirm trailing stop entries';
-
-  @override
-  String get orderConfirmLimitShared => 'Limit and Post Only share this setting.';
-
-  @override
   String get orderConfirmDoNotShow => 'Do not show confirmation again for this order type';
 
   @override
@@ -5647,10 +5315,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orderConfirmStopLoss => 'Stop Loss';
 
   @override
-  String get orderConfirmBuy => 'Buy/Long';
+  String get orderConfirmBuy => 'Long';
 
   @override
-  String get orderConfirmSell => 'Sell/Short';
+  String get orderConfirmSell => 'Short';
 
   @override
   String get orderConfirmSubmitted => 'Order submitted';
@@ -5658,10 +5326,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get orderConfirmExpired =>
       'Order details are no longer current. Close this dialog and place the order again.';
-
-  @override
-  String get orderConfirmWalletHint =>
-      'This setting controls the app review. Wallet signatures and checks before submission still apply.';
 
   @override
   String get scaledTotalAmount => 'Total order amount';
@@ -5771,12 +5435,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orderTypeScaled => 'Scaled Order';
 
   @override
-  String get orderModeLabel => 'Order type';
-
-  @override
-  String get orderModeMore => 'More order types';
-
-  @override
   String get orderModeStopLimit => 'TP/SL Limit';
 
   @override
@@ -5876,13 +5534,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get liveCapacityRatesUnavailable =>
       'Fresh collateral conversion rates are unavailable. Refresh before calculating capacity.';
-
-  @override
-  String get liveCapacityRefreshAccount => 'Refresh trading account and limits';
-
-  @override
-  String get liveCapacityRefreshAccountHint =>
-      'Sign separately to read configuration, balances, positions, orders, risk tiers and the symbol fee, with up to ten wallet signatures; also refresh public prices and collateral rates. No order is submitted.';
 
   @override
   String get liveCapacityLiquidation => 'Estimated liquidation price after fill';
@@ -7015,6 +6666,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String notificationOrderSide(String side) {
     String _temp0 = intl.Intl.selectLogic(side, {
+      'BUY': 'long order',
+      'SELL': 'short order',
+      'other': 'order',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String spotOrderSide(String side) {
+    String _temp0 = intl.Intl.selectLogic(side, {
       'BUY': 'buy order',
       'SELL': 'sell order',
       'other': 'order',
@@ -7217,7 +6878,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openOrdersConfirm => 'Confirm';
 
   @override
-  String get openOrdersDetailsTitle => 'Order details';
+  String get openOrdersEdit => 'Edit';
+
+  @override
+  String get openOrdersEditTitle => 'Edit Price/Amount';
+
+  @override
+  String get openOrdersEditPrice => 'Price';
+
+  @override
+  String get openOrdersEditAmount => 'Amount';
+
+  @override
+  String get openOrdersEditNote =>
+      'After a successful order modification, the order\'s time priority is reset and it moves to the back of the queue at the same price level.\nNote: This rule also applies when only the quantity is adjusted, not the price.';
+
+  @override
+  String get openOrdersEditInvalidPrice => 'Enter a price greater than 0.';
+
+  @override
+  String openOrdersEditInvalidAmount(String filled) {
+    return 'Enter an amount greater than the filled amount $filled.';
+  }
+
+  @override
+  String get openOrdersEditUnchanged => 'Change the price or amount before confirming.';
+
+  @override
+  String get openOrdersEditModified => 'Order modified.';
+
+  @override
+  String openOrdersEditFailed(String reason) {
+    return 'Order not modified: $reason';
+  }
+
+  @override
+  String get openOrdersEditClosed => 'The order is no longer open and was not modified.';
+
+  @override
+  String get openOrdersEditUnknown =>
+      'The modification result is unconfirmed. Check open orders before trying again; it is never resubmitted automatically.';
 
   @override
   String openOrdersViewChart(String symbol) {
@@ -7277,6 +6977,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get positionsCloseAll => 'Close all';
+
+  @override
+  String positionsCloseAllQuestion(int count) {
+    return 'Are you sure you want to close all $count positions by market orders?';
+  }
+
+  @override
+  String positionsCloseSymbolQuestion(String symbol, int count) {
+    return 'Are you sure you want to close all $count $symbol positions by market orders?';
+  }
 
   @override
   String get positionsEntry => 'Entry';
@@ -7357,6 +7067,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get positionTpslConfirm => 'Confirm';
+
+  @override
+  String get positionTpslAdd => 'Add TP/SL';
+
+  @override
+  String positionTpslEstimatedPnlUnit(String unit) {
+    return 'Estimated Pnl ($unit)';
+  }
+
+  @override
+  String positionTpslAmountUnit(String unit) {
+    return 'Amount ($unit)';
+  }
 
   @override
   String get positionTpslTriggerTitle => 'Select Trigger Type';
@@ -7782,4 +7505,218 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pushNoServerVisibility =>
       'The notification server cannot observe this account. You will not receive account notifications while the app is closed.';
+
+  @override
+  String assistantRemainingToday(String remaining, String limit) {
+    return 'Remaining today: $remaining/$limit';
+  }
+
+  @override
+  String get assistantClearAction => 'Clear';
+
+  @override
+  String get assistantBack => 'Back';
+
+  @override
+  String get assistantCopilotTitle => 'Your AI Trading Copilot';
+
+  @override
+  String get assistantCopilotIntro => 'Ask about markets, trends, or risk and reward.';
+
+  @override
+  String get assistantAuthIntro =>
+      'Ask market questions, summarize trends, and explore risk and reward.';
+
+  @override
+  String get assistantAuthCardTitle => 'Authenticate your wallet';
+
+  @override
+  String get assistantAuthCardBody =>
+      'Connect your wallet and complete wallet authentication to use Vanta AI.';
+
+  @override
+  String get assistantAuthenticate => 'Authenticate';
+
+  @override
+  String get assistantSessionExpired =>
+      'Your session has expired. Please re-authenticate your wallet to continue using Vanta AI.';
+
+  @override
+  String get assistantPromptMarket => 'What moved BTC over the last 24h?';
+
+  @override
+  String get assistantPromptFunding => 'How does funding affect risk and reward?';
+
+  @override
+  String get assistantPromptGuide => 'Explain perpetual funding step by step.';
+
+  @override
+  String get assistantDisclaimer => 'AI can make mistakes. Verify important information.';
+
+  @override
+  String get assistantThinking => 'Agent is thinking…';
+
+  @override
+  String get assistantManuallyInterrupted => 'This response was manually interrupted.';
+
+  @override
+  String get assistantResponseFailedTitle => 'Couldn\'t generate a response';
+
+  @override
+  String get assistantResponseFailedBody => 'Something went wrong. Please try again.';
+
+  @override
+  String get assistantRetry => 'Retry';
+
+  @override
+  String get assistantLimitTitle => 'Daily AI limit reached';
+
+  @override
+  String get assistantLimitBody =>
+      'You\'ve reached today\'s AI request limit. Please try again after the daily reset.';
+
+  @override
+  String get assistantWalletAuthTitle => 'Wallet authentication';
+
+  @override
+  String get assistantEnableTitle => 'Enable Vanta AI';
+
+  @override
+  String get assistantStepConnect => 'Connect wallet';
+
+  @override
+  String get assistantStepSign => 'Sign message';
+
+  @override
+  String get assistantConnectTitle => '1. Connect your wallet';
+
+  @override
+  String get assistantConnectBody =>
+      'Connect a wallet, then sign an authentication message to enable Vanta AI.';
+
+  @override
+  String get assistantConnectWallet => 'Connect wallet';
+
+  @override
+  String get assistantSignTitle => '2. Sign to authenticate';
+
+  @override
+  String get assistantSignBody =>
+      'Wallet connected. Sign the authentication message in your wallet, then return here.';
+
+  @override
+  String get assistantSignWithWallet => 'Sign with wallet';
+
+  @override
+  String get assistantSignatureCanceledTitle => 'Signature canceled';
+
+  @override
+  String get assistantSignatureCanceledBody => 'You need to sign the message to enable Vanta AI.';
+
+  @override
+  String get assistantTryAgain => 'Try Again';
+
+  @override
+  String get assistantAuthExpiredTitle => 'Authentication expired';
+
+  @override
+  String get assistantAuthExpiredBody =>
+      'Your authentication request has expired. Please try again.';
+
+  @override
+  String get assistantSignAgain => 'Sign Again';
+
+  @override
+  String get assistantAuthFailedTitle => 'Authentication failed';
+
+  @override
+  String get assistantAuthFailedBody => 'We couldn\'t verify your wallet. Please try again.';
+
+  @override
+  String get settingsChinese => '中文';
+
+  @override
+  String get settingsPushNotifications => 'Push Notifications';
+
+  @override
+  String get settingsCheckUpdates => 'Check for Updates';
+
+  @override
+  String get settingsCheck => 'Check';
+
+  @override
+  String get settingsAppVersion => 'App Version';
+
+  @override
+  String get settingsCacheSize => 'Cache Size';
+
+  @override
+  String settingsCacheValue(String size) {
+    return '$size · Clear';
+  }
+
+  @override
+  String get settingsCacheCleared => 'Cache cleared';
+
+  @override
+  String get settingsCacheClearFailed => 'Some cached files could not be cleared. Please retry.';
+
+  @override
+  String get settingsUpToDate => 'No update required for this version';
+
+  @override
+  String settingsUpdateRequired(String version) {
+    return 'Please update to version $version or later';
+  }
+
+  @override
+  String get settingsVersionUnreadable => 'The installed app version could not be read.';
+
+  @override
+  String get settingsLinkFailed => 'The link could not be opened.';
+
+  @override
+  String get pushQuietHours => 'Quiet Hours';
+
+  @override
+  String get pushNotificationTime => 'Notification Time';
+
+  @override
+  String get pushMinimumTradeValue => 'Minimum Trade Value';
+
+  @override
+  String get pushTradeExecutions => 'Trade Executions';
+
+  @override
+  String get pushConditionalTriggers => 'Conditional Order Triggers';
+
+  @override
+  String get pushOrderUpdates => 'Order Updates';
+
+  @override
+  String get pushFundingFees => 'Funding Fees';
+
+  @override
+  String get pushTransfers => 'Deposits & Withdrawals';
+
+  @override
+  String get pushAnnouncements => 'Announcements';
+
+  @override
+  String get pushStartTime => 'Start time';
+
+  @override
+  String get pushEndTime => 'End time';
+
+  @override
+  String get pushHour => 'Hour';
+
+  @override
+  String get pushMinute => 'Minute';
+
+  @override
+  String get pushConfirm => 'Confirm';
+
+  @override
+  String get pushQuietSameTime => 'Start and end time must be different.';
 }

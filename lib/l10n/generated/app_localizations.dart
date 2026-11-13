@@ -537,6 +537,18 @@ abstract class AppLocalizations {
   /// **'Overlays share the price pane. Show one lower indicator at a time, switch or hide it whenever you need.'**
   String get indicatorHint;
 
+  /// No description provided for @chartSelectTimeframe.
+  ///
+  /// In en, this message translates to:
+  /// **'Select timeframe'**
+  String get chartSelectTimeframe;
+
+  /// No description provided for @chartSettingsConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get chartSettingsConfirm;
+
   /// No description provided for @exitFullscreen.
   ///
   /// In en, this message translates to:
@@ -567,30 +579,6 @@ abstract class AppLocalizations {
   /// **'Line'**
   String get lineChart;
 
-  /// No description provided for @sync.
-  ///
-  /// In en, this message translates to:
-  /// **'Market cache'**
-  String get sync;
-
-  /// No description provided for @syncing.
-  ///
-  /// In en, this message translates to:
-  /// **'History loading / gap repair'**
-  String get syncing;
-
-  /// No description provided for @closedCandle.
-  ///
-  /// In en, this message translates to:
-  /// **'Closed'**
-  String get closedCandle;
-
-  /// No description provided for @formingCandle.
-  ///
-  /// In en, this message translates to:
-  /// **'Forming'**
-  String get formingCandle;
-
   /// No description provided for @eventTime.
   ///
   /// In en, this message translates to:
@@ -602,30 +590,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Candle start'**
   String get startTime;
-
-  /// No description provided for @chartSource.
-  ///
-  /// In en, this message translates to:
-  /// **'Aster Perpetuals · USDT'**
-  String get chartSource;
-
-  /// No description provided for @chartSourceShort.
-  ///
-  /// In en, this message translates to:
-  /// **'Aster · USDT'**
-  String get chartSourceShort;
-
-  /// No description provided for @marketSource.
-  ///
-  /// In en, this message translates to:
-  /// **'Aster Perpetuals'**
-  String get marketSource;
-
-  /// No description provided for @poweredBy.
-  ///
-  /// In en, this message translates to:
-  /// **'VANTA  /  POWERED BY ASTER'**
-  String get poweredBy;
 
   /// No description provided for @gap.
   ///
@@ -906,13 +870,13 @@ abstract class AppLocalizations {
   /// No description provided for @buy.
   ///
   /// In en, this message translates to:
-  /// **'Buy / Long'**
+  /// **'Long'**
   String get buy;
 
   /// No description provided for @sell.
   ///
   /// In en, this message translates to:
-  /// **'Sell / Short'**
+  /// **'Short'**
   String get sell;
 
   /// No description provided for @long.
@@ -1431,12 +1395,6 @@ abstract class AppLocalizations {
   /// **'Expand chart'**
   String get fullscreen;
 
-  /// No description provided for @chartHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Hold for details · Pinch to zoom'**
-  String get chartHint;
-
   /// No description provided for @network.
   ///
   /// In en, this message translates to:
@@ -1923,16 +1881,28 @@ abstract class AppLocalizations {
   /// **'No open orders for the current symbol.'**
   String get openOrdersNoCurrentSymbol;
 
-  /// No description provided for @openOrdersBuy.
+  /// No description provided for @spotSideBuy.
   ///
   /// In en, this message translates to:
   /// **'Buy'**
+  String get spotSideBuy;
+
+  /// No description provided for @spotSideSell.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell'**
+  String get spotSideSell;
+
+  /// No description provided for @openOrdersBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Long'**
   String get openOrdersBuy;
 
   /// No description provided for @openOrdersSell.
   ///
   /// In en, this message translates to:
-  /// **'Sell'**
+  /// **'Short'**
   String get openOrdersSell;
 
   /// No description provided for @openOrdersLongSide.
@@ -1976,12 +1946,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Partially filled'**
   String get openOrdersPartiallyFilled;
-
-  /// No description provided for @openOrdersCreatedLocal.
-  ///
-  /// In en, this message translates to:
-  /// **'Placed (local time)'**
-  String get openOrdersCreatedLocal;
 
   /// No description provided for @openOrdersFilledTotal.
   ///
@@ -2228,12 +2192,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel all perpetual orders?'**
   String get batchCancelTitle;
-
-  /// No description provided for @batchCancelHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel all orders on the listed futures symbols when Aster processes each request, including orders added on other devices. Other symbols and Spot orders are outside this scope. Each symbol requires cancellation and status-query signatures. Filled positions remain.'**
-  String get batchCancelHint;
 
   /// No description provided for @batchCancelScopeCount.
   ///
@@ -2655,36 +2613,6 @@ abstract class AppLocalizations {
   /// **'This read was stopped. You can try again.'**
   String get historyReadStopped;
 
-  /// No description provided for @positionRiskTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Position risk'**
-  String get positionRiskTitle;
-
-  /// No description provided for @positionRiskScope.
-  ///
-  /// In en, this message translates to:
-  /// **'Read positions for the connected wallet. A signed snapshot is the baseline; enabled account monitoring can update individual positions. Public mark prices update estimates separately. Read account balances separately. Closing requires its own confirmation and signatures; TP/SL is not available yet.'**
-  String get positionRiskScope;
-
-  /// No description provided for @positionRiskRead.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign to read position risk'**
-  String get positionRiskRead;
-
-  /// No description provided for @positionRiskRefresh.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign to refresh position risk'**
-  String get positionRiskRefresh;
-
-  /// No description provided for @positionRiskCount.
-  ///
-  /// In en, this message translates to:
-  /// **'Position records ({count})'**
-  String positionRiskCount(int count);
-
   /// No description provided for @positionRiskNoCurrent.
   ///
   /// In en, this message translates to:
@@ -2697,191 +2625,17 @@ abstract class AppLocalizations {
   /// **'Negative isolated balance'**
   String get positionRiskBalanceOnly;
 
-  /// No description provided for @positionRiskSide.
-  ///
-  /// In en, this message translates to:
-  /// **'Position side'**
-  String get positionRiskSide;
-
   /// No description provided for @positionRiskNotional.
   ///
   /// In en, this message translates to:
   /// **'Signed notional'**
   String get positionRiskNotional;
 
-  /// No description provided for @positionRiskLiquidation.
-  ///
-  /// In en, this message translates to:
-  /// **'Liquidation price'**
-  String get positionRiskLiquidation;
-
   /// No description provided for @positionRiskIsolatedWallet.
   ///
   /// In en, this message translates to:
   /// **'Isolated wallet balance'**
   String get positionRiskIsolatedWallet;
-
-  /// No description provided for @positionRiskIsolatedMargin.
-  ///
-  /// In en, this message translates to:
-  /// **'Isolated margin'**
-  String get positionRiskIsolatedMargin;
-
-  /// No description provided for @positionRiskUpdated.
-  ///
-  /// In en, this message translates to:
-  /// **'Position update (UTC)'**
-  String get positionRiskUpdated;
-
-  /// No description provided for @positionRiskLiquidationHint.
-  ///
-  /// In en, this message translates to:
-  /// **'A missing or zero liquidation price is shown as —. This does not mean the position is free of liquidation risk.'**
-  String get positionRiskLiquidationHint;
-
-  /// No description provided for @positionRiskBalanceHint.
-  ///
-  /// In en, this message translates to:
-  /// **'The position quantity is zero, but its isolated wallet balance is negative. This record remains visible for review.'**
-  String get positionRiskBalanceHint;
-
-  /// No description provided for @positionAdlTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'ADL queue'**
-  String get positionAdlTitle;
-
-  /// No description provided for @positionAdlScope.
-  ///
-  /// In en, this message translates to:
-  /// **'Read ADL separately with your wallet. Levels range from 0 to 4, low to high, and the exchange updates them every 30 seconds. Four lit bars indicate the highest queue level. This is not a margin ratio or a liquidation countdown. Refresh positions and ADL to review matching snapshots.'**
-  String get positionAdlScope;
-
-  /// No description provided for @positionAdlRead.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign to read ADL'**
-  String get positionAdlRead;
-
-  /// No description provided for @positionAdlRefresh.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign to refresh ADL'**
-  String get positionAdlRefresh;
-
-  /// No description provided for @positionAdlUnknown.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown — read or refresh matching ADL data'**
-  String get positionAdlUnknown;
-
-  /// No description provided for @positionAdlNotApplicable.
-  ///
-  /// In en, this message translates to:
-  /// **'Not applicable to a zero-quantity balance record'**
-  String get positionAdlNotApplicable;
-
-  /// No description provided for @positionAdlLevel.
-  ///
-  /// In en, this message translates to:
-  /// **'Level {level} / 4'**
-  String positionAdlLevel(int level);
-
-  /// No description provided for @positionAdlHistorical.
-  ///
-  /// In en, this message translates to:
-  /// **'Historical level {level} / 4 — refresh'**
-  String positionAdlHistorical(int level);
-
-  /// No description provided for @positionAdlEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No ADL records returned. Missing positions remain unknown.'**
-  String get positionAdlEmpty;
-
-  /// No description provided for @positionMarkReadFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Read positions to start public mark prices.'**
-  String get positionMarkReadFirst;
-
-  /// No description provided for @positionMarkScope.
-  ///
-  /// In en, this message translates to:
-  /// **'Estimates use the displayed position quantity and entry price with public mark prices. Fees and funding are excluded. Prices expire after 10 seconds; refreshing prices does not verify the complete position list, margin or liquidation prices.'**
-  String get positionMarkScope;
-
-  /// No description provided for @positionMarkCoverage.
-  ///
-  /// In en, this message translates to:
-  /// **'Fresh mark prices: {fresh} / {total} symbols'**
-  String positionMarkCoverage(int fresh, int total);
-
-  /// No description provided for @positionMarkSnapshot.
-  ///
-  /// In en, this message translates to:
-  /// **'Snapshot mark price'**
-  String get positionMarkSnapshot;
-
-  /// No description provided for @positionMarkCurrent.
-  ///
-  /// In en, this message translates to:
-  /// **'Current mark price'**
-  String get positionMarkCurrent;
-
-  /// No description provided for @positionMarkHistorical.
-  ///
-  /// In en, this message translates to:
-  /// **'Historical mark price'**
-  String get positionMarkHistorical;
-
-  /// No description provided for @positionMarkTime.
-  ///
-  /// In en, this message translates to:
-  /// **'Mark event (UTC)'**
-  String get positionMarkTime;
-
-  /// No description provided for @positionEstimatedNotional.
-  ///
-  /// In en, this message translates to:
-  /// **'Estimated signed notional'**
-  String get positionEstimatedNotional;
-
-  /// No description provided for @positionEstimatedPnl.
-  ///
-  /// In en, this message translates to:
-  /// **'Estimated unrealized PnL'**
-  String get positionEstimatedPnl;
-
-  /// No description provided for @positionEstimateStale.
-  ///
-  /// In en, this message translates to:
-  /// **'Historical estimate: positions or mark prices need refreshing.'**
-  String get positionEstimateStale;
-
-  /// No description provided for @positionSnapshotNotional.
-  ///
-  /// In en, this message translates to:
-  /// **'Snapshot signed notional'**
-  String get positionSnapshotNotional;
-
-  /// No description provided for @positionSnapshotPnl.
-  ///
-  /// In en, this message translates to:
-  /// **'Snapshot unrealized PnL'**
-  String get positionSnapshotPnl;
-
-  /// No description provided for @positionMarkUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Some mark prices are unavailable or stale. Retained values are historical.'**
-  String get positionMarkUnavailable;
-
-  /// No description provided for @positionMarkRetry.
-  ///
-  /// In en, this message translates to:
-  /// **'Retry public mark prices'**
-  String get positionMarkRetry;
 
   /// Futures private account change monitor; does not merge partial event payloads into snapshots.
   ///
@@ -3038,54 +2792,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cross wallet balance'**
   String get accountCrossWalletBalance;
-
-  /// No description provided for @positionEventPnl.
-  ///
-  /// In en, this message translates to:
-  /// **'Event unrealized PnL'**
-  String get positionEventPnl;
-
-  /// No description provided for @positionEventFieldsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Leverage, liquidation price, mark, notional and isolated margin are not provided by this event. Read positions to verify. Public mark estimates use the displayed quantity and entry price; they do not confirm the complete account.'**
-  String get positionEventFieldsHint;
-
-  /// No description provided for @positionAllocatedMargin.
-  ///
-  /// In en, this message translates to:
-  /// **'Allocated isolated wallet'**
-  String get positionAllocatedMargin;
-
-  /// No description provided for @positionEstimatedCrossMargin.
-  ///
-  /// In en, this message translates to:
-  /// **'Estimated cross position margin'**
-  String get positionEstimatedCrossMargin;
-
-  /// No description provided for @positionEstimatedInitialMargin.
-  ///
-  /// In en, this message translates to:
-  /// **'Estimated initial margin basis'**
-  String get positionEstimatedInitialMargin;
-
-  /// No description provided for @positionEstimatedRoe.
-  ///
-  /// In en, this message translates to:
-  /// **'Estimated ROE (%)'**
-  String get positionEstimatedRoe;
-
-  /// No description provided for @positionSnapshotRoe.
-  ///
-  /// In en, this message translates to:
-  /// **'Snapshot ROE estimate (%)'**
-  String get positionSnapshotRoe;
-
-  /// No description provided for @positionReturnScope.
-  ///
-  /// In en, this message translates to:
-  /// **'Linear contracts: initial margin basis = absolute quantity × mark price ÷ leverage; ROE = unrealized PnL ÷ that basis × 100. Isolated margin allocation uses its wallet balance, not the ROE basis. These estimates exclude fees and funding, are not account returns or available funds, and remain historical when position data or prices are stale. Unknown leverage or units shows —.'**
-  String get positionReturnScope;
 
   /// No description provided for @leverageSettings.
   ///
@@ -3693,16 +3399,10 @@ abstract class AppLocalizations {
   /// **'The form above uses local demo funds. Live orders have a separate wallet confirmation.'**
   String get liveOrderEntryHint;
 
-  /// No description provided for @liveOrderTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Live futures order'**
-  String get liveOrderTitle;
-
   /// No description provided for @liveOrderScope.
   ///
   /// In en, this message translates to:
-  /// **'Use this wallet to place real ordinary, conditional or trailing orders. Limit orders use a supported execution policy. In one-way mode, buying or selling can reduce or reverse an existing position. Hedge mode operates on the selected long or short side. Aster checks fees, available margin and final eligibility.'**
+  /// **'Use this wallet to place real ordinary, conditional or trailing orders. Limit orders use a supported execution policy. In one-way mode, a long or short order can reduce or reverse an existing position. Hedge mode operates on the selected long or short side. Aster checks fees, available margin and final eligibility.'**
   String get liveOrderScope;
 
   /// No description provided for @liveOrderReadContext.
@@ -3710,12 +3410,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Read order settings (2 signatures)'**
   String get liveOrderReadContext;
-
-  /// No description provided for @liveOrderReadHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Read public trading rules and mark price, then sign separately for position mode and symbol configuration. Settings expire 30 seconds after the mark-price response. Reading places no order.'**
-  String get liveOrderReadHint;
 
   /// No description provided for @liveOrderSettingsBusy.
   ///
@@ -3747,35 +3441,17 @@ abstract class AppLocalizations {
   /// **'Quantity ({asset})'**
   String liveOrderQuantity(String asset);
 
-  /// No description provided for @liveOrderQuantityBounds.
-  ///
-  /// In en, this message translates to:
-  /// **'Minimum {minimum}; maximum {maximum}; step {step}'**
-  String liveOrderQuantityBounds(String minimum, String maximum, String step);
-
   /// No description provided for @liveOrderPrice.
   ///
   /// In en, this message translates to:
   /// **'Limit price ({asset})'**
   String liveOrderPrice(String asset);
 
-  /// No description provided for @liveOrderPriceTick.
-  ///
-  /// In en, this message translates to:
-  /// **'Price increment: {tick}'**
-  String liveOrderPriceTick(String tick);
-
   /// No description provided for @liveOrderEstimatedNotional.
   ///
   /// In en, this message translates to:
   /// **'Reference notional'**
   String get liveOrderEstimatedNotional;
-
-  /// No description provided for @liveOrderReview.
-  ///
-  /// In en, this message translates to:
-  /// **'Review live order'**
-  String get liveOrderReview;
 
   /// No description provided for @liveOrderClientId.
   ///
@@ -3843,30 +3519,6 @@ abstract class AppLocalizations {
   /// **'IOC (Immediate or canceled)'**
   String get timeInForceIoc;
 
-  /// No description provided for @liveOrderConditional.
-  ///
-  /// In en, this message translates to:
-  /// **'Conditional order'**
-  String get liveOrderConditional;
-
-  /// No description provided for @liveOrderPositionTriggers.
-  ///
-  /// In en, this message translates to:
-  /// **'Position TP/SL'**
-  String get liveOrderPositionTriggers;
-
-  /// No description provided for @liveOrderStop.
-  ///
-  /// In en, this message translates to:
-  /// **'Stop'**
-  String get liveOrderStop;
-
-  /// No description provided for @liveOrderTakeProfit.
-  ///
-  /// In en, this message translates to:
-  /// **'Take profit'**
-  String get liveOrderTakeProfit;
-
   /// No description provided for @liveOrderTriggerBasis.
   ///
   /// In en, this message translates to:
@@ -3878,18 +3530,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reference price at read'**
   String get liveOrderTriggerReference;
-
-  /// No description provided for @liveOrderTriggerRises.
-  ///
-  /// In en, this message translates to:
-  /// **'Triggers when the selected price rises to or above the trigger price.'**
-  String get liveOrderTriggerRises;
-
-  /// No description provided for @liveOrderTriggerFalls.
-  ///
-  /// In en, this message translates to:
-  /// **'Triggers when the selected price falls to or below the trigger price.'**
-  String get liveOrderTriggerFalls;
 
   /// No description provided for @liveOrderTriggerProtect.
   ///
@@ -3909,29 +3549,11 @@ abstract class AppLocalizations {
   /// **'Off'**
   String get liveOrderProtectOff;
 
-  /// No description provided for @liveOrderProtectHint.
-  ///
-  /// In en, this message translates to:
-  /// **'When enabled, the mark/last price difference must also satisfy the symbol’s threshold at trigger time. This can delay or prevent triggering; it does not protect the execution price.'**
-  String get liveOrderProtectHint;
-
-  /// No description provided for @liveOrderProtectThreshold.
-  ///
-  /// In en, this message translates to:
-  /// **'Allowed price difference at trigger: {percent}%.'**
-  String liveOrderProtectThreshold(String percent);
-
   /// No description provided for @liveOrderConditionalHint.
   ///
   /// In en, this message translates to:
   /// **'This submits one independent conditional order for the specified quantity. Triggering does not guarantee a fill. Separate TP and SL orders do not cancel each other automatically. Later position changes can affect execution; review active orders separately.'**
   String get liveOrderConditionalHint;
-
-  /// No description provided for @liveOrderConditionalEstimateHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Reference estimate only: conditional market orders use the trigger price, conditional limit orders use the limit price. Position, leverage and available funds can change before triggering. Fees, funding, depth slippage and execution-time checks are excluded; this is not realized PnL or guaranteed required margin.'**
-  String get liveOrderConditionalEstimateHint;
 
   /// No description provided for @liveOrderTypeUnavailable.
   ///
@@ -3968,12 +3590,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The trigger price is already reached at this read. Adjust it according to the displayed direction and review again. Aster checks the actual price at submission.'**
   String get liveOrderTriggerImmediate;
-
-  /// No description provided for @liveOrderPolicyChoose.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose a supported policy'**
-  String get liveOrderPolicyChoose;
 
   /// No description provided for @liveOrderPolicyGtc.
   ///
@@ -4041,12 +3657,6 @@ abstract class AppLocalizations {
   /// **'Order type'**
   String get liveOrderType;
 
-  /// No description provided for @liveOrderSignSubmit.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign and place live order'**
-  String get liveOrderSignSubmit;
-
   /// No description provided for @liveOrderInvalidQuantity.
   ///
   /// In en, this message translates to:
@@ -4083,18 +3693,6 @@ abstract class AppLocalizations {
   /// **'Order value is below the exchange minimum notional. Market orders use the reference mark price.'**
   String get liveOrderNotionalFilter;
 
-  /// No description provided for @liveCloseTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Close a live position'**
-  String get liveCloseTitle;
-
-  /// No description provided for @liveCloseScope.
-  ///
-  /// In en, this message translates to:
-  /// **'Read this wallet’s current position before choosing an ordinary or trailing close. Position TP/SL supports fixed quantity or entire close at trigger. One-way fixed-quantity closes only reduce positions; hedge closes retain the original LONG/SHORT side. Percentage quantities round down to the order step; 100% can leave a remainder. Existing orders are not cancelled.'**
-  String get liveCloseScope;
-
   /// No description provided for @liveClosePositionChanged.
   ///
   /// In en, this message translates to:
@@ -4110,32 +3708,20 @@ abstract class AppLocalizations {
   /// No description provided for @liveCloseLong.
   ///
   /// In en, this message translates to:
-  /// **'Close long · sell'**
+  /// **'Close long'**
   String get liveCloseLong;
 
   /// No description provided for @liveCloseShort.
   ///
   /// In en, this message translates to:
-  /// **'Close short · buy'**
+  /// **'Close short'**
   String get liveCloseShort;
-
-  /// No description provided for @liveClosePositionAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Position quantity at last read'**
-  String get liveClosePositionAmount;
 
   /// No description provided for @liveCloseEstimatedPnl.
   ///
   /// In en, this message translates to:
   /// **'Estimated close PnL'**
   String get liveCloseEstimatedPnl;
-
-  /// No description provided for @liveCloseEstimateHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Estimate only: market closes use the read best bid for longs or best ask for shorts; limit closes use the entered price. Fees, funding and depth slippage are excluded. Missing book data shows —. This is not realized PnL.'**
-  String get liveCloseEstimateHint;
 
   /// No description provided for @liveCloseConfirmTitle.
   ///
@@ -4167,12 +3753,6 @@ abstract class AppLocalizations {
   /// **'Remaining quantity at this read'**
   String get liveCloseRemaining;
 
-  /// No description provided for @liveOrderReduceHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Only reduce an existing position; never intentionally open the opposite side. Aster checks the available reducible quantity, including concurrent orders.'**
-  String get liveOrderReduceHint;
-
   /// No description provided for @liveOrderReduceHedge.
   ///
   /// In en, this message translates to:
@@ -4191,35 +3771,11 @@ abstract class AppLocalizations {
   /// **'Close all current-symbol live positions'**
   String get batchCloseCurrent;
 
-  /// No description provided for @batchCloseTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Close these live positions at market?'**
-  String get batchCloseTitle;
-
-  /// No description provided for @batchCloseHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Only the listed wallet, symbols, sides and exact quantities are included. Submit an opposite MARKET order for each nonzero position, using reduce-only in one-way mode or the original side in hedge mode. Existing orders and Spot are excluded. Each position needs separate setting-read, position-recheck, order and query signatures, followed by a final position-read signature. Changed positions, invalid quantities, refused signatures or unknown results stop further submissions. No automatic resizing or order retry. Later activity can change positions again.'**
-  String get batchCloseHint;
-
-  /// No description provided for @batchCloseReadFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Read a fresh, complete live position snapshot before closing all. An unresolved trade or configuration change must be checked first.'**
-  String get batchCloseReadFirst;
-
   /// No description provided for @batchCloseCount.
   ///
   /// In en, this message translates to:
   /// **'Confirmed scope: {count} positions'**
   String batchCloseCount(int count);
-
-  /// No description provided for @batchCloseConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign and close each position'**
-  String get batchCloseConfirm;
 
   /// No description provided for @batchCloseStopped.
   ///
@@ -4287,59 +3843,17 @@ abstract class AppLocalizations {
   /// **'Collateral eligibility not provided'**
   String get liveOrderCollateralUnknown;
 
-  /// No description provided for @liveOrderOpeningQuantity.
-  ///
-  /// In en, this message translates to:
-  /// **'Reference new opening quantity'**
-  String get liveOrderOpeningQuantity;
-
-  /// No description provided for @liveOrderOpeningMargin.
-  ///
-  /// In en, this message translates to:
-  /// **'Estimated additional opening initial margin'**
-  String get liveOrderOpeningMargin;
-
-  /// No description provided for @liveOrderMarginEstimateHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Reference only: new opening quantity × entered limit price (or reference mark) ÷ read leverage. One-way orders first offset the read opposite position; hedge orders open the selected side. Valid reduce-only closes add no opening exposure. Fees, funding, existing orders, released margin, execution price and risk tiers can change actual requirements.'**
-  String get liveOrderMarginEstimateHint;
-
   /// No description provided for @liveOrderFundsHistorical.
   ///
   /// In en, this message translates to:
   /// **'Historical funds snapshot. Refresh before reviewing another opening order.'**
   String get liveOrderFundsHistorical;
 
-  /// No description provided for @liveOrderMarginAboveBalance.
-  ///
-  /// In en, this message translates to:
-  /// **'The estimate exceeds the read USDT available balance. Review your funds; released margin and fees are excluded, and Aster makes the final check.'**
-  String get liveOrderMarginAboveBalance;
-
-  /// No description provided for @liveEntireClose.
-  ///
-  /// In en, this message translates to:
-  /// **'Close entire position at trigger'**
-  String get liveEntireClose;
-
   /// No description provided for @liveEntireHint.
   ///
   /// In en, this message translates to:
   /// **'The exchange uses the position size at trigger time, which may differ from this snapshot. No fixed quantity or reduceOnly is sent. Independent TP/SL orders do not cancel each other.'**
   String get liveEntireHint;
-
-  /// No description provided for @liveEntireMarketOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Entire close is available for conditional market orders only.'**
-  String get liveEntireMarketOnly;
-
-  /// No description provided for @liveEntireEstimateHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Estimated using the reviewed position quantity and trigger price. Trigger-time size, execution price, fees and funding may change the result.'**
-  String get liveEntireEstimateHint;
 
   /// No description provided for @liveEntireQuantity.
   ///
@@ -4470,7 +3984,7 @@ abstract class AppLocalizations {
   /// No description provided for @liveTrailingImmediate.
   ///
   /// In en, this message translates to:
-  /// **'A buy activation price must be below the selected latest price; a sell activation price must be above it.'**
+  /// **'A long activation price must be below the selected latest price; a short activation price must be above it.'**
   String get liveTrailingImmediate;
 
   /// No description provided for @liveTrailingHint.
@@ -4512,19 +4026,19 @@ abstract class AppLocalizations {
   /// No description provided for @liveTrailingActivationDirection.
   ///
   /// In en, this message translates to:
-  /// **'If specified: buy activation below the latest price; sell activation above it. The exchange rechecks at placement.'**
+  /// **'If specified: long activation below the latest price; short activation above it. The exchange rechecks at placement.'**
   String get liveTrailingActivationDirection;
 
   /// No description provided for @liveTrailingBuy.
   ///
   /// In en, this message translates to:
-  /// **'After activation, a buy follows the lowest price and triggers on a rise by the callback percentage. Triggering does not guarantee an execution price.'**
+  /// **'After activation, a long order follows the lowest price and triggers on a rise by the callback percentage. Triggering does not guarantee an execution price.'**
   String get liveTrailingBuy;
 
   /// No description provided for @liveTrailingSell.
   ///
   /// In en, this message translates to:
-  /// **'After activation, a sell follows the highest price and triggers on a fall by the callback percentage. Triggering does not guarantee an execution price.'**
+  /// **'After activation, a short order follows the highest price and triggers on a fall by the callback percentage. Triggering does not guarantee an execution price.'**
   String get liveTrailingSell;
 
   /// No description provided for @liveTrailingEstimateHint.
@@ -4532,6 +4046,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There is no fixed execution price. Notional and opening margin use the current mark only as a reference; closing PnL is unavailable. Actual size eligibility, margin and execution depend on exchange state. Fees, funding and slippage are excluded.'**
   String get liveTrailingEstimateHint;
+
+  /// No description provided for @quickOrderInvalidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive decimal amount.'**
+  String get quickOrderInvalidAmount;
+
+  /// No description provided for @quickOrderQuoteUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Order book price is unavailable, so the amount cannot be converted. Try again shortly.'**
+  String get quickOrderQuoteUnavailable;
+
+  /// No description provided for @quickOrderAmountTooSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'The amount is below the minimum order quantity.'**
+  String get quickOrderAmountTooSmall;
+
+  /// No description provided for @quickOrderInsufficientBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient balance'**
+  String get quickOrderInsufficientBalance;
 
   /// No description provided for @quickOrderInvalid.
   ///
@@ -4554,13 +4092,13 @@ abstract class AppLocalizations {
   /// No description provided for @quickOrderBuy.
   ///
   /// In en, this message translates to:
-  /// **'Market Buy / Long'**
+  /// **'Market Long'**
   String get quickOrderBuy;
 
   /// No description provided for @quickOrderSell.
   ///
   /// In en, this message translates to:
-  /// **'Market Sell / Short'**
+  /// **'Market Short'**
   String get quickOrderSell;
 
   /// No description provided for @quickOrderConfirmation.
@@ -4575,34 +4113,22 @@ abstract class AppLocalizations {
   /// **'Do not show market order confirmation again'**
   String get quickOrderDoNotShow;
 
-  /// No description provided for @quickOrderConfirmPreference.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm market entries'**
-  String get quickOrderConfirmPreference;
-
-  /// No description provided for @quickOrderPreferenceFailure.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirmation preference could not be read or saved. The last saved choice is retained; orders require review until a choice is saved successfully.'**
-  String get quickOrderPreferenceFailure;
-
   /// No description provided for @quickOrderMarketBuy.
   ///
   /// In en, this message translates to:
-  /// **'Market Buy'**
+  /// **'Long'**
   String get quickOrderMarketBuy;
 
   /// No description provided for @quickOrderMarketSell.
   ///
   /// In en, this message translates to:
-  /// **'Market Sell'**
+  /// **'Short'**
   String get quickOrderMarketSell;
 
   /// No description provided for @quickOrderAmount.
   ///
   /// In en, this message translates to:
-  /// **'Amount({asset})'**
+  /// **'Market · Amount · {asset}'**
   String quickOrderAmount(String asset);
 
   /// No description provided for @quickOrderAvailable.
@@ -5918,12 +5444,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Entry pricing'**
   String get attachedEntryPricing;
-
-  /// No description provided for @attachedEntryFixed.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a limit price'**
-  String get attachedEntryFixed;
 
   /// No description provided for @attachedEntryCounterparty.
   ///
@@ -9579,24 +9099,6 @@ abstract class AppLocalizations {
   /// **'The current quantity or price differs from the original strategy terms. Values above are from this order report; automatic replenishment is not inferred.'**
   String get strategyExecutionTermsChanged;
 
-  /// No description provided for @liveAmountUnit.
-  ///
-  /// In en, this message translates to:
-  /// **'Order size unit'**
-  String get liveAmountUnit;
-
-  /// No description provided for @liveAmountInput.
-  ///
-  /// In en, this message translates to:
-  /// **'Order amount ({asset})'**
-  String liveAmountInput(String asset);
-
-  /// No description provided for @liveAmountHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter order notional, not margin. The amount is not multiplied by leverage.'**
-  String get liveAmountHint;
-
   /// No description provided for @liveAmountInvalid.
   ///
   /// In en, this message translates to:
@@ -9615,59 +9117,11 @@ abstract class AppLocalizations {
   /// **'The required conversion price is unavailable. Refresh the order snapshot or enter a base-asset quantity.'**
   String get liveAmountReferenceUnavailable;
 
-  /// No description provided for @liveAmountLimitReference.
-  ///
-  /// In en, this message translates to:
-  /// **'entered limit price'**
-  String get liveAmountLimitReference;
-
-  /// No description provided for @liveAmountAskReference.
-  ///
-  /// In en, this message translates to:
-  /// **'best ask snapshot'**
-  String get liveAmountAskReference;
-
-  /// No description provided for @liveAmountBidReference.
-  ///
-  /// In en, this message translates to:
-  /// **'best bid snapshot'**
-  String get liveAmountBidReference;
-
-  /// No description provided for @liveAmountTriggerReference.
-  ///
-  /// In en, this message translates to:
-  /// **'trigger price estimate'**
-  String get liveAmountTriggerReference;
-
-  /// No description provided for @liveAmountBboReference.
-  ///
-  /// In en, this message translates to:
-  /// **'indicative Mark, not an engine BBO price'**
-  String get liveAmountBboReference;
-
-  /// No description provided for @liveAmountConversionPrice.
-  ///
-  /// In en, this message translates to:
-  /// **'Conversion reference: {basis}'**
-  String liveAmountConversionPrice(String basis);
-
   /// No description provided for @liveAmountResolvedQuantity.
   ///
   /// In en, this message translates to:
   /// **'Base quantity to submit'**
   String get liveAmountResolvedQuantity;
-
-  /// No description provided for @liveAmountSnapshotTime.
-  ///
-  /// In en, this message translates to:
-  /// **'Order snapshot (UTC)'**
-  String get liveAmountSnapshotTime;
-
-  /// No description provided for @liveAmountEstimateHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Quantity is rounded down to the applicable step and fixed for confirmation. Market, trigger and BBO prices may change; actual spending can exceed this estimate. This amount is not a spending cap.'**
-  String get liveAmountEstimateHint;
 
   /// No description provided for @futuresHistoryTitle.
   ///
@@ -9678,7 +9132,7 @@ abstract class AppLocalizations {
   /// No description provided for @futuresHistoryScope.
   ///
   /// In en, this message translates to:
-  /// **'Read this wallet’s futures orders, individual fills and income ledger separately. BUY/SELL alone does not identify opening or closing. Reading never submits or cancels an order.'**
+  /// **'Read this wallet’s futures orders, individual fills and income ledger separately. Long/Short direction alone does not identify opening or closing. Reading never submits or cancels an order.'**
   String get futuresHistoryScope;
 
   /// No description provided for @futuresHistoryIncome.
@@ -9771,36 +9225,6 @@ abstract class AppLocalizations {
   /// **'{type, select, TRANSFER{Transfer} WITHDRAW{Withdrawal} DEPOSIT{Deposit} WELCOME_BONUS{Welcome bonus} REALIZED_PNL{Realized PnL} FUNDING_FEE{Funding fee} COMMISSION{Commission} INSURANCE_CLEAR{Insurance clearing} MARKET_MERCHANT_RETURN_REWARD{Market merchant return reward} REFERRAL_KICKBACK{Referral kickback} COMMISSION_REBATE{Commission rebate} MARKET_MAKER_REBATE{Market maker rebate} API_REBATE{API rebate} CONTEST_REWARD{Contest reward} CROSS_COLLATERAL_TRANSFER{Cross-collateral transfer} INTERNAL_TRANSFER{Internal transfer} AUTO_EXCHANGE{Automatic exchange} other{Unknown ({type})}}'**
   String futuresHistoryIncomeType(String type);
 
-  /// No description provided for @orderConfirmLimit.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm limit and Post Only entries'**
-  String get orderConfirmLimit;
-
-  /// No description provided for @orderConfirmStopLimit.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm conditional limit entries'**
-  String get orderConfirmStopLimit;
-
-  /// No description provided for @orderConfirmStopMarket.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm conditional market entries'**
-  String get orderConfirmStopMarket;
-
-  /// No description provided for @orderConfirmTrailing.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm trailing stop entries'**
-  String get orderConfirmTrailing;
-
-  /// No description provided for @orderConfirmLimitShared.
-  ///
-  /// In en, this message translates to:
-  /// **'Limit and Post Only share this setting.'**
-  String get orderConfirmLimitShared;
-
   /// No description provided for @orderConfirmDoNotShow.
   ///
   /// In en, this message translates to:
@@ -9846,13 +9270,13 @@ abstract class AppLocalizations {
   /// No description provided for @orderConfirmBuy.
   ///
   /// In en, this message translates to:
-  /// **'Buy/Long'**
+  /// **'Long'**
   String get orderConfirmBuy;
 
   /// No description provided for @orderConfirmSell.
   ///
   /// In en, this message translates to:
-  /// **'Sell/Short'**
+  /// **'Short'**
   String get orderConfirmSell;
 
   /// No description provided for @orderConfirmSubmitted.
@@ -9866,12 +9290,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Order details are no longer current. Close this dialog and place the order again.'**
   String get orderConfirmExpired;
-
-  /// No description provided for @orderConfirmWalletHint.
-  ///
-  /// In en, this message translates to:
-  /// **'This setting controls the app review. Wallet signatures and checks before submission still apply.'**
-  String get orderConfirmWalletHint;
 
   /// No description provided for @scaledTotalAmount.
   ///
@@ -10071,18 +9489,6 @@ abstract class AppLocalizations {
   /// **'Scaled Order'**
   String get orderTypeScaled;
 
-  /// No description provided for @orderModeLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Order type'**
-  String get orderModeLabel;
-
-  /// No description provided for @orderModeMore.
-  ///
-  /// In en, this message translates to:
-  /// **'More order types'**
-  String get orderModeMore;
-
   /// No description provided for @orderModeStopLimit.
   ///
   /// In en, this message translates to:
@@ -10250,18 +9656,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Fresh collateral conversion rates are unavailable. Refresh before calculating capacity.'**
   String get liveCapacityRatesUnavailable;
-
-  /// No description provided for @liveCapacityRefreshAccount.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh trading account and limits'**
-  String get liveCapacityRefreshAccount;
-
-  /// No description provided for @liveCapacityRefreshAccountHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign separately to read configuration, balances, positions, orders, risk tiers and the symbol fee, with up to ten wallet signatures; also refresh public prices and collateral rates. No order is submitted.'**
-  String get liveCapacityRefreshAccountHint;
 
   /// No description provided for @liveCapacityLiquidation.
   ///
@@ -12270,8 +11664,14 @@ abstract class AppLocalizations {
   /// No description provided for @notificationOrderSide.
   ///
   /// In en, this message translates to:
-  /// **'{side, select, BUY{buy order} SELL{sell order} other{order}}'**
+  /// **'{side, select, BUY{long order} SELL{short order} other{order}}'**
   String notificationOrderSide(String side);
+
+  /// No description provided for @spotOrderSide.
+  ///
+  /// In en, this message translates to:
+  /// **'{side, select, BUY{buy order} SELL{sell order} other{order}}'**
+  String spotOrderSide(String side);
 
   /// No description provided for @notificationOrderSummary.
   ///
@@ -12532,11 +11932,77 @@ abstract class AppLocalizations {
   /// **'Confirm'**
   String get openOrdersConfirm;
 
-  /// No description provided for @openOrdersDetailsTitle.
+  /// No description provided for @openOrdersEdit.
   ///
   /// In en, this message translates to:
-  /// **'Order details'**
-  String get openOrdersDetailsTitle;
+  /// **'Edit'**
+  String get openOrdersEdit;
+
+  /// No description provided for @openOrdersEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Price/Amount'**
+  String get openOrdersEditTitle;
+
+  /// No description provided for @openOrdersEditPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get openOrdersEditPrice;
+
+  /// No description provided for @openOrdersEditAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get openOrdersEditAmount;
+
+  /// No description provided for @openOrdersEditNote.
+  ///
+  /// In en, this message translates to:
+  /// **'After a successful order modification, the order\'s time priority is reset and it moves to the back of the queue at the same price level.\nNote: This rule also applies when only the quantity is adjusted, not the price.'**
+  String get openOrdersEditNote;
+
+  /// No description provided for @openOrdersEditInvalidPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a price greater than 0.'**
+  String get openOrdersEditInvalidPrice;
+
+  /// No description provided for @openOrdersEditInvalidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount greater than the filled amount {filled}.'**
+  String openOrdersEditInvalidAmount(String filled);
+
+  /// No description provided for @openOrdersEditUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the price or amount before confirming.'**
+  String get openOrdersEditUnchanged;
+
+  /// No description provided for @openOrdersEditModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Order modified.'**
+  String get openOrdersEditModified;
+
+  /// No description provided for @openOrdersEditFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Order not modified: {reason}'**
+  String openOrdersEditFailed(String reason);
+
+  /// No description provided for @openOrdersEditClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'The order is no longer open and was not modified.'**
+  String get openOrdersEditClosed;
+
+  /// No description provided for @openOrdersEditUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'The modification result is unconfirmed. Check open orders before trying again; it is never resubmitted automatically.'**
+  String get openOrdersEditUnknown;
 
   /// No description provided for @openOrdersViewChart.
   ///
@@ -12633,6 +12099,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close all'**
   String get positionsCloseAll;
+
+  /// No description provided for @positionsCloseAllQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to close all {count} positions by market orders?'**
+  String positionsCloseAllQuestion(int count);
+
+  /// No description provided for @positionsCloseSymbolQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to close all {count} {symbol} positions by market orders?'**
+  String positionsCloseSymbolQuestion(String symbol, int count);
 
   /// No description provided for @positionsEntry.
   ///
@@ -12783,6 +12261,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm'**
   String get positionTpslConfirm;
+
+  /// No description provided for @positionTpslAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add TP/SL'**
+  String get positionTpslAdd;
+
+  /// No description provided for @positionTpslEstimatedPnlUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated Pnl ({unit})'**
+  String positionTpslEstimatedPnlUnit(String unit);
+
+  /// No description provided for @positionTpslAmountUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount ({unit})'**
+  String positionTpslAmountUnit(String unit);
 
   /// No description provided for @positionTpslTriggerTitle.
   ///
@@ -13461,6 +12957,408 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The notification server cannot observe this account. You will not receive account notifications while the app is closed.'**
   String get pushNoServerVisibility;
+
+  /// No description provided for @assistantRemainingToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining today: {remaining}/{limit}'**
+  String assistantRemainingToday(String remaining, String limit);
+
+  /// No description provided for @assistantClearAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get assistantClearAction;
+
+  /// No description provided for @assistantBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get assistantBack;
+
+  /// No description provided for @assistantCopilotTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your AI Trading Copilot'**
+  String get assistantCopilotTitle;
+
+  /// No description provided for @assistantCopilotIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask about markets, trends, or risk and reward.'**
+  String get assistantCopilotIntro;
+
+  /// No description provided for @assistantAuthIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask market questions, summarize trends, and explore risk and reward.'**
+  String get assistantAuthIntro;
+
+  /// No description provided for @assistantAuthCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Authenticate your wallet'**
+  String get assistantAuthCardTitle;
+
+  /// No description provided for @assistantAuthCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your wallet and complete wallet authentication to use Vanta AI.'**
+  String get assistantAuthCardBody;
+
+  /// No description provided for @assistantAuthenticate.
+  ///
+  /// In en, this message translates to:
+  /// **'Authenticate'**
+  String get assistantAuthenticate;
+
+  /// No description provided for @assistantSessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Please re-authenticate your wallet to continue using Vanta AI.'**
+  String get assistantSessionExpired;
+
+  /// No description provided for @assistantPromptMarket.
+  ///
+  /// In en, this message translates to:
+  /// **'What moved BTC over the last 24h?'**
+  String get assistantPromptMarket;
+
+  /// No description provided for @assistantPromptFunding.
+  ///
+  /// In en, this message translates to:
+  /// **'How does funding affect risk and reward?'**
+  String get assistantPromptFunding;
+
+  /// No description provided for @assistantPromptGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain perpetual funding step by step.'**
+  String get assistantPromptGuide;
+
+  /// No description provided for @assistantDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'AI can make mistakes. Verify important information.'**
+  String get assistantDisclaimer;
+
+  /// No description provided for @assistantThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent is thinking…'**
+  String get assistantThinking;
+
+  /// No description provided for @assistantManuallyInterrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'This response was manually interrupted.'**
+  String get assistantManuallyInterrupted;
+
+  /// No description provided for @assistantResponseFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t generate a response'**
+  String get assistantResponseFailedTitle;
+
+  /// No description provided for @assistantResponseFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get assistantResponseFailedBody;
+
+  /// No description provided for @assistantRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get assistantRetry;
+
+  /// No description provided for @assistantLimitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily AI limit reached'**
+  String get assistantLimitTitle;
+
+  /// No description provided for @assistantLimitBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve reached today\'s AI request limit. Please try again after the daily reset.'**
+  String get assistantLimitBody;
+
+  /// No description provided for @assistantWalletAuthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet authentication'**
+  String get assistantWalletAuthTitle;
+
+  /// No description provided for @assistantEnableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Vanta AI'**
+  String get assistantEnableTitle;
+
+  /// No description provided for @assistantStepConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect wallet'**
+  String get assistantStepConnect;
+
+  /// No description provided for @assistantStepSign.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign message'**
+  String get assistantStepSign;
+
+  /// No description provided for @assistantConnectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Connect your wallet'**
+  String get assistantConnectTitle;
+
+  /// No description provided for @assistantConnectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a wallet, then sign an authentication message to enable Vanta AI.'**
+  String get assistantConnectBody;
+
+  /// No description provided for @assistantConnectWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect wallet'**
+  String get assistantConnectWallet;
+
+  /// No description provided for @assistantSignTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'2. Sign to authenticate'**
+  String get assistantSignTitle;
+
+  /// No description provided for @assistantSignBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet connected. Sign the authentication message in your wallet, then return here.'**
+  String get assistantSignBody;
+
+  /// No description provided for @assistantSignWithWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign with wallet'**
+  String get assistantSignWithWallet;
+
+  /// No description provided for @assistantSignatureCanceledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Signature canceled'**
+  String get assistantSignatureCanceledTitle;
+
+  /// No description provided for @assistantSignatureCanceledBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You need to sign the message to enable Vanta AI.'**
+  String get assistantSignatureCanceledBody;
+
+  /// No description provided for @assistantTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Again'**
+  String get assistantTryAgain;
+
+  /// No description provided for @assistantAuthExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication expired'**
+  String get assistantAuthExpiredTitle;
+
+  /// No description provided for @assistantAuthExpiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your authentication request has expired. Please try again.'**
+  String get assistantAuthExpiredBody;
+
+  /// No description provided for @assistantSignAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign Again'**
+  String get assistantSignAgain;
+
+  /// No description provided for @assistantAuthFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication failed'**
+  String get assistantAuthFailedTitle;
+
+  /// No description provided for @assistantAuthFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t verify your wallet. Please try again.'**
+  String get assistantAuthFailedBody;
+
+  /// No description provided for @settingsChinese.
+  ///
+  /// In en, this message translates to:
+  /// **'中文'**
+  String get settingsChinese;
+
+  /// No description provided for @settingsPushNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Push Notifications'**
+  String get settingsPushNotifications;
+
+  /// No description provided for @settingsCheckUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for Updates'**
+  String get settingsCheckUpdates;
+
+  /// No description provided for @settingsCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check'**
+  String get settingsCheck;
+
+  /// No description provided for @settingsAppVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'App Version'**
+  String get settingsAppVersion;
+
+  /// No description provided for @settingsCacheSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache Size'**
+  String get settingsCacheSize;
+
+  /// Cache size followed by the clear action.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} · Clear'**
+  String settingsCacheValue(String size);
+
+  /// No description provided for @settingsCacheCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache cleared'**
+  String get settingsCacheCleared;
+
+  /// No description provided for @settingsCacheClearFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Some cached files could not be cleared. Please retry.'**
+  String get settingsCacheClearFailed;
+
+  /// No description provided for @settingsUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'No update required for this version'**
+  String get settingsUpToDate;
+
+  /// Backend minimum supported version is newer than the installed app.
+  ///
+  /// In en, this message translates to:
+  /// **'Please update to version {version} or later'**
+  String settingsUpdateRequired(String version);
+
+  /// No description provided for @settingsVersionUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'The installed app version could not be read.'**
+  String get settingsVersionUnreadable;
+
+  /// No description provided for @settingsLinkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The link could not be opened.'**
+  String get settingsLinkFailed;
+
+  /// No description provided for @pushQuietHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet Hours'**
+  String get pushQuietHours;
+
+  /// No description provided for @pushNotificationTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification Time'**
+  String get pushNotificationTime;
+
+  /// No description provided for @pushMinimumTradeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum Trade Value'**
+  String get pushMinimumTradeValue;
+
+  /// No description provided for @pushTradeExecutions.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade Executions'**
+  String get pushTradeExecutions;
+
+  /// No description provided for @pushConditionalTriggers.
+  ///
+  /// In en, this message translates to:
+  /// **'Conditional Order Triggers'**
+  String get pushConditionalTriggers;
+
+  /// No description provided for @pushOrderUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Updates'**
+  String get pushOrderUpdates;
+
+  /// No description provided for @pushFundingFees.
+  ///
+  /// In en, this message translates to:
+  /// **'Funding Fees'**
+  String get pushFundingFees;
+
+  /// No description provided for @pushTransfers.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposits & Withdrawals'**
+  String get pushTransfers;
+
+  /// No description provided for @pushAnnouncements.
+  ///
+  /// In en, this message translates to:
+  /// **'Announcements'**
+  String get pushAnnouncements;
+
+  /// No description provided for @pushStartTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start time'**
+  String get pushStartTime;
+
+  /// No description provided for @pushEndTime.
+  ///
+  /// In en, this message translates to:
+  /// **'End time'**
+  String get pushEndTime;
+
+  /// No description provided for @pushHour.
+  ///
+  /// In en, this message translates to:
+  /// **'Hour'**
+  String get pushHour;
+
+  /// No description provided for @pushMinute.
+  ///
+  /// In en, this message translates to:
+  /// **'Minute'**
+  String get pushMinute;
+
+  /// No description provided for @pushConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get pushConfirm;
+
+  /// No description provided for @pushQuietSameTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start and end time must be different.'**
+  String get pushQuietSameTime;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
