@@ -18,13 +18,20 @@ class StartupScreen extends ConsumerStatefulWidget {
 }
 
 class _StartupScreenState extends ConsumerState<StartupScreen> {
-  bool _finished = false, _restoring = false;
+  bool _finished = false, _restoring = false, _introPlayed = false;
   String? _restoredKey;
 
   void _finish() => setState(() => _finished = true);
 
   @override
   Widget build(BuildContext context) {
+    // Startup restoration runs during the intro; its destination waits for it.
+    final destination = _destination();
+    if (_introPlayed) return destination;
+    return StartupSplash(onIntroCompleted: () => setState(() => _introPlayed = true));
+  }
+
+  Widget _destination() {
     if (_finished) return WalletSessionHost(child: widget.home);
     final auth = ref.watch(authProvider), identity = auth.identity;
     if (auth.phase == AuthPhase.initializing || auth.busy || _restoring) {

@@ -102,7 +102,7 @@ void main() {
     addTearDown(repository.dispose);
     addTearDown(connection.dispose);
     final container = setup(tester, identityRepository: repository, walletConnector: connector);
-    await launch(tester, container);
+    await launch(tester, container, keepTradingOnboarding: true);
     expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
     await tester.tap(find.byKey(const Key('enable-trading-cancel')));
     await tester.pumpAndSettle();
@@ -149,7 +149,7 @@ void main() {
     addTearDown(repository.dispose);
     addTearDown(connection.dispose);
     final container = setup(tester, identityRepository: repository, walletConnector: connector);
-    await launch(tester, container);
+    await launch(tester, container, keepTradingOnboarding: true);
     expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
     await tester.tap(find.byKey(const Key('enable-trading-cancel')));
     await tester.pumpAndSettle();
@@ -187,7 +187,7 @@ void main() {
       identityRepository: repository,
       walletConnector: TestWalletConnector(connection),
     );
-    await launch(tester, container);
+    await launch(tester, container, keepTradingOnboarding: true);
     expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
     await tester.tap(find.byKey(const Key('enable-trading-cancel')));
     await tester.pumpAndSettle();
@@ -213,7 +213,7 @@ void main() {
       );
     addTearDown(repository.dispose);
     final container = setup(tester, identityRepository: repository);
-    await launch(tester, container);
+    await launch(tester, container, keepTradingOnboarding: true);
     expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
     await tester.tap(find.byKey(const Key('enable-trading-cancel')));
     await tester.pumpAndSettle();

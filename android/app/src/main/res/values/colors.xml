@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- First frame of the Flutter splash intro (AppColors.launchBackground). -->
+    <color name="launch_background">#121215</color>
+</resources>

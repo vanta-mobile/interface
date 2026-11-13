@@ -13,6 +13,8 @@ dependencies:
   # Render the original Figma social and wallet SVG icons.
   flutter_svg: ^2.3.2
   k_chart_plus: ^1.0.4
+  # Plays the approved Vanta startup splash (`assets/branding/vanta-splash.riv`).
+  rive: 0.14.11
   # EIP-712 verification and device signing keys for authorized account requests.
   web3dart: 3.0.3
   # Privy SIWE requires WalletConnect accounts in EIP-55 checksum form.
@@ -52,12 +54,14 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/
+    - assets/assistant/
     - assets/auth/
     - assets/trade/
     - assets/navigation/
     - assets/portfolio/
     - assets/feedback/
     - assets/points/
+    - assets/settings/
   fonts:
     - family: Inter
       fonts:
@@ -69,7 +73,8 @@ flutter:
 dependency_overrides:
   # Reown permits 7.x; 7.0.0 avoids 7.1's iOS 26-only native API.
   connectivity_plus: 7.0.0
-  # Local 1.0.4 patch: pinch must take over from a drag or long press.
+  # Local 1.0.4 patch: pinch must take over from a drag or long press; optional
+  # filled current-price badge (`KChartColors.nowPriceTextColor`).
   k_chart_plus:
     path: third_party/k_chart_plus
   intl: ^0.20.3
