@@ -7,6 +7,7 @@ import 'aster_open_orders.dart';
 import 'asset_valuation.dart';
 import 'futures_asset_mode.dart';
 import 'isolated_margin_ratio.dart';
+import 'position_exit_groups.dart';
 import 'position_risk.dart';
 
 /// Margin Ratio (Futures PRD, Positions «margin ratio»): maintenance margin
@@ -124,7 +125,7 @@ double? liquidationProgress({Decimal? entry, Decimal? mark, Decimal? liquidation
 
 /// Open take-profit / stop-loss orders that close one position. Entire orders
 /// close the whole position (`closePosition`); partial orders carry their own
-/// reduce quantity. The newest order of each kind is shown.
+/// reduce quantity. The earliest still-open order of each kind is shown.
 class PositionExitOrders {
   const PositionExitOrders({
     this.entireTakeProfit,
@@ -137,29 +138,22 @@ class PositionExitOrders {
   final int partialCount;
 }
 
-const _takeProfitTypes = {'TAKE_PROFIT', 'TAKE_PROFIT_MARKET'};
-const _stopLossTypes = {'STOP', 'STOP_MARKET'};
-
 PositionExitOrders positionExitOrders(PositionRisk position, Iterable<AsterOpenOrder> orders) {
   AsterOpenOrder? entireTp, entireSl, partialTp, partialSl;
   var partialCount = 0;
-  AsterOpenOrder newer(AsterOpenOrder? current, AsterOpenOrder next) =>
-      current == null || (next.time?.isAfter(current.time ?? next.time!) ?? false) ? next : current;
+  AsterOpenOrder earlier(AsterOpenOrder? current, AsterOpenOrder next) {
+    final a = current?.time, b = next.time;
+    return current == null || b != null && (a == null || b.isBefore(a)) ? next : current;
+  }
+
   for (final order in orders) {
-    final takeProfit = _takeProfitTypes.contains(order.type);
-    if (order.symbol != position.symbol ||
-        order.positionSide != position.side ||
-        order.side != (position.long ? 'SELL' : 'BUY') ||
-        !takeProfit && !_stopLossTypes.contains(order.type) ||
-        // One-way rows close only when marked; hedge rows close their side.
-        position.side == 'BOTH' && !order.reduceOnly && !order.closePosition) {
-      continue;
-    }
+    if (!isPositionExit(position, order)) continue;
+    final takeProfit = isTakeProfitExit(order);
     if (order.closePosition) {
-      takeProfit ? entireTp = newer(entireTp, order) : entireSl = newer(entireSl, order);
+      takeProfit ? entireTp = earlier(entireTp, order) : entireSl = earlier(entireSl, order);
     } else {
       partialCount++;
-      takeProfit ? partialTp = newer(partialTp, order) : partialSl = newer(partialSl, order);
+      takeProfit ? partialTp = earlier(partialTp, order) : partialSl = earlier(partialSl, order);
     }
   }
   return PositionExitOrders(

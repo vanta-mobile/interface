@@ -17,7 +17,6 @@ import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/domain/live_order_capacity.dart';
 import 'package:vanta/features/portfolio/domain/live_order_peg.dart';
 import 'package:vanta/features/portfolio/domain/live_order_size.dart';
-import 'package:vanta/features/portfolio/presentation/live_order_form.dart';
 import 'package:vanta/features/portfolio/presentation/main_order_capacity_panel.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
@@ -72,7 +71,6 @@ void main() {
     Size size = const Size(430, 900),
     double scale = 1,
     LiveOrderDraft? draft,
-    bool form = false,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -97,17 +95,15 @@ void main() {
             body: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: form
-                    ? LiveOrderForm(data: orders.context)
-                    : ValueListenableBuilder<String>(
-                        valueListenable: input,
-                        builder: (context, value, _) => MainOrderCapacityPanel(
-                          data: orders.context,
-                          draft: draft ?? liveDraft(price: '101'),
-                          unit: OrderSizeUnit.base,
-                          input: value,
-                        ),
-                      ),
+                child: ValueListenableBuilder<String>(
+                  valueListenable: input,
+                  builder: (context, value, _) => MainOrderCapacityPanel(
+                    data: orders.context,
+                    draft: draft ?? liveDraft(price: '101'),
+                    unit: OrderSizeUnit.base,
+                    input: value,
+                  ),
+                ),
               ),
             ),
           ),
@@ -257,25 +253,6 @@ void main() {
     expect(inKey('main-order-maximum-buy', '10.101 BTC'), findsOneWidget);
     expect(inKey('main-order-maximum-sell', '9.9 BTC'), findsOneWidget);
     expect(find.text(messages(tester).liveCapacityPriceUnavailable), findsNothing);
-  });
-  panelTest('production form exposes explicit capacity read and preserves manual inputs', (
-    tester,
-  ) async {
-    await open(tester, form: true);
-    await tester.enterText(find.byKey(const Key('live-order-quantity')), '200.000');
-    await tester.enterText(find.byKey(const Key('live-order-price')), '100');
-    await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
-    await tap(tester, 'main-order-capacity-read');
-    expect(repository.reads, 1);
-    expect(inKey('main-order-cost-buy', '≈ 20 USDT'), findsOneWidget);
-    expect(inKey('main-order-cost-sell', '≈ 20 USDT'), findsOneWidget);
-    final text = tester
-        .widget<TextField>(find.byKey(const Key('live-order-quantity')))
-        .controller!
-        .text;
-    expect(text, '200.000');
-    expect(orders.submits, 0);
   });
   for (final locale in ['en', 'zh']) {
     for (final size in [const Size(320, 844), const Size(844, 390), const Size(768, 1024)]) {

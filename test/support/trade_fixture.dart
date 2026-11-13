@@ -1,3 +1,5 @@
+import 'package:vanta/features/portfolio/application/order_modification_provider.dart';
+import 'package:vanta/features/portfolio/domain/order_modification.dart';
 import 'package:vanta/features/market/application/public_leverage_provider.dart';
 import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
 import 'package:vanta/features/authorization/domain/trading_agent.dart';
@@ -5,6 +7,7 @@ import 'package:vanta/features/portfolio/application/open_order_strategies_provi
 import 'package:vanta/features/portfolio/domain/open_order_strategy.dart';
 
 import 'aster_open_orders.dart' show TestOpenOrderStrategyRepository;
+import 'onboarding.dart';
 import 'trading_agents.dart';
 import 'identity_repository.dart';
 
@@ -92,6 +95,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
+import 'package:vanta/features/deep_link/application/deep_link_provider.dart';
+import 'package:vanta/features/deep_link/data/app_link_source.dart';
+import 'package:vanta/features/auth/application/vanta_api_session_provider.dart';
 import 'package:vanta/features/auth/data/privy_configuration.dart';
 import 'package:vanta/features/auth/data/wallet_configuration.dart';
 import 'package:vanta/features/auth/data/reown_wallet_connector.dart';
@@ -131,15 +137,14 @@ import 'package:vanta/features/portfolio/domain/account_change_stream.dart';
 import 'package:vanta/features/market/domain/mark_prices.dart';
 import 'package:vanta/features/portfolio/application/position_mark_prices_provider.dart';
 
-import 'package:vanta/features/portfolio/domain/position_adl.dart';
-import 'package:vanta/features/portfolio/application/position_adl_provider.dart';
-
 import 'package:vanta/features/portfolio/domain/position_risk.dart';
 import 'package:vanta/features/portfolio/application/position_risk_provider.dart';
 import 'package:vanta/features/portfolio/application/position_leverage_provider.dart';
 import 'package:vanta/features/portfolio/domain/position_leverage.dart';
 import 'package:vanta/features/portfolio/application/position_margin_mode_provider.dart';
 import 'package:vanta/features/portfolio/domain/position_margin_mode.dart';
+import 'package:vanta/features/settings/application/settings_providers.dart';
+import 'package:vanta/features/settings/data/app_cache_repository.dart';
 
 final fixture = Market(
   symbol: 'BTCUSDT',
@@ -228,8 +233,8 @@ ProviderContainer setup(
   AsterOpenOrdersRepository? openOrdersRepository,
   OpenOrderStrategyRepository? openOrderStrategyRepository,
   OrderCancellationRepository? orderCancellationRepository,
+  OrderModificationRepository? orderModificationRepository,
   BatchOrderCancellationRepository? batchCancellationRepository,
-  PositionAdlRepository? positionAdlRepository,
   PositionRiskRepository? positionRiskRepository,
   PositionLeverageRepository? positionLeverageRepository,
   FuturesAssetModeRepository? futuresAssetModeRepository,
@@ -253,6 +258,11 @@ ProviderContainer setup(
   AccountChangeRepository? accountChangeRepository,
   DateTime Function()? monitorClock,
   DateTime Function()? historyClock,
+  AppCacheRepository? appCacheRepository,
+
+  /// Start with a verified Vanta API session so a signed-in launch with an
+  /// active agent completes onboarding; tests have no API base URI otherwise.
+  bool verifiedApiSession = false,
 }) {
   tester.view.physicalSize = Size(width, 844);
   tester.view.devicePixelRatio = 1;
@@ -266,6 +276,13 @@ ProviderContainer setup(
   final container = ProviderContainer(
     overrides: [
       publicLeverageProvider.overrideWith((ref) async => const {}),
+      // Tests have no app_links plugin; launches carry no navigation link.
+      appLinkSourceProvider.overrideWithValue(
+        AppLinkSource(links: const Stream.empty(), initialLink: () async => null),
+      ),
+      if (appCacheRepository != null)
+        appCacheRepositoryProvider.overrideWithValue(appCacheRepository),
+      if (verifiedApiSession) vantaApiSessionProvider.overrideWith(VerifiedVantaSession.new),
       tradingAgentStoreProvider.overrideWithValue(
         tradingAgentStore ?? MemoryTradingAgentStorage().store(DateTime.now),
       ),
@@ -356,8 +373,6 @@ ProviderContainer setup(
       positionMarkPricesProvider.overrideWith(
         (ref) => markPricesStream ?? Stream.value(MarkPrices()),
       ),
-      if (positionAdlRepository != null)
-        positionAdlRepositoryProvider.overrideWithValue(positionAdlRepository),
       if (positionRiskRepository != null)
         positionRiskRepositoryProvider.overrideWithValue(positionRiskRepository),
       if (futuresHistoryClock != null)
@@ -371,6 +386,8 @@ ProviderContainer setup(
         batchOrderCancellationRepositoryProvider.overrideWithValue(batchCancellationRepository),
       if (orderCancellationRepository != null)
         orderCancellationRepositoryProvider.overrideWithValue(orderCancellationRepository),
+      if (orderModificationRepository != null)
+        orderModificationRepositoryProvider.overrideWithValue(orderModificationRepository),
       if (openOrdersRepository != null)
         asterOpenOrdersRepositoryProvider.overrideWithValue(openOrdersRepository),
       openOrderStrategyRepositoryProvider.overrideWithValue(
@@ -456,7 +473,22 @@ ProviderContainer setup(
   return container;
 }
 
-Future<void> launch(WidgetTester tester, ProviderContainer container) async {
+/// A signed-in launch without a completed setup stops on Enable Trading. Most
+/// tests exercise the trading page, so cancel it like a user unless
+/// [keepTradingOnboarding] is set to test that flow.
+Future<void> launch(
+  WidgetTester tester,
+  ProviderContainer container, {
+  bool keepTradingOnboarding = false,
+}) async {
   await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const VantaApp()));
+  await tester.pumpAndSettle();
+  if (keepTradingOnboarding) return;
+  await awaitTradingAgent(tester, container);
+  final cancel = find.byKey(const Key('enable-trading-cancel'));
+  if (cancel.evaluate().isEmpty) return;
+  await tester.ensureVisible(cancel);
+  await tester.pumpAndSettle();
+  await tester.tap(cancel);
   await tester.pumpAndSettle();
 }

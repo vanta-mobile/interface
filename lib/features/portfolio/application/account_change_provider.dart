@@ -16,7 +16,6 @@ import '../domain/account_snapshot.dart';
 import 'account_read_provider.dart';
 import 'wallet_stream_controller.dart';
 import 'open_orders_provider.dart';
-import 'position_adl_provider.dart';
 import 'position_risk_provider.dart';
 
 final accountChangeClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
@@ -52,7 +51,6 @@ class AccountChangeController extends WalletStreamController {
     ref.read(accountReadProvider.notifier).markStale();
     ref.read(openOrdersReadProvider.notifier).markStale();
     ref.read(positionRiskProvider.notifier).markStale();
-    ref.read(positionAdlProvider.notifier).markStale();
   }
 
   @override

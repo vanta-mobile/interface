@@ -44,8 +44,8 @@ class AccountPositionCard extends ConsumerWidget {
           ? null
           : positionMarginRatio(p, account, address, assetMode: assetMode, rates: rates),
       exits: positionExitOrders(p, sameWallet ? orders!.orders : const <AsterOpenOrder>[]),
-      onTpSl: () => openPositionTpSl(context, p),
-      onEditPartial: () => openPositionTpSl(context, p),
+      onTpSl: () => openPositionTpSl(context, ref, p),
+      onEditPartial: () => openPositionTpSl(context, ref, p),
       onMarket: () => showPositionCloseSheet(context, p),
       onLimit: () => showPositionCloseSheet(context, p, limit: true),
       onAdjustMargin: p.isolated

@@ -108,9 +108,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: f.container,
-          child: _app(
-            const SingleChildScrollView(child: LiveOrderScreen(symbol: 'BTCUSDT', embedded: true)),
-          ),
+          child: _app(const SingleChildScrollView(child: LiveOrderScreen(symbol: 'BTCUSDT'))),
         ),
       );
       await tester.pumpAndSettle();
@@ -158,9 +156,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: f.container,
-          child: _app(
-            const SingleChildScrollView(child: LiveOrderScreen(symbol: 'BTCUSDT', embedded: true)),
-          ),
+          child: _app(const SingleChildScrollView(child: LiveOrderScreen(symbol: 'BTCUSDT'))),
         ),
       );
       await tester.pumpAndSettle();

@@ -33,15 +33,6 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
   }
 
   LiveOrderContext? get _pricingContext => _pricing.context;
-  bool get _pricingPending => switch (ref.read(mainOrderPricingProvider)) {
-    MainOrderMarketData(pending: true) => true,
-    _ => false,
-  };
-
-  String _validationText(String key) {
-    final failure = _pricing.failure;
-    return accountErrorText(context, failure?.key == key ? failure! : AccountReadFailure(key));
-  }
 
   OrderSizeResolution _resolveSize(LiveOrderDraft entry) {
     if (_allocationPercent == null) {
@@ -146,7 +137,8 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
       candidate,
       isFormCurrent: () => mounted && _formTerms == terms,
       input: MainOrderReviewInput(
-        draft: rawDraft(attaching ? LiveOrderAttachment(entryPeg: entryPeg) : null),
+        // A retained BBO entry choice does not apply to a market entry.
+        draft: rawDraft(attaching ? LiveOrderAttachment(entryPeg: market ? null : entryPeg) : null),
         size: _manualSizeInput,
         percent: _allocationPercent,
         attachment: attaching ? attachment : null,
@@ -164,6 +156,7 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
       ),
       sizing: capturedSize,
       allocationReview: review,
+      alwaysConfirm: _prefilled,
     );
   }
 }

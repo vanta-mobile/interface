@@ -7,7 +7,6 @@ import 'package:vanta/features/market/application/market_providers.dart';
 import 'package:vanta/features/portfolio/application/account_change_provider.dart';
 import 'package:vanta/features/portfolio/application/account_read_provider.dart';
 import 'package:vanta/features/portfolio/application/open_orders_provider.dart';
-import 'package:vanta/features/portfolio/application/position_adl_provider.dart';
 import 'package:vanta/features/portfolio/application/position_risk_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_change_stream.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
@@ -16,7 +15,6 @@ import '../../support/account_changes.dart';
 import '../../support/aster_account.dart';
 import '../../support/aster_open_orders.dart';
 import '../../support/identity_repository.dart';
-import '../../support/position_adl.dart';
 import '../../support/position_risk.dart';
 
 void main() {
@@ -26,14 +24,12 @@ void main() {
   late TestPositionRiskRepository risk;
   late TestAsterAccountRepository account;
   late TestOpenOrdersRepository orders;
-  late TestPositionAdlRepository adl;
   setUp(() {
     identity = TestIdentityRepository()..restored = signingIdentity;
     changes = TestAccountChangeRepository();
     risk = TestPositionRiskRepository();
     account = TestAsterAccountRepository();
     orders = TestOpenOrdersRepository();
-    adl = TestPositionAdlRepository();
     container = ProviderContainer(
       overrides: [
         identityRepositoryProvider.overrideWithValue(identity),
@@ -42,7 +38,6 @@ void main() {
         positionRiskRepositoryProvider.overrideWithValue(risk),
         asterAccountRepositoryProvider.overrideWithValue(account),
         asterOpenOrdersRepositoryProvider.overrideWithValue(orders),
-        positionAdlRepositoryProvider.overrideWithValue(adl),
       ],
     );
   });
@@ -63,14 +58,12 @@ void main() {
     await container.read(accountReadProvider.notifier).refresh();
     await container.read(openOrdersReadProvider.notifier).refresh();
     await container.read(positionRiskProvider.notifier).refresh();
-    await container.read(positionAdlProvider.notifier).refresh();
   }
 
   void expectStale(bool stale) {
     expect(container.read(accountReadProvider).stale, stale);
     expect(container.read(openOrdersReadProvider).stale, stale);
     expect(container.read(positionRiskProvider).stale, stale);
-    expect(container.read(positionAdlProvider).stale, stale);
   }
 
   test('monitoring is explicit; connection never signs or refreshes snapshots', () async {

@@ -35,4 +35,22 @@ void main() {
     final small = liveCloseContext(quantity: '0.01');
     expect(small.closeAmount('BOTH', 0.75, market: true), d('0.007'));
   });
+  test('slider choice snaps without a range; with one only the ends are stops', () {
+    final fine = d('0.01');
+    expect(sliderChoice(0.4, maximum: null, fine: fine), (percent: 50, amount: null));
+    expect(sliderChoice(1, maximum: d('772.5'), fine: fine), (percent: 100, amount: null));
+    expect(sliderChoice(0.001, maximum: d('772.5'), fine: fine), (percent: 0, amount: null));
+    expect(sliderChoice(0.5, maximum: d('772.5'), fine: fine), (percent: null, amount: d('386')));
+    expect(sliderChoice(0.5, maximum: d('0.01'), fine: d('0.001')), (
+      percent: null,
+      amount: d('0.005'),
+    ));
+  });
+  test('slider position follows the stop, else the typed share of the range', () {
+    expect(sliderPosition(percent: 25, amount: d('1'), maximum: d('2')), 0.25);
+    expect(sliderPosition(amount: d('1'), maximum: d('4')), 0.25);
+    expect(sliderPosition(amount: d('9'), maximum: d('4')), 1);
+    expect(sliderPosition(amount: d('1'), maximum: null), 0);
+    expect(sliderPosition(amount: null, maximum: d('4')), 0);
+  });
 }

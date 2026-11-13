@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/portfolio/application/open_orders_provider.dart';
 import 'package:vanta/features/portfolio/application/order_cancellation_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/order_cancellation.dart';
+import 'package:vanta/features/portfolio/presentation/aster_open_order_card.dart';
 import 'package:vanta/features/trade/application/providers.dart';
 
 import '../../support/aster_account.dart';
@@ -13,9 +15,26 @@ import '../../support/aster_open_orders.dart';
 import '../../support/batch_order_cancellation.dart';
 import '../../support/identity_repository.dart';
 import '../../support/trade_fixture.dart';
+import '../../support/workspace_navigation.dart';
 
 const bulkKey = Key('cancel-all-open-orders');
 const confirmKey = Key('confirm-batch-cancel');
+
+/// Open orders live in the Open tab of the Futures account section below the
+/// trade workspace (0a18176, docs/implementation.md 2026-11-11).
+Future<void> showOpenOrders(WidgetTester tester, ProviderContainer container) async {
+  await launch(tester, container);
+  await revealFuturesAccountTabs(tester);
+  await container.read(openOrdersReadProvider.notifier).refresh();
+  await tester.pumpAndSettle();
+}
+
+/// The redesigned Cancel all bottom sheet that holds [confirmKey].
+Finder sheet() =>
+    find.ancestor(of: find.byKey(confirmKey), matching: find.byType(SingleChildScrollView)).first;
+
+VoidCallback? bulkAction(WidgetTester tester) =>
+    tester.widget<TextButton>(find.byKey(bulkKey)).onPressed;
 
 Future<void> openConfirmation(WidgetTester tester) async {
   await tester.ensureVisible(find.byKey(bulkKey));
@@ -43,7 +62,8 @@ void main() {
         batchCancellationRepository: batch,
       );
       await launch(tester, container);
-      expect(tester.widget<OutlinedButton>(find.byKey(bulkKey)).onPressed, null);
+      await revealFuturesAccountTabs(tester);
+      expect(bulkAction(tester), null);
       expect(batch.cancelled, isEmpty);
       expect(container.read(openOrdersReadProvider).account, null);
       await tester.pumpWidget(const SizedBox());
@@ -64,21 +84,22 @@ void main() {
         batchCancellationRepository: batch,
         language: const Locale('en'),
       );
-      await launch(tester, container);
-      await container.read(openOrdersReadProvider.notifier).refresh();
-      await tester.pumpAndSettle();
+      await showOpenOrders(tester, container);
       await openConfirmation(tester);
-      final dialog = find.byType(AlertDialog);
-      for (final text in [
-        accountAddress,
-        'BTCUSDT',
-        'ETHUSDT',
-        'Snapshot: 2 orders across 2 symbols',
-      ]) {
-        expect(find.descendant(of: dialog, matching: find.text(text)), findsOneWidget);
-      }
-      expect(find.textContaining('including orders added on other devices'), findsOneWidget);
-      await tester.tap(find.text('Keep order'));
+      // Figma 331:67880: title, warning mark, question and the two actions only.
+      expect(
+        find.descendant(
+          of: sheet(),
+          matching: find.text('Are you sure you want to cancel all perpetual orders?'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.descendant(of: sheet(), matching: find.text('Cancel all')), findsOneWidget);
+      expect(
+        find.descendant(of: sheet(), matching: find.textContaining('Snapshot:')),
+        findsNothing,
+      );
+      await tester.tap(find.descendant(of: sheet(), matching: find.text('Cancel')));
       await tester.pumpAndSettle();
       expect(batch.cancelled, isEmpty);
       expect(container.read(openOrdersReadProvider).account!.orders.length, 2);
@@ -100,18 +121,21 @@ void main() {
       batchCancellationRepository: batch,
       language: const Locale('en'),
     );
-    await launch(tester, container);
-    await container.read(openOrdersReadProvider.notifier).refresh();
-    await tester.pumpAndSettle();
+    await showOpenOrders(tester, container);
     await tester.ensureVisible(find.byKey(const Key('open-orders-current-symbol')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('open-orders-current-symbol')));
     await tester.pumpAndSettle();
     await openConfirmation(tester);
-    final dialog = find.byType(AlertDialog);
-    expect(find.descendant(of: dialog, matching: find.text('BTCUSDT')), findsOneWidget);
-    expect(find.descendant(of: dialog, matching: find.text('ETHUSDT')), findsNothing);
-    expect(find.text('Snapshot: 1 order across 1 symbol'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: sheet(),
+        matching: find.text('Are you sure you want to cancel all BTCUSDT orders?'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.descendant(of: sheet(), matching: find.textContaining('ETHUSDT')), findsNothing);
+
     await confirm(tester);
     await tester.pumpAndSettle();
     expect(batch.cancelled, ['BTCUSDT']);
@@ -140,23 +164,20 @@ void main() {
       batchCancellationRepository: batch,
       language: const Locale('en'),
     );
-    await launch(tester, container);
-    await container.read(openOrdersReadProvider.notifier).refresh();
-    await tester.pumpAndSettle();
+    await showOpenOrders(tester, container);
     await openConfirmation(tester);
     await confirm(tester);
     await tester.pumpAndSettle();
     expect(batch.cancelled, ['BTCUSDT']);
     expect(find.text('Outcome unconfirmed. Check status before retrying.'), findsOneWidget);
     expect(find.text('Not submitted'), findsOneWidget);
-    expect(tester.widget<OutlinedButton>(find.byKey(bulkKey)).onPressed, null);
+    expect(bulkAction(tester), null);
     expect(
       tester
-          .widget<OutlinedButton>(find.byKey(const Key('cancel-order-BTCUSDT-1917641')))
+          .widget<OpenOrderChipButton>(find.byKey(const Key('cancel-order-BTCUSDT-1917641')))
           .onPressed,
       null,
     );
-    expect(tester.widget<FilledButton>(find.byKey(const Key('read-open-orders'))).onPressed, null);
     expect(container.read(openOrdersReadProvider).account!.orders.length, 2);
     batch.results.remove('BTCUSDT');
     await tester.ensureVisible(find.byKey(const Key('recheck-batch-cancel')));
@@ -184,15 +205,13 @@ void main() {
       batchCancellationRepository: batch,
       language: const Locale('en'),
     );
-    await launch(tester, container);
-    await container.read(openOrdersReadProvider.notifier).refresh();
-    await tester.pumpAndSettle();
+    await showOpenOrders(tester, container);
     await openConfirmation(tester);
     await confirm(tester);
     await tester.pump(const Duration(milliseconds: 400));
     expect(batch.cancelled, ['BTCUSDT']);
     expect(find.text('Processing; outcome not yet verified'), findsOneWidget);
-    expect(tester.widget<OutlinedButton>(find.byKey(bulkKey)).onPressed, null);
+    expect(bulkAction(tester), null);
     await tester.ensureVisible(find.byKey(const Key('stop-batch-cancel')));
     await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.byKey(const Key('stop-batch-cancel')));
@@ -230,9 +249,7 @@ void main() {
         language: Locale(variant.$4),
       );
       tester.view.physicalSize = Size(variant.$1, variant.$2);
-      await launch(tester, container);
-      await container.read(openOrdersReadProvider.notifier).refresh();
-      await tester.pumpAndSettle();
+      await showOpenOrders(tester, container);
       await openConfirmation(tester);
       expect(tester.takeException(), null);
       await confirm(tester);

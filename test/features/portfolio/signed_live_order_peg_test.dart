@@ -11,9 +11,21 @@ import 'package:vanta/features/portfolio/data/signed_account_request.dart';
 import 'package:vanta/features/portfolio/data/signed_live_order_repository.dart';
 import 'package:vanta/features/portfolio/data/signed_order_query_repository.dart';
 import 'package:vanta/features/portfolio/domain/live_order_peg.dart';
+import 'package:vanta/features/portfolio/domain/order_recovery.dart';
 
 import '../../support/live_order.dart';
 import '../../support/wallet_connection.dart';
+
+/// Journal writes are best-effort and unawaited (docs/implementation.md,
+/// 2026-11-11 "Make order records observational and nonblocking").
+Future<void> _settled(
+  FileOrderRecoveryJournal journal,
+  bool Function(List<OrderRecoveryRecord> records) done,
+) async {
+  for (var i = 0; i < 300 && !done(journal.snapshot.records.toList()); i++) {
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+  }
+}
 
 void main() {
   for (final close in [false, true]) {
@@ -143,6 +155,7 @@ void main() {
       onStep: (_) {},
     );
     expect(unknown.needsRecheck, true);
+    await _settled(original, (records) => records.length == 1);
     expect(original.snapshot.records.single.query.draft.peg, LiveOrderPeg.queue);
     await original.close();
     final rebuilt = FileOrderRecoveryJournal(() async => dir);
@@ -164,6 +177,7 @@ void main() {
     expect(rebuilt.snapshot.records, isNotEmpty);
     correctPeg = true;
     expect((await reads.query(frozen, isCurrent: () => true, onStep: (_) {})).orderId, '12345');
+    await _settled(rebuilt, (records) => records.isEmpty);
     expect(rebuilt.snapshot.records, isEmpty);
     expect(requests.where((r) => r.method == 'POST').length, postCount);
     expect(postCount, 1);

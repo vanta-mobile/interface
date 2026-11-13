@@ -9,7 +9,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/authorization/domain/trading_agent.dart';
 import 'package:vanta/features/portfolio/presentation/position_margin_mode_screen.dart';
-import 'package:vanta/features/portfolio/presentation/position_risk_screen.dart';
 import 'package:vanta/features/portfolio/application/futures_asset_mode_provider.dart';
 import 'package:vanta/features/portfolio/application/futures_position_mode_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
@@ -77,9 +76,7 @@ class ExistingPortfolioBundle extends CachingAssetBundle {
 }
 
 void main() {
-  testWidgets('existing asset bundle renders settings icons and close dismisses the sheet', (
-    t,
-  ) async {
+  testWidgets('existing asset bundle renders settings icons and back leaves the page', (t) async {
     final c = setup(t, language: const Locale('en'));
     final bundle = ExistingPortfolioBundle();
     await t.pumpWidget(
@@ -91,11 +88,12 @@ void main() {
     await t.pumpAndSettle();
     await tap(t, 'trade-settings');
     expect(t.takeException(), null);
-    expect(bundle.requested, contains('assets/portfolio/close.svg'));
-    expect(bundle.requested, contains('assets/portfolio/chevron-right.svg'));
-    await t.tap(find.byTooltip('Close'));
+    expect(bundle.requested, contains('assets/portfolio/back.svg'));
+    expect(bundle.requested, contains('assets/settings/chevron-right.svg'));
+    expect(bundle.requested, isNot(contains('assets/settings/language.svg')));
+    await t.tap(find.byKey(const Key('settings-back')));
     await t.pumpAndSettle();
-    expect(find.byKey(const Key('trade-mode-settings')), findsNothing);
+    expect(find.byKey(const Key('settings-screen')), findsNothing);
     await close(t, c);
   });
 
@@ -132,39 +130,46 @@ void main() {
     expect(bundle.requested, contains('assets/portfolio/notification-success.svg'));
     expect(find.text('Requirements met'), findsOneWidget);
     expect(t.takeException(), null);
-    await t.tap(find.byTooltip('Close'));
+    // The startup Enable Trading page (with its own Close) stays behind the sheet.
+    await t.tap(
+      find.descendant(
+        of: find.byKey(const Key('multi-asset-activation-sheet')),
+        matching: find.byTooltip('Close'),
+      ),
+    );
     await t.pumpAndSettle();
     expect(find.byKey(const Key('multi-asset-activation-sheet')), findsNothing);
     await close(t, c);
   });
 
-  testWidgets('settings opens the designed asset and position sheets without navigation reads', (
-    t,
-  ) async {
-    final assets = TestFuturesAssetModeRepository();
-    final positions = TestFuturesPositionModeRepository();
-    final c = setup(
-      t,
-      futuresAssetModeRepository: assets,
-      futuresPositionModeRepository: positions,
-      language: const Locale('en'),
-    );
-    await launch(t, c);
-    await tap(t, 'trade-settings');
-    expect(find.text('Account Settings'), findsOneWidget);
-    expect(find.byKey(const Key('settings-asset-mode')), findsOneWidget);
-    expect(find.byKey(const Key('settings-position-mode')), findsOneWidget);
-    await tap(t, 'settings-asset-mode');
-    expect(find.byKey(const Key('asset-mode-sheet')), findsOneWidget);
-    expect(find.byKey(const Key('asset-mode-single')), findsOneWidget);
-    expect(find.byKey(const Key('asset-mode-multi')), findsOneWidget);
-    expect(assets.reads, 0);
-    await tap(t, 'asset-mode-sheet-read');
-    expect(find.byKey(const Key('login-email')), findsOneWidget);
-    expect(assets.changes, 0);
-    expect(positions.changes, 0);
-    await close(t, c);
-  });
+  testWidgets(
+    'settings page opens the designed asset and position sheets without navigation reads',
+    (t) async {
+      final assets = TestFuturesAssetModeRepository();
+      final positions = TestFuturesPositionModeRepository();
+      final c = setup(
+        t,
+        futuresAssetModeRepository: assets,
+        futuresPositionModeRepository: positions,
+        language: const Locale('en'),
+      );
+      await launch(t, c);
+      await tap(t, 'trade-settings');
+      expect(find.text('Account Settings'), findsOneWidget);
+      expect(find.byKey(const Key('settings-asset-mode')), findsOneWidget);
+      expect(find.byKey(const Key('settings-position-mode')), findsOneWidget);
+      await tap(t, 'settings-asset-mode');
+      expect(find.byKey(const Key('asset-mode-sheet')), findsOneWidget);
+      expect(find.byKey(const Key('asset-mode-single')), findsOneWidget);
+      expect(find.byKey(const Key('asset-mode-multi')), findsOneWidget);
+      expect(assets.reads, 0);
+      await tap(t, 'asset-mode-sheet-read');
+      expect(find.byKey(const Key('login-email')), findsOneWidget);
+      expect(assets.changes, 0);
+      expect(positions.changes, 0);
+      await close(t, c);
+    },
+  );
 
   testWidgets('multi activation moves through blocked, resolving and verified Cross states', (
     t,
@@ -466,7 +471,7 @@ void main() {
       await t.tap(find.text(hasPosition ? 'Manage' : 'Switch to Cross'));
       await t.pumpAndSettle();
       if (hasPosition) {
-        expect(t.widget<PositionRiskScreen>(find.byType(PositionRiskScreen)).symbol, 'ETHUSDT');
+        expect(find.byKey(const Key('mode-market-positions')), findsOneWidget);
       } else {
         final screen = t.widget<PositionMarginModeScreen>(find.byType(PositionMarginModeScreen));
         expect(screen.symbol, 'ETHUSDT');

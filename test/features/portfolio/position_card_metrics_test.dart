@@ -104,13 +104,14 @@ AsterOpenOrder order({
   bool reduceOnly = true,
   bool closePosition = false,
   int minute = 0,
+  String status = 'NEW',
 }) => AsterOpenOrder(
   symbol: 'BTCUSDT',
   orderId: '$type-$stop-$minute',
   side: side,
   positionSide: positionSide,
   type: type,
-  status: 'NEW',
+  status: status,
   time: DateTime.utc(2026, 11, 11, 12, minute),
   origQty: d(closePosition ? '0' : '0.005'),
   executedQty: Decimal.zero,
@@ -227,13 +228,29 @@ void main() {
   });
 
   group('positionExitOrders', () {
-    test('splits entire and partial TP/SL and keeps the newest of each', () {
+    test('splits entire and partial TP/SL and keeps the earliest open one of each', () {
       final exits = positionExitOrders(position(), [
-        order(type: 'TAKE_PROFIT_MARKET', stop: '95000', closePosition: true, reduceOnly: false),
+        order(
+          type: 'TAKE_PROFIT_MARKET',
+          stop: '96000',
+          closePosition: true,
+          reduceOnly: false,
+          minute: 7,
+        ),
+        order(
+          type: 'TAKE_PROFIT_MARKET',
+          stop: '95000',
+          closePosition: true,
+          reduceOnly: false,
+          minute: 2,
+        ),
         order(type: 'STOP_MARKET', stop: '75000', closePosition: true, reduceOnly: false),
-        order(type: 'TAKE_PROFIT', stop: '90000'),
         order(type: 'TAKE_PROFIT_MARKET', stop: '91000', minute: 5),
+        order(type: 'TAKE_PROFIT', stop: '90000', minute: 1),
         order(type: 'STOP', stop: '76000'),
+        // Filled or cancelled rows no longer count.
+        order(type: 'TAKE_PROFIT', stop: '89000', status: 'FILLED'),
+        order(type: 'STOP', stop: '74000', closePosition: true, status: 'CANCELED'),
         // Not exits of this position.
         order(type: 'LIMIT', stop: '1'),
         order(type: 'STOP_MARKET', side: 'BUY', stop: '2'),
@@ -241,7 +258,7 @@ void main() {
       ]);
       expect(exits.entireTakeProfit?.stopPrice, d('95000'));
       expect(exits.entireStopLoss?.stopPrice, d('75000'));
-      expect(exits.partialTakeProfit?.stopPrice, d('91000'));
+      expect(exits.partialTakeProfit?.stopPrice, d('90000'));
       expect(exits.partialStopLoss?.stopPrice, d('76000'));
       expect(exits.partialCount, 3);
     });

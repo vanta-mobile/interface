@@ -48,19 +48,19 @@ class _AmountSection extends StatelessWidget {
   const _AmountSection({
     required this.controller,
     required this.unit,
-    required this.percent,
+    required this.position,
     required this.positionValue,
     required this.enabled,
     required this.onTyped,
-    required this.onPercent,
+    required this.onPosition,
   });
   final TextEditingController controller;
   final String unit;
-  final int percent;
+  final double position;
   final Decimal? positionValue;
   final bool enabled;
   final VoidCallback onTyped;
-  final ValueChanged<int> onPercent;
+  final ValueChanged<double> onPosition;
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -81,8 +81,9 @@ class _AmountSection extends StatelessWidget {
         const SizedBox(height: 6),
         PositionAmountSlider(
           sliderKey: const Key('position-tpsl-percent'),
-          percent: percent,
-          onChanged: enabled ? onPercent : null,
+          position: position,
+          continuous: positionValue != null,
+          onCommit: enabled ? onPosition : null,
         ),
         const SizedBox(height: 6),
         Row(

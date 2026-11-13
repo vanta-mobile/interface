@@ -159,6 +159,11 @@ class AsterReadService {
     return _signed('DELETE', path, query: query, signature: signature);
   }
 
+  /// Used only by the futures service's explicit LIMIT order modification.
+  Future<Object?> signedPut(String path, {required String query, required String signature}) {
+    return _signed('PUT', path, query: query, signature: signature);
+  }
+
   Future<Object?> _signed(
     String method,
     String path, {

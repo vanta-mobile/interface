@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/funding/domain/funding_catalog.dart';
 import 'package:vanta/features/funding/presentation/funding_screen.dart';
 import 'package:vanta/features/portfolio/application/account_read_provider.dart';
-import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
+import 'package:vanta/features/portfolio/application/position_risk_provider.dart';
+import 'package:vanta/features/portfolio/domain/position_risk.dart';
 
+import '../../support/live_order.dart';
 import '../../support/navigation_fixture.dart';
 import '../../support/trade_fixture.dart';
 
@@ -17,10 +19,14 @@ void main() {
       await launch(tester, fixture.container);
       await tapNavigationControl(tester, 'navigation-portfolio');
       await fixture.container.read(accountReadProvider.notifier).refresh();
+      // Portfolio positions now come from the signed position-risk read
+      // (7844ea4 removed PortfolioOverview.positions).
+      await fixture.container.read(positionRiskProvider.notifier).refresh();
       await tester.pumpAndSettle();
-      final action = find.byKey(
-        ValueKey('portfolio-position-BTCUSDT-BOTH-${market ? 'Market' : 'Limit'}'),
-      );
+      // The Portfolio list renders the shared TradePositionCard, whose Market
+      // and Limit actions open the Close Position sheet on the matching tab
+      // (7844ea4, docs/implementation.md "Portfolio page's position list").
+      final action = find.byKey(Key('trade-position-action-${market ? 1 : 2}-BTCUSDT-BOTH'));
       await tester.scrollUntilVisible(
         action,
         200,
@@ -35,21 +41,40 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(action);
       await tester.pumpAndSettle();
-      expect(
-        tester.widget<LiveOrderScreen>(find.byType(LiveOrderScreen)).initialCloseMarket,
-        market,
-      );
-      await tapNavigationControl(tester, 'live-order-read');
-      final selector = tester.widget<SegmentedButton<bool>>(
-        find.byKey(const Key('live-order-type')),
-      );
-      expect(selector.selected, {market});
+      expect(find.byKey(const Key('position-close-sheet')), findsOneWidget);
+      expect(find.byKey(const Key('position-limit-price')), market ? findsNothing : findsOneWidget);
       expect(fixture.orders.submits, 0);
       expect(fixture.identity.signatures, 0);
       expect(tester.takeException(), null);
       await fixture.close(tester);
     });
   }
+  testWidgets('portfolio close all opens the design sheet; cancel submits nothing', (tester) async {
+    final fixture = NavigationFixture(tester);
+    // Close-all needs a position read from the last 30 seconds.
+    final stored = fixture.positions.result;
+    fixture.positions.result = PositionRiskSnapshot(
+      address: stored.address,
+      receivedAt: liveOrderClock,
+      positions: stored.positions,
+      units: stored.units,
+    );
+    await launch(tester, fixture.container);
+    await tapNavigationControl(tester, 'navigation-portfolio');
+    await fixture.container.read(positionRiskProvider.notifier).refresh();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('portfolio-close-all')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('batch-close-confirm')), findsOneWidget);
+    expect(find.textContaining('by market orders?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('batch-close-confirm')), findsNothing);
+    expect(fixture.orders.submits, 0);
+    expect(fixture.identity.signatures, 0);
+    expect(tester.takeException(), null);
+    await fixture.close(tester);
+  });
   for (final operation in [FundingOperation.deposit, FundingOperation.withdraw]) {
     testWidgets('portfolio funding enters $operation without signing', (tester) async {
       final fixture = NavigationFixture(tester);

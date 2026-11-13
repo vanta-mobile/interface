@@ -8,18 +8,28 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../market/domain/market_precision.dart';
 import '../../trade/presentation/trade_theme.dart';
 import '../../trade/presentation/widgets/trade_option_sheet.dart';
+import '../../auth/application/auth_provider.dart';
 import '../application/live_order_provider.dart';
+import '../application/open_orders_auto_read_provider.dart';
+import '../application/open_orders_provider.dart';
+import '../application/order_cancellation_provider.dart';
 import '../application/position_risk_provider.dart';
 import '../application/position_tpsl_provider.dart';
+import '../domain/aster_open_orders.dart';
 import '../domain/attached_entry_peg.dart';
 import '../domain/live_order.dart';
 import '../domain/live_order_peg.dart';
 import '../domain/live_order_trigger.dart';
+import '../domain/position_exit_groups.dart';
 import '../domain/position_risk.dart';
 import '../domain/position_tpsl.dart';
 import '../domain/position_trigger_calculation.dart';
 import '../domain/percent_share.dart';
 import '../domain/position_valuation.dart';
+import 'aster_open_order_card.dart';
+import 'open_order_cancel_prompts.dart';
+import 'open_order_labels.dart';
+import 'order_cancellation_controls.dart';
 import 'portfolio_components.dart';
 import 'position_order_inputs.dart';
 import 'position_tpsl_fields.dart';
@@ -29,10 +39,7 @@ import 'trade_check_option.dart';
 
 part 'position_tpsl_chrome.dart';
 part 'position_tpsl_leg.dart';
-
-void openPositionTpSl(BuildContext context, PositionRisk position) =>
-    Navigator.of(context)
-        .push<void>(MaterialPageRoute(builder: (_) => PositionTpSlScreen(position: position)));
+part 'position_tpsl_list.dart';
 
 /// Set TP/SL for one position: a take-profit and/or stop-loss conditional
 /// order closing part of it (reduce quantity) or all of it (closePosition).
@@ -75,17 +82,6 @@ class _PositionTpSlScreenState extends ConsumerState<PositionTpSlScreen> {
     super.dispose();
   }
 
-  /// The newest snapshot of this position, or the one the page opened with.
-  PositionRisk _position() {
-    final p = widget.position;
-    for (final row
-        in ref.watch(positionRiskProvider.select((s) => s.account?.positions)) ??
-            const <PositionRisk>[]) {
-      if (row.symbol == p.symbol && row.side == p.side && !row.balanceOnly) return row;
-    }
-    return p;
-  }
-
   /// Display quantity: the slider share of the position or the typed amount at
   /// the current mark. Submission recomputes it on the exchange step.
   Decimal? _quantity(PositionRisk p, Decimal? mark, LiveOrderContext? data) {
@@ -124,18 +120,40 @@ class _PositionTpSlScreenState extends ConsumerState<PositionTpSlScreen> {
     stopLoss.syncEstimate(estimate);
   }
 
+  /// Position value at the current mark: the slider's range.
+  Decimal? _positionValue(PositionRisk p, Decimal? mark) {
+    if (mark == null) return null;
+    final value = (p.quantity * mark).abs();
+    return value > Decimal.zero ? value : null;
+  }
+
   /// A slider stop fills the amount with that share of the position value.
   void _selectPercent(int value, PositionRisk p, Decimal? mark) => _render(() {
     percent = value;
-    final total = mark == null ? null : (p.quantity * mark).abs();
+    final total = _positionValue(p, mark);
     amount.text = total == null ? '' : marketInput(percentShare(total, value).round(scale: 2));
     _resync();
   });
 
+  /// Trade-workspace slider rules over the position value ([sliderChoice]).
+  void _selectPosition(double position, PositionRisk p, Decimal? mark) {
+    final choice = sliderChoice(
+      position,
+      maximum: _positionValue(p, mark),
+      fine: Decimal.parse('0.01'),
+    );
+    if (choice.percent case final share?) return _selectPercent(share, p, mark);
+    _render(() {
+      percent = null;
+      amount.text = marketInput(choice.amount!);
+      _resync();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final p = _position();
+    final p = _latestPosition(ref, widget.position);
     final (quote, _) = watchPositionMark(ref, p);
     final mark = PositionValuation(position: p, quote: quote).mark;
     final live = ref.watch(liveOrderProvider);
@@ -204,14 +222,18 @@ class _PositionTpSlScreenState extends ConsumerState<PositionTpSlScreen> {
                       _AmountSection(
                         controller: amount,
                         unit: quoteAsset,
-                        percent: percent ?? 0,
-                        positionValue: mark == null ? null : (p.quantity * mark).abs(),
+                        position: sliderPosition(
+                          percent: percent,
+                          amount: Decimal.tryParse(amount.text.trim()),
+                          maximum: _positionValue(p, mark),
+                        ),
+                        positionValue: _positionValue(p, mark),
                         enabled: enabled,
                         onTyped: () => _render(() {
                           percent = null;
                           _resync();
                         }),
-                        onPercent: (value) => _selectPercent(value, p, mark),
+                        onPosition: (value) => _selectPosition(value, p, mark),
                       ),
                     ],
                     const SizedBox(height: 16),

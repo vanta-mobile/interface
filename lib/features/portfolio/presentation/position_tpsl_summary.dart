@@ -60,21 +60,28 @@ class PositionOrderSummary extends StatelessWidget {
           for (final (label, value) in rows)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: TradeTypography.body.copyWith(color: TradeColors.secondary),
+              // Long amounts wrap within most of the row instead of pushing
+              // the label out; short ones keep their natural width.
+              child: LayoutBuilder(
+                builder: (context, constraints) => Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: TradeTypography.body.copyWith(color: TradeColors.secondary),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  DefaultTextStyle.merge(
-                    style: TradeTypography.body,
-                    textAlign: TextAlign.end,
-                    child: value,
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: constraints.maxWidth * .6),
+                      child: DefaultTextStyle.merge(
+                        style: TradeTypography.body,
+                        textAlign: TextAlign.end,
+                        child: value,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],

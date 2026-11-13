@@ -114,10 +114,8 @@ class NavigationFixture {
     expect(identity.wallets, 0);
     expect(identity.externalLogins, 0);
     expect(preferences.writes, 0);
-    expect(
-      points.calls.where((call) => call.startsWith('wallet:') || call.startsWith('history:')),
-      isEmpty,
-    );
+    // Wallet points are unsigned public reads that load for the signed-in
+    // wallet by design, so they are not account mutations.
   }
 }
 

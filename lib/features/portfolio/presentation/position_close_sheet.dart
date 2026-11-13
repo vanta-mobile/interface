@@ -137,10 +137,43 @@ class _PositionCloseSheetState extends ConsumerState<PositionCloseSheet> {
     peg: limit ? peg : null,
   );
 
+  /// Slider range in the shown unit: the position quantity, or its value at
+  /// the mark. Null while the mark is unknown.
+  Decimal? _maximum(PositionRisk p, Decimal? mark) {
+    final total = p.quantity.abs();
+    final value = unit == OrderSizeUnit.base ? total : (mark == null ? null : total * mark);
+    return value == null || value <= Decimal.zero ? null : value;
+  }
+
+  /// Trade-workspace slider rules ([sliderChoice]). Base amounts move in the
+  /// exchange step of this order type; without it the slider keeps its stops.
+  ({Decimal? maximum, Decimal fine}) _sliderScale(
+    PositionRisk p,
+    Decimal? mark,
+    LiveOrderContext? data,
+  ) {
+    if (unit == OrderSizeUnit.quote) {
+      return (maximum: _maximum(p, mark), fine: Decimal.parse('0.01'));
+    }
+    final rule = data == null
+        ? null
+        : (limit ? data.rules.limitQuantity : data.rules.marketQuantity);
+    return (maximum: rule == null ? null : _maximum(p, mark), fine: rule?.step ?? Decimal.one);
+  }
+
+  void _selectPosition(double position, PositionRisk p, Decimal? mark, LiveOrderContext? data) {
+    final scale = _sliderScale(p, mark, data);
+    final choice = sliderChoice(position, maximum: scale.maximum, fine: scale.fine);
+    if (choice.percent case final share?) return _selectPercent(share, p, mark);
+    _render(() {
+      percent = null;
+      amount.text = marketInput(choice.amount!);
+    });
+  }
+
   void _selectPercent(int value, PositionRisk p, Decimal? mark) => _render(() {
     percent = value;
-    final total = p.quantity.abs();
-    final maximum = unit == OrderSizeUnit.base ? total : (mark == null ? null : total * mark);
+    final maximum = _maximum(p, mark);
     final shown = maximum == null ? null : percentShare(maximum, value);
     amount.text = shown == null
         ? ''
@@ -380,8 +413,13 @@ class _PositionCloseSheetState extends ConsumerState<PositionCloseSheet> {
               const SizedBox(height: 8),
               PositionAmountSlider(
                 sliderKey: const Key('position-close-percent'),
-                percent: percent ?? 0,
-                onChanged: enabled ? (value) => _selectPercent(value, p, mark) : null,
+                position: sliderPosition(
+                  percent: percent,
+                  amount: Decimal.tryParse(amount.text.trim()),
+                  maximum: _maximum(p, mark),
+                ),
+                continuous: _sliderScale(p, mark, data).maximum != null,
+                onCommit: enabled ? (value) => _selectPosition(value, p, mark, data) : null,
               ),
               if (limit) ...[
                 const SizedBox(height: 8),

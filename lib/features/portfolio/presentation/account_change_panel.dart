@@ -18,7 +18,6 @@ import '../application/spot_history_provider.dart';
 import '../application/account_read_provider.dart';
 import '../application/open_orders_provider.dart';
 import '../application/spot_open_orders_provider.dart';
-import '../application/position_adl_provider.dart';
 import '../application/position_risk_provider.dart';
 import '../domain/account_change_stream.dart';
 import '../domain/account_snapshot.dart';
@@ -101,7 +100,6 @@ class _Controls extends ConsumerWidget {
         ref.watch(openOrdersReadProvider.select((s) => s.busy)) ||
         ref.watch(spotOpenOrdersProvider.select((s) => s.busy)) ||
         ref.watch(positionRiskProvider.select((s) => s.busy)) ||
-        ref.watch(positionAdlProvider.select((s) => s.busy)) ||
         ref.watch(spotAccountReadProvider.select((s) => s.busy)) ||
         ref.watch(spotHistoryProvider.select((s) => s.busy)) ||
         ref.watch(futuresHistoryProvider.select((s) => s.busy)) ||

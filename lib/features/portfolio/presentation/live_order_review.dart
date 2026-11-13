@@ -11,6 +11,7 @@ import '../application/order_confirmation_provider.dart';
 import '../application/order_review_activity_provider.dart';
 import '../application/main_order_review_provider.dart';
 import '../application/main_order_review_submission_provider.dart';
+import '../application/main_order_refresh_provider.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/live_order.dart';
 import '../domain/main_order_allocation.dart';
@@ -25,7 +26,17 @@ Future<void> reviewLiveOrder(
   OrderSizeResolution? sizing,
   Future<void> Function()? onSubmit,
   MainOrderAllocationReview? allocationReview,
+  bool alwaysConfirm = false,
 }) async {
+  // One review at a time: a second request while a confirmation (or a direct
+  // submission it started) is open must not open another route.
+  if (ref.read(orderReviewActivityProvider) > 0) return;
+  // A fixed review keeps the facts it opened with: stop a background read that
+  // is already running so its late result cannot replace them. The main
+  // confirmation (with an allocation review) keeps renewing in place.
+  if (allocationReview == null && ref.read(mainOrderRefreshProvider).background) {
+    ref.read(mainOrderRefreshProvider.notifier).stop();
+  }
   final activity = ref.read(orderReviewActivityProvider.notifier);
   activity.begin();
   try {
@@ -36,6 +47,7 @@ Future<void> reviewLiveOrder(
       sizing: sizing,
       onSubmit: onSubmit,
       allocationReview: allocationReview,
+      alwaysConfirm: alwaysConfirm,
     );
   } finally {
     activity.end();
@@ -49,6 +61,7 @@ Future<void> _reviewLiveOrder(
   OrderSizeResolution? sizing,
   Future<void> Function()? onSubmit,
   MainOrderAllocationReview? allocationReview,
+  required bool alwaysConfirm,
 }) async {
   final controller = ref.read(liveOrderProvider.notifier);
   Future<void> submit() => onSubmit?.call() ?? controller.submit(intent);
@@ -70,7 +83,8 @@ Future<void> _reviewLiveOrder(
 
   final preference = ref.read(orderConfirmationProvider(orderConfirmationKind(intent.draft)));
   // Reducing and entire-position close flows keep their dedicated review.
-  if (!intent.draft.reducing && preference.canSkip) {
+  // Terms filled from outside the app (a deep link) are always confirmed.
+  if (!alwaysConfirm && !intent.draft.reducing && preference.canSkip) {
     await submitCurrent();
     return;
   }

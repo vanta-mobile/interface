@@ -92,7 +92,10 @@ void main() {
         case 'decreasingRate':
           brackets[1]['maintMarginRatio'] = '0.001';
         case 'badCum':
-          brackets[1]['cum'] = 6;
+          // Continuity is not required (docs/implementation.md "Third
+          // real-response mismatch"), but maintenance at the floor must stay
+          // nonnegative: 1000 × 0.01 − 11 < 0.
+          brackets[1]['cum'] = 11;
         case 'initialCum':
           brackets[0]['cum'] = 1;
         case 'gap':

@@ -5,7 +5,9 @@ import 'package:vanta/features/portfolio/application/batch_close_provider.dart';
 import 'package:vanta/features/portfolio/application/position_risk_provider.dart';
 import 'package:vanta/features/portfolio/domain/position_risk.dart';
 import 'package:vanta/features/portfolio/presentation/batch_close_controls.dart';
-import 'package:vanta/features/portfolio/presentation/position_risk_screen.dart';
+import 'package:vanta/features/portfolio/presentation/batch_close_status.dart';
+import 'package:vanta/features/auth/application/auth_provider.dart';
+import 'package:vanta/features/portfolio/application/symbol_settings_activity.dart';
 
 import '../../support/aster_account.dart';
 import '../../support/batch_close.dart';
@@ -18,7 +20,7 @@ void main() {
   Future<void> open(WidgetTester tester, ProviderContainer container) async {
     await launch(tester, container);
     Navigator.of(tester.element(find.byType(Navigator).first))
-        .push<void>(MaterialPageRoute(builder: (_) => const PositionRiskScreen()));
+        .push<void>(MaterialPageRoute(builder: (_) => const _BatchCloseHost()));
     await tester.pumpAndSettle();
   }
 
@@ -70,7 +72,7 @@ void main() {
     expect(identity.wallets, 0);
     await dispose(tester, container);
   });
-  testWidgets('confirmation lists exact wallet sides quantities IDs; cancel submits nothing', (
+  testWidgets('design confirmation states the market close count; cancel submits nothing', (
     tester,
   ) async {
     final identity = TestIdentityRepository()..restored = signingIdentity;
@@ -89,25 +91,11 @@ void main() {
     await container.read(positionRiskProvider.notifier).refresh();
     await tester.pumpAndSettle();
     await tap(tester, 'batch-close-open');
-    final dialog = find.byType(AlertDialog);
-    for (final text in [accountAddress, 'BTCUSDT', 'ETHUSDT', '0.01 BTC', '0.02 ETH']) {
-      expect(
-        find.descendant(of: dialog, matching: find.text(text)),
-        findsOneWidget,
-        reason: text,
-      );
-    }
-    expect(find.descendant(of: dialog, matching: find.text('BOTH')), findsNWidgets(2));
+    // ZEROUSDT has no quantity and is not part of the close.
     expect(
-      find.descendant(
-        of: dialog,
-        matching: find.byWidgetPredicate(
-          (w) => w is SelectableText && (w.data?.startsWith('vanta-') ?? false),
-        ),
-      ),
-      findsNWidgets(2),
+      find.text('Are you sure you want to close all 2 positions by market orders?'),
+      findsOneWidget,
     );
-    expect(find.descendant(of: dialog, matching: find.text('ZEROUSDT')), findsNothing);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(repository.posts, isEmpty);
@@ -134,11 +122,10 @@ void main() {
     await container.read(positionRiskProvider.notifier).refresh();
     await tester.pumpAndSettle();
     await tap(tester, 'position-risk-current-symbol');
-    expect(tester.widget<BatchCloseControls>(find.byType(BatchCloseControls)).symbol, 'BTCUSDT');
     await tap(tester, 'batch-close-open');
     expect(
-      find.descendant(of: find.byType(AlertDialog), matching: find.text('ETHUSDT')),
-      findsNothing,
+      find.text('Are you sure you want to close all 1 BTCUSDT positions by market orders?'),
+      findsOneWidget,
     );
     risk.result = PositionRiskSnapshot(
       address: accountAddress,
@@ -213,7 +200,7 @@ void main() {
         await container.read(positionRiskProvider.notifier).refresh();
         await tester.pumpAndSettle();
         await tap(tester, 'batch-close-open');
-        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(find.byKey(const Key('batch-close-confirm')), findsOneWidget);
         expect(tester.takeException(), null);
         tester.view.physicalSize = const Size(844, 390);
         await tester.pumpAndSettle();
@@ -276,4 +263,44 @@ void main() {
       await dispose(tester, container);
     },
   );
+}
+
+/// The production close-all flow (enabled only when preparation succeeds, the
+/// design confirmation sheet and the shared result status) on a bare page.
+class _BatchCloseHost extends ConsumerStatefulWidget {
+  const _BatchCloseHost();
+  @override
+  ConsumerState<_BatchCloseHost> createState() => _BatchCloseHostState();
+}
+
+class _BatchCloseHostState extends ConsumerState<_BatchCloseHost> {
+  bool currentOnly = false;
+  @override
+  Widget build(BuildContext context) {
+    ref.watch(authProvider);
+    ref.watch(batchCloseProvider);
+    ref.watch(positionRiskProvider);
+    ref.watch(symbolSettingsActivityProvider);
+    final symbol = currentOnly ? 'BTCUSDT' : null;
+    final enabled = ref.read(batchCloseProvider.notifier).prepare(symbol: symbol) != null;
+    return Scaffold(
+      body: ListView(
+        key: const Key('position-risk-page'),
+        children: [
+          SwitchListTile(
+            key: const Key('position-risk-current-symbol'),
+            title: const Text('Current symbol'),
+            value: currentOnly,
+            onChanged: (value) => setState(() => currentOnly = value),
+          ),
+          OutlinedButton(
+            key: const Key('batch-close-open'),
+            onPressed: enabled ? () => confirmBatchClose(context, ref, symbol: symbol) : null,
+            child: const Text('Close all'),
+          ),
+          const BatchCloseStatus(),
+        ],
+      ),
+    );
+  }
 }

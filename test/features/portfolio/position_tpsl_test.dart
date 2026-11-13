@@ -172,6 +172,22 @@ void main() {
       ]);
       expect((repository.reads, repository.submits), (2, 2));
       expect(repository.lastIntent?.draft.trigger?.kind, LiveOrderTriggerKind.stop);
+      expect(
+        repository.lastIntent?.clientOrderId,
+        matches(RegExp(r'^vanta-[0-9a-z]+-[0-9a-z]+-sl$')),
+      );
+    });
+
+    test('legs of one submission share a client-ID base', () async {
+      final ids = <String>[];
+      container.listen(liveOrderProvider, (_, next) {
+        if (next.intent?.clientOrderId case final id? when !ids.contains(id)) ids.add(id);
+      });
+      await container.read(positionTpSlProvider.notifier).submit('BTCUSDT', legs());
+      expect(ids, hasLength(2));
+      expect(ids.first, endsWith('-tp'));
+      expect(ids.last, '${ids.first.substring(0, ids.first.length - 3)}-sl');
+      expect(ids.every((id) => id.length <= 36), isTrue);
     });
 
     test('a rejected leg stops the sequence without sending later legs', () async {

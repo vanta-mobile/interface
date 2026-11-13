@@ -42,9 +42,6 @@ class AsterAccountService extends AsterReadService {
   Future<Object?> positionRisk({required String query, required String signature}) =>
       signedGet('/fapi/v3/positionRisk', query: query, signature: signature);
 
-  Future<Object?> positionAdl({required String query, required String signature}) =>
-      signedGet('/fapi/v3/adlQuantile', query: query, signature: signature);
-
   Future<Object?> leverageBrackets({required String query, required String signature}) =>
       signedGet('/fapi/v3/leverageBrackets', query: query, signature: signature);
 
@@ -90,6 +87,10 @@ class AsterAccountService extends AsterReadService {
 
   Future<Object?> cancelOrder({required String query, required String signature}) =>
       signedDelete('/fapi/v3/order', query: query, signature: signature);
+
+  /// LIMIT orders only; price and quantity are both required by Aster.
+  Future<Object?> modifyOrder({required String query, required String signature}) =>
+      signedPut('/fapi/v3/order', query: query, signature: signature);
 
   Future<Object?> queryOrder({required String query, required String signature}) =>
       signedGet('/fapi/v3/order', query: query, signature: signature);

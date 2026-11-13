@@ -19,3 +19,28 @@ Decimal sliderAmount(Decimal maximum, double position, Decimal fine) {
   if (maximum > Decimal.one) return raw.floor();
   return Decimal.fromBigInt((raw / fine).floor()) * fine;
 }
+
+/// A slider selection: a percentage stop, or a plain [amount] in the shown unit.
+typedef SliderChoice = ({int? percent, Decimal? amount});
+
+/// Trade-workspace slider rules. Without a known [maximum] the thumb snaps to
+/// the five stops; with one, only the end of the track is 100% (the exact
+/// maximum), the start is 0%, and anything between is a [sliderAmount].
+SliderChoice sliderChoice(double position, {required Decimal? maximum, required Decimal fine}) {
+  if (maximum == null || maximum <= Decimal.zero) {
+    return (percent: (position * 4).round() * 25, amount: null);
+  }
+  if (position >= 1) return (percent: 100, amount: null);
+  final amount = sliderAmount(maximum, position, fine);
+  return amount <= Decimal.zero ? (percent: 0, amount: null) : (percent: null, amount: amount);
+}
+
+/// Thumb position (0–1) of a selected [percent] stop, or else of a typed
+/// [amount] as a share of [maximum].
+double sliderPosition({int? percent, Decimal? amount, Decimal? maximum}) {
+  if (percent != null) return percent / 100;
+  if (amount == null || maximum == null || maximum <= Decimal.zero || amount <= Decimal.zero) {
+    return 0;
+  }
+  return (amount / maximum).toDouble().clamp(0.0, 1.0);
+}

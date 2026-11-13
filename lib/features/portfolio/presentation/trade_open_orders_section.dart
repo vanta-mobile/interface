@@ -12,6 +12,9 @@ import '../application/position_risk_provider.dart';
 import '../../../core/errors/error_text.dart';
 import '../application/open_order_strategies_provider.dart';
 import '../application/open_orders_auto_read_provider.dart';
+import '../application/order_modification_provider.dart';
+import '../domain/order_modification.dart';
+import 'open_order_edit_sheet.dart';
 import 'aster_open_order_card.dart';
 import 'batch_order_cancellation_controls.dart';
 import 'order_cancellation_controls.dart';
@@ -42,6 +45,15 @@ class _TradeOpenOrdersSectionState extends ConsumerState<TradeOpenOrdersSection>
     }
   }
 
+  /// Shows the order's market at the top of the trade page, switching symbol
+  /// first when the order belongs to another market.
+  void openMarket(String orderSymbol) {
+    final symbol = ref.read(symbolProvider);
+    if (orderSymbol != symbol) ref.read(symbolProvider.notifier).select(orderSymbol);
+    Scrollable.maybeOf(context)?.position
+        .animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOutCubic);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -51,12 +63,14 @@ class _TradeOpenOrdersSectionState extends ConsumerState<TradeOpenOrdersSection>
     final session = ref.watch(authProvider);
     final strategies = ref.watch(openOrderStrategiesProvider);
     final positions = ref.watch(positionRiskProvider.select((s) => s.account?.positions));
+    final modifying = ref.watch(orderModificationProvider.select((s) => s.busy));
     final canCancel =
         session.identity?.signingAvailable == true &&
         !session.busy &&
         !state.busy &&
         !cancellation.busy &&
-        !cancellation.needsRecheck;
+        !cancellation.needsRecheck &&
+        !modifying;
     final symbol = ref.watch<String>(symbolProvider);
     final all = state.account?.orders;
     final orders = all?.where((order) => !currentSymbolOnly || order.symbol == symbol).toList();
@@ -138,9 +152,15 @@ class _TradeOpenOrdersSectionState extends ConsumerState<TradeOpenOrdersSection>
               leverage: leverage(order.symbol, order.positionSide),
               strategy: strategies[OpenOrderStrategiesController.key(order)],
               onCancel: canCancel ? () => confirmOrderCancellation(context, ref, order) : null,
+              editable: canModifyOpenOrder(
+                order,
+                strategy: strategies[OpenOrderStrategiesController.key(order)],
+              ),
+              onEdit: canCancel ? () => showOpenOrderEditSheet(context, order) : null,
               onViewChart: order.symbol == symbol
                   ? null
                   : () => ref.read(symbolProvider.notifier).select(order.symbol),
+              onTap: () => openMarket(order.symbol),
             ),
           ),
       ],

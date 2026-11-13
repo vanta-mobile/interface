@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/presentation/drag_throttle.dart';
+
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
 import '../../trade/presentation/widgets/trade_icon.dart';
@@ -265,45 +267,92 @@ class PositionPriceRow extends StatelessWidget {
 }
 
 /// Five-stop amount slider of the design: a 4 px control track, a small first
-/// stop, ringed stops at 25/50/75/100% and a white 12 px thumb.
-class PositionAmountSlider extends StatelessWidget {
+/// stop, ringed stops at 25/50/75/100% and a white 12 px thumb. Like the
+/// trade-workspace slider, a [continuous] slider's thumb follows the finger
+/// between the stops and commits throttled positions; otherwise it snaps to
+/// the five stops.
+class PositionAmountSlider extends StatefulWidget {
   const PositionAmountSlider({
     super.key,
-    required this.percent,
-    required this.onChanged,
+    required this.position,
+    required this.onCommit,
+    this.continuous = false,
     this.sliderKey,
   });
-  final int percent;
-  final ValueChanged<int>? onChanged;
+
+  /// Committed position, 0–1.
+  final double position;
+  final ValueChanged<double>? onCommit;
+  final bool continuous;
   final Key? sliderKey;
+
+  @override
+  State<PositionAmountSlider> createState() => _PositionAmountSliderState();
+}
+
+class _PositionAmountSliderState extends State<PositionAmountSlider> {
+  late final _throttle = DragThrottle<double>((value) => widget.onCommit?.call(value));
+  double? _drag;
+
+  @override
+  void didUpdateWidget(PositionAmountSlider old) {
+    super.didUpdateWidget(old);
+    // A drag cut off by disabling never reports its end; drop its local value.
+    if (widget.onCommit == null) {
+      _throttle.cancel();
+      _drag = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _throttle.cancel();
+    super.dispose();
+  }
+
+  double _snap(double value) => widget.continuous ? value : (value * 4).round() / 4;
+
+  void _step(double delta) => widget.onCommit?.call(_snap((widget.position + delta).clamp(0, 1)));
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, box) {
       final width = box.maxWidth;
-      int stopAt(double dx) => ((dx - 6) / (width - 12) * 4).round().clamp(0, 4) * 25;
-      void pick(Offset position) {
-        final value = stopAt(position.dx);
-        if (value != percent) onChanged?.call(value);
-      }
-
+      double at(Offset local) => _snap(((local.dx - 6) / (width - 12)).clamp(0.0, 1.0));
+      final enabled = widget.onCommit != null;
+      final shown = (_drag ?? widget.position).clamp(0.0, 1.0);
+      String label(double value) => '${(value * 100).round()}%';
       return Semantics(
-        key: sliderKey,
+        key: widget.sliderKey,
         slider: true,
-        value: '$percent%',
-        increasedValue: '${(percent + 25).clamp(0, 100)}%',
-        decreasedValue: '${(percent - 25).clamp(0, 100)}%',
-        onIncrease: onChanged == null || percent >= 100
-            ? null
-            : () => onChanged!((percent + 25).clamp(0, 100)),
-        onDecrease: onChanged == null || percent <= 0
-            ? null
-            : () => onChanged!((percent - 25).clamp(0, 100)),
+        value: label(shown),
+        increasedValue: label((shown + 0.25).clamp(0, 1)),
+        decreasedValue: label((shown - 0.25).clamp(0, 1)),
+        onIncrease: !enabled || shown >= 1 ? null : () => _step(0.25),
+        onDecrease: !enabled || shown <= 0 ? null : () => _step(-0.25),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTapDown: onChanged == null ? null : (d) => pick(d.localPosition),
-          onHorizontalDragUpdate: onChanged == null ? null : (d) => pick(d.localPosition),
-          child: SizedBox(height: 24, child: CustomPaint(painter: _SliderPainter(percent / 100))),
+          onTapUp: enabled ? (d) => widget.onCommit!(at(d.localPosition)) : null,
+          onHorizontalDragUpdate: enabled
+              ? (d) {
+                  final value = at(d.localPosition);
+                  setState(() => _drag = value);
+                  _throttle.add(value);
+                }
+              : null,
+          onHorizontalDragEnd: enabled
+              ? (_) {
+                  if (_drag case final value?) _throttle.end(value);
+                  if (mounted) setState(() => _drag = null);
+                }
+              : null,
+          onHorizontalDragCancel: enabled
+              ? () {
+                  if (_drag case final value?) _throttle.end(value);
+                  if (mounted) setState(() => _drag = null);
+                }
+              : null,
+          child: SizedBox(height: 24, child: CustomPaint(painter: _SliderPainter(shown))),
         ),
       );
     },

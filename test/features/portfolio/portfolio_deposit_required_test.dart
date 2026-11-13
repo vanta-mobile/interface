@@ -48,11 +48,16 @@ void main() {
         expect(account.calls, 1);
         expect(container.read(portfolioOverviewProvider).totalUsd, isNull);
         expect(find.byKey(const Key('portfolio-deposit-required')), findsNothing);
+        // The redesigned page shows account feedback below the Futures list,
+        // which can sit below the fold.
         expect(
-          find.byKey(const Key('account-read-error')),
+          find.byKey(const Key('account-read-error'), skipOffstage: false),
           depositRequired ? findsNothing : findsOneWidget,
         );
-        expect(find.text(serverMessage), depositRequired ? findsNothing : findsOneWidget);
+        expect(
+          find.text(serverMessage, skipOffstage: false),
+          depositRequired ? findsNothing : findsOneWidget,
+        );
         // The original structured server failure remains available to diagnostics.
         expect(container.read(accountReadProvider).failure?.details?.message, serverMessage);
         await tapNavigationControl(tester, 'navigation-assistant');

@@ -44,7 +44,7 @@ Widget _reference(String label, String value) => Padding(
   ),
 );
 Widget _side(AppLocalizations l10n, String side) => Text(
-  side == 'BUY' ? l10n.openOrdersBuy : l10n.openOrdersSell,
+  side == 'BUY' ? l10n.spotSideBuy : l10n.spotSideSell,
   style: TextStyle(color: side == 'BUY' ? AppColors.positive : AppColors.negative),
 );
 

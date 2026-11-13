@@ -9,13 +9,16 @@ import '../../trade/presentation/trade_theme.dart';
 import '../application/futures_asset_mode_provider.dart';
 import '../application/symbol_settings_activity.dart';
 import '../application/open_orders_provider.dart';
+import '../application/position_risk_provider.dart';
+import '../../../core/presentation/status_view.dart';
 import '../domain/futures_asset_mode.dart';
 import '../domain/position_margin_mode.dart';
+import '../domain/position_risk.dart';
 import 'mode_read_action.dart';
 import 'mode_settings_sheet.dart';
 import 'portfolio_components.dart';
 import 'position_margin_mode_screen.dart';
-import 'position_risk_screen.dart';
+import 'account_position_card.dart';
 import 'aster_open_orders_panel.dart';
 
 class MultiAssetActivationSheet extends ConsumerStatefulWidget {
@@ -133,7 +136,7 @@ class _MultiAssetActivationSheetState extends ConsumerState<MultiAssetActivation
         MaterialPageRoute(
           builder: (_) => market?.blocked != false
               ? market?.hasPosition == true || market?.hasCollateral == true
-                    ? PositionRiskScreen(symbol: symbol)
+                    ? _MarketPositionsPage(symbol: symbol)
                     : Scaffold(
                         appBar: AppBar(
                           title: Text(AppLocalizations.of(context).asterOpenOrdersTitle),
@@ -259,6 +262,44 @@ class _AffectedMarket extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// One market's positions on the shared position card, whose close, TP/SL and
+/// margin actions clear what blocks the asset-mode switch.
+class _MarketPositionsPage extends ConsumerWidget {
+  const _MarketPositionsPage({required this.symbol});
+  final String symbol;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final positions = ref
+        .watch(positionRiskProvider.select((s) => s.account?.positions))
+        ?.where((p) => p.symbol == symbol && !p.balanceOnly)
+        .toList();
+    return Scaffold(
+      appBar: AppBar(title: Text(l.positions)),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: ref.read(positionRiskProvider.notifier).refresh,
+          child: ListView(
+            key: const Key('mode-market-positions'),
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            children: [
+              if (positions != null && positions.isEmpty)
+                StatusEmptyView(message: l.accountNoPositions)
+              else
+                for (final position in positions ?? const <PositionRisk>[])
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: AccountPositionCard(position: position),
+                  ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -194,7 +194,6 @@ mixin BatchOrderCancellation on Notifier<OrderCancellationState> {
     if (result.submitted) {
       ref.read(accountReadProvider.notifier).markStale();
       ref.read(positionRiskProvider.notifier).markStale();
-      ref.read(positionAdlProvider.notifier).markStale();
     }
   }
 

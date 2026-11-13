@@ -77,11 +77,13 @@ class _MainOrderPercentageControlState extends ConsumerState<MainOrderPercentage
 
   /// A position before the end becomes a whole-unit (or sub-unit) amount.
   void _commitPosition(double position, MainOrderSliderScale? scale) {
-    if (scale == null || widget.onAmount == null) return _commit((position * 4).round() * 25);
-    if (position >= 1) return _commit(100);
-    final amount = sliderAmount(scale.maximum, position, scale.fine);
-    if (amount <= Decimal.zero) return _commit(0);
-    widget.onAmount!('$amount');
+    final choice = sliderChoice(
+      position,
+      maximum: widget.onAmount == null ? null : scale?.maximum,
+      fine: scale?.fine ?? Decimal.zero,
+    );
+    if (choice.amount case final amount?) return widget.onAmount!('$amount');
+    _commit(choice.percent!);
   }
 
   void _commit(int percent) {
@@ -128,11 +130,11 @@ class _MainOrderPercentageControlState extends ConsumerState<MainOrderPercentage
       // Keep the last known range while a refresh briefly drops the preview.
       final scale = _lastScale = widget.scale ?? _lastScale;
       final amount = widget.amount;
-      final position = state.percent != null
-          ? state.percent! / 100
-          : scale == null || amount == null
-          ? 0.0
-          : (amount / scale.maximum).toDouble().clamp(0.0, 1.0);
+      final position = sliderPosition(
+        percent: state.percent,
+        amount: amount,
+        maximum: scale?.maximum,
+      );
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

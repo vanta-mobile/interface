@@ -65,10 +65,13 @@ Future<bool> showOpenOrderCancelDialog(
   return confirmed == true;
 }
 
-/// Bottom confirmation sheet with the warning mark, used by "Cancel all".
-Future<bool> showCancelAllOrdersSheet(
+/// Bottom confirmation sheet with the warning mark, used by "Cancel all"
+/// orders and "Close all" positions.
+Future<bool> showWarningConfirmSheet(
   BuildContext context, {
+  required String title,
   required String message,
+  required Key confirmKey,
   String? note,
 }) async {
   final confirmed = await showModalBottomSheet<bool>(
@@ -94,7 +97,7 @@ Future<bool> showCancelAllOrdersSheet(
                 height: 44,
                 child: Row(
                   children: [
-                    Expanded(child: Text(l10n.openOrdersCancelAll, style: TradeTypography.heading)),
+                    Expanded(child: Text(title, style: TradeTypography.heading)),
                     IconButton(
                       tooltip: l10n.close,
                       onPressed: () => Navigator.pop(context, false),
@@ -127,12 +130,12 @@ Future<bool> showCancelAllOrdersSheet(
                 ),
               ],
               const SizedBox(height: 20),
-              const _PromptActions(
-                confirmKey: Key('confirm-batch-cancel'),
+              _PromptActions(
+                confirmKey: confirmKey,
                 confirm: TradeColors.accent,
                 onConfirm: TradeColors.onAccent,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 20),
             ],
           ),
         ),

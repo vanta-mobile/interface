@@ -31,7 +31,7 @@ class LiveOrderAttachmentSummary extends StatelessWidget {
           ),
           ValueRow(
             l10n.attachedOrderExecution,
-            '${intent.draft.buy ? l10n.sell : l10n.buy} · ${attachedExecutionLabel(l10n, exit.execution)}'
+            '${intent.draft.buy ? l10n.liveCloseLong : l10n.liveCloseShort} · ${attachedExecutionLabel(l10n, exit.execution)}'
             '${!exit.market ? ' · ${exit.executionPrice} ${intent.context.rules.quoteAsset}' : ''}',
           ),
         ],

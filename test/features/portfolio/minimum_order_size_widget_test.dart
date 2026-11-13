@@ -35,7 +35,7 @@ void main() {
               home: const Scaffold(
                 body: SingleChildScrollView(
                   padding: EdgeInsets.all(16),
-                  child: LiveOrderScreen(symbol: 'BTCUSDT', embedded: true),
+                  child: LiveOrderScreen(symbol: 'BTCUSDT'),
                 ),
               ),
             ),

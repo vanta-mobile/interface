@@ -15,13 +15,13 @@ Future<void> confirmBatchCancellation(BuildContext context, WidgetRef ref, {Stri
   final intent = controller.prepareBatch(symbol: symbol);
   if (intent == null) return;
   final l10n = AppLocalizations.of(context);
-  final confirmed = await showCancelAllOrdersSheet(
+  final confirmed = await showWarningConfirmSheet(
     context,
+    title: l10n.openOrdersCancelAll,
+    confirmKey: const Key('confirm-batch-cancel'),
     message: symbol == null
         ? l10n.openOrdersCancelAllQuestion
         : l10n.openOrdersCancelSymbolQuestion(symbol),
-    note:
-        '${l10n.batchCancelScopeCount(intent.orderCount, intent.symbols.length)}\n\n${l10n.batchCancelHint}',
   );
   if (confirmed && context.mounted) await controller.cancelBatch(intent);
 }

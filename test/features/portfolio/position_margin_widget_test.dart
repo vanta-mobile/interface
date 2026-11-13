@@ -8,7 +8,6 @@ import 'package:vanta/features/portfolio/application/position_margin_storage_pro
 import 'package:vanta/features/portfolio/domain/position_margin_adjustment.dart';
 import 'package:vanta/features/portfolio/domain/position_risk.dart';
 import 'package:vanta/features/portfolio/presentation/position_margin_screen.dart';
-import 'package:vanta/features/portfolio/presentation/position_risk_card.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
@@ -276,35 +275,7 @@ void main() {
       await cleanup(tester);
     },
   );
-  testWidgets('only nonzero isolated position has entry', (tester) async {
-    for (final isolated in [true, false]) {
-      for (final zero in [true, false]) {
-        final base = marginContext().position;
-        final p = PositionRisk(
-          symbol: base.symbol,
-          side: base.side,
-          quantity: zero ? md('0') : base.quantity,
-          entryPrice: base.entryPrice,
-          markPrice: base.markPrice,
-          isolated: isolated,
-          isolatedWallet: base.isolatedWallet,
-          leverage: base.leverage,
-          units: base.units,
-        );
-        await open(
-          tester,
-          home: Scaffold(
-            body: SingleChildScrollView(child: PositionRiskCard(position: p)),
-          ),
-        );
-        expect(
-          find.byKey(const ValueKey('margin-adjust-BTCUSDT-BOTH')),
-          isolated && !zero ? findsOneWidget : findsNothing,
-        );
-      }
-    }
-    await cleanup(tester);
-  });
+
   for (final zh in [false, true]) {
     for (final size in [const Size(320, 740), const Size(844, 390), const Size(768, 1024)]) {
       testWidgets('${zh ? 'ZH' : 'EN'} $size enlarged text form and review no overflow', (

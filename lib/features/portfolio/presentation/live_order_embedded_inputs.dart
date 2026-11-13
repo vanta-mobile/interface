@@ -8,6 +8,10 @@ import '../domain/live_order.dart';
 import '../domain/live_order_size.dart';
 import 'live_order_embedded_controls.dart';
 
+/// Two 28px steppers, and the price width (before text scaling) kept readable
+/// beside them; with less room the steppers hide.
+const _steppersWidth = 56.0, _minPriceWidth = 40.0;
+
 /// Design-matching price box for the trade workspace. Stepping keeps the price
 /// on the exchange tick; validation still belongs to the order rules.
 class EmbeddedPriceField extends StatelessWidget {
@@ -64,70 +68,98 @@ class EmbeddedPriceField extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final editable = enabled && fixedLabel == null;
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: bboLevel != null
-                ? _BboModeBox(level: bboLevel!, onTap: enabled ? onBboLevel : null)
-                : EmbeddedInputBox(
-                    label: l.tradeOrderPrice(asset),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: fixedLabel != null
-                              ? Text(fixedLabel!, style: TradeTypography.body, maxLines: 1)
-                              : EmbeddedTextInput(
-                                  fieldKey: const Key('live-order-price'),
-                                  controller: controller!,
-                                  enabled: enabled,
-                                  onChanged: onChanged,
-                                ),
+    final bbo = onBbo != null || bboSelected || bboVisible;
+    // IntrinsicHeight rules out a LayoutBuilder inside the row, so size the
+    // price box here: narrow boxes with enlarged text keep the price readable
+    // and the steppers return once both fit.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bboWidth = bbo ? 4 + 24 + _textWidth(context, l.liveOrderBbo) : 0.0;
+        final priceWidth = MediaQuery.textScalerOf(context).scale(_minPriceWidth);
+        // 20: the input box's horizontal padding.
+        final steppers = constraints.maxWidth - bboWidth - 20 >= _steppersWidth + priceWidth;
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: bboLevel != null
+                    ? _BboModeBox(level: bboLevel!, onTap: enabled ? onBboLevel : null)
+                    : EmbeddedInputBox(
+                        label: l.tradeOrderPrice(asset),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: fixedLabel != null
+                                  ? Text(fixedLabel!, style: TradeTypography.body, maxLines: 1)
+                                  : EmbeddedTextInput(
+                                      fieldKey: const Key('live-order-price'),
+                                      controller: controller!,
+                                      enabled: enabled,
+                                      onChanged: onChanged,
+                                    ),
+                            ),
+                            if (steppers) ...[
+                              _StepButton(
+                                icon: Icons.remove,
+                                tooltip: l.tradePriceDown,
+                                onPressed: editable ? () => _step(-1) : null,
+                              ),
+                              _StepButton(
+                                icon: Icons.add,
+                                tooltip: l.tradePriceUp,
+                                onPressed: editable ? () => _step(1) : null,
+                              ),
+                            ],
+                          ],
                         ),
-                        _StepButton(
-                          icon: Icons.remove,
-                          tooltip: l.tradePriceDown,
-                          onPressed: editable ? () => _step(-1) : null,
-                        ),
-                        _StepButton(
-                          icon: Icons.add,
-                          tooltip: l.tradePriceUp,
-                          onPressed: editable ? () => _step(1) : null,
-                        ),
-                      ],
-                    ),
-                  ),
-          ),
-          if (onBbo != null || bboSelected || bboVisible) ...[
-            const SizedBox(width: 4),
-            Material(
-              color: bboSelected ? TradeColors.accentBackground : TradeColors.card,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: bboSelected ? const BorderSide(color: TradeColors.positive) : BorderSide.none,
+                      ),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                key: const Key('live-order-bbo'),
-                onTap: enabled ? onBbo : null,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Center(
-                    child: Text(
-                      l.liveOrderBbo,
-                      style: TradeTypography.body.copyWith(
-                        color: bboSelected ? TradeColors.accent : TradeColors.text,
+              if (bbo) ...[
+                const SizedBox(width: 4),
+                Material(
+                  color: bboSelected ? TradeColors.accentBackground : TradeColors.card,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: bboSelected
+                        ? const BorderSide(color: TradeColors.positive)
+                        : BorderSide.none,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    key: const Key('live-order-bbo'),
+                    onTap: enabled ? onBbo : null,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Center(
+                        child: Text(
+                          l.liveOrderBbo,
+                          style: TradeTypography.body.copyWith(
+                            color: bboSelected ? TradeColors.accent : TradeColors.text,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ],
-        ],
-      ),
+              ],
+            ],
+          ),
+        );
+      },
     );
+  }
+
+  static double _textWidth(BuildContext context, String text) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: TradeTypography.body),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    return width;
   }
 }
 

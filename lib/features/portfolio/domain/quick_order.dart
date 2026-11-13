@@ -81,6 +81,33 @@ class QuickOrderSizing {
   }
 }
 
+/// Base quantity for a typed quote [amount]: the amount divided by the best ask
+/// (buy) or bid (sell), floored to the market quantity step. Null when the
+/// amount is not a positive decimal or the quote is unavailable; zero when the
+/// amount is below one minimum step.
+Decimal? quickOrderQuantityFromAmount(LiveOrderContext data, bool buy, String amount) {
+  final value = parseOrderDecimal(amount), price = buy ? data.ask : data.bid;
+  if (value == null || value <= Decimal.zero || price == null || price <= Decimal.zero) return null;
+  return data.rules.marketQuantity.floor((value / price).toDecimal(scaleOnInfinitePrecision: 24));
+}
+
+/// Reference pre-check for a quick market entry: the initial margin of the part
+/// that opens exposure (fees excluded) exceeds the available balance. Unknown
+/// prices or balances never block; the exchange remains authoritative.
+bool quickOrderExceedsBalance(LiveOrderContext data, bool buy, String quantity) {
+  final amount = parseOrderDecimal(quantity), price = buy ? data.ask : data.bid;
+  final available = data.funds?.account.availableBalance;
+  if (amount == null || price == null || available == null || data.leverage <= 0) return false;
+  var opening = amount;
+  // One-way entries first consume an opposite position, which needs no margin.
+  if (data.mode == FuturesPositionMode.oneWay) {
+    final held = data.positions['BOTH']?.quantity ?? Decimal.zero;
+    if (buy ? held < Decimal.zero : held > Decimal.zero) opening -= held.abs();
+  }
+  if (opening <= Decimal.zero) return false;
+  return opening * price > available * Decimal.fromInt(data.leverage);
+}
+
 abstract interface class QuickOrderRepository {
   Future<QuickOrderSizing> readSizing({
     required LiveOrderContext context,
@@ -90,6 +117,8 @@ abstract interface class QuickOrderRepository {
 }
 
 class QuickOrderState {
+  /// [quantity] holds the typed quote-asset amount; the base quantity is
+  /// derived at the current ask/bid when an order is prepared.
   const QuickOrderState({
     this.quantity = '',
     this.percent,

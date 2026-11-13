@@ -10,7 +10,6 @@ import '../../trade/presentation/widgets/coin_icon.dart';
 import '../../trade/presentation/widgets/trade_icon.dart';
 import '../application/order_explorer_provider.dart';
 import '../domain/aster_open_orders.dart';
-import 'open_order_details_sheet.dart';
 import 'open_order_labels.dart';
 import 'portfolio_components.dart';
 
@@ -22,6 +21,9 @@ class AsterOpenOrderCard extends StatelessWidget {
     this.strategy,
     this.onCancel,
     this.onViewChart,
+    this.onTap,
+    this.editable = false,
+    this.onEdit,
   });
   final AsterOpenOrder order;
   final int? leverage;
@@ -32,6 +34,13 @@ class AsterOpenOrderCard extends StatelessWidget {
 
   /// Shown only while the chart displays a different symbol.
   final VoidCallback? onViewChart;
+
+  /// Opens the order's market; the card is inert without it.
+  final VoidCallback? onTap;
+
+  /// Shows the Edit chip (LIMIT orders without TP/SL); [onEdit] null disables it.
+  final bool editable;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +54,7 @@ class AsterOpenOrderCard extends StatelessWidget {
       type: MaterialType.transparency,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: () => showOpenOrderDetails(context, order),
+        onTap: onTap,
         child: PortfolioCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -106,7 +115,7 @@ class AsterOpenOrderCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: editable ? 8 : 12),
                   Expanded(
                     child: OpenOrderChipButton(
                       key: Key('cancel-order-${order.symbol}-${order.orderId}'),
@@ -114,6 +123,16 @@ class AsterOpenOrderCard extends StatelessWidget {
                       onPressed: onCancel,
                     ),
                   ),
+                  if (editable) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OpenOrderChipButton(
+                        key: Key('edit-order-${order.symbol}-${order.orderId}'),
+                        label: l10n.openOrdersEdit,
+                        onPressed: onEdit,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -281,10 +300,14 @@ class _Row extends StatelessWidget {
             child: Text(label, style: TradeTypography.body.copyWith(color: TradeColors.secondary)),
           ),
           const SizedBox(width: 12),
+          // Align fills the loose half so short values stay flush right.
           Flexible(
-            child: copyable
-                ? SelectableText(value, style: style, textAlign: TextAlign.end)
-                : Text(value, style: style, textAlign: TextAlign.end),
+            child: Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: copyable
+                  ? SelectableText(value, style: style, textAlign: TextAlign.end)
+                  : Text(value, style: style, textAlign: TextAlign.end),
+            ),
           ),
         ],
       ),
@@ -313,16 +336,19 @@ class _TpSlRow extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Flexible(
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  price(strategy.takeProfit, TradeColors.positive),
-                  const TextSpan(text: ' / '),
-                  price(strategy.stopLoss, TradeColors.negative),
-                ],
+            child: Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    price(strategy.takeProfit, TradeColors.positive),
+                    const TextSpan(text: ' / '),
+                    price(strategy.stopLoss, TradeColors.negative),
+                  ],
+                ),
+                style: TradeTypography.body,
+                textAlign: TextAlign.end,
               ),
-              style: TradeTypography.body,
-              textAlign: TextAlign.end,
             ),
           ),
         ],
@@ -332,13 +358,20 @@ class _TpSlRow extends StatelessWidget {
 }
 
 /// Full-width card action from the design ("Chip"): 32 px tall, raised fill.
+/// While [pending] it is disabled and shows a spinner.
 class OpenOrderChipButton extends StatelessWidget {
-  const OpenOrderChipButton({super.key, required this.label, required this.onPressed});
+  const OpenOrderChipButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.pending = false,
+  });
   final String label;
   final VoidCallback? onPressed;
+  final bool pending;
   @override
   Widget build(BuildContext context) => OutlinedButton(
-    onPressed: onPressed,
+    onPressed: pending ? null : onPressed,
     style: OutlinedButton.styleFrom(
       minimumSize: const Size.fromHeight(32),
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -356,6 +389,11 @@ class OpenOrderChipButton extends StatelessWidget {
         fontWeight: FontWeight.w500,
       ),
     ),
-    child: Text(label),
+    child: pending
+        ? const SizedBox.square(
+            dimension: 16,
+            child: CircularProgressIndicator(strokeWidth: 2, color: TradeColors.text),
+          )
+        : Text(label),
   );
 }

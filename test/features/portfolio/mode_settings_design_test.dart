@@ -10,7 +10,6 @@ import 'package:vanta/features/portfolio/presentation/futures_asset_mode_sheet.d
 import 'package:vanta/features/portfolio/presentation/futures_position_mode_sheet.dart';
 import 'package:vanta/features/portfolio/presentation/mode_settings_sheet.dart';
 import 'package:vanta/features/portfolio/presentation/multi_asset_activation_sheet.dart';
-import 'package:vanta/features/trade/presentation/widgets/trade_mode_settings.dart';
 
 import '../../support/aster_account.dart';
 import '../../support/futures_asset_mode.dart';
@@ -19,7 +18,7 @@ import '../../support/identity_repository.dart';
 import '../../support/trade_fixture.dart';
 
 void main() {
-  for (final name in ['settings', 'asset', 'position', 'blocked', 'resolving', 'ready']) {
+  for (final name in ['asset', 'position', 'blocked', 'resolving', 'ready']) {
     testWidgets('mode settings design $name', (t) async {
       final font = FontLoader('Inter')..addFont(rootBundle.load('assets/fonts/Inter.ttf'));
       await font.load();
@@ -57,7 +56,6 @@ void main() {
       await c.read(futuresAssetModeProvider.notifier).load();
       await c.read(futuresPositionModeProvider.notifier).load();
       final widget = switch (name) {
-        'settings' => const TradeModeSettings(),
         'asset' => const FuturesAssetModeSheet(),
         'position' => const FuturesPositionModeSheet(),
         _ => const MultiAssetActivationSheet(),

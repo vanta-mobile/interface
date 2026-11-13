@@ -46,9 +46,7 @@ void main() {
             StatefulBuilder(
               builder: (context, setState) => LiveOrderModeSelector(
                 selected: selected,
-                remembered: LiveOrderEntryMode.stopLimit,
                 enabled: true,
-                compact: true,
                 onSelected: (value) => setState(() {
                   selected = value;
                   changes++;
@@ -118,9 +116,7 @@ void main() {
       _app(
         LiveOrderModeSelector(
           selected: LiveOrderEntryMode.limit,
-          remembered: LiveOrderEntryMode.stopLimit,
           enabled: false,
-          compact: true,
           onSelected: (_) => fail('Disabled selector changed type'),
         ),
       ),
@@ -137,7 +133,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: f.container,
-          child: _app(const LiveOrderScreen(symbol: 'BTCUSDT', embedded: true)),
+          child: _app(const LiveOrderScreen(symbol: 'BTCUSDT')),
         ),
       );
       await tester.pumpAndSettle();

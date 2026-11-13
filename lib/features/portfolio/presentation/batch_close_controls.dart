@@ -2,75 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-import '../../auth/application/auth_provider.dart';
 import '../../trade/presentation/widgets/primitives.dart';
 import '../application/batch_close_provider.dart';
-import '../application/position_risk_provider.dart';
-import '../application/symbol_settings_activity.dart';
 import '../domain/batch_close.dart';
+import 'open_order_cancel_prompts.dart';
 
-class BatchCloseControls extends ConsumerWidget {
-  const BatchCloseControls({super.key, this.symbol});
-  final String? symbol;
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    ref.watch(authProvider);
-    ref.watch(batchCloseProvider);
-    ref.watch(positionRiskProvider);
-    ref.watch(symbolSettingsActivityProvider);
-    final controller = ref.read(batchCloseProvider.notifier);
-    final enabled = controller.prepare(symbol: symbol) != null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        OutlinedButton.icon(
-          key: const Key('batch-close-open'),
-          onPressed: enabled ? () => confirmBatchClose(context, ref, symbol: symbol) : null,
-          icon: const Icon(Icons.close_fullscreen),
-          label: Text(symbol == null ? l10n.batchCloseAll : l10n.batchCloseCurrent),
-        ),
-        if (!enabled) Text(l10n.batchCloseReadFirst, style: Theme.of(context).textTheme.bodySmall),
-      ],
-    );
-  }
-}
-
+/// Design confirmation sheet; confirming closes every listed position at
+/// market straight away.
 Future<void> confirmBatchClose(BuildContext context, WidgetRef ref, {String? symbol}) async {
   final controller = ref.read(batchCloseProvider.notifier),
       intent = controller.prepare(symbol: symbol);
   if (intent == null) return;
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) {
-      final l10n = AppLocalizations.of(context);
-      return AlertDialog(
-        scrollable: true,
-        title: Text(l10n.batchCloseTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.batchCloseHint),
-            SelectableText(intent.address),
-            Text(intent.symbol == null ? l10n.batchCloseAll : l10n.batchCloseCurrent),
-            if (intent.symbol != null) SelectableText(intent.symbol!),
-            Text(l10n.batchCloseCount(intent.targets.length)),
-            for (final target in intent.targets) BatchCloseTargetDetails(target: target),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
-          FilledButton(
-            key: const Key('batch-close-confirm'),
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.batchCloseConfirm),
-          ),
-        ],
-      );
-    },
+  final l10n = AppLocalizations.of(context), count = intent.targets.length;
+  final confirmed = await showWarningConfirmSheet(
+    context,
+    title: l10n.positionsCloseAll,
+    message: intent.symbol == null
+        ? l10n.positionsCloseAllQuestion(count)
+        : l10n.positionsCloseSymbolQuestion(intent.symbol!, count),
+    confirmKey: const Key('batch-close-confirm'),
   );
-  if (confirmed == true && context.mounted) await controller.submit(intent);
+  if (confirmed && context.mounted) await controller.submit(intent);
 }
 
 class BatchCloseTargetDetails extends StatelessWidget {

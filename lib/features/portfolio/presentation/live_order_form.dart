@@ -5,10 +5,8 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
-import '../../trade/presentation/widgets/primitives.dart';
 import '../../trade/application/providers.dart' show orderPriceProvider, symbolProvider;
 import '../application/live_order_provider.dart';
 import '../application/main_order_allocation_provider.dart';
@@ -16,19 +14,15 @@ import '../application/main_order_capacity_provider.dart';
 import '../application/main_order_refresh_provider.dart';
 import '../application/main_order_capacity_preview_provider.dart';
 import '../application/main_order_pricing_provider.dart';
+import '../application/order_form_prefill_provider.dart';
+import '../domain/order_form_prefill.dart';
 import '../domain/account_snapshot.dart';
-import '../domain/main_order_pricing.dart';
 import '../application/symbol_settings_activity.dart';
 import '../domain/live_order.dart';
 import '../domain/futures_position_mode.dart';
 import '../domain/live_order_time_in_force.dart';
 import 'live_order_review.dart';
-import 'order_confirmation_control.dart';
-import 'live_order_reduction_controls.dart';
-import 'live_order_funds_panel.dart';
 import '../domain/live_order_trigger.dart';
-import 'live_order_trigger_controls.dart';
-import 'live_order_entire_controls.dart';
 import '../domain/live_order_trailing.dart';
 import 'live_order_trailing_controls.dart';
 import '../domain/live_order_attachment.dart';
@@ -36,10 +30,8 @@ import '../domain/attached_exit_input.dart';
 import 'live_order_attachment_controls.dart';
 import '../domain/attached_entry_peg.dart';
 import '../domain/live_order_peg.dart';
-import 'live_order_price_inputs.dart';
 import '../domain/live_order_size.dart';
 import '../domain/live_order_entry_mode.dart';
-import 'live_order_size_field.dart';
 import 'main_order_amount_slider.dart';
 import 'main_order_capacity_panel.dart';
 import 'main_order_percentage_control.dart';
@@ -60,30 +52,13 @@ import '../../trade/presentation/widgets/trade_option_sheet.dart';
 
 part 'live_order_allocation_binding.dart';
 part 'live_order_form_embedded.dart';
-part 'live_order_form_full.dart';
+part 'live_order_prefill_binding.dart';
 
 class LiveOrderForm extends ConsumerStatefulWidget {
-  const LiveOrderForm({
-    super.key,
-    required this.data,
-    this.closingSide,
-    this.initialConditional = false,
-    this.initialCloseMarket = true,
-    this.mode,
-    this.onModeChanged,
-    this.bookPricing = false,
-    this.embedded = false,
-  });
+  const LiveOrderForm({super.key, required this.data, this.mode, this.onModeChanged});
   final LiveOrderContext data;
-  final String? closingSide;
-  final bool initialConditional;
-  final bool initialCloseMarket;
   final LiveOrderEntryMode? mode;
   final ValueChanged<LiveOrderEntryMode>? onModeChanged;
-  final bool bookPricing;
-
-  /// Trade-workspace layout; closing and position-trigger forms keep theirs.
-  final bool embedded;
   @override
   ConsumerState<LiveOrderForm> createState() => _LiveOrderFormState();
 }
@@ -94,6 +69,9 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
   final _ratioInput = TextEditingController();
   OrderSizeUnit sizeUnit = OrderSizeUnit.quote;
   bool _limitSeeded = false, _limitEdited = false;
+
+  /// Set once deep-link inputs were applied; this form then always confirms.
+  bool _prefilled = false, _prefillScheduled = false;
   LiveOrderSize get sizeInput => LiveOrderSize(
     unit: sizeUnit,
     text: _allocationPercent == null ? _manualSizeInput.text : _ratioInput.text,
@@ -109,7 +87,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
   /// while the form terms it was found for are unchanged.
   ({AccountReadFailure failure, Object terms})? _reviewFailure;
   bool conditional = false, protect = false;
-  bool entireClose = false, trailing = false;
+  bool trailing = false;
   final trailingRate = TextEditingController(), trailingActivation = TextEditingController();
   LiveOrderTriggerBasis trailingBasis = LiveOrderTriggerBasis.mark;
   LiveOrderTriggerKind triggerKind = LiveOrderTriggerKind.stop;
@@ -150,9 +128,6 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
   @override
   void initState() {
     super.initState();
-    market = widget.closingSide != null && widget.initialCloseMarket;
-    conditional = widget.initialConditional;
-    sizeUnit = widget.closingSide == null ? OrderSizeUnit.quote : OrderSizeUnit.base;
     if (widget.mode case final mode?) _applyMode(mode);
     _seedLimit();
   }
@@ -183,7 +158,6 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
       timeInForce = mode.defaultPolicy;
       if (mode == LiveOrderEntryMode.postOnly) _constrainPostOnly();
     }
-    entireClose = false;
   }
 
   void _constrainPostOnly() {
@@ -203,8 +177,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
     super.dispose();
   }
 
-  bool get reducing =>
-      widget.closingSide != null || reduceOnly && widget.data.mode == FuturesPositionMode.oneWay;
+  bool get reducing => reduceOnly && widget.data.mode == FuturesPositionMode.oneWay;
 
   LiveOrderDraft get draft => buildDraft(effectiveAttachment);
   LiveOrderDraft buildDraft(LiveOrderAttachment? protection) {
@@ -213,17 +186,13 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
   }
 
   LiveOrderDraft rawDraft(LiveOrderAttachment? protection) => LiveOrderDraft(
-    buy: widget.closingSide == null
-        ? buy
-        : !(widget.data.positions[widget.closingSide]?.long ?? true),
+    buy: buy,
     market: market,
-    quantity: entireClose ? '' : quantity.text.trim(),
-    price: market || entireClose || trailing || effectivePeg != null || protection?.entryPeg != null
+    quantity: quantity.text.trim(),
+    price: market || trailing || effectivePeg != null || protection?.entryPeg != null
         ? ''
         : price.text.trim(),
-    entireClose: entireClose,
     reduceOnly: reduceOnly && widget.data.mode == FuturesPositionMode.oneWay,
-    closingSide: widget.closingSide,
     timeInForce: timeInForce,
     attachment: protection,
     peg: effectivePeg,
@@ -261,91 +230,54 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
         if (previous != next) _resetForIdentity();
       },
     );
+    _watchPrefill();
     final state = ref.watch(liveOrderProvider);
     final allocation = ref.watch(mainOrderAllocationProvider);
     ref.watch(mainOrderCapacityProvider);
     if (!reducing) ref.watch(mainOrderPricingProvider);
     ref.watch(symbolSettingsActivityProvider);
-    final controller = ref.read(liveOrderProvider.notifier);
     final refresh = ref.watch(mainOrderRefreshProvider);
     final enabled =
         (!refresh.loading || refresh.background) &&
         (!state.busy || refresh.background && state.intent == null) &&
         !allocation.preparing;
-    if (widget.bookPricing) {
-      ref.listen<String>(orderPriceProvider, (_, value) {
-        if (!mounted ||
-            value.isEmpty ||
-            !enabled ||
-            ref.read(symbolProvider) != widget.data.symbol) {
-          return;
-        }
-        setState(() {
-          _applyMode(LiveOrderEntryMode.limit);
-          price.text = value;
-          _limitEdited = true;
-          peg = null;
-          entryPeg = null;
-        });
-        widget.onModeChanged?.call(LiveOrderEntryMode.limit);
+    ref.listen<String>(orderPriceProvider, (_, value) {
+      if (!mounted || value.isEmpty || !enabled || ref.read(symbolProvider) != widget.data.symbol) {
+        return;
+      }
+      setState(() {
+        _applyMode(LiveOrderEntryMode.limit);
+        price.text = value;
+        _limitEdited = true;
+        peg = null;
+        entryPeg = null;
       });
-    }
-    final contextData = _pricingContext ?? widget.data;
+      widget.onModeChanged?.call(LiveOrderEntryMode.limit);
+    });
     _syncRatioInput();
-    final size = sizing;
-    final invalid =
-        size.failure ??
-        (!reducing && _pricingContext == null ? _pricing.failure?.key : null) ??
-        attachmentFailure ??
-        contextData.validate(draft);
-    final intent = invalid == null
-        ? controller.prepare(contextData.symbol, draft, pricingContext: _pricingContext)
-        : null;
-    if (widget.embedded && widget.closingSide == null && !widget.initialConditional) {
-      return _embeddedLayout(contextData: contextData, enabled: enabled);
-    }
-    return _fullLayout(
-      contextData: contextData,
-      invalid: invalid,
-      intent: intent,
-      size: size,
-      enabled: enabled,
-      stale: state.stale,
-      pending: allocation.preparing || state.busy && state.intent != null,
-    );
+    return _embeddedLayout(contextData: _pricingContext ?? widget.data, enabled: enabled);
   }
 
-  Widget _trailingControls(LiveOrderContext data, bool enabled, {required bool showToggle}) =>
-      LiveOrderTrailingControls(
-        showToggle: showToggle,
-        data: data,
-        selected: trailing,
-        enabled: enabled,
-        rate: trailingRate,
-        activation: trailingActivation,
-        basis: trailingBasis,
-        onEnabled: (value) => setState(() {
-          trailing = value;
-          if (value) {
-            market = true;
-            conditional = false;
-            entireClose = false;
-          }
-        }),
-        onBasis: (value) => setState(() => trailingBasis = value),
-        onInput: () => setState(() {}),
-      );
+  Widget _trailingControls(LiveOrderContext data, bool enabled) => LiveOrderTrailingControls(
+    data: data,
+    selected: trailing,
+    enabled: enabled,
+    rate: trailingRate,
+    activation: trailingActivation,
+    basis: trailingBasis,
+    onBasis: (value) => setState(() => trailingBasis = value),
+    onInput: () => setState(() {}),
+  );
 
   /// A different wallet or signer never inherits the previous order intent.
   void _resetForIdentity() {
     quantity.clear();
     quoteAmount.clear();
     _ratioInput.clear();
-    sizeUnit = widget.closingSide == null ? OrderSizeUnit.quote : OrderSizeUnit.base;
+    sizeUnit = OrderSizeUnit.quote;
     price.clear();
     _limitSeeded = _limitEdited = false;
     triggerPrice.clear();
-    entireClose = false;
     trailing = false;
     trailingRate.clear();
     trailingActivation.clear();
@@ -356,6 +288,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
     peg = null;
     attachmentGeneration++;
     timeInForce = LiveOrderTimeInForce.gtc;
+    _prefilled = false;
   }
 
   void _render(VoidCallback change) => setState(change);

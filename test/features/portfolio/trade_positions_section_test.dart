@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +13,7 @@ import 'package:vanta/features/portfolio/application/live_order_provider.dart';
 import 'package:vanta/features/portfolio/data/position_risk_mapper.dart';
 import 'package:vanta/features/portfolio/domain/live_order_time_in_force.dart';
 import 'package:vanta/features/portfolio/domain/live_order_trigger.dart';
+import 'package:vanta/features/portfolio/domain/order_cancellation.dart';
 import 'package:vanta/features/portfolio/presentation/position_tpsl_screen.dart';
 import 'package:vanta/features/portfolio/presentation/trade_position_card.dart';
 
@@ -19,6 +21,7 @@ import '../../support/aster_account.dart';
 import '../../support/aster_open_orders.dart';
 import '../../support/identity_repository.dart';
 import '../../support/live_order.dart';
+import '../../support/order_cancellation.dart';
 import '../../support/position_risk.dart';
 import '../../support/trade_fixture.dart';
 import '../../support/trading_agents.dart';
@@ -41,6 +44,8 @@ Future<TradingAgentStore> _activeStore() async {
 Future<TestIdentityRepository> _launch(
   WidgetTester tester, {
   TestLiveOrderRepository? live,
+  TestOrderCancellationRepository? cancellation,
+  bool exits = true,
   double width = 390,
 }) async {
   final identity = TestIdentityRepository()..restored = signingIdentity;
@@ -95,10 +100,12 @@ Future<TestIdentityRepository> _launch(
   final orders = TestOpenOrdersRepository()
     ..result = mapAsterOpenOrders(
       [
-        openOrder(id: 1, type: 'TAKE_PROFIT_MARKET', side: 'SELL', origQty: '0', price: '0')
-          ..addAll({'stopPrice': '90000', 'closePosition': true}),
-        openOrder(id: 2, type: 'STOP_MARKET', side: 'SELL', origQty: '0.005', price: '0')
-          ..addAll({'stopPrice': '75000', 'reduceOnly': true}),
+        if (exits) ...[
+          openOrder(id: 1, type: 'TAKE_PROFIT_MARKET', side: 'SELL', origQty: '0', price: '0')
+            ..addAll({'stopPrice': '90000', 'closePosition': true}),
+          openOrder(id: 2, type: 'STOP_MARKET', side: 'SELL', origQty: '0.005', price: '0')
+            ..addAll({'stopPrice': '75000', 'reduceOnly': true}),
+        ],
       ],
       address: accountAddress,
       receivedAt: _received,
@@ -111,6 +118,7 @@ Future<TestIdentityRepository> _launch(
     positionRiskRepository: risk,
     asterAccountRepository: account,
     openOrdersRepository: orders,
+    orderCancellationRepository: cancellation,
     liveOrderRepository: live,
     liveClock: () => liveOrderClock,
     tradingAgentStore: await tester.runAsync(_activeStore),
@@ -162,6 +170,19 @@ Future<void> _logout(WidgetTester tester, TestIdentityRepository identity) async
 
 const _card = Key('trade-position-BTCUSDT-BOTH');
 
+/// TP/SL opens the existing-orders list; Add TP/SL opens the form.
+Future<void> _openTpSlForm(WidgetTester tester) async {
+  final action = find.byKey(const Key('trade-position-action-0-BTCUSDT-BOTH'));
+  await tester.ensureVisible(action);
+  await tester.pumpAndSettle();
+  await tester.tap(action);
+  await tester.pumpAndSettle();
+  expect(find.byType(PositionTpSlListScreen), findsOneWidget);
+  await tester.tap(find.byKey(const Key('position-tpsl-add')));
+  await tester.pumpAndSettle();
+  expect(find.byType(PositionTpSlScreen), findsOneWidget);
+}
+
 void main() {
   testWidgets('the Positions tab reads silently and shows the designed card', (tester) async {
     final identity = await _launch(tester);
@@ -196,12 +217,7 @@ void main() {
   testWidgets('TP/SL places an entire-close take profit and returns', (tester) async {
     final live = TestLiveOrderRepository()..context = liveCloseContext();
     final identity = await _launch(tester, live: live);
-    final action = find.byKey(const Key('trade-position-action-0-BTCUSDT-BOTH'));
-    await tester.ensureVisible(action);
-    await tester.pumpAndSettle();
-    await tester.tap(action);
-    await tester.pumpAndSettle();
-    expect(find.byType(PositionTpSlScreen), findsOneWidget);
+    await _openTpSlForm(tester);
 
     await tester.tap(find.byKey(const ValueKey('position-tab-PositionTpSlScope.entire')));
     await tester.pumpAndSettle();
@@ -221,6 +237,10 @@ void main() {
     expect(draft.trigger?.kind, LiveOrderTriggerKind.takeProfit);
     expect(draft.trigger?.price, '82000');
     expect(find.byType(PositionTpSlScreen), findsNothing);
+    // The form returns to the existing-orders list.
+    expect(find.byType(PositionTpSlListScreen), findsOneWidget);
+    await tester.tap(find.byKey(const Key('position-tpsl-back')));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byType(TradePositionCard),
       250,
@@ -236,14 +256,43 @@ void main() {
     await _logout(tester, identity);
   });
 
+  testWidgets('TP/SL amount slider follows the trade-workspace slider rules', (tester) async {
+    final live = TestLiveOrderRepository()..context = liveCloseContext();
+    final identity = await _launch(tester, live: live);
+    await _openTpSlForm(tester);
+    final slider = find.byKey(const Key('position-tpsl-percent'));
+    await tester.ensureVisible(slider);
+    await tester.pumpAndSettle();
+    String amount() =>
+        tester.widget<TextField>(find.byKey(const Key('position-tpsl-amount'))).controller!.text;
+    final box = tester.getRect(slider);
+    // Between stops: a whole-unit amount, not a snapped percentage.
+    await tester.tapAt(Offset(box.left + 6 + (box.width - 12) * 0.3, box.center.dy));
+    await tester.pumpAndSettle();
+    final partial = amount();
+    expect(partial, isNot(contains('.')));
+    expect(partial, isNotEmpty);
+    // Dragging to the end selects the whole position.
+    await tester.dragFrom(Offset(box.left + 6, box.center.dy), Offset(box.width + 20, 0));
+    await tester.pumpAndSettle();
+    final whole = amount();
+    expect(Decimal.parse(whole) > Decimal.parse(partial), isTrue);
+    expect(tester.getSemantics(slider).value, '100%');
+    // A typed amount moves the thumb to its share of the position value.
+    await tester.enterText(
+      find.byKey(const Key('position-tpsl-amount')),
+      '${(Decimal.parse(whole) / Decimal.fromInt(2)).toDecimal(scaleOnInfinitePrecision: 8)}',
+    );
+    await tester.pumpAndSettle();
+    expect(tester.getSemantics(slider).value, '50%');
+    expect(tester.takeException(), null);
+    await _logout(tester, identity);
+  });
+
   testWidgets('TP/SL keeps input and sends nothing without a trigger or amount', (tester) async {
     final live = TestLiveOrderRepository()..context = liveCloseContext();
     final identity = await _launch(tester, live: live);
-    final action = find.byKey(const Key('trade-position-action-0-BTCUSDT-BOTH'));
-    await tester.ensureVisible(action);
-    await tester.pumpAndSettle();
-    await tester.tap(action);
-    await tester.pumpAndSettle();
+    await _openTpSlForm(tester);
     await tester.tap(find.byKey(const Key('position-tpsl-confirm')));
     await tester.pumpAndSettle();
     expect(find.text('Enter a take-profit or stop-loss trigger price.'), findsOneWidget);
@@ -271,6 +320,81 @@ void main() {
     await _logout(tester, identity);
   });
 
+  testWidgets('TP/SL lists the existing orders of each close scope', (tester) async {
+    final identity = await _launch(tester);
+    final action = find.byKey(const Key('trade-position-action-0-BTCUSDT-BOTH'));
+    await tester.ensureVisible(action);
+    await tester.pumpAndSettle();
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+    final list = find.byType(PositionTpSlListScreen);
+    Finder inList(Finder finder) => find.descendant(of: list, matching: finder);
+    // Partial close: the reduce-only stop loss of 0.005 BTC.
+    expect(find.byKey(const Key('position-tpsl-group-2')), findsOneWidget);
+    expect(find.byKey(const Key('position-tpsl-group-1')), findsNothing);
+    expect(inList(find.text('SL')), findsOneWidget);
+    expect(inList(find.text('TP')), findsNothing);
+    expect(inList(find.textContaining('75,000')), findsOneWidget);
+    // 0.005 × (75,000 − 79,000).
+    expect(inList(find.textContaining('-20', findRichText: true)), findsOneWidget);
+    expect(inList(find.text('Market')), findsOneWidget);
+    // Entire close: the closePosition take profit.
+    await tester.tap(find.byKey(const ValueKey('position-tab-PositionTpSlScope.entire')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('position-tpsl-group-1')), findsOneWidget);
+    expect(find.byKey(const Key('position-tpsl-group-2')), findsNothing);
+    expect(inList(find.text('TP')), findsOneWidget);
+    expect(inList(find.textContaining('90,000')), findsOneWidget);
+    expect(tester.takeException(), null);
+    await _logout(tester, identity);
+  });
+
+  testWidgets('TP/SL Cancel cancels the group orders after confirmation', (tester) async {
+    final cancellation = TestOrderCancellationRepository()
+      ..result = const OrderCancellationResult(
+        resolution: OrderResolution(symbol: 'BTCUSDT', orderId: '2', status: 'CANCELED'),
+      );
+    final identity = await _launch(tester, cancellation: cancellation);
+    final action = find.byKey(const Key('trade-position-action-0-BTCUSDT-BOTH'));
+    await tester.ensureVisible(action);
+    await tester.pumpAndSettle();
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('position-tpsl-cancel-2')));
+    await tester.pumpAndSettle();
+    expect(cancellation.cancels, 0);
+    await tester.tap(find.byKey(const Key('confirm-order-cancel')));
+    await tester.pumpAndSettle();
+    expect(cancellation.cancels, 1);
+    expect(find.byKey(const Key('position-tpsl-group-2')), findsNothing);
+    expect(tester.takeException(), null);
+    await _logout(tester, identity);
+  });
+
+  testWidgets('TP/SL opens the form directly without existing orders', (tester) async {
+    final identity = await _launch(tester, exits: false);
+    final action = find.byKey(const Key('trade-position-action-0-BTCUSDT-BOTH'));
+    await tester.ensureVisible(action);
+    await tester.pumpAndSettle();
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+    expect(find.byType(PositionTpSlListScreen), findsNothing);
+    expect(find.byType(PositionTpSlScreen), findsOneWidget);
+    expect(tester.takeException(), null);
+    await _logout(tester, identity);
+  });
+
+  /// Base unit, then the middle of the slider: half the 0.01 BTC position on
+  /// the 0.001 step. The quote unit would floor a whole-USDT half instead.
+  Future<void> closeHalfInBase(WidgetTester tester) async {
+    await tester.tap(find.byKey(const Key('position-close-unit')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('trade-option-OrderSizeUnit.base')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('position-close-percent')));
+    await tester.pumpAndSettle();
+  }
+
   Future<void> openClose(WidgetTester tester, int action) async {
     final button = find.byKey(Key('trade-position-action-$action-BTCUSDT-BOTH'));
     await tester.ensureVisible(button);
@@ -279,14 +403,48 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('close amount slider follows the trade-workspace slider rules', (tester) async {
+    final live = TestLiveOrderRepository()..context = liveCloseContext();
+    final identity = await _launch(tester, live: live);
+    await openClose(tester, 1);
+    final slider = find.byKey(const Key('position-close-percent'));
+    String amount() =>
+        tester.widget<TextField>(find.byKey(const Key('position-close-amount'))).controller!.text;
+    final box = tester.getRect(slider);
+    // Between stops in USDT: a whole-unit amount, not a snapped percentage.
+    await tester.tapAt(Offset(box.left + 6 + (box.width - 12) * 0.3, box.center.dy));
+    await tester.pumpAndSettle();
+    final partial = amount();
+    expect(partial, isNotEmpty);
+    expect(partial, isNot(contains('.')));
+    // Only the end of the track is the whole position.
+    await tester.dragFrom(Offset(box.left + 6, box.center.dy), Offset(box.width + 20, 0));
+    await tester.pumpAndSettle();
+    expect(tester.getSemantics(slider).value, '100%');
+    final whole = Decimal.parse(amount());
+    expect(whole > Decimal.parse(partial), isTrue);
+    // A typed amount moves the thumb to its share of the position value.
+    await tester.enterText(
+      find.byKey(const Key('position-close-amount')),
+      '${(whole / Decimal.fromInt(4)).toDecimal(scaleOnInfinitePrecision: 8)}',
+    );
+    await tester.pumpAndSettle();
+    expect(tester.getSemantics(slider).value, '25%');
+    expect(live.submits, 0);
+    expect(tester.takeException(), null);
+    await _logout(tester, identity);
+  });
+
   testWidgets('Market closes half the position as a reduce-only market order', (tester) async {
     final live = TestLiveOrderRepository()..context = liveCloseContext();
     final identity = await _launch(tester, live: live);
     await openClose(tester, 1);
     expect(find.text('Close Position'), findsOneWidget);
-    // The middle slider stop is 50%: 0.005 of the 0.01 BTC position.
-    await tester.tap(find.byKey(const Key('position-close-percent')));
-    await tester.pumpAndSettle();
+    await closeHalfInBase(tester);
+    expect(
+      tester.widget<TextField>(find.byKey(const Key('position-close-amount'))).controller!.text,
+      '0.005',
+    );
     // Closing a long at the bid: 0.005 × (79,999 − 79,000).
     expect(find.text('+4.995 USDT'), findsOneWidget);
     await tester.tap(find.byKey(const Key('position-close-confirm')));
@@ -307,8 +465,7 @@ void main() {
     final identity = await _launch(tester, live: live);
     await openClose(tester, 2);
     expect(find.text('Hidden Order'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('position-close-percent')));
-    await tester.pumpAndSettle();
+    await closeHalfInBase(tester);
     await tester.tap(find.byKey(const Key('position-close-confirm')));
     await tester.pumpAndSettle();
     expect(find.text('Enter a limit price or choose BBO.'), findsOneWidget);

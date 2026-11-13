@@ -66,8 +66,7 @@ void main() {
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Consumer(
-                builder: (_, ref, _) =>
-                    LiveOrderScreen(symbol: ref.watch(symbolProvider), embedded: true),
+                builder: (_, ref, _) => LiveOrderScreen(symbol: ref.watch(symbolProvider)),
               ),
             ),
           ),

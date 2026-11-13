@@ -67,6 +67,8 @@ void main() {
         expect(find.text('original-9007199254740993'), findsOneWidget);
         expect(find.textContaining('0.100000000000000001 BTC'), findsWidgets);
         expect(find.textContaining('Long'), findsNothing);
+        // Spot keeps Buy/Sell; futures direction labels read Long/Short.
+        expect(find.text(l10n.spotSideBuy), findsOneWidget);
         await reveal(tester, filter, scrollKey: 'spot-open-orders-scroll');
         await tester.enterText(filter, 'eth');
         tester.testTextInput.hide();

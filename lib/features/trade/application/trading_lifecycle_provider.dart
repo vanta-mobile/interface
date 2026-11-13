@@ -8,7 +8,6 @@ import '../../market/application/market_providers.dart';
 import '../../portfolio/application/account_read_provider.dart';
 import '../../portfolio/application/live_order_provider.dart';
 import '../../portfolio/application/open_orders_provider.dart';
-import '../../portfolio/application/position_adl_provider.dart';
 import '../../portfolio/application/position_risk_provider.dart';
 import '../../portfolio/application/spot_account_provider.dart';
 import '../../portfolio/application/spot_history_provider.dart';
@@ -38,7 +37,6 @@ class TradingLifecycle {
         state == AppLifecycleState.hidden) {
       ref.read(accountReadProvider.notifier).markStale();
       ref.read(positionRiskProvider.notifier).markStale();
-      ref.read(positionAdlProvider.notifier).markStale();
       ref.read(spotAccountReadProvider.notifier).markStale();
       ref.read(spotHistoryProvider.notifier).markStale();
       ref.read(openOrdersReadProvider.notifier).markStale();

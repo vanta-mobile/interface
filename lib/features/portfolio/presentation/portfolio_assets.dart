@@ -13,11 +13,15 @@ import 'portfolio_loading.dart';
 import 'trade_position_card.dart';
 import '../application/portfolio_overview_provider.dart';
 import '../application/position_risk_provider.dart';
+import '../application/batch_close_provider.dart';
+import '../application/symbol_settings_activity.dart';
+import '../../auth/application/auth_provider.dart';
 import '../domain/position_card_metrics.dart';
 import '../domain/position_risk.dart';
 import '../../../core/errors/error_text.dart';
 import 'portfolio_asset_row.dart';
-import 'position_risk_screen.dart';
+import 'batch_close_controls.dart';
+import 'batch_close_status.dart';
 import '../../../core/presentation/status_view.dart';
 import '../../funding/domain/funding_catalog.dart';
 import '../../funding/presentation/funding_screen.dart';
@@ -107,6 +111,15 @@ class PortfolioPositionList extends ConsumerWidget {
     final read = ref.watch(positionRiskProvider.select((s) => (s.busy, s.failure)));
     final symbol = hideOther ? ref.watch(symbolProvider) : null;
     final positions = all?.where((p) => !hideOther || p.symbol == symbol).toList();
+    // Watch everything batch-close preparation reads so the action stays current.
+    ref.watch(authProvider);
+    ref.watch(batchCloseProvider);
+    ref.watch(positionRiskProvider);
+    ref.watch(symbolSettingsActivityProvider);
+    final canCloseAll =
+        !preview &&
+        positions?.isNotEmpty == true &&
+        ref.read(batchCloseProvider.notifier).prepare(symbol: symbol) != null;
     String rowKey(PositionRisk p) => 'portfolio-position-${p.symbol}-${p.side}';
     final indices = {for (var i = 0; i < (positions?.length ?? 0); i++) rowKey(positions![i]): i};
     return SliverMainAxisGroup(
@@ -115,6 +128,7 @@ class PortfolioPositionList extends ConsumerWidget {
           child: _PositionControls(
             preview: preview,
             hasPositions: all?.isNotEmpty == true,
+            onCloseAll: canCloseAll ? () => confirmBatchClose(context, ref, symbol: symbol) : null,
             hideOther: hideOther,
             onHideOther: onHideOther,
           ),
@@ -156,6 +170,8 @@ class PortfolioPositionList extends ConsumerWidget {
               );
             },
           ),
+        // Progress and per-position results of a confirmed close-all.
+        if (!preview) const SliverToBoxAdapter(child: BatchCloseStatus()),
       ],
     );
   }
@@ -188,9 +204,11 @@ class _PositionControls extends StatelessWidget {
     required this.hasPositions,
     required this.hideOther,
     required this.onHideOther,
+    required this.onCloseAll,
   });
   final bool preview, hasPositions, hideOther;
   final ValueChanged<bool> onHideOther;
+  final VoidCallback? onCloseAll;
 
   @override
   Widget build(BuildContext context) {
@@ -225,13 +243,14 @@ class _PositionControls extends StatelessWidget {
         if (hasPositions)
           TextButton(
             key: const Key('portfolio-close-all'),
-            onPressed: preview
-                ? () => portfolioPreviewNotice(context)
-                : () => Navigator.of(context)
-                      .push<void>(MaterialPageRoute(builder: (_) => const PositionRiskScreen())),
+            onPressed: preview ? () => portfolioPreviewNotice(context) : onCloseAll,
             child: Text(
               l.portfolioCloseAll,
-              style: PortfolioTypography.caption.copyWith(color: PortfolioColors.negative),
+              style: PortfolioTypography.caption.copyWith(
+                color: preview || onCloseAll != null
+                    ? PortfolioColors.negative
+                    : PortfolioColors.muted,
+              ),
             ),
           ),
       ],

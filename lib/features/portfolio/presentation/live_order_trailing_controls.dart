@@ -14,17 +14,13 @@ class LiveOrderTrailingControls extends StatelessWidget {
     required this.rate,
     required this.activation,
     required this.basis,
-    required this.onEnabled,
     required this.onBasis,
     required this.onInput,
-    this.showToggle = true,
   });
   final LiveOrderContext data;
   final bool selected, enabled;
-  final bool showToggle;
   final TextEditingController rate, activation;
   final LiveOrderTriggerBasis basis;
-  final ValueChanged<bool> onEnabled;
   final ValueChanged<LiveOrderTriggerBasis> onBasis;
   final VoidCallback onInput;
 
@@ -34,14 +30,6 @@ class LiveOrderTrailingControls extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (showToggle)
-          SwitchListTile(
-            key: const Key('live-order-trailing'),
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.openOrdersTrailingStop),
-            value: selected,
-            onChanged: enabled ? onEnabled : null,
-          ),
         if (selected) ...[
           Text(l10n.liveTrailingHint),
           TextField(

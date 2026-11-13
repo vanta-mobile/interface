@@ -5,8 +5,11 @@ import 'package:vanta/features/auth/application/vanta_api_session_provider.dart'
 /// Full missing-session/signature behavior is covered by wallet_onboarding_test.
 class VerifiedVantaSession extends VantaApiSessionController {
   @override
-  VantaApiSessionState build() => VantaApiSessionState(
-    VantaApiSessionStatus.ready,
-    address: ref.watch(authProvider).identity?.walletAddress?.toLowerCase(),
-  );
+  VantaApiSessionState build() {
+    final address = ref.watch(authProvider).identity?.walletAddress?.toLowerCase();
+    // Like the real controller, a signed-out wallet has no ready session.
+    return address == null
+        ? const VantaApiSessionState(VantaApiSessionStatus.signedOut)
+        : VantaApiSessionState(VantaApiSessionStatus.ready, address: address);
+  }
 }

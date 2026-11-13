@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,7 @@ import 'package:vanta/features/portfolio/domain/futures_position_mode.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/presentation/quick_order_panel.dart';
 import 'package:vanta/features/portfolio/application/live_order_provider.dart';
+import 'package:vanta/features/portfolio/application/quick_order_provider.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
@@ -14,6 +17,7 @@ import '../../support/identity_repository.dart';
 import '../../support/live_order.dart';
 import '../../support/quick_order.dart';
 import '../../support/trade_fixture.dart';
+import '../../support/trading_agents.dart';
 import '../../support/workspace_navigation.dart';
 
 void main() {
@@ -84,7 +88,9 @@ void main() {
             expect(orders.reads, 0);
             expect(sizing.reads, 0);
             expect(quantity(tester), '');
-            await field(tester, '0.001');
+            // The chart quick entry takes a quote (USDT) amount; at these
+            // quotes it floors to 0.001 BTC.
+            await field(tester, '80.01');
             final key = buy ? 'quick-order-buy' : 'quick-order-sell';
             await tap(tester, key);
             final dialog = find.byType(AlertDialog), messages = l10n(tester);
@@ -105,7 +111,7 @@ void main() {
             await tester.tap(find.text(messages.cancel));
             await tester.pumpAndSettle();
             expect(orders.submits, 0);
-            expect(quantity(tester), '0.001');
+            expect(quantity(tester), '80.01');
             await tap(tester, key);
             await tester.tap(find.byKey(const Key('quick-order-confirm')));
             await tester.pumpAndSettle();
@@ -116,7 +122,7 @@ void main() {
               hedge ? (buy ? 'LONG' : 'SHORT') : 'BOTH',
             );
             expect(orders.lastIntent!.parameters['reduceOnly'], hedge ? null : 'false');
-            expect(quantity(tester), '0.001');
+            expect(quantity(tester), '80.01');
             await visible(tester, 'quick-order-quantity');
             expect(
               tester.widget<TextField>(find.byKey(const Key('quick-order-quantity'))).readOnly,
@@ -163,8 +169,8 @@ void main() {
       await tap(tester, 'quick-order-percent-50');
       expect(sizing.reads, 1);
       expect(quantity(tester), '50%');
-      await field(tester, '0.001');
-      expect(quantity(tester), '0.001');
+      await field(tester, '80.01');
+      expect(quantity(tester), '80.01');
       await tap(tester, 'quick-order-buy');
       await tap(tester, 'quick-order-skip-confirmation');
       await tester.tap(find.text(l10n(tester).cancel));
@@ -177,7 +183,7 @@ void main() {
       expect(preference.required, false);
       expect(orders.submits, 1);
       expect(quantity(tester), '');
-      await field(tester, '0.001');
+      await field(tester, '80.01');
       await tap(tester, 'quick-order-sell');
       expect(find.byType(AlertDialog), findsNothing);
       expect(orders.submits, 2);
@@ -201,13 +207,11 @@ void main() {
       liveClock: () => liveOrderClock,
     );
     await open(tester, container);
-    await field(tester, '0.001');
+    await field(tester, '80.01');
     await tap(tester, 'quick-order-quantity');
     await tap(tester, 'quick-order-percent-50');
-    expect(quantity(tester), '0.001');
-    expect(find.byType(SnackBar), findsOneWidget);
-    ScaffoldMessenger.of(tester.element(find.byType(QuickOrderPanel))).hideCurrentSnackBar();
-    await tester.pumpAndSettle();
+    expect(quantity(tester), '80.01');
+    expect(find.byKey(const Key('quick-order-error')), findsOneWidget);
     await tap(tester, 'quick-order-buy');
     expect(find.byType(AlertDialog), findsOneWidget);
     await tester.tap(find.text(l10n(tester).cancel));
@@ -221,6 +225,194 @@ void main() {
     await tester.tap(find.byKey(const Key('quick-order-confirm')));
     await tester.pumpAndSettle();
     expect(orders.lastIntent!.draft.quantity, '0.002');
+    expect(tester.takeException(), null);
+    await dispose(tester, container);
+  });
+  testWidgets('insufficient balance shows the banner and clears on edit without submitting', (
+    tester,
+  ) async {
+    final identity = TestIdentityRepository()..restored = signingIdentity;
+    final orders = TestLiveOrderRepository()..context = liveContext(bid: '79999', ask: '80001');
+    addTearDown(identity.dispose);
+    final container = setup(
+      tester,
+      width: 320,
+      identityRepository: identity,
+      liveOrderRepository: orders,
+      quickOrderRepository: TestQuickOrderRepository(),
+      orderConfirmationPreferences: MemoryOrderConfirmationPreferences(),
+      liveClock: () => liveOrderClock,
+    );
+    await open(tester, container);
+    // 1600.02 USDT / 10x exceeds the 89 USDT available balance.
+    await field(tester, '1600.02');
+    await tap(tester, 'quick-order-buy');
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text(l10n(tester).quickOrderInsufficientBalance), findsOneWidget);
+    expect(orders.submits, 0);
+    await field(tester, '80.01');
+    expect(find.byKey(const Key('quick-order-error')), findsNothing);
+    expect(tester.takeException(), null);
+    await dispose(tester, container);
+  });
+  testWidgets('an active grant readies percentage sizing before the first tap', (tester) async {
+    final identity = TestIdentityRepository()..restored = signingIdentity;
+    final orders = TestLiveOrderRepository()..context = liveContext(bid: '79999', ask: '80001');
+    final sizing = TestQuickOrderRepository();
+    addTearDown(identity.dispose);
+    final container = setup(
+      tester,
+      identityRepository: identity,
+      liveOrderRepository: orders,
+      quickOrderRepository: sizing,
+      orderConfirmationPreferences: MemoryOrderConfirmationPreferences(),
+      liveClock: () => liveOrderClock,
+      tradingAgentStore: await tester.runAsync(activeAgentStore),
+      verifiedApiSession: true,
+    );
+    await launch(tester, container);
+    await awaitTradingAgent(tester, container);
+    await selectWorkspace(tester, chart: true);
+    // The renewed account snapshot is sized in the background, silently.
+    await container.read(liveOrderProvider.notifier).load('BTCUSDT');
+    await tester.pumpAndSettle();
+    expect(sizing.reads, 1);
+    final reads = orders.reads;
+    await tap(tester, 'quick-order-quantity');
+    await tap(tester, 'quick-order-percent-50');
+    expect(quantity(tester), '50%');
+    expect(sizing.reads, 1);
+    expect(orders.reads, reads);
+    expect(identity.wallets, 0);
+    expect(tester.takeException(), null);
+    await dispose(tester, container);
+  });
+  testWidgets('a silent renewal keeps the field editable and a percentage applies at once', (
+    tester,
+  ) async {
+    final identity = TestIdentityRepository()..restored = signingIdentity;
+    final orders = TestLiveOrderRepository()..context = liveContext(bid: '79999', ask: '80001');
+    final sizing = TestQuickOrderRepository();
+    addTearDown(identity.dispose);
+    final container = setup(
+      tester,
+      identityRepository: identity,
+      liveOrderRepository: orders,
+      quickOrderRepository: sizing,
+      orderConfirmationPreferences: MemoryOrderConfirmationPreferences(),
+      liveClock: () => liveOrderClock,
+      tradingAgentStore: await tester.runAsync(activeAgentStore),
+      verifiedApiSession: true,
+    );
+    await launch(tester, container);
+    await awaitTradingAgent(tester, container);
+    await selectWorkspace(tester, chart: true);
+    await container.read(liveOrderProvider.notifier).load('BTCUSDT');
+    await tester.pumpAndSettle();
+    await tap(tester, 'quick-order-quantity');
+    // A renewal starts while the user is typing.
+    orders
+      ..context = liveContext(bid: '79998', ask: '80002')
+      ..readGate = Completer<void>();
+    final renewal = container.read(liveOrderProvider.notifier).load('BTCUSDT');
+    await tester.pump();
+    final field = find.byKey(const Key('quick-order-quantity'));
+    expect(tester.widget<TextField>(field).readOnly, false);
+    expect(tester.testTextInput.isVisible, true);
+    await tester.tap(find.byKey(const Key('quick-order-percent-50')));
+    await tester.pump();
+    // Sizing already read for this account applies the choice immediately.
+    expect(quantity(tester), '50%');
+    orders.readGate!.complete();
+    await renewal;
+    await tester.pumpAndSettle();
+    expect(quantity(tester), '50%');
+    expect(tester.testTextInput.isVisible, true);
+    expect(container.read(quickOrderProvider).sizing?.context.ask, Decimal.parse('80002'));
+    expect(identity.wallets, 0);
+    expect(tester.takeException(), null);
+    await dispose(tester, container);
+  });
+  testWidgets('a slower earlier percentage never overrides a later choice', (tester) async {
+    final identity = TestIdentityRepository()..restored = signingIdentity;
+    final orders = TestLiveOrderRepository()..context = liveContext(bid: '79999', ask: '80001');
+    final sizing = TestQuickOrderRepository()..gate = Completer<void>();
+    addTearDown(identity.dispose);
+    final container = setup(
+      tester,
+      identityRepository: identity,
+      liveOrderRepository: orders,
+      quickOrderRepository: sizing,
+      orderConfirmationPreferences: MemoryOrderConfirmationPreferences(),
+      liveClock: () => liveOrderClock,
+      tradingAgentStore: await tester.runAsync(activeAgentStore),
+      verifiedApiSession: true,
+    );
+    await launch(tester, container);
+    await awaitTradingAgent(tester, container);
+    await selectWorkspace(tester, chart: true);
+    // The first background sizing is still in flight when the user taps twice.
+    await container.read(liveOrderProvider.notifier).load('BTCUSDT');
+    await tester.pump();
+    await tap(tester, 'quick-order-quantity');
+    expect(container.read(quickOrderProvider).sizing, null);
+    await tester.tap(find.byKey(const Key('quick-order-percent-75')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('quick-order-percent-100')));
+    await tester.pump();
+    expect(quantity(tester), '');
+    sizing.gate!.complete();
+    await tester.pumpAndSettle();
+    expect(quantity(tester), '100%');
+    expect(sizing.reads, 1);
+    expect(tester.takeException(), null);
+    await dispose(tester, container);
+  });
+  testWidgets('automatic renewal cycles never close the keyboard or delay a percentage', (
+    tester,
+  ) async {
+    final identity = TestIdentityRepository()..restored = signingIdentity;
+    final orders = TestLiveOrderRepository()..context = liveContext(bid: '79999', ask: '80001');
+    final sizing = TestQuickOrderRepository();
+    addTearDown(identity.dispose);
+    var now = liveOrderClock;
+    final container = setup(
+      tester,
+      identityRepository: identity,
+      liveOrderRepository: orders,
+      quickOrderRepository: sizing,
+      orderConfirmationPreferences: MemoryOrderConfirmationPreferences(),
+      liveClock: () => now,
+      tradingAgentStore: await tester.runAsync(activeAgentStore),
+      verifiedApiSession: true,
+    );
+    await launch(tester, container);
+    await awaitTradingAgent(tester, container);
+    await selectWorkspace(tester, chart: true);
+    await tap(tester, 'quick-order-quantity');
+    final field = find.byKey(const Key('quick-order-quantity'));
+    final readOnly = <bool>{};
+    final startReads = orders.reads;
+    // Several renewal cycles (account, capacity and pricing stages) pass while
+    // the keyboard is open.
+    for (var i = 0; i < 80; i++) {
+      now = now.add(const Duration(milliseconds: 500));
+      // Like the exchange, each renewal returns a snapshot taken now.
+      orders.context = liveContext(bid: '79999', ask: '80001', time: now);
+      await tester.pump(const Duration(milliseconds: 500));
+      readOnly.add(tester.widget<TextField>(field).readOnly);
+      expect(tester.testTextInput.isVisible, true, reason: 'keyboard closed at step $i');
+    }
+    expect(orders.reads, greaterThan(startReads));
+    // Each renewed snapshot was sized in the background.
+    expect(sizing.reads, greaterThan(1));
+    expect(readOnly, {false});
+    expect(tester.widget<TextField>(field).focusNode!.hasFocus, true);
+    await tester.tap(find.byKey(const Key('quick-order-percent-50')));
+    await tester.pump();
+    await tester.pump();
+    expect(quantity(tester), '50%');
+    expect(identity.wallets, 0);
     expect(tester.takeException(), null);
     await dispose(tester, container);
   });

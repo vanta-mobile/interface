@@ -14,7 +14,7 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
         if (contextData.fundsFailure case final failure?)
           _errorText(accountErrorText(context, failure)),
         if (contextData.funds?.account.canTrade == false) _errorText(l10n.liveOrderTradingDisabled),
-        if (trailing) _trailingControls(contextData, enabled, showToggle: false),
+        if (trailing) _trailingControls(contextData, enabled),
         if (conditional && !trailing) ...[
           EmbeddedTriggerField(
             controller: triggerPrice,
@@ -300,6 +300,8 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
     final intent = ref
         .read(liveOrderProvider.notifier)
         .prepare(contextData.symbol, draft, pricingContext: _pricingContext);
-    if (intent != null) await reviewLiveOrder(context, ref, intent, sizing: size);
+    if (intent != null) {
+      await reviewLiveOrder(context, ref, intent, sizing: size, alwaysConfirm: _prefilled);
+    }
   }
 }

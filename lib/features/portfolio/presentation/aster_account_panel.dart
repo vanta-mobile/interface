@@ -20,7 +20,6 @@ import '../domain/aster_account.dart';
 import 'aster_account_rows.dart';
 import 'account_read_controls.dart';
 import 'account_snapshot_status.dart';
-import 'position_risk_screen.dart';
 import 'account_change_panel.dart';
 import 'account_event_status.dart';
 
@@ -40,14 +39,6 @@ class AsterAccountPanel extends ConsumerWidget {
         const SizedBox(height: 12),
         Text(l10n.asterAccountScope, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 12),
-        OutlinedButton.icon(
-          key: const Key('open-position-risk'),
-          onPressed: () =>
-              Navigator.of(context)
-                  .push<void>(MaterialPageRoute(builder: (_) => const PositionRiskScreen())),
-          icon: const Icon(Icons.shield_outlined),
-          label: Text(l10n.positionRiskTitle),
-        ),
         const AccountChangePanel(),
         const FuturesHistoryEntry(),
         const PositionMarginHistoryEntry(),

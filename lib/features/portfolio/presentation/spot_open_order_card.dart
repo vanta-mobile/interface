@@ -23,7 +23,7 @@ class SpotOpenOrderCard extends StatelessWidget {
         children: [
           SelectableText(o.symbol, style: Theme.of(context).textTheme.titleMedium),
           Text(
-            o.side == 'BUY' ? l10n.openOrdersBuy : l10n.openOrdersSell,
+            o.side == 'BUY' ? l10n.spotSideBuy : l10n.spotSideSell,
             style: TextStyle(color: o.side == 'BUY' ? AppColors.positive : AppColors.negative),
           ),
           ValueRow(l10n.openOrdersStatus, switch (o.status) {

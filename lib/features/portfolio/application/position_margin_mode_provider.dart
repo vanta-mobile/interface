@@ -13,7 +13,6 @@ import '../domain/position_margin_mode.dart';
 import 'account_change_provider.dart';
 import 'account_read_provider.dart';
 import 'open_orders_provider.dart';
-import 'position_adl_provider.dart';
 import 'position_risk_provider.dart';
 import 'symbol_settings_activity.dart';
 
@@ -263,7 +262,6 @@ class PositionMarginModeController extends Notifier<PositionMarginModeState> {
   void _invalidate() {
     ref.read(accountReadProvider.notifier).markStale();
     ref.read(positionRiskProvider.notifier).markStale();
-    ref.read(positionAdlProvider.notifier).markStale();
     ref.read(openOrdersReadProvider.notifier).markStale();
   }
 

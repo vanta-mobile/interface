@@ -102,9 +102,7 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: const Scaffold(
-              body: SingleChildScrollView(
-                child: LiveOrderScreen(symbol: 'BTCUSDT', embedded: true),
-              ),
+              body: SingleChildScrollView(child: LiveOrderScreen(symbol: 'BTCUSDT')),
             ),
           ),
         ),

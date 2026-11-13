@@ -21,18 +21,6 @@ import '../../support/trade_fixture.dart';
 import '../../support/trading_agents.dart';
 import '../../support/workspace_navigation.dart';
 
-Future<TradingAgentStore> _activeStore() async {
-  final store = MemoryTradingAgentStorage().store(DateTime.now);
-  final agent = await store.prepare(
-    signingIdentity.id,
-    accountAddress,
-    DateTime.now().add(const Duration(days: 30)),
-  );
-  await store.setStatus(agent, TradingAgentStatus.unknown);
-  await store.setStatus(agent, TradingAgentStatus.active);
-  return store;
-}
-
 Future<void> _awaitAgent(WidgetTester tester, ProviderContainer container) async {
   for (var i = 0; i < 50 && container.read(tradingAgentProvider).isLoading; i++) {
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 10)));
@@ -73,12 +61,15 @@ void main() {
       tester,
       identityRepository: identity,
       openOrdersRepository: orders,
-      tradingAgentStore: await tester.runAsync(_activeStore),
+      tradingAgentStore: await tester.runAsync(activeAgentStore),
+      verifiedApiSession: true,
       language: const Locale('en'),
     );
     await launch(tester, container);
-    await revealFuturesAccountTabs(tester);
     await _awaitAgent(tester, container);
+    // The loaded grant completes onboarding; let the trading page mount.
+    await tester.pumpAndSettle();
+    await revealFuturesAccountTabs(tester);
     await tester.pump();
     await tester.pump();
     expect(orders.calls, 1);
@@ -110,6 +101,52 @@ void main() {
     expect(tester.takeException(), null);
   });
 
+  testWidgets('tapping a card opens its market at the top of the trade page', (tester) async {
+    final identity = TestIdentityRepository()..restored = signingIdentity;
+    addTearDown(identity.dispose);
+    final container = setup(
+      tester,
+      identityRepository: identity,
+      openOrdersRepository: TestOpenOrdersRepository(),
+      tradingAgentStore: await tester.runAsync(activeAgentStore),
+      verifiedApiSession: true,
+      language: const Locale('en'),
+    );
+    await launch(tester, container);
+    await _awaitAgent(tester, container);
+    await tester.pumpAndSettle();
+    await revealFuturesAccountTabs(tester);
+    await tester.pumpAndSettle();
+    final scrollable = find
+        .descendant(
+          of: find.byKey(const Key('futures-workspace')),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    final page = tester.state<ScrollableState>(scrollable);
+    // At the top the account sections leave the sliver cache, so scroll back down.
+    Future<void> tapCard(String key) async {
+      await tester.scrollUntilVisible(find.byKey(Key(key)), 300, scrollable: scrollable);
+      await tester.pumpAndSettle();
+      expect(page.position.pixels, greaterThan(0));
+      await tester.tap(find.byKey(Key(key)));
+      await tester.pumpAndSettle();
+    }
+
+    expect(container.read(symbolProvider), 'BTCUSDT');
+    await tapCard('open-order-ETHUSDT-1917642');
+    expect(container.read(symbolProvider), 'ETHUSDT');
+    expect(page.position.pixels, 0);
+    expect(find.byKey(const Key('open-order-details')), findsNothing);
+
+    await tapCard('open-order-ETHUSDT-1917642');
+    expect(container.read(symbolProvider), 'ETHUSDT');
+    expect(page.position.pixels, 0);
+    expect(tester.takeException(), null);
+    container.dispose();
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('a failed silent read stops automatic reads until Retry', (tester) async {
     final identity = TestIdentityRepository()..restored = signingIdentity;
     final orders = TestOpenOrdersRepository()
@@ -119,12 +156,15 @@ void main() {
       tester,
       identityRepository: identity,
       openOrdersRepository: orders,
-      tradingAgentStore: await tester.runAsync(_activeStore),
+      tradingAgentStore: await tester.runAsync(activeAgentStore),
+      verifiedApiSession: true,
       language: const Locale('en'),
     );
     await launch(tester, container);
-    await revealFuturesAccountTabs(tester);
     await _awaitAgent(tester, container);
+    // The loaded grant completes onboarding; let the trading page mount.
+    await tester.pumpAndSettle();
+    await revealFuturesAccountTabs(tester);
     await tester.pumpAndSettle();
     expect(orders.calls, 1);
     expect(_inOrders(find.textContaining('Aster error code: -2015')), findsOneWidget);
@@ -177,12 +217,15 @@ void main() {
       identityRepository: identity,
       openOrdersRepository: orders,
       openOrderStrategyRepository: strategies,
-      tradingAgentStore: await tester.runAsync(_activeStore),
+      tradingAgentStore: await tester.runAsync(activeAgentStore),
+      verifiedApiSession: true,
       language: const Locale('en'),
     );
     await launch(tester, container);
-    await revealFuturesAccountTabs(tester);
     await _awaitAgent(tester, container);
+    // The loaded grant completes onboarding; let the trading page mount.
+    await tester.pumpAndSettle();
+    await revealFuturesAccountTabs(tester);
     await tester.pumpAndSettle();
     expect(strategies.queries.single.parameters, {'clientStrategyId': 'vanta-abc-def'});
     await tester.ensureVisible(find.byKey(const Key('open-order-tpsl')));

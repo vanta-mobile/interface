@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/portfolio/application/order_explorer_provider.dart';
 import 'package:vanta/features/portfolio/domain/aster_account.dart';
 import 'package:vanta/features/portfolio/domain/aster_open_orders.dart';
+import 'package:vanta/features/portfolio/domain/order_modification.dart';
 import 'package:vanta/features/portfolio/presentation/aster_open_order_card.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
@@ -65,7 +66,7 @@ void main() {
       tester,
       AsterOpenOrderCard(order: _order(), leverage: 20, onCancel: () => cancels++),
     );
-    expect(find.text('Buy'), findsOneWidget);
+    expect(find.text('Long'), findsOneWidget);
     expect(find.text('Limit'), findsOneWidget);
     expect(find.text('20x'), findsOneWidget);
     expect(find.text('Filled / Total amount (AAPL)'), findsOneWidget);
@@ -77,6 +78,26 @@ void main() {
     expect(find.byKey(const Key('open-order-chart-AAPLUSDT-39842202')), findsNothing);
     await tester.tap(find.byKey(const Key('cancel-order-AAPLUSDT-39842202')));
     expect(cancels, 1);
+  });
+
+  testWidgets('row values sit flush with the card content edge', (tester) async {
+    await _pump(
+      tester,
+      AsterOpenOrderCard(
+        order: _order(),
+        strategy: OpenOrderStrategy(
+          strategyId: '77',
+          sequence: 1,
+          takeProfit: Decimal.parse('372.86'),
+          stopLoss: Decimal.parse('41.43'),
+        ),
+        onCancel: () {},
+      ),
+    );
+    final edge = tester.getTopRight(find.byKey(const Key('cancel-order-AAPLUSDT-39842202'))).dx;
+    expect(tester.getTopRight(find.text('8.70 USDT')).dx, edge);
+    expect(tester.getTopRight(find.text('--')).dx, edge);
+    expect(tester.getTopRight(find.text('372.86 / 41.43', findRichText: true)).dx, edge);
   });
 
   testWidgets('conditional orders show trigger condition and reduce-only', (tester) async {
@@ -95,7 +116,7 @@ void main() {
         onViewChart: () => charts++,
       ),
     );
-    expect(find.text('Sell'), findsOneWidget);
+    expect(find.text('Short'), findsOneWidget);
     expect(find.text('Market'), findsOneWidget);
     expect(find.text('Last price >= 426.64'), findsOneWidget);
     expect(find.text('Yes'), findsOneWidget);
@@ -114,17 +135,44 @@ void main() {
     expect(find.text('No'), findsOneWidget);
   });
 
-  testWidgets('tapping a card opens copyable order details', (tester) async {
-    await _pump(tester, AsterOpenOrderCard(order: _order()), locale: const Locale('zh'));
+  testWidgets('tapping a card runs its tap action without a details sheet', (tester) async {
+    var taps = 0;
+    await _pump(tester, AsterOpenOrderCard(order: _order(), onTap: () => taps++));
     await tester.tap(find.byKey(const Key('open-order-AAPLUSDT-39842202')));
     await tester.pumpAndSettle();
-    expect(find.text('订单详情'), findsOneWidget);
-    final id = find.descendant(
-      of: find.byKey(const Key('open-order-details')),
-      matching: find.byType(SelectableText),
-    );
-    expect(tester.widgetList<SelectableText>(id).map((w) => w.data), contains('39842202'));
+    expect(taps, 1);
+    expect(find.byType(BottomSheet), findsNothing);
     expect(tester.takeException(), null);
+  });
+
+  testWidgets('Edit chip appears only when editable and follows its callback', (tester) async {
+    await _pump(tester, AsterOpenOrderCard(order: _order()));
+    expect(find.byKey(const Key('edit-order-AAPLUSDT-39842202')), findsNothing);
+    var edits = 0;
+    await _pump(tester, AsterOpenOrderCard(order: _order(), editable: true, onEdit: () => edits++));
+    expect(find.text('Edit'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('edit-order-AAPLUSDT-39842202')));
+    expect(edits, 1);
+    await _pump(tester, AsterOpenOrderCard(order: _order(), editable: true));
+    expect(
+      tester
+          .widget<OpenOrderChipButton>(find.byKey(const Key('edit-order-AAPLUSDT-39842202')))
+          .onPressed,
+      isNull,
+    );
+  });
+
+  test('only LIMIT orders without TP/SL linkage can be modified', () {
+    expect(canModifyOpenOrder(_order()), true);
+    expect(canModifyOpenOrder(_order(type: 'STOP', stop: '47.4')), false);
+    expect(canModifyOpenOrder(_order(price: '0')), false);
+    expect(
+      canModifyOpenOrder(
+        _order(),
+        strategy: const OpenOrderStrategy(strategyId: '77', sequence: 1),
+      ),
+      false,
+    );
   });
 
   testWidgets('explorer opens the placement transaction and is disabled without one', (

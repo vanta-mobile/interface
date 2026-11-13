@@ -190,7 +190,10 @@ void main() {
       expect(journal.snapshot.records, isEmpty);
     });
   }
-  test('BBO rechecks selected book after recovery journal I/O before dispatch', () async {
+  // Order records are best-effort diagnostics: journal I/O never delays
+  // dispatch (docs/implementation.md, 2026-11-11 "Make order records
+  // observational and nonblocking"). A later book change cannot resend.
+  test('BBO dispatch is not delayed by recovery journal I/O and is sent once', () async {
     final persisted = Completer<void>(), release = Completer<void>();
     journal.afterPrepare = () async {
       persisted.complete();
@@ -205,11 +208,13 @@ void main() {
     gate.complete();
     await persisted.future;
     expect(journal.snapshot.records.length, 1);
+    await f.flush();
+    expect(posts().length, 1);
     f.prices(bid: '200', ask: '201');
     await f.flush();
     release.complete();
     await submit;
-    expect(posts(), isEmpty);
+    expect(posts().length, 1);
     expect(journal.snapshot.records, isEmpty);
   });
   test(

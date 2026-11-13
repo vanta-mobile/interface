@@ -6,7 +6,6 @@ import 'package:vanta/features/portfolio/data/order_recovery_journal.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/order_query.dart';
 import 'package:vanta/features/portfolio/domain/order_recovery.dart';
-import 'package:vanta/features/portfolio/presentation/batch_close_controls.dart';
 import 'package:vanta/features/portfolio/presentation/futures_asset_mode_screen.dart';
 import 'package:vanta/features/portfolio/presentation/futures_position_mode_screen.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
@@ -64,8 +63,9 @@ void main() {
           const FuturesPositionModeScreen(),
           const FuturesAssetModeScreen(),
           const ScaledOrderScreen(symbol: 'BTCUSDT'),
-          const Scaffold(body: BatchCloseControls()),
-          const LiveOrderScreen(symbol: 'BTCUSDT'),
+          const Scaffold(
+            body: SingleChildScrollView(child: LiveOrderScreen(symbol: 'BTCUSDT')),
+          ),
           Scaffold(body: TradingHeader(onLanguage: () {})),
         ];
         for (final page in pages) {

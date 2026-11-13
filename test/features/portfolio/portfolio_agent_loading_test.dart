@@ -12,6 +12,9 @@ import '../../support/navigation_fixture.dart';
 import '../../support/trade_fixture.dart';
 import '../../support/trading_agents.dart';
 
+// The portfolio prompt can sit below the fold; check it regardless of scroll.
+final enableTrading = find.byKey(const Key('portfolio-enable-trading'), skipOffstage: false);
+
 void main() {
   testWidgets(
     'authorized portfolio loads owner assets once and refresh preserves data until settled',
@@ -38,7 +41,7 @@ void main() {
       expect(account.calls, 1);
       expect(container.read(accountReadProvider).account?.address, accountAddress);
       expect(find.byKey(const Key('read-aster-account')), findsNothing);
-      expect(find.byKey(const Key('portfolio-enable-trading')), findsNothing);
+      expect(enableTrading, findsNothing);
       expect(identity.signatures, 0);
       container.read(portfolioOverviewProvider);
       await tester.pumpAndSettle();
@@ -88,12 +91,12 @@ void main() {
     expect(account.calls, 0);
     expect(identity.signatures, 0);
     expect(find.byKey(const Key('read-aster-account')), findsNothing);
-    expect(find.byKey(const Key('portfolio-enable-trading')), findsOneWidget);
+    expect(enableTrading, findsOneWidget);
     await store.setStatus(agent, TradingAgentStatus.active);
     container.invalidate(tradingAgentProvider);
     await tester.pumpAndSettle();
     expect(account.calls, 1);
-    expect(find.byKey(const Key('portfolio-enable-trading')), findsNothing);
+    expect(enableTrading, findsNothing);
     expect(identity.signatures, 0);
     expect(tester.takeException(), null);
     await tester.pumpWidget(const SizedBox());

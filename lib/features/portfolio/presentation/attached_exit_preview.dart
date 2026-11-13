@@ -43,7 +43,7 @@ class AttachedExitPreview extends StatelessWidget {
         ),
         ValueRow(
           l10n.attachedOrderExecution,
-          '${entry.buy ? l10n.sell : l10n.buy} · ${attachedExecutionLabel(l10n, exit.execution)}'
+          '${entry.buy ? l10n.liveCloseLong : l10n.liveCloseShort} · ${attachedExecutionLabel(l10n, exit.execution)}'
           '${!exit.market && ready ? ' · ${exit.executionPrice} $quote' : ''}',
         ),
         ValueRow(

@@ -16,8 +16,9 @@ typedef PositionOrderAttempt = ({PositionOrderOutcome outcome, AccountReadFailur
 Future<PositionOrderAttempt> submitPositionOrder(
   Ref ref,
   String symbol,
-  LiveOrderDraft Function(LiveOrderContext context) build,
-) async {
+  LiveOrderDraft Function(LiveOrderContext context) build, {
+  String? clientOrderId,
+}) async {
   PositionOrderAttempt failed(AccountReadFailure failure) =>
       (outcome: PositionOrderOutcome.failed, failure: failure);
   const expired = AccountReadFailure('liveOrderContextExpired');
@@ -30,7 +31,7 @@ Future<PositionOrderAttempt> submitPositionOrder(
   }
   final draft = build(context);
   if (context.validate(draft) case final invalid?) return failed(AccountReadFailure(invalid));
-  final intent = live.prepare(symbol, draft);
+  final intent = live.prepare(symbol, draft, clientOrderId: clientOrderId);
   if (intent == null) return failed(expired);
   await live.submit(intent);
   if (!ref.mounted) return (outcome: PositionOrderOutcome.unknown, failure: null);

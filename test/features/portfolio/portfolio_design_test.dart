@@ -8,6 +8,7 @@ import '../../support/asset_indices.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/portfolio/application/account_read_provider.dart';
 import 'package:vanta/features/portfolio/application/portfolio_overview_provider.dart';
@@ -19,10 +20,12 @@ import 'package:vanta/features/trade/presentation/widgets/app_bottom_navigation.
 import '../../support/navigation_fixture.dart';
 import '../../support/trade_fixture.dart';
 
-Future<void> preview(WidgetTester tester) async {
+/// The static preview no longer has a UI entry for signed-in users, so the
+/// design checks switch it on directly.
+Future<void> preview(WidgetTester tester, ProviderContainer container) async {
   await tapNavigationControl(tester, 'navigation-portfolio');
-  await tapNavigationControl(tester, 'portfolio-account-selector');
-  await tapNavigationControl(tester, 'portfolio-select-preview');
+  container.read(portfolioPreviewProvider.notifier).select(true);
+  await tester.pumpAndSettle();
 }
 
 Future<void> scrollPortfolioTop(WidgetTester tester) async {
@@ -95,7 +98,7 @@ void main() {
   ) async {
     final fixture = NavigationFixture(tester);
     await launch(tester, fixture.container);
-    await preview(tester);
+    await preview(tester, fixture.container);
     expect(find.text('Static design sample. No real funds or orders.'), findsOneWidget);
     expect(find.text(r'$3,840.00'), findsOneWidget);
     await tapNavigationControl(tester, 'portfolio-deposit');
@@ -173,7 +176,7 @@ void main() {
         );
         tester.view.physicalSize = size;
         await launch(tester, fixture.container);
-        await preview(tester);
+        await preview(tester, fixture.container);
         await tester.drag(find.byKey(const Key('portfolio-page')), const Offset(0, -500));
         await tester.pumpAndSettle();
         expect(tester.takeException(), null);
@@ -255,6 +258,10 @@ void main() {
     final fixture = NavigationFixture(tester, assetIndexRepository: indices);
     await launch(tester, fixture.container);
     await tapNavigationControl(tester, 'navigation-portfolio');
+    // Without a device grant nothing reads positions automatically, and the
+    // portfolio refresh only repeats position reads already made. Make the
+    // first read the positions auto-read would perform.
+    await fixture.container.read(positionRiskProvider.notifier).refresh();
     indices.gate = Completer<AssetIndexSnapshot>();
     var settled = false;
     final refresh = fixture.container.read(portfolioRefreshProvider)().then((_) => settled = true);

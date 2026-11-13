@@ -1,5 +1,3 @@
-import '../../support/order_mode_widget.dart';
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -7,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/portfolio/application/scaled_order_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
-import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
 import 'package:vanta/features/portfolio/presentation/scaled_order_screen.dart';
 
 import '../../support/aster_account.dart';
@@ -67,7 +64,9 @@ void main() {
       await tester.tap(find.byKey(const Key('scaled-confirm')));
       await tester.pumpAndSettle();
       expect(repository.posts.length, 1);
-      expect(tester.widget<TextField>(find.byKey(const Key('scaled-low'))).enabled, false);
+      // Settled unknown scaled orders no longer lock input (docs/implementation.md,
+      // 2026-11-11 "Make order records observational and nonblocking").
+      expect(tester.widget<TextField>(find.byKey(const Key('scaled-low'))).enabled, true);
       expect(container.read(scaledOrderProvider).needsRecheck, true);
       await visible(tester, 'scaled-recheck');
       expect(find.text(l10n.liveOrderOutcomeUnknown), findsOneWidget);
@@ -166,26 +165,7 @@ void main() {
     container.dispose();
     await tester.pump();
   });
-  testWidgets('ordinary entry opens Scaled while close route does not offer it', (tester) async {
-    final container = setup(tester);
-    await launch(tester, container);
-    final navContext = tester.element(find.byType(Navigator).first);
-    openLiveOrder(navContext, 'BTCUSDT');
-    await tester.pumpAndSettle();
-    await chooseOrderMode(tester, LiveOrderEntryMode.scaled);
-    expect(find.byType(ScaledOrderScreen), findsOneWidget);
-    Navigator.of(tester.element(find.byType(ScaledOrderScreen))).pop();
-    await tester.pumpAndSettle();
-    Navigator.of(tester.element(find.byType(LiveOrderScreen))).pop();
-    await tester.pumpAndSettle();
-    openLiveClose(navContext, 'BTCUSDT', 'BOTH');
-    await tester.pumpAndSettle();
-    expect(find.byType(LiveOrderModeSelector), findsNothing);
-    expect(tester.takeException(), null);
-    await tester.pumpWidget(const SizedBox());
-    container.dispose();
-    await tester.pump();
-  });
+
   testWidgets('stop button retains sent result and leaves four unsent children', (tester) async {
     final identity = TestIdentityRepository()..restored = signingIdentity;
     addTearDown(identity.dispose);
