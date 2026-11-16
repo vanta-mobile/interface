@@ -17,6 +17,7 @@ class TradingHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final unread = ref.watch(serverUnreadNotificationsProvider);
+    final unreadLabel = ref.watch(serverUnreadLabelProvider);
     final demo = ref.watch(accountProvider.select((a) => a.connected));
     final session = ref.watch(authProvider);
     final identity = session.identity;
@@ -42,7 +43,7 @@ class TradingHeader extends ConsumerWidget {
             onPressed: () => openNotifications(context),
             icon: Badge(
               isLabelVisible: unread > 0,
-              label: Text('$unread'),
+              label: Text(unreadLabel),
               child: const Icon(Icons.notifications_outlined),
             ),
           ),

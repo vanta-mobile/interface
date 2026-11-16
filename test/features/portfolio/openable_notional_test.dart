@@ -141,7 +141,7 @@ void main() {
     (302, '{}', 'accountReadFailed'),
     (200, 'bad json', 'accountDataInvalid'),
   ]) {
-    test('failed public cap $status $key stays failed with no retry', () async {
+    test('failed public cap $status $key stays failed after bounded retries', () async {
       var calls = 0;
       final service = AsterAccountService(
         client: MockClient((_) async {
@@ -154,7 +154,7 @@ void main() {
         service.remainingOpenableNotionalValue(symbol: 'BTCUSDT', leverage: 20),
         throwsA(isA<AccountReadFailure>().having((e) => e.key, 'safe failure', key)),
       );
-      expect(calls, 1);
+      expect(calls, status == 429 ? 3 : 1);
     });
   }
 }

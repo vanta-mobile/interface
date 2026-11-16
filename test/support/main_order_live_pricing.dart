@@ -10,6 +10,8 @@ import 'package:vanta/features/portfolio/domain/account_change_stream.dart';
 import 'package:vanta/features/portfolio/application/main_order_allocation_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_capacity_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_pricing_provider.dart';
+import 'package:vanta/features/portfolio/application/order_confirmation_provider.dart';
+import 'package:vanta/features/portfolio/data/order_confirmation_preferences.dart';
 import 'package:vanta/features/portfolio/domain/main_order_revaluation.dart';
 
 import 'identity_repository.dart';
@@ -43,8 +45,11 @@ class PricingFeed<T> {
 /// Uses the production pricing/preview/allocation providers and revaluation.
 /// Only the signed account repository and public feed boundaries are replaced.
 class MainOrderLiveFixture {
-  MainOrderLiveFixture({TestLiveOrderRepository? orderRepository, AccountChangeRepository? changes})
-    : orders = orderRepository ?? (TestLiveOrderRepository()..context = capacityContext()) {
+  MainOrderLiveFixture({
+    TestLiveOrderRepository? orderRepository,
+    AccountChangeRepository? changes,
+    OrderConfirmationPreferences? confirmations,
+  }) : orders = orderRepository ?? (TestLiveOrderRepository()..context = capacityContext()) {
     capacities.transform = (context) => withRevaluationFacts(
       assembledCapacity(context: context, payload: payload, receivedAt: now, now: now),
     );
@@ -54,6 +59,8 @@ class MainOrderLiveFixture {
         marketSyncProvider.overrideWithValue(null),
         if (changes != null) accountChangeRepositoryProvider.overrideWithValue(changes),
         if (changes != null) accountChangeClockProvider.overrideWithValue(() => now),
+        if (confirmations != null)
+          orderConfirmationPreferencesProvider.overrideWithValue(confirmations),
         liveOrderRepositoryProvider.overrideWithValue(orders),
         mainOrderCapacityRepositoryProvider.overrideWithValue(capacities),
         liveOrderClockProvider.overrideWithValue(() => now),

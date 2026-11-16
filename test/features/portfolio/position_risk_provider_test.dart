@@ -61,6 +61,20 @@ void main() {
     },
   );
 
+  test('an accepted write marks positions stale again after a read that missed it', () async {
+    await start();
+    final controller = container.read(positionRiskProvider.notifier);
+    await controller.refresh();
+    controller.markStaleAfterWrite();
+    expect(container.read(positionRiskProvider).stale, true);
+    // A read made right after the acknowledgement may predate the write.
+    await controller.refresh();
+    expect(container.read(positionRiskProvider).stale, false);
+    await Future<void>.delayed(const Duration(milliseconds: 2100));
+    expect(container.read(positionRiskProvider).stale, true);
+    expect(positions.calls, 2);
+  });
+
   test('wallet disconnection clears snapshot and blocks a pending result', () async {
     await start();
     final controller = container.read(positionRiskProvider.notifier);

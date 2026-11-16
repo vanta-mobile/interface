@@ -1,5 +1,14 @@
 part of 'live_order_form.dart';
 
+/// Account facts that moved after the last read (fills, margin, settings).
+/// A direction click re-reads and quotes again instead of stopping on these.
+const _changedFacts = {
+  'liveCapacityChanged',
+  'liveCapacityStale',
+  'liveOrderContextExpired',
+  'liveAllocationChanged',
+};
+
 /// Text-controller adaptation only. Exact sizing, refreshed limits and signing
 /// guards belong to domain/application code, never to the widget callbacks.
 extension _LiveOrderAllocationBinding on _LiveOrderFormState {
@@ -129,7 +138,7 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
     _allocationPercent,
   );
 
-  Future<void> _reviewAllocated({bool? direction}) async {
+  Future<void> _reviewAllocated({bool? direction, bool retried = false}) async {
     if (direction != null && direction != buy) _render(() => buy = direction);
     final candidate = draft, terms = _formTerms, capturedSize = sizing;
     final controller = ref.read(mainOrderAllocationProvider.notifier);
@@ -144,8 +153,30 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
         attachment: attaching ? attachment : null,
       ),
     );
-    if (!mounted || review == null) return;
-    await reviewLiveOrder(
+    if (!mounted) return;
+    if (review == null) {
+      if (_formTerms != terms) return;
+      final failure = ref.read(mainOrderAllocationProvider).failure;
+      controller.clearFailure();
+      // The same unchanged form is quoted again after one full re-read.
+      if (!retried && (failure == null || _changedFacts.contains(failure.key))) {
+        final side = buy;
+        if (!await _refreshForReview(side) || !mounted || _formTerms != terms) return;
+        return _reviewAllocated(direction: side, retried: true);
+      }
+      // A clicked review reports its cause until dismissed, not inline where
+      // the next background renewal would clear it.
+      AppToast.showFailure(
+        context,
+        mainOrderAllocationFailureText(
+          context,
+          failure ?? const AccountReadFailure('liveAllocationChanged'),
+          sizeUnit,
+        ),
+      );
+      return;
+    }
+    final placed = await reviewLiveOrder(
       context,
       ref,
       LiveOrderIntent(
@@ -158,5 +189,16 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
       allocationReview: review,
       alwaysConfirm: _prefilled,
     );
+    if (placed) _clearSize();
+  }
+
+  /// A placed order's size is not carried into the next one.
+  void _clearSize() {
+    if (!mounted) return;
+    _render(() {
+      quantity.clear();
+      quoteAmount.clear();
+      _ratioInput.clear();
+    });
   }
 }

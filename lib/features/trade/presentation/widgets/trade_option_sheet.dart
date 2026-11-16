@@ -17,6 +17,48 @@ Future<T?> showTradeOptionSheet<T>(
   required List<TradeOption<T>> options,
   String? footer,
   Key? key,
+}) => _showTradeSheet<T>(
+  context,
+  key: key,
+  title: title,
+  children: (context) => [
+    const SizedBox(height: 8),
+    for (final option in options)
+      TradeOptionRow(
+        option: option,
+        selected: option.value == selected,
+        onTap: () => Navigator.pop(context, option.value),
+      ),
+    if (footer != null) ...[
+      const SizedBox(height: 8),
+      Text(footer, style: TradeTypography.body.copyWith(color: TradeColors.muted)),
+    ],
+  ],
+);
+
+/// Explanation sheet opened from an order option's question mark.
+Future<void> showTradeInfoSheet(
+  BuildContext context, {
+  required String title,
+  required String message,
+  Key? key,
+}) => _showTradeSheet<void>(
+  context,
+  key: key,
+  title: title,
+  children: (_) => [
+    Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Text(message, style: TradeTypography.option),
+    ),
+  ],
+);
+
+Future<T?> _showTradeSheet<T>(
+  BuildContext context, {
+  required String title,
+  required List<Widget> Function(BuildContext context) children,
+  Key? key,
 }) => showModalBottomSheet<T>(
   context: context,
   isScrollControlled: true,
@@ -49,17 +91,7 @@ Future<T?> showTradeOptionSheet<T>(
           ),
           const SizedBox(height: 8),
           const Divider(height: 1, thickness: 1, color: TradeColors.line),
-          const SizedBox(height: 8),
-          for (final option in options)
-            TradeOptionRow(
-              option: option,
-              selected: option.value == selected,
-              onTap: () => Navigator.pop(context, option.value),
-            ),
-          if (footer != null) ...[
-            const SizedBox(height: 8),
-            Text(footer, style: TradeTypography.body.copyWith(color: TradeColors.muted)),
-          ],
+          ...children(context),
         ],
       ),
     ),

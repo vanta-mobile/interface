@@ -12,6 +12,7 @@ import 'package:vanta/features/portfolio/application/main_order_pricing_provider
 import 'package:vanta/features/portfolio/application/live_order_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_capacity_provider.dart';
 import 'package:vanta/features/portfolio/application/order_review_activity_provider.dart';
+import 'package:vanta/core/presentation/app_toast.dart';
 import 'package:vanta/core/presentation/status_view.dart';
 import 'package:vanta/features/market/application/selection_providers.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
@@ -24,7 +25,10 @@ import '../../support/main_order_capacity.dart';
 void main() {
   late MainOrderLiveFixture f;
   setUp(() => f = MainOrderLiveFixture());
-  tearDown(() => f.close());
+  tearDown(() {
+    AppToast.dismiss();
+    return f.close();
+  });
 
   final quantity = find.byKey(const Key('live-order-quantity'));
   final price = find.byKey(const Key('live-order-price'));
@@ -140,6 +144,9 @@ void main() {
         expect(f.orders.submits, 1);
         expect(f.orders.lastIntent!.context.receivedAt, f.now);
         expect(f.orders.lastIntent!.draft.quantity, '0.1');
+        // A placed order's size is not carried into the next order.
+        expect(tester.widget<TextField>(quantity).controller!.text, isEmpty);
+        expect(tester.widget<TextField>(price).controller!.text, '100');
         final l10n = AppLocalizations.of(tester.element(quantity));
         expect(find.textContaining(l10n.liveAllocationChanged), findsNothing);
         expect(tester.takeException(), isNull);
@@ -407,7 +414,45 @@ void main() {
       f.disposeContainer();
     }
   });
-  testWidgets('a failed direction click reports its cause until the form changes', (tester) async {
+  testWidgets('changed account facts on click re-read once and reach confirmation', (tester) async {
+    try {
+      await open(tester, 'zh');
+      await tester.showKeyboard(quantity);
+      var changed = true;
+      final read = f.capacities.transform;
+      f.capacities.transform = (context) {
+        if (changed) {
+          changed = false;
+          throw const AccountReadFailure('liveCapacityChanged');
+        }
+        return read?.call(context) ?? assembledCapacity(context: context);
+      };
+      final accountReads = f.orders.reads, capacityReads = f.capacities.reads;
+      await tester.ensureVisible(button('buy'));
+      await tester.tap(button('buy'));
+      await tester.pump();
+      // A focused size field would reopen the keyboard once it is re-enabled.
+      final field = find.descendant(of: quantity, matching: find.byType(EditableText));
+      expect(tester.widget<EditableText>(field).focusNode.hasFocus, isFalse);
+      await flush(tester);
+      await flush(tester);
+      await tester.pumpAndSettle();
+      expect(find.byType(OrderConfirmationDialog), findsOneWidget);
+      expect(f.orders.reads, accountReads + 1);
+      expect(f.capacities.reads, capacityReads + 3);
+      final l10n = AppLocalizations.of(tester.element(quantity));
+      expect(find.textContaining(l10n.liveCapacityChanged), findsNothing);
+      expect(tester.widget<TextField>(quantity).controller!.text, '10');
+      expect(f.orders.submits, 0);
+    } finally {
+      f.container.read(mainOrderRefreshProvider.notifier).stop();
+      await tester.pumpWidget(const SizedBox());
+      f.disposeContainer();
+    }
+  });
+  testWidgets('a failed direction click reports its cause in a toast that survives renewals', (
+    tester,
+  ) async {
     try {
       await open(tester, 'en');
       final gate = f.orders.readGate = Completer<void>();
@@ -430,13 +475,23 @@ void main() {
       expect(await polling, isFalse);
       await flush(tester);
       await tester.pumpAndSettle();
-      final failure = find.byKey(const Key('main-order-review-failure'));
+      final failure = find.textContaining('/fapi/v3/commissionRate');
       expect(failure, findsOneWidget);
-      expect(tester.widget<Text>(failure).data, contains('/fapi/v3/commissionRate'));
+      expect(find.byKey(const Key('main-order-review-failure')), findsNothing);
       expect(find.byType(OrderConfirmationDialog), findsNothing);
-      await tester.enterText(quantity, '11');
+      for (final side in ['buy', 'sell']) {
+        expect(spinner(side), findsNothing);
+      }
+      f.orders.readFailure = null;
+      expect(
+        await f.container
+            .read(mainOrderRefreshProvider.notifier)
+            .refresh('BTCUSDT', reconnectPrices: false, background: true),
+        isTrue,
+      );
+      await flush(tester);
       await tester.pump();
-      expect(failure, findsNothing);
+      expect(failure, findsOneWidget);
       expect(f.orders.submits, 0);
     } finally {
       f.container.read(mainOrderRefreshProvider.notifier).stop();

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
+import '../../trade/presentation/widgets/trade_icon.dart';
+import '../../trade/presentation/widgets/trade_option_sheet.dart';
 
 /// Collapsed by default so optional order settings stay out of the main flow.
 class EmbeddedAdvancedSection extends StatelessWidget {
@@ -32,17 +34,20 @@ class EmbeddedAdvancedSection extends StatelessWidget {
 }
 
 /// Design checkbox row: 11px box, white fill when selected, full-row target.
+/// [help] adds the design question mark that opens an explanation sheet.
 class EmbeddedCheckRow extends StatelessWidget {
   const EmbeddedCheckRow({
     super.key,
     required this.label,
     required this.value,
     required this.onChanged,
+    this.help,
     this.trailing,
   });
   final String label;
   final bool value;
   final ValueChanged<bool>? onChanged;
+  final String? help;
   final Widget? trailing;
   @override
   Widget build(BuildContext context) {
@@ -51,54 +56,86 @@ class EmbeddedCheckRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Flexible(
-          child: Semantics(
-            checked: value,
-            enabled: enabled,
-            child: InkWell(
-              onTap: enabled ? () => onChanged!(!value) : null,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 11,
-                      height: 11,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: value ? TradeColors.text : TradeColors.card),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                      child: value
-                          ? Container(
-                              width: 7,
-                              height: 7,
-                              decoration: BoxDecoration(
-                                color: TradeColors.text,
-                                borderRadius: BorderRadius.circular(1),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Semantics(
+                  checked: value,
+                  enabled: enabled,
+                  child: InkWell(
+                    onTap: enabled ? () => onChanged!(!value) : null,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 11,
+                            height: 11,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: value ? TradeColors.text : TradeColors.card,
                               ),
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        label,
-                        style: TradeTypography.caption.copyWith(
-                          color: enabled ? TradeColors.text : TradeColors.muted,
-                        ),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                            child: value
+                                ? Container(
+                                    width: 7,
+                                    height: 7,
+                                    decoration: BoxDecoration(
+                                      color: TradeColors.text,
+                                      borderRadius: BorderRadius.circular(1),
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              label,
+                              style: TradeTypography.caption.copyWith(
+                                color: enabled ? TradeColors.text : TradeColors.muted,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+              if (help case final help?) _HelpButton(title: label, message: help),
+            ],
           ),
         ),
         if (trailing != null) ...[const SizedBox(width: 8), trailing!],
       ],
     );
   }
+}
+
+/// 12px question mark with a 2px gap after the label; the tap target extends
+/// vertically within the row so it stays usable without shifting the layout.
+class _HelpButton extends StatelessWidget {
+  const _HelpButton({required this.title, required this.message});
+  final String title, message;
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: AppLocalizations.of(context).tradeOptionHelp(title),
+    excludeSemantics: true,
+    child: InkWell(
+      key: ValueKey('trade-option-help-$title'),
+      borderRadius: BorderRadius.circular(4),
+      onTap: () => showTradeInfoSheet(context, title: title, message: message),
+      child: const Padding(
+        padding: EdgeInsets.fromLTRB(2, 6, 6, 6),
+        child: TradeIcon('question-mark', size: 12, color: TradeColors.muted),
+      ),
+    ),
+  );
 }
 
 /// Small text-plus-caret control that opens a design option sheet.

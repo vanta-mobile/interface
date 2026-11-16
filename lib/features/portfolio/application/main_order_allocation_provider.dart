@@ -146,6 +146,12 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
     state = const MainOrderAllocationState(percent: null);
   }
 
+  /// Drops a reported failure that the caller recovers by re-reading.
+  void clearFailure() {
+    if (state.preparing || state.failure == null) return;
+    state = MainOrderAllocationState(percent: state.percent);
+  }
+
   void stop() {
     if (!state.preparing) return;
     _pricingWait?.cancel();

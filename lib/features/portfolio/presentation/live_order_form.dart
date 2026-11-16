@@ -41,6 +41,7 @@ import '../domain/main_order_allocation.dart';
 import '../domain/main_order_review_input.dart';
 import '../../../core/domain/decimal_value.dart';
 import '../../../core/errors/error_text.dart';
+import '../../../core/presentation/app_toast.dart';
 import '../../../core/formatters/token_amount_formatter.dart';
 import '../../funding/domain/funding_catalog.dart';
 import '../../funding/presentation/funding_screen.dart';
@@ -82,6 +83,10 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
   final triggerPrice = TextEditingController();
   bool buy = true, market = false, reduceOnly = false;
   bool? _refreshingReviewDirection;
+
+  /// The direction whose click (read, review and any direct submission) is
+  /// still running; both direction buttons wait for it.
+  bool? _reviewingDirection;
 
   /// Embedded layout: a failure from the last direction click, shown only
   /// while the form terms it was found for are unchanged.

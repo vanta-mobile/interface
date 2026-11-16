@@ -13,6 +13,14 @@ class AccountReadFailure implements Exception, DetailedApiFailure {
   /// Aster confirms that the exchange account has not been created by a deposit.
   /// Neither a zero balance nor the displayed server text proves this status.
   bool get requiresDeposit => code == -5050;
+
+  /// A read was refused for missing permission, or no local grant is usable.
+  /// This says nothing about the outcome or retry safety of a financial write.
+  bool get requiresAuthorization =>
+      key == 'accountPermissionRequired' ||
+      key == 'authorizationRequired' ||
+      key == 'builderAuthorizationRequired' ||
+      key == 'builderApprovalUnknown';
 }
 
 abstract interface class WalletAccountSnapshot {

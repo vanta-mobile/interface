@@ -15,7 +15,7 @@ abstract class WalletAccountController<T extends WalletAccountSnapshot>
 
   int _generation = 0;
   int _staleRevision = 0;
-  Timer? _expiry;
+  Timer? _expiry, _settle;
   @override
   AccountSnapshotState<T> build() {
     ref.listen(
@@ -31,6 +31,7 @@ abstract class WalletAccountController<T extends WalletAccountSnapshot>
         if (before == after) return;
         _generation++;
         _expiry?.cancel();
+        _settle?.cancel();
         onScopeReset();
         state = AccountSnapshotState<T>();
       },
@@ -38,6 +39,7 @@ abstract class WalletAccountController<T extends WalletAccountSnapshot>
     ref.onDispose(() {
       _generation++;
       _expiry?.cancel();
+      _settle?.cancel();
     });
     return AccountSnapshotState<T>();
   }
@@ -132,6 +134,16 @@ abstract class WalletAccountController<T extends WalletAccountSnapshot>
     );
   }
 
+  /// An accepted write may reach the exchange's REST lists a moment after its
+  /// acknowledgement, so a read made right away can still miss it. Mark the
+  /// snapshot stale now and once more shortly after, so background readers
+  /// read again once the lists have caught up.
+  void markStaleAfterWrite() {
+    markStale();
+    _settle?.cancel();
+    _settle = Timer(_writeSettle, markStale);
+  }
+
   /// A verified order action invalidates any older in-flight snapshot read.
   void acceptSnapshot(T snapshot) {
     _generation++;
@@ -139,3 +151,5 @@ abstract class WalletAccountController<T extends WalletAccountSnapshot>
     state = AccountSnapshotState<T>(account: snapshot, stale: true);
   }
 }
+
+const _writeSettle = Duration(seconds: 2);

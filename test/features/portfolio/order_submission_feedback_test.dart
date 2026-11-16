@@ -4,10 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/errors/api_error_details.dart';
 import 'package:vanta/core/presentation/app_toast.dart';
 import 'package:vanta/core/theme.dart';
+import 'package:vanta/features/portfolio/application/order_confirmation_provider.dart';
 import 'package:vanta/features/portfolio/application/order_recovery_provider.dart';
 import 'package:vanta/features/portfolio/application/symbol_settings_activity.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
+import 'package:vanta/features/portfolio/domain/order_confirmation.dart';
 import 'package:vanta/features/portfolio/domain/order_query.dart';
 import 'package:vanta/features/portfolio/domain/order_recovery.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
@@ -18,6 +20,7 @@ import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/live_order.dart';
 import '../../support/main_order_live_pricing.dart';
+import '../../support/quick_order.dart';
 
 Widget _app(Widget child, {String language = 'en'}) => MaterialApp(
   theme: vantaTheme(),
@@ -133,6 +136,63 @@ void main() {
       expect(find.textContaining(l.liveOrderOutcomeUnknown), findsNothing);
       expect(tester.widget<TextField>(quantity).controller!.text, '10');
       expect(f.container.read(symbolSettingsActivityProvider).busy, isFalse);
+      expect(tester.takeException(), isNull);
+    } finally {
+      AppToast.dismiss();
+      await tester.pumpWidget(const SizedBox());
+      await f.close();
+    }
+  });
+
+  testWidgets('skipped confirmation reports a rejection in a toast and re-enables the form', (
+    tester,
+  ) async {
+    final f = MainOrderLiveFixture(
+      confirmations: MemoryOrderConfirmationPreferences()
+        ..values[OrderConfirmationKind.limit] = false,
+    );
+    const reason = 'Margin is insufficient.';
+    f.orders.result = const LiveOrderResult(
+      rejected: true,
+      failure: AccountReadFailure(
+        'accountReadFailed',
+        code: -2019,
+        details: ApiErrorDetails(message: reason, status: 400),
+      ),
+    );
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(430, 1100);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    try {
+      await tester.runAsync(f.open);
+      f.container.read(orderConfirmationProvider(OrderConfirmationKind.limit));
+      await tester.runAsync(f.flush);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: f.container,
+          child: _app(const SingleChildScrollView(child: LiveOrderScreen(symbol: 'BTCUSDT'))),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final quantity = find.byKey(const Key('live-order-quantity'));
+      await tester.enterText(find.byKey(const Key('live-order-price')), '100');
+      await tester.enterText(quantity, '10');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      final review = find.byKey(const Key('main-order-review-buy'));
+      await tester.ensureVisible(review);
+      await tester.tap(review);
+      await tester.runAsync(f.flush);
+      await tester.pumpAndSettle();
+      expect(f.orders.submits, 1);
+      expect(find.byType(OrderConfirmationDialog), findsNothing);
+      final toast = find.byKey(const Key('app-toast'));
+      expect(find.descendant(of: toast, matching: find.textContaining(reason)), findsOneWidget);
+      await tester.pump(const Duration(minutes: 1));
+      expect(find.descendant(of: toast, matching: find.textContaining(reason)), findsOneWidget);
+      expect(tester.widget<FilledButton>(review).onPressed, isNotNull);
+      expect(tester.widget<TextField>(quantity).controller!.text, '10');
       expect(tester.takeException(), isNull);
     } finally {
       AppToast.dismiss();

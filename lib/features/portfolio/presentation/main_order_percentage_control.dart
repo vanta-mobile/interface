@@ -181,22 +181,29 @@ class _MainOrderPercentageControlState extends ConsumerState<MainOrderPercentage
     );
   }
 
-  Widget _failureText(BuildContext context, AccountReadFailure failure) {
-    final l10n = AppLocalizations.of(context);
-    return Text(
-      failure is MainOrderCapacityExceeded
-          ? l10n.liveAllocationMaximumChanged(
-              failure.capacity.buy ? l10n.long : l10n.short,
-              widget.unit == OrderSizeUnit.quote
-                  ? '≈ ${failure.capacity.maximumQuote}'
-                  : '${failure.capacity.maximum}',
-              widget.unit == OrderSizeUnit.quote
-                  ? failure.context.rules.quoteAsset
-                  : failure.context.rules.baseAsset,
-            )
-          : accountErrorText(context, failure),
-      key: const Key('main-order-allocation-failure'),
-      style: const TextStyle(color: AppColors.negative),
-    );
-  }
+  Widget _failureText(BuildContext context, AccountReadFailure failure) => Text(
+    mainOrderAllocationFailureText(context, failure, widget.unit),
+    key: const Key('main-order-allocation-failure'),
+    style: const TextStyle(color: AppColors.negative),
+  );
+}
+
+/// A main-order review failure, naming the refreshed maximum when that is why.
+String mainOrderAllocationFailureText(
+  BuildContext context,
+  AccountReadFailure failure,
+  OrderSizeUnit unit,
+) {
+  final l10n = AppLocalizations.of(context);
+  return failure is MainOrderCapacityExceeded
+      ? l10n.liveAllocationMaximumChanged(
+          failure.capacity.buy ? l10n.long : l10n.short,
+          unit == OrderSizeUnit.quote
+              ? '≈ ${failure.capacity.maximumQuote}'
+              : '${failure.capacity.maximum}',
+          unit == OrderSizeUnit.quote
+              ? failure.context.rules.quoteAsset
+              : failure.context.rules.baseAsset,
+        )
+      : accountErrorText(context, failure);
 }

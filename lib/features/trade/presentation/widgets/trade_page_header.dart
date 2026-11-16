@@ -17,6 +17,7 @@ class TradePageHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final unread = ref.watch(serverUnreadNotificationsProvider);
+    final unreadLabel = ref.watch(serverUnreadLabelProvider);
     return Row(
       children: [
         Image.asset('assets/branding/mark.webp', width: 22, height: 22),
@@ -41,7 +42,7 @@ class TradePageHeader extends ConsumerWidget {
           onPressed: () => openNotifications(context),
           icon: Badge(
             isLabelVisible: unread > 0,
-            label: Text('$unread'),
+            label: Text(unreadLabel),
             child: const TradeIcon('bell'),
           ),
         ),

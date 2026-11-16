@@ -80,8 +80,14 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
           reviewFailure: _reviewFailure?.terms == _formTerms ? _reviewFailure!.failure : null,
           reviewWithoutPreview: entry.attachment?.entryPeg != null,
           onRefresh: _refreshForReview,
-          refreshingReviewDirection: _refreshingReviewDirection,
-          onReview: enabled && (_allocationPercent == null || _allocationPercent! > 0)
+          // A confirmation dialog covering the form owns the progress display.
+          refreshingReviewDirection:
+              _refreshingReviewDirection ??
+              (ModalRoute.of(context)?.isCurrent == false ? null : _reviewingDirection),
+          onReview:
+              enabled &&
+                  _reviewingDirection == null &&
+                  (_allocationPercent == null || _allocationPercent! > 0)
               ? _reviewDirection
               : null,
         ),
@@ -126,6 +132,7 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
         EmbeddedCheckRow(
           key: const Key('live-order-hidden'),
           label: l10n.tradeHiddenOrder,
+          help: l10n.tradeHiddenOrderHelp,
           value: hidden,
           onChanged: enabled
               ? (value) => policy(value ? LiveOrderTimeInForce.hidden : LiveOrderTimeInForce.gtc)
@@ -135,6 +142,7 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
         EmbeddedCheckRow(
           key: const Key('live-order-reduce-only'),
           label: l10n.reduceOnly,
+          help: l10n.tradeReduceOnlyHelp,
           value: entry.reduceOnly,
           onChanged: oneWay && enabled ? (value) => _render(() => reduceOnly = value) : null,
           trailing: showPolicy
@@ -256,6 +264,8 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
   /// direction's button shows progress; background renewal stays silent.
   Future<bool> _refreshForReview(bool direction) async {
     if (_refreshingReviewDirection != null) return false;
+    // A focused size field would reopen the keyboard when it is re-enabled.
+    FocusScope.of(context).unfocus();
     _render(() {
       buy = direction;
       _refreshingReviewDirection = direction;
@@ -264,11 +274,22 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
     try {
       final refresh = ref.read(mainOrderRefreshProvider.notifier);
       if (ref.read(mainOrderRefreshProvider).background) refresh.stop();
-      final ok = await refresh.refresh(widget.data.symbol);
+      var ok = await refresh.refresh(widget.data.symbol);
+      // Facts that moved between the account and capacity reads are read once more.
+      if (!ok &&
+          mounted &&
+          _changedFacts.contains(ref.read(mainOrderRefreshProvider).failure?.key)) {
+        ok = await refresh.refresh(widget.data.symbol);
+      }
       if (!mounted) return false;
       if (!ok) {
+        // A clicked read reports its cause until dismissed; background
+        // renewals may replace the provider's failure at any time.
         final failure = ref.read(mainOrderRefreshProvider).failure;
-        if (failure != null) _reviewFailure = (failure: failure, terms: _formTerms);
+        AppToast.showFailure(
+          context,
+          accountErrorText(context, failure ?? const AccountReadFailure('liveAllocationChanged')),
+        );
         return false;
       }
       await WidgetsBinding.instance.endOfFrame;
@@ -281,10 +302,21 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
   /// Compound-entry pegs keep their direct review; others use the allocation
   /// review, which re-checks capacity before any signing.
   Future<void> _reviewDirection(bool direction) async {
+    if (_reviewingDirection != null) return;
+    FocusScope.of(context).unfocus();
     _render(() {
       buy = direction;
+      _reviewingDirection = direction;
       _reviewFailure = null;
     });
+    try {
+      await _reviewSelected(direction);
+    } finally {
+      if (mounted) _render(() => _reviewingDirection = null);
+    }
+  }
+
+  Future<void> _reviewSelected(bool direction) async {
     if (!reducing && draft.attachment?.entryPeg == null) {
       return _reviewAllocated(direction: direction);
     }
@@ -301,7 +333,14 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
         .read(liveOrderProvider.notifier)
         .prepare(contextData.symbol, draft, pricingContext: _pricingContext);
     if (intent != null) {
-      await reviewLiveOrder(context, ref, intent, sizing: size, alwaysConfirm: _prefilled);
+      final placed = await reviewLiveOrder(
+        context,
+        ref,
+        intent,
+        sizing: size,
+        alwaysConfirm: _prefilled,
+      );
+      if (placed) _clearSize();
     }
   }
 }

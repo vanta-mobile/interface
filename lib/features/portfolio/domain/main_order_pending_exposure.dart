@@ -1,5 +1,4 @@
 import 'package:decimal/decimal.dart';
-import 'package:rational/rational.dart';
 
 import 'account_snapshot.dart';
 import 'aster_open_orders.dart';
@@ -23,20 +22,19 @@ LiveOrderOpeningExposure mainOrderPendingExposure({
     markPrice: context.markPrice,
     positions: positions,
     orders: orders.orders,
-    corroborate: true,
   );
 }
 
 /// Reuse the same opening/closing and pending-notional rules for every symbol
-/// which shares a margin budget. Revalued margins must not be corroborated
-/// against the older signed mark's rounded openOrderInitialMargin.
+/// which shares a margin budget. Pending reservations come from the open
+/// orders themselves; the exchange's openOrderInitialMargin uses its own mark
+/// and formula, so it never matches exactly and is not a consistency check.
 LiveOrderOpeningExposure capacitySymbolExposure({
   required String symbol,
   required FuturesPositionMode mode,
   required Decimal markPrice,
   required List<CapacityPosition> positions,
   required Iterable<AsterOpenOrder> orders,
-  bool corroborate = false,
 }) {
   final hedge = mode == FuturesPositionMode.hedge;
   final sides = hedge ? {'LONG', 'SHORT'} : {'BOTH'};
@@ -76,7 +74,7 @@ LiveOrderOpeningExposure capacitySymbolExposure({
       asks += o.remainingQty * o.price;
     }
   }
-  final exposure = hedge
+  return hedge
       ? LiveOrderOpeningExposure.hedge(
           markPrice: markPrice,
           leverage: leverage,
@@ -90,27 +88,4 @@ LiveOrderOpeningExposure capacitySymbolExposure({
           buyOrderNotional: bids,
           sellOrderNotional: asks,
         );
-  if (!corroborate) return exposure;
-  if (hedge) {
-    for (final p in positions) {
-      final pending = p.side == 'LONG' ? bids : asks;
-      _corroborate(pending / Decimal.fromInt(leverage), p.orderMargin);
-    }
-  } else {
-    final extra = exposure.currentNotional - positions.single.notional.abs();
-    _corroborate(extra / Decimal.fromInt(leverage), positions.single.orderMargin);
-  }
-  return exposure;
-}
-
-void _corroborate(Rational expected, Decimal reported) {
-  // Account margin examples use eight decimal places. Respect greater supplied
-  // precision and allow at most one last-place reporting quantum. This only
-  // corroborates independently known limit-order notionals; it never derives
-  // unknown notionals from rounded aggregate margin.
-  final scale = reported.scale > 8 ? reported.scale : 8;
-  final quantum = Decimal.parse('1e-$scale').toRational();
-  if ((expected - reported.toRational()).abs() > quantum) {
-    throw const AccountReadFailure('liveCapacityChanged');
-  }
 }

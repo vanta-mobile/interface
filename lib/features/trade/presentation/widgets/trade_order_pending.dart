@@ -130,6 +130,7 @@ class _PendingAdvanced extends StatelessWidget {
         EmbeddedCheckRow(
           key: const Key('trade-pending-tpsl'),
           label: l.tradeTpSl,
+          help: l.tradeTpSlHelp,
           value: false,
           onChanged: onChanged,
         ),
@@ -137,12 +138,14 @@ class _PendingAdvanced extends StatelessWidget {
           EmbeddedCheckRow(
             key: const Key('trade-pending-hidden'),
             label: l.tradeHiddenOrder,
+            help: l.tradeHiddenOrderHelp,
             value: false,
             onChanged: onChanged,
           ),
         EmbeddedCheckRow(
           key: const Key('trade-pending-reduce-only'),
           label: l.reduceOnly,
+          help: l.tradeReduceOnlyHelp,
           value: false,
           onChanged: onChanged,
           trailing: market

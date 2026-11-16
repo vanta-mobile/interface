@@ -57,6 +57,7 @@ class _LiveOrderAttachmentControlsState extends State<LiveOrderAttachmentControl
             EmbeddedCheckRow(
               key: const Key('live-order-attached'),
               label: l10n.tradeTpSl,
+              help: l10n.tradeTpSlHelp,
               value: selected,
               onChanged: !widget.enabled ? null : toggle,
             )

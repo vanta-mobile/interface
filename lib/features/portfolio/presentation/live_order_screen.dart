@@ -106,7 +106,7 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
     final readFailure = gate == OrderEntryGate.ready && state.intent == null
         ? refresh.failure ?? state.failure ?? data?.fundsFailure ?? capacity.failure
         : null;
-    final failed = readFailure != null && data == null;
+    final failed = readFailure != null && (data == null || readFailure.requiresAuthorization);
     return Column(
       key: const Key('trade-live-order'),
       crossAxisAlignment: CrossAxisAlignment.stretch,

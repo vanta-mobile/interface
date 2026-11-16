@@ -19,7 +19,8 @@ import '../domain/live_order_size.dart';
 import '../domain/order_confirmation.dart';
 import 'order_confirmation_dialog.dart';
 
-Future<void> reviewLiveOrder(
+/// Returns true only when a submission from this review was verified as placed.
+Future<bool> reviewLiveOrder(
   BuildContext context,
   WidgetRef ref,
   LiveOrderIntent intent, {
@@ -30,7 +31,7 @@ Future<void> reviewLiveOrder(
 }) async {
   // One review at a time: a second request while a confirmation (or a direct
   // submission it started) is open must not open another route.
-  if (ref.read(orderReviewActivityProvider) > 0) return;
+  if (ref.read(orderReviewActivityProvider) > 0) return false;
   // A fixed review keeps the facts it opened with: stop a background read that
   // is already running so its late result cannot replace them. The main
   // confirmation (with an allocation review) keeps renewing in place.
@@ -40,7 +41,7 @@ Future<void> reviewLiveOrder(
   final activity = ref.read(orderReviewActivityProvider.notifier);
   activity.begin();
   try {
-    await _reviewLiveOrder(
+    return await _reviewLiveOrder(
       context,
       ref,
       intent,
@@ -54,7 +55,7 @@ Future<void> reviewLiveOrder(
   }
 }
 
-Future<void> _reviewLiveOrder(
+Future<bool> _reviewLiveOrder(
   BuildContext context,
   WidgetRef ref,
   LiveOrderIntent intent, {
@@ -67,7 +68,8 @@ Future<void> _reviewLiveOrder(
   Future<void> submit() => onSubmit?.call() ?? controller.submit(intent);
   final identity = ref.read(authProvider).identity;
   final container = ProviderScope.containerOf(context, listen: false);
-  Future<OrderSubmissionOutcome> submitCurrent() async {
+  var placed = false;
+  Future<OrderSubmissionOutcome> attempt() async {
     if (!identical(identity, container.read(authProvider).identity)) {
       return const OrderSubmissionOutcome(OrderSubmissionKind.notSubmitted);
     }
@@ -81,12 +83,28 @@ Future<void> _reviewLiveOrder(
     return _observe(container, intent, submit);
   }
 
+  Future<OrderSubmissionOutcome> submitCurrent() async {
+    final outcome = await attempt();
+    if (outcome.kind == OrderSubmissionKind.success) placed = true;
+    return outcome;
+  }
+
   final preference = ref.read(orderConfirmationProvider(orderConfirmationKind(intent.draft)));
   // Reducing and entire-position close flows keep their dedicated review.
   // Terms filled from outside the app (a deep link) are always confirmed.
   if (!alwaysConfirm && !intent.draft.reducing && preference.canSkip) {
-    await submitCurrent();
-    return;
+    // Without a dialog, the submission's outcome is reported here.
+    OrderSubmissionOutcome outcome;
+    try {
+      outcome = await submitCurrent();
+    } catch (_) {
+      outcome = const OrderSubmissionOutcome(
+        OrderSubmissionKind.failed,
+        AccountReadFailure('accountReadFailed'),
+      );
+    }
+    if (context.mounted) showOrderSubmissionOutcome(context, outcome);
+    return placed;
   }
   // The dialog can outlive the form (for example after a logout), so its
   // submission reads through the container rather than the form's ref.
@@ -117,6 +135,7 @@ Future<void> _reviewLiveOrder(
       ),
     ),
   );
+  return placed;
 }
 
 /// Reads the settled order and allocation state around one submission.

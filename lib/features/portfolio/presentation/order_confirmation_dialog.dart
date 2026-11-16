@@ -20,6 +20,34 @@ class OrderSubmissionOutcome {
   final AccountReadFailure? failure;
 }
 
+/// Reports one submission attempt. Failures stay until dismissed.
+void showOrderSubmissionOutcome(BuildContext context, OrderSubmissionOutcome outcome) {
+  final l10n = AppLocalizations.of(context);
+  switch (outcome.kind) {
+    case OrderSubmissionKind.success:
+      AppToast.showSuccess(context, l10n.orderConfirmSubmitted);
+    case OrderSubmissionKind.unknown:
+      AppToast.showFailure(
+        context,
+        outcome.failure == null
+            ? l10n.liveOrderOutcomeUnknown
+            : accountErrorText(context, outcome.failure!),
+      );
+    case OrderSubmissionKind.failed:
+      AppToast.showFailure(
+        context,
+        accountErrorText(context, outcome.failure ?? const AccountReadFailure('accountReadFailed')),
+      );
+    case OrderSubmissionKind.notSubmitted:
+      AppToast.showFailure(
+        context,
+        outcome.failure == null
+            ? l10n.orderConfirmExpired
+            : accountErrorText(context, outcome.failure!),
+      );
+  }
+}
+
 /// Centered order confirmation from the mobile Futures design. The confirm
 /// button stays busy until the submission settles; only a verified success
 /// closes the dialog.
@@ -65,34 +93,8 @@ class _OrderConfirmationDialogState extends State<OrderConfirmationDialog> {
     }
     if (!mounted) return;
     setState(() => _pending = false);
-    final l10n = AppLocalizations.of(context);
-    switch (outcome.kind) {
-      case OrderSubmissionKind.success:
-        AppToast.showSuccess(context, l10n.orderConfirmSubmitted);
-        Navigator.pop(context);
-      case OrderSubmissionKind.unknown:
-        AppToast.showFailure(
-          context,
-          outcome.failure == null
-              ? l10n.liveOrderOutcomeUnknown
-              : accountErrorText(context, outcome.failure!),
-        );
-      case OrderSubmissionKind.failed:
-        AppToast.showFailure(
-          context,
-          accountErrorText(
-            context,
-            outcome.failure ?? const AccountReadFailure('accountReadFailed'),
-          ),
-        );
-      case OrderSubmissionKind.notSubmitted:
-        AppToast.showFailure(
-          context,
-          outcome.failure == null
-              ? l10n.orderConfirmExpired
-              : accountErrorText(context, outcome.failure!),
-        );
-    }
+    showOrderSubmissionOutcome(context, outcome);
+    if (outcome.kind == OrderSubmissionKind.success) Navigator.pop(context);
   }
 
   @override

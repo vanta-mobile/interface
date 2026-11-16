@@ -9,6 +9,7 @@ import 'package:vanta/features/portfolio/domain/live_order_size.dart';
 import 'package:vanta/features/portfolio/domain/main_order_capacity_preview.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_embedded_controls.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_embedded_inputs.dart';
+import 'package:vanta/features/trade/presentation/widgets/trade_icon.dart';
 import 'package:vanta/features/trade/presentation/widgets/trade_option_sheet.dart';
 import 'package:vanta/features/portfolio/presentation/main_order_direction_card.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
@@ -197,5 +198,54 @@ void main() {
     await tester.tap(find.text('Hidden Order'));
     await tester.pump();
     expect(tester.takeException(), null);
+  });
+
+  testWidgets('check row question mark explains the option without toggling it', (tester) async {
+    var value = false;
+    await tester.pumpWidget(
+      _app(
+        StatefulBuilder(
+          builder: (context, setState) => Column(
+            children: [
+              EmbeddedCheckRow(
+                label: 'Reduce only',
+                help: 'Reduce-Only orders can only decrease an existing position.',
+                value: value,
+                onChanged: (next) => setState(() => value = next),
+              ),
+              const EmbeddedCheckRow(
+                label: 'Hidden Order',
+                help: 'Hidden orders are not displayed in the order book.',
+                value: false,
+                onChanged: null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    final label = tester.getRect(find.text('Reduce only'));
+    final icon = tester.getRect(
+      find.descendant(
+        of: find.byKey(const ValueKey('trade-option-help-Reduce only')),
+        matching: find.byType(TradeIcon),
+      ),
+    );
+    expect(icon.size, const Size.square(12));
+    expect(icon.left - label.right, 2);
+    expect(find.bySemanticsLabel('About Reduce only'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('trade-option-help-Reduce only')));
+    await tester.pumpAndSettle();
+    expect(value, false);
+    expect(find.text('Reduce-Only orders can only decrease an existing position.'), findsOneWidget);
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+    expect(find.text('Reduce-Only orders can only decrease an existing position.'), findsNothing);
+
+    // Disabled options still explain themselves.
+    await tester.tap(find.byKey(const ValueKey('trade-option-help-Hidden Order')));
+    await tester.pumpAndSettle();
+    expect(find.text('Hidden orders are not displayed in the order book.'), findsOneWidget);
   });
 }

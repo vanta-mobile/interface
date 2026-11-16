@@ -187,19 +187,29 @@ void main() {
       );
     });
   }
-  test('resolved ordinary peg still requires corroborated pending margin', () {
+  test('pending reservation follows open orders, not reported aggregate margin', () {
+    // The exchange's openOrderInitialMargin uses its own mark and formula; a
+    // difference from the order-derived reservation must not block capacity.
     expect(
-      () => assembledCapacity(
+      assembledCapacity(
         orders: [
           {...capacityOrder(), 'pegPriceType': 'QUEUE_1'},
         ],
-      ),
-      failure('liveCapacityChanged'),
+      ).exposure.buyOrderNotional,
+      Decimal.fromInt(200),
     );
-    expect(() => assembledCapacity(orders: [capacityOrder()]), failure('liveCapacityChanged'));
+    expect(
+      assembledCapacity(orders: [capacityOrder()]).exposure.currentNotional,
+      Decimal.fromInt(200),
+    );
     final raw = capacityAccountPayload();
     ((raw['positions'] as List).single as Map)['openOrderInitialMargin'] = '20';
-    expect(() => assembledCapacity(payload: raw), failure('liveCapacityChanged'));
+    expect(assembledCapacity(payload: raw).exposure.currentNotional, Decimal.zero);
+    ((raw['positions'] as List).single as Map)['openOrderInitialMargin'] = '20.5';
+    expect(
+      assembledCapacity(payload: raw, orders: [capacityOrder()]).exposure.currentNotional,
+      Decimal.fromInt(200),
+    );
   });
   test('closing-only conditional orders do not manufacture opening reservation', () {
     final result = assembledCapacity(
@@ -224,19 +234,6 @@ void main() {
     );
     expect(result.exposure.hedge, true);
     expect(result.exposure.currentNotional, Decimal.fromInt(800));
-  });
-  test('known margin reporting precision permits a last-place quantum, not unknown orders', () {
-    final raw = capacityAccountPayload();
-    ((raw['positions'] as List).single as Map)['openOrderInitialMargin'] = '20.00000001';
-    expect(
-      assembledCapacity(payload: raw, orders: [capacityOrder()]).exposure.currentNotional,
-      Decimal.fromInt(200),
-    );
-    ((raw['positions'] as List).single as Map)['openOrderInitialMargin'] = '20.00000002';
-    expect(
-      () => assembledCapacity(payload: raw, orders: [capacityOrder()]),
-      failure('liveCapacityChanged'),
-    );
   });
   test('account maxNotional and leverage-specific bracket cap both apply', () {
     final raw = capacityAccountPayload();
