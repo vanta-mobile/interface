@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
+import 'package:vanta/features/auth/data/reown_auth_failure.dart';
+import 'package:vanta/features/auth/presentation/auth_controls.dart';
 
 import '../../support/identity_repository.dart';
 
@@ -16,6 +18,43 @@ import 'package:vanta/l10n/generated/app_localizations.dart';
 
 void main() {
   for (final locale in ['en', 'zh']) {
+    testWidgets(
+      'wallet feedback prioritizes real reasons and falls back only when absent: $locale',
+      (tester) async {
+        Future<AppLocalizations> show(AuthFailure failure) async {
+          late AppLocalizations l10n;
+          await tester.pumpWidget(
+            MaterialApp(
+              locale: Locale(locale),
+              supportedLocales: AppLocalizations.supportedLocales,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              home: Builder(
+                builder: (context) {
+                  l10n = AppLocalizations.of(context);
+                  return Scaffold(body: AuthFailureText(failure));
+                },
+              ),
+            ),
+          );
+          return l10n;
+        }
+
+        const cause = 'The client closed with pending request "irn_subscribe".';
+        var l10n = await show(failureFromReown(cause));
+        expect(find.text(l10n.walletResponseReason(cause)), findsOneWidget);
+        expect(find.text(l10n.authWalletUnavailable), findsNothing);
+        l10n = await show(failureFromReown('Relay failed token=private\n at internal.frame'));
+        expect(find.text(l10n.walletResponseReason('Relay failed token=•••')), findsOneWidget);
+        expect(find.textContaining('private'), findsNothing);
+        expect(find.textContaining('internal.frame'), findsNothing);
+        l10n = await show(failureFromReown(Object()));
+        expect(find.text(l10n.authWalletUnavailable), findsOneWidget);
+        l10n = await show(const AuthFailure('authWalletConnectionTimeout'));
+        expect(find.text(l10n.authWalletConnectionTimeout), findsOneWidget);
+        expect(find.text(l10n.authWalletUnavailable), findsNothing);
+      },
+    );
+
     testWidgets('quote freshness and time failures retain their concrete cause: $locale', (
       tester,
     ) async {

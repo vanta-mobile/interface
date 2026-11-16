@@ -13,6 +13,9 @@ import '../../support/points.dart';
 import '../../support/trading_events.dart';
 
 class _Signer implements WalletMessageSigner {
+  @override
+  int personalSigningChainId({required String expectedAddress}) => 1;
+
   final calls = <(String, String)>[];
   Future<void> Function()? onSign;
   String signature = '0x${'1' * 130}';

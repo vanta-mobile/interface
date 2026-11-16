@@ -124,7 +124,7 @@ void main() {
         );
         expect(result.positions.length, empty ? 0 : 1);
         expect(result.positions.isEmpty ? null : result.positions.single.units, null);
-        expect(metadata, 1);
+        expect(metadata, 3);
         service.close();
       }
     },

@@ -89,22 +89,26 @@ void main() {
     (429, 'pointsRateLimited'),
     (500, 'pointsUnavailable'),
   ]) {
-    test('HTTP ${pair.$1} maps a safe reason without redirect or retry', () async {
-      var calls = 0;
-      final repo = repository((_) async {
-        calls++;
-        return http.Response(
-          'sensitive server body',
-          pair.$1,
-          headers: {'location': 'https://untrusted.invalid'},
+    test(
+      'HTTP ${pair.$1} maps a safe reason without redirect; only transient reads retry',
+      () async {
+        var calls = 0;
+        final repo = repository((_) async {
+          calls++;
+          return http.Response(
+            'sensitive server body',
+            pair.$1,
+            headers: {'location': 'https://untrusted.invalid'},
+          );
+        });
+        await expectLater(
+          repo.campaigns(),
+          throwsA(isA<PointsFailure>().having((e) => e.key, 'key', pair.$2)),
         );
-      });
-      await expectLater(
-        repo.campaigns(),
-        throwsA(isA<PointsFailure>().having((e) => e.key, 'key', pair.$2)),
-      );
-      expect(calls, 1);
-    });
+        // Safe reads retry transient statuses twice before failing.
+        expect(calls, {418, 429, 500}.contains(pair.$1) ? 3 : 1);
+      },
+    );
   }
   for (final payload in [
     '<html>SPA</html>',
@@ -151,7 +155,7 @@ void main() {
       throwsA(isA<PointsFailure>().having((e) => e.key, 'key', 'pointsDataInvalid')),
     );
   });
-  test('timeout is a safe network reason without retry', () async {
+  test('timeout is a safe network reason after bounded retries', () async {
     final gate = Completer<http.Response>();
     var calls = 0;
     final repo = repository((_) {
@@ -163,6 +167,6 @@ void main() {
       throwsA(isA<PointsFailure>().having((e) => e.key, 'key', 'pointsNetwork')),
     );
     gate.complete(http.Response('{"campaign":null}', 200));
-    expect(calls, 1);
+    expect(calls, 3);
   });
 }

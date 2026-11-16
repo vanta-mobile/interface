@@ -22,6 +22,9 @@ EventTaskProgress taskProgressFromRaw(Object? raw) =>
 TradingEvent channelEventFromRaw(Object? raw) => mapTradingEvent({'event': raw}, eventId: 17);
 
 class _Signer implements WalletMessageSigner {
+  @override
+  int personalSigningChainId({required String expectedAddress}) => 1;
+
   final calls = <String>[];
   Future<void> Function()? onSign;
   String signature = '0x${'1' * 130}';

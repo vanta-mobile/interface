@@ -4,17 +4,24 @@ import 'package:http/http.dart' as http;
 
 import '../../../core/errors/api_error_parser.dart';
 import '../../../core/market_failure.dart';
+import '../../../core/network/safe_read_retry.dart';
 import '../domain/public_leverage.dart';
 
 class PublicLeverageRepository {
   PublicLeverageRepository(this.client);
   final http.Client client;
+  final _readRetry = SafeReadRetry();
+
+  void dispose() => _readRetry.close();
 
   Future<Map<String, PublicLeverage>> read() async {
-    final response = await client.post(
-      Uri.https('www.asterdex.com', '/bapi/futures/v1/friendly/future/common/brackets'),
-      headers: {'Content-Type': 'application/json'},
-      body: '{}',
+    // This public POST only reads risk brackets; it cannot place an order.
+    final response = await _readRetry.run(
+      () => client.post(
+        Uri.https('www.asterdex.com', '/bapi/futures/v1/friendly/future/common/brackets'),
+        headers: {'Content-Type': 'application/json'},
+        body: '{}',
+      ),
     );
     if (response.statusCode != 200) {
       throw MarketFailure(

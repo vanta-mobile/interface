@@ -133,8 +133,23 @@ void main() {
     final result = await modify();
     expect(result.outcome, OrderModifyOutcome.unknown);
     expect(result.order, null);
-    expect(methods(), ['PUT', 'GET']);
+    expect(methods(), ['PUT', 'GET', 'GET', 'GET']);
   });
+
+  test(
+    'missing-agent errors after a PUT remain unknown until an order query verifies it',
+    () async {
+      putStatus = 400;
+      putPayload = {'code': -1000, 'msg': 'No agent found'};
+      queryStatus = 400;
+      queryPayload = putPayload;
+      final result = await modify();
+      expect(result.outcome, OrderModifyOutcome.unknown);
+      expect(result.failure?.code, -1000);
+      expect(result.failure?.details?.message, 'No agent found');
+      expect(methods(), ['PUT', 'GET']);
+    },
+  );
 
   test('a malformed success response is verified instead of trusted', () async {
     putPayload = openOrder(price: '1', origQty: '0.5');

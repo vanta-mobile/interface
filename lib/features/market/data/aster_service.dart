@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../../core/market_failure.dart';
+import '../../../core/network/safe_read_retry.dart';
 import '../domain/market.dart';
 import 'aster_stream.dart';
 import 'shared_market_streams.dart';
@@ -24,49 +25,41 @@ class AsterService {
   final WebSocketChannel Function(Uri) _connect;
   static final _streamUri = Uri.parse('wss://fstream.asterdex.com/stream');
   late final SharedMarketStreams _streams;
-  Future<void> dispose() => _streams.dispose();
+  final _readRetry = SafeReadRetry();
+  Future<void> dispose() {
+    _readRetry.close();
+    return _streams.dispose();
+  }
+
   int _serverOffset = 0;
   int get serverNow => DateTime.now().millisecondsSinceEpoch + _serverOffset;
   Future<Object?> request(String path, [Map<String, String>? query]) async {
-    for (var attempt = 0; attempt < 3; attempt++) {
-      final response = await client
+    final response = await _readRetry.run(
+      () => client
           .get(Uri.https('fapi.asterdex.com', path, query))
-          .timeout(const Duration(seconds: 12));
-      if (response.statusCode == 429 || response.statusCode == 418) {
-        if (attempt == 2) {
-          throw MarketFailure(
-            'Aster HTTP ${response.statusCode}: rate limit',
-            details: apiErrorDetails(
-              decodeErrorPayload(response.body),
-              status: response.statusCode,
-            ),
-          );
-        }
-        continue;
-      }
-      if (response.statusCode != 200) {
-        throw MarketFailure(
-          'Aster HTTP ${response.statusCode}',
-          details: apiErrorDetails(decodeErrorPayload(response.body), status: response.statusCode),
-        );
-      }
-      try {
-        final payload = jsonDecode(utf8.decode(response.bodyBytes));
-        if (payload is Map && payload['code'] is int && (payload['code'] as int) < 0) {
-          throw MarketFailure(
-            'Aster error ${payload['code']}',
-            details: apiErrorDetails(payload, status: response.statusCode),
-          );
-        }
-        return payload;
-      } on FormatException {
-        throw MarketFailure(
-          'Invalid Aster response',
-          details: ApiErrorDetails(cause: ApiErrorCause.invalidResponse, endpoint: path),
-        );
-      }
+          .timeout(const Duration(seconds: 12)),
+    );
+    if (response.statusCode != 200) {
+      throw MarketFailure(
+        'Aster HTTP ${response.statusCode}',
+        details: apiErrorDetails(decodeErrorPayload(response.body), status: response.statusCode),
+      );
     }
-    throw const MarketFailure('Aster rate limit');
+    try {
+      final payload = jsonDecode(utf8.decode(response.bodyBytes));
+      if (payload is Map && payload['code'] is int && (payload['code'] as int) < 0) {
+        throw MarketFailure(
+          'Aster error ${payload['code']}',
+          details: apiErrorDetails(payload, status: response.statusCode),
+        );
+      }
+      return payload;
+    } on FormatException {
+      throw MarketFailure(
+        'Invalid Aster response',
+        details: ApiErrorDetails(cause: ApiErrorCause.invalidResponse, endpoint: path),
+      );
+    }
   }
 
   void calibrateClock(int serverTime) {

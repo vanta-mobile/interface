@@ -8,7 +8,9 @@ import '../domain/public_leverage.dart';
 final publicLeverageRepositoryProvider = Provider.autoDispose<PublicLeverageRepository>((ref) {
   final client = createMarketHttpClient(client: ref.watch(backendHttpPoolProvider).lease());
   ref.onDispose(client.close);
-  return PublicLeverageRepository(client);
+  final repository = PublicLeverageRepository(client);
+  ref.onDispose(repository.dispose);
+  return repository;
 });
 
 final publicLeverageProvider = FutureProvider.autoDispose<Map<String, PublicLeverage>>(

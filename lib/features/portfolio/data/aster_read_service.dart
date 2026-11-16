@@ -1,11 +1,9 @@
 import '../../../core/errors/api_error_details.dart';
 import '../../../core/errors/api_error_parser.dart';
+import '../../../core/network/safe_read_retry.dart';
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -29,6 +27,7 @@ class AsterReadService {
   final Uri origin;
   final String? timePath;
   final http.Client _client;
+  final _readRetry = SafeReadRetry();
   final Object? Function(String) _decodeResponse;
   final Duration timeout;
 
@@ -43,7 +42,7 @@ class AsterReadService {
   }) async {
     try {
       // A redirect must not forward an account signature to another origin.
-      final response = await (() async {
+      Future<http.Response> send() async {
         final request = http.Request(method, origin.replace(path: path, query: query))
           ..followRedirects = false
           ..headers['Accept'] = 'application/json';
@@ -52,16 +51,14 @@ class AsterReadService {
           request.body = body;
         }
         return http.Response.fromStream(await _client.send(request));
-      })().timeout(timeout);
+      }
+
+      final response = await (method == 'GET' ? _readRetry.run(send) : send());
       if (response.statusCode >= 300 && response.statusCode < 400) {
         throw AccountReadFailure(
           'accountReadFailed',
           details: ApiErrorDetails(status: response.statusCode),
         );
-      }
-      if (kDebugMode && path == '/fapi/v3/commissionRate') {
-        await File('${Directory.systemTemp.path}/vanta-fee-audit.json')
-            .writeAsBytes(response.bodyBytes);
       }
       Object? data;
       try {
@@ -91,7 +88,11 @@ class AsterReadService {
         throw AccountReadFailure(
           response.statusCode == 429 || response.statusCode == 418
               ? 'accountRateLimited'
-              : _failureKey(code, response.statusCode),
+              : _failureKey(
+                  code,
+                  response.statusCode,
+                  missingAgent: method == 'GET' && _missingAgent(data),
+                ),
           code: code is int ? code : null,
           details: apiErrorDetails(data, status: response.statusCode),
         );
@@ -176,10 +177,23 @@ class AsterReadService {
     return _request(method, path, query: '$query&signature=$signature');
   }
 
-  void close() => _client.close();
+  void close() {
+    _readRetry.close();
+    _client.close();
+  }
 }
 
-String _failureKey(Object? code, int status) => switch (code) {
+// Aster also uses generic -1000 for a missing agent. Recognize only this
+// explicit read response; never use its display text to classify a write as
+// safely rejected or replayable.
+bool _missingAgent(Object? data) {
+  if (data is! Map || data['code'] != -1000) return false;
+  final message = data['msg'] ?? data['message'];
+  return message is String && message.trim() == 'No agent found';
+}
+
+String _failureKey(Object? code, int status, {bool missingAgent = false}) => switch (code) {
+  -1000 when missingAgent => 'accountPermissionRequired',
   -5050 => 'accountDepositRequired',
   -1021 || -4225 => 'accountSignatureExpired',
   -1022 => 'accountSignatureRejected',

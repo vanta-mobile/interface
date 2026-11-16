@@ -48,7 +48,7 @@ void main() {
     },
   );
   for (final status in [302, 401, 403, 429, 500, 503]) {
-    test('HTTP $status fails safely without following or retrying', () async {
+    test('HTTP $status fails safely without following; only transient reads retry', () async {
       var calls = 0;
       final repo = repository((_) async {
         calls++;
@@ -59,7 +59,7 @@ void main() {
         );
       });
       await expectLater(repo.read(YieldAsset.usdf), throwsA(isA<AccountReadFailure>()));
-      expect(calls, 1);
+      expect(calls, {429, 500, 503}.contains(status) ? 3 : 1);
     });
   }
   for (final source in [
@@ -76,7 +76,7 @@ void main() {
       );
     });
   }
-  test('timeout returns a network reason without retry', () async {
+  test('timeout returns a network reason after bounded retries', () async {
     var calls = 0;
     final gate = Completer<http.Response>();
     final repo = repository((_) {
@@ -88,6 +88,6 @@ void main() {
       throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'accountNetwork')),
     );
     gate.complete(http.Response(usdf, 200));
-    expect(calls, 1);
+    expect(calls, 3);
   });
 }

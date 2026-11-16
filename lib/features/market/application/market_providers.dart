@@ -30,6 +30,7 @@ final orderBookRepositoryProvider = Provider<OrderBookRepository>(
   (ref) => OrderBookRepository(ref.watch(asterServiceProvider)),
 );
 final instrumentsProvider = FutureProvider<List<AsterInstrument>>(
+  retry: (_, _) => null,
   (ref) => ref.watch(marketCatalogRepositoryProvider).read(),
 );
 final quoteUpdatesActiveProvider = NotifierProvider<QuoteUpdatesActive, bool>(

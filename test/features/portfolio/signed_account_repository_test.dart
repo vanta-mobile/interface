@@ -250,6 +250,11 @@ void main() {
     (400, '{"code":-5050,"msg":"sensitive raw response"}', 'accountDepositRequired', -5050),
     (400, '{"code":-1021}', 'accountSignatureExpired', -1021),
     (200, '{"code":-1022}', 'accountSignatureRejected', -1022),
+    (400, '{"code":-1000,"msg":"No agent found"}', 'accountPermissionRequired', -1000),
+    (200, '{"code":-1000,"message":"No agent found"}', 'accountPermissionRequired', -1000),
+    (400, '{"code":-1000,"msg":"Internal error"}', 'accountReadFailed', -1000),
+    (400, '{"code":-1000}', 'accountReadFailed', -1000),
+    (400, '{"code":-1001,"msg":"No agent found"}', 'accountReadFailed', -1001),
     (302, '', 'accountReadFailed', null),
     (503, 'unavailable', 'accountReadFailed', null),
     (200, 'unavailable', 'accountDataInvalid', null),
@@ -272,7 +277,8 @@ void main() {
         service.account(query: 'nonce=1', signature: TestWalletConnection.signature),
         throwsA(failure(scenario.$3).having((AccountReadFailure e) => e.code, 'code', scenario.$4)),
       );
-      expect(calls, 1); // no automatic retries or redirection
+      expect(calls, {418, 429, 503}.contains(scenario.$1) ? 3 : 1);
+      // Only transient safe reads retry; redirects/business failures do not.
     });
   }
 

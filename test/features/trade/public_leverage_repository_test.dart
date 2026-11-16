@@ -35,7 +35,7 @@ void main() {
     addTearDown(client.close);
     expect((await PublicLeverageRepository(client).read())['BTCUSDT']!.defaultLeverage(), 20);
   });
-  test('do not retry rate limits or turn failures into default capability', () async {
+  test('retry rate limits twice without inventing a default capability', () async {
     var calls = 0;
     final client = MockClient((_) async {
       calls++;
@@ -43,6 +43,6 @@ void main() {
     });
     addTearDown(client.close);
     await expectLater(PublicLeverageRepository(client).read(), throwsA(isA<MarketFailure>()));
-    expect(calls, 1);
+    expect(calls, 3);
   });
 }

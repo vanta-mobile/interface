@@ -98,7 +98,7 @@ void main() {
       );
       expect(result.orders.length, empty ? 0 : 1);
       expect(result.orders.isEmpty ? null : result.orders.single.units, null);
-      expect(metadata, empty ? 0 : 1);
+      expect(metadata, empty ? 0 : 3);
       service.close();
     }
   });
@@ -156,7 +156,7 @@ void main() {
     await expectLater(pending, throwsA(failure('authWalletChanged')));
   });
   for (final code in [302, 403, 429, 503]) {
-    test('Spot HTTP $code is safe failure and never retried', () async {
+    test('Spot HTTP $code is safe failure; only transient reads retry', () async {
       var reads = 0;
       final service = AsterSpotService(
         client: MockClient((request) async {
@@ -176,7 +176,7 @@ void main() {
         repository.read(address: accountAddress, isCurrent: () => true, onStep: (_) {}),
         throwsA(isA<AccountReadFailure>()),
       );
-      expect(reads, 1);
+      expect(reads, {429, 503}.contains(code) ? 3 : 1);
     });
   }
   test('malformed payload cannot become an empty Spot account', () async {

@@ -294,7 +294,7 @@ void main() {
     await expectLater(pending, throwsA(failure('authWalletChanged')));
   });
 
-  test('transport permissions and timeout map to safe failures without replay', () async {
+  test('transport permissions and timeout map to safe failures; only timeouts retry', () async {
     for (final timeout in [true, false]) {
       var privateCalls = 0;
       final service = AsterSpotService(
@@ -317,7 +317,8 @@ void main() {
         ),
         throwsA(failure(timeout ? 'accountNetwork' : 'accountPermissionRequired')),
       );
-      expect(privateCalls, 1);
+      // A timed-out GET retries with the same signed query, never a new signature.
+      expect(privateCalls, timeout ? 3 : 1);
       service.close();
     }
   });
