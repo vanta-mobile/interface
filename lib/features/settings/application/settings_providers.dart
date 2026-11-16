@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/network_providers.dart';
+import '../../../core/network/request_scope.dart';
 import '../../../core/vanta_api/vanta_api_failure.dart';
 import '../../../core/vanta_api/vanta_api_http.dart';
 import '../../auth/application/vanta_api_session_provider.dart';
@@ -33,29 +35,52 @@ final appUpdateRepositoryProvider = Provider.autoDispose<AppUpdateRepository?>((
   return repository;
 });
 
+final appUpdatePlatformProvider = Provider<String>(
+  (ref) => defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android',
+);
+
 final appUpdateCheckProvider = NotifierProvider.autoDispose<AppUpdateCheckController, bool>(
   AppUpdateCheckController.new,
 );
 
 /// State is whether a check is in flight.
 class AppUpdateCheckController extends Notifier<bool> {
+  int _revision = 0;
   @override
   bool build() {
     ref.watch(appUpdateRepositoryProvider);
+    _revision++;
+    _pending = null;
+    ref.onDispose(() => _revision++);
     return false;
   }
 
-  Future<AppUpdateCheck> check() async {
+  Future<AppUpdateCheck>? _pending;
+  Future<AppUpdateCheck> check() {
+    if (_pending case final pending?) return pending;
+    final task = _check();
+    _pending = task;
+    return task.whenComplete(() {
+      if (identical(_pending, task)) _pending = null;
+    });
+  }
+
+  Future<AppUpdateCheck> _check() async {
     final repository = ref.read(appUpdateRepositoryProvider);
+    final revision = _revision;
+    bool isCurrent() => ref.mounted && revision == _revision;
     if (repository == null) throw const VantaApiFailure(vantaApiUnavailable);
+    final platform = ref.read(appUpdatePlatformProvider);
     state = true;
     try {
       final current = await ref.read(appVersionProvider.future);
+      if (!isCurrent()) throw const VantaApiFailure(vantaApiRequestFailed);
       if (current == null) throw const VantaApiFailure(vantaApiDataInvalid);
-      final minimum = await repository.minimumSupportedVersion();
-      return AppUpdateCheck(current: current, minimum: minimum);
+      final config = await RequestScope.runOwned(isCurrent, () => repository.read(platform));
+      if (!isCurrent()) throw const VantaApiFailure(vantaApiRequestFailed);
+      return AppUpdateCheck(current: current, minimum: config.minimum, release: config.release);
     } finally {
-      if (ref.mounted) state = false;
+      if (isCurrent()) state = false;
     }
   }
 }

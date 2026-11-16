@@ -6545,6 +6545,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradeHiddenOrder => 'Hidden Order';
 
   @override
+  String get tradeTpSlHelp =>
+      'Set Take Profit or Stop Loss before opening a position. The orders take effect after the position opens and can use Last price or Mark price as the trigger.';
+
+  @override
+  String get tradeHiddenOrderHelp =>
+      'Hidden orders are not displayed in the order book before execution.';
+
+  @override
+  String get tradeReduceOnlyHelp =>
+      'Reduce-Only orders can only decrease an existing position. They will never increase or open a new position.';
+
+  @override
+  String tradeOptionHelp(String option) {
+    return 'About $option';
+  }
+
+  @override
   String get tradeSelectPriceType => 'Select Price Type';
 
   @override
@@ -7259,10 +7276,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradingHistoryRelatedOrders => 'Related Orders';
 
   @override
-  String get tradingHistoryRelatedUnavailable =>
-      'Related orders are unavailable for this position because the history service does not provide position-to-order links.';
-
-  @override
   String get tradingHistoryNoTrades => 'No trades found';
 
   @override
@@ -7478,6 +7491,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get incomeArchiveReferenceConflict =>
+      'Income records of different types share a transaction reference. The archive cannot safely deduplicate them; reporting has stopped.';
+
+  @override
   String notificationApiField(String field) {
     String _temp0 = intl.Intl.selectLogic(field, {
       'price': 'Price',
@@ -7494,6 +7511,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'transactionHash': 'Transaction Hash',
       'createdAt': 'Time',
       'eventKey': 'Reference',
+      'executedQuantity': 'Executed Quantity',
+      'tradeId': 'Trade ID',
+      'clientOrderId': 'Client Order ID',
+      'reference': 'Transfer Reference',
+      'positionSide': 'Position Side',
+      'transferKind': 'Transfer Type',
+      'averagePrice': 'Average Price',
+      'network': 'Network',
       'other': 'Details',
     });
     return '$_temp0';
@@ -7719,4 +7744,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pushQuietSameTime => 'Start and end time must be different.';
+
+  @override
+  String get tradingHistoryEstimatedRoe => 'Estimated ROE%';
+
+  @override
+  String get tradingHistoryEstimateHint =>
+      'Leverage and margin mode are the first values observed in this cycle. ROE is an estimate before fees, not an Aster historical return.';
+
+  @override
+  String get notificationUnreadCapped => '99+ unread';
+
+  @override
+  String notificationTransferKind(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'deposit': 'Deposit',
+      'withdraw': 'Withdrawal',
+      'internal_transfer': 'Internal transfer',
+      'other': 'Transfer',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String settingsUpdateAvailable(String version) {
+    return 'Version $version is available';
+  }
+
+  @override
+  String get settingsUpdateAction => 'Update';
+
+  @override
+  String get settingsUpdateUnavailable =>
+      'No version information has been published for this platform.';
+
+  @override
+  String get settingsUpdateLinkUnavailable => 'A download link has not been provided.';
 }

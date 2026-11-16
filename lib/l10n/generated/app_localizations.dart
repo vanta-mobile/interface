@@ -11457,6 +11457,30 @@ abstract class AppLocalizations {
   /// **'Hidden Order'**
   String get tradeHiddenOrder;
 
+  /// No description provided for @tradeTpSlHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Take Profit or Stop Loss before opening a position. The orders take effect after the position opens and can use Last price or Mark price as the trigger.'**
+  String get tradeTpSlHelp;
+
+  /// No description provided for @tradeHiddenOrderHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden orders are not displayed in the order book before execution.'**
+  String get tradeHiddenOrderHelp;
+
+  /// No description provided for @tradeReduceOnlyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce-Only orders can only decrease an existing position. They will never increase or open a new position.'**
+  String get tradeReduceOnlyHelp;
+
+  /// No description provided for @tradeOptionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'About {option}'**
+  String tradeOptionHelp(String option);
+
   /// No description provided for @tradeSelectPriceType.
   ///
   /// In en, this message translates to:
@@ -12580,12 +12604,6 @@ abstract class AppLocalizations {
   /// **'Related Orders'**
   String get tradingHistoryRelatedOrders;
 
-  /// No description provided for @tradingHistoryRelatedUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Related orders are unavailable for this position because the history service does not provide position-to-order links.'**
-  String get tradingHistoryRelatedUnavailable;
-
   /// No description provided for @tradingHistoryNoTrades.
   ///
   /// In en, this message translates to:
@@ -12940,10 +12958,16 @@ abstract class AppLocalizations {
   /// **'{type, select, fill{Order Filled} trigger{Conditional Order Triggered} order{Order Updated} liquidation{Liquidation} marginCall{Margin Call} funding{Funding Fee} transfer{Transfer Update} announce{Announcement} maintenance{Maintenance} other{Notification}}'**
   String notificationApiType(String type);
 
+  /// No description provided for @incomeArchiveReferenceConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Income records of different types share a transaction reference. The archive cannot safely deduplicate them; reporting has stopped.'**
+  String get incomeArchiveReferenceConflict;
+
   /// No description provided for @notificationApiField.
   ///
   /// In en, this message translates to:
-  /// **'{field, select, price{Price} quantity{Quantity} fee{Fee} markPrice{Mark Price} liquidationPrice{Liquidation Price} distance{Distance} amount{Amount} symbol{Symbol} market{Market} side{Side} orderId{Order ID} transactionHash{Transaction Hash} createdAt{Time} eventKey{Reference} other{Details}}'**
+  /// **'{field, select, price{Price} quantity{Quantity} fee{Fee} markPrice{Mark Price} liquidationPrice{Liquidation Price} distance{Distance} amount{Amount} symbol{Symbol} market{Market} side{Side} orderId{Order ID} transactionHash{Transaction Hash} createdAt{Time} eventKey{Reference} executedQuantity{Executed Quantity} tradeId{Trade ID} clientOrderId{Client Order ID} reference{Transfer Reference} positionSide{Position Side} transferKind{Transfer Type} averagePrice{Average Price} network{Network} other{Details}}'**
   String notificationApiField(String field);
 
   /// No description provided for @pushVisibilityTitle.
@@ -13359,6 +13383,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start and end time must be different.'**
   String get pushQuietSameTime;
+
+  /// No description provided for @tradingHistoryEstimatedRoe.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated ROE%'**
+  String get tradingHistoryEstimatedRoe;
+
+  /// No description provided for @tradingHistoryEstimateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leverage and margin mode are the first values observed in this cycle. ROE is an estimate before fees, not an Aster historical return.'**
+  String get tradingHistoryEstimateHint;
+
+  /// No description provided for @notificationUnreadCapped.
+  ///
+  /// In en, this message translates to:
+  /// **'99+ unread'**
+  String get notificationUnreadCapped;
+
+  /// No description provided for @notificationTransferKind.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, deposit{Deposit} withdraw{Withdrawal} internal_transfer{Internal transfer} other{Transfer}}'**
+  String notificationTransferKind(String kind);
+
+  /// No description provided for @settingsUpdateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is available'**
+  String settingsUpdateAvailable(String version);
+
+  /// No description provided for @settingsUpdateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get settingsUpdateAction;
+
+  /// No description provided for @settingsUpdateUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No version information has been published for this platform.'**
+  String get settingsUpdateUnavailable;
+
+  /// No description provided for @settingsUpdateLinkUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'A download link has not been provided.'**
+  String get settingsUpdateLinkUnavailable;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

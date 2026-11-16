@@ -13,6 +13,7 @@ import '../../notifications/presentation/notification_api_error.dart';
 import '../application/settings_providers.dart';
 import 'push_settings_sheet.dart';
 import 'settings_components.dart';
+import 'settings_update_sheet.dart';
 import 'settings_language_sheet.dart';
 
 class SettingsAppCard extends ConsumerWidget {
@@ -23,10 +24,12 @@ class SettingsAppCard extends ConsumerWidget {
     try {
       final result = await ref.read(appUpdateCheckProvider.notifier).check();
       if (!context.mounted) return;
-      if (result.updateRequired) {
-        AppToast.showFailure(context, l.settingsUpdateRequired(result.minimum!.text));
-      } else {
+      if (result.updateAvailable) {
+        await showAppUpdate(context, result);
+      } else if (result.hasPublishedVersion) {
         AppToast.showSuccess(context, l.settingsUpToDate);
+      } else {
+        AppToast.showFailure(context, l.settingsUpdateUnavailable);
       }
     } catch (error) {
       if (context.mounted) AppToast.showFailure(context, notificationApiErrorText(context, error));

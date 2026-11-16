@@ -2845,6 +2845,17 @@
   "tradePriceUp": "Increase price",
   "tradeTpSl": "TP/SL",
   "tradeHiddenOrder": "Hidden Order",
+  "tradeTpSlHelp": "Set Take Profit or Stop Loss before opening a position. The orders take effect after the position opens and can use Last price or Mark price as the trigger.",
+  "tradeHiddenOrderHelp": "Hidden orders are not displayed in the order book before execution.",
+  "tradeReduceOnlyHelp": "Reduce-Only orders can only decrease an existing position. They will never increase or open a new position.",
+  "tradeOptionHelp": "About {option}",
+  "@tradeOptionHelp": {
+    "placeholders": {
+      "option": {
+        "type": "String"
+      }
+    }
+  },
   "tradeSelectPriceType": "Select Price Type",
   "tradeSelectUnitType": "Select Unit Type",
   "tradeTriggerByLast": "Trigger by Last Price",
@@ -3290,7 +3301,6 @@
   "tradingHistoryOrderDetails": "Order Details",
   "tradingHistoryTradeDetails": "Trade Details",
   "tradingHistoryRelatedOrders": "Related Orders",
-  "tradingHistoryRelatedUnavailable": "Related orders are unavailable for this position because the history service does not provide position-to-order links.",
   "tradingHistoryNoTrades": "No trades found",
   "tradingHistoryFillsUnavailable": "The reported fills could not be found in the available history.",
   "tradingHistoryIncompleteFills": "Some reported fills are unavailable. Fee and profit totals remain unavailable until all fills are matched.",
@@ -3436,7 +3446,8 @@
       }
     }
   },
-  "notificationApiField": "{field, select, price{Price} quantity{Quantity} fee{Fee} markPrice{Mark Price} liquidationPrice{Liquidation Price} distance{Distance} amount{Amount} symbol{Symbol} market{Market} side{Side} orderId{Order ID} transactionHash{Transaction Hash} createdAt{Time} eventKey{Reference} other{Details}}",
+  "incomeArchiveReferenceConflict": "Income records of different types share a transaction reference. The archive cannot safely deduplicate them; reporting has stopped.",
+  "notificationApiField": "{field, select, price{Price} quantity{Quantity} fee{Fee} markPrice{Mark Price} liquidationPrice{Liquidation Price} distance{Distance} amount{Amount} symbol{Symbol} market{Market} side{Side} orderId{Order ID} transactionHash{Transaction Hash} createdAt{Time} eventKey{Reference} executedQuantity{Executed Quantity} tradeId{Trade ID} clientOrderId{Client Order ID} reference{Transfer Reference} positionSide{Position Side} transferKind{Transfer Type} averagePrice{Average Price} network{Network} other{Details}}",
   "@notificationApiField": {
     "placeholders": {
       "field": {
@@ -3538,5 +3549,27 @@
   "pushHour": "Hour",
   "pushMinute": "Minute",
   "pushConfirm": "Confirm",
-  "pushQuietSameTime": "Start and end time must be different."
+  "pushQuietSameTime": "Start and end time must be different.",
+  "tradingHistoryEstimatedRoe": "Estimated ROE%",
+  "tradingHistoryEstimateHint": "Leverage and margin mode are the first values observed in this cycle. ROE is an estimate before fees, not an Aster historical return.",
+  "notificationUnreadCapped": "99+ unread",
+  "notificationTransferKind": "{kind, select, deposit{Deposit} withdraw{Withdrawal} internal_transfer{Internal transfer} other{Transfer}}",
+  "settingsUpdateAvailable": "Version {version} is available",
+  "settingsUpdateAction": "Update",
+  "settingsUpdateUnavailable": "No version information has been published for this platform.",
+  "settingsUpdateLinkUnavailable": "A download link has not been provided.",
+  "@settingsUpdateAvailable": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "@notificationTransferKind": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  }
 }

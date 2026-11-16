@@ -6085,6 +6085,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tradeHiddenOrder => '隐藏委托';
 
   @override
+  String get tradeTpSlHelp => '在开仓前设置止盈或止损。委托将在开仓后生效，可使用最新成交价或标记价格作为触发价。';
+
+  @override
+  String get tradeHiddenOrderHelp => '隐藏委托在成交前不会显示在订单簿中。';
+
+  @override
+  String get tradeReduceOnlyHelp => '仅减仓委托只会减少现有仓位，不会增加仓位或开立新仓位。';
+
+  @override
+  String tradeOptionHelp(String option) {
+    return '关于$option';
+  }
+
+  @override
   String get tradeSelectPriceType => '选择价格类型';
 
   @override
@@ -6762,9 +6776,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tradingHistoryRelatedOrders => '关联订单';
 
   @override
-  String get tradingHistoryRelatedUnavailable => '历史服务暂未提供仓位与订单的关联信息，无法读取该仓位的关联订单。';
-
-  @override
   String get tradingHistoryNoTrades => '暂无成交';
 
   @override
@@ -6970,6 +6981,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get incomeArchiveReferenceConflict => '不同类型的资金流水共用了同一流水号，归档接口无法安全去重，已停止上报。';
+
+  @override
   String notificationApiField(String field) {
     String _temp0 = intl.Intl.selectLogic(field, {
       'price': '价格',
@@ -6986,6 +7000,14 @@ class AppLocalizationsZh extends AppLocalizations {
       'transactionHash': '交易哈希',
       'createdAt': '时间',
       'eventKey': '通知编号',
+      'executedQuantity': '已成交数量',
+      'tradeId': '成交编号',
+      'clientOrderId': '客户端订单号',
+      'reference': '划转参考号',
+      'positionSide': '持仓方向',
+      'transferKind': '划转类型',
+      'averagePrice': '成交均价',
+      'network': '网络',
       'other': '详情',
     });
     return '$_temp0';
@@ -7203,4 +7225,38 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pushQuietSameTime => '开始时间和结束时间不能相同。';
+
+  @override
+  String get tradingHistoryEstimatedRoe => '估算收益率';
+
+  @override
+  String get tradingHistoryEstimateHint => '杠杆和保证金模式为该周期内首次观测值。收益率为未扣手续费的估算值，并非 Aster 历史收益率。';
+
+  @override
+  String get notificationUnreadCapped => '99+ 条未读';
+
+  @override
+  String notificationTransferKind(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'deposit': '充值',
+      'withdraw': '提现',
+      'internal_transfer': '内部划转',
+      'other': '划转',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String settingsUpdateAvailable(String version) {
+    return '发现新版本 $version';
+  }
+
+  @override
+  String get settingsUpdateAction => '更新';
+
+  @override
+  String get settingsUpdateUnavailable => '当前平台尚未发布版本信息。';
+
+  @override
+  String get settingsUpdateLinkUnavailable => '暂未提供下载链接。';
 }
