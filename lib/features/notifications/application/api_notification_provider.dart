@@ -25,6 +25,7 @@ class ApiInboxState {
     this.unreadOnly = false,
     this.nextCursor,
     this.unread = 0,
+    this.unreadCountCapped = false,
     this.loaded = false,
     this.loading = false,
     this.marking = false,
@@ -39,6 +40,8 @@ class ApiInboxState {
   final bool unreadOnly, loaded, loading, marking;
   final String? nextCursor;
   final int unread;
+  final bool unreadCountCapped;
+  String get unreadLabel => unreadCountCapped || unread > 99 ? '99+' : '$unread';
   final Object? error;
 
   ApiInboxState copy({
@@ -47,6 +50,7 @@ class ApiInboxState {
     String? nextCursor,
     bool replaceCursor = false,
     int? unread,
+    bool? unreadCountCapped,
     bool? loaded,
     bool? loading,
     bool? marking,
@@ -58,6 +62,7 @@ class ApiInboxState {
     unreadOnly: unreadOnly,
     nextCursor: replaceCursor ? nextCursor : this.nextCursor,
     unread: unread ?? this.unread,
+    unreadCountCapped: unreadCountCapped ?? this.unreadCountCapped,
     loaded: loaded ?? this.loaded,
     loading: loading ?? this.loading,
     marking: marking ?? this.marking,
@@ -72,6 +77,10 @@ final apiNotificationInboxProvider =
 
 final serverUnreadNotificationsProvider = Provider<int>(
   (ref) => ref.watch(apiNotificationInboxProvider.select((s) => s.unread)),
+);
+
+final serverUnreadLabelProvider = Provider<String>(
+  (ref) => ref.watch(apiNotificationInboxProvider.select((s) => s.unreadLabel)),
 );
 
 class ApiNotificationInboxController extends Notifier<ApiInboxState> {
@@ -123,6 +132,7 @@ class ApiNotificationInboxController extends Notifier<ApiInboxState> {
       unreadOnly: unreadOnly,
       cache: state.cache,
       unread: state.unread,
+      unreadCountCapped: state.unreadCountCapped,
       marking: state.marking,
     );
     return refresh();
@@ -186,6 +196,7 @@ class ApiNotificationInboxController extends Notifier<ApiInboxState> {
         items: items,
         cache: cache,
         unread: page.unread,
+        unreadCountCapped: page.unreadCountCapped,
         loaded: true,
         loading: false,
         nextCursor: page.nextCursor,

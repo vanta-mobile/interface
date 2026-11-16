@@ -28,6 +28,15 @@ String historyAmount(Decimal? value, {int? fixed, bool signed = false}) {
   return '${signed && value > Decimal.zero ? '+' : ''}$text';
 }
 
+String historyPercent(Decimal? value) => value == null
+    ? historyPlaceholder
+    : TokenAmountFormatter.formatPercent(
+        DecimalValue(value.toString()),
+        signed: false,
+        trimInsignificantZeros: false,
+        preserveSmallValues: true,
+      );
+
 String historyUnit(Decimal? value, String? unit, {int? fixed, bool signed = false}) => value == null
     ? historyPlaceholder
     : '${historyAmount(value, fixed: fixed, signed: signed)} ${unit ?? historyPlaceholder}';

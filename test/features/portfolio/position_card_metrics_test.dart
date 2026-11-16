@@ -228,7 +228,7 @@ void main() {
   });
 
   group('positionExitOrders', () {
-    test('splits entire and partial TP/SL and keeps the earliest open one of each', () {
+    test('splits entire and partial TP/SL: earliest entire, nearest-trigger partial', () {
       final exits = positionExitOrders(position(), [
         order(
           type: 'TAKE_PROFIT_MARKET',
@@ -248,6 +248,7 @@ void main() {
         order(type: 'TAKE_PROFIT_MARKET', stop: '91000', minute: 5),
         order(type: 'TAKE_PROFIT', stop: '90000', minute: 1),
         order(type: 'STOP', stop: '76000'),
+        order(type: 'STOP_MARKET', stop: '77000', minute: 9),
         // Filled or cancelled rows no longer count.
         order(type: 'TAKE_PROFIT', stop: '89000', status: 'FILLED'),
         order(type: 'STOP', stop: '74000', closePosition: true, status: 'CANCELED'),
@@ -259,8 +260,20 @@ void main() {
       expect(exits.entireTakeProfit?.stopPrice, d('95000'));
       expect(exits.entireStopLoss?.stopPrice, d('75000'));
       expect(exits.partialTakeProfit?.stopPrice, d('90000'));
-      expect(exits.partialStopLoss?.stopPrice, d('76000'));
-      expect(exits.partialCount, 3);
+      expect(exits.partialStopLoss?.stopPrice, d('77000'));
+      expect(exits.partialCount, 4);
+    });
+
+    test('short partial TP/SL nearest to trigger: highest TP, lowest SL', () {
+      final exits = positionExitOrders(position(side: 'SHORT', quantity: '-0.01'), [
+        for (final stop in ['70000', '72000'])
+          order(type: 'TAKE_PROFIT_MARKET', side: 'BUY', positionSide: 'SHORT', stop: stop),
+        for (final stop in ['86000', '84000'])
+          order(type: 'STOP_MARKET', side: 'BUY', positionSide: 'SHORT', stop: stop),
+      ]);
+      expect(exits.partialTakeProfit?.stopPrice, d('72000'));
+      expect(exits.partialStopLoss?.stopPrice, d('84000'));
+      expect(exits.partialCount, 4);
     });
 
     test('hedge rows close their own side without reduce-only', () {

@@ -7,8 +7,8 @@ import '../../authorization/domain/trading_agent.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/trading_history.dart';
 
-/// Direct Aster tabs never depend on Vanta configuration or SIWE. Only an
-/// active device grant enables passive reads; missing grants use existing UI.
+/// All history tabs read the authenticated Vanta archive. Reporting recent
+/// exchange income additionally needs an existing active device grant.
 class TradingHistoryAccess {
   const TradingHistoryAccess({
     this.address,
@@ -24,38 +24,43 @@ class TradingHistoryAccess {
 
 final tradingHistoryAccessProvider = Provider.autoDispose
     .family<TradingHistoryAccess, TradingHistoryTab>((ref, tab) {
-      if (!historyUsesAster(tab)) {
-        final session = ref.watch(vantaApiSessionProvider);
-        return TradingHistoryAccess(
-          address: session.address,
-          ready: session.ready,
-          pending: session.pending,
-          unavailable: session.status == VantaApiSessionStatus.unavailable,
-          failure: session.failure,
-        );
-      }
-      final auth = ref.watch(authProvider), identity = auth.identity;
-      final agent = ref.watch(tradingAgentProvider);
-      final address = identity?.walletAddress?.toLowerCase();
-      if (address == null || identity?.signingAvailable != true) {
-        return TradingHistoryAccess(address: address);
-      }
-      if (agent.isLoading || auth.busy) {
-        return TradingHistoryAccess(address: address, pending: true);
-      }
-      final grant = agent.asData?.value;
-      final valid =
-          grant != null &&
-          grant.status == TradingAgentStatus.active &&
-          grant.identityId == identity!.id &&
-          grant.owner.toLowerCase() == address &&
-          grant.expiresAt.isAfter(ref.watch(tradingAgentClockProvider)());
+      final session = ref.watch(vantaApiSessionProvider);
+      final wallet = ref.watch(
+        authProvider.select((s) => s.identity?.walletAddress?.toLowerCase()),
+      );
       return TradingHistoryAccess(
-        ready: valid,
-        address: address,
-        failure: valid ? null : agent.error ?? const AccountReadFailure('authorizationRequired'),
+        address: session.address,
+        ready: session.ready && wallet != null && session.address == wallet,
+        pending: session.pending,
+        unavailable: session.status == VantaApiSessionStatus.unavailable,
+        failure: session.failure,
       );
     });
+
+/// Optional device grant for income reporting, independent of archive access.
+final incomeReportingAccessProvider = Provider.autoDispose<TradingHistoryAccess>((ref) {
+  final auth = ref.watch(authProvider), identity = auth.identity;
+  final agent = ref.watch(tradingAgentProvider);
+  final address = identity?.walletAddress?.toLowerCase();
+  if (address == null || identity?.signingAvailable != true) {
+    return TradingHistoryAccess(address: address);
+  }
+  if (agent.isLoading || auth.busy) {
+    return TradingHistoryAccess(address: address, pending: true);
+  }
+  final grant = agent.asData?.value;
+  final valid =
+      grant != null &&
+      grant.status == TradingAgentStatus.active &&
+      grant.identityId == identity!.id &&
+      grant.owner.toLowerCase() == address &&
+      grant.expiresAt.isAfter(ref.watch(tradingAgentClockProvider)());
+  return TradingHistoryAccess(
+    ready: valid,
+    address: address,
+    failure: valid ? null : agent.error ?? const AccountReadFailure('authorizationRequired'),
+  );
+});
 
 /// The UI captures this owner as well as its address before showing details.
 final tradingHistoryIdentityProvider = Provider(

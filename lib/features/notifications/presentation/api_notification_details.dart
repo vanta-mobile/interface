@@ -1,19 +1,25 @@
 import 'dart:async';
 
+import 'package:decimal/decimal.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/domain/decimal_value.dart';
+import '../../../core/formatters/token_amount_formatter.dart';
 import '../../../core/presentation/status_view.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../auth/application/vanta_api_session_provider.dart';
 import '../application/api_notification_provider.dart';
+import '../application/api_notification_units_provider.dart';
 import '../domain/api_notification.dart';
 import 'api_notification_labels.dart';
 import 'notification_api_error.dart';
 import 'notification_detail_components.dart';
+import 'notification_labels.dart';
 
 class ApiNotificationDetails extends ConsumerStatefulWidget {
   const ApiNotificationDetails({super.key, required this.initialEntry, required this.ownerAddress});
@@ -40,11 +46,11 @@ class _ApiNotificationDetailsState extends ConsumerState<ApiNotificationDetails>
     final entry = _entry();
     if (entry == null) return;
     final controller = ref.read(apiNotificationInboxProvider.notifier);
-    if (!entry.read) {
-      await controller.markRead(entry);
-    } else {
-      await controller.refresh();
-    }
+    await Future.wait([
+      entry.read ? controller.refresh() : controller.markRead(entry),
+      if (entry.symbol != null && entry.payload.market != 'spot')
+        ref.refresh(apiNotificationUnitsProvider.future).then((_) {}, onError: (Object _) {}),
+    ]);
   }
 
   @override
@@ -53,6 +59,11 @@ class _ApiNotificationDetailsState extends ConsumerState<ApiNotificationDetails>
     ref.watch(authProvider.select((s) => s.identity?.walletAddress));
     ref.watch(vantaApiSessionProvider);
     final inbox = ref.watch(apiNotificationInboxProvider), entry = _entry();
+    final symbols = entry?.symbol != null && entry?.payload.market != 'spot'
+        ? ref.watch(apiNotificationUnitsProvider)
+        : null;
+    final error = inbox.error ?? symbols?.error;
+    final retrying = inbox.marking || inbox.loading || symbols?.isLoading == true;
     if (!_entered && entry != null) {
       _entered = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -87,12 +98,12 @@ class _ApiNotificationDetailsState extends ConsumerState<ApiNotificationDetails>
                           if (entry == null)
                             StatusEmptyView(message: l.notificationEmpty)
                           else
-                            ApiNotificationFacts(entry),
-                          if (entry != null && inbox.error != null)
+                            ApiNotificationFacts(entry, units: symbols?.value?[entry.symbol]),
+                          if (entry != null && error != null)
                             StatusFailureView(
-                              message: notificationApiErrorText(context, inbox.error!),
-                              retrying: inbox.marking || inbox.loading,
-                              onRetry: inbox.marking || inbox.loading ? null : _refresh,
+                              message: notificationApiErrorText(context, error),
+                              retrying: retrying,
+                              onRetry: retrying ? null : _refresh,
                             ),
                         ],
                       ),
@@ -111,8 +122,9 @@ class _ApiNotificationDetailsState extends ConsumerState<ApiNotificationDetails>
 /// Uses the same cards, type scale and copy controls as the supplied detail
 /// design. Sparse API payloads display only facts the backend actually supplies.
 class ApiNotificationFacts extends StatelessWidget {
-  const ApiNotificationFacts(this.entry, {super.key});
+  const ApiNotificationFacts(this.entry, {super.key, this.units});
   final ApiNotification entry;
+  final NotificationSymbolUnits? units;
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context), p = entry.payload;
@@ -120,13 +132,20 @@ class ApiNotificationFacts extends StatelessWidget {
     final amount = p.numbers[NotificationNumber.amount];
     String number(NotificationNumber key) {
       final unit = switch (key) {
-        NotificationNumber.quantity => p.baseAsset,
+        NotificationNumber.quantity ||
+        NotificationNumber.executedQuantity => units?.base ?? p.baseAsset,
         NotificationNumber.fee => p.feeAsset,
         NotificationNumber.amount => p.asset,
-        _ => p.quoteAsset,
+        _ => units?.quote ?? p.quoteAsset,
       };
-      // The contract does not define distance units. Never turn it into a %.
-      if (key == NotificationNumber.distance) return '${p.numbers[key]}';
+      if (key == NotificationNumber.distance) {
+        final percent = p.numbers[key]! * Decimal.fromInt(100);
+        return TokenAmountFormatter.formatPercent(
+          DecimalValue(percent.toString()),
+          signed: false,
+          preserveSmallValues: true,
+        );
+      }
       return notificationAmount(p.numbers[key]!, unit, l);
     }
 
@@ -160,10 +179,38 @@ class ApiNotificationFacts extends StatelessWidget {
                 l.notificationApiField('side'),
                 p.market == 'spot' ? l.spotOrderSide(p.side!) : l.notificationOrderSide(p.side!),
               ),
+            if (p.originalType != null || p.orderType != null)
+              NotificationDetailRow(
+                l.openOrdersOrderType,
+                l.notificationOrderType(p.originalType ?? p.orderType!),
+              ),
+            if (p.network != null)
+              NotificationDetailRow(l.notificationApiField('network'), p.network!),
             for (final key in p.numbers.keys)
               NotificationDetailRow(l.notificationApiField(key.name), number(key)),
             if (p.orderId != null)
               NotificationDetailRow(l.notificationApiField('orderId'), p.orderId!, copyable: true),
+            for (final field in {
+              'tradeId': p.tradeId,
+              'clientOrderId': p.clientOrderId,
+              'reference': p.reference,
+            }.entries)
+              if (field.value != null)
+                NotificationDetailRow(
+                  l.notificationApiField(field.key),
+                  field.value!,
+                  copyable: true,
+                ),
+            if (p.positionSide != null)
+              NotificationDetailRow(
+                l.notificationApiField('positionSide'),
+                notificationSide(l, p.positionSide!),
+              ),
+            if (p.transferKind != null)
+              NotificationDetailRow(
+                l.notificationApiField('transferKind'),
+                l.notificationTransferKind(p.transferKind!),
+              ),
             if (p.transactionHash != null)
               NotificationDetailRow(
                 l.notificationApiField('transactionHash'),

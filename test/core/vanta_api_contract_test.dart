@@ -52,7 +52,10 @@ void main() {
         containsAll(['all', 'orders', 'transfers']),
       );
       final page = okSchema(list);
-      expect(page['required'], containsAll(['items', 'next_cursor', 'unread']));
+      expect(
+        page['required'],
+        containsAll(['items', 'next_cursor', 'unread', 'unread_count_capped']),
+      );
       final notification = resolve(((page['properties'] as Json)['items'] as Json)['items']);
       expect(
         notification['required'],
@@ -134,6 +137,25 @@ void main() {
     final status = operation('get', '/v1/push/status');
     expect(status['security'], isNotEmpty);
     expect(okSchema(status)['required'], containsAll(['status', 'devices', 'prefs']));
+  });
+
+  test('platform update metadata, linked orders and equity gaps remain declared', () {
+    final schemas = (spec['components'] as Json)['schemas'] as Json;
+    final release = resolve(schemas['AppUpdateInfo']);
+    expect(release['required'], containsAll(['latest_version', 'force_update', 'release_notes']));
+    expect(properties(release), contains('store_url'));
+    expect(properties(resolve(schemas['SystemConfig'])), contains('update'));
+    final bootstrap = resolve(schemas['Bootstrap']);
+    final config = resolve((bootstrap['properties'] as Json)['config']);
+    expect(properties(config), contains('update'));
+    expect(properties(resolve(schemas['ValueCurve'])), contains('equity_gaps'));
+    final linked = operation('get', '/v1/history/positions/{position_id}/orders');
+    expect(linked['security'], isNotEmpty);
+    expect(okSchema(linked)['required'], containsAll(['position_id', 'items']));
+    expect(
+      resolve(((okSchema(linked)['properties'] as Json)['items'] as Json)['items']),
+      same(resolve(schemas['Order'])),
+    );
   });
 
   test('SIWE sign-in, refresh and logout use declared fields', () {

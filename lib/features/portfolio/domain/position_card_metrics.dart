@@ -125,7 +125,8 @@ double? liquidationProgress({Decimal? entry, Decimal? mark, Decimal? liquidation
 
 /// Open take-profit / stop-loss orders that close one position. Entire orders
 /// close the whole position (`closePosition`); partial orders carry their own
-/// reduce quantity. The earliest still-open order of each kind is shown.
+/// reduce quantity. Entire rows show the earliest still-open order of each
+/// kind; partial rows show the TP and SL nearest to triggering.
 class PositionExitOrders {
   const PositionExitOrders({
     this.entireTakeProfit,
@@ -146,6 +147,15 @@ PositionExitOrders positionExitOrders(PositionRisk position, Iterable<AsterOpenO
     return current == null || b != null && (a == null || b.isBefore(a)) ? next : current;
   }
 
+  // A long TP triggers on a rise and its SL on a fall (a short mirrors this),
+  // so the nearest TP has the lowest trigger and the nearest SL the highest.
+  AsterOpenOrder nearer(AsterOpenOrder? current, AsterOpenOrder next, {required bool lower}) {
+    final a = current?.stopPrice, b = next.stopPrice;
+    if (current == null || a == null && b != null) return next;
+    if (a == null || b == null || a == b) return earlier(current, next);
+    return (lower ? b < a : b > a) ? next : current;
+  }
+
   for (final order in orders) {
     if (!isPositionExit(position, order)) continue;
     final takeProfit = isTakeProfitExit(order);
@@ -153,7 +163,9 @@ PositionExitOrders positionExitOrders(PositionRisk position, Iterable<AsterOpenO
       takeProfit ? entireTp = earlier(entireTp, order) : entireSl = earlier(entireSl, order);
     } else {
       partialCount++;
-      takeProfit ? partialTp = earlier(partialTp, order) : partialSl = earlier(partialSl, order);
+      takeProfit
+          ? partialTp = nearer(partialTp, order, lower: position.long)
+          : partialSl = nearer(partialSl, order, lower: !position.long);
     }
   }
   return PositionExitOrders(

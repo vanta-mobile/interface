@@ -33,7 +33,9 @@ class AsterTradingHistoryRepository
     required String address,
     TradingHistoryCursor? cursor,
   }) async {
-    if (!historyUsesAster(tab)) throw const AccountReadFailure('accountDataInvalid');
+    if (tab != TradingHistoryTab.orders && tab != TradingHistoryTab.transactions) {
+      throw const AccountReadFailure('accountDataInvalid');
+    }
     final pending = cursor == null
         ? [HistoryWindow.recent(now(), const Duration(days: 7))]
         : _windows(cursor);

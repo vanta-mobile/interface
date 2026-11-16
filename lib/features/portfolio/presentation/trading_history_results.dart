@@ -5,7 +5,6 @@ import '../../../core/presentation/status_view.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../auth/application/vanta_api_session_provider.dart';
-import '../../authorization/presentation/enable_trading_screen.dart';
 import '../../trade/application/providers.dart' show symbolProvider;
 import '../../trade/presentation/trade_theme.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
@@ -34,10 +33,7 @@ class _TradingHistoryResultsState extends ConsumerState<TradingHistoryResults> {
       showAccountSheet(context);
       return;
     }
-    if (historyUsesAster(widget.tab) && !ref.read(tradingHistoryAccessProvider(widget.tab)).ready) {
-      await Navigator.of(context)
-          .push<void>(MaterialPageRoute(builder: (_) => const EnableTradingScreen()));
-    } else if (!historyUsesAster(widget.tab) && !ref.read(vantaApiSessionProvider).ready) {
+    if (!ref.read(vantaApiSessionProvider).ready) {
       await ref.read(vantaApiSessionProvider.notifier).ensure();
     }
     if (mounted) await refresh();
@@ -102,22 +98,14 @@ class _TradingHistoryResultsState extends ConsumerState<TradingHistoryResults> {
               title: blocked
                   ? session.unavailable
                         ? l.vantaApiUnavailableTitle
-                        : historyUsesAster(tab)
-                        ? l.enableTradingTitle
                         : l.vantaApiSignInTitle
                   : null,
               message: failure != null
                   ? portfolioStatsErrorText(context, failure)
                   : session.unavailable
                   ? l.vantaApiUnavailable
-                  : historyUsesAster(tab)
-                  ? l.accountSignInToRead
                   : l.vantaApiSignIn,
-              retryLabel: blocked
-                  ? historyUsesAster(tab)
-                        ? l.enableTradingTitle
-                        : l.vantaApiSignInAction
-                  : null,
+              retryLabel: blocked ? l.vantaApiSignInAction : null,
               onRetry: session.unavailable ? null : retry,
             ),
           if (page != null) ...[

@@ -12,6 +12,8 @@ class NotificationInboxHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final capped = ref.watch(apiNotificationInboxProvider.select((s) => s.unreadCountCapped));
+    final label = capped || unread > 99 ? '99+' : '$unread';
     final marking = ref.watch(apiNotificationInboxProvider.select((s) => s.marking));
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 7, 4, 0),
@@ -47,7 +49,9 @@ class NotificationInboxHeader extends ConsumerWidget {
                   if (unread > 0) ...[
                     const SizedBox(width: 8),
                     Semantics(
-                      label: l10n.notificationUnreadCount(unread),
+                      label: capped || unread > 99
+                          ? l10n.notificationUnreadCapped
+                          : l10n.notificationUnreadCount(unread),
                       excludeSemantics: true,
                       child: Container(
                         key: const Key('notification-unread-count'),
@@ -57,7 +61,7 @@ class NotificationInboxHeader extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          '$unread',
+                          label,
                           style: NotificationTypography.chip.copyWith(
                             color: NotificationColors.accent,
                           ),

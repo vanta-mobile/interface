@@ -13,6 +13,7 @@ import 'mode_settings_sheet.dart';
 import 'portfolio_components.dart';
 import 'portfolio_stats_error.dart';
 import 'trading_history_components.dart';
+import 'trading_history_related_orders.dart';
 
 Future<void> showTradingOrderDetails(
   BuildContext context,
@@ -30,25 +31,7 @@ Future<void> showHistoryRelatedOrders(BuildContext context, HistoryPosition posi
     tab: TradingHistoryTab.positions,
     owner: owner,
     address: address,
-    child: SafeArea(
-      top: false,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            HistorySheetHeader(AppLocalizations.of(context).tradingHistoryRelatedOrders),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context).tradingHistoryRelatedUnavailable,
-              style: TradeTypography.body,
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    ),
+    child: TradingHistoryRelatedOrders(position),
   ),
 );
 
@@ -85,11 +68,7 @@ class _SessionSheet extends ConsumerWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: HistorySheetHeader(
-            historyUsesAster(tab)
-                ? AppLocalizations.of(context).enableTradingTitle
-                : AppLocalizations.of(context).vantaApiSignInTitle,
-          ),
+          child: HistorySheetHeader(AppLocalizations.of(context).vantaApiSignInTitle),
         ),
       );
     }

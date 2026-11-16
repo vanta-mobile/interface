@@ -188,6 +188,8 @@ PortfolioStatsView _view(
       todayPnl: data.today?.pnl,
       todayPercent: data.today?.returnPercent,
       history: points.map((p) => p.value),
+      historyBuckets: points.map((p) => p.bucket),
+      historyBreakBefore: data.curve?.breakBefore ?? const {},
       start: points.isEmpty ? null : points.first.bucket,
       end: points.isEmpty ? null : points.last.bucket,
     ),

@@ -11,8 +11,7 @@ List<TradingHistoryRecord> mapTradingHistory(
   String pageKey = 'first',
 }) {
   if (value is! List || value.length > 200) throw const FormatException();
-  return value.indexed.map((entry) {
-    final (index, item) = entry;
+  return value.map((item) {
     if (item is! HistoryJson) throw const FormatException();
     final symbol = _optionalText(item['symbol']) ?? '';
     return switch (tab) {
@@ -29,6 +28,11 @@ List<TradingHistoryRecord> mapTradingHistory(
         price: _optionalPositive(item['price']),
         averagePrice: _optionalPositive(item['avg_price']),
         reduceOnly: _optionalBool(item['reduce_only']),
+        closePosition: _optionalBool(item['close_position']),
+        quoteFilled: _optionalPositive(item['cum_quote']),
+        stopPrice: _optionalPositive(item['stop_price']),
+        activationPrice: _optionalPositive(item['activate_price']),
+        callbackRate: _optionalPositive(item['price_rate']),
         updatedAt: _optionalTime(item['update_time']),
       ),
       TradingHistoryTab.trades => HistoryFill(
@@ -49,10 +53,12 @@ List<TradingHistoryRecord> mapTradingHistory(
       TradingHistoryTab.transactions => HistoryTransaction(
         symbol: symbol,
         time: _time(item['occurred_at']),
-        id: transfers ? 'transfer:${_id(item['id'])}' : 'income:$pageKey:$index',
+        id: transfers ? 'transfer:${_id(item['id'])}' : 'income:${_text(item['id'])}',
         type: _transactionType(_text(item['kind'])),
         asset: _text(item['asset']),
         amount: _decimal(item['amount']),
+        reference: _optionalText(item[transfers ? 'reference' : 'tran_id']),
+        network: transfers ? _optionalText(item['network']) : null,
       ),
     };
   }).toList();
@@ -78,6 +84,10 @@ HistoryPosition _position(HistoryJson row, String symbol) {
     maxQuantity: _positive(row['max_qty']),
     realizedPnl: _decimal(row['realized_pnl']),
     fees: _decimal(row['fees']),
+    leverage: _optionalPositive(row['leverage'], nonzero: true),
+    marginType: _marginType(row['margin_type']),
+    closedQuantity: _optionalPositive(row['closed_qty']),
+    roe: _optionalDecimal(row['roe']),
     closedAt: closed,
     inferred: _bool(row['inferred']),
     liquidated: _bool(row['liquidated']),
@@ -119,7 +129,11 @@ Decimal _positive(Object? value, {bool nonzero = false}) {
 }
 
 Decimal? _optionalDecimal(Object? value) => value == null ? null : _decimal(value);
-Decimal? _optionalPositive(Object? value) => value == null ? null : _positive(value);
+Decimal? _optionalPositive(Object? value, {bool nonzero = false}) =>
+    value == null ? null : _positive(value, nonzero: nonzero);
+String? _marginType(Object? value) => value == null || value == 'cross' || value == 'isolated'
+    ? value as String?
+    : throw const FormatException();
 DateTime _time(Object? value) {
   if (value is! String || !RegExp(r'^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$').hasMatch(value)) {
     throw const FormatException();

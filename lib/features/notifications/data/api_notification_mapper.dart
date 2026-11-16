@@ -4,11 +4,14 @@ import '../domain/api_notification.dart';
 
 ApiNotificationPage mapNotificationPage(Map<String, Object?> json) {
   final items = json['items'], cursor = json['next_cursor'], unread = json['unread'];
+  final capped = json['unread_count_capped'];
   if (items is! List ||
       !json.containsKey('next_cursor') ||
       (cursor != null && (cursor is! String || cursor.isEmpty)) ||
       unread is! int ||
-      unread < 0) {
+      unread < 0 ||
+      capped != null && capped is! bool ||
+      capped == true && unread < 100) {
     throw const FormatException('notification page');
   }
   return ApiNotificationPage(
@@ -18,6 +21,7 @@ ApiNotificationPage mapNotificationPage(Map<String, Object?> json) {
     }),
     nextCursor: cursor as String?,
     unread: unread,
+    unreadCountCapped: capped == true,
   );
 }
 
@@ -61,7 +65,7 @@ ApiNotification mapApiNotification(Map<String, Object?> json) {
     type: type,
     severity: severity,
     read: read,
-    symbol: _optional(json['symbol']),
+    symbol: _optional(json['symbol'] ?? payload['symbol']),
     createdAt: _time(json['created_at']),
     readAt: json['read_at'] == null ? null : _time(json['read_at']),
     payload: _payload(payload),
@@ -90,6 +94,15 @@ NotificationPayload _payload(Map<String, Object?> p) => NotificationPayload(
   feeAsset: _optional(p['fee_asset']),
   orderId: _reference(p['order_id']),
   transactionHash: _optional(p['tx_hash']),
+  tradeId: _reference(p['trade_id']),
+  clientOrderId: _optional(p['client_order_id']),
+  reference: _optional(p['reference']),
+  positionSide: _choice(p['position_side'], const ['LONG', 'SHORT', 'BOTH']),
+  transferKind: _choice(p['kind'], const ['deposit', 'withdraw', 'internal_transfer']),
+  source: _choice(p['source'], const ['report']),
+  orderType: _optional(p['order_type']),
+  originalType: _optional(p['orig_type']),
+  network: _optional(p['network']),
   numbers: {
     for (final field in const {
       'price': NotificationNumber.price,
@@ -99,6 +112,8 @@ NotificationPayload _payload(Map<String, Object?> p) => NotificationPayload(
       'liquidation_price': NotificationNumber.liquidationPrice,
       'distance': NotificationNumber.distance,
       'amount': NotificationNumber.amount,
+      'executed_qty': NotificationNumber.executedQuantity,
+      'avg_price': NotificationNumber.averagePrice,
     }.entries)
       if (p[field.key] != null) field.value: _decimal(p[field.key]),
   },

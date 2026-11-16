@@ -72,7 +72,14 @@ class PortfolioHistoryChart extends StatelessWidget {
     final chart = SizedBox(
       height: compact ? 38 : 110,
       width: compact ? 112 : double.infinity,
-      child: CustomPaint(painter: _HistoryPainter(data, compact: compact)),
+      child: CustomPaint(
+        painter: PortfolioHistoryPainter(
+          data,
+          compact: compact,
+          buckets: performance.historyBuckets,
+          breakBefore: performance.historyBreakBefore,
+        ),
+      ),
     );
     if (compact) return data.isEmpty ? const SizedBox.shrink() : chart;
     final locale = Localizations.localeOf(context).toLanguageTag();
@@ -114,8 +121,15 @@ class PortfolioHistoryChart extends StatelessWidget {
 }
 
 /// Only chart coordinates cross into double; financial values stay Decimal.
-class _HistoryPainter extends CustomPainter {
-  _HistoryPainter(this.data, {required this.compact});
+class PortfolioHistoryPainter extends CustomPainter {
+  PortfolioHistoryPainter(
+    this.data, {
+    required this.compact,
+    this.buckets = const [],
+    this.breakBefore = const {},
+  });
+  final List<DateTime> buckets;
+  final Set<int> breakBefore;
   final List<Decimal> data;
   final bool compact;
   @override
@@ -125,18 +139,18 @@ class _HistoryPainter extends CustomPainter {
     final min = values.reduce((a, b) => a < b ? a : b);
     final max = values.reduce((a, b) => a > b ? a : b);
     final span = max - min;
+    final timed = buckets.length == values.length && buckets.last.isAfter(buckets.first);
+    final duration = timed ? buckets.last.difference(buckets.first).inMicroseconds : 1;
     final points = [
       for (var i = 0; i < values.length; i++)
         Offset(
-          i * size.width / (values.length - 1),
+          (timed
+                  ? buckets[i].difference(buckets.first).inMicroseconds / duration
+                  : i / (values.length - 1)) *
+              size.width,
           size.height * .88 - (span == 0 ? .5 : (values[i] - min) / span) * size.height * .7,
         ),
     ];
-    final line = Path()..moveTo(points.first.dx, points.first.dy);
-    for (var i = 1; i < points.length; i++) {
-      final a = points[i - 1], b = points[i], mid = (a.dx + b.dx) / 2;
-      line.cubicTo(mid, a.dy, mid, b.dy, b.dx, b.dy);
-    }
     if (!compact) {
       final grid = Paint()
         ..color = PortfolioColors.line.withValues(alpha: .08)
@@ -149,33 +163,58 @@ class _HistoryPainter extends CustomPainter {
         );
       }
     }
-    final area = Path.from(line)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(
-      area,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            PortfolioColors.accent.withValues(alpha: .18),
-            PortfolioColors.accent.withValues(alpha: 0),
-          ],
-        ).createShader(Offset.zero & size),
-    );
-    canvas.drawPath(
-      line,
-      Paint()
-        ..color = PortfolioColors.accent
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = compact ? 1 : 1.7
-        ..strokeCap = StrokeCap.round,
-    );
+    final starts = [
+      0,
+      ...breakBefore.where((i) => i > 0 && i < points.length).toList()..sort(),
+      points.length,
+    ];
+    for (var segment = 1; segment < starts.length; segment++) {
+      final first = starts[segment - 1], end = starts[segment];
+      if (first == end) continue;
+      final line = Path()..moveTo(points[first].dx, points[first].dy);
+      for (var i = first + 1; i < end; i++) {
+        final a = points[i - 1], b = points[i], mid = (a.dx + b.dx) / 2;
+        line.cubicTo(mid, a.dy, mid, b.dy, b.dx, b.dy);
+      }
+      if (end - first == 1) {
+        canvas.drawCircle(
+          points[first],
+          compact ? 1 : 1.7,
+          Paint()..color = PortfolioColors.accent,
+        );
+        continue;
+      }
+      final area = Path.from(line)
+        ..lineTo(points[end - 1].dx, size.height)
+        ..lineTo(points[first].dx, size.height)
+        ..close();
+      canvas.drawPath(
+        area,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              PortfolioColors.accent.withValues(alpha: .18),
+              PortfolioColors.accent.withValues(alpha: 0),
+            ],
+          ).createShader(Offset.zero & size),
+      );
+      canvas.drawPath(
+        line,
+        Paint()
+          ..color = PortfolioColors.accent
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = compact ? 1 : 1.7
+          ..strokeCap = StrokeCap.round,
+      );
+    }
   }
 
   @override
-  bool shouldRepaint(_HistoryPainter oldDelegate) =>
-      oldDelegate.data != data || oldDelegate.compact != compact;
+  bool shouldRepaint(PortfolioHistoryPainter oldDelegate) =>
+      oldDelegate.data != data ||
+      oldDelegate.compact != compact ||
+      oldDelegate.buckets != buckets ||
+      oldDelegate.breakBefore != breakBefore;
 }

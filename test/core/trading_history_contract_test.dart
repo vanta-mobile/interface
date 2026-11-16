@@ -28,6 +28,20 @@ void main() {
       containsAll(['items', 'next_cursor', 'partial', 'symbol_filter_ignored']),
     );
   });
+  test('filtered fills and full income report retain identity and trade linkage', () {
+    final parameters = (spec['components'] as YamlMap)['parameters'] as YamlMap;
+    expect((parameters['OrderIdFilter'] as YamlMap)['name'], 'order_id');
+    final get = (paths['/v1/history/fills'] as YamlMap)['get'] as YamlMap;
+    expect(
+      (get['parameters'] as YamlList).map((p) => (p as YamlMap)[r'$ref']),
+      contains('#/components/parameters/OrderIdFilter'),
+    );
+    final report = (schemas['ReportPayload'] as YamlMap)['properties'] as YamlMap;
+    expect(
+      report.keys,
+      containsAll(['incomeType', 'tranId', 'tradeId', 'reportedAt', 'amount', 'network']),
+    );
+  });
   test('every consumed history field remains declared', () {
     final fields = {
       'Order': [
@@ -43,6 +57,11 @@ void main() {
         'price',
         'avg_price',
         'reduce_only',
+        'stop_price',
+        'activate_price',
+        'price_rate',
+        'close_position',
+        'cum_quote',
         'order_time',
         'update_time',
       ],
@@ -74,8 +93,12 @@ void main() {
         'status',
         'inferred',
         'liquidated',
+        'leverage',
+        'margin_type',
+        'closed_qty',
+        'roe',
       ],
-      'IncomeItem': ['occurred_at', 'kind', 'symbol', 'asset', 'amount'],
+      'IncomeItem': ['id', 'tran_id', 'occurred_at', 'kind', 'symbol', 'asset', 'amount'],
       'TransferItem': ['id', 'occurred_at', 'kind', 'symbol', 'asset', 'amount'],
     };
     for (final entry in fields.entries) {

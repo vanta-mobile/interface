@@ -15,6 +15,10 @@ final vantaTestAddress = vantaTestKey.address.eip55With0x;
 final vantaTestNow = DateTime.utc(2026, 11, 12, 8);
 
 class KeySigner implements WalletMessageSigner {
+  int chainId = 1;
+  @override
+  int personalSigningChainId({required String expectedAddress}) => chainId;
+
   int calls = 0;
   Completer<void>? gate;
   String? signature;

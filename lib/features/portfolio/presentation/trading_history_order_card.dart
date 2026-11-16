@@ -147,20 +147,10 @@ class _TradingHistoryOrderCardState extends State<TradingHistoryOrderCard> {
                       : l.openOrdersNo,
                 ),
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OpenOrderChipButton(label: l.openOrdersViewExplorer, onPressed: null),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OpenOrderChipButton(
-                        key: Key('history-details-${r.id}'),
-                        label: l.tradingHistoryDetails,
-                        onPressed: () => showTradingOrderDetails(context, r, widget.units),
-                      ),
-                    ),
-                  ],
+                OpenOrderChipButton(
+                  key: Key('history-details-${r.id}'),
+                  label: l.tradingHistoryDetails,
+                  onPressed: () => showTradingOrderDetails(context, r, widget.units),
                 ),
               ],
             ),

@@ -88,11 +88,27 @@ class HistoryPosition extends TradingHistoryRecord {
     required this.liquidated,
     this.closedAt,
     this.exitPrice,
+    this.leverage,
+    this.marginType,
+    this.closedQuantity,
+    this.roe,
   });
   final String id, side, status;
   final DateTime? closedAt;
   final Decimal entryPrice, maxQuantity, realizedPnl, fees;
-  final Decimal? exitPrice;
+  final Decimal? exitPrice, leverage, closedQuantity, roe;
+  final String? marginType;
+
+  /// Backend ROE is an estimate based on observed leverage, before fees.
+  Decimal? get estimatedRoePercent =>
+      inferred ||
+          roe == null ||
+          leverage == null ||
+          leverage! <= Decimal.zero ||
+          entryPrice <= Decimal.zero ||
+          maxQuantity <= Decimal.zero
+      ? null
+      : roe! * Decimal.fromInt(100);
   final bool inferred, liquidated;
   @override
   String get key => 'position:$id';
@@ -106,8 +122,11 @@ class HistoryTransaction extends TradingHistoryRecord {
     required this.type,
     required this.asset,
     required this.amount,
+    this.reference,
+    this.network,
   });
   final String id, type, asset;
+  final String? reference, network;
   final Decimal amount;
   @override
   String get key => 'transaction:$id';
@@ -125,12 +144,14 @@ class TradingHistoryPage {
     this.next,
     this.partial = false,
     this.recentDays,
+    this.refreshFailure,
   }) : records = List.unmodifiable(records);
   final String address;
   final List<TradingHistoryRecord> records;
   final TradingHistoryCursor? next;
   final bool partial;
   final int? recentDays;
+  final Object? refreshFailure;
 }
 
 abstract interface class TradingOrderFillsRepository {
@@ -141,13 +162,14 @@ abstract interface class TradingOrderFillsRepository {
   });
 }
 
-bool historyUsesAster(TradingHistoryTab tab) =>
-    tab == TradingHistoryTab.orders || tab == TradingHistoryTab.transactions;
-
 abstract interface class TradingHistoryRepository {
   Future<TradingHistoryPage> read(
     TradingHistoryTab tab, {
     required String address,
     TradingHistoryCursor? cursor,
   });
+}
+
+abstract interface class TradingPositionOrdersRepository {
+  Future<List<HistoryOrder>> readPositionOrders(HistoryPosition position);
 }

@@ -12,10 +12,16 @@ class PortfolioPerformance {
     Map<DateTime, Decimal> dailyPnl = const {},
     this.start,
     this.end,
+    Iterable<DateTime> historyBuckets = const [],
+    Set<int> historyBreakBefore = const {},
   }) : history = List.unmodifiable(history),
-       dailyPnl = Map.unmodifiable(dailyPnl);
+       dailyPnl = Map.unmodifiable(dailyPnl),
+       historyBuckets = List.unmodifiable(historyBuckets),
+       historyBreakBefore = Set.unmodifiable(historyBreakBefore);
   final Decimal? pnl, returnPercent, volume, todayPnl, todayPercent;
   final List<Decimal> history;
+  final List<DateTime> historyBuckets;
+  final Set<int> historyBreakBefore;
   final Map<DateTime, Decimal> dailyPnl;
   final DateTime? start, end;
 }

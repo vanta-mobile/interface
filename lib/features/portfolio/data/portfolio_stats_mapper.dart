@@ -24,6 +24,7 @@ PortfolioCurve mapValueCurve(Map<String, Object?> json) {
   return PortfolioCurve(
     _points(json)
         .map((p) => PortfolioCurvePoint(_time(p['bucket']), _decimal(p['equity_close_usd']))),
+    gaps: _gaps(json['equity_gaps']),
   );
 }
 
@@ -68,6 +69,27 @@ Iterable<Map<String, Object?>> _points(Map<String, Object?> json) {
   return mapped..sort((a, b) => _time(a['bucket']).compareTo(_time(b['bucket'])));
 }
 
+List<PortfolioEquityGap> _gaps(Object? value) {
+  if (value == null) return const [];
+  if (value is! List) throw const FormatException('equity gaps');
+  final gaps = <PortfolioEquityGap>[];
+  for (final item in value) {
+    if (item is! Map<String, Object?>) throw const FormatException('equity gap');
+    final from = _date(item['from']), to = _date(item['to']), days = item['days'];
+    if (to.isBefore(from) || days is! int || days < 1 || days != to.difference(from).inDays + 1) {
+      throw const FormatException('equity gap bounds');
+    }
+    gaps.add(PortfolioEquityGap(from: from, to: to, days: days));
+  }
+  gaps.sort((a, b) => a.from.compareTo(b.from));
+  for (var i = 1; i < gaps.length; i++) {
+    if (!gaps[i].from.isAfter(gaps[i - 1].to)) {
+      throw const FormatException('overlapping equity gaps');
+    }
+  }
+  return gaps;
+}
+
 final _decimalPattern = RegExp(r'^-?[0-9]+(\.[0-9]+)?$');
 
 Decimal _decimal(Object? value) {
@@ -91,5 +113,6 @@ DateTime _date(Object? value) {
     throw const FormatException('date');
   }
   final day = DateTime.parse('${value}T00:00:00Z');
+  if (day.toIso8601String().substring(0, 10) != value) throw const FormatException('date');
   return DateTime.utc(day.year, day.month, day.day);
 }

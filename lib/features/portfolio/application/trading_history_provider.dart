@@ -10,6 +10,7 @@ import '../../auth/application/vanta_api_session_provider.dart';
 import '../../authorization/application/trading_agent_provider.dart';
 import '../data/aster_account_service.dart';
 import '../data/trading_history_repository.dart';
+import '../data/income_archive_repository.dart';
 import '../data/aster_trading_history_repository.dart';
 import '../domain/trading_history.dart';
 import 'account_read_provider.dart';
@@ -28,21 +29,47 @@ final asterTradingHistoryRepositoryProvider = Provider<AsterTradingHistoryReposi
   );
 });
 
-final tradingOrderFillsRepositoryProvider = Provider<TradingOrderFillsRepository>(
-  (ref) => ref.watch(asterTradingHistoryRepositoryProvider),
-);
-
 final tradingHistoryRepositoryProvider = Provider<TradingHistoryRepository?>((ref) {
   final session = ref.watch(vantaApiSessionRepositoryProvider);
   return session == null ? null : ApiTradingHistoryRepository(session);
 });
 
+final tradingOrderFillsRepositoryProvider = Provider<TradingOrderFillsRepository?>(
+  (ref) => switch (ref.watch(tradingHistoryRepositoryProvider)) {
+    final TradingOrderFillsRepository repository => repository,
+    _ => null,
+  },
+);
+
+final tradingPositionOrdersRepositoryProvider = Provider<TradingPositionOrdersRepository?>(
+  (ref) => switch (ref.watch(tradingHistoryRepositoryProvider)) {
+    final TradingPositionOrdersRepository repository => repository,
+    _ => null,
+  },
+);
+
 final tradingHistorySourceProvider = Provider.autoDispose
-    .family<TradingHistoryRepository?, TradingHistoryTab>(
-      (ref, tab) => historyUsesAster(tab)
-          ? ref.watch(asterTradingHistoryRepositoryProvider)
-          : ref.watch(tradingHistoryRepositoryProvider),
-    );
+    .family<TradingHistoryRepository?, TradingHistoryTab>((ref, tab) {
+      final archive = ref.watch(tradingHistoryRepositoryProvider);
+      if (archive == null || tab != TradingHistoryTab.transactions) return archive;
+      final session = ref.watch(vantaApiSessionRepositoryProvider);
+      bool canReport() =>
+          ref.mounted &&
+          ref.read(incomeReportingAccessProvider).ready &&
+          ref.read(incomeReportingAccessProvider).address == session?.address;
+      return IncomeArchiveRepository(
+        archive,
+        canReport: canReport,
+        reports: session != null
+            ? IncomeReportRepository(
+                session,
+                ref.watch(futuresHistoryRepositoryProvider),
+                ref.watch(futuresHistoryClockProvider),
+                isCurrent: canReport,
+              )
+            : null,
+      );
+    });
 
 class TradingHistoryState {
   const TradingHistoryState({this.page, this.busy = false, this.error});
@@ -133,11 +160,29 @@ class TradingHistoryController extends Notifier<TradingHistoryState> {
           throw const VantaApiFailure(vantaApiDataInvalid);
         }
       }
-      final records = <String, TradingHistoryRecord>{
+      final merged = <String, TradingHistoryRecord>{
         if (more)
           for (final r in old!.records) r.key: r,
-        for (final r in page.records) r.key: r,
-      }.values.toList()..sort((a, b) => b.time.compareTo(a.time));
+      };
+      for (final r in page.records) {
+        final previous = merged[r.key];
+        if (r is HistoryTransaction &&
+            previous is HistoryTransaction &&
+            (r.symbol, r.time, r.type, r.asset, r.amount, r.reference, r.network) !=
+                (
+                  previous.symbol,
+                  previous.time,
+                  previous.type,
+                  previous.asset,
+                  previous.amount,
+                  previous.reference,
+                  previous.network,
+                )) {
+          throw const VantaApiFailure(vantaApiDataInvalid);
+        }
+        merged[r.key] = r;
+      }
+      final records = merged.values.toList()..sort((a, b) => b.time.compareTo(a.time));
       if (records.length > 10000) {
         throw const VantaApiFailure('futuresHistoryCapacity');
       }
@@ -145,12 +190,14 @@ class TradingHistoryController extends Notifier<TradingHistoryState> {
         _seenCursors.add((next.main, next.transfers));
       }
       state = TradingHistoryState(
+        error: page.refreshFailure ?? (more ? old?.refreshFailure : null),
         page: TradingHistoryPage(
           address: page.address,
           records: records,
           next: page.next,
           partial: page.partial || more && old!.partial,
           recentDays: page.recentDays,
+          refreshFailure: page.refreshFailure ?? (more ? old?.refreshFailure : null),
         ),
       );
     } catch (error) {

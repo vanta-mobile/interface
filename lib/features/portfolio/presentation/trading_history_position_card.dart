@@ -23,6 +23,10 @@ class _TradingHistoryPositionCardState extends State<TradingHistoryPositionCard>
   Widget build(BuildContext context) {
     final r = widget.position, u = widget.units, l = AppLocalizations.of(context);
     final color = historyPnlColor(r.realizedPnl);
+    final observed = [
+      if (r.marginType != null) r.marginType == 'cross' ? l.cross : l.accountIsolatedMode,
+      if (r.leverage != null) '${historyAmount(r.leverage)}x',
+    ].join(' ');
     return PortfolioCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -60,7 +64,10 @@ class _TradingHistoryPositionCardState extends State<TradingHistoryPositionCard>
                                     : l.tradingHistoryOpen,
                                 style: TradeTypography.tag.copyWith(color: TradeColors.text),
                               ),
-                              const HistoryTag(historyPlaceholder, outlined: true),
+                              HistoryTag(
+                                observed.isEmpty ? historyPlaceholder : observed,
+                                outlined: true,
+                              ),
                             ],
                           ),
                         ],
@@ -107,12 +114,12 @@ class _TradingHistoryPositionCardState extends State<TradingHistoryPositionCard>
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        l.tradingHistoryRoe,
+                        l.tradingHistoryEstimatedRoe,
                         textAlign: TextAlign.end,
                         style: TradeTypography.body.copyWith(color: TradeColors.secondary),
                       ),
                       const SizedBox(height: 4),
-                      const Text(historyPlaceholder, style: TradeTypography.body),
+                      Text(historyPercent(r.estimatedRoePercent), style: TradeTypography.body),
                     ],
                   ),
                 ),
@@ -127,9 +134,14 @@ class _TradingHistoryPositionCardState extends State<TradingHistoryPositionCard>
             ),
             HistoryRow(l.tradingHistoryClosePrice, historyAmount(r.exitPrice, fixed: 6)),
             HistoryRow(l.tradingHistoryMaxHeld, historyUnit(r.maxQuantity, u?.base)),
-            HistoryRow(l.tradingHistoryClosed, historyPlaceholder),
+            HistoryRow(l.tradingHistoryClosed, historyUnit(r.closedQuantity, u?.base)),
             HistoryRow(l.tradingHistoryOpenedAt, historyTime(r.inferred ? null : r.time)),
             HistoryRow(l.tradingHistoryClosedAt, historyTime(r.closedAt)),
+            if (r.leverage != null || r.marginType != null || r.estimatedRoePercent != null)
+              Text(
+                l.tradingHistoryEstimateHint,
+                style: TradeTypography.body.copyWith(color: TradeColors.secondary),
+              ),
             const SizedBox(height: 8),
             OpenOrderChipButton(
               label: l.tradingHistoryDetails,

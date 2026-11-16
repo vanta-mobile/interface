@@ -53,6 +53,7 @@ void main() {
     await historyTap(t, 'history-expand-order:AAPLUSDT:123');
     expect(find.text('190.100000 / 190.000000'), findsOneWidget);
     expect(find.text('570.30 / 1,140.00'), findsOneWidget);
+    expect(find.text('View Explorer'), findsNothing);
     await historyTap(t, 'history-details-123');
     expect(find.byKey(const Key('history-order-details')), findsOneWidget);
     expect(find.text('Order Details'), findsOneWidget);
@@ -81,9 +82,7 @@ void main() {
     expect(t.takeException(), isNull);
   });
 
-  testWidgets('position details explain unavailable linkage; inferred fields are hidden', (
-    t,
-  ) async {
+  testWidgets('position details load backend-linked orders', (t) async {
     final repository = HistoryRepository();
     await launchTradingHistory(t, repository);
     await historyTap(t, 'history-tab-positions');
@@ -93,7 +92,8 @@ void main() {
     expect(find.text('194.600000'), findsOneWidget);
     await historyTap(t, 'history-position-details-7');
     expect(find.text('Related Orders'), findsOneWidget);
-    expect(find.textContaining('does not provide position-to-order links'), findsOneWidget);
+    expect(repository.positionOrderCalls.single.id, '7');
+    expect(find.byType(TradingHistoryOrderCard), findsNWidgets(2));
     expect(t.takeException(), isNull);
   });
 
@@ -196,34 +196,28 @@ void main() {
     expect(t.takeException(), isNull);
   });
 
-  testWidgets('Aster tabs and order fills work without an OpenAPI session', (t) async {
-    final repository = HistoryRepository();
-    final c = await launchTradingHistory(t, repository);
+  testWidgets('every archive tab requires its OpenAPI session', (t) async {
+    final c = await launchTradingHistory(t, HistoryRepository());
     (c.read(vantaApiSessionProvider.notifier) as HistorySession).set(
       const VantaApiSessionState(VantaApiSessionStatus.unavailable),
     );
     await t.pumpAndSettle();
-    expect(find.byType(TradingHistoryOrderCard), findsNWidgets(2));
-    await historyTap(t, 'history-expand-order:AAPLUSDT:123');
-    await historyTap(t, 'history-details-123');
-    expect(repository.orderFillCalls.single.id, '123');
-    expect(find.widgetWithText(SelectableText, '50'), findsOneWidget);
-    await t.tap(find.byTooltip('Close'));
-    await t.pumpAndSettle();
+    expect(find.byType(TradingHistoryOrderCard), findsNothing);
+    for (final tab in [
+      TradingHistoryTab.orders,
+      TradingHistoryTab.trades,
+      TradingHistoryTab.positions,
+    ]) {
+      await historyTap(t, 'history-tab-${tab.name}');
+      expect(find.byKey(const Key('history-failure')), findsOneWidget);
+    }
     await historyTap(t, 'history-tab-transactions');
-    expect(find.byType(TradingHistoryTransactionRow), findsOneWidget);
-    await historyTap(t, 'history-tab-trades');
-    expect(find.byType(TradingHistoryFillCard), findsNothing);
-    expect(find.byKey(const Key('history-failure')), findsOneWidget);
-    await historyTap(t, 'history-tab-positions');
-    expect(find.byType(TradingHistoryPositionCard), findsNothing);
+    expect(find.byType(TradingHistoryTransactionRow), findsNothing);
     expect(find.byKey(const Key('history-failure')), findsOneWidget);
     expect(t.takeException(), isNull);
   });
 
-  testWidgets('revoking the Aster grant clears only direct tabs and does not initiate SIWE', (
-    t,
-  ) async {
+  testWidgets('revoking the Aster grant retains authenticated transaction archives', (t) async {
     var granted = true;
     final repository = HistoryRepository();
     final c = await launchTradingHistory(
@@ -231,14 +225,18 @@ void main() {
       repository,
       loadGrant: () async => granted ? historyGrant : null,
     );
+    await historyTap(t, 'history-tab-transactions');
     granted = false;
     c.invalidate(tradingAgentProvider);
     await t.pumpAndSettle();
-    expect(find.byType(TradingHistoryOrderCard), findsNothing);
-    expect(find.byKey(const Key('history-failure')), findsOneWidget);
+    expect(find.byType(TradingHistoryTransactionRow), findsOneWidget);
+    expect(find.byKey(const Key('history-failure')), findsNothing);
+    final calls = repository.calls.length;
     await t.widget<RefreshIndicator>(find.byType(RefreshIndicator)).onRefresh();
-    expect(repository.calls, hasLength(1));
+    expect(repository.calls, hasLength(calls + 1));
     expect((c.read(vantaApiSessionProvider.notifier) as HistorySession).signInCalls, 0);
+    await historyTap(t, 'history-tab-orders');
+    expect(find.byType(TradingHistoryOrderCard), findsNWidgets(2));
     await historyTap(t, 'history-tab-trades');
     expect(find.byType(TradingHistoryFillCard), findsOneWidget);
     expect(t.takeException(), isNull);
@@ -288,7 +286,9 @@ void main() {
     expect(t.takeException(), isNull);
   });
 
-  testWidgets('Aster revocation preserves its concrete failure after the grant clears', (t) async {
+  testWidgets('reporting failure keeps its cause and previously loaded archive after grant loss', (
+    t,
+  ) async {
     var granted = true;
     final repository = HistoryRepository();
     final c = await launchTradingHistory(
@@ -296,6 +296,7 @@ void main() {
       repository,
       loadGrant: () async => granted ? historyGrant : null,
     );
+    await historyTap(t, 'history-tab-transactions');
     repository.gate = Completer<void>();
     repository.failure = const AccountReadFailure(
       'accountPermissionRequired',
@@ -310,7 +311,7 @@ void main() {
     await refresh;
     await t.pumpAndSettle();
     expect(find.textContaining('Account access revoked'), findsOneWidget);
-    expect(find.byType(TradingHistoryOrderCard), findsNothing);
+    expect(find.byType(TradingHistoryTransactionRow), findsOneWidget);
     expect(t.takeException(), isNull);
   });
 }

@@ -78,12 +78,13 @@ Map<String, Object?> historyPosition({
   'liquidated': false,
 };
 Map<String, Object?> historyIncome({String amount = '-0.00000043'}) => {
+  'id': 'transfer:1:FUNDING_FEE',
   'occurred_at': '2026-11-04T23:58:09Z',
   'kind': 'funding',
   'symbol': 'AAPLUSDT',
   'asset': 'USDT',
   'amount': amount,
-  'source': 'app_report',
+  'source': 'transfer',
   'data_source': 'app_report',
   'source_tier': 'live',
 };
@@ -139,7 +140,22 @@ final historyGrant = TradingAgent(
   status: TradingAgentStatus.active,
 );
 
-class HistoryRepository implements TradingHistoryRepository, TradingOrderFillsRepository {
+class HistoryRepository
+    implements
+        TradingHistoryRepository,
+        TradingOrderFillsRepository,
+        TradingPositionOrdersRepository {
+  final positionOrderCalls = <HistoryPosition>[];
+  @override
+  Future<List<HistoryOrder>> readPositionOrders(HistoryPosition position) async {
+    positionOrderCalls.add(position);
+    final scope = RequestScope.current;
+    scopes.add(() => scope?.active ?? false);
+    await gate?.future;
+    if (failure case final error?) throw error;
+    return rows[TradingHistoryTab.orders]!.cast<HistoryOrder>();
+  }
+
   final orderFillCalls = <HistoryOrder>[];
   @override
   Future<TradingHistoryPage> readOrderFills(
@@ -208,6 +224,7 @@ Future<ProviderContainer> launchTradingHistory(
       ),
       tradingHistorySourceProvider.overrideWith((ref, tab) => repository),
       tradingOrderFillsRepositoryProvider.overrideWithValue(repository),
+      tradingPositionOrdersRepositoryProvider.overrideWithValue(repository),
       tradingHistoryUnitsProvider.overrideWith(
         (ref) async => loadUnits == null ? historyUnits : await loadUnits(),
       ),

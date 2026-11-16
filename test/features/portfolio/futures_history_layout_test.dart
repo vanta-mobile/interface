@@ -51,7 +51,7 @@ void main() {
             expectHistoryValuesAtRight(t, parent: card, right: right);
             final roe = find.descendant(
               of: card,
-              matching: find.text(locale == 'en' ? 'Realized ROE%' : '已实现收益率'),
+              matching: find.text(locale == 'en' ? 'Estimated ROE%' : '估算收益率'),
             );
             expect(roe, findsOneWidget);
             expect(t.getRect(roe).right, closeTo(right - 8, 0.01));

@@ -31,7 +31,17 @@ class ApiNotificationReadTarget {
   final String? key;
 }
 
-enum NotificationNumber { price, quantity, fee, markPrice, liquidationPrice, distance, amount }
+enum NotificationNumber {
+  price,
+  quantity,
+  fee,
+  markPrice,
+  liquidationPrice,
+  distance,
+  amount,
+  executedQuantity,
+  averagePrice,
+}
 
 class NotificationPayload {
   NotificationPayload({
@@ -46,11 +56,27 @@ class NotificationPayload {
     this.feeAsset,
     this.orderId,
     this.transactionHash,
+    this.tradeId,
+    this.clientOrderId,
+    this.reference,
+    this.positionSide,
+    this.transferKind,
+    this.source,
+    this.orderType,
+    this.originalType,
+    this.network,
     Map<NotificationNumber, Decimal> numbers = const {},
   }) : numbers = Map.unmodifiable(numbers);
   final String? title, message, market, status, side;
   final String? asset, baseAsset, quoteAsset, feeAsset, orderId, transactionHash;
+  final String? tradeId, clientOrderId, reference, positionSide, transferKind, source;
+  final String? orderType, originalType, network;
   final Map<NotificationNumber, Decimal> numbers;
+}
+
+class NotificationSymbolUnits {
+  const NotificationSymbolUnits({this.base, this.quote});
+  final String? base, quote;
 }
 
 class ApiNotification {
@@ -99,8 +125,10 @@ class ApiNotificationPage {
     required Iterable<ApiNotification> items,
     required this.nextCursor,
     required this.unread,
+    this.unreadCountCapped = false,
   }) : items = List.unmodifiable(items);
   final List<ApiNotification> items;
   final String? nextCursor;
   final int unread;
+  final bool unreadCountCapped;
 }

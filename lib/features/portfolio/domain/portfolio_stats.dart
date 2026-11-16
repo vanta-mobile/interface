@@ -54,8 +54,24 @@ class PortfolioCurvePoint {
 
 /// Ordered buckets that have data; missing days are absent, not zero.
 class PortfolioCurve {
-  PortfolioCurve(Iterable<PortfolioCurvePoint> points) : points = List.unmodifiable(points);
+  PortfolioCurve(
+    Iterable<PortfolioCurvePoint> points, {
+    Iterable<PortfolioEquityGap> gaps = const [],
+  }) : points = List.unmodifiable(points),
+       gaps = List.unmodifiable(gaps);
   final List<PortfolioCurvePoint> points;
+  final List<PortfolioEquityGap> gaps;
+
+  /// Break before each bucket whose incoming segment crosses a reported gap.
+  Set<int> get breakBefore => {
+    for (var i = 1; i < points.length; i++)
+      if (gaps.any(
+        (g) =>
+            points[i - 1].bucket.isBefore(g.to.add(const Duration(days: 1))) &&
+            points[i].bucket.isAfter(g.from),
+      ))
+        i,
+  };
 }
 
 /// `GET /v1/portfolio/calendar`: only UTC days that have data.
@@ -64,4 +80,10 @@ class PortfolioCalendarMonth {
     : days = Map.unmodifiable(days);
   final DateTime month;
   final Map<DateTime, Decimal> days;
+}
+
+class PortfolioEquityGap {
+  const PortfolioEquityGap({required this.from, required this.to, required this.days});
+  final DateTime from, to;
+  final int days;
 }

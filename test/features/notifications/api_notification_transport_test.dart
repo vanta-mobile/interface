@@ -76,7 +76,7 @@ void main() {
           final transport = Transport(), api = await session(transport);
           addTearDown(api.close);
           final repository = ApiNotificationRepository(api);
-          var current = true, cancelled = false;
+          var current = true;
           Future<void> operation() async {
             switch (operationName) {
               case 'inbox read':
@@ -110,7 +110,8 @@ void main() {
           await turn();
           final other = api.get('/other');
           await turn();
-          final body = StreamController<List<int>>(onCancel: () => cancelled = true);
+          final released = Completer<void>();
+          final body = StreamController<List<int>>(onCancel: released.complete);
           if (headers) {
             transport.responses[0].complete(http.StreamedResponse(body.stream, 200));
             body.add(utf8.encode('{'));
@@ -119,7 +120,13 @@ void main() {
           current = false;
           await failure;
           expect((transport.requests[0] as http.Abortable).abortTrigger, completes);
-          if (headers) expect(cancelled, isTrue);
+          // A loaded runner can hit the wall-clock timeout before headers (body never
+          // read) or deliver the failure before the body cancel lands; either way the
+          // body must end with no reader.
+          if (headers && body.hasListener) {
+            await released.future.timeout(const Duration(seconds: 2));
+          }
+          if (headers) expect(body.hasListener, isFalse);
           if (!headers) {
             transport.responses[0].complete(http.StreamedResponse(body.stream, 200));
           }

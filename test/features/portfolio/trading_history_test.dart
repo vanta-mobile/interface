@@ -55,10 +55,12 @@ void main() {
     );
   });
 
-  test('income without an ID keeps distinct identical reported ledger rows', () {
+  test('archive income requires a stable server identity', () {
+    final item = historyIncome()..remove('id');
+    expect(() => mapTradingHistory([item], TradingHistoryTab.transactions), throwsFormatException);
     final rows = mapTradingHistory([
-      historyIncome(),
-      historyIncome(),
+      {...historyIncome(), 'id': 'fill:5:COMMISSION', 'kind': 'COMMISSION'},
+      {...historyIncome(), 'id': 'fill:5:REALIZED_PNL', 'kind': 'REALIZED_PNL'},
     ], TradingHistoryTab.transactions);
     expect(rows.map((r) => r.key).toSet(), hasLength(2));
   });
@@ -106,32 +108,35 @@ void main() {
       await session.restore(vantaTestAddress);
       repository = ApiTradingHistoryRepository(session);
     });
-    test('transactions merge independent ledgers and never restart an exhausted cursor', () async {
-      backend.routes['GET /v1/history/income'] = (_) =>
-          json(historyPage([historyIncome()], next: 'income-2', partial: true));
-      backend.routes['GET /v1/history/transfers'] = (_) => json(historyPage([historyTransfer()]));
-      final first = await repository.read(
-        TradingHistoryTab.transactions,
-        address: vantaTestAddress,
-      );
-      expect(first.records, hasLength(2));
-      expect(first.partial, isTrue);
-      expect(first.next?.main, 'income-2');
-      expect(first.next?.transfers, isNull);
-      backend.routes['GET /v1/history/income'] = (request) {
-        expect(request.url.queryParameters['cursor'], 'income-2');
-        expect(request.headers['Authorization'], 'Bearer a');
-        return json(historyPage([]));
-      };
-      final next = await repository.read(
-        TradingHistoryTab.transactions,
-        address: vantaTestAddress,
-        cursor: first.next,
-      );
-      expect(next.next, isNull);
-      expect(backend.paths.where((p) => p.endsWith('/transfers')), hasLength(1));
-      expect(backend.requests.every((r) => !r.url.queryParameters.containsKey('symbol')), isTrue);
-    });
+    test(
+      'transactions use only merged income and preserve server cursor and partial flag',
+      () async {
+        backend.routes['GET /v1/history/income'] = (_) =>
+            json(historyPage([historyIncome()], next: 'income-2', partial: true));
+        backend.routes['GET /v1/history/transfers'] = (_) => json(historyPage([historyTransfer()]));
+        final first = await repository.read(
+          TradingHistoryTab.transactions,
+          address: vantaTestAddress,
+        );
+        expect(first.records, hasLength(1));
+        expect(first.partial, isTrue);
+        expect(first.next?.main, 'income-2');
+        expect(first.next?.transfers, isNull);
+        backend.routes['GET /v1/history/income'] = (request) {
+          expect(request.url.queryParameters['cursor'], 'income-2');
+          expect(request.headers['Authorization'], 'Bearer a');
+          return json(historyPage([]));
+        };
+        final next = await repository.read(
+          TradingHistoryTab.transactions,
+          address: vantaTestAddress,
+          cursor: first.next,
+        );
+        expect(next.next, isNull);
+        expect(backend.paths.where((p) => p.endsWith('/transfers')), isEmpty);
+        expect(backend.requests.every((r) => !r.url.queryParameters.containsKey('symbol')), isTrue);
+      },
+    );
     test('malformed payload carries typed safe failure with endpoint', () async {
       backend.routes['GET /v1/history/orders'] = (_) => json(
         historyPage([
@@ -239,6 +244,28 @@ void main() {
       expect(container.read(provider).page, same(old));
       expect(container.read(provider).error, isA<VantaApiFailure>());
       expect(container.read(provider).busy, isFalse);
+    });
+    test('income IDs survive cursor overlap and reject conflicting immutable amounts', () async {
+      final transactions = tradingHistoryProvider(TradingHistoryTab.transactions);
+      repository.next = const TradingHistoryCursor('older');
+      final sub = container.listen(transactions, (_, _) {});
+      addTearDown(sub.close);
+      await settle();
+      final old = container.read(transactions).page;
+      repository.next = null;
+      repository.rows[TradingHistoryTab.transactions] = mapTradingHistory([
+        historyIncome(amount: '100'),
+      ], TradingHistoryTab.transactions);
+      await container.read(transactions.notifier).loadMore();
+      expect(container.read(transactions).page, same(old));
+      expect(container.read(transactions).error, isA<VantaApiFailure>());
+      repository.rows[TradingHistoryTab.transactions] = mapTradingHistory([
+        historyIncome(),
+        {...historyIncome(), 'id': 'fill:1:COMMISSION', 'kind': 'COMMISSION'},
+      ], TradingHistoryTab.transactions);
+      await container.read(transactions.notifier).loadMore();
+      expect(container.read(transactions).page!.records, hasLength(2));
+      expect(container.read(transactions).error, isNull);
     });
     test('wallet changes discard late reads and clear private records', () async {
       repository.gate = Completer<void>();

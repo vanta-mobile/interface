@@ -23,14 +23,14 @@ class HistoryOrderDetails {
       : fills.fold<Decimal>(Decimal.zero, (sum, f) => sum - f.fee);
 }
 
-/// Exact symbol + order ID linkage only. Bound scanning, report incomplete data,
+/// Exact symbol + order ID linkage only. Follow filtered pages, report incomplete data,
 /// and never infer maker/taker from active_buy or aggregate unlike fee units.
 final tradingOrderDetailsProvider = FutureProvider.autoDispose
     .family<HistoryOrderDetails?, HistoryOrder>(retry: (_, _) => null, (ref, order) async {
       final session = ref.watch(tradingHistoryAccessProvider(TradingHistoryTab.orders));
       final owner = ref.watch(tradingHistoryIdentityProvider);
       final repository = ref.watch(tradingOrderFillsRepositoryProvider);
-      if (!session.ready || session.address == null) return null;
+      if (!session.ready || session.address == null || repository == null) return null;
       if (order.executed == Decimal.zero) return HistoryOrderDetails(const [], complete: true);
       bool current() =>
           ref.mounted &&
@@ -41,7 +41,8 @@ final tradingOrderDetailsProvider = FutureProvider.autoDispose
         final seen = <String>{};
         TradingHistoryCursor? cursor;
         var complete = false;
-        for (var pageIndex = 0; pageIndex < 20; pageIndex++) {
+        var partial = false;
+        for (;;) {
           final page = await repository.readOrderFills(
             order,
             address: session.address!,
@@ -49,13 +50,19 @@ final tradingOrderDetailsProvider = FutureProvider.autoDispose
           );
           if (!current()) throw const VantaApiFailure(vantaApiRequestFailed);
           if (page.address != session.address) throw const VantaApiFailure(vantaApiDataInvalid);
+          partial |= page.partial;
           for (final fill in page.records.whereType<HistoryFill>()) {
-            if (fill.symbol == order.symbol && fill.orderId == order.id) fills[fill.key] = fill;
+            if (fill.symbol != order.symbol || fill.orderId != order.id) continue;
+            final old = fills[fill.key];
+            if (old != null && !_sameFill(old, fill)) {
+              throw const VantaApiFailure(vantaApiDataInvalid);
+            }
+            fills[fill.key] = fill;
           }
           final quantity = fills.values.fold(Decimal.zero, (sum, f) => sum + f.quantity);
           if (quantity > order.executed) throw const VantaApiFailure(vantaApiDataInvalid);
           if (quantity == order.executed) {
-            complete = true;
+            complete = !partial;
             break;
           }
           cursor = page.next;
@@ -68,3 +75,36 @@ final tradingOrderDetailsProvider = FutureProvider.autoDispose
         return HistoryOrderDetails(sorted, complete: complete);
       });
     });
+
+/// Related orders are backend-persisted links, never inferred from timestamps.
+final tradingPositionOrdersProvider = FutureProvider.autoDispose
+    .family<List<HistoryOrder>?, HistoryPosition>(retry: (_, _) => null, (ref, position) async {
+      final session = ref.watch(tradingHistoryAccessProvider(TradingHistoryTab.positions));
+      final owner = ref.watch(tradingHistoryIdentityProvider);
+      final repository = ref.watch(tradingPositionOrdersRepositoryProvider);
+      if (!session.ready || repository == null) return null;
+      bool current() =>
+          ref.mounted &&
+          ref.read(tradingHistoryIdentityProvider) == owner &&
+          ref.read(tradingHistoryAccessProvider(TradingHistoryTab.positions)).ready &&
+          ref.read(tradingHistoryAccessProvider(TradingHistoryTab.positions)).address ==
+              session.address;
+      return RequestScope.runOwned(current, () async {
+        final orders = await repository.readPositionOrders(position);
+        if (!current()) throw const VantaApiFailure(vantaApiRequestFailed);
+        return orders;
+      });
+    });
+
+bool _sameFill(HistoryFill a, HistoryFill b) =>
+    a.time == b.time &&
+    a.orderId == b.orderId &&
+    a.side == b.side &&
+    a.positionSide == b.positionSide &&
+    a.price == b.price &&
+    a.quantity == b.quantity &&
+    a.fee == b.fee &&
+    a.feeAsset == b.feeAsset &&
+    a.notional == b.notional &&
+    a.realizedPnl == b.realizedPnl &&
+    a.maker == b.maker;

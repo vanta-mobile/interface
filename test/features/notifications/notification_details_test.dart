@@ -86,8 +86,8 @@ void main() {
         await tester.tap(find.byKey(const Key('notification-event:1')));
         await tester.pumpAndSettle();
         final l = AppLocalizations.of(tester.element(find.byType(ApiNotificationDetails)));
-        expect(find.text('0.15'), findsOneWidget);
-        expect(find.text('15%'), findsNothing);
+        expect(find.text('0.15'), findsNothing);
+        expect(find.text('15%'), findsOneWidget);
         expect(find.text(l.notificationPerp), findsNothing);
         expect(find.text(l.notificationStatus('FILLED')), findsNothing);
         for (final size in [const Size(320, 740), const Size(844, 390), const Size(1024, 768)]) {
@@ -97,7 +97,7 @@ void main() {
         }
         f.auth.setWallet('0x${'ab' * 20}');
         await tester.pumpAndSettle();
-        expect(find.text('0.15'), findsNothing);
+        expect(find.text('15%'), findsNothing);
         expect(find.text(l.notificationEmpty), findsOneWidget);
         await tester.pumpWidget(const SizedBox());
       },

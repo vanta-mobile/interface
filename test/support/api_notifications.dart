@@ -18,6 +18,8 @@ import 'package:vanta/features/auth/data/vanta_api_session_repository.dart';
 import 'package:vanta/features/auth/data/vanta_api_session_store.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/notifications/application/api_notification_provider.dart';
+import 'package:vanta/features/notifications/application/api_notification_units_provider.dart';
+import 'package:vanta/features/notifications/domain/api_notification.dart';
 import 'package:vanta/features/notifications/presentation/notification_screen.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
@@ -71,6 +73,7 @@ class InboxFixture {
     bool storedSession = true,
     PushMessagingRepository? messaging,
     Future<PushDeviceMetadata> Function()? metadataReader,
+    Future<Map<String, NotificationSymbolUnits>> Function()? loadApiUnits,
   }) {
     if (storedSession) {
       store.value = VantaApiCredentials(
@@ -132,6 +135,9 @@ class InboxFixture {
     container = ProviderContainer(
       overrides: [
         notificationRepositoryProvider.overrideWithValue(journal),
+        apiNotificationUnitsProvider.overrideWith(
+          (ref) async => loadApiUnits == null ? const {} : await loadApiUnits(),
+        ),
         pushMessagingRepositoryProvider.overrideWithValue(messaging),
         pushDeviceMetadataReaderProvider.overrideWithValue(
           metadataReader ?? () async => pushMetadata,

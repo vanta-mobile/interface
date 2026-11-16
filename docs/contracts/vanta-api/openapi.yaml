@@ -23,7 +23,8 @@ info:
       `message` 只给人看，不保证稳定。不会用 200 包错误。
     * **数据不完整不是错误**：响应里的 `partial: true` 表示该口径的数据不全（如没有资金费上报），仍是 200。
     * **缓存**：只有公开的配置类端点带 `Cache-Control: public, max-age=…` + `ETag`（支持
-    `If-None-Match` → 304）；
+    `If-None-Match` → 304，可传标签列表或 `*`，弱比较）；内容随调用方 IP 变化的（`/v1/app/bootstrap`、
+    `/v1/config/geo`）是 `private, max-age=…`，只进端上缓存；`server_time` / `evaluated_at` 不参与 ETag；
       其余一律 `no-store`。
     * **限流**：每用户（公开端点按 IP）令牌桶；超限 `429` + `Retry-After`。
     * **请求内不同步调用 Aster**：所有接口读自己的库，Aster 故障时这些接口仍可用，只是数据变旧（看 `as_of`）。
@@ -66,9 +67,9 @@ paths:
     get:
       tags: [Ops]
       operationId: healthz
-      summary: 探活
+      summary: 探活（人看 / 监控）
       description: |
-        DB 可达即 200。同时报告归档水位落后：落后超 7 天意味着数据已永久丢失，不藏在日志里。
+        DB 可达即 200。编排探针请用 `/livez`（存活）与 `/readyz`（就绪）。同时报告归档水位落后：落后超 7 天意味着数据已永久丢失，不藏在日志里。
         DB 不可达返回 503。
       responses:
         "200":
@@ -86,6 +87,50 @@ paths:
                     properties:
                       streams_behind_over_1d: {type: integer}
                       streams_permanently_lost: {type: integer}
+        "503":
+          description: DB 不可达
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: {type: string, const: degraded}
+                  db: {type: string, const: down}
+  /livez:
+    get:
+      tags: [Ops]
+      operationId: livez
+      summary: 存活探针
+      description: 进程能处理请求即 200，不访问 DB（DB 故障时重启 gateway 无济于事）。
+      responses:
+        "200":
+          description: 存活
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: {type: string, const: ok}
+  /readyz:
+    get:
+      tags: [Ops]
+      operationId: readyz
+      summary: 就绪探针
+      description: |
+        DB 可达即 200，否则 503。不看归档水位（水位落后走 `/healthz` 与告警），
+        每次只跑一条 `SELECT 1`，供 LB 高频探测。
+      responses:
+        "200":
+          description: 就绪
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, db]
+                properties:
+                  status: {type: string, const: ok}
+                  db: {type: string, const: ok}
         "503":
           description: DB 不可达
           content:
@@ -115,7 +160,7 @@ paths:
       description: |
         交易对目录（内部 id ↔ Aster 交易对映射、分类、精度）、交易时段、维护 / 升级 / 地区配置。
         **不含任何行情字段**（行情由 App 直连 Aster）。bapi 字段缺失时降级省略，`partial=true`。
-        `Cache-Control: public, max-age=30` + `ETag`。
+        `Cache-Control: private, max-age=30` + `ETag`（含调用方的 geo 判定，不能进共享缓存）。
       parameters:
         - name: symbol
           in: query
@@ -297,11 +342,12 @@ paths:
       operationId: configGeo
       summary: 地区限制规则与当前判定
       description: |
-        规则可匿名读取；**判定基于服务端看到的 IP**（`X-Forwarded-For` 第一段，其次 `X-Real-IP`），
+        规则可匿名读取；**判定基于服务端看到的 IP**（`X-Forwarded-For` 从右数第 `TRUSTED_PROXY_HOPS`
+        段，未配置时取第一段；其次 `X-Real-IP`），
         客户端自报的 `country` 只落库备查，**不参与判定**。
         服务端不硬拦，由 App 据 `decision.blocked` 拦截 UI。
 
-        `Cache-Control: public, max-age=300`。
+        `Cache-Control: private, max-age=300`（判定随调用方 IP 变化）；`evaluated_at` 不参与 ETag。
       parameters:
         - name: country
           in: query
@@ -716,12 +762,15 @@ paths:
       tags: [History]
       operationId: historyFills
       summary: 成交历史
-      description: 成交按成交 id 去重，重放不会产生重复行。时间倒序。
+      description: |
+        成交按成交 id 去重，重放不会产生重复行。时间倒序。支持按 `order_id` 筛选
+        （索引下推，订单详情成交不再需要扫全量翻页匹配）；不带则返回全部成交。
       security: [{bearerAuth: []}]
       parameters:
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/AccountId"
+        - $ref: "#/components/parameters/OrderIdFilter"
         - $ref: "#/components/parameters/SymbolIgnored"
         - $ref: "#/components/parameters/From"
         - $ref: "#/components/parameters/To"
@@ -801,14 +850,51 @@ paths:
         "401": {$ref: "#/components/responses/Unauthorized"}
         "404": {$ref: "#/components/responses/NotFound"}
         "429": {$ref: "#/components/responses/RateLimited"}
+  /v1/history/positions/{position_id}/orders:
+    get:
+      tags: [History]
+      operationId: historyPositionOrders
+      summary: 持仓周期关联的订单
+      description: |
+        该持仓周期参与的订单（由周期内的成交的 `orderId` 聚合，**在重建周期时落库**）。
+        周期边界是「净仓归零」算出来的，所以关联关系不是按时间窗口反推的。
+
+        只查当前操作账户名下的周期；别人的（或不存在的）返回 `not_found`。
+        旧数据回填前（周期还没按新口径重算、`order_ids` 未落库）同样返回 `not_found`。
+        `items` 按下单时间倒序，空数组表示该周期没有关联订单。
+      security: [{bearerAuth: []}]
+      parameters:
+        - name: position_id
+          in: path
+          required: true
+          schema: {type: integer, format: int64}
+      responses:
+        "200":
+          description: 关联订单
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [position_id, items]
+                properties:
+                  position_id: {type: integer, format: int64}
+                  items:
+                    type: array
+                    items: {$ref: "#/components/schemas/Order"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
   /v1/history/income:
     get:
       tags: [History]
       operationId: historyIncome
-      summary: 资金费流水
+      summary: 资金流水（合并视图）
       description: |
-        **只来自端上报**（`/v1/report/income`）；没上报的区间是空档，`partial=true`。不支持按交易对过滤
-        （传了 `symbol` 会被忽略，`symbol_filter_ignored=true`）。
+        四支合并：资金费来自端上报（`transfer`）、完整流水来自端上报的 Aster income
+        （`income`，`INSURANCE_CLEAR` / 返佣 / 跨抵押划转 / 自动兑换 …），手续费与已实现
+        盈亏由成交归档合成（`fill`）。上报的 `COMMISSION` / `REALIZED_PNL` 携带 `tradeId`
+        时会在读侧压制同笔成交的合成行，避免双算。没上报的区间是空档，`partial=true`。
+        不支持按交易对过滤（传了 `symbol` 会被忽略，`symbol_filter_ignored=true`）。
       security: [{bearerAuth: []}]
       parameters:
         - $ref: "#/components/parameters/Cursor"
@@ -879,8 +965,8 @@ paths:
         同一 `reference` 重复上报只算一笔。
         支持 `kind` 过滤（PRD「资金变动记录」的 All / Deposit /
         Withdraw 页签），过滤在 SQL 下推。
-        **注意**：当前没有处理中 / 成功 / 失败状态、网络、链上 txHash
-        字段（待与端侧对齐字段后补）。
+        **注意**：`network`（链）随上报携带并回显；处理中 / 成功 / 失败状态
+        与链上确认数等字段仍未约定（`reference` 可携带 tx hash）。
       security: [{bearerAuth: []}]
       parameters:
         - $ref: "#/components/parameters/Cursor"
@@ -1050,11 +1136,14 @@ paths:
     post:
       tags: [Report]
       operationId: reportIncome
-      summary: 上报资金费流水
+      summary: 上报资金流水
       description: |
-        资金费**只有端上报这一个来源**（服务端回读拿不到逐笔资金费）。只有 `incomeType` 为 `FUNDING_FEE` /
-        `FUNDING`（缺省按资金费）才落库；手续费与已实现盈亏的真值在成交归档里，不在这里重复存。
-        新落库的资金费会产生一条 `FUNDING` 通知，重复上报不再推。必须带 `amount`。
+        资金费**只有端上报这一个来源**（服务端回读拿不到逐笔资金费）。
+        `incomeType` 为 `FUNDING_FEE` / `FUNDING`（缺省按资金费）走资金费通道：新落库会产生一条
+        `FUNDING` 通知并触发当日日汇总重算；其余类型（`INSURANCE_CLEAR` / 返佣 / 跨抵押划转 /
+        自动兑换 …，含 `COMMISSION` / `REALIZED_PNL`）落 `archived_incomes`（完整资金流水），
+        不进日汇总（真值在成交归档），携带 `tradeId` 时在读侧压制同笔成交的合成行避免双算。
+        重复上报不再推。必须带 `amount`。
       security: [{bearerAuth: []}]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1076,7 +1165,7 @@ paths:
                   report_id: {type: integer, format: int64}
                   landed:
                     type: boolean
-                    description: 是否新落库（重复上报 / 非资金费类型 → false）
+                    description: 是否新落库（重复上报 → false）
                   pushed: {type: boolean}
                   note: {type: string}
         "400": {$ref: "#/components/responses/BadRequest"}
@@ -1203,6 +1292,12 @@ paths:
         个人事件 ∪ 公告广播，按时间倒序。**不提供 WebSocket**；前台实时性由 App 直连 Aster 私有 WS 负责。
         收件箱不依赖推送：没有设备令牌时事件照样入库。
 
+        **系统推送 data 与本接口的一致性合同**（Notion《接口联调》§三）：每条推送的
+        `data` 携带 `kind` / `id` / `event_key` / `type` / `symbol`（交易类） /
+        `address`（事件），取值与本接口返回的同名通知**完全一致**（`id` 在 FCM data 里
+        转成字符串）。App 点推送后据 `address` 与当前钱包比对，再调
+        `/v1/notifications/read` 标已读。
+
         页签（对应通知中心的 All / Transfers / Orders / Risk）用 `category` 筛：
 
         | `category` | 包含的事件类型 |
@@ -1236,7 +1331,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [items, next_cursor, unread]
+                required: [items, next_cursor, unread, unread_count_capped]
                 properties:
                   items:
                     type: array
@@ -1244,7 +1339,10 @@ paths:
                   next_cursor: {$ref: "#/components/schemas/NextCursor"}
                   unread:
                     type: integer
-                    description: 未读事件 + 游标之后的广播（全局角标）
+                    description: 未读事件 + 游标之后的广播（全局角标）；最多数到 100；`unread_count_capped=true` 表示 ≥100，端上显示 99+
+                  unread_count_capped:
+                    type: boolean
+                    description: "`true` = 未读数已封顶（实际 ≥100），端上显示 99+"
         "400": {$ref: "#/components/responses/BadRequest"}
         "401": {$ref: "#/components/responses/Unauthorized"}
         "429": {$ref: "#/components/responses/RateLimited"}
@@ -1423,7 +1521,7 @@ paths:
       operationId: portfolioSummary
       summary: 区间汇总
       description: |
-        **指标口径**：`realized_pnl_usd` / `fees_usd` / `volume_usd` / `trades` /
+        **指标口径**：`realized_pnl_usd` / `fees_usd`（**非负成本** = −Σ `Fill.fee`，PnL = realized − fees + funding）/ `volume_usd` / `trades` /
         权益来自回读归档；
         `funding_fee_usd` 与 `net_flow_usd` 来自端上报（见响应 `source`）。
 
@@ -1639,6 +1737,14 @@ components:
       in: query
       description: 目前**不会按交易对过滤**；传了会在响应里标 `symbol_filter_ignored=true`
       schema: {type: string}
+    OrderIdFilter:
+      name: order_id
+      in: query
+      description: |
+        仅 `/v1/history/fills` 使用：按订单 id 筛选成交（订单详情页直接用，
+        无需扫页按币对 + 订单号匹配）。索引下推；与 `cursor` 分页兼容。
+        其它历史接口收到该参数会被忽略。
+      schema: {type: integer, format: int64}
     TransferKindParam:
       name: kind
       in: query
@@ -1670,7 +1776,7 @@ components:
       description: 内容哈希
       schema: {type: string}
     CachePublic:
-      description: "`public, max-age=30`（首屏聚合）或 `public, max-age=300`（配置类）"
+      description: "`public, max-age=30`（目录）、`public, max-age=300`（配置类），或 `private, max-age=…`（含调用方 geo 判定的 bootstrap / geo）"
       schema: {type: string}
     RetryAfter:
       description: 限流后建议等待的秒数
@@ -1878,7 +1984,7 @@ components:
           type: [array, object, "null"]
     SystemConfig:
       type: object
-      required: [maintenance, min_supported_version, feature_flags, server_time]
+      required: [maintenance, min_supported_version, feature_flags, server_time, update]
       properties:
         maintenance:
           type: object
@@ -1892,6 +1998,27 @@ components:
           additionalProperties: {type: boolean}
           description: 含 `privy_login`（服务端是否配置了 Privy）
         server_time: {$ref: "#/components/schemas/Timestamp"}
+        update:
+          type: object
+          additionalProperties: {$ref: "#/components/schemas/AppUpdateInfo"}
+          description: 版本更新信息（键 = 平台 `ios` / `android`）；未配置 = 空对象
+    AppUpdateInfo:
+      type: object
+      required: [latest_version, force_update, release_notes]
+      properties:
+        latest_version:
+          type: string
+          description: 最新版本号
+        store_url:
+          type: [string, "null"]
+          description: 商店 / 下载链接；未配置为 null
+        force_update:
+          type: boolean
+          description: 是否强制更新；false 时升级判定沿用 min_supported_version
+        release_notes:
+          type: object
+          additionalProperties: {type: string}
+          description: 更新说明（键 = 语言码，如 zh / en）
     GeoDecision:
       type: object
       required: [allowed, blocked, country_known, enforced_by]
@@ -1941,6 +2068,10 @@ components:
               type: object
               additionalProperties: {type: boolean}
             geo: {$ref: "#/components/schemas/GeoDecision"}
+            update:
+              type: object
+              additionalProperties: {$ref: "#/components/schemas/AppUpdateInfo"}
+              description: 同 /v1/config/system 的 update（App「检查更新」用）
         source:
           type: object
           properties:
@@ -2184,6 +2315,10 @@ components:
               description: 上游原因码（`-5049` / `-5052` / `-5053`）
         unread_notifications:
           type: integer
+          description: 未读条数（未读事件 + 游标之后的广播）；最多数到 100；`unread_count_capped=true` 表示 ≥100，端上显示 99+
+        unread_count_capped:
+          type: boolean
+          description: "`true` = 未读数已封顶（实际 ≥100），端上显示 99+"
 
     WatchlistItem:
       type: object
@@ -2241,6 +2376,21 @@ components:
           $ref: "#/components/schemas/NullableDecimal"
         reduce_only:
           type: boolean
+        stop_price:
+          $ref: "#/components/schemas/NullableDecimal"
+          description: 触发价（条件单）；普通单为 null（Notion《接口联调》§一）
+        activate_price:
+          $ref: "#/components/schemas/NullableDecimal"
+          description: 追踪委托激活价
+        price_rate:
+          $ref: "#/components/schemas/NullableDecimal"
+          description: 追踪委托回调比例
+        close_position:
+          type: [boolean, "null"]
+          description: 是否全部平仓（「触发时全部平仓」的强平单为 true）
+        cum_quote:
+          $ref: "#/components/schemas/NullableDecimal"
+          description: 成交额（累计 quote）；旧数据回填前为 null
         order_time:
           $ref: "#/components/schemas/Timestamp"
         update_time:
@@ -2334,17 +2484,42 @@ components:
         liquidated:
           type: boolean
           description: 该周期以强平结束
+        leverage:
+          $ref: "#/components/schemas/NullableDecimal"
+          description: 周期内首次观测到的杠杆（**不是**下单那一刻的杠杆；没观测到为 `null`）
+        margin_type:
+          type: [string, "null"]
+          enum: [cross, isolated, null]
+          description: 周期内首次观测到的保证金模式（没观测到为 `null`）
+        closed_qty:
+          $ref: "#/components/schemas/NullableDecimal"
+          description: |
+            已平数量（周期内平仓腿成交量合计）。`null` = 该周期还没按新口径重算（端上显示占位）。
+        roe:
+          $ref: "#/components/schemas/NullableDecimal"
+          description: |
+            回报率 = 已实现盈亏 ÷ 估算初始保证金（`entry_price × max_qty ÷ leverage`）。
+
+            **派生估算值，不是 Aster 权威字段**：Aster 只给当前仓位的 `isolatedMargin`，
+            历史仓位的初始保证金无从取回。缺任一前置条件（没观测到杠杆 / 均价或峰值为 0）
+            时为 `null`，端上显示占位。`inferred=true` 的周期也为 `null`（那种周期的开仓
+            均价不可信，拿它算回报率是假精确）。分子是**未扣手续费**的已实现盈亏（手续费
+            见 `fees`）。
     IncomeItem:
       type: object
       properties:
+        id:
+          type: string
+          description: 行唯一 id（`source:seq:kind`；同一笔成交的 COMMISSION / REALIZED_PNL 两行互不相同）
         occurred_at:
           $ref: "#/components/schemas/Timestamp"
         source:
           type: string
-          description: 行来源（`app_report` / `balance_diff`）
+          enum: [transfer, income, fill]
+          description: 行来源：资金费上报（transfer）/ 完整流水上报（income）/ 成交合成（fill）
         kind:
           type: string
-          description: 资金费类（`funding`）
+          description: 类型（`FUNDING_FEE` / `COMMISSION` / `REALIZED_PNL` / 上报原样类型如 `INSURANCE_CLEAR`）
         asset:
           type: string
         amount:
@@ -2353,9 +2528,13 @@ components:
           type: [string, "null"]
         balance_after:
           $ref: "#/components/schemas/NullableDecimal"
+        tran_id:
+          type: [string, "null"]
+          description: Aster income 的唯一流水引用（`tranId`）；仅端上报的完整流水行携带，合成行为 null
         data_source:
           type: string
-          const: app_report
+          enum: [app_report, fill_archive]
+          description: 资金费 / 完整流水 = `app_report`；成交合成 = `fill_archive`
         source_tier:
           $ref: "#/components/schemas/DataTier"
     TransferItem:
@@ -2379,6 +2558,9 @@ components:
         reference:
           type: [string, "null"]
           description: 外部引用（tx hash / 内部流水号），去重用
+        network:
+          type: [string, "null"]
+          description: 链（Aster 充提记录的 `chainId` 口径；端上报携带，未报为 null）
         data_source:
           type: string
           enum: [app_report, balance_diff]
@@ -2551,10 +2733,21 @@ components:
           description: 金额（`report/income`、`report/transfers` 必填）
         incomeType:
           type: string
-          description: "`FUNDING_FEE` / `FUNDING`（落库）；`COMMISSION` /
-            `REALIZED_PNL` … 只记原始日志"
+          description: "`FUNDING_FEE` / `FUNDING` 走资金费通道；其余类型
+            （`COMMISSION` / `REALIZED_PNL` / `INSURANCE_CLEAR` / 返佣 / 跨抵押划转 /
+            自动兑换 …）落 `archived_incomes`（完整资金流水）"
+        tranId:
+          type: string
+          description: Aster income 的唯一流水引用；去重优先靠它（没带退回全行去重）
+        tradeId:
+          type: integer
+          format: int64
+          description: 成交关联类流水（`COMMISSION` / `REALIZED_PNL`）的成交 id；带上才能在读侧压制同笔成交的合成行
         kind:
           $ref: "#/components/schemas/TransferKind"
+        network:
+          type: string
+          description: 充提链（Aster 充提记录的 `chainId` 口径；随流水与 TRANSFER 通知回显）
         balanceAfter:
           type: string
           description: 划转后的余额
@@ -2657,8 +2850,21 @@ components:
         payload:
           type: object
           additionalProperties: true
-          description: 事件详情（成交含 price / qty / fee；追保含 mark_price /
-            liquidation_price / distance）
+          description: |
+            事件详情，字段与事件类型一一对应（Notion《接口联调》§二）：
+            - `FILL`：trade_id / order_id / symbol / side / status / price / qty / fee /
+              fee_asset；订单同轮可见时另带 order_type / orig_type / avg_price（不可见为 null，不推断）
+            - `ORDER`：order_id / client_order_id / symbol / side / status / executed_qty /
+              order_type / orig_type / avg_price（回读侧）；端上报侧另带 executed_qty / avg_price
+            - `TRIGGER`：同 `ORDER`（条件单触发后的订单状态）
+            - `LIQUIDATION`：order_id / symbol / side / status / executed_qty
+            - `MARGIN_CALL`：symbol / position_side / mark_price / liquidation_price / distance
+              （`distance` = |mark − liq| / mark 的**小数比例**，如 0.08 = 距强平 8%；不是百分数也不是价差）
+            - `TRANSFER`：kind / asset / amount / reference / network（链，端上报携带时）
+            - `FUNDING`：symbol / asset / amount
+            - `ANNOUNCE` / `MAINTENANCE`：广播自定内容（无固定 schema）
+            端上报来源的事件额外带 `source: "report"`；回读来源带 trade_id 等上表字段。
+            base_asset / quote_asset 未携带：以 `/v1/symbols` 的交易对元数据为准，不在事件里重复。
         read:
           type: boolean
         read_at:
@@ -2790,6 +2996,9 @@ components:
           $ref: "#/components/schemas/Decimal"
         fees_usd:
           $ref: "#/components/schemas/Decimal"
+          description: |
+            **非负成本**（= −Σ `Fill.fee`；`Fill.fee` 是「负=收取」，这里符号取反后求和）。
+            端上 PnL 口径 `realized − fees + funding` 在本约定下直接成立。
         funding_fee_usd:
           $ref: "#/components/schemas/Decimal"
           description: 只来自端上报；`partial=true` 时 0 不代表真的是 0
@@ -2871,6 +3080,17 @@ components:
           $ref: "#/components/schemas/NullableDecimal"
         low_usd:
           $ref: "#/components/schemas/NullableDecimal"
+        equity_gaps:
+          type: array
+          description: |
+            权益日表在区间内相邻两点之间缺失的日期段（停机 / worker 故障留下的洞）。
+            首点之前与末点之后不算缺口。端上应据此标注断线，而非把曲线画成连续。
+          items:
+            type: object
+            properties:
+              from: {$ref: "#/components/schemas/DateString"}
+              to: {$ref: "#/components/schemas/DateString"}
+              days: {type: integer, minimum: 1}
         max_drawdown:
           type:
             - object
@@ -2935,6 +3155,9 @@ components:
           $ref: "#/components/schemas/Decimal"
         fees_usd:
           $ref: "#/components/schemas/Decimal"
+          description: |
+            **非负成本**（= −Σ `Fill.fee`；`Fill.fee` 是「负=收取」，这里符号取反后求和）。
+            端上 PnL 口径 `realized − fees + funding` 在本约定下直接成立。
         funding_fee_usd:
           $ref: "#/components/schemas/Decimal"
         volume_usd:
@@ -2950,6 +3173,9 @@ components:
           $ref: "#/components/schemas/Decimal"
         fees_usd:
           $ref: "#/components/schemas/Decimal"
+          description: |
+            **非负成本**（= −Σ `Fill.fee`；`Fill.fee` 是「负=收取」，这里符号取反后求和）。
+            端上 PnL 口径 `realized − fees + funding` 在本约定下直接成立。
         funding_fee_usd:
           $ref: "#/components/schemas/Decimal"
         volume_usd:

@@ -1,3 +1,5 @@
+import 'package:vanta/features/portfolio/data/income_archive_repository.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -276,7 +278,7 @@ void main() {
     );
   });
 
-  test('tab source wiring keeps Trade and Position on OpenAPI only', () {
+  test('all tab sources use the archive, with optional transaction reporting', () {
     final api = HistoryRepository();
     final c = ProviderContainer(
       overrides: [
@@ -289,10 +291,13 @@ void main() {
     for (final tab in TradingHistoryTab.values) {
       expect(
         c.read(tradingHistorySourceProvider(tab)),
-        same(historyUsesAster(tab) ? repository : api),
+        tab == TradingHistoryTab.transactions
+            ? isA<IncomeArchiveRepository>().having((r) => r.archive, 'archive', same(api))
+            : same(api),
       );
     }
-    expect(c.read(tradingOrderFillsRepositoryProvider), same(repository));
+    expect(c.read(tradingOrderFillsRepositoryProvider), same(api));
+    expect(c.read(tradingPositionOrdersRepositoryProvider), same(api));
   });
 
   for (final bodyStarted in [false, true]) {
