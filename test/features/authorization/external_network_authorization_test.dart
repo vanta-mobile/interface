@@ -110,25 +110,22 @@ void main() {
         );
         final rejected = outcome == 'rejected' || outcome == 'addRejected';
         final failed = rejected || outcome == 'cancelled';
-        final verification = failed
+        final verification = failed || outcome == 'unknown'
             ? expectLater(
                 pending,
                 throwsA(
                   isA<AccountReadFailure>().having(
                     (e) => e.key,
                     'key',
-                    rejected ? 'authWalletRejected' : 'authWalletChanged',
+                    outcome == 'unknown'
+                        ? 'authorizationUnknown'
+                        : rejected
+                        ? 'authWalletRejected'
+                        : 'authWalletChanged',
                   ),
                 ),
               )
-            : expectLater(
-                pending,
-                completion(
-                  outcome == 'unknown'
-                      ? TradingAuthorizationResult.unknown
-                      : TradingAuthorizationResult.acknowledged,
-                ),
-              );
+            : expectLater(pending, completion(TradingAuthorizationResult.acknowledged));
         await Future<void>.delayed(Duration.zero);
         expect(operations, ['wallet_switchEthereumChain']);
         gate.complete();

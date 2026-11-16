@@ -107,6 +107,9 @@ class AsterAccountService extends AsterReadService {
   Future<Object?> commissionRate({required String query, required String signature}) =>
       signedGet('/fapi/v3/commissionRate', query: query, signature: signature);
 
+  Future<Object?> builders({required String query, required String signature}) =>
+      signedGet('/fapi/v3/builder', query: query, signature: signature);
+
   Future<Object?> newOrder({required String query, required String signature}) =>
       signedPost('/fapi/v3/order', query: query, signature: signature);
 

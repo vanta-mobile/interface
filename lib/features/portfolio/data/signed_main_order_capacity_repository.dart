@@ -22,6 +22,7 @@ import 'main_order_risk_mapper.dart';
 import 'openable_notional_mapper.dart';
 import 'position_leverage_mapper.dart';
 import 'signed_account_request.dart';
+import '../domain/builder_order_fee.dart';
 
 class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
   final AccountRequestAuthorization? authorization;
@@ -186,7 +187,11 @@ class SignedMainOrderCapacityRepository implements MainOrderCapacityRepository {
         contractCap: contractCap,
         indices: indices,
         now: now(),
-        marketFacts: MainOrderAccountFacts(orders: orders, riskTiers: riskTiers, takerFee: fee),
+        marketFacts: MainOrderAccountFacts(
+          orders: orders,
+          riskTiers: riskTiers,
+          takerFee: builderSizingTakerFee(fee),
+        ),
       );
     } on FormatException {
       throw AccountReadFailure(

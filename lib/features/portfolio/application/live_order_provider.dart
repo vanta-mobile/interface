@@ -1,4 +1,6 @@
 import '../../authorization/application/trading_agent_provider.dart';
+import '../../authorization/application/builder_authorization_provider.dart';
+import '../data/builder_order_preflight.dart';
 import '../../market/application/selection_providers.dart';
 import '../../../core/network/network_providers.dart';
 
@@ -31,6 +33,7 @@ final liveOrderRepositoryProvider = Provider<LiveOrderRepository>((ref) {
     now: ref.watch(liveOrderClockProvider),
     journal: ref.watch(orderRecoveryJournalProvider),
     authorization: ref.watch(asterRequestAuthorizationProvider),
+    builder: BuilderOrderPreflight(ref.watch(builderAuthorizationRepositoryProvider)),
   );
 });
 
@@ -345,9 +348,9 @@ class LiveOrderController extends Notifier<LiveOrderState> {
   }
 
   void _markAccountOutputsStale() {
-    ref.read(accountReadProvider.notifier).markStale();
-    ref.read(positionRiskProvider.notifier).markStale();
-    ref.read(openOrdersReadProvider.notifier).markStale();
+    ref.read(accountReadProvider.notifier).markStaleAfterWrite();
+    ref.read(positionRiskProvider.notifier).markStaleAfterWrite();
+    ref.read(openOrdersReadProvider.notifier).markStaleAfterWrite();
   }
 
   AccountReadFailure _failure(Object error) =>

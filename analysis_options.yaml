@@ -5,6 +5,8 @@ analyzer:
     - android/**
     - ios/**
     - third_party/k_chart_plus/**
+    - third_party/reown_core/**
+    - third_party/reown_appkit/**
   language:
     strict-casts: true
     strict-inference: true

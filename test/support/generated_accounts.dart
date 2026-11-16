@@ -1,3 +1,7 @@
+import 'package:vanta/features/authorization/application/builder_authorization_provider.dart';
+
+import 'builder.dart';
+
 import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
 
 import 'package:vanta/features/authorization/domain/trading_agent.dart';
@@ -78,6 +82,9 @@ class GeneratedAccountsFixture {
     );
     container = ProviderContainer(
       overrides: [
+        builderApprovalJournalProvider.overrideWithValue(
+          MemoryBuilderApprovalJournal(approvedByDefault: true),
+        ),
         tradingAgentStoreProvider.overrideWithValue(
           agents ?? MemoryTradingAgentStorage().store(DateTime.now),
         ),

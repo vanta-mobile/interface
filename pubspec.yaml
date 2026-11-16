@@ -77,4 +77,10 @@ dependency_overrides:
   # filled current-price badge (`KChartColors.nowPriceTextColor`).
   k_chart_plus:
     path: third_party/k_chart_plus
+  # Serialize SDK, lifecycle, and network relay reconnects (upstream 1.5.1).
+  reown_core:
+    path: third_party/reown_core
+  # Keep restored-wallet launching and launch failures observable (upstream 1.9.0).
+  reown_appkit:
+    path: third_party/reown_appkit
   intl: ^0.20.3

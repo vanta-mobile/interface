@@ -1,0 +1,66 @@
+import 'package:flutter/material.dart';
+import 'package:reown_appkit/modal/widgets/buttons/base_button.dart';
+import 'package:reown_appkit/reown_appkit.dart';
+
+class PrimaryButton extends StatelessWidget {
+  final String title;
+  final VoidCallback? onTap;
+  final bool loading;
+  final Color? color;
+  final BorderRadiusGeometry? borderRadius;
+  final BaseButtonSize buttonSize;
+  const PrimaryButton({
+    super.key,
+    required this.title,
+    this.onTap,
+    this.loading = false,
+    this.color,
+    this.borderRadius,
+    this.buttonSize = BaseButtonSize.big,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = ReownAppKitModalTheme.colorsOf(context);
+    final radiuses = ReownAppKitModalTheme.radiusesOf(context);
+    return BaseButton(
+      semanticsLabel: 'PrimaryButton',
+      size: buttonSize,
+      child: loading
+          ? SizedBox(
+              height: BaseButtonSize.big.height * 0.4,
+              width: BaseButtonSize.big.height * 0.4,
+              child: CircularProgressIndicator(
+                color: themeColors.accent100,
+                strokeWidth: 2.0,
+              ),
+            )
+          : Text(title),
+      onTap: loading ? null : onTap,
+      buttonStyle: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return themeColors.grayGlass002;
+          }
+          return color ?? themeColors.accent100;
+        }),
+        foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return themeColors.foreground200;
+          }
+          return themeColors.inverse100;
+        }),
+        shape: WidgetStateProperty.resolveWith<RoundedRectangleBorder>((
+          states,
+        ) {
+          return RoundedRectangleBorder(
+            side: BorderSide(color: themeColors.grayGlass002, width: 1.0),
+            borderRadius: radiuses.isSquare()
+                ? BorderRadius.zero
+                : BorderRadius.circular(buttonSize.height),
+          );
+        }),
+      ),
+    );
+  }
+}

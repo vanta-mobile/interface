@@ -9,6 +9,7 @@ import 'signed_order_query_repository.dart';
 import 'order_recovery_boundary.dart';
 import '../domain/order_query.dart';
 import '../domain/order_recovery.dart';
+import 'builder_order_preflight.dart';
 
 class SignedAttachedOrderRepository {
   final AccountRequestAuthorization? authorization;
@@ -19,12 +20,14 @@ class SignedAttachedOrderRepository {
     this.now, {
     this.authorization,
     this.journal,
+    this.builder,
   });
   final AsterAccountService service;
   final AccountRequestSigner sign;
   final AsterReadNonces nonces;
   final DateTime Function() now;
   final OrderRecoveryJournal? journal;
+  final BuilderOrderPreflight? builder;
 
   SignedAccountRequest _request(
     Future<Object?> Function({required String query, required String signature}) send,
@@ -43,11 +46,21 @@ class SignedAttachedOrderRepository {
     required void Function(LiveOrderStep) onStep,
   }) => RequestScope.run(isCurrent, () async {
     var submitted = false;
+    final quote = await builder?.read(
+      service: service,
+      sign: sign,
+      nonces: nonces,
+      authorization: authorization,
+      intent: intent,
+      isCurrent: isCurrent,
+      canSubmit: canSubmit,
+    );
     AccountReadFailure? postFailure;
     try {
       final payload =
           await _request(({required query, required signature}) async {
             if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
+            quote?.checkFresh();
             recordOrderAttempt(journal, intent, now());
             if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
             submitted = true;
@@ -55,7 +68,7 @@ class SignedAttachedOrderRepository {
             return service.placeStrategyOrder(query: query, signature: signature);
           }).read(
             address: intent.context.address,
-            parameters: intent.strategyParameters,
+            parameters: {...intent.strategyParameters, ...?quote?.parameters},
             isCurrent: isCurrent,
             onStep: (step) {
               if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');

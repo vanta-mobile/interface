@@ -1,0 +1,227 @@
+import 'dart:math';
+
+import 'package:reown_appkit/modal/constants/string_constants.dart';
+import 'package:reown_appkit/reown_appkit.dart';
+
+class CoreUtils {
+  static bool isValidProjectID(String projectId) {
+    return RegExp(r'^[0-9a-fA-F]{32}$').hasMatch(projectId);
+  }
+
+  static bool isValidEmail(String email) {
+    if (email.contains(' ')) return false;
+    return RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    ).hasMatch(email);
+  }
+
+  static bool isHttpUrl(String url) {
+    return url.startsWith('http://') || url.startsWith('https://');
+  }
+
+  static String createPlainUrl(String url) {
+    if (url.isEmpty) return url;
+
+    String plainUrl = url;
+    if (!plainUrl.endsWith('/')) {
+      plainUrl = '$url/';
+    }
+    return plainUrl;
+  }
+
+  static String createSafeUrl(String url) {
+    if (url.isEmpty) return url;
+
+    String safeUrl = url;
+    if (!safeUrl.contains('://')) {
+      safeUrl = url.replaceAll('/', '').replaceAll(':', '');
+      safeUrl = '$safeUrl://';
+    } else {
+      final parts = safeUrl.split('://');
+      if (parts.last.isNotEmpty && parts.last != 'wc') {
+        if (!safeUrl.endsWith('/')) {
+          return '$safeUrl/';
+        }
+        return safeUrl;
+      } else {
+        safeUrl = url.replaceFirst('://wc', '://');
+      }
+    }
+    return safeUrl;
+  }
+
+  static Uri? formatCustomSchemeUri(String? appUrl, String? wcUri) {
+    if (appUrl == null || appUrl.isEmpty) return null;
+
+    if (isHttpUrl(appUrl)) {
+      return formatWebUrl(appUrl, wcUri);
+    }
+
+    final safeAppUrl = createSafeUrl(appUrl);
+
+    if (wcUri == null) {
+      return Uri.parse(safeAppUrl);
+    }
+
+    if (wcUri.contains('requestId')) {
+      return Uri.parse('${safeAppUrl}wc?$wcUri');
+    }
+
+    final encodedWcUrl = Uri.encodeComponent(wcUri);
+    return Uri.parse('${safeAppUrl}wc?uri=$encodedWcUrl');
+  }
+
+  static Uri? formatWebUrl(String? appUrl, String? wcUri) {
+    if (appUrl == null || appUrl.isEmpty) return null;
+
+    if (!isHttpUrl(appUrl)) {
+      return formatCustomSchemeUri(appUrl, wcUri);
+    }
+    String plainAppUrl = createPlainUrl(appUrl);
+
+    if (wcUri == null) {
+      return Uri.parse(plainAppUrl);
+    }
+
+    if (wcUri.contains('requestId')) {
+      return Uri.parse('${plainAppUrl}wc?$wcUri');
+    }
+
+    final encodedWcUrl = Uri.encodeComponent(wcUri);
+    return Uri.parse('${plainAppUrl}wc?uri=$encodedWcUrl');
+  }
+
+  static String formatChainBalance(double? chainBalance, {int precision = 4}) {
+    final p = min(precision, 16);
+    if (chainBalance == null) {
+      return '_.'.padRight(p + 1, '_');
+    }
+    if (chainBalance == 0.0) {
+      return '0.'.padRight(p + 2, '0');
+    }
+
+    if (chainBalance.toInt() > 0) {
+      return chainBalance.toStringAsFixed(p - 1)
+        ..replaceAll(RegExp(r'([.]*0+)(?!.*\d)'), '');
+    }
+
+    return chainBalance.toStringAsFixed(p)
+      ..replaceAll(RegExp(r'([.]*0+)(?!.*\d)'), '');
+  }
+
+  static String formatStringBalance(String stringValue, {int precision = 4}) {
+    final value = double.tryParse(stringValue) ?? double.parse('0');
+    return formatChainBalance(value, precision: precision);
+  }
+
+  // TODO move to Core SDK
+  static String getUserAgent() {
+    String userAgent =
+        '${CoreConstants.X_SDK_TYPE}/'
+        '${CoreConstants.X_SDK_VERSION}/'
+        '${CoreConstants.X_CORE_SDK_VERSION}/'
+        '${ReownCoreUtils.getOS()}';
+    //
+    return userAgent;
+  }
+
+  // TODO move to Core SDK
+  static Map<String, String> getAPIHeaders(
+    String projectId, [
+    String? referer,
+    String? origin,
+  ]) {
+    return {
+      'x-project-id': projectId,
+      'x-sdk-type': CoreConstants.X_SDK_TYPE,
+      'x-sdk-version': CoreConstants.X_SDK_VERSION,
+      'user-agent': getUserAgent(),
+      if (referer != null) 'referer': referer,
+      if (origin != null) 'origin': origin,
+    };
+  }
+
+  static Map<String, String> getApiQueryParams(String projectId) {
+    return {
+      'st': CoreConstants.X_SDK_TYPE,
+      'sv': CoreConstants.X_SDK_VERSION,
+      'projectId': projectId,
+    };
+  }
+
+  static String formatImageUri(String imageUrl, String projectId) {
+    if (imageUrl.isNotEmpty) {
+      Uri imageUri = Uri.parse(imageUrl);
+      if (imageUri.host == 'api.web3modal.com') {
+        final queryParams = CoreUtils.getApiQueryParams(projectId);
+        imageUri = imageUri.replace(queryParameters: queryParams);
+      }
+      return imageUri.toString();
+    }
+    return imageUrl;
+  }
+
+  /// Converts an amount string (in smallest units) to a decimal number.
+  /// For example, stringAmountToDouble('10000000', 6) returns 10.0.
+  static double stringAmountToDouble(String amount, int decimals) {
+    final bigIntValue = BigInt.parse(amount);
+    final factor = BigInt.from(10).pow(decimals);
+    return bigIntValue / factor;
+  }
+
+  static String toPrecision(
+    double value, {
+    String? withSymbol,
+    int decimals = 4,
+  }) {
+    final parsed = value
+        .toStringAsPrecision(8)
+        .toDouble()
+        .toStringAsFixed(decimals);
+    if ((withSymbol ?? '').isNotEmpty) {
+      return '$parsed $withSymbol';
+    }
+    return parsed;
+  }
+}
+
+extension StringExtension on String {
+  double toDouble() {
+    return double.parse(this);
+  }
+}
+
+String constructCallData(String recipient, BigInt sendValue) {
+  // Keccak256 hash of `transfer(address,uint256)`'s signature
+  final transferMethodId = 'a9059cbb';
+  // Remove '0x' and pad
+  final paddedReceiver = recipient.replaceFirst('0x', '').padLeft(64, '0');
+  // Amount in hex, padded
+  final paddedAmount = sendValue.toRadixString(16).padLeft(64, '0');
+  //
+  return '0x$transferMethodId$paddedReceiver$paddedAmount';
+}
+
+extension JsonRpcErrorExtensions on JsonRpcError {
+  bool get isUserRejected {
+    final regexp = RegExp(
+      r'\b(rejected|cancelled|disapproved|denied)\b',
+      caseSensitive: false,
+    );
+    final code = (this.code ?? 0);
+    final match = RegExp(r'\b500[0-3]\b').hasMatch(code.toString());
+    if (match || code == Errors.getSdkError(Errors.USER_REJECTED_SIGN).code) {
+      return true;
+    }
+    return regexp.hasMatch(toString());
+  }
+
+  String get cleanMessage {
+    return (message ?? '')
+        .replaceAll('reown_getExchangePayUrl:', '')
+        .replaceAll('Internal error:', '')
+        .replaceAll('Validation error:', '')
+        .replaceAll('Execution error:', '')
+        .trim();
+  }
+}

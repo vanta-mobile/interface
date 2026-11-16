@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:privy_flutter/privy_flutter.dart';
 
 import '../domain/auth_session.dart';
+import 'wallet_error_message.dart';
 
 typedef PrivyTypedDataRequester = Future<Result<EthereumRpcResponse>> Function(
   EmbeddedEthereumWallet wallet,
@@ -26,7 +27,10 @@ Future<String> signEmbeddedPersonalMessage({
   );
   return switch (result) {
     Success<EthereumRpcResponse>(:final value) => value.data,
-    Failure<EthereumRpcResponse>() => throw const AuthFailure('authWalletUnavailable'),
+    Failure<EthereumRpcResponse>(:final error) => throw AuthFailure(
+      'authWalletUnavailable',
+      reason: walletReason(error.message),
+    ),
   };
 }
 
@@ -46,7 +50,10 @@ Future<String> signEmbeddedRequest({
   );
   final signature = switch (result) {
     Success<EthereumRpcResponse>(:final value) => value.data,
-    Failure<EthereumRpcResponse>() => throw const AuthFailure('authWalletUnavailable'),
+    Failure<EthereumRpcResponse>(:final error) => throw AuthFailure(
+      'authWalletUnavailable',
+      reason: walletReason(error.message),
+    ),
   };
   if (!RegExp(r'^0x[a-fA-F0-9]{130}$').hasMatch(signature)) {
     throw const AuthFailure('authWalletSignature');

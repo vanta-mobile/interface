@@ -9,15 +9,16 @@ import 'package:vanta/features/auth/data/wallet_redirect_handler.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 
 import '../../support/reown_modal.dart';
+import 'reown_connector_fixture.dart';
 
 void main() {
-  late _Modal modal;
+  late ConnectorTestModal modal;
   late ReownWalletConnector connector;
   late BuildContext host;
   late StreamController<Uri> links;
 
   setUp(() {
-    modal = _Modal();
+    modal = ConnectorTestModal();
     links = StreamController<Uri>(sync: true);
     connector = ReownWalletConnector(
       const WalletConfiguration(projectId: 'test'),
@@ -99,6 +100,26 @@ void main() {
     });
   });
 
+  testWidgets('restore skips the remote catalog and explicit connection prepares it', (
+    tester,
+  ) async {
+    await mount(tester);
+    modal.isConnected = true;
+    modal.catalogGate = Completer<void>();
+    final restored = await connector.restore(host, expectedAddress: modal.address);
+    expect(restored?.isCurrent, true);
+    expect(modal.initializationModes, [true]);
+    final pending = connector.connect(host);
+    await tester.pump();
+    expect(modal.initializationModes, [true, false]);
+    expect(modal.calls, ['init']);
+    modal.catalogGate!.complete();
+    final fresh = await pending;
+    expect(modal.calls, ['init', 'disconnect', 'open']);
+    await restored!.release();
+    await fresh.release();
+  });
+
   testWidgets('a sleeping wallet peer never blocks or downgrades session restore', (tester) async {
     await mount(tester);
     modal.isConnected = true;
@@ -111,6 +132,34 @@ void main() {
     expect(modal.appKit.pings, 0);
     expect(modal.calls, ['init']);
     await connection!.release();
+  });
+
+  testWidgets('restoration cannot resurrect a session that just failed its peer check', (
+    tester,
+  ) async {
+    await mount(tester);
+    modal.isConnected = true;
+    final connection = await connector.restore(host, expectedAddress: modal.address);
+    modal.requestGate = Completer<dynamic>();
+    modal.appKit.pingFailure = JsonRpcError(code: 7001, message: 'Session not found');
+    await expectLater(
+      connection!.signPersonalMessage('Sign in'),
+      throwsA(isA<AuthFailure>().having((e) => e.key, 'key', 'authWalletSessionUnverified')),
+    );
+    await expectLater(
+      connector.restore(host, expectedAddress: modal.address),
+      throwsA(isA<AuthFailure>().having((e) => e.key, 'key', 'authWalletSessionUnverified')),
+    );
+    expect(modal.calls.where((call) => call == 'open'), isEmpty);
+    await connection.release();
+    final oldRequest = modal.requestGate!;
+    modal.requestGate = null;
+    modal.appKit.pingFailure = null;
+    final fresh = await connector.connect(host);
+    expect(await fresh.signPersonalMessage('Sign in'), '0x${'1' * 130}');
+    expect(modal.calls.where((call) => call == 'open'), hasLength(1));
+    oldRequest.complete('0x${'1' * 130}');
+    await fresh.release();
   });
 
   testWidgets('missing, expired and different-address sessions cannot restore', (tester) async {
@@ -189,6 +238,7 @@ void main() {
     final first = expectTimeout(connector.connect(host));
     await tester.pump(const Duration(seconds: 2));
     await first;
+    expect((modal.appKit.core.relayClient as TestRelayClient).disconnects, 1);
     final second = expectTimeout(connector.connect(host));
     await tester.pump(const Duration(seconds: 2));
     await second;
@@ -200,6 +250,50 @@ void main() {
     final connection = await connector.connect(host);
     expect(modal.calls, ['init', 'open']);
     await connection.release();
+  });
+
+  testWidgets('preparation relay failure retains its cause and settles before the watchdog', (
+    tester,
+  ) async {
+    await mount(tester);
+    modal.initGate = Completer<void>();
+    final pending = expectLater(
+      connector.restore(host, expectedAddress: modal.address),
+      throwsA(isA<AuthFailure>().having((e) => e.reason, 'reason', 'Relay handshake refused')),
+    );
+    await tester.pump();
+    final relay = modal.appKit.core.relayClient as TestRelayClient;
+    relay.onRelayClientError.broadcast(ErrorEvent('Relay handshake refused'));
+    await tester.pump();
+    await pending;
+    expect(relay.disconnects, 1);
+    expect(relay.onRelayClientError.subscriberCount, 0);
+    expect(modal.calls, ['init']);
+    modal.initGate!.complete();
+    await tester.pump();
+    expect(modal.calls, ['init']);
+  });
+
+  testWidgets('explicit retry after a timed-out restore runs fresh connection preparation', (
+    tester,
+  ) async {
+    await mount(tester);
+    modal.isConnected = true;
+    modal.initGate = Completer<void>();
+    final expired = expectLater(
+      connector.restore(host, expectedAddress: modal.address),
+      throwsA(isA<AuthFailure>().having((e) => e.key, 'key', 'authWalletConnectionTimeout')),
+    );
+    await tester.pump(const Duration(seconds: 2));
+    await expired;
+    final pending = connector.connect(host);
+    await tester.pump();
+    expect(modal.calls, ['init']);
+    modal.initGate!.complete();
+    final fresh = await pending;
+    expect(modal.initializationModes, [true, false]);
+    expect(modal.calls, ['init', 'disconnect', 'open']);
+    await fresh.release();
   });
 
   testWidgets('disposal during setup never opens a wallet prompt', (tester) async {
@@ -217,120 +311,4 @@ void main() {
     await disposal;
     expect(modal.calls, ['init']);
   });
-}
-
-class _Modal extends ChangeNotifier implements ReownAppKitModal {
-  @override
-  final TestReownAppKit appKit = TestReownAppKit();
-  bool get observesSession => hasListeners;
-  @override
-  Future<void> reconnectRelay() async {
-    calls.add('relay');
-  }
-
-  final calls = <String>[];
-  final envelopes = <String>[];
-  bool acceptEnvelope = true;
-  final address = '0x2222222222222222222222222222222222222222';
-  int expiry = 9999999999;
-  BuildContext? host;
-  Completer<void>? initGate, openGate;
-  bool cancel = false, deferDisconnect = false;
-  bool? disconnectAll;
-  @override
-  bool isConnected = false;
-  @override
-  bool isOpen = false;
-  @override
-  ReownAppKitModalStatus status = ReownAppKitModalStatus.idle;
-  @override
-  BuildContext? get modalContext => host;
-  @override
-  Future<void> init() async {
-    calls.add('init');
-    await initGate?.future;
-    status = ReownAppKitModalStatus.initialized;
-  }
-
-  @override
-  Future<bool> dispatchEnvelope(String url) async {
-    expect(status, ReownAppKitModalStatus.initialized);
-    envelopes.add(url);
-    return acceptEnvelope;
-  }
-
-  @override
-  Future<void> disconnect({bool disconnectAllSessions = true}) async {
-    disconnectAll = disconnectAllSessions;
-    calls.add('disconnect');
-    status = ReownAppKitModalStatus.initializing;
-    if (!deferDisconnect) finishDisconnect();
-  }
-
-  void finishDisconnect() {
-    isConnected = false;
-    status = ReownAppKitModalStatus.initialized;
-    notifyListeners();
-  }
-
-  @override
-  Future<void> openModalView([Widget? startWidget]) async {
-    calls.add('open');
-    isOpen = true;
-    await openGate?.future;
-    isOpen = false;
-    isConnected = !cancel;
-  }
-
-  void approve() => openGate!.complete();
-
-  @override
-  ReownAppKitModalSession? get session => isConnected
-      ? ReownAppKitModalSession(
-          sessionData: SessionData(
-            topic: 'topic',
-            pairingTopic: 'pairing',
-            relay: Relay('irn'),
-            expiry: expiry,
-            acknowledged: true,
-            controller: 'key',
-            self: metadata,
-            peer: metadata,
-            namespaces: {
-              'eip155': Namespace(
-                accounts: ['eip155:56:$address'],
-                methods: ['personal_sign', 'eth_signTypedData_v4'],
-                events: [],
-              ),
-            },
-          ),
-        )
-      : null;
-  static const metadata = ConnectionMetadata(
-    publicKey: 'key',
-    metadata: PairingMetadata(
-      name: 'test',
-      description: 'test',
-      url: 'https://example.com',
-      icons: [],
-    ),
-  );
-  @override
-  ReownAppKitModalNetworkInfo? get selectedChain => const ReownAppKitModalNetworkInfo(
-    name: 'BNB Chain',
-    chainId: 'eip155:56',
-    currency: 'BNB',
-    rpcUrl: 'https://example.com',
-    explorerUrl: 'https://example.com',
-  );
-  bool disposed = false;
-  @override
-  Future<void> dispose() async {
-    if (disposed) return;
-    disposed = true;
-    super.dispose();
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

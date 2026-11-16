@@ -20,8 +20,11 @@ class TestTradingAuthorizationRepository implements TradingAuthorizationReposito
   Future<TradingAuthorizationResult> enable({
     required TradingAuthorizationReview review,
     required bool Function() isCurrent,
+    void Function(TradingAuthorizationStep)? onStep,
+    bool retryPendingBuilder = false,
   }) async {
     sends++;
+    onStep?.call(TradingAuthorizationStep.submitting);
     await gate?.future;
     if (failure != null) throw failure!;
     return TradingAuthorizationResult.acknowledged;
@@ -31,6 +34,7 @@ class TestTradingAuthorizationRepository implements TradingAuthorizationReposito
   Future<TradingAuthorizationCheck> check({
     required String address,
     required bool Function() isCurrent,
+    String? identityId,
   }) async {
     checks++;
     await gate?.future;

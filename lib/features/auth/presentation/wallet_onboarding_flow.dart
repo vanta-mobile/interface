@@ -9,15 +9,24 @@ import 'startup_splash.dart';
 
 /// Used by both cold startup and a newly connected/login wallet.
 class WalletOnboardingFlow extends ConsumerStatefulWidget {
-  const WalletOnboardingFlow({required this.onCompleted, required this.onCancel, super.key});
+  const WalletOnboardingFlow({
+    required this.onCompleted,
+    required this.onCancel,
+    this.automaticEmbedded = true,
+    super.key,
+  });
   final VoidCallback onCompleted, onCancel;
+
+  /// Fresh embedded login can finish its authorized flow automatically. An
+  /// existing wallet entering the app shows the missing step for confirmation.
+  final bool automaticEmbedded;
 
   @override
   ConsumerState<WalletOnboardingFlow> createState() => _WalletOnboardingFlowState();
 }
 
 class _WalletOnboardingFlowState extends ConsumerState<WalletOnboardingFlow> {
-  bool _inspected = false;
+  bool _inspected = false, _presented = false;
   String? _identityKey;
   WalletOnboardingController? _controller;
 
@@ -34,8 +43,11 @@ class _WalletOnboardingFlowState extends ConsumerState<WalletOnboardingFlow> {
     final progress = ref.watch(walletOnboardingProvider);
     final identity = auth.identity;
     final key = onboardingIdentityKey(identity);
-    final embedded = identity?.walletKind == WalletKind.embedded;
-    if (_identityKey != key) _inspected = false;
+    final automatic = widget.automaticEmbedded && identity?.walletKind == WalletKind.embedded;
+    if (_identityKey != key) {
+      _inspected = false;
+      _presented = false;
+    }
     _identityKey = key;
     _controller = ref.read(walletOnboardingProvider.notifier);
     if (status.complete && !progress.busy || identity == null) {
@@ -44,17 +56,18 @@ class _WalletOnboardingFlowState extends ConsumerState<WalletOnboardingFlow> {
       });
       return const StartupSplash();
     }
-    if (embedded && key != null) {
+    if (automatic && key != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) ref.read(walletOnboardingProvider.notifier).startAutomatic(key);
       });
     }
     if (!status.checking) _inspected = true;
-    if (auth.busy ||
+    if (auth.busy && !_presented ||
         status.checking && !_inspected ||
-        embedded && (progress.automaticKey != key || progress.busy)) {
+        automatic && (progress.automaticKey != key || progress.busy)) {
       return const StartupSplash();
     }
+    _presented = true;
     return EnableTradingScreen(closeWhenComplete: false, onCancel: widget.onCancel);
   }
 }

@@ -128,8 +128,8 @@ class _EnableTradingFeedback extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l = AppLocalizations.of(context), auth = ref.watch(authProvider);
-    final s = ref.watch(tradingAuthorizationProvider);
+    final auth = ref.watch(authProvider);
+    final authorization = ref.watch(tradingAuthorizationProvider);
     final status = ref.watch(walletOnboardingStatusProvider);
     final session = ref.watch(vantaApiSessionProvider);
     final verificationFailure =
@@ -137,70 +137,45 @@ class _EnableTradingFeedback extends ConsumerWidget {
         (session.status == VantaApiSessionStatus.unavailable
             ? const VantaApiFailure(vantaApiUnavailable)
             : null);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (auth.failure case final failure?) ...[
-          const SizedBox(height: 12),
-          AuthFailureText(failure),
-        ],
-        if (s.failure case final failure?) ...[
-          const SizedBox(height: 12),
-          Semantics(
-            liveRegion: true,
-            child: Text(
-              apiErrorText(context, failure, s.errorDetails),
-              key: const Key('enable-trading-error'),
-              style: AuthTypography.caption.copyWith(color: AppColors.authError),
-            ),
+    String? message;
+    if (auth.failure case final failure?) {
+      message = authFailureText(context, failure);
+    } else if (authorization.failure case final failure?) {
+      // Dispatch uncertainty is a recovery guard, not an extra page state.
+      // The existing error slot shows the actual API/transport cause instead.
+      final key = {'authorizationUnknown', 'builderApprovalUnknown'}.contains(failure)
+          ? 'accountReadFailed'
+          : failure;
+      message = apiErrorText(context, key, authorization.errorDetails);
+    } else if (status.agentFailure case final failure?) {
+      message = apiErrorText(context, 'accountReadFailed', errorDetailsOf(failure));
+    } else if (verificationFailure case final failure?) {
+      message = failure is AuthFailure
+          ? authFailureText(context, failure)
+          : apiErrorText(
+              context,
+              failure is VantaApiFailure ? failure.key : vantaApiRequestFailed,
+              errorDetailsOf(failure),
+            );
+    }
+    if (message == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Semantics(
+        liveRegion: true,
+        child: Text(
+          message,
+          key: Key(
+            verificationFailure != null &&
+                    authorization.failure == null &&
+                    auth.failure == null &&
+                    status.agentFailure == null
+                ? 'wallet-verification-error'
+                : 'enable-trading-error',
           ),
-        ],
-        if (status.agentFailure case final failure?) ...[
-          const SizedBox(height: 12),
-          Text(
-            apiErrorText(context, 'accountReadFailed', errorDetailsOf(failure)),
-            style: AuthTypography.caption.copyWith(color: AppColors.authError),
-          ),
-        ],
-        if (verificationFailure case final failure?) ...[
-          const SizedBox(height: 12),
-          Text(
-            failure is AuthFailure
-                ? authFailureText(context, failure)
-                : apiErrorText(
-                    context,
-                    failure is VantaApiFailure ? failure.key : vantaApiRequestFailed,
-                    errorDetailsOf(failure),
-                  ),
-            key: const Key('wallet-verification-error'),
-            style: AuthTypography.caption.copyWith(color: AppColors.authError),
-          ),
-        ],
-        if (status.unknown) ...[
-          const SizedBox(height: 12),
-          Text(l.authorizationUnknown, style: AuthTypography.caption),
-          Text(l.authorizationCheckScope, style: AuthTypography.caption),
-          if (s.check case final check?) ...[
-            Text(
-              check.futuresReadAccepted
-                  ? l.authorizationReadAccepted
-                  : tr(context, check.futuresFailure ?? 'accountReadFailed'),
-              style: AuthTypography.caption,
-            ),
-            Text(switch (check.futuresCanTrade) {
-              true => l.authorizationCanTrade,
-              false => l.authorizationCannotTrade,
-              null => l.authorizationPermissionUnknown,
-            }, style: AuthTypography.caption),
-            Text(
-              check.spotReadAccepted
-                  ? l.authorizationSpotPermissionUnknown
-                  : tr(context, check.spotFailure ?? 'accountReadFailed'),
-              style: AuthTypography.caption,
-            ),
-          ],
-        ],
-      ],
+          style: AuthTypography.caption.copyWith(color: AppColors.authError),
+        ),
+      ),
     );
   }
 }
@@ -231,8 +206,6 @@ class _EnableTradingActions extends ConsumerWidget {
                 ? tr(context, 'createWallet')
                 : reconnect
                 ? tr(context, 'reconnectExternalWallet')
-                : status.unknown
-                ? l.authorizationCheck
                 : status.tradingReady
                 ? l.walletVerificationTitle
                 : identity?.walletKind == WalletKind.external

@@ -2,13 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:reown_appkit/reown_appkit.dart';
+import 'package:reown_appkit/modal/services/uri_service/relay_wallet_request.dart';
 
 import '../domain/auth_session.dart';
 import 'reown_auth_failure.dart';
+import 'wallet_error_message.dart';
 
 /// Keep dispatch and wallet launch inside AppKit. Its modal error events and
 /// async-void launch errors can arrive without settling `request`, so bridge
-/// them into this request's future and release the caller's signing lease.
+/// them into this request's future and release the caller's signing/network lease.
 ///
 /// A sleeping wallet cannot answer a ping, so liveness is only judged while
 /// the request is in flight: a session ping is queued just before the wallet
@@ -16,10 +18,11 @@ import 'reown_auth_failure.dart';
 /// explicit ping error, or no answer for [probeTimeout] while this app holds
 /// the foreground, marks the session unresponsive. Time spent in the wallet
 /// never counts, so a user reviewing the request is not interrupted.
-Future<dynamic> requestReownSignature({
+Future<dynamic> requestReownWallet({
   required ReownAppKitModal modal,
   required String chainId,
   required SessionRequestParams request,
+  String? switchToChainId,
   required bool Function() isCurrent,
   required Stream<void> invalidations,
   required bool Function() needsReconnect,
@@ -30,8 +33,10 @@ Future<dynamic> requestReownSignature({
 }) async {
   final result = Completer<dynamic>();
   final topic = modal.session?.topic;
+  final relay = modal.appKit?.core.relayClient;
   Timer? responseTimer, probeTimer;
   var answered = false, dispatched = false;
+  var probeRevision = 0, awaitingRelay = false;
   void current() {
     if (!isCurrent() || topic == null || modal.session?.topic != topic) {
       throw const AuthFailure('authWalletChanged');
@@ -39,11 +44,14 @@ Future<dynamic> requestReownSignature({
   }
 
   void fail(Object error, StackTrace stack) {
-    if (!result.isCompleted) result.completeError(failureFromReown(error), stack);
+    // Preserve JSON-RPC codes until the operation-specific caller handles them
+    // (network approval may add BNB only for explicit 4902). The connection
+    // boundary maps any remaining error to a safe AuthFailure.
+    if (!result.isCompleted) result.completeError(error, stack);
     // Late SDK callbacks belong to the abandoned request, never a later retry.
   }
 
-  void unresponsive() {
+  void unresponsive([Object? error]) {
     if (result.isCompleted) return;
     if (!isCurrent()) {
       fail(const AuthFailure('authWalletChanged'), StackTrace.current);
@@ -51,19 +59,68 @@ Future<dynamic> requestReownSignature({
     }
     // No answer is not proof of disconnection. Require a verified connection
     // before another signing attempt; never replay this one.
-    fail(const AuthFailure('authWalletSessionUnverified'), StackTrace.current);
+    fail(
+      AuthFailure(
+        'authWalletSessionUnverified',
+        reason: error == null ? null : failureFromReown(error).reason,
+      ),
+      StackTrace.current,
+    );
     onUnresponsive();
   }
 
   void probe() {
     probeTimer?.cancel();
     if (!dispatched || answered || result.isCompleted) return;
-    probeTimer = Timer(probeTimeout, unresponsive);
+    probeTimer = Timer(probeTimeout, () {
+      if (relay?.isConnected != true) {
+        fail(const AuthFailure('authNetwork'), StackTrace.current);
+      } else {
+        unresponsive();
+      }
+    });
+  }
+
+  void pingPeer() {
+    if (!dispatched || result.isCompleted) return;
+    final revision = ++probeRevision;
+    answered = false;
+    awaitingRelay = relay?.isConnected != true;
+    if (awaitingRelay) return;
+    unawaited(
+      modal.appKit!
+          .ping(topic: topic!)
+          .then(
+            (_) {
+              if (revision != probeRevision || result.isCompleted) return;
+              answered = true;
+              probeTimer?.cancel();
+            },
+            onError: (Object error) {
+              if (revision != probeRevision || result.isCompleted) return;
+              if (relay?.isConnected != true) {
+                fail(const AuthFailure('authNetwork'), StackTrace.current);
+              } else {
+                unresponsive(error);
+              }
+            },
+          ),
+    );
+  }
+
+  void onRelayConnect(EventArgs? _) {
+    if (awaitingRelay && WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+      pingPeer();
+      probe();
+    }
   }
 
   void onError(ModalError? error) {
     if (error is ErrorOpeningWallet || error is WalletNotInstalled) {
-      fail(const AuthFailure('authWalletOpenFailed'), StackTrace.current);
+      fail(
+        AuthFailure('authWalletOpenFailed', reason: walletReason(error!.description)),
+        StackTrace.current,
+      );
     } else if (error is UserRejectedRequest) {
       fail(const AuthFailure('authWalletRejected'), StackTrace.current);
     } else if (error != null) {
@@ -74,7 +131,7 @@ Future<dynamic> requestReownSignature({
   void onRelayError(ErrorEvent? event) {
     // AppKit swallows publish failures; the request may never reach the wallet.
     final Object? error = event?.error;
-    if (dispatched) fail(error ?? StateError('Relay error'), StackTrace.current);
+    fail(error ?? const AuthFailure('authWalletUnavailable'), StackTrace.current);
   }
 
   void onSessionChanged() {
@@ -90,8 +147,9 @@ Future<dynamic> requestReownSignature({
       probeTimer?.cancel();
       return;
     }
-    // The wallet's queued answer arrives once the relay socket is back.
-    unawaited(modal.reconnectRelay().catchError((Object _) {}));
+    // AppKit owns reconnection. Recheck a pending request's peer: its previous
+    // pong does not prove that the wallet kept the session while backgrounded.
+    pingPeer();
     probe();
   });
 
@@ -102,36 +160,44 @@ Future<dynamic> requestReownSignature({
       StackTrace.current,
     );
   });
-  final relayErrors = modal.appKit?.core.relayClient.onRelayClientError;
+  final relayErrors = relay?.onRelayClientError;
   modal.addListener(onSessionChanged);
   modal.onModalError.subscribe(onError);
   relayErrors?.subscribe(onRelayError);
+  relay?.onRelayClientConnect.subscribe(onRelayConnect);
   WidgetsBinding.instance.addObserver(lifecycle);
   runZonedGuarded(() async {
     try {
       // An unreachable relay is a network failure, not evidence about the wallet.
       await modal.reconnectRelay().timeout(
         relayTimeout,
-        onTimeout: () => throw const AuthFailure('authWalletUnavailable'),
+        onTimeout: () => throw const AuthFailure('authWalletConnectionTimeout'),
       );
       if (result.isCompleted) return;
       current();
       final sdk = modal.appKit;
       if (sdk == null) throw const AuthFailure('authWalletUnavailable');
+      if (relay?.isConnected != true) throw const AuthFailure('authNetwork');
       dispatched = true;
       // Queue the ping before the request launches the wallet.
-      unawaited(
-        sdk.ping(topic: topic!).then((_) {
-          answered = true;
-          probeTimer?.cancel();
-        }, onError: (Object _) => unresponsive()),
-      );
+      pingPeer();
       responseTimer = Timer(responseTimeout, () {
+        if (relay?.isConnected != true) {
+          return fail(const AuthFailure('authNetwork'), StackTrace.current);
+        }
         if (!answered) return unresponsive();
         fail(const AuthFailure('authWalletResponseTimeout'), StackTrace.current);
       });
       if (WidgetsBinding.instance.lifecycleState case null || AppLifecycleState.resumed) probe();
-      final value = await modal.request(topic: topic, chainId: chainId, request: request);
+      final value = await withWalletRequestGuard(
+        isCurrent: () => !result.isCompleted && isCurrent(),
+        request: () => modal.request(
+          topic: topic,
+          chainId: chainId,
+          request: request,
+          switchToChainId: switchToChainId,
+        ),
+      );
       current();
       if (!result.isCompleted) result.complete(value);
     } catch (error, stack) {
@@ -146,6 +212,7 @@ Future<dynamic> requestReownSignature({
     WidgetsBinding.instance.removeObserver(lifecycle);
     unawaited(subscription.cancel());
     relayErrors?.unsubscribe(onRelayError);
+    relay?.onRelayClientConnect.unsubscribe(onRelayConnect);
     modal.onModalError.unsubscribe(onError);
     modal.removeListener(onSessionChanged);
   }

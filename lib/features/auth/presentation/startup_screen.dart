@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'startup_splash.dart';
 import '../application/auth_provider.dart';
+import '../application/wallet_onboarding_provider.dart';
 import '../domain/auth_session.dart';
 import 'wallet_onboarding_flow.dart';
 import 'wallet_session_host.dart';
@@ -19,9 +20,63 @@ class StartupScreen extends ConsumerStatefulWidget {
 
 class _StartupScreenState extends ConsumerState<StartupScreen> {
   bool _finished = false, _restoring = false, _introPlayed = false;
+  bool _startupResolved = false;
   String? _restoredKey;
+  bool _checkOnEntry = false, _entryCheckScheduled = false, _entryPromptOpen = false;
 
   void _finish() => setState(() => _finished = true);
+
+  void _checkEntry() {
+    if (!_entryPromptOpen && (ModalRoute.of(context)?.isCurrent ?? false)) {
+      setState(() => _checkOnEntry = true);
+    }
+  }
+
+  Widget _home() {
+    if (_checkOnEntry) {
+      final auth = ref.watch(authProvider);
+      final status = ref.watch(walletOnboardingStatusProvider);
+      final progress = ref.watch(walletOnboardingProvider);
+      if (!auth.busy && !status.checking && !progress.busy && !_entryCheckScheduled) {
+        _entryCheckScheduled = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) => _resumeOnboarding());
+      }
+    }
+    return WalletSessionHost(
+      onRestored: _checkEntry,
+      initiallyAttemptedIdentity: _restoredKey,
+      child: widget.home,
+    );
+  }
+
+  void _resumeOnboarding() {
+    _entryCheckScheduled = false;
+    if (!mounted) return;
+    final auth = ref.read(authProvider), identity = auth.identity;
+    final status = ref.read(walletOnboardingStatusProvider);
+    if (auth.busy || status.checking || ref.read(walletOnboardingProvider).busy) return;
+    setState(() => _checkOnEntry = false);
+    if (_entryPromptOpen ||
+        !(ModalRoute.of(context)?.isCurrent ?? false) ||
+        identity?.walletAddress == null ||
+        identity?.signingAvailable != true ||
+        status.complete) {
+      return;
+    }
+    // Push over the existing home so backgrounding never discards order input.
+    _entryPromptOpen = true;
+    final navigator = Navigator.of(context);
+    late final MaterialPageRoute<void> route;
+    void close() {
+      if (route.isCurrent) navigator.pop();
+    }
+
+    route = MaterialPageRoute<void>(
+      builder: (_) =>
+          WalletOnboardingFlow(automaticEmbedded: false, onCompleted: close, onCancel: close),
+    );
+    unawaited(navigator.push(route).whenComplete(() => _entryPromptOpen = false));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +87,14 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
   }
 
   Widget _destination() {
-    if (_finished) return WalletSessionHost(child: widget.home);
+    if (_finished) return _home();
+    if (_startupResolved) {
+      return WalletOnboardingFlow(
+        automaticEmbedded: false,
+        onCompleted: _finish,
+        onCancel: _finish,
+      );
+    }
     final auth = ref.watch(authProvider), identity = auth.identity;
     if (auth.phase == AuthPhase.initializing || auth.busy || _restoring) {
       return const StartupSplash();
@@ -58,6 +120,7 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
       });
       return const StartupSplash();
     }
-    return WalletOnboardingFlow(onCompleted: _finish, onCancel: _finish);
+    _startupResolved = true;
+    return WalletOnboardingFlow(automaticEmbedded: false, onCompleted: _finish, onCancel: _finish);
   }
 }

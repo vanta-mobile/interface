@@ -99,6 +99,26 @@ void main() {
     expect(sdk.legacyUser.created, 0);
   });
 
+  for (final chain in ['1', '56', '42161', '8453']) {
+    test('personal signing network comes from the active EOA connection on $chain', () async {
+      final wallet = TestWalletConnection(chainId: chain);
+      addTearDown(wallet.dispose);
+      await repository.initialize();
+      await repository.loginWithWallet(wallet);
+      expect(repository.personalSigningChainId(expectedAddress: wallet.address), int.parse(chain));
+      expect(
+        () => repository.personalSigningChainId(expectedAddress: '0x${'3' * 40}'),
+        throwsA(isA<AuthFailure>().having((e) => e.key, 'key', 'authWalletChanged')),
+      );
+      wallet.invalidate();
+      expect(
+        () => repository.personalSigningChainId(expectedAddress: wallet.address),
+        throwsA(isA<AuthFailure>()),
+      );
+      expect(sdk.legacyUser.created, 0);
+    });
+  }
+
   test('EOA transactions delegate only to connected wallet without Privy fallback', () async {
     await repository.initialize();
     await repository.loginWithWallet(connection);
@@ -263,6 +283,7 @@ void main() {
       final embedded = build();
       addTearDown(embedded.dispose);
       expect((await embedded.initialize())?.walletKind, WalletKind.embedded);
+      expect(embedded.personalSigningChainId(expectedAddress: '0x${'1' * 40}'), 1);
     },
   );
 

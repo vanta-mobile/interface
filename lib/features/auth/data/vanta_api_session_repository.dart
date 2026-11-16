@@ -61,12 +61,21 @@ class VantaApiSessionRepository {
     return true;
   }
 
-  Future<void> signIn(String address, {int chainId = 1, bool Function()? isCurrent}) async {
+  Future<void> signIn(String address, {bool Function()? isCurrent}) async {
     _check();
     final key = address.toLowerCase();
     bool current() => !_closed && (isCurrent?.call() ?? true);
+    final wallet = signer();
+    final chainId = wallet.personalSigningChainId(expectedAddress: key);
+    void checkNetwork() {
+      if (wallet.personalSigningChainId(expectedAddress: key) != chainId) {
+        throw const AuthFailure('authWalletChanged');
+      }
+    }
+
     final challenge = await http.get('/v1/auth/nonce', query: {'address': key});
     if (!current()) throw const VantaApiFailure(vantaApiRequestFailed);
+    checkNetwork();
     final nonce = challenge['nonce'], expires = DateTime.tryParse('${challenge['expires_at']}');
     final issuedAt = now().toUtc();
     if (nonce is! String || expires == null || !expires.toUtc().isAfter(issuedAt)) {
@@ -86,13 +95,14 @@ class VantaApiSessionRepository {
     } on FormatException {
       throw const VantaApiFailure(vantaApiDataInvalid);
     }
-    final signature = await signer()
+    final signature = await wallet
         .signPersonalMessage(expectedAddress: message.address, message: message.text)
         .timeout(
           message.expiresAt.difference(now().toUtc()),
           onTimeout: () => throw const AuthFailure('authWalletCancelled'),
         );
     if (!current()) throw const VantaApiFailure(vantaApiRequestFailed);
+    checkNetwork();
     if (!verifyPersonalSignature(key, message.text, signature)) {
       throw const AuthFailure('authWalletSignature');
     }

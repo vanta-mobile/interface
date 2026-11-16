@@ -11,6 +11,9 @@ import '../../portfolio/data/signed_account_request.dart';
 import '../../portfolio/domain/account_snapshot.dart';
 import '../domain/trading_authorization.dart';
 import '../domain/trading_agent.dart';
+import 'builder_authorization_repository.dart';
+import 'authorization_refusal.dart';
+import 'agent_authorization_mapper.dart';
 
 /// V3 public registration, signed by the current wallet itself. Deliberately
 /// defaults to no withdrawal permission; an explicit IP-restricted option is
@@ -25,6 +28,7 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
     this.signingPreparation,
     this.agents,
     this.checkAuthorization,
+    this.builder,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
   final AsterAccountService futures;
@@ -34,12 +38,15 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
   final WalletSigningPreparation? signingPreparation;
   final TradingAgentStore? agents;
   final AccountRequestAuthorization? checkAuthorization;
+  final AsterBuilderAuthorizationRepository? builder;
   final DateTime Function() now;
 
   @override
   Future<TradingAuthorizationResult> enable({
     required TradingAuthorizationReview review,
     required bool Function() isCurrent,
+    void Function(TradingAuthorizationStep)? onStep,
+    bool retryPendingBuilder = false,
   }) => RequestScope.run(isCurrent, () async {
     void current() {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
@@ -51,6 +58,7 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
 
     try {
       current();
+      onStep?.call(TradingAuthorizationStep.preparing);
       final address = review.identity.walletAddress;
       if (address == null ||
           !RegExp(r'^0x[a-fA-F0-9]{40}$').hasMatch(address) ||
@@ -69,7 +77,14 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
         current();
         if (previous != null && now().isBefore(previous.expiresAt)) {
           if (previous.status == TradingAgentStatus.active) {
-            return TradingAuthorizationResult.acknowledged;
+            return builder == null
+                ? TradingAuthorizationResult.acknowledged
+                : await builder!.enable(
+                    review: review,
+                    isCurrent: isCurrent,
+                    onStep: onStep,
+                    retryPendingBuilder: retryPendingBuilder,
+                  );
           }
           if (previous.status == TradingAgentStatus.unknown) {
             return TradingAuthorizationResult.unknown;
@@ -106,6 +121,7 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
       ).query;
       final data = asterReadTypedData(query);
       data['domain'] = {...data['domain']! as Map<String, Object?>, 'chainId': 56};
+      onStep?.call(TradingAuthorizationStep.signing);
       final signature = await sign(expectedAddress: address, typedData: data);
       current();
       if (!verifyAsterWalletSignature(address, data, signature)) {
@@ -117,26 +133,54 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
         throw const AccountReadFailure('accountSignatureExpired');
       }
       // A crash after dispatch must never turn into an automatic replay.
-      if (agent != null) await agents!.setStatus(agent, TradingAgentStatus.unknown);
-      current();
-      if (clock.elapsed >= const Duration(seconds: 9)) {
-        throw const AccountReadFailure('accountSignatureExpired');
-      }
       try {
+        if (agent != null) await agents!.setStatus(agent, TradingAgentStatus.unknown);
+        current();
+        if (clock.elapsed >= const Duration(seconds: 9)) {
+          throw const AccountReadFailure('accountSignatureExpired');
+        }
+      } catch (_) {
+        // No POST has been called. A cancelled/expired local preflight is not
+        // an uncertain financial write, even if its durable marker was saved.
+        if (agent != null) {
+          try {
+            await agents!.setStatus(agent, TradingAgentStatus.prepared);
+          } catch (_) {
+            // Keep the original failure if secure storage is still unavailable.
+          }
+        }
+        rethrow;
+      }
+      bool accepted;
+      try {
+        onStep?.call(TradingAuthorizationStep.submitting);
         final result = await futures.signedPost(
           '/fapi/v3/registerAndApproveAgent',
           query: query,
           signature: signature,
         );
         // A malformed/non-success reply does not prove the grant was refused.
-        if (result is Map<String, dynamic> && result['code'] == 200) {
+        accepted = result is Map<String, dynamic> && result['code'] == 200;
+        if (accepted) {
           if (agent != null) await agents!.setStatus(agent, TradingAgentStatus.active);
-          return TradingAuthorizationResult.acknowledged;
         }
-        return TradingAuthorizationResult.unknown;
-      } catch (_) {
-        return TradingAuthorizationResult.unknown;
+      } on AccountReadFailure catch (failure) {
+        if (!isCurrent()) rethrow;
+        if (authorizationWasRefused(failure)) {
+          if (agent != null) await agents!.setStatus(agent, TradingAgentStatus.rejected);
+          rethrow;
+        }
+        throw AccountReadFailure(
+          'authorizationUnknown',
+          code: failure.code,
+          details: failure.details,
+        );
       }
+      if (!accepted) return TradingAuthorizationResult.unknown;
+      current();
+      return builder != null && !review.canWithdraw
+          ? await builder!.enable(review: review, isCurrent: isCurrent, onStep: onStep)
+          : TradingAuthorizationResult.acknowledged;
     } on AuthFailure catch (e) {
       throw AccountReadFailure(e.key, details: ApiErrorDetails(message: e.reason));
     }
@@ -146,10 +190,12 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
   Future<TradingAuthorizationCheck> check({
     required String address,
     required bool Function() isCurrent,
+    String? identityId,
   }) => RequestScope.run(isCurrent, () async {
     bool futuresAccepted = false, spotAccepted = false;
     bool? canTrade, canWithdraw;
     String? futuresFailure, spotFailure;
+    ApiErrorDetails? futuresErrorDetails, spotErrorDetails;
     String safe(Object e) => e is AccountReadFailure ? e.key : 'accountReadFailed';
     try {
       final data = await SignedAccountRequest(
@@ -174,6 +220,7 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
       futuresAccepted = true;
     } catch (e) {
       futuresFailure = safe(e);
+      futuresErrorDetails = errorDetailsOf(e);
     }
     if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
     try {
@@ -191,6 +238,54 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
       spotAccepted = true;
     } catch (e) {
       spotFailure = safe(e);
+      spotErrorDetails = errorDetailsOf(e);
+    }
+    if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
+    bool? agentReady;
+    String? agentFailure;
+    ApiErrorDetails? agentErrorDetails;
+    if (agents != null && identityId != null) {
+      try {
+        final agent = await agents!.load(identityId, address);
+        if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
+        agentReady = agent?.status == TradingAgentStatus.active;
+        if (agent?.status == TradingAgentStatus.unknown) {
+          final data = await SignedAccountRequest(
+            serverTime: futures.serverTime,
+            send: ({required query, required signature}) =>
+                futures.signedGet('/fapi/v3/agent', query: query, signature: signature),
+            sign: sign,
+            authorization: checkAuthorization,
+            nonces: nonces,
+          ).read(address: address, isCurrent: isCurrent, onStep: (_) {});
+          if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
+          agentReady = hasTradingAgentGrant(data, agent!, now());
+          if (agentReady) await agents!.setStatus(agent, TradingAgentStatus.active);
+        }
+      } on FormatException {
+        agentFailure = 'accountDataInvalid';
+        agentErrorDetails = const ApiErrorDetails(
+          cause: ApiErrorCause.invalidResponse,
+          endpoint: '/fapi/v3/agent',
+        );
+      } on AccountReadFailure catch (failure) {
+        if (!isCurrent()) rethrow;
+        agentFailure = failure.key;
+        agentErrorDetails = failure.details;
+      }
+    }
+    if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
+    bool? builderReady;
+    String? builderFailure;
+    ApiErrorDetails? builderErrorDetails;
+    if (builder != null) {
+      try {
+        builderReady = (await builder!.check(address: address, isCurrent: isCurrent)).sufficient;
+      } on AccountReadFailure catch (failure) {
+        if (!isCurrent()) rethrow;
+        builderFailure = failure.key;
+        builderErrorDetails = failure.details;
+      }
     }
     if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
     return TradingAuthorizationCheck(
@@ -202,6 +297,14 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
       futuresCanWithdraw: futuresAccepted ? canWithdraw : null,
       futuresFailure: futuresFailure,
       spotFailure: spotFailure,
+      builderReady: builderReady,
+      builderFailure: builderFailure,
+      builderErrorDetails: builderErrorDetails,
+      agentReady: agentReady,
+      agentFailure: agentFailure,
+      agentErrorDetails: agentErrorDetails,
+      futuresErrorDetails: futuresErrorDetails,
+      spotErrorDetails: spotErrorDetails,
     );
   });
 }

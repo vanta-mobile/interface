@@ -52,6 +52,17 @@ class ReownWalletConnector
   bool _disposed = false;
   final WalletRedirectHandler _redirects;
   bool _observing = false;
+  String? _unverifiedTopic;
+
+  ReownWalletConnection _connection(ReownAppKitModal modal, String address, String chain) {
+    final topic = modal.session?.topic;
+    return ReownWalletConnection(
+      modal,
+      address,
+      chain,
+      onUnresponsive: () => _unverifiedTopic = topic,
+    );
+  }
 
   ReownAppKitModal _getModal(BuildContext host) {
     if (!_observing) {
@@ -80,12 +91,11 @@ class ReownWalletConnector
         final host = Navigator.of(context).context;
         final modal = _getModal(host);
         final preparation = _preparation ??= _sdkCall(() async {
-          if (modal.status != ReownAppKitModalStatus.initialized) await modal.init();
+          if (modal.status != ReownAppKitModalStatus.initialized) {
+            await modal.init(restoreOnly: true);
+          }
         }).whenComplete(() => _preparation = null);
-        await preparation.timeout(
-          preparationTimeout,
-          onTimeout: () => throw const AuthFailure('authWalletConnectionTimeout'),
-        );
+        await _waitForPreparation(modal, preparation);
         if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
         _acceptRedirects(modal);
         final session = modal.session;
@@ -104,7 +114,10 @@ class ReownWalletConnector
         }
         // A sleeping wallet cannot answer a ping, so restoring never probes the
         // peer. The next signing request verifies it once the wallet is open.
-        return ReownWalletConnection(modal, address, chain.substring(7));
+        if (session?.topic == _unverifiedTopic) {
+          throw const AuthFailure('authWalletSessionUnverified');
+        }
+        return _connection(modal, address, chain.substring(7));
       });
 
   @override
@@ -113,10 +126,9 @@ class ReownWalletConnector
     if (!configuration.isConfigured) throw const AuthFailure('authWalletConfiguration');
     final previous = _modal;
     if (previous != null && previous.modalContext == null) {
-      await _preparation?.timeout(
-        preparationTimeout,
-        onTimeout: () => throw const AuthFailure('authWalletConnectionTimeout'),
-      );
+      if (_preparation case final preparation?) {
+        await _waitForPreparation(previous, preparation);
+      }
       _redirects.detach();
       await previous.dispose();
       _modal = null;
@@ -126,16 +138,19 @@ class ReownWalletConnector
     // signatures can still launch the connected wallet app.
     final host = Navigator.of(context).context;
     final modal = _getModal(host);
+    // A restore/earlier timed-out preparation may still be unwinding. Wait for
+    // it, then run this explicit connection's own catalog/disconnect work.
+    if (_preparation case final earlier?) {
+      await _waitForPreparation(modal, earlier);
+    }
+    if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
     // A stored WalletConnect session is not proof that its peer can still
     // sign. An explicit connect/reconnect must offer fresh wallet approval.
     // Keep preparation separate from the modal: timing out must never open
     // wallet UI later or run another SDK initialization concurrently.
     final preparation = _preparation ??= _sdkCall(() => _prepare(modal))
         .whenComplete(() => _preparation = null);
-    await preparation.timeout(
-      preparationTimeout,
-      onTimeout: () => throw const AuthFailure('authWalletConnectionTimeout'),
-    );
+    await _waitForPreparation(modal, preparation);
     if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
     if (modal.status != ReownAppKitModalStatus.initialized || modal.isConnected || modal.isOpen) {
       throw const AuthFailure('authWalletUnavailable');
@@ -153,11 +168,44 @@ class ReownWalletConnector
         address == null) {
       throw const AuthFailure('authWalletUnsupported');
     }
-    return ReownWalletConnection(modal, address, chain.substring(7));
+    // Only fresh, explicit wallet approval can clear a known-unverified topic.
+    _unverifiedTopic = null;
+    return _connection(modal, address, chain.substring(7));
   }).whenComplete(() => _pending = null);
 
+  Future<void> _waitForPreparation(ReownAppKitModal modal, Future<void> preparation) async {
+    final relay = modal.appKit?.core.relayClient;
+    final failed = Completer<void>();
+    void onError(ErrorEvent? event) {
+      if (!failed.isCompleted) {
+        final Object? error = event?.error;
+        failed.completeError(failureFromReown(error ?? const AuthFailure('authNetwork')));
+      }
+    }
+
+    relay?.onRelayClientError.subscribe(onError);
+    try {
+      await Future.any([preparation, failed.future]).timeout(
+        preparationTimeout,
+        onTimeout: () => throw const AuthFailure('authWalletConnectionTimeout'),
+      );
+    } catch (_) {
+      // Release a stalled relay connect/subscription so an explicit retry can
+      // continue initialization. Keep the shared SDK future until it settles;
+      // never start overlapping initialization or open late wallet UI.
+      if (modal.status != ReownAppKitModalStatus.initialized && relay != null) {
+        unawaited(Future<void>.sync(relay.disconnect).catchError((Object _) {}));
+      }
+      rethrow;
+    } finally {
+      relay?.onRelayClientError.unsubscribe(onError);
+    }
+  }
+
   Future<void> _prepare(ReownAppKitModal modal) async {
-    if (modal.status != ReownAppKitModalStatus.initialized) await modal.init();
+    // Restoration deliberately skips the remote wallet catalog. Explicit
+    // connection prepares it, even when local session initialization finished.
+    await modal.init();
     _acceptRedirects(modal);
     if (_disposed || !modal.isConnected) return;
     final disconnected = Completer<void>();

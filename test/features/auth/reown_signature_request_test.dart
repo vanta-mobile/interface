@@ -103,114 +103,12 @@ void main() {
       time.elapse(const Duration(seconds: 10));
       time.flushMicrotasks();
       // An unreachable relay is a network failure, not evidence about the wallet.
-      expect(failure?.key, 'authWalletUnavailable');
+      expect(failure?.key, 'authWalletConnectionTimeout');
       expect(connection.needsReconnect, false);
       modal.relayGate!.complete();
       time.flushMicrotasks();
       expect(modal.requests, isEmpty);
       expect(modal.sdk.pings, 0);
-    });
-  });
-
-  test('an orphaned peer session settles the signature as soon as its ping fails', () async {
-    modal.gate = Completer<void>();
-    modal.sdk.pingFailure = JsonRpcError(code: 7001, message: 'Session not found');
-    await expectLater(
-      connection.signPersonalMessage('first'),
-      throwsA(isA<AuthFailure>().having((e) => e.key, 'key', 'authWalletSessionUnverified')),
-    );
-    expect(modal.isConnected, true);
-    expect(connection.isCurrent, false);
-    expect(connection.needsReconnect, true);
-    expect(modal.sdk.pings, 1);
-    expect(modal.requests, hasLength(1));
-    modal.gate!.complete();
-    await pumpEventQueue();
-  });
-
-  test('a wallet that never opens and never answers fails within the probe window', () {
-    fakeAsync((time) {
-      modal.gate = Completer<void>();
-      modal.sdk.pingGate = Completer<void>();
-      AuthFailure? failure;
-      connection
-          .signPersonalMessage('first')
-          .then<void>(
-            (_) {},
-            onError: (Object error) {
-              failure = error as AuthFailure;
-            },
-          );
-      time.flushMicrotasks();
-      expect(modal.requests, hasLength(1));
-      time.elapse(const Duration(seconds: 9));
-      time.flushMicrotasks();
-      expect(failure, isNull);
-      time.elapse(const Duration(seconds: 1));
-      time.flushMicrotasks();
-      expect(failure?.key, 'authWalletSessionUnverified');
-      expect(connection.needsReconnect, true);
-      modal.sdk.pingGate!.complete();
-      modal.gate!.complete();
-      time.flushMicrotasks();
-    });
-  });
-
-  test('time spent in the wallet never counts toward the probe window', () {
-    fakeAsync((time) {
-      final binding = TestWidgetsFlutterBinding.instance;
-      modal.gate = Completer<void>();
-      modal.sdk.pingGate = Completer<void>();
-      String? signature;
-      connection.signPersonalMessage('first').then((value) => signature = value);
-      time.flushMicrotasks();
-      binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-      binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-      time.elapse(const Duration(seconds: 30));
-      time.flushMicrotasks();
-      // The wallet came to the foreground and answered the queued ping.
-      modal.sdk.pingGate!.complete();
-      time.flushMicrotasks();
-      binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      time.flushMicrotasks();
-      expect(modal.relayReconnects, 2);
-      time.elapse(const Duration(seconds: 20));
-      time.flushMicrotasks();
-      expect(connection.needsReconnect, false);
-      modal.gate!.complete();
-      time.flushMicrotasks();
-      expect(signature, modal.result);
-    });
-  });
-
-  test('returning from the wallet without a peer answer fails within the probe window', () {
-    fakeAsync((time) {
-      final binding = TestWidgetsFlutterBinding.instance;
-      modal.gate = Completer<void>();
-      modal.sdk.pingGate = Completer<void>();
-      AuthFailure? failure;
-      connection
-          .signPersonalMessage('first')
-          .then<void>(
-            (_) {},
-            onError: (Object error) {
-              failure = error as AuthFailure;
-            },
-          );
-      time.flushMicrotasks();
-      binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-      binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-      time.elapse(const Duration(seconds: 30));
-      time.flushMicrotasks();
-      expect(failure, isNull);
-      binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      time.elapse(const Duration(seconds: 10));
-      time.flushMicrotasks();
-      expect(failure?.key, 'authWalletSessionUnverified');
-      expect(connection.needsReconnect, true);
-      modal.sdk.pingGate!.complete();
-      modal.gate!.complete();
-      time.flushMicrotasks();
     });
   });
 
@@ -229,32 +127,54 @@ void main() {
     await pumpEventQueue();
   });
 
-  test('a live wallet that never signs times out without requiring reconnect', () {
-    fakeAsync((time) {
-      modal.gate = Completer<void>();
-      AuthFailure? failure;
-      var signatures = 0;
-      connection
-          .signPersonalMessage('first')
-          .then<void>(
-            (_) {
-              signatures++;
-            },
-            onError: (Object error) {
-              failure = error as AuthFailure;
-            },
-          );
-      time.flushMicrotasks();
-      expect(modal.requests, hasLength(1));
-      time.elapse(const Duration(seconds: 60));
-      time.flushMicrotasks();
-      expect(failure?.key, 'authWalletResponseTimeout');
+  for (final beforeDispatch in [true, false]) {
+    test('relay string errors retain their reason: beforeDispatch=$beforeDispatch', () async {
+      final gate = Completer<void>();
+      if (beforeDispatch) {
+        modal.relayGate = gate;
+      } else {
+        modal.gate = gate;
+      }
+      final pending = expectLater(
+        connection.signPersonalMessage('first'),
+        throwsA(
+          isA<AuthFailure>()
+              .having((e) => e.key, 'key', 'authWalletUnavailable')
+              .having(
+                (e) => e.reason,
+                'reason',
+                'The client closed with pending request "irn_subscribe".',
+              ),
+        ),
+      );
+      await pumpEventQueue();
+      modal.sdk.relayErrors.broadcast(
+        ErrorEvent('The client closed with pending request "irn_subscribe".'),
+      );
+      await pending;
+      expect(modal.requests, hasLength(beforeDispatch ? 0 : 1));
       expect(connection.needsReconnect, false);
-      modal.gate!.complete();
-      time.flushMicrotasks();
-      expect(signatures, 0);
-      expect(modal.requests, hasLength(1));
+      gate.complete();
+      await pumpEventQueue();
+      expect(modal.requests, hasLength(beforeDispatch ? 0 : 1));
     });
+  }
+
+  test('wallet launch failures preserve the SDK description', () async {
+    modal.gate = Completer<void>();
+    final pending = expectLater(
+      connection.signPersonalMessage('first'),
+      throwsA(
+        isA<AuthFailure>()
+            .having((e) => e.key, 'key', 'authWalletOpenFailed')
+            .having((e) => e.reason, 'reason', 'Wallet launch was blocked'),
+      ),
+    );
+    await pumpEventQueue();
+    modal.onModalError.broadcast(ErrorOpeningWallet(description: 'Wallet launch was blocked'));
+    await pending;
+    modal.gate!.complete();
+    await pumpEventQueue();
   });
 
   test('disconnect event promptly settles a signature whose SDK future never returns', () async {
@@ -298,17 +218,6 @@ void main() {
     expect(connection.isCurrent, false);
     modal.gate!.complete();
     await pumpEventQueue();
-  });
-
-  test('resume never pings an idle connection', () async {
-    modal.sdk.pingFailure = StateError('Session missing');
-    final binding = TestWidgetsFlutterBinding.instance;
-    binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-    binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-    await pumpEventQueue();
-    expect(modal.sdk.pings, 0);
-    expect(connection.needsReconnect, false);
-    expect(connection.isCurrent, true);
   });
 
   test('an SDK launch failure cancels its watchdog before a later retry', () {

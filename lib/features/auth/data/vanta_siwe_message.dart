@@ -9,7 +9,7 @@ class VantaSiweMessage {
     required this.nonce,
     required this.issuedAt,
     required this.expiresAt,
-    this.chainId = 1,
+    required this.chainId,
   }) : address = canonicalEvmAddress(address) ?? (throw const FormatException('Invalid address')) {
     // EIP-4361 nonce grammar: at least eight alphanumeric characters.
     if (!RegExp(r'^[A-Za-z0-9]{8,128}$').hasMatch(nonce) || !expiresAt.isAfter(issuedAt)) {

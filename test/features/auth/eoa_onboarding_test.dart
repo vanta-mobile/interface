@@ -1,3 +1,7 @@
+import 'package:vanta/features/authorization/application/builder_authorization_provider.dart';
+
+import '../../support/builder.dart';
+
 import 'package:vanta/features/auth/application/vanta_api_session_provider.dart';
 import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
 
@@ -70,6 +74,9 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         vantaApiSessionProvider.overrideWith(VerifiedVantaSession.new),
+        builderApprovalJournalProvider.overrideWithValue(
+          MemoryBuilderApprovalJournal(approvedByDefault: true),
+        ),
         tradingAgentStoreProvider.overrideWithValue(
           MemoryTradingAgentStorage().store(DateTime.now),
         ),

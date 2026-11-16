@@ -10,6 +10,7 @@ import 'aster_account_service.dart';
 import 'aster_open_orders_mapper.dart';
 import 'position_leverage_mapper.dart';
 import 'signed_account_request.dart';
+import '../domain/builder_order_fee.dart';
 
 class SignedQuickOrderRepository implements QuickOrderRepository {
   final AccountRequestAuthorization? authorization;
@@ -64,7 +65,12 @@ class SignedQuickOrderRepository implements QuickOrderRepository {
       )) {
         throw const FormatException();
       }
-      return QuickOrderSizing(context: context, takerFee: fee, brackets: brackets, orders: orders);
+      return QuickOrderSizing(
+        context: context,
+        takerFee: builderSizingTakerFee(fee),
+        brackets: brackets,
+        orders: orders,
+      );
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');
     }

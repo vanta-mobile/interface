@@ -15,12 +15,29 @@ class TradingAuthorizationCheck {
     this.futuresCanWithdraw,
     this.futuresFailure,
     this.spotFailure,
+    this.builderReady,
+    this.builderFailure,
+    this.builderErrorDetails,
+    this.agentReady,
+    this.agentFailure,
+    this.agentErrorDetails,
+    this.futuresErrorDetails,
+    this.spotErrorDetails,
   });
   final String address;
   final DateTime checkedAt;
   final bool futuresReadAccepted, spotReadAccepted;
   final bool? futuresCanTrade, futuresCanWithdraw;
   final String? futuresFailure, spotFailure;
+  final bool? builderReady;
+  final String? builderFailure;
+  final ApiErrorDetails? builderErrorDetails;
+  final bool? agentReady;
+  final String? agentFailure;
+  final ApiErrorDetails? agentErrorDetails, futuresErrorDetails, spotErrorDetails;
+
+  bool get canResumeBuilder =>
+      agentReady == true && agentFailure == null && builderReady == false && builderFailure == null;
 }
 
 class TradingAuthorizationReview {
@@ -39,14 +56,20 @@ class TradingAuthorizationReview {
 
 enum TradingAuthorizationResult { acknowledged, unknown }
 
+/// Request lifecycle, independent of presentation copy and recovery journals.
+enum TradingAuthorizationStep { preparing, signing, submitting, confirming }
+
 abstract interface class TradingAuthorizationRepository {
   Future<TradingAuthorizationResult> enable({
     required TradingAuthorizationReview review,
     required bool Function() isCurrent,
+    void Function(TradingAuthorizationStep)? onStep,
+    bool retryPendingBuilder = false,
   });
   Future<TradingAuthorizationCheck> check({
     required String address,
     required bool Function() isCurrent,
+    String? identityId,
   });
 }
 
@@ -58,6 +81,8 @@ class TradingAuthorizationState {
     this.check,
     this.failure,
     this.errorDetails,
+    this.builderAuthorized = false,
+    this.step,
   });
   final bool busy;
   final TradingAuthorizationReview? review;
@@ -65,6 +90,8 @@ class TradingAuthorizationState {
   final TradingAuthorizationCheck? check;
   final ApiErrorDetails? errorDetails;
   final String? failure;
+  final bool builderAuthorized;
+  final TradingAuthorizationStep? step;
 }
 
 /// Normalize only documented literal IP/CIDR entries. No hostnames, URLs,

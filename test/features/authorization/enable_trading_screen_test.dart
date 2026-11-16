@@ -1,3 +1,7 @@
+import 'package:vanta/features/authorization/application/builder_authorization_provider.dart';
+
+import '../../support/builder.dart';
+
 import 'package:vanta/features/auth/application/vanta_api_session_provider.dart';
 import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
 
@@ -48,6 +52,7 @@ Future<ProviderContainer> _launch(
   bool direct = false,
   Size size = const Size(393, 818),
   double scale = 1,
+  String language = 'en',
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -57,6 +62,9 @@ Future<ProviderContainer> _launch(
   final container = ProviderContainer(
     overrides: [
       vantaApiSessionProvider.overrideWith(VerifiedVantaSession.new),
+      builderApprovalJournalProvider.overrideWithValue(
+        MemoryBuilderApprovalJournal(approvedByDefault: true),
+      ),
       tradingAgentStoreProvider.overrideWithValue(MemoryTradingAgentStorage().store(DateTime.now)),
       identityRepositoryProvider.overrideWithValue(identity),
       privyConfigurationProvider.overrideWithValue(
@@ -72,7 +80,7 @@ Future<ProviderContainer> _launch(
       container: container,
       child: MaterialApp(
         theme: vantaTheme(),
-        locale: const Locale('en'),
+        locale: Locale(language),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => MediaQuery(
@@ -234,7 +242,48 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('unknown result survives leaving and access checks never resubmit a grant', (
+  for (final language in ['en', 'zh']) {
+    for (final timeout in [false, true]) {
+      testWidgets(
+        'one concrete authorization error, stable action and no status report: $language timeout=$timeout',
+        (tester) async {
+          final identity = _IdentityRepository()..restored = _identity;
+          final authorization = TestTradingAuthorizationRepository()
+            ..failure = AccountReadFailure(
+              timeout ? 'builderApprovalUnknown' : 'accountReadFailed',
+              details: timeout
+                  ? const ApiErrorDetails(cause: ApiErrorCause.timeout)
+                  : const ApiErrorDetails(message: 'Signature check failed', status: 400),
+            );
+          await _launch(
+            tester,
+            identity: identity,
+            authorization: authorization,
+            direct: true,
+            language: language,
+          );
+          await tester.tap(find.byKey(const Key('enable-trading-sign')));
+          await tester.pumpAndSettle();
+          final context = tester.element(find.byKey(const Key('enable-trading-page')));
+          final l = AppLocalizations.of(context);
+          expect(
+            find.text(timeout ? l.apiRequestTimeout : 'Signature check failed'),
+            findsOneWidget,
+          );
+          expect(find.text(l.enableTradingSign), findsOneWidget);
+          expect(find.text(l.authorizationCheck), findsNothing);
+          expect(find.text(l.authorizationUnknown), findsNothing);
+          expect(find.text(l.authorizationCheckScope), findsNothing);
+          expect(find.text(l.authorizationFuturesRead), findsNothing);
+          expect(find.byKey(const Key('enable-trading-error')), findsOneWidget);
+          expect(authorization.enables, 1);
+          await tester.pumpWidget(const SizedBox());
+        },
+      );
+    }
+  }
+
+  testWidgets('pending recovery survives leaving without replacing the designed sign action', (
     tester,
   ) async {
     final identity = _IdentityRepository()..restored = _identity;
@@ -248,7 +297,9 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('enable-trading-sign')));
     await tester.pumpAndSettle();
-    expect(find.text('Check signed API access'), findsOneWidget);
+    expect(find.text('Check signed API access'), findsNothing);
+    expect(find.text('Sign to enable trading'), findsOneWidget);
+    expect(find.textContaining('authorization result is unknown'), findsNothing);
     final controller = container.read(tradingAuthorizationProvider.notifier);
     controller.cancel();
     controller.prepare();
@@ -259,15 +310,17 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('open')));
     await tester.pumpAndSettle();
-    expect(find.text('Check signed API access'), findsOneWidget);
+    expect(find.text('Check signed API access'), findsNothing);
+    expect(find.text('Sign to enable trading'), findsOneWidget);
     await tester.tap(find.byKey(const Key('enable-trading-sign')));
     await tester.pumpAndSettle();
-    expect(authorization.checks, 1);
+    expect(authorization.checks, 2);
     expect(authorization.enables, 1);
     expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
     expect(container.read(tradingAuthorizationProvider).result, TradingAuthorizationResult.unknown);
     expect(container.read(tradingAuthorizationProvider).check!.futuresCanTrade, true);
-    expect(find.textContaining('does not prove order execution'), findsOneWidget);
+    expect(find.textContaining('does not prove order execution'), findsNothing);
+    expect(find.textContaining('Accepted reads do not prove trading permissions'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
 

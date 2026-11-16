@@ -206,7 +206,8 @@ class _ReturnModal extends TestReownModal {
   @override
   ReownAppKitModalStatus status = ReownAppKitModalStatus.idle;
   @override
-  Future<void> init() async => status = ReownAppKitModalStatus.initialized;
+  Future<void> init({bool restoreOnly = false}) async =>
+      status = ReownAppKitModalStatus.initialized;
   @override
   Future<bool> dispatchEnvelope(String url) async {
     envelopes.add(url);

@@ -894,18 +894,16 @@ packages:
   reown_appkit:
     dependency: "direct main"
     description:
-      name: reown_appkit
-      sha256: "399a879c00ad1b81f1d1c7acc30521746f7a90b9845eaeafe35994d35899a76d"
-      url: "https://pub.dev"
-    source: hosted
+      path: "third_party/reown_appkit"
+      relative: true
+    source: path
     version: "1.9.0"
   reown_core:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: reown_core
-      sha256: ec80a54a8d2ab25a8573bc2e68bac0e170a0b646d6e60729938600b8afb791cd
-      url: "https://pub.dev"
-    source: hosted
+      path: "third_party/reown_core"
+      relative: true
+    source: path
     version: "1.5.1"
   reown_sign:
     dependency: transitive

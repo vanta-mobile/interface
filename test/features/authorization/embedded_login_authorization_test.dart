@@ -1,3 +1,7 @@
+import 'package:vanta/features/authorization/application/builder_authorization_provider.dart';
+
+import '../../support/builder.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,6 +48,9 @@ void main() {
         overrides: [
           identityRepositoryProvider.overrideWithValue(identity),
           vantaApiSessionProvider.overrideWith(() => session),
+          builderApprovalJournalProvider.overrideWithValue(
+            MemoryBuilderApprovalJournal(approvedByDefault: true),
+          ),
           tradingAgentStoreProvider.overrideWithValue(
             MemoryTradingAgentStorage().store(DateTime.now),
           ),
@@ -90,6 +97,9 @@ void main() {
         overrides: [
           identityRepositoryProvider.overrideWithValue(identity),
           vantaApiSessionProvider.overrideWith(VerifiedVantaSession.new),
+          builderApprovalJournalProvider.overrideWithValue(
+            MemoryBuilderApprovalJournal(approvedByDefault: true),
+          ),
           tradingAgentStoreProvider.overrideWithValue(
             MemoryTradingAgentStorage().store(DateTime.now),
           ),

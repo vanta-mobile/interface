@@ -1,3 +1,7 @@
+import 'package:vanta/features/authorization/application/builder_authorization_provider.dart';
+
+import '../../support/builder.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -45,6 +49,9 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         identityRepositoryProvider.overrideWithValue(repository),
+        builderApprovalJournalProvider.overrideWithValue(
+          MemoryBuilderApprovalJournal(approvedByDefault: true),
+        ),
         tradingAgentStoreProvider.overrideWithValue(
           MemoryTradingAgentStorage().store(DateTime.now),
         ),

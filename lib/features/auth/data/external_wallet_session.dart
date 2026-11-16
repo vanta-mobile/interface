@@ -115,6 +115,9 @@ class ExternalWalletSession {
     return signature;
   }
 
+  int personalSigningChainId({required String expectedAddress}) =>
+      int.parse(_signer(expectedAddress).chainId);
+
   Future<String> signPersonalMessage({required String expectedAddress, required String message}) {
     if (message.isEmpty || message.length > 16384) throw const AuthFailure('authWalletChanged');
     return _sign(expectedAddress, (connection) => connection.signPersonalMessage(message));

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../authorization/application/trading_agent_provider.dart';
+import '../../authorization/application/builder_authorization_provider.dart';
+import '../../authorization/domain/builder_authorization.dart';
 import '../../authorization/application/trading_authorization_provider.dart';
 import '../../authorization/domain/trading_agent.dart';
 import '../../authorization/domain/trading_authorization.dart';
@@ -34,23 +36,32 @@ final walletOnboardingStatusProvider = Provider<WalletOnboardingStatus>((ref) {
     return WalletOnboardingStatus(checking: auth.busy);
   }
   final agent = ref.watch(tradingAgentProvider);
+  final builder = ref.watch(builderApprovalProvider);
   final authorization = ref.watch(tradingAuthorizationProvider);
   final session = ref.watch(vantaApiSessionProvider);
   final address = identity.walletAddress!.toLowerCase();
   final sessionMatches = session.address == address;
+  final builderReady =
+      builder.asData?.value?.status == BuilderApprovalStatus.approved &&
+          builder.asData!.value!.maxFeeRate >= VantaBuilder.approvalCap ||
+      authorization.result == TradingAuthorizationResult.acknowledged &&
+          authorization.builderAuthorized;
   return WalletOnboardingStatus(
     checking:
         auth.busy ||
         agent.isLoading ||
+        builder.isLoading ||
         session.status == VantaApiSessionStatus.restoring ||
         (session.status != VantaApiSessionStatus.unavailable && !sessionMatches),
     tradingReady:
-        agent.asData?.value?.status == TradingAgentStatus.active ||
-        authorization.result == TradingAuthorizationResult.acknowledged,
+        (agent.asData?.value?.status == TradingAgentStatus.active ||
+            authorization.result == TradingAuthorizationResult.acknowledged) &&
+        builderReady,
     verified: sessionMatches && session.ready,
-    agentFailure: agent.error,
+    agentFailure: agent.error ?? builder.error,
     unknown:
         agent.asData?.value?.status == TradingAgentStatus.unknown ||
+        builder.asData?.value?.status == BuilderApprovalStatus.unknown ||
         authorization.result == TradingAuthorizationResult.unknown,
   );
 });
@@ -111,12 +122,12 @@ class WalletOnboardingController extends Notifier<WalletOnboardingProgress> {
       }
       state = WalletOnboardingProgress(automaticKey: key);
       if (auth.failure == null && identity?.signingAvailable == true && !status.unknown) {
-        unawaited(continueSigning(completeAll: true));
+        unawaited(continueSigning(completeAll: true, retryPendingBuilder: false));
       }
     });
   }
 
-  Future<void> continueSigning({bool completeAll = false}) async {
+  Future<void> continueSigning({bool completeAll = false, bool retryPendingBuilder = true}) async {
     final auth = ref.read(authProvider), identity = auth.identity;
     if (state.busy || auth.busy || identity?.signingAvailable != true) return;
     final generation = _generation;
@@ -133,21 +144,42 @@ class WalletOnboardingController extends Notifier<WalletOnboardingProgress> {
       if (status.checking) return;
       if (status.agentFailure != null) {
         ref.invalidate(tradingAgentProvider);
+        ref.invalidate(builderApprovalProvider);
         try {
-          await ref.read(tradingAgentProvider.future);
+          await Future.wait([
+            ref.read(tradingAgentProvider.future),
+            ref.read(builderApprovalProvider.future),
+          ]);
         } catch (_) {
           return;
         }
         if (!current()) return;
         status = ref.read(walletOnboardingStatusProvider);
       }
+      var resumePendingBuilder = false;
       if (status.unknown) {
         await ref.read(tradingAuthorizationProvider.notifier).check();
-        return;
+        if (!current()) return;
+        if (!retryPendingBuilder ||
+            ref.read(tradingAuthorizationProvider).check?.canResumeBuilder != true) {
+          return;
+        }
+        // A renewed user request may resume only the verified missing Builder.
+        // Read-back after a dispatched attempt below never enters this path.
+        resumePendingBuilder = true;
       }
-      if (!status.tradingReady) {
-        await ref.read(tradingAuthorizationProvider.notifier).enableTrading();
-        if (!current() || !completeAll) return;
+      if (!status.tradingReady || resumePendingBuilder) {
+        await ref
+            .read(tradingAuthorizationProvider.notifier)
+            .enableTrading(retryPendingBuilder: resumePendingBuilder);
+        if (!current()) return;
+        if (ref.read(tradingAuthorizationProvider).result == TradingAuthorizationResult.unknown) {
+          // The user already requested authorization. Reconcile with reads in
+          // the same action; never turn a lost reply into another signed write.
+          await ref.read(tradingAuthorizationProvider.notifier).check();
+          return;
+        }
+        if (!completeAll) return;
         if (ref.read(tradingAuthorizationProvider).result !=
             TradingAuthorizationResult.acknowledged) {
           return;

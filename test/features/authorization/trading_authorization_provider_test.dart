@@ -6,6 +6,8 @@ import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/authorization/application/trading_authorization_provider.dart';
 import 'package:vanta/features/authorization/domain/trading_authorization.dart';
+import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
+import 'package:vanta/core/errors/api_error_details.dart';
 
 import '../../support/identity_repository.dart';
 import '../../support/trading_authorization.dart';
@@ -91,6 +93,87 @@ void main() {
     expect(container.read(tradingAuthorizationProvider).result, TradingAuthorizationResult.unknown);
     expect(repository.enables, 1);
   });
+
+  test('pending Builder recovery requires a successful live missing-binding check', () async {
+    repository.result = TradingAuthorizationResult.unknown;
+    await controller.enableTrading();
+    await controller.enableTrading(retryPendingBuilder: true);
+    expect(repository.enables, 1);
+    repository.checked = TradingAuthorizationCheck(
+      address: _identity.walletAddress!,
+      checkedAt: DateTime.now(),
+      futuresReadAccepted: true,
+      spotReadAccepted: true,
+      agentReady: true,
+      builderReady: false,
+    );
+    await controller.check();
+    expect(container.read(tradingAuthorizationProvider).result, TradingAuthorizationResult.unknown);
+    repository.result = TradingAuthorizationResult.acknowledged;
+    await controller.enableTrading(retryPendingBuilder: true);
+    expect(repository.enables, 2);
+    expect(repository.retriedPendingBuilder, true);
+    expect(
+      container.read(tradingAuthorizationProvider).result,
+      TradingAuthorizationResult.acknowledged,
+    );
+  });
+
+  test('a failed Builder read never permits pending approval signing', () async {
+    repository.result = TradingAuthorizationResult.unknown;
+    await controller.enableTrading();
+    repository.checked = TradingAuthorizationCheck(
+      address: _identity.walletAddress!,
+      checkedAt: DateTime.now(),
+      futuresReadAccepted: true,
+      spotReadAccepted: true,
+      agentReady: true,
+      builderFailure: 'accountNetwork',
+    );
+    await controller.check();
+    await controller.enableTrading(retryPendingBuilder: true);
+    expect(repository.enables, 1);
+    expect(container.read(tradingAuthorizationProvider).failure, 'accountNetwork');
+  });
+
+  test('stopping before a wallet signature is returned does not invent a pending write', () async {
+    repository.initialStep = TradingAuthorizationStep.signing;
+    repository.enableGate = Completer<void>();
+    final pending = controller.enableTrading();
+    expect(container.read(tradingAuthorizationProvider).step, TradingAuthorizationStep.signing);
+    controller.stop();
+    await pending;
+    expect(container.read(tradingAuthorizationProvider).result, isNull);
+    expect(container.read(tradingAuthorizationProvider).busy, false);
+    repository.enableGate!.complete();
+    await Future<void>.delayed(Duration.zero);
+    expect(container.read(tradingAuthorizationProvider).result, isNull);
+  });
+
+  test(
+    'wallet refusal before dispatch retains its actual reason and allows explicit retry',
+    () async {
+      repository.initialStep = TradingAuthorizationStep.signing;
+      repository.failure = const AccountReadFailure(
+        'authWalletRejected',
+        details: ApiErrorDetails(message: 'User declined signature'),
+      );
+      await controller.enableTrading();
+      final failed = container.read(tradingAuthorizationProvider);
+      expect(failed.result, isNull);
+      expect(failed.step, TradingAuthorizationStep.signing);
+      expect(failed.failure, 'authWalletRejected');
+      expect(failed.errorDetails?.message, 'User declined signature');
+      expect(repository.enables, 1);
+      repository.failure = null;
+      await controller.enableTrading();
+      expect(repository.enables, 2);
+      expect(
+        container.read(tradingAuthorizationProvider).result,
+        TradingAuthorizationResult.acknowledged,
+      );
+    },
+  );
 
   test('signer reconnection for the same wallet preserves an unknown grant', () async {
     repository.result = TradingAuthorizationResult.unknown;

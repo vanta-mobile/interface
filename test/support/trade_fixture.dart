@@ -1,3 +1,7 @@
+import 'package:vanta/features/authorization/application/builder_authorization_provider.dart';
+
+import 'builder.dart';
+
 import 'package:vanta/features/portfolio/application/order_modification_provider.dart';
 import 'package:vanta/features/portfolio/domain/order_modification.dart';
 import 'package:vanta/features/market/application/public_leverage_provider.dart';
@@ -283,6 +287,9 @@ ProviderContainer setup(
       if (appCacheRepository != null)
         appCacheRepositoryProvider.overrideWithValue(appCacheRepository),
       if (verifiedApiSession) vantaApiSessionProvider.overrideWith(VerifiedVantaSession.new),
+      builderApprovalJournalProvider.overrideWithValue(
+        MemoryBuilderApprovalJournal(approvedByDefault: true),
+      ),
       tradingAgentStoreProvider.overrideWithValue(
         tradingAgentStore ?? MemoryTradingAgentStorage().store(DateTime.now),
       ),

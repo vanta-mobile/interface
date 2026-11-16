@@ -224,11 +224,11 @@ void main() {
     );
     expect(requests.where((r) => r.method == 'POST'), isEmpty);
   });
-  test('timeout or malformed success is unknown without retry', () async {
+  test('dispatched timeout retains the transport cause without retry', () async {
     failure = TimeoutException('fixture');
-    expect(
-      await repository.enable(review: review, isCurrent: () => true),
-      TradingAuthorizationResult.unknown,
+    await expectLater(
+      repository.enable(review: review, isCurrent: () => true),
+      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'authorizationUnknown')),
     );
     expect(requests.where((r) => r.method == 'POST').length, 1);
   });

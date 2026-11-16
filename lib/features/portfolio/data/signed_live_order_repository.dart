@@ -23,6 +23,7 @@ import 'order_recovery_boundary.dart';
 import 'signed_order_query_repository.dart';
 import '../domain/order_query.dart';
 import '../domain/order_recovery.dart';
+import 'builder_order_preflight.dart';
 
 class SignedLiveOrderRepository implements LiveOrderRepository {
   final AccountRequestAuthorization? authorization;
@@ -32,6 +33,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
     this.authorization,
     required this.nonces,
     this.journal,
+    this.builder,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
 
@@ -40,6 +42,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
   final AsterReadNonces nonces;
   final DateTime Function() now;
   final OrderRecoveryJournal? journal;
+  final BuilderOrderPreflight? builder;
 
   SignedAccountRequest _request(
     Future<Object?> Function({required String query, required String signature}) send, {
@@ -243,13 +246,24 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
         now,
         journal: journal,
         authorization: authorization,
+        builder: builder,
       ).submit(intent: intent, isCurrent: isCurrent, canSubmit: canSubmit, onStep: onStep);
     }
     var submitted = false;
+    final quote = await builder?.read(
+      service: service,
+      sign: sign,
+      nonces: nonces,
+      authorization: authorization,
+      intent: intent,
+      isCurrent: isCurrent,
+      canSubmit: canSubmit,
+    );
     try {
       await _request(({required query, required signature}) async {
         // Check again after the wallet prompt, immediately before the POST.
         if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
+        quote?.checkFresh();
         recordOrderAttempt(journal, intent, now());
         if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
         submitted = true;
@@ -257,7 +271,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
         return service.newOrder(query: query, signature: signature);
       }).read(
         address: context.address,
-        parameters: intent.parameters,
+        parameters: {...intent.parameters, ...?quote?.parameters},
         isCurrent: isCurrent,
         onStep: (step) {
           if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');

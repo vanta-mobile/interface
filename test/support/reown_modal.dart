@@ -159,6 +159,21 @@ class TestReownCore implements IReownCore {
 }
 
 class TestRelayClient implements IRelayClient {
+  int disconnects = 0;
+  @override
+  Future<void> disconnect() async {
+    disconnects++;
+    isConnected = false;
+  }
+
+  @override
+  bool isConnected = true;
+  @override
+  final onRelayClientConnect = Event<EventArgs>();
+  @override
+  final onRelayClientDisconnect = Event<EventArgs>();
+  @override
+  final onRelayClientPublish = Event<RelayPublishEvent>();
   @override
   final onRelayClientError = Event<ErrorEvent>();
 

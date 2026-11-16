@@ -7,6 +7,11 @@ import '../l10n/generated/app_localizations.dart';
 String tr(BuildContext context, String key) {
   final messages = AppLocalizations.of(context);
   return switch (key) {
+    'incomeArchiveReferenceConflict' => messages.incomeArchiveReferenceConflict,
+    'builderAuthorizationRequired' => messages.authorizationRequired,
+    'builderApprovalUnknown' => messages.authorizationUnknown,
+    'builderFeeAboveBudget' => messages.liveOrderContextExpired,
+    'builderFeeQuoteExpired' => messages.liveOrderContextExpired,
     'orderResponseIdentityMismatch' => messages.orderResponseIdentityMismatch,
     'orderResponseLinkageMismatch' => messages.orderResponseLinkageMismatch,
     'orderResponseTermsMismatch' => messages.orderResponseTermsMismatch,

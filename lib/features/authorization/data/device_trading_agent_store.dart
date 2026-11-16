@@ -158,6 +158,8 @@ class DeviceTradingAgentStore implements TradingAgentStore {
     final previous = _metadata(e).status;
     if (!(previous == TradingAgentStatus.prepared && status == TradingAgentStatus.unknown ||
         previous == TradingAgentStatus.unknown && status == TradingAgentStatus.active ||
+        previous == TradingAgentStatus.unknown && status == TradingAgentStatus.rejected ||
+        previous == TradingAgentStatus.unknown && status == TradingAgentStatus.prepared ||
         previous == TradingAgentStatus.active && status == TradingAgentStatus.rejected)) {
       throw const AccountReadFailure('authorizationUnknown');
     }

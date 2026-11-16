@@ -280,6 +280,22 @@ class PrivyIdentityRepository
   });
 
   @override
+  int personalSigningChainId({required String expectedAddress}) {
+    if (_disposed) throw const AuthFailure('authWalletCancelled');
+    if (_external.selected) {
+      return _external.personalSigningChainId(expectedAddress: expectedAddress);
+    }
+    final user = _user;
+    if (user == null) throw const AuthFailure('authSessionUnavailable');
+    final identity = _identity(user);
+    if (!identity.signingAvailable ||
+        identity.walletAddress?.toLowerCase() != expectedAddress.toLowerCase()) {
+      throw const AuthFailure('authWalletChanged');
+    }
+    return 1;
+  }
+
+  @override
   Future<String> signPersonalMessage({required String expectedAddress, required String message}) =>
       _guard(() async {
         if (_external.selected) {

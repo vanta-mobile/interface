@@ -1,3 +1,7 @@
+import 'package:vanta/features/authorization/application/builder_authorization_provider.dart';
+
+import 'builder.dart';
+
 import 'dart:async';
 
 import 'package:decimal/decimal.dart';
@@ -161,6 +165,9 @@ class FundingHarness {
     container = ProviderContainer(
       overrides: [
         identityRepositoryProvider.overrideWithValue(identity),
+        builderApprovalJournalProvider.overrideWithValue(
+          MemoryBuilderApprovalJournal(approvedByDefault: true),
+        ),
         tradingAgentStoreProvider.overrideWithValue(
           MemoryTradingAgentStorage().store(DateTime.now),
         ),

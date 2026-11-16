@@ -16,6 +16,8 @@ import '../data/trading_authorization_repository.dart';
 import '../domain/trading_authorization.dart';
 import '../domain/trading_agent.dart';
 import 'trading_agent_provider.dart';
+import 'builder_authorization_provider.dart';
+import '../domain/builder_authorization.dart';
 
 final tradingAuthorizationClockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 final tradingAuthorizationRepositoryProvider = Provider<TradingAuthorizationRepository>((ref) {
@@ -31,6 +33,7 @@ final tradingAuthorizationRepositoryProvider = Provider<TradingAuthorizationRepo
     spot,
     identity.signWalletRequest,
     agents: ref.watch(tradingAgentStoreProvider),
+    builder: ref.watch(builderAuthorizationRepositoryProvider),
     checkAuthorization: ref.watch(asterAuthorizationCheckProvider),
     signingPreparation: identity is WalletSigningPreparation
         ? identity as WalletSigningPreparation
@@ -70,6 +73,20 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
     // A dependency rebuild must interrupt the old operation, not reset its
     // visible busy state while retaining an independent private lock.
     ref.listen(tradingAuthorizationRepositoryProvider, (_, _) => stop());
+    ref.listen(builderApprovalProvider, (_, next) {
+      if (_working || next.isLoading || !next.hasValue) return;
+      final record = next.asData?.value;
+      if (record?.status == BuilderApprovalStatus.unknown) {
+        state = TradingAuthorizationState(
+          result: TradingAuthorizationResult.unknown,
+          check: state.check,
+          failure: state.failure,
+          errorDetails: state.errorDetails,
+        );
+      } else if (record?.status == BuilderApprovalStatus.rejected) {
+        state = TradingAuthorizationState(failure: state.failure, errorDetails: state.errorDetails);
+      }
+    });
     ref.listen(tradingAgentProvider, (previous, next) {
       if (_working || !next.hasValue || next.isLoading) return;
       final before = previous?.asData?.value;
@@ -78,6 +95,8 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
         state = TradingAuthorizationState(
           result: TradingAuthorizationResult.unknown,
           check: state.check,
+          failure: state.failure,
+          errorDetails: state.errorDetails,
         );
       } else if (agent?.status == TradingAgentStatus.prepared &&
           state.result == TradingAuthorizationResult.unknown) {
@@ -111,6 +130,7 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
               ? TradingAuthorizationState(
                   result: state.result ?? (submitting ? TradingAuthorizationResult.unknown : null),
                   check: state.check,
+                  builderAuthorized: state.builderAuthorized,
                 )
               : const TradingAuthorizationState();
         }
@@ -161,11 +181,22 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
   }
 
   /// Uses the default trading-only grant for onboarding, including Privy login.
-  /// An uncertain dispatched write must be checked, never submitted again.
-  Future<void> enableTrading() async {
-    if (_working || state.result != null) return;
+  /// Pending Builder recovery is allowed only after a renewed user action and
+  /// a live check; the repository still verifies binding before fresh signing.
+  Future<void> enableTrading({bool retryPendingBuilder = false}) async {
+    if (_working ||
+        state.result == TradingAuthorizationResult.unknown && !retryPendingBuilder ||
+        state.result == TradingAuthorizationResult.acknowledged && state.builderAuthorized) {
+      return;
+    }
+    if (retryPendingBuilder) {
+      if (state.check?.canResumeBuilder != true) return;
+      state = const TradingAuthorizationState();
+    }
     prepare();
-    if (state.review case final review?) await confirm(review);
+    if (state.review case final review?) {
+      await confirm(review, retryPendingBuilder: retryPendingBuilder);
+    }
   }
 
   void stop() {
@@ -174,29 +205,56 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
     state = TradingAuthorizationState(
       result: state.result ?? (submitting ? TradingAuthorizationResult.unknown : null),
       check: state.check,
+      builderAuthorized: state.builderAuthorized,
     );
   }
 
-  Future<void> confirm(TradingAuthorizationReview review) async {
+  Future<void> confirm(
+    TradingAuthorizationReview review, {
+    bool retryPendingBuilder = false,
+  }) async {
     if (_working || !identical(state.review, review)) return;
     final g = ++_generation;
     if (!_current(review.identity, g)) return;
     final interrupted = _interrupted = Completer<void>();
-    _submitting = true;
-    state = const TradingAuthorizationState(busy: true);
+    _submitting = false;
+    state = const TradingAuthorizationState(busy: true, step: TradingAuthorizationStep.preparing);
     try {
       final result = await _wait(
         ref
             .read(tradingAuthorizationRepositoryProvider)
-            .enable(review: review, isCurrent: () => _current(review.identity, g)),
+            .enable(
+              review: review,
+              isCurrent: () => _current(review.identity, g),
+              retryPendingBuilder: retryPendingBuilder,
+              onStep: (step) {
+                if (!_current(review.identity, g)) return;
+                _submitting =
+                    step == TradingAuthorizationStep.submitting ||
+                    step == TradingAuthorizationStep.confirming;
+                state = TradingAuthorizationState(busy: true, step: step);
+              },
+            ),
         interrupted,
       );
-      if (_current(review.identity, g)) state = TradingAuthorizationState(result: result);
+      if (_current(review.identity, g)) {
+        state = TradingAuthorizationState(
+          result: result,
+          builderAuthorized:
+              !review.canWithdraw && result == TradingAuthorizationResult.acknowledged,
+        );
+      }
     } catch (e) {
       if (_current(review.identity, g)) {
         state = TradingAuthorizationState(
           errorDetails: errorDetailsOf(e),
           failure: e is AccountReadFailure ? e.key : 'accountReadFailed',
+          result:
+              e is AccountReadFailure &&
+                  {'authorizationUnknown', 'builderApprovalUnknown'}.contains(e.key)
+              ? TradingAuthorizationResult.unknown
+              : null,
+          step: state.step,
         );
       }
     } finally {
@@ -215,33 +273,70 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
       state = TradingAuthorizationState(
         result: state.result,
         check: state.check,
+        builderAuthorized: state.builderAuthorized,
         failure: 'authWalletReconnect',
       );
       return;
     }
     final g = ++_generation, previous = state;
     final interrupted = _interrupted = Completer<void>();
-    state = TradingAuthorizationState(busy: true, result: previous.result, check: previous.check);
+    state = TradingAuthorizationState(
+      busy: true,
+      result: previous.result,
+      check: previous.check,
+      builderAuthorized: previous.builderAuthorized,
+    );
     try {
       final result = await _wait(
         ref
             .read(tradingAuthorizationRepositoryProvider)
-            .check(address: identity.walletAddress!, isCurrent: () => _current(identity, g)),
+            .check(
+              address: identity.walletAddress!,
+              identityId: identity.id,
+              isCurrent: () => _current(identity, g),
+            ),
         interrupted,
       );
       if (_current(identity, g)) {
-        state = TradingAuthorizationState(result: previous.result, check: result);
+        final failure =
+            result.agentFailure ??
+            result.builderFailure ??
+            result.futuresFailure ??
+            result.spotFailure ??
+            (result.agentReady == false
+                ? 'authorizationRequired'
+                : result.builderReady == false
+                ? 'builderAuthorizationRequired'
+                : null);
+        final details = result.agentFailure != null
+            ? result.agentErrorDetails
+            : result.builderFailure != null
+            ? result.builderErrorDetails
+            : result.futuresFailure != null
+            ? result.futuresErrorDetails
+            : result.spotErrorDetails;
+        state = TradingAuthorizationState(
+          result: result.builderReady == true && result.agentReady == true
+              ? TradingAuthorizationResult.acknowledged
+              : previous.result,
+          check: result,
+          builderAuthorized: result.builderReady == true,
+          failure: failure,
+          errorDetails: details,
+        );
       }
     } catch (e) {
       if (_current(identity, g)) {
         state = TradingAuthorizationState(
           result: previous.result,
           check: previous.check,
+          builderAuthorized: previous.builderAuthorized,
           errorDetails: errorDetailsOf(e),
           failure: e is AccountReadFailure ? e.key : 'accountReadFailed',
         );
       }
     } finally {
+      if (ref.mounted) ref.invalidate(tradingAgentProvider);
       if (identical(_interrupted, interrupted)) _interrupted = null;
     }
   }

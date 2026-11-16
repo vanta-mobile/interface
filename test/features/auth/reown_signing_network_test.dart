@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:reown_appkit/reown_appkit.dart';
 import 'package:vanta/features/auth/data/reown_signing_network.dart';
 import 'package:vanta/features/auth/data/reown_wallet_connector.dart';
@@ -177,7 +178,7 @@ void main() {
           isCurrent: () => current,
           timeout: const Duration(milliseconds: 20),
         ),
-        throwsA(issue == 'timeout' ? isA<TimeoutException>() : anything),
+        throwsA(issue == 'timeout' ? isA<AuthFailure>() : anything),
       );
       gate.complete();
       await Future<void>.delayed(Duration.zero);
@@ -277,7 +278,7 @@ void main() {
         isCurrent: () => true,
         timeout: const Duration(milliseconds: 10),
       ),
-      throwsA(isA<TimeoutException>()),
+      throwsA(isA<AuthFailure>().having((e) => e.key, 'key', 'authWalletResponseTimeout')),
     );
     gate.complete();
     await Future<void>.delayed(Duration.zero);
@@ -300,5 +301,79 @@ void main() {
     );
     expect(modal.requests.length, 1);
     expect(modal.selectedChainId, '42161');
+  });
+
+  test('network approval restores relay before asking the SDK to open MetaMask', () async {
+    modal.relayGate = Completer<void>();
+    modal.onRequest = (_) async {
+      approve();
+      return null;
+    };
+    final pending = prepare();
+    await pumpEventQueue();
+    expect(modal.relayReconnects, 1);
+    expect(modal.requests, isEmpty);
+    modal.relayGate!.complete();
+    await pending;
+    expect(modal.requests.single.method, 'wallet_switchEthereumChain');
+    expect(connection.chainId, '56');
+  });
+
+  test('failed wallet launch releases network loading and does not sign', () async {
+    modal.gate = Completer<void>();
+    final pending = expectLater(
+      prepare(),
+      throwsA(
+        isA<AuthFailure>()
+            .having((e) => e.key, 'key', 'authWalletOpenFailed')
+            .having((e) => e.reason, 'reason', 'OS refused to open MetaMask'),
+      ),
+    );
+    await pumpEventQueue();
+    modal.onModalError.broadcast(ErrorOpeningWallet(description: 'OS refused to open MetaMask'));
+    await pending;
+    expect(modal.requests.map((r) => r.method), ['wallet_switchEthereumChain']);
+    expect(connection.chainId, '42161');
+    modal.gate!.complete();
+    await pumpEventQueue();
+    expect(modal.requests.length, 1);
+  });
+
+  test(
+    'relay failure during switching is displayed before dispatch and never opens late',
+    () async {
+      modal.relayGate = Completer<void>();
+      final pending = expectLater(
+        prepare(),
+        throwsA(
+          isA<AuthFailure>().having((e) => e.reason, 'reason', 'Relay connection unavailable'),
+        ),
+      );
+      await pumpEventQueue();
+      modal.sdk.relayErrors.broadcast(ErrorEvent('Relay connection unavailable'));
+      await pending;
+      modal.relayGate!.complete();
+      await pumpEventQueue();
+      expect(modal.requests, isEmpty);
+    },
+  );
+
+  test('MetaMask that never opens or answers ends loading within the foreground probe window', () {
+    fakeAsync((time) {
+      modal.gate = Completer<void>();
+      modal.sdk.pingGate = Completer<void>();
+      AuthFailure? failure;
+      prepare().then<void>((_) {}, onError: (Object e) => failure = e as AuthFailure);
+      time.flushMicrotasks();
+      time.elapse(const Duration(seconds: 10));
+      time.flushMicrotasks();
+      expect(failure?.key, 'authWalletSessionUnverified');
+      expect(connection.needsReconnect, true);
+      expect(modal.requests.map((r) => r.method), ['wallet_switchEthereumChain']);
+      modal.gate!.complete();
+      modal.sdk.pingGate!.complete();
+      time.flushMicrotasks();
+      expect(modal.requests.length, 1);
+    });
   });
 }

@@ -1,149 +1,30 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vanta/core/theme.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/auth/application/vanta_api_session_provider.dart';
 import 'package:vanta/features/auth/application/wallet_onboarding_provider.dart';
-import 'package:vanta/features/auth/data/vanta_api_session_store.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
-import 'package:vanta/features/auth/data/reown_wallet_connector.dart';
-import 'package:vanta/features/auth/data/privy_configuration.dart';
-import 'package:vanta/features/auth/domain/wallet_connection.dart';
-
-import '../../support/wallet_connection.dart';
-
-import 'package:vanta/features/auth/presentation/startup_screen.dart';
 import 'package:vanta/features/auth/presentation/login_screen.dart';
-import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
-import 'package:vanta/features/authorization/application/trading_authorization_provider.dart';
 import 'package:vanta/features/authorization/domain/trading_agent.dart';
+import 'package:vanta/features/authorization/domain/builder_authorization.dart';
+import 'package:vanta/features/authorization/domain/trading_authorization.dart';
+import 'package:vanta/features/authorization/application/trading_authorization_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
-import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/identity_repository.dart';
-import '../../support/trading_agents.dart';
-import '../../support/trading_authorization.dart';
 import '../../support/vanta_api.dart';
+import '../../support/wallet_connection.dart';
+import 'wallet_onboarding_fixture.dart';
 
-AuthIdentity _identity(WalletKind kind) => AuthIdentity(
-  id: 'test-user',
-  walletAddress: vantaTestAddress,
-  walletKind: kind,
-  signingAvailable: true,
-);
+import 'package:vanta/features/authorization/application/builder_authorization_provider.dart';
 
 class _LoginIdentity extends TestIdentityRepository {
   @override
   Future<AuthIdentity> ensureWallet() async {
     await super.ensureWallet();
-    return _identity(WalletKind.embedded);
-  }
-}
-
-class _Store extends MemoryStore {
-  Completer<void>? readGate;
-  Object? failure;
-  @override
-  Future<VantaApiCredentials?> read() async {
-    await readGate?.future;
-    if (failure case final error?) throw error;
-    return super.read();
-  }
-}
-
-class _Harness {
-  _Harness({
-    WalletKind kind = WalletKind.external,
-    bool verified = false,
-    WalletConnector? connector,
-    bool configured = true,
-    TestIdentityRepository? repository,
-  }) : identity = repository ?? TestIdentityRepository() {
-    identity.restored = _identity(kind);
-    if (verified) {
-      sessions.value = VantaApiCredentials(
-        address: vantaTestAddress.toLowerCase(),
-        accessToken: 'fixture-access',
-        refreshToken: 'fixture-refresh',
-        accessExpiresAt: vantaTestNow.add(const Duration(hours: 1)),
-      );
-    }
-    container = ProviderContainer(
-      overrides: [
-        identityRepositoryProvider.overrideWithValue(identity),
-        privyConfigurationProvider.overrideWithValue(
-          const PrivyConfiguration(appId: 'fixture', clientId: 'fixture'),
-        ),
-        if (connector != null) walletConnectorProvider.overrideWithValue(connector),
-        tradingAgentStoreProvider.overrideWithValue(agents.store(() => vantaTestNow)),
-        tradingAgentClockProvider.overrideWithValue(() => vantaTestNow),
-        tradingAuthorizationRepositoryProvider.overrideWithValue(authorization),
-        vantaApiSessionRepositoryProvider.overrideWithValue(
-          configured
-              ? vantaTestRepository(
-                  backend,
-                  store: sessions,
-                  signer: signer,
-                  now: () => vantaTestNow,
-                )
-              : null,
-        ),
-      ],
-    );
-    addTearDown(() async {
-      container.dispose();
-      await identity.dispose();
-    });
-  }
-  final TestIdentityRepository identity;
-  final authorization = TestTradingAuthorizationRepository();
-  final agents = MemoryTradingAgentStorage();
-  final sessions = _Store();
-  final backend = Backend();
-  final signer = KeySigner();
-  late final ProviderContainer container;
-
-  Future<void> grant([TradingAgentStatus status = TradingAgentStatus.active]) async {
-    final store = container.read(tradingAgentStoreProvider);
-    final agent = await store.prepare(
-      'test-user',
-      vantaTestAddress,
-      vantaTestNow.add(const Duration(days: 30)),
-    );
-    await store.setStatus(agent, TradingAgentStatus.unknown);
-    if (status == TradingAgentStatus.active) await store.setStatus(agent, status);
-  }
-
-  Future<void> mount(WidgetTester tester, {Widget? home, String language = 'en'}) =>
-      tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: MaterialApp(
-            theme: vantaTheme(),
-            locale: Locale(language),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: StartupScreen(home: home ?? const Scaffold(body: Text('Main page'))),
-          ),
-        ),
-      );
-}
-
-class _Restorer extends TestWalletConnector implements WalletSessionRestorer {
-  _Restorer(super.connection);
-  final restoreGate = Completer<void>();
-  int restores = 0;
-  bool missing = false;
-  @override
-  Future<WalletConnection?> restore(BuildContext context, {required String expectedAddress}) async {
-    restores++;
-    expect(expectedAddress, connection.address);
-    await restoreGate.future;
-    if (failure case final error?) throw error;
-    return missing ? null : connection;
+    return onboardingIdentity(WalletKind.embedded);
   }
 }
 
@@ -154,8 +35,8 @@ void main() {
     ) async {
       final connection = TestWalletConnection(address: vantaTestAddress);
       addTearDown(connection.dispose);
-      final connector = _Restorer(connection)..missing = true;
-      final h = _Harness(connector: connector);
+      final connector = OnboardingRestorer(connection)..missing = true;
+      final h = OnboardingHarness(connector: connector);
       h.identity.restored = AuthIdentity(
         id: 'external-user',
         walletKind: WalletKind.external,
@@ -185,7 +66,7 @@ void main() {
   testWidgets('holds splash for identity and session restoration before entering home', (
     tester,
   ) async {
-    final h = _Harness(verified: true);
+    final h = OnboardingHarness(verified: true);
     await h.grant();
     h.identity.initializeGate = Completer<void>();
     h.sessions.readGate = Completer<void>();
@@ -207,7 +88,7 @@ void main() {
   });
 
   testWidgets('signed out startup enters the public home after the check', (tester) async {
-    final h = _Harness();
+    final h = OnboardingHarness();
     h.identity.restored = null;
     await h.mount(tester);
     await tester.pumpAndSettle();
@@ -221,8 +102,8 @@ void main() {
     ) async {
       final connection = TestWalletConnection(address: vantaTestAddress);
       addTearDown(connection.dispose);
-      final connector = _Restorer(connection)..missing = missing;
-      final h = _Harness(connector: connector);
+      final connector = OnboardingRestorer(connection)..missing = missing;
+      final h = OnboardingHarness(connector: connector);
       h.identity.restored = AuthIdentity(
         id: 'external-user',
         walletKind: WalletKind.external,
@@ -244,7 +125,7 @@ void main() {
   }
 
   testWidgets('unreadable stored credentials settle on the signature page', (tester) async {
-    final h = _Harness();
+    final h = OnboardingHarness();
     h.sessions.failure = const AuthFailure('authNetwork');
     await h.mount(tester);
     await tester.pumpAndSettle();
@@ -257,7 +138,7 @@ void main() {
   testWidgets('missing API configuration settles on the signature page without a false login', (
     tester,
   ) async {
-    final h = _Harness(configured: false);
+    final h = OnboardingHarness(configured: false);
     await h.mount(tester);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('startup-splash')), findsNothing);
@@ -270,7 +151,7 @@ void main() {
       testWidgets('external startup grant=$granted verified=$verified resumes the missing step', (
         tester,
       ) async {
-        final h = _Harness(verified: verified);
+        final h = OnboardingHarness(verified: verified);
         if (granted) await h.grant();
         await h.mount(tester);
         await tester.pumpAndSettle();
@@ -300,10 +181,8 @@ void main() {
     }
   }
 
-  testWidgets('fresh Privy login silently completes trading and SIWE before closing login', (
-    tester,
-  ) async {
-    final h = _Harness(repository: _LoginIdentity());
+  testWidgets('fresh Privy login automatically signs trading and SIWE', (tester) async {
+    final h = OnboardingHarness(repository: _LoginIdentity());
     h.identity.restored = null;
     h.signer.gate = Completer<void>();
     await h.mount(
@@ -329,6 +208,10 @@ void main() {
     expect(h.authorization.enables, 1);
     expect(h.signer.calls, 1);
     expect(find.byKey(const Key('startup-splash')), findsOneWidget);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(h.signer.calls, 1);
     h.signer.gate!.complete();
     await tester.pumpAndSettle();
     expect(find.text('Open login'), findsOneWidget);
@@ -336,33 +219,60 @@ void main() {
     expect(h.container.read(vantaApiSessionProvider).ready, true);
   });
 
-  testWidgets('Privy silently signs trading then SIWE once and holds splash until both settle', (
+  testWidgets('an existing Agent without Builder approval resumes the existing enable flow', (
     tester,
   ) async {
-    final h = _Harness(kind: WalletKind.embedded);
+    final h = OnboardingHarness(verified: true);
+    await h.grant();
+    h.builderJournal.records.clear();
+    h.container.invalidate(builderApprovalProvider);
+    await h.mount(tester);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
+    expect(h.authorization.enables, 0);
+    expect(h.signer.calls, 0);
+    await tester.tap(find.byKey(const Key('enable-trading-sign')));
+    await tester.pumpAndSettle();
+    expect(h.authorization.enables, 1);
+    expect(find.text('Main page'), findsOneWidget);
+    expect(h.signer.calls, 0);
+    h.container.dispose();
+  });
+
+  testWidgets('restored Privy shows authorization and signs both steps only after confirmation', (
+    tester,
+  ) async {
+    final h = OnboardingHarness(kind: WalletKind.embedded);
     h.authorization.enableGate = Completer<void>();
     h.signer.gate = Completer<void>();
     await h.mount(tester);
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('startup-splash')), findsOneWidget);
+    expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
+    expect(h.authorization.enables, 0);
+    expect(h.signer.calls, 0);
+    await tester.tap(find.byKey(const Key('enable-trading-sign')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     expect(h.authorization.enables, 1);
     expect(h.signer.calls, 0);
     h.authorization.enableGate!.complete();
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     expect(h.signer.calls, 1);
-    expect(find.byKey(const Key('startup-splash')), findsOneWidget);
+    expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
     h.signer.gate!.complete();
     await tester.pumpAndSettle();
     expect(find.text('Main page'), findsOneWidget);
     expect(h.authorization.enables, 1);
   });
 
-  testWidgets('Privy failure stops automatic retries and offers a working explicit retry', (
-    tester,
-  ) async {
-    final h = _Harness(kind: WalletKind.embedded);
+  testWidgets('restored Privy failure waits for an explicit retry', (tester) async {
+    final h = OnboardingHarness(kind: WalletKind.embedded);
     h.authorization.failure = const AccountReadFailure('authWalletRejected');
     await h.mount(tester);
+    await tester.pumpAndSettle();
+    expect(h.authorization.enables, 0);
+    await tester.tap(find.byKey(const Key('enable-trading-sign')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
     expect(h.authorization.enables, 1);
@@ -377,10 +287,13 @@ void main() {
   testWidgets('SIWE rejection releases loading and retry never repeats an active grant', (
     tester,
   ) async {
-    final h = _Harness(kind: WalletKind.embedded);
+    final h = OnboardingHarness(kind: WalletKind.embedded);
     await h.grant();
     h.backend.routes['POST /v1/auth/siwe'] = (_) => json({'message': 'Verification declined'}, 400);
     await h.mount(tester);
+    await tester.pumpAndSettle();
+    expect(h.signer.calls, 0);
+    await tester.tap(find.byKey(const Key('enable-trading-sign')));
     await tester.pumpAndSettle();
     expect(find.text('Verification declined'), findsOneWidget);
     expect(h.container.read(walletOnboardingProvider).busy, false);
@@ -397,7 +310,7 @@ void main() {
   testWidgets('stored unknown grant is checked without silently replaying a financial write', (
     tester,
   ) async {
-    final h = _Harness(kind: WalletKind.embedded);
+    final h = OnboardingHarness(kind: WalletKind.embedded);
     await h.grant(TradingAgentStatus.unknown);
     await h.mount(tester);
     await tester.pumpAndSettle();
@@ -412,14 +325,53 @@ void main() {
     h.container.dispose();
   });
 
+  testWidgets('sign button resumes a missing Builder after live check with an active Agent', (
+    tester,
+  ) async {
+    final h = OnboardingHarness();
+    await h.grant();
+    await h.builderJournal.save(
+      vantaTestAddress,
+      BuilderApprovalRecord(
+        status: BuilderApprovalStatus.unknown,
+        maxFeeRate: VantaBuilder.approvalCap,
+      ),
+    );
+    h.authorization.checked = TradingAuthorizationCheck(
+      address: vantaTestAddress,
+      checkedAt: vantaTestNow,
+      futuresReadAccepted: true,
+      spotReadAccepted: true,
+      agentReady: true,
+      builderReady: false,
+    );
+    await h.mount(tester);
+    await tester.pumpAndSettle();
+    expect(h.authorization.enables, 0);
+    await tester.tap(find.byKey(const Key('enable-trading-sign')));
+    await tester.pumpAndSettle();
+    expect(h.authorization.checks, 1);
+    expect(h.authorization.enables, 1);
+    expect(h.authorization.retriedPendingBuilder, true);
+    final authorization = h.container.read(tradingAuthorizationProvider);
+    expect(authorization.result, TradingAuthorizationResult.acknowledged);
+    expect(authorization.failure, isNull);
+    expect(h.signer.calls, 0);
+    h.container.dispose();
+  });
+
   testWidgets('late signature after wallet change cannot enter the previous wallet home', (
     tester,
   ) async {
-    final h = _Harness(kind: WalletKind.embedded);
+    final h = OnboardingHarness(kind: WalletKind.embedded);
     await h.grant();
     h.signer.gate = Completer<void>();
     await h.mount(tester);
     await tester.pumpAndSettle();
+    expect(h.signer.calls, 0);
+    await tester.tap(find.byKey(const Key('enable-trading-sign')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     expect(h.signer.calls, 1);
     h.identity.events.add(
       const AuthIdentity(

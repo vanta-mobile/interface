@@ -2,7 +2,7 @@ part of 'reown_wallet_connector.dart';
 
 class ReownWalletConnection
     implements WalletConnection, WalletSigningPreparation, WalletSessionVerification {
-  ReownWalletConnection(this.modal, this.address, String chainId)
+  ReownWalletConnection(this.modal, this.address, String chainId, {this.onUnresponsive})
     : _chainId = chainId,
       _topic = modal.session?.topic {
     modal.addListener(_check);
@@ -21,6 +21,7 @@ class ReownWalletConnection
   }
 
   final ReownAppKitModal modal;
+  final VoidCallback? onUnresponsive;
   final String? _topic;
   @override
   final String address;
@@ -46,6 +47,7 @@ class ReownWalletConnection
   void _requireReconnect() {
     if (_closed || _invalid) return;
     _needsReconnect = true;
+    onUnresponsive?.call();
     _invalidate();
   }
 
@@ -83,6 +85,9 @@ class ReownWalletConnection
         fromChain: this.chainId,
         chainId: chainId,
         isCurrent: () => this.isCurrent && isCurrent(),
+        invalidations: invalidations,
+        needsReconnect: () => needsReconnect,
+        onUnresponsive: _requireReconnect,
       );
       _chainId = '$chainId';
     } finally {
@@ -117,7 +122,7 @@ class ReownWalletConnection
     if (!owner()) throw const AuthFailure('authWalletChanged');
     _signingOwner = owner;
     try {
-      final result = await requestReownSignature(
+      final result = await requestReownWallet(
         modal: modal,
         chainId: 'eip155:$chainId',
         request: SessionRequestParams(method: method, params: parameters),

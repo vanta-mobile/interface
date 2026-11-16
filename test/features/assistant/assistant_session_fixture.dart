@@ -86,6 +86,9 @@ class AssistantTestStore implements AssistantSecureStore {
 }
 
 class AssistantTestSigner implements WalletMessageSigner {
+  @override
+  int personalSigningChainId({required String expectedAddress}) => 1;
+
   final messages = <String>[], addresses = <String>[];
   Future<String> Function(String message)? respond;
   @override

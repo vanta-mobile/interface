@@ -36,6 +36,7 @@ void main() {
   late List<http.Request> requests;
   late int walletPrompts;
   late bool current, dispatched;
+  late bool postRefused, agentMayTrade, malformedAgent;
   Object? failure;
   Future<void> Function()? duringWallet;
   late AsterTradingAuthorizationRepository repository;
@@ -58,6 +59,9 @@ void main() {
     walletPrompts = 0;
     current = true;
     dispatched = false;
+    postRefused = false;
+    agentMayTrade = true;
+    malformedAgent = false;
     failure = null;
     duringWallet = null;
     nonces = AsterReadNonces();
@@ -70,6 +74,7 @@ void main() {
         dispatched = true;
         final agent = await storage.store(() => now).load('login', fixtureMaster);
         expect(agent?.status, TradingAgentStatus.unknown);
+        if (postRefused) return http.Response('{"message":"Signature check failed"}', 400);
         if (failure != null) throw failure!;
         return http.Response(jsonEncode({'code': 200}), 200);
       }
@@ -88,6 +93,27 @@ void main() {
         ),
         true,
       );
+      if (request.url.path == '/fapi/v3/agent') {
+        final agent = (await store.load('login', fixtureMaster))!;
+        return http.Response(
+          jsonEncode(
+            malformedAgent
+                ? {'agents': <Object?>[]}
+                : [
+                    {
+                      'agentAddress': agent.address,
+                      'expired': agent.expiresAt.millisecondsSinceEpoch,
+                      'canRead': true,
+                      'canSpotTrade': true,
+                      'canPerpTrade': agentMayTrade,
+                      'canWithdraw': false,
+                      'ipWhitelist': '',
+                    },
+                  ],
+          ),
+          200,
+        );
+      }
       return http.Response(
         jsonEncode(request.url.host.startsWith('sapi') ? spotPayload() : accountPayload()),
         200,
@@ -150,9 +176,9 @@ void main() {
     'lost authorization response persists uncertainty across restart and never replays',
     () async {
       failure = TimeoutException('fixture');
-      expect(
-        await repository.enable(review: review, isCurrent: () => current),
-        TradingAuthorizationResult.unknown,
+      await expectLater(
+        repository.enable(review: review, isCurrent: () => current),
+        throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'authorizationUnknown')),
       );
       store = storage.store(() => now);
       final restored = AsterTradingAuthorizationRepository(
@@ -178,6 +204,63 @@ void main() {
     },
   );
 
+  test(
+    'registration refusal is rejected, not pending, and does not replay automatically',
+    () async {
+      postRefused = true;
+      final steps = <TradingAuthorizationStep>[];
+      await expectLater(
+        repository.enable(review: review, isCurrent: () => current, onStep: steps.add),
+        throwsA(
+          isA<AccountReadFailure>().having(
+            (e) => e.details?.message,
+            'reason',
+            'Signature check failed',
+          ),
+        ),
+      );
+      expect((await store.load('login', fixtureMaster))?.status, TradingAgentStatus.rejected);
+      expect(steps, [
+        TradingAuthorizationStep.preparing,
+        TradingAuthorizationStep.signing,
+        TradingAuthorizationStep.submitting,
+      ]);
+      expect(requests.where((r) => r.method == 'POST'), hasLength(1));
+      postRefused = false;
+      expect(
+        await repository.enable(review: review, isCurrent: () => current),
+        TradingAuthorizationResult.acknowledged,
+      );
+      expect(requests.where((r) => r.method == 'POST'), hasLength(2));
+    },
+  );
+
+  for (final scenario in ['approved', 'missing permission', 'malformed']) {
+    test('a pending Agent is resolved from its exact grant: $scenario', () async {
+      failure = TimeoutException('fixture');
+      await expectLater(
+        repository.enable(review: review, isCurrent: () => current),
+        throwsA(isA<AccountReadFailure>()),
+      );
+      failure = null;
+      agentMayTrade = scenario != 'missing permission';
+      malformedAgent = scenario == 'malformed';
+      final result = await repository.check(
+        address: fixtureMaster,
+        identityId: 'login',
+        isCurrent: () => current,
+      );
+      expect(result.agentReady, scenario == 'approved' ? true : false);
+      expect(result.agentFailure, malformedAgent ? 'accountDataInvalid' : null);
+      expect(
+        (await store.load('login', fixtureMaster))?.status,
+        scenario == 'approved' ? TradingAgentStatus.active : TradingAgentStatus.unknown,
+      );
+      expect(walletPrompts, 1);
+      expect(requests.where((r) => r.method == 'POST'), hasLength(1));
+    });
+  }
+
   test('key storage failure prevents owner signature and network dispatch', () async {
     storage.writeFailure = StateError('fixture');
     await expectLater(
@@ -195,6 +278,31 @@ void main() {
     await expectLater(
       repository.enable(review: review, isCurrent: () => current),
       throwsA(isA<AccountReadFailure>()),
+    );
+    expect(dispatched, false);
+    expect((await store.load('login', fixtureMaster))?.status, TradingAgentStatus.prepared);
+  });
+  test('a known interruption before dispatch restores the prepared Agent', () async {
+    final values = <String, String>{};
+    store = DeviceTradingAgentStore(
+      now: () => now,
+      read: (key) async => values[key],
+      write: (key, value) async {
+        values[key] = value;
+        if ((jsonDecode(value) as Map)['status'] == 'unknown') current = false;
+      },
+    );
+    repository = AsterTradingAuthorizationRepository(
+      futures,
+      spot,
+      wallet,
+      agents: store,
+      nonces: nonces,
+      now: () => now,
+    );
+    await expectLater(
+      repository.enable(review: review, isCurrent: () => current),
+      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'authWalletChanged')),
     );
     expect(dispatched, false);
     expect((await store.load('login', fixtureMaster))?.status, TradingAgentStatus.prepared);
