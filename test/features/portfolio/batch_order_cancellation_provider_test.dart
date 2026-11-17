@@ -78,25 +78,45 @@ void main() {
     expect(container.read(openOrdersReadProvider).account!.orders.single.symbol, 'ETHUSDT');
   });
 
-  test('unknown result stops the queue; GET recheck never resumes unsubmitted symbols', () async {
+  test(
+    'an unconfirmed symbol is queried automatically; still unconfirmed stops the queue',
+    () async {
+      batch.results['BTCUSDT'] = const BatchSymbolCancellation(
+        symbol: 'BTCUSDT',
+        submitted: true,
+        failure: AccountReadFailure('accountNetwork'),
+      );
+      await controller.cancelBatch(controller.prepareBatch()!);
+      expect(batch.cancelled, ['BTCUSDT']);
+      expect(batch.checked, ['BTCUSDT']);
+      final report = container.read(orderCancellationProvider).batch!;
+      expect(report.results['BTCUSDT']!.failure?.key, 'accountNetwork');
+      expect(report.results['ETHUSDT']!.submitted, false);
+      expect(container.read(openOrdersReadProvider).account!.orders.length, 2);
+      // Nothing is locked: a new confirmation is possible right away.
+      expect(controller.prepareBatch(), isNotNull);
+    },
+  );
+
+  test('a symbol confirmed by the automatic query lets the queue continue', () async {
     batch.results['BTCUSDT'] = const BatchSymbolCancellation(
       symbol: 'BTCUSDT',
       submitted: true,
       failure: AccountReadFailure('accountNetwork'),
     );
+    batch.checkResults['BTCUSDT'] = BatchSymbolCancellation(
+      symbol: 'BTCUSDT',
+      submitted: true,
+      snapshot: AsterOpenOrders(
+        address: accountAddress,
+        receivedAt: DateTime.utc(2026),
+        orders: [],
+      ),
+    );
     await controller.cancelBatch(controller.prepareBatch()!);
-    expect(batch.cancelled, ['BTCUSDT']);
-    final report = container.read(orderCancellationProvider).batch!;
-    expect(report.results['ETHUSDT']!.submitted, false);
-    expect(report.needsRecheck, true);
-    expect(controller.prepareBatch(), null);
-    expect(container.read(openOrdersReadProvider).account!.orders.length, 2);
-    batch.results.remove('BTCUSDT');
-    await controller.recheckBatch();
+    expect(batch.cancelled, ['BTCUSDT', 'ETHUSDT']);
     expect(batch.checked, ['BTCUSDT']);
-    expect(batch.cancelled, ['BTCUSDT']);
-    expect(container.read(orderCancellationProvider).needsRecheck, false);
-    expect(controller.prepareBatch()!.symbols, ['ETHUSDT']);
+    expect(container.read(orderCancellationProvider).batch!.results['BTCUSDT']!.failure, isNull);
   });
 
   test('signature refusal stops before later symbols and keeps original orders', () async {
@@ -108,7 +128,6 @@ void main() {
     await controller.cancelBatch(controller.prepareBatch()!);
     expect(batch.cancelled, ['BTCUSDT']);
     expect(container.read(openOrdersReadProvider).account!.orders.length, 2);
-    expect(container.read(orderCancellationProvider).needsRecheck, false);
     expect(container.read(orderCancellationProvider).batch!.results['ETHUSDT']!.submitted, false);
   });
 
@@ -153,7 +172,7 @@ void main() {
   });
 
   test(
-    'pending or unknown single cancellation also blocks a previously prepared bulk intent',
+    'a pending single cancellation blocks bulk; once settled only a new confirmation proceeds',
     () async {
       final batchIntent = controller.prepareBatch()!;
       final order = container.read(openOrdersReadProvider).account!.orders.first;
@@ -165,7 +184,9 @@ void main() {
       expect(batch.cancelled, isEmpty);
       single.gate!.complete();
       await pending;
-      expect(controller.prepareBatch(), null);
+      // The settled (unconfirmed) single cancellation blocks nothing, but the
+      // earlier bulk confirmation is outdated and still refused.
+      expect(controller.prepareBatch(), isNotNull);
       await controller.cancelBatch(batchIntent);
       expect(batch.cancelled, isEmpty);
       expect(container.read(openOrdersReadProvider).account!.orders.length, 2);
@@ -219,9 +240,9 @@ void main() {
     expect(result.orders.any((o) => o.symbol == 'ETHUSDT'), true);
   });
 
-  test('wrong account or symbol snapshot stays unknown and cannot clear orders', () async {
+  test('a wrong account or symbol snapshot is an error and cannot clear orders', () async {
     for (final wrongAddress in [true, false]) {
-      batch.results['BTCUSDT'] = BatchSymbolCancellation(
+      final snapshot = BatchSymbolCancellation(
         symbol: 'BTCUSDT',
         submitted: true,
         snapshot: AsterOpenOrders(
@@ -230,13 +251,9 @@ void main() {
           orders: wrongAddress ? [] : orders.result.orders,
         ),
       );
-      if (container.read(orderCancellationProvider).needsRecheck) {
-        await controller.recheckBatch();
-      } else {
-        await controller.cancelBatch(controller.prepareBatch()!);
-      }
+      batch.results['BTCUSDT'] = snapshot;
+      await controller.cancelBatch(controller.prepareBatch()!);
       expect(container.read(openOrdersReadProvider).account!.orders.length, 2);
-      expect(container.read(orderCancellationProvider).needsRecheck, true);
       expect(
         container.read(orderCancellationProvider).batch!.results['BTCUSDT']!.failure?.key,
         'accountDataInvalid',

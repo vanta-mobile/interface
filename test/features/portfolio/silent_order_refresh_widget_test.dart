@@ -15,6 +15,8 @@ import 'package:vanta/features/market/domain/order_reference_prices.dart';
 import 'package:vanta/features/market/application/selection_providers.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
+import 'package:vanta/features/portfolio/presentation/position_margin_mode_sheet.dart';
+import 'package:vanta/features/portfolio/application/symbol_settings_activity.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/main_order_live_pricing.dart';
@@ -314,6 +316,39 @@ void main() {
       }
     });
   }
+
+  testWidgets('background renewal leaves account settings usable and yields to them', (
+    tester,
+  ) async {
+    try {
+      await open(tester, 'en');
+      f.orders.readGate = Completer<void>();
+      final renewing = f.container
+          .read(mainOrderRefreshProvider.notifier)
+          .refresh('BTCUSDT', reconnectPrices: false, background: true);
+      await flush(tester);
+      expect(f.container.read(mainOrderRefreshProvider).loading, isTrue);
+      final l = AppLocalizations.of(tester.element(find.byType(LiveOrderScreen)));
+      final margin = find.widgetWithText(TextButton, l.cross);
+      expect(tester.widget<TextButton>(margin).onPressed, isNotNull);
+      await tester.tap(margin);
+      await tester.pump();
+      // Opening a setting stops the periodic renewal instead of waiting for it.
+      expect(f.container.read(mainOrderRefreshProvider).loading, isFalse);
+      expect(await renewing, isFalse);
+      // The sheet's access check may still animate; pump a fixed time.
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byType(PositionMarginModeSheet), findsOneWidget);
+      // The stopped read released its lease, so the setting can be changed.
+      expect(f.container.read(symbolSettingsActivityProvider).busy, isFalse);
+      expect(f.orders.submits, 0);
+      expect(tester.takeException(), isNull);
+    } finally {
+      f.container.read(mainOrderRefreshProvider.notifier).stop();
+      await tester.pumpWidget(const SizedBox());
+      f.disposeContainer();
+    }
+  });
 
   testWidgets('quote gaps retain values; edited sizes show only right-hand value placeholders', (
     tester,

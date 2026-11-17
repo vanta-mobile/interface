@@ -54,6 +54,14 @@ Future<void> showTradeInfoSheet(
   ],
 );
 
+/// Design action sheet with free-form content below its title and divider.
+Future<T?> showTradeContentSheet<T>(
+  BuildContext context, {
+  required String title,
+  required List<Widget> Function(BuildContext context) children,
+  Key? key,
+}) => _showTradeSheet<T>(context, title: title, children: children, key: key);
+
 Future<T?> _showTradeSheet<T>(
   BuildContext context, {
   required String title,

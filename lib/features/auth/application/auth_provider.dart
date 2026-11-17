@@ -8,6 +8,7 @@ import '../data/privy_configuration.dart';
 import '../data/privy_identity_repository.dart';
 import '../domain/auth_session.dart';
 import '../domain/wallet_connection.dart';
+import '../domain/wallet_network_source.dart';
 import '../data/reown_wallet_connector.dart';
 import '../data/wallet_configuration.dart';
 
@@ -37,6 +38,16 @@ final accountSwitchAuthorizationProvider = Provider<AccountSwitchAuthorization>(
   (ref) => AccountSwitchAuthorization(ref.watch(identityRepositoryProvider).signWalletRequest),
 );
 final authProvider = NotifierProvider<AuthController, AuthSession>(AuthController.new);
+
+/// Network the connected external wallet is on, re-read when the identity
+/// changes or a consumer returns. Null for embedded wallets.
+final walletChainProvider = Provider.autoDispose<int?>((ref) {
+  ref.watch(authProvider.select((s) => s.identity));
+  final repository = ref.watch(identityRepositoryProvider);
+  return repository is WalletNetworkSource
+      ? (repository as WalletNetworkSource).walletChainId
+      : null;
+});
 
 class AuthController extends Notifier<AuthSession> {
   StreamSubscription<AuthIdentity?>? _subscription;

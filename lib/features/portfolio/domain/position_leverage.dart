@@ -17,11 +17,29 @@ class PositionLeverageContext {
     required this.current,
     required this.receivedAt,
     required Iterable<LeverageBracket> brackets,
+    this.positionNotional,
   }) : brackets = List.unmodifiable(brackets);
   final String address, symbol;
   final int current;
   final DateTime receivedAt;
   final List<LeverageBracket> brackets;
+
+  /// Absolute notional of this symbol's positions (all sides) from the same
+  /// signed positionRisk read; null when the response omits it.
+  final Decimal? positionNotional;
+
+  /// Notional still openable at [leverage]: the largest bracket cap that
+  /// allows it, less the existing position notional, never below zero.
+  Decimal? remainingNotional(int leverage) {
+    final held = positionNotional;
+    Decimal? cap;
+    for (final bracket in brackets) {
+      if (bracket.maximum >= leverage && (cap == null || bracket.cap > cap)) cap = bracket.cap;
+    }
+    if (cap == null || held == null) return null;
+    return cap > held ? cap - held : Decimal.zero;
+  }
+
   // The documented mutation range is 1..125 even if a website badge or a
   // bracket advertises a higher maximum. Tighter exposure limits stay server-side.
   int get maximum => math.min(125, brackets.fold(0, (n, b) => math.max(n, b.maximum)));
@@ -54,7 +72,6 @@ class LeverageResult {
   final int? observed;
   final DateTime? checkedAt;
   final AccountReadFailure? failure;
-  bool get needsRecheck => observed == null;
 }
 
 class PositionLeverageState {
@@ -73,7 +90,6 @@ class PositionLeverageState {
   final LeverageStep step;
   final bool stale;
   bool get busy => step != LeverageStep.idle;
-  bool get needsRecheck => result?.needsRecheck == true;
 }
 
 abstract interface class PositionLeverageRepository {

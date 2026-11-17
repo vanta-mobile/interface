@@ -39,12 +39,8 @@ import '../domain/live_order_capacity.dart';
 import '../domain/main_order_capacity_preview.dart';
 import '../domain/main_order_allocation.dart';
 import '../domain/main_order_review_input.dart';
-import '../../../core/domain/decimal_value.dart';
 import '../../../core/errors/error_text.dart';
 import '../../../core/presentation/app_toast.dart';
-import '../../../core/formatters/token_amount_formatter.dart';
-import '../../funding/domain/funding_catalog.dart';
-import '../../funding/presentation/funding_screen.dart';
 import '../../trade/presentation/trade_theme.dart';
 import 'live_order_embedded_controls.dart';
 import 'live_order_embedded_inputs.dart';
@@ -263,9 +259,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
     return _embeddedLayout(contextData: _pricingContext ?? widget.data, enabled: enabled);
   }
 
-  Widget _trailingControls(LiveOrderContext data, bool enabled) => LiveOrderTrailingControls(
-    data: data,
-    selected: trailing,
+  Widget _trailingControls(bool enabled) => LiveOrderTrailingControls(
     enabled: enabled,
     rate: trailingRate,
     activation: trailingActivation,

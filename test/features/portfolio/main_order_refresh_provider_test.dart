@@ -251,7 +251,7 @@ void main() {
       controller().stop();
       expect(await result.timeout(const Duration(seconds: 1)), false);
       expect(state().loading, false);
-      expect(f.container.read(symbolSettingsActivityProvider).owner, isNull);
+      expect(f.container.read(symbolSettingsActivityProvider).busy, isFalse);
       f.orders.readGate?.complete();
       f.capacities.gate?.complete();
       f.prices();
@@ -329,7 +329,7 @@ void main() {
           f.container.read(mainOrderCapacityProvider.notifier).current?.context,
           f.orders.context,
         );
-        expect(f.container.read(symbolSettingsActivityProvider).owner, isNull);
+        expect(f.container.read(symbolSettingsActivityProvider).busy, isFalse);
         expect(f.orders.submits, 0);
       },
     );

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:decimal/decimal.dart';
+
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/position_leverage.dart';
 import 'package:vanta/features/portfolio/data/position_leverage_mapper.dart';
@@ -18,20 +20,29 @@ List<Map<String, Object?>> leverageRows({
   String symbol = 'BTCUSDT',
   String value = '10',
   bool hedge = false,
+  String notional = '0',
 }) => [
   for (final side in hedge ? ['LONG', 'SHORT'] : ['BOTH'])
-    {'symbol': symbol, 'leverage': value, 'positionSide': side, 'positionAmt': '0'},
+    {
+      'symbol': symbol,
+      'leverage': value,
+      'positionSide': side,
+      'positionAmt': '0',
+      'notional': side == 'SHORT' ? '-$notional' : notional,
+    },
 ];
 PositionLeverageContext leverageContext({
   String symbol = 'BTCUSDT',
   String address = accountAddress,
   DateTime? time,
+  Decimal? positionNotional,
 }) => PositionLeverageContext(
   address: address,
   symbol: symbol,
   current: 10,
   receivedAt: time ?? leverageClock,
   brackets: mapLeverageBrackets(leverageBrackets(symbol: symbol), symbol),
+  positionNotional: positionNotional ?? Decimal.parse('2500'),
 );
 
 class TestPositionLeverageRepository implements PositionLeverageRepository {
@@ -40,6 +51,9 @@ class TestPositionLeverageRepository implements PositionLeverageRepository {
   AccountReadFailure? readFailure, changeFailure;
   bool submit = true;
   PositionLeverageContext? context;
+
+  /// Result of the verification query; defaults to [result].
+  LeverageResult? checkResult;
   LeverageResult result = LeverageResult(observed: 20, checkedAt: leverageClock);
   bool Function()? latestCurrent;
   @override
@@ -82,6 +96,6 @@ class TestPositionLeverageRepository implements PositionLeverageRepository {
     latestCurrent = isCurrent;
     onStep(LeverageStep.checkSigning);
     await checkGate?.future;
-    return result;
+    return checkResult ?? result;
   }
 }

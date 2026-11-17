@@ -9,9 +9,8 @@ import '../../trade/presentation/widgets/primitives.dart';
 import '../../auth/application/auth_provider.dart';
 import '../application/rebalance_provider.dart';
 import '../application/rebalance_storage_provider.dart';
-import '../application/symbol_settings_activity.dart';
 import '../domain/asset_rebalance.dart';
-import 'futures_asset_mode_status.dart';
+import 'futures_asset_mode_sheet.dart';
 
 class RebalanceScreen extends ConsumerWidget {
   const RebalanceScreen({super.key});
@@ -21,17 +20,10 @@ class RebalanceScreen extends ConsumerWidget {
         state = ref.watch(rebalanceProvider),
         auth = ref.watch(authProvider);
     final controller = ref.read(rebalanceProvider.notifier),
-        pending = ref.watch(pendingRebalancesProvider),
         storage = ref.watch(rebalanceStorageProvider);
     final c = state.context;
     final canReview =
-        !state.busy &&
-        !state.stale &&
-        c?.needed == true &&
-        pending.isEmpty &&
-        storage.ready &&
-        !storage.failure &&
-        !ref.watch(symbolSettingsActivityProvider).blocks(SymbolSetting.rebalance);
+        !state.busy && !state.stale && c?.needed == true && storage.ready && !storage.failure;
     return PopScope(
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) controller.stop();

@@ -133,7 +133,11 @@ void main() {
     await launch(t, c);
     await _openSettings(t);
     expect(find.text('7.5 KB · Clear'), findsOneWidget);
-    await _tap(t, 'settings-cache');
+    await t.ensureVisible(find.byKey(const Key('settings-cache')));
+    await t.tap(find.byKey(const Key('settings-cache')));
+    // The success toast counts down while visible; stop short of its close.
+    await t.pump();
+    await t.pump(const Duration(seconds: 1));
     expect(cache.clears, 1);
     expect(find.text('0 B · Clear'), findsOneWidget);
     expect(find.text('Cache cleared'), findsOneWidget);

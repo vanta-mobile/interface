@@ -5,37 +5,60 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/position_leverage.dart';
-import 'package:vanta/features/portfolio/presentation/position_leverage_screen.dart';
+import 'package:vanta/features/portfolio/presentation/mode_settings_sheet.dart';
+import 'package:vanta/features/portfolio/presentation/position_leverage_sheet.dart';
 import 'package:vanta/features/portfolio/application/position_leverage_provider.dart';
 
 import '../../support/aster_account.dart';
 import '../../support/position_leverage.dart';
 import '../../support/identity_repository.dart';
 import '../../support/trade_fixture.dart';
+import '../../support/trading_agents.dart';
 
 void main() {
-  Future<void> open(WidgetTester tester, ProviderContainer container) async {
+  final sheet = find.byKey(const Key('leverage-sheet'));
+
+  Future<void> open(WidgetTester tester, ProviderContainer container, {bool settle = true}) async {
     await launch(tester, container);
-    openLeverageSettings(tester.element(find.byType(Navigator).first), 'BTCUSDT');
+    await awaitTradingAgent(tester, container);
+    unawaited(openLeverageSettings(tester.element(find.byType(Navigator).first), 'BTCUSDT'));
+    // Skeletons animate, so a pending read pumps a fixed time.
+    settle ? await tester.pumpAndSettle() : await tester.pump(const Duration(milliseconds: 500));
+  }
+
+  Future<void> tap(WidgetTester tester, String key) async {
+    await tester.ensureVisible(find.byKey(Key(key)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(Key(key)));
     await tester.pumpAndSettle();
   }
 
-  Future<void> visible(WidgetTester tester, String key) async {
-    await tester.scrollUntilVisible(
-      find.byKey(Key(key)),
-      150,
-      scrollable: find
-          .descendant(of: find.byKey(const Key('leverage-page')), matching: find.byType(Scrollable))
-          .first,
+  String value(WidgetTester tester) =>
+      tester.widget<Text>(find.byKey(const Key('leverage-value'))).data!;
+
+  VoidCallback? pressed(WidgetTester tester, String key) => tester
+      .widget<FilledButton>(
+        find.descendant(of: find.byKey(Key(key)), matching: find.byType(FilledButton)),
+      )
+      .onPressed;
+
+  /// Signed in with an active device trading grant, so the sheet reads itself.
+  Future<ProviderContainer> signedIn(
+    WidgetTester tester,
+    TestPositionLeverageRepository repository, {
+    Locale language = const Locale('en'),
+  }) async {
+    final identity = TestIdentityRepository()..restored = signingIdentity;
+    addTearDown(identity.dispose);
+    final store = await activeAgentStore();
+    return setup(
+      tester,
+      identityRepository: identity,
+      tradingAgentStore: store,
+      positionLeverageRepository: repository,
+      leverageClock: () => leverageClock,
+      language: language,
     );
-    await tester.pumpAndSettle();
-  }
-
-  Future<void> enter(WidgetTester tester, String value) async {
-    await visible(tester, 'leverage-target');
-    await tester.enterText(find.byKey(const Key('leverage-target')), value);
-    tester.testTextInput.hide();
-    await tester.pumpAndSettle();
   }
 
   testWidgets('signed-out read opens actual login and never creates a wallet or sends writes', (
@@ -49,8 +72,8 @@ void main() {
       positionLeverageRepository: repository,
     );
     await open(tester, container);
-    await tester.tap(find.byKey(const Key('leverage-read')));
-    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('leverage-confirm')), findsNothing);
+    await tap(tester, 'mode-access-action');
     expect(find.byKey(const Key('login-email')), findsOneWidget);
     expect(repository.reads, 0);
     expect(repository.changes, 0);
@@ -58,176 +81,158 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     container.dispose();
   });
-  testWidgets(
-    'review displays wallet, symbol, old and target leverage; cancelling sends no change',
-    (tester) async {
-      final identity = TestIdentityRepository()..restored = signingIdentity;
-      final repository = TestPositionLeverageRepository();
-      addTearDown(identity.dispose);
-      final container = setup(
-        tester,
-        identityRepository: identity,
-        positionLeverageRepository: repository,
-        leverageClock: () => leverageClock,
-        language: const Locale('en'),
-      );
-      await open(tester, container);
-      await tester.tap(find.byKey(const Key('leverage-read')));
-      await tester.pumpAndSettle();
-      await enter(tester, '20');
-      await visible(tester, 'leverage-review');
-      await tester.tap(find.byKey(const Key('leverage-review')));
-      await tester.pumpAndSettle();
-      final dialog = find.byType(AlertDialog);
-      expect(find.descendant(of: dialog, matching: find.text(accountAddress)), findsOneWidget);
-      expect(find.descendant(of: dialog, matching: find.text('BTCUSDT')), findsOneWidget);
-      expect(find.text('10× → 20×'), findsOneWidget);
-      expect(find.textContaining('including both hedge directions'), findsOneWidget);
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
-      expect(repository.changes, 0);
-      expect(
-        tester.widget<TextField>(find.byKey(const Key('leverage-target'))).controller!.text,
-        '20',
-      );
-      await tester.pumpWidget(const SizedBox());
-      container.dispose();
-    },
-  );
-  testWidgets(
-    'explicit confirmation submits once; unknown result retains input and only rechecks',
-    (tester) async {
-      final identity = TestIdentityRepository()..restored = signingIdentity;
-      final repository = TestPositionLeverageRepository()
-        ..changeGate = Completer<void>()
-        ..result = const LeverageResult(failure: AccountReadFailure('accountNetwork'));
-      addTearDown(identity.dispose);
-      final container = setup(
-        tester,
-        identityRepository: identity,
-        positionLeverageRepository: repository,
-        leverageClock: () => leverageClock,
-        language: const Locale('en'),
-      );
-      await open(tester, container);
-      await tester.tap(find.byKey(const Key('leverage-read')));
-      await tester.pumpAndSettle();
-      await enter(tester, '20');
-      await visible(tester, 'leverage-review');
-      await tester.tap(find.byKey(const Key('leverage-review')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('leverage-confirm')));
+
+  testWidgets('designed stepper, stops and notional cap follow the signed brackets', (
+    tester,
+  ) async {
+    final repository = TestPositionLeverageRepository();
+    final container = await signedIn(tester, repository);
+    await open(tester, container);
+    expect(find.text('BTCUSDT Adjust leverage'), findsOneWidget);
+    expect(repository.reads, 1); // read on entry with the trading grant
+    expect(value(tester), '10');
+    // Brackets allow up to 100x: stops at 1, 26, 51, 75 and 100.
+    for (final label in ['1x', '26x', '51x', '75x', '100x']) {
+      expect(find.text(label), findsOneWidget);
+    }
+    final notional = find.byKey(const Key('leverage-notional'));
+    expect(find.text('Remaining openable notional value'), findsOneWidget);
+    // Bracket cap at 10x (100,000) less the 2,500 position notional.
+    expect(find.descendant(of: notional, matching: find.text('97,500 USDT')), findsOneWidget);
+    await tap(tester, 'leverage-decrease');
+    expect(value(tester), '9');
+    for (var i = 0; i < 2; i++) {
+      await tap(tester, 'leverage-increase');
+    }
+    expect(value(tester), '11');
+    // Dragging to the far right reaches the maximum, whose bracket caps lower.
+    final slider = find.byKey(const Key('leverage-slider'));
+    await tester.tapAt(tester.getTopRight(slider) + const Offset(-1, 12));
+    await tester.pumpAndSettle();
+    expect(value(tester), '100');
+    expect(find.descendant(of: notional, matching: find.text('7,500 USDT')), findsOneWidget);
+    expect(tester.widget<IconButton>(find.byKey(const Key('leverage-increase'))).onPressed, isNull);
+    // Stops are only marks: a point between them selects that leverage.
+    // 10% along the track, between the first two stops.
+    await tester.tapAt(
+      tester.getTopLeft(slider) + Offset(6 + (tester.getSize(slider).width - 12) * 0.1, 12),
+    );
+    await tester.pumpAndSettle();
+    expect(value(tester), '11');
+    expect(repository.changes, 0);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    container.dispose();
+  });
+
+  testWidgets('confirm submits the selected leverage once and closes when verified', (
+    tester,
+  ) async {
+    final repository = TestPositionLeverageRepository()..changeGate = Completer<void>();
+    final container = await signedIn(tester, repository);
+    await open(tester, container);
+    for (var i = 0; i < 10; i++) {
+      await tester.tap(find.byKey(const Key('leverage-increase')));
       await tester.pump();
-      expect(repository.changes, 1);
-      expect(tester.widget<FilledButton>(find.byKey(const Key('leverage-review'))).onPressed, null);
-      repository.changeGate!.complete();
-      await tester.pumpAndSettle();
-      await visible(tester, 'leverage-target');
-      expect(
-        tester.widget<TextField>(find.byKey(const Key('leverage-target'))).controller!.text,
-        '20',
-      );
-      await visible(tester, 'leverage-result');
-      expect(find.textContaining('No change is resubmitted'), findsOneWidget);
-      repository.result = LeverageResult(observed: 10, checkedAt: leverageClock);
-      await visible(tester, 'leverage-recheck');
-      await tester.tap(find.byKey(const Key('leverage-recheck')));
-      await tester.pumpAndSettle();
-      expect(repository.checks, 1);
-      expect(repository.changes, 1);
-      expect(find.textContaining('Query shows 10×; requested 20×'), findsOneWidget);
-      expect(tester.takeException(), null);
-      await tester.pumpWidget(const SizedBox());
-      container.dispose();
-    },
-  );
+    }
+    expect(value(tester), '20');
+    await tester.tap(find.byKey(const Key('leverage-confirm')));
+    await tester.pump();
+    expect(repository.changes, 1);
+    expect(pressed(tester, 'leverage-confirm'), isNull);
+    repository.changeGate!.complete();
+    await tester.pumpAndSettle();
+    expect(sheet, findsNothing);
+    expect(container.read(positionLeverageProvider).result?.observed, 20);
+    await tester.pumpWidget(const SizedBox());
+    container.dispose();
+  });
+
+  testWidgets('confirming the current leverage closes without a change', (tester) async {
+    final repository = TestPositionLeverageRepository();
+    final container = await signedIn(tester, repository);
+    await open(tester, container);
+    await tap(tester, 'leverage-confirm');
+    expect(sheet, findsNothing);
+    expect(repository.changes, 0);
+    await tester.pumpWidget(const SizedBox());
+    container.dispose();
+  });
+
+  testWidgets('an unverified change is queried automatically; a failed query is an error', (
+    tester,
+  ) async {
+    final repository = TestPositionLeverageRepository()
+      ..result = const LeverageResult(failure: AccountReadFailure('accountNetwork'))
+      ..checkResult = const LeverageResult(failure: AccountReadFailure('accountNetwork'));
+    final container = await signedIn(tester, repository);
+    await open(tester, container);
+    await tap(tester, 'leverage-increase');
+    await tap(tester, 'leverage-confirm');
+    expect(repository.changes, 1);
+    expect(repository.checks, 1);
+    expect(sheet, findsOneWidget);
+    expect(find.byType(ModeError), findsOneWidget);
+    expect(find.textContaining('No change is resubmitted'), findsNothing);
+    // The sheet stays usable: nothing is locked behind a manual re-check.
+    expect(pressed(tester, 'leverage-confirm'), isNotNull);
+    expect(
+      tester.widget<IconButton>(find.byKey(const Key('leverage-increase'))).onPressed,
+      isNotNull,
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    container.dispose();
+  });
+
+  testWidgets('account values are skeletons while the first read is pending', (tester) async {
+    final repository = TestPositionLeverageRepository()..readGate = Completer<void>();
+    final container = await signedIn(tester, repository);
+    await open(tester, container, settle: false);
+    expect(find.byKey(const Key('leverage-value-pending')), findsOneWidget);
+    expect(find.byKey(const Key('leverage-value')), findsNothing);
+    expect(pressed(tester, 'leverage-confirm'), isNull);
+    repository.readGate!.complete();
+    await tester.pumpAndSettle();
+    expect(value(tester), '10');
+    await tester.pumpWidget(const SizedBox());
+    container.dispose();
+  });
+
+  testWidgets('expired read refreshes before signing; refusal shows a safe failure', (
+    tester,
+  ) async {
+    final repository = TestPositionLeverageRepository()
+      ..submit = false
+      ..changeFailure = const AccountReadFailure('authWalletRejected');
+    final container = await signedIn(tester, repository);
+    await open(tester, container);
+    await tap(tester, 'leverage-increase');
+    container.read(positionLeverageProvider.notifier).markStale();
+    await tester.pumpAndSettle();
+    expect(value(tester), '11'); // the selection survives expiry
+    await tap(tester, 'leverage-confirm');
+    expect(repository.reads, 2);
+    expect(repository.changes, 1);
+    expect(find.byType(ModeError), findsOneWidget);
+    expect(repository.checks, 0); // nothing was sent, nothing to verify
+    await tester.pumpWidget(const SizedBox());
+    container.dispose();
+  });
+
   for (final spec in [(360.0, 844.0, 2.0, 'en'), (844.0, 390.0, 1.5, 'zh')]) {
-    testWidgets('localized leverage input, confirmation and result fit $spec', (tester) async {
-      final identity = TestIdentityRepository()..restored = signingIdentity;
+    testWidgets('stepper, stops and confirmation fit $spec', (tester) async {
       final repository = TestPositionLeverageRepository();
-      addTearDown(identity.dispose);
-      final container = setup(
-        tester,
-        width: spec.$1,
-        scale: spec.$3,
-        language: Locale(spec.$4),
-        identityRepository: identity,
-        positionLeverageRepository: repository,
-        leverageClock: () => leverageClock,
-      );
+      final container = await signedIn(tester, repository, language: Locale(spec.$4));
       tester.view.physicalSize = Size(spec.$1, spec.$2);
+      tester.platformDispatcher.textScaleFactorTestValue = spec.$3;
       await open(tester, container);
-      await visible(tester, 'leverage-read');
-      await tester.tap(find.byKey(const Key('leverage-read')));
-      await tester.pumpAndSettle();
-      await enter(tester, '1.5');
-      expect(
-        find.text(
-          spec.$4 == 'en'
-              ? 'Enter a different whole-number leverage within the displayed limit.'
-              : '请输入显示范围内且不同于当前值的整数杠杆。',
-        ),
-        findsOneWidget,
-      );
-      await enter(tester, '20');
-      await visible(tester, 'leverage-review');
-      await tester.tap(find.byKey(const Key('leverage-review')));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.byKey(const Key('leverage-confirm')));
-      await tester.tap(find.byKey(const Key('leverage-confirm')));
-      await tester.pumpAndSettle();
-      await visible(tester, 'leverage-result');
-      expect(
-        find.textContaining(
-          spec.$4 == 'en' ? 'Query verified the requested leverage' : '查询已核对目标杠杆',
-        ),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), null);
+      await tap(tester, 'leverage-increase');
+      await tap(tester, 'leverage-confirm');
+      expect(repository.changes, 1);
+      expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       container.dispose();
     });
   }
-  testWidgets(
-    'stale refresh preserves target; refused signature exposes a safe localized failure',
-    (tester) async {
-      final identity = TestIdentityRepository()..restored = signingIdentity;
-      final repository = TestPositionLeverageRepository()
-        ..submit = false
-        ..changeFailure = const AccountReadFailure('authWalletRejected');
-      addTearDown(identity.dispose);
-      final container = setup(
-        tester,
-        identityRepository: identity,
-        positionLeverageRepository: repository,
-        leverageClock: () => leverageClock,
-        language: const Locale('en'),
-      );
-      await open(tester, container);
-      await tester.tap(find.byKey(const Key('leverage-read')));
-      await tester.pumpAndSettle();
-      await enter(tester, '20');
-      container.read(positionLeverageProvider.notifier).markStale();
-      await tester.pumpAndSettle();
-      await visible(tester, 'leverage-read');
-      await tester.tap(find.byKey(const Key('leverage-read')));
-      await tester.pumpAndSettle();
-      await visible(tester, 'leverage-target');
-      expect(
-        tester.widget<TextField>(find.byKey(const Key('leverage-target'))).controller!.text,
-        '20',
-      );
-      await visible(tester, 'leverage-review');
-      await tester.tap(find.byKey(const Key('leverage-review')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('leverage-confirm')));
-      await tester.pumpAndSettle();
-      await visible(tester, 'leverage-error');
-      expect(find.byKey(const Key('leverage-error')), findsOneWidget);
-      expect(repository.changes, 1);
-      expect(container.read(positionLeverageProvider).needsRecheck, false);
-      await tester.pumpWidget(const SizedBox());
-      container.dispose();
-    },
-  );
 }

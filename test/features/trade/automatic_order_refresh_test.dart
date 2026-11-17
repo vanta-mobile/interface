@@ -39,7 +39,7 @@ class Auth extends AuthController {
 
 class Activity extends SymbolSettingsActivityController {
   @override
-  SymbolSettingsActivity build() => const SymbolSettingsActivity();
+  SymbolSettingsActivity build() => SymbolSettingsActivity();
   void set(SymbolSettingsActivity value) => state = value;
 }
 
@@ -215,17 +215,13 @@ void main() {
       review.end();
       clock.flushMicrotasks();
       expect(refresh.calls.length, 2);
+      // Other operations (a settings change, a quick order) no longer pause renewal.
       final activity = c.read(symbolSettingsActivityProvider.notifier) as Activity;
-      for (final state in [
-        const SymbolSettingsActivity(owner: SymbolSetting.order, busy: true),
-        const SymbolSettingsActivity(recoveryBlocked: true),
-        const SymbolSettingsActivity(unresolved: true),
-      ]) {
-        activity.set(state);
-        clock.elapse(const Duration(seconds: 20));
-        expect(refresh.calls.length, 2);
-      }
-      activity.set(const SymbolSettingsActivity());
+      activity.set(SymbolSettingsActivity(running: {1: SymbolSetting.leverage}));
+      clock.elapse(const Duration(seconds: 20));
+      expect(refresh.calls.length, greaterThan(2));
+      final renewed = refresh.calls.length;
+      activity.set(SymbolSettingsActivity());
       (c.read(liveOrderProvider.notifier) as Live).set(
         LiveOrderState(
           intent: LiveOrderIntent(
@@ -239,7 +235,7 @@ void main() {
       );
       clock.flushMicrotasks();
       // Refreshing reads after an unknown order never replays its placement.
-      expect(refresh.calls.length, 3);
+      expect(refresh.calls.length, renewed + 1);
     });
   });
 

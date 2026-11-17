@@ -14,8 +14,8 @@ String apiErrorText(
 }) {
   final fallback = fallbackText ?? tr(context, key);
   final message = details?.message;
-  // Unknown-outcome and recovery wording must remain visible even when the
-  // backend supplied a reason for the transport/reconciliation failure.
+  // Writes that could not be confirmed ("check the records later") keep that
+  // instruction visible next to the concrete transport/server cause.
   final uncertain = RegExp(
     r'unknown|unverified|unresolved|recovery|pending',
     caseSensitive: false,

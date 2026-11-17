@@ -7,7 +7,6 @@ import 'package:vanta/features/portfolio/application/open_orders_provider.dart';
 import 'package:vanta/features/portfolio/application/order_cancellation_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/order_cancellation.dart';
-import 'package:vanta/features/portfolio/presentation/aster_open_order_card.dart';
 import 'package:vanta/features/trade/application/providers.dart';
 
 import '../../support/aster_account.dart';
@@ -146,7 +145,36 @@ void main() {
     container.dispose();
   });
 
-  testWidgets('unknown result locks actions; GET recheck never submits untouched symbols', (
+  testWidgets('orders re-read while the sheet is open still cancel the confirmed scope', (
+    tester,
+  ) async {
+    final identity = TestIdentityRepository()..restored = signingIdentity;
+    final batch = TestBatchCancellationRepository();
+    addTearDown(identity.dispose);
+    final container = setup(
+      tester,
+      identityRepository: identity,
+      openOrdersRepository: TestOpenOrdersRepository(),
+      batchCancellationRepository: batch,
+      language: const Locale('en'),
+    );
+    await showOpenOrders(tester, container);
+    await tester.ensureVisible(find.byKey(const Key('open-orders-current-symbol')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('open-orders-current-symbol')));
+    await tester.pumpAndSettle();
+    await openConfirmation(tester);
+    // A background renewal replaces the snapshot behind the open sheet.
+    await container.read(openOrdersReadProvider.notifier).refresh();
+    await confirm(tester);
+    await tester.pumpAndSettle();
+    expect(batch.cancelled, ['BTCUSDT']);
+    expect(tester.takeException(), null);
+    await tester.pumpWidget(const SizedBox());
+    container.dispose();
+  });
+
+  testWidgets('an unconfirmed symbol is queried automatically; untouched symbols stay unsent', (
     tester,
   ) async {
     final identity = TestIdentityRepository()..restored = signingIdentity;
@@ -169,26 +197,13 @@ void main() {
     await confirm(tester);
     await tester.pumpAndSettle();
     expect(batch.cancelled, ['BTCUSDT']);
-    expect(find.text('Outcome unconfirmed. Check status before retrying.'), findsOneWidget);
-    expect(find.text('Not submitted'), findsOneWidget);
-    expect(bulkAction(tester), null);
-    expect(
-      tester
-          .widget<OpenOrderChipButton>(find.byKey(const Key('cancel-order-BTCUSDT-1917641')))
-          .onPressed,
-      null,
-    );
-    expect(container.read(openOrdersReadProvider).account!.orders.length, 2);
-    batch.results.remove('BTCUSDT');
-    await tester.ensureVisible(find.byKey(const Key('recheck-batch-cancel')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('recheck-batch-cancel')));
-    await tester.pumpAndSettle();
-    expect(batch.checked, ['BTCUSDT']);
-    expect(batch.cancelled, ['BTCUSDT']);
+    expect(batch.checked, ['BTCUSDT']); // the automatic follow-up query
+    expect(find.text('Outcome unconfirmed. Check status before retrying.'), findsNothing);
     expect(find.byKey(const Key('recheck-batch-cancel')), findsNothing);
     expect(find.text('Not submitted'), findsOneWidget);
-    expect(container.read(openOrdersReadProvider).account!.orders.single.symbol, 'ETHUSDT');
+    // Nothing is locked after the error.
+    expect(bulkAction(tester), isNotNull);
+    expect(container.read(openOrdersReadProvider).account!.orders.length, 2);
     expect(tester.takeException(), null);
     await tester.pumpWidget(const SizedBox());
     container.dispose();
@@ -259,7 +274,7 @@ void main() {
       container.read(localeProvider.notifier).select(variant.$4 == 'en' ? 'zh' : 'en');
       await tester.pumpAndSettle();
       expect(container.read(orderCancellationProvider).batch, same(report));
-      expect(find.byKey(const Key('recheck-batch-cancel')), findsOneWidget);
+      expect(find.byKey(const Key('recheck-batch-cancel')), findsNothing);
       expect(batch.cancelled, ['BTCUSDT']);
       expect(tester.takeException(), null);
       await tester.pumpWidget(const SizedBox());

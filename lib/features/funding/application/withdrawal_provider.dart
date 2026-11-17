@@ -94,7 +94,12 @@ class WithdrawalController extends Notifier<WithdrawalState> {
     if (ref.mounted && !_working) state = const WithdrawalState();
   }
 
-  Future<WithdrawalReview?> prepare(DepositWalletQuery query, String amount) async {
+  /// [receiver] is the entered destination; see [entersWithdrawalReceiver].
+  Future<WithdrawalReview?> prepare(
+    DepositWalletQuery query,
+    String amount, {
+    String? receiver,
+  }) async {
     final auth = ref.read(authProvider), i = auth.identity;
     if (_working || auth.busy || i?.walletAddress == null) return null;
     final g = ++_generation;
@@ -103,7 +108,13 @@ class WithdrawalController extends Notifier<WithdrawalState> {
     try {
       final r = await ref
           .read(withdrawalRepositoryProvider)
-          .prepare(identity: i!, query: query, amount: amount, isCurrent: () => _current(i, g));
+          .prepare(
+            identity: i!,
+            query: query,
+            amount: amount,
+            receiver: receiver,
+            isCurrent: () => _current(i, g),
+          );
       if (_current(i, g)) {
         state = WithdrawalState(review: r);
         return r;
@@ -123,8 +134,13 @@ class WithdrawalController extends Notifier<WithdrawalState> {
 
   /// Prepares and signs in one wallet step only when the fresh platform fee
   /// equals the fee the user saw; a changed fee stops before any signature.
-  Future<void> submit(DepositWalletQuery query, String amount, {required Decimal shownFee}) async {
-    final review = await prepare(query, amount);
+  Future<void> submit(
+    DepositWalletQuery query,
+    String amount, {
+    required Decimal shownFee,
+    String? receiver,
+  }) async {
+    final review = await prepare(query, amount, receiver: receiver);
     if (!ref.mounted || review == null) return;
     if (review.fee.assetFee != shownFee) {
       state = const WithdrawalState(failure: 'withdrawalFeeChanged');

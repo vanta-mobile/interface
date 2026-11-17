@@ -26,6 +26,22 @@ FilledButton _submit(WidgetTester tester) => tester.widget<FilledButton>(
 );
 
 void main() {
+  testWidgets('no network is preselected; deposit waits for the user to choose one', (
+    tester,
+  ) async {
+    final h = FundingHarness();
+    await h.open(tester, network: null);
+    final l = _l(tester);
+    expect(find.text(l.fundingSelectNetwork), findsOneWidget);
+    expect(find.text(l.fundingNetworkBnb), findsNothing);
+    expect(_submit(tester).onPressed, isNull);
+    expect(h.wallet.calls, isEmpty);
+    await h.selectNetwork(tester, 56);
+    expect(find.text(l.fundingNetworkBnb), findsOneWidget);
+    expect(find.text(l.fundingSelectNetwork), findsNothing);
+    await h.close(tester);
+  });
+
   testWidgets('BNB Max reports missing gas, then a deposit goes form → wallet → processing', (
     tester,
   ) async {

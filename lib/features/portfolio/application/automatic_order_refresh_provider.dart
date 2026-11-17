@@ -50,7 +50,6 @@ final automaticOrderRefreshProvider = Provider.autoDispose<void>((ref) {
         nextAttempt = null;
         failures = 0;
       }
-      final activity = ref.read(symbolSettingsActivityProvider);
       final live = ref.read(liveOrderProvider);
       if (identity?.signingAvailable != true ||
           identity?.walletAddress == null ||
@@ -67,9 +66,6 @@ final automaticOrderRefreshProvider = Provider.autoDispose<void>((ref) {
           ref.read(mainOrderReviewSubmissionProvider) ||
           auth.busy ||
           auth.failure != null ||
-          activity.owner != null ||
-          activity.recoveryBlocked ||
-          activity.unresolved ||
           live.busy ||
           ref.read(mainOrderAllocationProvider).preparing ||
           ref.read(orderReviewActivityProvider) > 0 &&

@@ -42,8 +42,7 @@ class _AsterOpenOrdersPanelState extends ConsumerState<AsterOpenOrdersPanel> {
         session.identity?.signingAvailable == true &&
         !session.busy &&
         !state.busy &&
-        !cancellation.busy &&
-        !cancellation.needsRecheck;
+        !cancellation.busy;
     final symbol = widget.symbol ?? ref.watch<String>(symbolProvider);
     final all = state.account?.orders;
     final orders = all?.where((order) => !currentSymbolOnly || order.symbol == symbol).toList();
@@ -68,7 +67,7 @@ class _AsterOpenOrdersPanelState extends ConsumerState<AsterOpenOrdersPanel> {
             buttonKey: const Key('read-open-orders'),
             initialLabel: l10n.openOrdersReadWithWallet,
             refreshLabel: l10n.openOrdersRefreshWithWallet,
-            enabled: !cancellation.busy && !cancellation.needsRecheck,
+            enabled: !cancellation.busy,
             failureView: true,
             onRead: () => ref.read(openOrdersReadProvider.notifier).refresh(),
           ),

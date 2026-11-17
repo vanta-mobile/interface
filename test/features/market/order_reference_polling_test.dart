@@ -63,18 +63,18 @@ void main() {
     });
   });
 
-  test('expired well-formed poll is stale data, never a format failure, and recovers', () {
+  test('expired well-formed book poll is stale data, never a format failure, and recovers', () {
     scenario((clock, service, repository) {
       poll(clock, service, seconds: 11);
       service.books.last.complete(orderBookPayload(symbol: 'SOLUSDT'));
       service.trades.last.complete(orderTradePayload());
       clock.flushMicrotasks();
       expect(repository.state.bookFresh, false);
-      expect(repository.state.tradeFresh, false);
+      // A quiet market's last trade remains the last price however old it is.
+      expect(repository.state.tradeFresh, true);
       expect(repository.state.bookFailure!.reasonKey, 'livePriceBookStale');
-      expect(repository.state.tradeFailure!.reasonKey, 'livePriceLastStale');
+      expect(repository.state.tradeFailure, isNull);
       expect(repository.state.bookFailure!.details, isNull);
-      expect(repository.state.tradeFailure!.details, isNull);
       poll(clock, service);
       service.books.last.complete(
         orderBookPayload(symbol: 'SOLUSDT', time: service.now.millisecondsSinceEpoch),
@@ -90,7 +90,7 @@ void main() {
     });
   });
 
-  test('polling the same trade cannot extend its server event deadline', () {
+  test('polling the same trade renews its receipt without a server event deadline', () {
     scenario((clock, service, repository) {
       poll(clock, service);
       service.books.last.complete(orderBookPayload(symbol: 'SOLUSDT'));
@@ -98,8 +98,10 @@ void main() {
       clock.flushMicrotasks();
       expect(repository.state.tradeFresh, true);
       service.now = service.now.add(const Duration(seconds: 4));
-      expect(repository.state.tradeFresh, false);
+      expect(repository.state.tradeFresh, true);
       expect(repository.state.bookFresh, false);
+      service.now = service.now.add(const Duration(seconds: 6));
+      expect(repository.state.tradeFresh, false);
     });
   });
 

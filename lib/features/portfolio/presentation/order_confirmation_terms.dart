@@ -32,11 +32,24 @@ class OrderConfirmationTerms extends StatelessWidget {
     final quote = intent.context.rules.quoteAsset, base = intent.context.rules.baseAsset;
     final converted = !draft.entireClose && sizing?.converted == true;
     final rows = <Widget>[
-      _SymbolRow(symbol: intent.context.symbol, direction: direction, buy: draft.buy),
-      if (draft.trigger != null || draft.trailing != null)
-        _TermRow(l10n.liveOrderType, liveOrderTypeLabel(l10n, draft)),
-      _TermRow(l10n.orderConfirmPrice, _price(l10n, draft, quote)),
-      _TermRow(
+      OrderConfirmationSymbolRow(
+        symbol: intent.context.symbol,
+        direction: direction,
+        buy: draft.buy,
+      ),
+      if (draft.trigger != null)
+        OrderConfirmationTermRow(l10n.liveOrderType, liveOrderTypeLabel(l10n, draft)),
+      // Trailing design order: callback rate before price and quantity.
+      if (draft.trailing case final trailing?) ...[
+        OrderConfirmationTermRow(l10n.openOrdersCallbackRate, '${trailing.callbackRate}%'),
+        if (trailing.activationPrice case final price?)
+          OrderConfirmationTermRow(
+            l10n.openOrdersActivationPrice,
+            '${_basis(l10n, trailing.basis)} $price $quote',
+          ),
+      ],
+      OrderConfirmationTermRow(l10n.orderConfirmPrice, _price(l10n, draft, quote)),
+      OrderConfirmationTermRow(
         l10n.orderConfirmQuantity,
         draft.entireClose
             ? l10n.liveEntireQuantity
@@ -45,13 +58,17 @@ class OrderConfirmationTerms extends StatelessWidget {
             : '${draft.quantity} $base',
         key: const Key('order-confirm-quantity'),
       ),
-      if (converted) _TermRow(l10n.liveAmountResolvedQuantity, '${draft.quantity} $base'),
+      if (converted)
+        OrderConfirmationTermRow(l10n.liveAmountResolvedQuantity, '${draft.quantity} $base'),
       ..._triggerRows(l10n, draft, quote),
       if (!draft.market && draft.timeInForce != LiveOrderTimeInForce.gtc)
-        _TermRow(l10n.liveOrderPolicy, liveOrderPolicyLabel(l10n, draft.timeInForce)),
-      if (draft.reduceOnly) _TermRow(l10n.reduceOnly, l10n.liveOrderProtectOn),
+        OrderConfirmationTermRow(
+          l10n.liveOrderPolicy,
+          liveOrderPolicyLabel(l10n, draft.timeInForce),
+        ),
+      if (draft.reduceOnly) OrderConfirmationTermRow(l10n.reduceOnly, l10n.liveOrderProtectOn),
       for (final exit in [...?draft.attachment?.exits])
-        _TermRow(
+        OrderConfirmationTermRow(
           exit.kind == LiveOrderTriggerKind.takeProfit
               ? l10n.orderConfirmTakeProfit
               : l10n.orderConfirmStopLoss,
@@ -76,23 +93,16 @@ class OrderConfirmationTerms extends StatelessWidget {
   }
 
   List<Widget> _triggerRows(AppLocalizations l10n, LiveOrderDraft draft, String quote) {
-    if (draft.trailing case final trailing?) {
-      return [
-        _TermRow(l10n.liveTrailingRate, '${trailing.callbackRate}%'),
-        _TermRow(l10n.liveTrailingBasis, _basis(l10n, trailing.basis)),
-        if (trailing.activationPrice case final price?)
-          _TermRow(l10n.liveTrailingActivation(quote), price),
-      ];
-    }
     final trigger = draft.trigger;
     if (trigger == null) return const [];
     return [
-      _TermRow(
+      OrderConfirmationTermRow(
         l10n.openOrdersTriggerPrice,
         '${_basis(l10n, trigger.basis)} ${trigger.rises(draft.buy) ? '≥' : '≤'} '
         '${trigger.price} $quote',
       ),
-      if (trigger.protect) _TermRow(l10n.liveOrderTriggerProtect, l10n.liveOrderProtectOn),
+      if (trigger.protect)
+        OrderConfirmationTermRow(l10n.liveOrderTriggerProtect, l10n.liveOrderProtectOn),
     ];
   }
 
@@ -106,8 +116,13 @@ class OrderConfirmationTerms extends StatelessWidget {
       basis == LiveOrderTriggerBasis.mark ? l10n.openOrdersMarkPrice : l10n.openOrdersLastPrice;
 }
 
-class _SymbolRow extends StatelessWidget {
-  const _SymbolRow({required this.symbol, required this.direction, required this.buy});
+class OrderConfirmationSymbolRow extends StatelessWidget {
+  const OrderConfirmationSymbolRow({
+    super.key,
+    required this.symbol,
+    required this.direction,
+    required this.buy,
+  });
   final String symbol, direction;
   final bool buy;
   @override
@@ -142,8 +157,13 @@ class _SymbolRow extends StatelessWidget {
   );
 }
 
-class _TermRow extends StatelessWidget {
-  const _TermRow(this.label, this.value, {super.key, this.labelColor = TradeColors.secondary});
+class OrderConfirmationTermRow extends StatelessWidget {
+  const OrderConfirmationTermRow(
+    this.label,
+    this.value, {
+    super.key,
+    this.labelColor = TradeColors.secondary,
+  });
   final String label, value;
   final Color labelColor;
   @override

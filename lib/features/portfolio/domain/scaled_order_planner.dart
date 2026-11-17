@@ -72,9 +72,11 @@ ScaledOrderPlan planScaledOrder(LiveOrderContext context, ScaledOrderDraft draft
       market: false,
       quantity: '${quantities[i]}',
       price: '${prices[i]}',
+      reduceOnly: draft.reduceOnly,
+      timeInForce: draft.timeInForce,
     );
     final failure = context.validate(order);
-    if (failure != null) throw AccountReadFailure(failure);
+    if (failure != null) throw ScaledChildFailure(failure, index: i, order: order);
     return order;
   });
   return ScaledOrderPlan(draft: draft, orders: orders);
@@ -127,4 +129,11 @@ void _checkVariance(ScaledOrderDraft draft, List<Decimal> quantities) {
       throw const AccountReadFailure('scaledVarianceStep');
     }
   }
+}
+
+/// A child order breaks an exchange rule; [index] is zero-based in price order.
+class ScaledChildFailure extends AccountReadFailure {
+  const ScaledChildFailure(super.key, {required this.index, required this.order});
+  final int index;
+  final LiveOrderDraft order;
 }

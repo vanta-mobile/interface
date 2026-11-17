@@ -32,10 +32,12 @@ class TestMarketService extends AsterService {
 
   @override
   Stream<Map<String, Object?>> stream(List<String> streams) {
-    final interval = streams.first.split('@kline_').last;
-    if (streams.length != 1) {
+    // A chart subscribes to its candles and its symbol's 24h ticker.
+    final charts = streams.where((stream) => stream.contains('@kline_')).toList();
+    if (charts.length != 1 || streams.length != 2 || !streams.last.endsWith('@ticker')) {
       throw StateError('Expected only the visible chart stream');
     }
+    final interval = charts.single.split('@kline_').last;
     late StreamController<Map<String, Object?>> controller;
     controller = StreamController<Map<String, Object?>>.broadcast(
       onListen: () {
@@ -46,7 +48,7 @@ class TestMarketService extends AsterService {
       onCancel: () => activeStreams--,
     );
     connections.add((
-      key: SeriesKey(streams.single.split('@').first.toUpperCase(), interval),
+      key: SeriesKey(charts.single.split('@').first.toUpperCase(), interval),
       events: controller,
     ));
     return controller.stream;

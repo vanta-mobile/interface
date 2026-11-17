@@ -474,7 +474,7 @@ void main() {
     );
     expect(journal.snapshot.records.single.acknowledged, false);
   });
-  test('unknown result survives and blocks a new request without automatic retry', () async {
+  test('an unconfirmed result is kept, never retried, and does not block a new request', () async {
     final r = await prepare(WalletOperationKind.freezeSubaccount, {'child': fixtureChild});
     postFailure = TimeoutException('fixture');
     await expectLater(
@@ -486,11 +486,9 @@ void main() {
       ),
     );
     expect(journal.snapshot.records.single.acknowledged, false);
-    await expectLater(
-      prepare(WalletOperationKind.freezeSubaccount, {'child': fixtureChild}),
-      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'walletOperationPending')),
-    );
     expect(requests.where((r) => r.method == 'POST').length, 1);
+    // The user may explicitly try again; nothing was re-sent automatically.
+    await prepare(WalletOperationKind.freezeSubaccount, {'child': fixtureChild});
   });
   test('late response after logout is recorded for the original master', () async {
     final r = await prepare(WalletOperationKind.freezeSubaccount, {'child': fixtureChild});

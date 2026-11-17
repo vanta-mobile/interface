@@ -80,10 +80,11 @@ class WalletOperationRecord {
             !RegExp(r'^(0|[1-9]\d*)(?:\.\d{1,8})?$').hasMatch(terms['amount']!))) {
       throw const FormatException();
     }
+    // The receiver may differ from the signing [address]: an embedded wallet
+    // withdraws to a destination the user entered.
     if (kind == WalletOperationKind.withdrawal &&
         (!{'1', '56', '42161'}.contains(terms['chain']) ||
-            !{'spot', 'perp'}.contains(terms['market']) ||
-            terms['receiver']!.toLowerCase() != address.toLowerCase())) {
+            !{'spot', 'perp'}.contains(terms['market']))) {
       throw const FormatException();
     }
   }
@@ -169,12 +170,8 @@ List<WalletOperationRecord> decodeWalletOperations(String source) {
     throw const FormatException();
   }
   final records = (value['records'] as List).map(WalletOperationRecord.fromJson).toList();
+  // Several unconfirmed operations may exist; each record is unique.
   if (records.map((r) => r.key).toSet().length != records.length) throw const FormatException();
-  final pending = records
-      .where((r) => !r.acknowledged && r.kind != WalletOperationKind.withdrawal)
-      .map((r) => r.address.toLowerCase())
-      .toList();
-  if (pending.toSet().length != pending.length) throw const FormatException();
   return List.unmodifiable(records);
 }
 

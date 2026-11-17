@@ -347,6 +347,12 @@ void main() {
     expect(failureFromPrivy('Code 123456 expired').reason, 'Code [redacted] expired');
     expect(failureFromPrivy('Unexpected response {"token":"private"}').reason, null);
     expect(failureFromPrivy('Too many requests').key, 'authRateLimited');
+    final api = failureFromPrivy(
+      'Something went wrong during authentication: apiError(httpCode: 422, '
+      'error: invalid_code, description: "Invalid email and code combination")',
+    );
+    expect(api.key, 'authInvalidCode');
+    expect(api.reason, 'Invalid email and code combination');
     expect(
       failureFromPrivy('Network private_key=hidden access_token=hidden').reason,
       'Network [redacted] [redacted]',

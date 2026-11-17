@@ -67,7 +67,7 @@ class _PortfolioFundingActivityState extends ConsumerState<PortfolioFundingActiv
       final message = l.transferTitle(completion.activity.type.name, completion.status.name);
       ref.read(fundingActivityProvider.notifier).acknowledgeCompletion(completion.activity.key);
       if (completion.status == TransferStatus.success) {
-        AppToast.showSuccess(context, message);
+        AppToast.showSuccess(context, message, preserveFailure: true);
       } else {
         AppToast.showFailure(context, message);
       }

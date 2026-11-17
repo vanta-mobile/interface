@@ -91,16 +91,11 @@ class PositionLeverageController extends Notifier<PositionLeverageState> {
   Future<void> load(String symbol) async {
     final auth = ref.read(authProvider), identity = ref.read(authProvider).identity;
     final address = identity?.walletAddress;
-    if (state.busy ||
-        state.needsRecheck ||
-        auth.busy ||
-        address == null ||
-        identity?.signingAvailable != true) {
+    if (state.busy || auth.busy || address == null || identity?.signingAvailable != true) {
       return;
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
     final lease = activity.acquire(SymbolSetting.leverage);
-    if (lease == null) return;
     final revision = ++_revision, staleRevision = _staleRevision;
     final previous = state.context?.symbol == symbol ? state.context : null;
     _expiry?.cancel();
@@ -147,15 +142,13 @@ class PositionLeverageController extends Notifier<PositionLeverageState> {
         state = PositionLeverageState(context: previous, stale: true, failure: _failure(error));
       }
     } finally {
-      activity.finish(lease, unresolved: false);
+      activity.finish(lease);
     }
   }
 
   LeverageIntent? prepare(String symbol, String input) {
     final context = state.context, auth = ref.read(authProvider);
     if (state.busy ||
-        ref.read(symbolSettingsActivityProvider).blocks(SymbolSetting.leverage) ||
-        state.needsRecheck ||
         context == null ||
         !_fresh(context) ||
         context.symbol != symbol ||
@@ -170,13 +163,9 @@ class PositionLeverageController extends Notifier<PositionLeverageState> {
         : LeverageIntent(context: context, target: target, revision: _revision);
   }
 
-  Future<void> change(LeverageIntent intent) => _run(intent, checkingOnly: false);
-  Future<void> recheck() async {
-    final intent = state.intent;
-    if (intent != null && state.needsRecheck) await _run(intent, checkingOnly: true);
-  }
+  Future<void> change(LeverageIntent intent) => _run(intent);
 
-  Future<void> _run(LeverageIntent intent, {required bool checkingOnly}) async {
+  Future<void> _run(LeverageIntent intent) async {
     final auth = ref.read(authProvider), identity = ref.read(authProvider).identity;
     if (state.busy ||
         intent.revision != _revision ||
@@ -185,14 +174,12 @@ class PositionLeverageController extends Notifier<PositionLeverageState> {
         identity?.walletAddress?.toLowerCase() != intent.context.address.toLowerCase()) {
       return;
     }
-    if (!checkingOnly &&
-        (state.context != intent.context ||
-            prepare(intent.context.symbol, '${intent.target}') == null)) {
+    if (state.context != intent.context ||
+        prepare(intent.context.symbol, '${intent.target}') == null) {
       return;
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.leverage, checkingOnly: checkingOnly);
-    if (lease == null) return;
+    final lease = activity.acquire(SymbolSetting.leverage);
     final revision = ++_revision;
     final active = LeverageIntent(
       context: intent.context,
@@ -213,7 +200,7 @@ class PositionLeverageController extends Notifier<PositionLeverageState> {
       step: LeverageStep.preparing,
       stale: state.stale,
     );
-    var submitted = checkingOnly;
+    var submitted = false;
     try {
       void progress(LeverageStep step) {
         if (!current()) return;
@@ -231,20 +218,36 @@ class PositionLeverageController extends Notifier<PositionLeverageState> {
       }
 
       final repository = ref.read(positionLeverageRepositoryProvider);
-      final result = checkingOnly
-          ? await repository.recheck(intent: active, isCurrent: current, onStep: progress)
-          : await repository.change(
-              intent: active,
-              isCurrent: current,
-              canSubmit: () => current() && _fresh(intent.context),
-              onStep: progress,
-            );
+      LeverageResult result;
+      try {
+        result = await repository.change(
+          intent: active,
+          isCurrent: current,
+          canSubmit: () => current() && _fresh(intent.context),
+          onStep: progress,
+        );
+      } catch (error) {
+        if (!submitted || !current()) rethrow;
+        result = LeverageResult(failure: _failure(error));
+      }
+      // A dispatched change is verified automatically, never left unknown.
+      if (result.observed == null && submitted && current()) {
+        result = await repository.recheck(intent: active, isCurrent: current, onStep: progress);
+      }
       if (!current()) return;
       if (result.observed != null && (result.observed! < 1 || result.observed! > 9999)) {
         throw const AccountReadFailure('accountDataInvalid');
       }
       _invalidate();
-      state = PositionLeverageState(context: context, intent: active, result: result, stale: true);
+      state = PositionLeverageState(
+        context: context,
+        intent: active,
+        result: result.observed == null ? null : result,
+        failure: result.observed == null
+            ? result.failure ?? const AccountReadFailure('accountReadFailed')
+            : null,
+        stale: true,
+      );
     } catch (error) {
       if (!current()) return;
       if (submitted) _invalidate();
@@ -252,11 +255,10 @@ class PositionLeverageController extends Notifier<PositionLeverageState> {
         context: context,
         intent: active,
         stale: true,
-        result: submitted ? LeverageResult(failure: _failure(error)) : null,
-        failure: submitted ? null : _failure(error),
+        failure: _failure(error),
       );
     } finally {
-      activity.finish(lease, unresolved: current() && state.needsRecheck);
+      activity.finish(lease);
     }
   }
 

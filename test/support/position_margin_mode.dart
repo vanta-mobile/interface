@@ -42,6 +42,9 @@ class TestPositionMarginModeRepository implements PositionMarginModeRepository {
   AccountReadFailure? readFailure, changeFailure;
   bool submit = true;
   PositionMarginModeContext? context;
+
+  /// Result of the verification query; defaults to [result].
+  MarginModeResult? checkResult;
   MarginModeResult result = MarginModeResult(
     observed: PositionMarginMode.isolated,
     checkedAt: marginModeClock,
@@ -87,6 +90,6 @@ class TestPositionMarginModeRepository implements PositionMarginModeRepository {
     latestCurrent = isCurrent;
     onStep(MarginModeStep.checkSigning);
     await checkGate?.future;
-    return result;
+    return checkResult ?? result;
   }
 }

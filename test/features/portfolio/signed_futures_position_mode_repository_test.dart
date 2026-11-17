@@ -161,7 +161,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     postGate!.completeError(TimeoutException('sensitive payload'));
     final result = await pending;
-    expect(result.needsRecheck, true);
+    expect(result.observed, isNull);
     getStatus = 200;
     expect((await recheck()).observed, FuturesPositionMode.hedge);
     expect(requests.where((r) => r.method == 'POST').length, 1);
@@ -178,7 +178,7 @@ void main() {
       messages.clear();
       refuse = 2;
       final result = await change();
-      expect(result.needsRecheck, true);
+      expect(result.observed, isNull);
       expect(result.failure?.key, 'authWalletRejected');
     },
   );
@@ -215,7 +215,7 @@ void main() {
     ]) {
       mode = data;
       final result = await recheck();
-      expect(result.needsRecheck, true);
+      expect(result.observed, isNull);
       expect(result.failure?.key, 'accountDataInvalid');
     }
   });

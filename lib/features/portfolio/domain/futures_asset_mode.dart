@@ -74,7 +74,6 @@ class AssetModeResult {
   final FuturesAssetMode? observed;
   final DateTime? checkedAt;
   final AccountReadFailure? failure;
-  bool get needsRecheck => observed == null;
 }
 
 class FuturesAssetModeState {
@@ -93,7 +92,6 @@ class FuturesAssetModeState {
   final AssetModeStep step;
   final bool stale;
   bool get busy => step != AssetModeStep.idle;
-  bool get needsRecheck => result?.needsRecheck == true;
 }
 
 abstract interface class FuturesAssetModeRepository {

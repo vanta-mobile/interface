@@ -72,7 +72,7 @@ void main() {
     await selectWorkspace(tester, chart: true);
     await tester.tap(find.byKey(const Key('trade-market-selector')));
     await tester.pumpAndSettle();
-    expect(find.text('100 / 100 个永续合约'), findsOneWidget);
+    expect(find.byKey(const Key('market-BTCUSDT')), findsOneWidget);
     await tester.enterText(find.byType(TextField).last, 'ETH');
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('market-ETHUSDT')));

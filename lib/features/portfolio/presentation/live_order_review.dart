@@ -162,8 +162,5 @@ Future<OrderSubmissionOutcome> _observe(
   if (result != null && result.failure == null && !result.needsRecheck) {
     return const OrderSubmissionOutcome(OrderSubmissionKind.success);
   }
-  if (after.needsRecheck) {
-    return OrderSubmissionOutcome(OrderSubmissionKind.unknown, result?.failure);
-  }
   return OrderSubmissionOutcome(OrderSubmissionKind.failed, after.failure ?? result?.failure);
 }

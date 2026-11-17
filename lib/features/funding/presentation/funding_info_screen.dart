@@ -65,7 +65,6 @@ class _FundingInfoScreenState extends ConsumerState<FundingInfoScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             const DepositApprovalRecoveryNotice(),
-            const RebalanceRecoveryNotice(),
             Text(l10n.fundingInfoScope),
             const SizedBox(height: 12),
             _Selectors(

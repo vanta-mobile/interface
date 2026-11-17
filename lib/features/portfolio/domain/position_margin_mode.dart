@@ -48,7 +48,6 @@ class MarginModeResult {
   final PositionMarginMode? observed;
   final DateTime? checkedAt;
   final AccountReadFailure? failure;
-  bool get needsRecheck => observed == null;
 }
 
 class PositionMarginModeState {
@@ -67,7 +66,6 @@ class PositionMarginModeState {
   final MarginModeStep step;
   final bool stale;
   bool get busy => step != MarginModeStep.idle;
-  bool get needsRecheck => result?.needsRecheck == true;
 }
 
 abstract interface class PositionMarginModeRepository {

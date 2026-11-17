@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
@@ -53,24 +51,19 @@ void main() {
     container.dispose();
     await identity.dispose();
   });
-  test('unknown BBO freezes its exact selected level and blocks a replacement strategy', () async {
+  test('an unconfirmed BBO entry is queried automatically with its exact level', () async {
     final intent = controller().prepare(
       'BTCUSDT',
       attachedIntent(peg: AttachedEntryPeg.queue10).draft,
     )!;
     repository.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
+    repository.checkResult = verified();
     await controller().submit(intent);
-    expect(container.read(liveOrderProvider).needsRecheck, true);
-    expect(
-      controller().prepare('BTCUSDT', attachedIntent(peg: AttachedEntryPeg.counterparty1).draft),
-      null,
-    );
-    repository.result = verified();
-    await controller().recheck();
     expect(repository.submits, 1);
     expect(repository.checks, 1);
     expect(repository.lastIntent!.clientOrderId, intent.clientOrderId);
     expect(repository.lastIntent!.draft.attachment!.entryPeg, AttachedEntryPeg.queue10);
+    expect(container.read(liveOrderProvider).failure, isNull);
   });
   test('market BBO cannot produce an actionable intent', () {
     expect(
@@ -82,67 +75,24 @@ void main() {
     );
     expect(repository.submits, 0);
   });
-  test(
-    'verified strategy ID does not become order ID; explicit refresh uses original intent',
-    () async {
-      final intent = prepare();
-      await controller().submit(intent);
-      expect(container.read(liveOrderProvider).needsRecheck, false);
-      expect(container.read(liveOrderProvider).result!.orderId, null);
-      expect(container.read(symbolSettingsActivityProvider).owner, null);
-      await controller().recheck();
-      expect(repository.submits, 1);
-      expect(repository.checks, 1);
-      expect(repository.lastIntent!.clientOrderId, intent.clientOrderId);
-      expect(repository.lastIntent!.draft.attachment, same(intent.draft.attachment));
-    },
-  );
-  test('unknown releases shared operations and recovery remains query only', () async {
-    repository.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
+  test('a verified strategy ID does not become an order ID; nothing else is blocked', () async {
     final intent = prepare();
     await controller().submit(intent);
-    expect(container.read(liveOrderProvider).needsRecheck, true);
+    expect(container.read(liveOrderProvider).result!.orderId, null);
+    expect(container.read(liveOrderProvider).result!.strategy, isNotNull);
+    expect(repository.submits, 1);
+    expect(repository.checks, 0);
+    expect(repository.lastIntent!.clientOrderId, intent.clientOrderId);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.leverage);
-    expect(lease, isNotNull);
-    activity.finish(lease!, unresolved: false);
-    // The submitted account snapshot is stale until explicitly renewed.
-    expect(controller().prepare('BTCUSDT', liveDraft()), null);
-    repository.result = verified();
-    now = now.add(const Duration(hours: 1));
-    await controller().recheck();
+    activity.finish(activity.acquire(SymbolSetting.leverage));
+  });
+  test('a still-unconfirmed strategy is reported as the query error, never re-sent', () async {
+    repository.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
+    await controller().submit(prepare());
     expect(repository.submits, 1);
     expect(repository.checks, 1);
-    expect(repository.lastIntent!.clientOrderId, intent.clientOrderId);
-    expect(container.read(liveOrderProvider).needsRecheck, false);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
-    repository.context = liveContext(time: now);
-    await controller().load('BTCUSDT');
-    expect(repository.reads, 2);
-    expect(controller().prepare('BTCUSDT', liveDraft()), isNotNull);
-  });
-  test('failed refresh of an accepted strategy retains its query-only recovery', () async {
-    await controller().submit(prepare());
-    final id = repository.lastIntent!.clientOrderId;
-    repository.result = const LiveOrderResult(failure: AccountReadFailure('authWalletRejected'));
-    await controller().recheck();
-    expect(container.read(liveOrderProvider).needsRecheck, true);
-    expect(repository.lastIntent!.clientOrderId, id);
-    repository.result = verified();
-    await controller().recheck();
-    expect(repository.submits, 1);
-    expect(repository.checks, 2);
-  });
-  test('identity exit while strategy query is pending discards old result', () async {
-    await controller().submit(prepare());
-    final gate = Completer<void>();
-    repository.checkGate = gate;
-    final pending = controller().recheck();
-    await container.read(authProvider.notifier).logout();
-    gate.complete();
-    await pending;
-    expect(container.read(liveOrderProvider).result, null);
-    expect(container.read(liveOrderProvider).intent, null);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(liveOrderProvider).failure?.key, 'accountNetwork');
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
   });
 }

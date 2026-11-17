@@ -87,35 +87,38 @@ void main() {
       expect(repository.reads, 1);
     },
   );
-  test('unknown result blocks new submits and symbol loads; recheck does not resubmit', () async {
+  test('an unverified change is queried automatically and never resubmitted', () async {
+    await getController().load('BTCUSDT');
+    repository.result = const LeverageResult(failure: AccountReadFailure('accountNetwork'));
+    repository.checkResult = LeverageResult(observed: 20, checkedAt: now);
+    await getController().change(getIntent());
+    expect(repository.changes, 1);
+    expect(repository.checks, 1);
+    expect(container.read(positionLeverageProvider).result?.observed, 20);
+    expect(container.read(positionLeverageProvider).failure, isNull);
+  });
+  test('a failed verification becomes the concrete error and leaves the setting usable', () async {
     await getController().load('BTCUSDT');
     repository.result = const LeverageResult(failure: AccountReadFailure('accountNetwork'));
     await getController().change(getIntent());
-    expect(container.read(positionLeverageProvider).needsRecheck, true);
-    await getController().load('ETHUSDT');
-    expect(repository.reads, 1);
-    expect(getController().prepare('BTCUSDT', '30'), null);
-    repository.result = LeverageResult(observed: 20, checkedAt: now);
-    await getController().recheck();
     expect(repository.checks, 1);
-    expect(repository.changes, 1);
-    expect(container.read(positionLeverageProvider).needsRecheck, false);
+    expect(container.read(positionLeverageProvider).failure?.key, 'accountNetwork');
+    expect(container.read(positionLeverageProvider).result, isNull);
+    await getController().load('BTCUSDT');
+    expect(repository.reads, 2);
   });
-  test(
-    'pre-submit signature refusal is recoverable; post-submit exception remains unknown',
-    () async {
-      await getController().load('BTCUSDT');
-      repository.submit = false;
-      repository.changeFailure = const AccountReadFailure('authWalletRejected');
-      await getController().change(getIntent());
-      expect(container.read(positionLeverageProvider).needsRecheck, false);
-      expect(container.read(positionLeverageProvider).failure?.key, 'authWalletRejected');
-      await getController().load('BTCUSDT');
-      repository.submit = true;
-      await getController().change(getIntent());
-      expect(container.read(positionLeverageProvider).needsRecheck, true);
-    },
-  );
+  test('pre-submit signature refusal is recoverable; post-submit exception is verified', () async {
+    await getController().load('BTCUSDT');
+    repository.submit = false;
+    repository.changeFailure = const AccountReadFailure('authWalletRejected');
+    await getController().change(getIntent());
+    expect(container.read(positionLeverageProvider).failure?.key, 'authWalletRejected');
+    await getController().load('BTCUSDT');
+    repository.submit = true;
+    await getController().change(getIntent());
+    expect(repository.checks, 1);
+    expect(container.read(positionLeverageProvider).failure, isNull);
+  });
   test('wallet logout during submit invalidates callback and discards late result', () async {
     await getController().load('BTCUSDT');
     repository.changeGate = Completer<void>();

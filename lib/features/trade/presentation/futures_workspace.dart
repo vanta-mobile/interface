@@ -9,7 +9,6 @@ import '../../portfolio/presentation/futures_history_screen.dart';
 import '../../portfolio/presentation/portfolio_components.dart';
 import '../../portfolio/presentation/trade_open_orders_section.dart';
 import '../../portfolio/presentation/live_order_screen.dart';
-import '../../portfolio/presentation/live_order_status.dart';
 import '../../portfolio/presentation/quick_order_panel.dart';
 import '../application/navigation_provider.dart';
 import '../application/page_refresh_provider.dart';
@@ -61,7 +60,6 @@ class FuturesWorkspace extends ConsumerWidget {
                                 CandleChart(flat: true),
                                 SizedBox(height: 20),
                                 ChartOrderBook(),
-                                LiveOrderStatus(),
                               ],
                             ),
                           ),

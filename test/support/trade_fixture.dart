@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:vanta/features/authorization/application/builder_authorization_provider.dart';
 
 import 'builder.dart';
 
 import 'package:vanta/features/portfolio/application/order_modification_provider.dart';
 import 'package:vanta/features/portfolio/domain/order_modification.dart';
+import 'package:vanta/features/market/application/open_interest_provider.dart';
 import 'package:vanta/features/market/application/public_leverage_provider.dart';
+import 'package:vanta/features/market/domain/public_leverage.dart';
 import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
 import 'package:vanta/features/authorization/domain/trading_agent.dart';
 import 'package:vanta/features/portfolio/application/open_order_strategies_provider.dart';
@@ -267,6 +271,8 @@ ProviderContainer setup(
   /// Start with a verified Vanta API session so a signed-in launch with an
   /// active agent completes onboarding; tests have no API base URI otherwise.
   bool verifiedApiSession = false,
+  Map<String, PublicLeverage> publicLeverage = const {},
+  Map<String, Decimal> openInterest = const {},
 }) {
   tester.view.physicalSize = Size(width, 844);
   tester.view.devicePixelRatio = 1;
@@ -279,7 +285,16 @@ ProviderContainer setup(
   if (notificationRepository == null) addTearDown(inboxRepository.dispose);
   final container = ProviderContainer(
     overrides: [
-      publicLeverageProvider.overrideWith((ref) async => const {}),
+      publicLeverageProvider.overrideWith((ref) async => publicLeverage),
+      // Public open interest is a per-row network read; unlisted rows stay unknown.
+      openInterestProvider.overrideWith((ref, symbol) async {
+        final value = openInterest[symbol];
+        if (value == null) return Completer<Decimal>().future;
+        await null;
+        // Mirrors the provider: loaded values feed the open-interest sort.
+        ref.read(openInterestCacheProvider.notifier).put(symbol, value);
+        return value;
+      }),
       // Tests have no app_links plugin; launches carry no navigation link.
       appLinkSourceProvider.overrideWithValue(
         AppLinkSource(links: const Stream.empty(), initialLink: () async => null),

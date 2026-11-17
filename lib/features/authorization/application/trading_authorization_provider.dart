@@ -264,6 +264,13 @@ class TradingAuthorizationController extends Notifier<TradingAuthorizationState>
         _submitting = false;
       }
     }
+    // An unconfirmed grant is checked automatically; it is never re-signed.
+    if (ref.mounted &&
+        _generation == g &&
+        state.result == TradingAuthorizationResult.unknown &&
+        review.identity.signingAvailable) {
+      await check();
+    }
   }
 
   Future<void> check() async {

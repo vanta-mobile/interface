@@ -5,15 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../auth/application/auth_provider.dart';
 import '../application/order_cancellation_provider.dart';
 import 'open_order_cancel_prompts.dart';
 import 'order_cancel_progress.dart';
 
 Future<void> confirmBatchCancellation(BuildContext context, WidgetRef ref, {String? symbol}) async {
   final controller = ref.read(orderCancellationProvider.notifier);
-  final intent = controller.prepareBatch(symbol: symbol);
-  if (intent == null) return;
+  final intent = await controller.prepareCurrentBatch(symbol: symbol);
+  if (intent == null || !context.mounted) return;
   final l10n = AppLocalizations.of(context);
   final confirmed = await showWarningConfirmSheet(
     context,
@@ -23,7 +22,9 @@ Future<void> confirmBatchCancellation(BuildContext context, WidgetRef ref, {Stri
         ? l10n.openOrdersCancelAllQuestion
         : l10n.openOrdersCancelSymbolQuestion(symbol),
   );
-  if (confirmed && context.mounted) await controller.cancelBatch(intent);
+  if (!confirmed || !context.mounted) return;
+  final current = await controller.renewBatch(intent, symbol: symbol);
+  if (current != null) await controller.cancelBatch(current);
 }
 
 class BatchOrderCancellationStatus extends ConsumerWidget {
@@ -33,7 +34,6 @@ class BatchOrderCancellationStatus extends ConsumerWidget {
     final batch = ref.watch(orderCancellationProvider.select((s) => s.batch));
     if (batch == null) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
-    final auth = ref.watch(authProvider);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
@@ -65,19 +65,18 @@ class BatchOrderCancellationStatus extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SelectableText(result.symbol, style: Theme.of(context).textTheme.titleSmall),
-                  Text(
-                    batch.busy && batch.currentSymbol == result.symbol
-                        ? l10n.batchCancelInProgress
-                        : !result.submitted
-                        ? l10n.batchCancelNotSubmitted
-                        : result.needsRecheck
-                        ? l10n.batchCancelUnknown
-                        : result.newerOrderEvents
-                        ? l10n.orderCancelEventsDuringCheck
-                        : result.snapshot!.orders.isEmpty
-                        ? l10n.batchCancelNoOpen
-                        : l10n.batchCancelRemaining(result.snapshot!.orders.length),
-                  ),
+                  if (batch.busy && batch.currentSymbol == result.symbol)
+                    Text(l10n.batchCancelInProgress)
+                  else if (!result.submitted)
+                    Text(l10n.batchCancelNotSubmitted)
+                  else if (result.snapshot case final snapshot?)
+                    Text(
+                      result.newerOrderEvents
+                          ? l10n.orderCancelEventsDuringCheck
+                          : snapshot.orders.isEmpty
+                          ? l10n.batchCancelNoOpen
+                          : l10n.batchCancelRemaining(snapshot.orders.length),
+                    ),
                   if (result.failure case final failure?)
                     Text(
                       accountErrorText(context, failure),
@@ -85,14 +84,6 @@ class BatchOrderCancellationStatus extends ConsumerWidget {
                     ),
                 ],
               ),
-            ),
-          if (batch.needsRecheck)
-            OutlinedButton(
-              key: const Key('recheck-batch-cancel'),
-              onPressed: batch.busy || auth.busy || auth.identity?.signingAvailable != true
-                  ? null
-                  : () => ref.read(orderCancellationProvider.notifier).recheckBatch(),
-              child: Text(l10n.batchCancelRecheck),
             ),
         ],
       ),

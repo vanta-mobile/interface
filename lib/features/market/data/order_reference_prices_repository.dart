@@ -46,7 +46,10 @@ class OrderReferencePricesRepository {
   bool _bookFailed = false, _tradeFailed = false;
   Stream<OrderReferencePrices> get events => _output.stream;
 
-  bool _fresh(DateTime event, DateTime received) {
+  /// [eventAge] limits how long ago the exchange produced the quote. Trades
+  /// skip it: a quiet market's last trade stays the current last price while
+  /// stream or REST receipts keep confirming it, as on the Aster website.
+  bool _fresh(DateTime event, DateTime received, {bool eventAge = true}) {
     final now = _now(), calibration = _clockAt;
     if (!_active || !_connected || calibration == null || _serverTime == null) return false;
     final elapsed = now.difference(calibration), age = now.difference(received);
@@ -55,10 +58,11 @@ class OrderReferencePricesRepository {
         !age.isNegative &&
         age < const Duration(seconds: 10) &&
         serverAge >= -10000 &&
-        // The server stamped its response between request start and receipt.
-        // Use the upper bound of that interval for expiry, so network latency
-        // cannot make an already old transaction look newer than ten seconds.
-        serverAge + _clockLatency < 10000;
+        (!eventAge ||
+            // The server stamped its response between request start and receipt.
+            // Use the upper bound of that interval for expiry, so network latency
+            // cannot make an already old transaction look newer than ten seconds.
+            serverAge + _clockLatency < 10000);
   }
 
   OrderReferencePrices get state => OrderReferencePrices(
@@ -72,7 +76,10 @@ class OrderReferencePricesRepository {
         ? OrderPriceConnection.online
         : OrderPriceConnection.connecting,
     bookFresh: _bookVerified && _book != null && _fresh(_book!.eventTime, _book!.receivedAt),
-    tradeFresh: _tradeVerified && _trade != null && _fresh(_trade!.eventTime, _trade!.receivedAt),
+    tradeFresh:
+        _tradeVerified &&
+        _trade != null &&
+        _fresh(_trade!.eventTime, _trade!.receivedAt, eventAge: false),
     bookFailure: _bookFailure,
     tradeFailure: _tradeFailure,
     bookFailed: _bookFailed,
@@ -206,7 +213,7 @@ class OrderReferencePricesRepository {
   }
 
   bool _acceptTrade(OrderTradeQuote quote, {bool rest = false}) {
-    if (!_fresh(quote.eventTime, quote.receivedAt)) return false;
+    if (!_fresh(quote.eventTime, quote.receivedAt, eventAge: false)) return false;
     final previous = _trade;
     if (previous == null) return true;
     if (quote.eventTime.isBefore(previous.eventTime)) return false;

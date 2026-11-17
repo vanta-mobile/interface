@@ -6,7 +6,6 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/domain/wallet_operation.dart';
 import '../../auth/application/auth_provider.dart';
 import '../data/aster_account_service.dart';
 import '../data/signed_position_margin_repository.dart';
@@ -110,13 +109,11 @@ class PositionMarginController extends Notifier<PositionMarginState> {
     if (state.busy ||
         auth.busy ||
         identity?.signingAvailable != true ||
-        identity?.walletAddress == null ||
-        ref.read(currentPositionMarginsProvider).any((r) => !r.acknowledged)) {
+        identity?.walletAddress == null) {
       return;
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
     final lease = activity.acquire(SymbolSetting.positionMargin);
-    if (lease == null) return;
     final revision = ++_revision, events = _eventRevision;
     _prepared = null;
     _expiry?.cancel();
@@ -164,7 +161,7 @@ class PositionMarginController extends Notifier<PositionMarginState> {
         );
       }
     } finally {
-      activity.finish(lease, unresolved: false);
+      activity.finish(lease);
     }
   }
 
@@ -176,8 +173,9 @@ class PositionMarginController extends Notifier<PositionMarginState> {
         auth.busy ||
         auth.identity?.signingAvailable != true ||
         auth.identity?.walletAddress?.toLowerCase() != c.account.address.toLowerCase() ||
-        ref.read(symbolSettingsActivityProvider).blocks(SymbolSetting.positionMargin) ||
-        ref.read(currentPositionMarginsProvider).any((r) => !r.acknowledged)) {
+        // A write must be journaled first; unusable storage refuses it.
+        !ref.read(positionMarginStorageProvider).ready ||
+        ref.read(positionMarginStorageProvider).failed) {
       return null;
     }
     final amount = c.amount(input, direction);
@@ -203,19 +201,10 @@ class PositionMarginController extends Notifier<PositionMarginState> {
         prepare(intent.direction, intent.amount.toString()) != intent) {
       return;
     }
-    await _run(intent: intent);
+    await _run(intent);
   }
 
-  Future<void> check(WalletOperationRecord record) async {
-    final saved = ref
-        .read(currentPositionMarginsProvider)
-        .where((r) => r.key == record.key)
-        .singleOrNull;
-    if (saved == null || saved.acknowledged) return;
-    await _run(record: saved);
-  }
-
-  Future<void> _run({PositionMarginIntent? intent, WalletOperationRecord? record}) async {
+  Future<void> _run(PositionMarginIntent intent) async {
     final auth = ref.read(authProvider), identity = auth.identity;
     if (state.busy ||
         auth.busy ||
@@ -224,8 +213,7 @@ class PositionMarginController extends Notifier<PositionMarginState> {
       return;
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.positionMargin, checkingOnly: record != null);
-    if (lease == null) return;
+    final lease = activity.acquire(SymbolSetting.positionMargin);
     final revision = ++_revision, events = _eventRevision, c = state.context;
     var checkEvents = events;
     _expiry?.cancel();
@@ -248,14 +236,23 @@ class PositionMarginController extends Notifier<PositionMarginState> {
       }
 
       final repo = ref.read(positionMarginRepositoryProvider);
-      final result = record != null
-          ? await repo.check(record: record, isCurrent: current, onStep: progress)
-          : await repo.change(
-              intent: intent!,
-              isCurrent: current,
-              canSubmit: () => current() && events == _eventRevision && _fresh(intent.context),
-              onStep: progress,
-            );
+      var result = await repo.change(
+        intent: intent,
+        isCurrent: current,
+        canSubmit: () => current() && events == _eventRevision && _fresh(intent.context),
+        onStep: progress,
+      );
+      // A sent adjustment that its own follow-up query could not confirm is
+      // queried once more automatically; it is never re-sent.
+      if (!result.verified && current()) {
+        final pending = ref
+            .read(currentPositionMarginsProvider)
+            .where((r) => r.key == result.record.key && !r.acknowledged)
+            .singleOrNull;
+        if (pending != null) {
+          result = await repo.check(record: pending, isCurrent: current, onStep: progress);
+        }
+      }
       if (!current()) return;
       _invalidate();
       if (result.verified && checkEvents == _eventRevision) {
@@ -289,7 +286,7 @@ class PositionMarginController extends Notifier<PositionMarginState> {
     } catch (e) {
       if (current()) state = PositionMarginState(context: c, failure: _failure(e), stale: true);
     } finally {
-      activity.finish(lease, unresolved: false);
+      activity.finish(lease);
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
@@ -8,9 +9,10 @@ import '../domain/live_order.dart';
 import '../domain/live_order_size.dart';
 import 'live_order_embedded_controls.dart';
 
-/// Two 28px steppers, and the price width (before text scaling) kept readable
-/// beside them; with less room the steppers hide.
-const _steppersWidth = 56.0, _minPriceWidth = 40.0;
+/// The design's 36px stepper group (two 14px icons, 8px apart) after an 8px
+/// gap on the price line, and the price width (before text scaling) kept readable beside them;
+/// with less room the steppers hide.
+const _steppersWidth = 44.0, _minPriceWidth = 40.0;
 
 /// Design-matching price box for the trade workspace. Stepping keeps the price
 /// on the exchange tick; validation still belongs to the order rules.
@@ -87,6 +89,8 @@ class EmbeddedPriceField extends StatelessWidget {
                     ? _BboModeBox(level: bboLevel!, onTap: enabled ? onBboLevel : null)
                     : EmbeddedInputBox(
                         label: l.tradeOrderPrice(asset),
+                        // Steppers sit on the price line so the caption keeps
+                        // the full width.
                         child: Row(
                           children: [
                             Expanded(
@@ -100,13 +104,14 @@ class EmbeddedPriceField extends StatelessWidget {
                                     ),
                             ),
                             if (steppers) ...[
+                              const SizedBox(width: 8),
                               _StepButton(
-                                icon: Icons.remove,
+                                asset: 'minus',
                                 tooltip: l.tradePriceDown,
                                 onPressed: editable ? () => _step(-1) : null,
                               ),
                               _StepButton(
-                                icon: Icons.add,
+                                asset: 'plus',
                                 tooltip: l.tradePriceUp,
                                 onPressed: editable ? () => _step(1) : null,
                               ),
@@ -260,9 +265,18 @@ class EmbeddedSizeField extends StatelessWidget {
 
 /// Filled, rounded field shell with a small caption above its content.
 class EmbeddedInputBox extends StatelessWidget {
-  const EmbeddedInputBox({super.key, required this.label, required this.child, this.labelTrailing});
+  const EmbeddedInputBox({
+    super.key,
+    required this.label,
+    required this.child,
+    this.labelTrailing,
+    this.error = false,
+  });
   final String label;
   final Widget child;
+
+  /// Outlines the box when its value breaks a limit.
+  final bool error;
 
   /// Inline control after the caption, e.g. a trigger price-type selector.
   final Widget? labelTrailing;
@@ -270,7 +284,11 @@ class EmbeddedInputBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 6, 8, 6),
-      decoration: BoxDecoration(color: TradeColors.card, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: TradeColors.card,
+        borderRadius: BorderRadius.circular(12),
+        border: error ? Border.all(color: TradeColors.negative) : null,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -335,20 +353,37 @@ class EmbeddedTextInput extends StatelessWidget {
 }
 
 class _StepButton extends StatelessWidget {
-  const _StepButton({required this.icon, required this.tooltip, required this.onPressed});
-  final IconData icon;
+  const _StepButton({required this.asset, required this.tooltip, required this.onPressed});
+  final String asset;
   final String tooltip;
   final VoidCallback? onPressed;
   @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      icon: Icon(icon, size: 16),
-      color: TradeColors.secondary,
-      visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints.tightFor(width: 28, height: 32),
-      padding: EdgeInsets.zero,
-    );
-  }
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: Semantics(
+      button: true,
+      enabled: onPressed != null,
+      label: tooltip,
+      child: InkResponse(
+        onTap: onPressed,
+        radius: 16,
+        // 14px design icons; each takes half of the 36px group.
+        child: SizedBox(
+          width: 18,
+          height: 32,
+          child: Center(
+            child: SvgPicture.asset(
+              'assets/trade/$asset.svg',
+              width: 14,
+              height: 14,
+              colorFilter: ColorFilter.mode(
+                onPressed == null ? TradeColors.muted : TradeColors.text,
+                BlendMode.srcIn,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }

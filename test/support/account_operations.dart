@@ -118,6 +118,7 @@ class TestWithdrawalRepository implements WithdrawalRepository {
     required DepositWalletQuery query,
     required String amount,
     required bool Function() isCurrent,
+    String? receiver,
   }) async {
     prepares++;
     await gate?.future;
@@ -139,6 +140,7 @@ class TestWithdrawalRepository implements WithdrawalRepository {
       ),
       info: withdrawInfoFixture(address: identity.walletAddress!),
       preparedAt: now,
+      receiver: receiver ?? identity.walletAddress!,
     );
   }
 
@@ -161,7 +163,7 @@ class TestWithdrawalRepository implements WithdrawalRepository {
         'fee': review.fee.assetFee.toString(),
         'chain': '${review.query.asset.chainId}',
         'market': review.query.market.name,
-        'receiver': review.identity.walletAddress!,
+        'receiver': review.receiver,
       },
       acknowledged: true,
       reference: 'fixture-withdraw-id',

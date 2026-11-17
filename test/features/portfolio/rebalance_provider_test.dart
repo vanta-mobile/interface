@@ -90,7 +90,6 @@ void main() {
       expect(identity.wallets, 0);
       await controller().confirm(r);
       expect(repository.posts, 1);
-      expect(c.read(symbolSettingsActivityProvider).recoveryBlocked, false);
     },
   );
   rebalanceTest('no-op remains a reported no-op, not proof of clearing debt', (tester) async {
@@ -187,9 +186,9 @@ void main() {
   rebalanceTest('settings epoch invalidates review before dispatch', (tester) async {
     final r = await review();
     final activity = c.read(symbolSettingsActivityProvider.notifier),
-        lease = activity.acquire(SymbolSetting.leverage)!;
+        lease = activity.acquire(SymbolSetting.leverage);
     activity.submitted(lease);
-    activity.finish(lease, unresolved: false);
+    activity.finish(lease);
     await controller().confirm(r);
     expect(repository.posts, 0);
     expect(state().review, null);
@@ -197,9 +196,9 @@ void main() {
   rebalanceTest('other unknown mutation blocks new rebalance', (tester) async {
     await controller().load();
     final activity = c.read(symbolSettingsActivityProvider.notifier),
-        lease = activity.acquire(SymbolSetting.assetMode)!;
+        lease = activity.acquire(SymbolSetting.assetMode);
     activity.submitted(lease);
-    activity.finish(lease, unresolved: true);
+    activity.finish(lease);
     expect(controller().prepare(), null);
     expect(repository.posts, 0);
   });
@@ -266,20 +265,19 @@ void main() {
       expect(journal.snapshot.records, isEmpty);
     });
   }
-  rebalanceTest('unknown POST persisted and locks new orders/configuration across checks', (
-    tester,
-  ) async {
+  rebalanceTest('unknown POST is persisted and blocks only a new rebalance', (tester) async {
     repository.submitFailure = const AccountReadFailure('accountNetwork');
     await controller().confirm(await review());
     expect(journal.snapshot.records.single.reply, null);
     expect(state().failure, 'accountNetwork');
-    expect(c.read(symbolSettingsActivityProvider.notifier).acquire(SymbolSetting.order), null);
+    // Orders and settings are independent of the pending rebalance.
+    final activity = c.read(symbolSettingsActivityProvider.notifier);
+    activity.finish(activity.acquire(SymbolSetting.order));
     repository.context = rebalanceContext(now: now, usdt: '0');
     await controller().load();
     expect(journal.snapshot.records.length, 1);
     expect(controller().prepare(), null);
     expect(repository.posts, 1);
-    expect(c.read(symbolSettingsActivityProvider).recoveryBlocked, true);
   });
   rebalanceTest('known response with failed account check can only recheck then releases lock', (
     tester,
@@ -292,11 +290,10 @@ void main() {
     repository.readFailure = null;
     await controller().load();
     expect(journal.snapshot.records, isEmpty);
-    expect(c.read(symbolSettingsActivityProvider).owner, null);
-    expect(c.read(symbolSettingsActivityProvider).recoveryBlocked, false);
+    expect(c.read(symbolSettingsActivityProvider).busy, isFalse);
     final lease = c.read(symbolSettingsActivityProvider.notifier).acquire(SymbolSetting.order);
     expect(lease, isNotNull);
-    c.read(symbolSettingsActivityProvider.notifier).finish(lease!, unresolved: false);
+    c.read(symbolSettingsActivityProvider.notifier).finish(lease);
   });
   for (final loss in ['stop', 'logout', 'dispose']) {
     rebalanceTest('server reply after $loss persists under original wallet', (tester) async {

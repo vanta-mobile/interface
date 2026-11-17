@@ -10,7 +10,6 @@ import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/portfolio/application/live_order_provider.dart';
 import 'package:vanta/features/portfolio/application/order_recovery_provider.dart';
 import 'package:vanta/features/portfolio/application/scaled_order_provider.dart';
-import 'package:vanta/features/portfolio/application/symbol_settings_activity.dart';
 import 'package:vanta/features/portfolio/data/aster_account_service.dart';
 import 'package:vanta/features/portfolio/data/order_recovery_journal.dart';
 import 'package:vanta/features/portfolio/domain/order_recovery.dart';
@@ -230,7 +229,7 @@ void main() {
                   orders.values.map((o) => o['price']),
                   unknownSecond ? ['79000', '80000'] : ['79000', '80000', '81000'],
                 );
-                expect(state.needsRecheck, unknownSecond);
+                expect(state.items[1].failure != null, unknownSecond);
                 if (unknownSecond) {
                   await _settled(
                     journal,
@@ -241,7 +240,6 @@ void main() {
                   expect(journal.snapshot.records.single.query.clientOrderId, intent.clientIds[1]);
                   expect(state.items[2].submitted, false);
                   // A settled unknown scaled order releases its activity lease.
-                  expect(container.read(symbolSettingsActivityProvider).unresolved, false);
                   container.dispose();
                   // A reconstructed native journal knows only the sent, unresolved child.
                   final restarted = FileOrderRecoveryJournal(() async => directory);

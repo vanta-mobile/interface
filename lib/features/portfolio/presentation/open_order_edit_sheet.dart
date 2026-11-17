@@ -9,6 +9,7 @@ import '../../market/domain/market_precision.dart';
 import '../../trade/presentation/trade_theme.dart';
 import '../application/order_modification_provider.dart';
 import '../domain/aster_open_orders.dart';
+import '../domain/account_snapshot.dart';
 import '../domain/order_modification.dart';
 import 'portfolio_components.dart';
 import 'position_order_inputs.dart';
@@ -83,8 +84,12 @@ class _OpenOrderEditSheetState extends ConsumerState<OpenOrderEditSheet> {
       case OrderModificationResult(outcome: OrderModifyOutcome.modified):
         AppToast.showSuccess(context, l10n.openOrdersEditModified);
         navigator.maybePop();
-      case OrderModificationResult(outcome: OrderModifyOutcome.unknown):
-        AppToast.showFailure(context, l10n.openOrdersEditUnknown);
+      case OrderModificationResult(outcome: OrderModifyOutcome.unverified, :final failure):
+        // The query after sending failed: report its concrete error.
+        AppToast.showFailure(
+          context,
+          accountErrorText(context, failure ?? const AccountReadFailure('accountNetwork')),
+        );
         navigator.maybePop();
       case OrderModificationResult(closed: true):
         AppToast.showFailure(context, l10n.openOrdersEditClosed);

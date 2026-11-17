@@ -8,15 +8,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/authorization/domain/trading_agent.dart';
-import 'package:vanta/features/portfolio/presentation/position_margin_mode_screen.dart';
+import 'package:vanta/features/portfolio/presentation/position_margin_mode_sheet.dart';
 import 'package:vanta/features/portfolio/application/futures_asset_mode_provider.dart';
 import 'package:vanta/features/portfolio/application/futures_position_mode_provider.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/futures_asset_mode.dart';
 import 'package:vanta/features/portfolio/domain/futures_position_mode.dart';
 import 'package:vanta/features/portfolio/domain/position_margin_mode.dart';
-import 'package:vanta/features/portfolio/presentation/futures_asset_mode_screen.dart';
-import 'package:vanta/features/portfolio/presentation/futures_position_mode_screen.dart';
+import 'package:vanta/features/portfolio/presentation/futures_asset_mode_sheet.dart';
+import 'package:vanta/features/portfolio/presentation/futures_position_mode_sheet.dart';
 import 'package:vanta/features/portfolio/presentation/mode_settings_sheet.dart';
 import 'package:vanta/features/portfolio/presentation/multi_asset_activation_sheet.dart';
 
@@ -106,6 +106,7 @@ void main() {
     final c = setup(
       t,
       identityRepository: identity,
+      tradingAgentStore: await activeAgentStore(),
       futuresAssetModeRepository: repository,
       assetModeClock: () => assetModeClock,
       language: const Locale('en'),
@@ -154,6 +155,7 @@ void main() {
         language: const Locale('en'),
       );
       await launch(t, c);
+      await awaitTradingAgent(t, c);
       await tap(t, 'trade-settings');
       expect(find.text('Account Settings'), findsOneWidget);
       expect(find.byKey(const Key('settings-asset-mode')), findsOneWidget);
@@ -163,7 +165,7 @@ void main() {
       expect(find.byKey(const Key('asset-mode-single')), findsOneWidget);
       expect(find.byKey(const Key('asset-mode-multi')), findsOneWidget);
       expect(assets.reads, 0);
-      await tap(t, 'asset-mode-sheet-read');
+      await tap(t, 'mode-access-action');
       expect(find.byKey(const Key('login-email')), findsOneWidget);
       expect(assets.changes, 0);
       expect(positions.changes, 0);
@@ -188,11 +190,13 @@ void main() {
     final c = setup(
       t,
       identityRepository: identity,
+      tradingAgentStore: await activeAgentStore(),
       futuresAssetModeRepository: repository,
       assetModeClock: () => assetModeClock,
       language: const Locale('en'),
     );
     await launch(t, c);
+    await awaitTradingAgent(t, c);
     final controller = c.read(futuresAssetModeProvider.notifier);
     await controller.load();
     openAssetModeSettings(t.element(find.byType(Navigator).first));
@@ -243,11 +247,13 @@ void main() {
     final c = setup(
       t,
       identityRepository: identity,
+      tradingAgentStore: await activeAgentStore(),
       futuresAssetModeRepository: r,
       assetModeClock: () => assetModeClock,
       language: const Locale('en'),
     );
     await launch(t, c);
+    await awaitTradingAgent(t, c);
     await c.read(futuresAssetModeProvider.notifier).load();
     openAssetModeSettings(t.element(find.byType(Navigator).first));
     await t.pumpAndSettle();
@@ -266,11 +272,13 @@ void main() {
     final c = setup(
       t,
       identityRepository: identity,
+      tradingAgentStore: await activeAgentStore(),
       futuresPositionModeRepository: r,
       positionModeClock: () => positionModeClock,
       language: const Locale('en'),
     );
     await launch(t, c);
+    await awaitTradingAgent(t, c);
     await c.read(futuresPositionModeProvider.notifier).load();
     openPositionModeSettings(t.element(find.byType(Navigator).first));
     await t.pumpAndSettle();
@@ -292,7 +300,9 @@ void main() {
     await close(t, c);
   });
 
-  testWidgets('unknown outcome survives reopening and recheck never repeats the write', (t) async {
+  testWidgets('an unverified write is queried automatically; a failed query is an error', (
+    t,
+  ) async {
     final identity = TestIdentityRepository()..restored = signingIdentity;
     addTearDown(identity.dispose);
     final r = TestFuturesAssetModeRepository()
@@ -300,29 +310,29 @@ void main() {
     final c = setup(
       t,
       identityRepository: identity,
+      tradingAgentStore: await activeAgentStore(),
       futuresAssetModeRepository: r,
       assetModeClock: () => assetModeClock,
       language: const Locale('en'),
     );
     await launch(t, c);
-    await c.read(futuresAssetModeProvider.notifier).load();
+    await awaitTradingAgent(t, c);
     openAssetModeSettings(t.element(find.byType(Navigator).first));
     await t.pumpAndSettle();
     await tap(t, 'asset-mode-multi');
     await tap(t, 'multi-asset-confirm');
-    expect(c.read(futuresAssetModeProvider).needsRecheck, true);
-    Navigator.pop(t.element(find.byKey(const Key('multi-asset-confirm'))));
-    await t.pumpAndSettle();
-    Navigator.pop(t.element(find.byKey(const Key('asset-mode-sheet'))));
-    await t.pumpAndSettle();
-    openAssetModeSettings(t.element(find.byType(Navigator).first));
-    await t.pumpAndSettle();
-    expect(find.textContaining('Querying never resubmits'), findsOneWidget);
-    r.result = AssetModeResult(observed: FuturesAssetMode.multi, checkedAt: assetModeClock);
-    await tap(t, 'asset-mode-sheet-read');
-    expect(r.checks, 1);
     expect(r.changes, 1);
-    expect(c.read(futuresAssetModeProvider).needsRecheck, false);
+    expect(r.checks, 1);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('multi-asset-activation-sheet')),
+        matching: find.byType(ModeError),
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('unverified'), findsNothing);
+    expect(find.textContaining('Querying never resubmits'), findsNothing);
+    expect(action(t, 'multi-asset-confirm').onPressed, isNotNull);
     await close(t, c);
   });
 
@@ -336,11 +346,13 @@ void main() {
       final c = setup(
         t,
         identityRepository: identity,
+        tradingAgentStore: await activeAgentStore(),
         futuresAssetModeRepository: r,
         assetModeClock: () => assetModeClock,
         language: const Locale('en'),
       );
       await launch(t, c);
+      await awaitTradingAgent(t, c);
       await c.read(futuresAssetModeProvider.notifier).load();
       openAssetModeSettings(t.element(find.byType(Navigator).first));
       await t.pumpAndSettle();
@@ -348,7 +360,8 @@ void main() {
       await tap(t, 'multi-asset-confirm');
       expect(find.byKey(const Key('multi-asset-activation-sheet')), findsOneWidget);
       expect(find.textContaining('Query shows Single-Asset; requested Multi-Asset'), findsWidgets);
-      expect(action(t, 'multi-asset-confirm').onPressed, null);
+      // Retrying re-reads first; nothing is locked after a mismatch.
+      expect(action(t, 'multi-asset-confirm').onPressed, isNotNull);
       expect(r.changes, 1);
       await close(t, c);
     },
@@ -377,6 +390,7 @@ void main() {
       language: const Locale('en'),
     );
     await launch(t, c);
+    await awaitTradingAgent(t, c);
     openAssetModeSettings(t.element(find.byType(Navigator).first));
     await t.pumpAndSettle();
     expect(r.reads, 1);
@@ -411,11 +425,13 @@ void main() {
     final c = setup(
       t,
       identityRepository: identity,
+      tradingAgentStore: await activeAgentStore(),
       futuresAssetModeRepository: r,
       assetModeClock: () => assetModeClock,
       language: const Locale('en'),
     );
     await launch(t, c);
+    await awaitTradingAgent(t, c);
     openAssetModeSettings(t.element(find.byType(Navigator).first));
     await t.pumpAndSettle();
     await t.tap(find.byKey(const Key('asset-mode-multi')));
@@ -457,11 +473,13 @@ void main() {
       final c = setup(
         t,
         identityRepository: identity,
+        tradingAgentStore: await activeAgentStore(),
         futuresAssetModeRepository: r,
         assetModeClock: () => assetModeClock,
         language: const Locale('en'),
       );
       await launch(t, c);
+      await awaitTradingAgent(t, c);
       await c.read(futuresAssetModeProvider.notifier).load();
       showModeSettingsSheet<void>(
         t.element(find.byType(Navigator).first),
@@ -469,13 +487,16 @@ void main() {
       );
       await t.pumpAndSettle();
       await t.tap(find.text(hasPosition ? 'Manage' : 'Switch to Cross'));
-      await t.pumpAndSettle();
+      // The margin sheet opens over the busy activation sheet, whose spinner
+      // keeps animating underneath, so the frames are pumped explicitly.
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 500));
       if (hasPosition) {
         expect(find.byKey(const Key('mode-market-positions')), findsOneWidget);
       } else {
-        final screen = t.widget<PositionMarginModeScreen>(find.byType(PositionMarginModeScreen));
-        expect(screen.symbol, 'ETHUSDT');
-        expect(screen.initialTarget, PositionMarginMode.cross);
+        final sheet = t.widget<PositionMarginModeSheet>(find.byType(PositionMarginModeSheet));
+        expect(sheet.symbol, 'ETHUSDT');
+        expect(sheet.initialTarget, PositionMarginMode.cross);
       }
       expect(r.changes, 0);
       expect(t.takeException(), null);
@@ -493,12 +514,14 @@ void main() {
         width: spec.$1,
         scale: spec.$3,
         identityRepository: identity,
+        tradingAgentStore: await activeAgentStore(),
         futuresAssetModeRepository: r,
         assetModeClock: () => assetModeClock,
         language: Locale(spec.$4),
       );
       t.view.physicalSize = Size(spec.$1, spec.$2);
       await launch(t, c);
+      await awaitTradingAgent(t, c);
       await c.read(futuresAssetModeProvider.notifier).load();
       showModeSettingsSheet<void>(
         t.element(find.byType(Navigator).first),

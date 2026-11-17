@@ -140,14 +140,12 @@ void main() {
     await pending;
     expect(repository.submitted, false);
   });
-  test('shared settings owner blocks load and confirmation', () async {
+  test('another settings operation in progress does not block loading', () async {
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    final token = activity.acquire(SymbolSetting.leverage)!;
-    await load();
-    expect(repository.reads, 0);
-    activity.finish(token, unresolved: false);
+    final token = activity.acquire(SymbolSetting.leverage);
     await load();
     expect(repository.reads, 1);
+    activity.finish(token);
   });
   test('one confirmed call while signing; event between review and send blocks dispatch', () async {
     await load();
@@ -197,41 +195,20 @@ void main() {
     expect(container.read(positionMarginProvider).context, null);
     expect(identity.wallets, 0);
   });
-  test(
-    'pending startup record blocks new writes across shared workflows and check is GET only',
-    () async {
-      await journal.prepare(marginRecord());
-      await load();
-      expect(repository.reads, 0);
-      final activity = container.read(symbolSettingsActivityProvider.notifier);
-      expect(activity.acquire(SymbolSetting.order), null);
-      expect(activity.acquire(SymbolSetting.leverage), null);
-      await controller().check(marginRecord());
-      expect(repository.checks, 1);
-      expect(repository.changes, 0);
-    },
-  );
-  test('foreign wallet record cannot be checked; caller cannot alter stored terms', () async {
-    final record = marginRecord();
-    await journal.prepare(record);
-    final forged = WalletOperationRecord(
-      kind: record.kind,
-      address: record.address,
-      nonce: record.nonce,
-      preparedAt: record.preparedAt,
-      terms: {...record.terms, 'amount': '999'},
-    );
-    await controller().check(forged);
-    expect(repository.checks, 1); // Canonical stored record is passed.
-    await container.read(authProvider.notifier).logout();
-    await controller().check(record);
-    expect(repository.checks, 1);
+  test('a pending record from earlier does not block loading or other operations', () async {
+    await journal.prepare(marginRecord());
+    await load();
+    expect(repository.reads, 1);
+    final activity = container.read(symbolSettingsActivityProvider.notifier);
+    activity.finish(activity.acquire(SymbolSetting.order));
+    expect(repository.changes, 0);
   });
-  test('corrupt storage blocks reads and new confirms without private requests', () async {
+  test('corrupt storage refuses new confirms; reading stays possible', () async {
     journal.publish(WalletOperationStorage(failed: true));
     await load();
-    expect(repository.reads, 0);
+    expect(repository.reads, 1);
     expect(controller().prepare(MarginDirection.add, '10'), null);
+    expect(repository.changes, 0);
   });
   test('verified full reads update primary account and positions before returning', () async {
     await load();

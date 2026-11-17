@@ -6,6 +6,7 @@ import 'package:vanta/features/auth/data/privy_configuration.dart';
 import 'package:vanta/features/auth/data/privy_identity_repository.dart';
 import 'package:vanta/features/auth/data/wallet_preference_store.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
+import 'package:vanta/features/auth/domain/wallet_signing_preparation.dart';
 import 'package:vanta/features/auth/domain/wallet_transaction.dart';
 
 import '../../support/wallet_connection.dart';
@@ -128,6 +129,35 @@ void main() {
     expect(connection.transactions.single, same(tx));
     expect(connection.typedSigns, 0);
     expect(sdk.legacyUser.created, 0);
+  });
+  test('EOA on another network is asked to switch before sending', () async {
+    final wallet = _SwitchingWallet(chain: '1');
+    addTearDown(wallet.dispose);
+    await repository.initialize();
+    await repository.loginWithWallet(wallet);
+    expect(repository.walletChainId, 1);
+    final tx = walletTransaction(from: wallet.address);
+    final result = await repository.sendWalletTransaction(transaction: tx, isCurrent: () => true);
+    expect(wallet.switches, [56]);
+    expect(result.hash, '0x${'a' * 64}');
+    expect(wallet.transactions.single, same(tx));
+    expect(repository.walletChainId, 56);
+  });
+  test('EOA that declines the network switch sends nothing', () async {
+    final wallet = _SwitchingWallet(chain: '1')..decline = true;
+    addTearDown(wallet.dispose);
+    await repository.initialize();
+    await repository.loginWithWallet(wallet);
+    await expectLater(
+      repository.sendWalletTransaction(
+        transaction: walletTransaction(from: wallet.address),
+        isCurrent: () => true,
+      ),
+      throwsA(
+        isA<WalletTransactionNotSent>().having((e) => e.key, 'key', 'walletTransactionWrongChain'),
+      ),
+    );
+    expect(wallet.transactions, isEmpty);
   });
   test('restored EOA cannot send through an existing embedded wallet', () async {
     sdk.state = Authenticated(sdk.legacyUser);
@@ -467,4 +497,23 @@ class _User implements PrivyUser {
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _SwitchingWallet extends TestWalletConnection implements WalletSigningPreparation {
+  _SwitchingWallet({required this.chain});
+  String chain;
+  bool decline = false;
+  final switches = <int>[];
+  @override
+  String get chainId => chain;
+  @override
+  Future<void> prepareSigning({
+    required String expectedAddress,
+    required int chainId,
+    required bool Function() isCurrent,
+  }) async {
+    switches.add(chainId);
+    if (decline) throw Exception('User rejected the request');
+    chain = '$chainId';
+  }
 }

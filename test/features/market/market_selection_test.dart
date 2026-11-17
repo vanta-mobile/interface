@@ -1,4 +1,7 @@
+import 'package:decimal/decimal.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/market/application/market_selection_provider.dart';
 import 'package:vanta/features/market/data/market_descriptor_mapper.dart';
 import 'package:vanta/features/market/domain/market_descriptor.dart';
 import 'package:vanta/features/market/domain/market_precision.dart';
@@ -58,6 +61,57 @@ void main() {
       () => selectMarkets(quotes, const MarketSelection(), {}).clear(),
       throwsUnsupportedError,
     );
+  });
+
+  test('columns sort both ways with unknown values last and catalog order for ties', () {
+    MarketQuote priced(String symbol, String? volume, {String? mark}) => MarketQuote(
+      symbol: symbol,
+      base: symbol,
+      precision: const MarketPrecision(),
+      quoteVolume: volume == null ? null : Decimal.parse(volume),
+      markPrice: mark == null ? null : Decimal.parse(mark),
+    );
+    final rows = [
+      priced('AUSDT', '5', mark: '2'),
+      priced('BUSDT', null, mark: '1'),
+      priced('CUSDT', '9', mark: '10'),
+      priced('DUSDT', '5'),
+    ];
+    List<String> sorted(MarketSort sort, bool descending, [Map<String, Decimal> oi = const {}]) =>
+        selectMarkets(
+          rows,
+          MarketSelection(sort: sort, descending: descending),
+          {},
+          openInterest: oi,
+        ).map((q) => q.symbol).toList();
+    expect(sorted(MarketSort.volume, true), ['CUSDT', 'AUSDT', 'DUSDT', 'BUSDT']);
+    expect(sorted(MarketSort.volume, false), ['AUSDT', 'DUSDT', 'CUSDT', 'BUSDT']);
+    expect(sorted(MarketSort.symbol, false), ['AUSDT', 'BUSDT', 'CUSDT', 'DUSDT']);
+    // Open interest is compared in quote value: base amount × mark price.
+    final oi = {'AUSDT': Decimal.fromInt(10), 'BUSDT': Decimal.fromInt(30), 'CUSDT': Decimal.one};
+    expect(sorted(MarketSort.openInterest, true, oi), ['BUSDT', 'AUSDT', 'CUSDT', 'DUSDT']);
+    expect(openInterestValue(rows[0], Decimal.fromInt(10)), Decimal.fromInt(20));
+    expect(openInterestValue(rows[3], Decimal.fromInt(10)), isNull);
+  });
+
+  test('a column cycles descending, ascending, then back to catalog order', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final sub = container.listen(marketSelectionProvider, (_, _) {});
+    addTearDown(sub.close);
+    final controller = container.read(marketSelectionProvider.notifier);
+    MarketSelection read() => container.read(marketSelectionProvider);
+    controller.search('btc');
+    controller.sortBy(MarketSort.volume);
+    expect((read().sort, read().descending), (MarketSort.volume, true));
+    controller.sortBy(MarketSort.volume);
+    expect((read().sort, read().descending), (MarketSort.volume, false));
+    controller.sortBy(MarketSort.volume);
+    expect(read().sort, isNull);
+    controller.sortBy(MarketSort.symbol);
+    expect((read().sort, read().descending), (MarketSort.symbol, false));
+    controller.favorites(true);
+    expect((read().sort, read().query, read().onlyFavorites), (MarketSort.symbol, 'btc', true));
   });
 
   test('optional labels are validated, deduplicated and immutable', () {

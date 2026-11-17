@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'main_order_capacity_provider.dart';
 
 /// Advertised maximum leverage per symbol, remembered from signed bracket
-/// reads for this session. Public market data has no reliable source, so a
-/// symbol that has not been read shows nothing rather than a guessed value.
+/// reads for this session. The trade header falls back to the public
+/// brackets (`publicLeverageProvider`) for symbols not read yet; the public
+/// `exchangeInfo` margin percent is not a reliable source.
 final symbolMaximumLeverageProvider =
     NotifierProvider<SymbolMaximumLeverageController, Map<String, int>>(
       SymbolMaximumLeverageController.new,

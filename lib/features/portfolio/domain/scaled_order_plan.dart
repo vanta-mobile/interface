@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 
 import 'live_order.dart';
+import 'live_order_time_in_force.dart';
 
 enum ScaledSizeUnit { base, quote }
 
@@ -22,6 +23,8 @@ class ScaledOrderDraft {
     this.constant = ScaledConstant.difference,
     this.variance = '10',
     this.randomSeed,
+    this.reduceOnly = false,
+    this.timeInForce = LiveOrderTimeInForce.gtc,
   });
   final bool buy;
   final String lowest, highest, quantity, variance;
@@ -30,6 +33,10 @@ class ScaledOrderDraft {
   final ScaledDistribution distribution;
   final ScaledConstant constant;
   final int? randomSeed;
+
+  /// Applied to every child order; GTC, IOC or Hidden.
+  final bool reduceOnly;
+  final LiveOrderTimeInForce timeInForce;
   bool get progressive =>
       distribution == ScaledDistribution.increasing ||
       distribution == ScaledDistribution.decreasing;
@@ -46,7 +53,9 @@ class ScaledOrderDraft {
       distribution == other.distribution &&
       constant == other.constant &&
       variance == other.variance &&
-      randomSeed == other.randomSeed;
+      randomSeed == other.randomSeed &&
+      reduceOnly == other.reduceOnly &&
+      timeInForce == other.timeInForce;
   @override
   int get hashCode => Object.hash(
     buy,
@@ -59,6 +68,8 @@ class ScaledOrderDraft {
     constant,
     variance,
     randomSeed,
+    reduceOnly,
+    timeInForce,
   );
 }
 

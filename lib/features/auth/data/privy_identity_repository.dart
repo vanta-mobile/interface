@@ -6,6 +6,7 @@ import '../domain/auth_session.dart';
 import '../domain/wallet_connection.dart';
 import '../domain/wallet_transaction.dart';
 import '../domain/wallet_message_signer.dart';
+import '../domain/wallet_network_source.dart';
 import '../domain/wallet_signing_preparation.dart';
 import 'evm_account_address.dart';
 import 'external_wallet_session.dart';
@@ -22,7 +23,11 @@ export 'privy_auth_failure.dart' show failureFromPrivy;
 /// External EOA sessions use their connection directly. Privy owns only email /
 /// social identities and embedded signing; neither session grants Aster access.
 class PrivyIdentityRepository
-    implements IdentityRepository, WalletMessageSigner, WalletSigningPreparation {
+    implements
+        IdentityRepository,
+        WalletMessageSigner,
+        WalletSigningPreparation,
+        WalletNetworkSource {
   PrivyIdentityRepository(
     this.configuration, {
     Privy Function(PrivyConfig)? create,
@@ -390,18 +395,46 @@ class PrivyIdentityRepository
       _guard(() => _external.signTypedData(expectedAddress: expectedAddress, typedData: typedData));
 
   @override
+  int? get walletChainId {
+    if (_disposed || !_external.selected || _external.identity?.signingAvailable != true) {
+      return null;
+    }
+    final connection = _external.connection;
+    return connection == null || !connection.isCurrent ? null : int.tryParse(connection.chainId);
+  }
+
+  @override
   Future<WalletTransactionResult> sendWalletTransaction({
     required EvmWalletTransaction transaction,
     required bool Function() isCurrent,
-  }) {
+  }) async {
     final generation = _sessionGeneration;
+    bool current() => !_disposed && generation == _sessionGeneration && isCurrent();
+    // As when enabling trading, a wallet on another network is asked to switch
+    // to the transaction's network first; nothing is sent until it has.
+    if (_external.selected && _external.connection?.chainId != '${transaction.chainId}') {
+      try {
+        await _external.prepareSigning(
+          expectedAddress: transaction.from,
+          chainId: transaction.chainId,
+          isCurrent: current,
+        );
+      } on AuthFailure catch (error) {
+        throw WalletTransactionNotSent(
+          error.key == 'authWalletSigningNetwork' ? 'walletTransactionWrongChain' : error.key,
+        );
+      } catch (_) {
+        // The wallet declined or could not switch.
+        throw const WalletTransactionNotSent('walletTransactionWrongChain');
+      }
+    }
     return _transactions.send(
       user: _external.selected ? null : _user,
       resolveIdentity: () =>
           _external.selected ? _external.identity : (_user == null ? null : _identity(_user!)),
       connection: _external.connection,
       transaction: transaction,
-      isCurrent: () => !_disposed && generation == _sessionGeneration && isCurrent(),
+      isCurrent: current,
     );
   }
 

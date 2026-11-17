@@ -142,9 +142,6 @@ class RebalanceController extends Notifier<RebalanceState> {
           .singleOrNull;
       if (pending?.reply != null && journal.snapshot.ready && !journal.snapshot.failure) {
         await journal.complete(pending!.key);
-        final activity = ref.read(symbolSettingsActivityProvider.notifier);
-        final lease = activity.acquire(SymbolSetting.rebalance, checkingOnly: true);
-        if (lease != null) activity.finish(lease, unresolved: false);
       }
       if (!current()) return;
       state = RebalanceState(context: c, reply: pending?.reply, stale: epoch != _staleEpoch);
@@ -171,9 +168,7 @@ class RebalanceController extends Notifier<RebalanceState> {
         !_fresh(c) ||
         !c.needed ||
         !storage.ready ||
-        storage.failure ||
-        ref.read(pendingRebalancesProvider).isNotEmpty ||
-        ref.read(symbolSettingsActivityProvider).blocks(SymbolSetting.rebalance)) {
+        storage.failure) {
       return null;
     }
     final review = RebalanceReview(c);
@@ -207,7 +202,6 @@ class RebalanceController extends Notifier<RebalanceState> {
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier),
         lease = activity.acquire(SymbolSetting.rebalance);
-    if (lease == null) return;
     final generation = _generation, epoch = _staleEpoch;
     bool current() => _current(identity!, generation);
     bool canSubmit() => current() && epoch == _staleEpoch && _fresh(review.context);
@@ -279,14 +273,7 @@ class RebalanceController extends Notifier<RebalanceState> {
       }
     } finally {
       _working = false;
-      activity.finish(
-        lease,
-        unresolved:
-            current() &&
-            journal.snapshot.records.any(
-              (r) => r.address.toLowerCase() == review.context.address.toLowerCase(),
-            ),
-      );
+      activity.finish(lease);
     }
   }
 }

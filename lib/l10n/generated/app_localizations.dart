@@ -3405,12 +3405,6 @@ abstract class AppLocalizations {
   /// **'Use this wallet to place real ordinary, conditional or trailing orders. Limit orders use a supported execution policy. In one-way mode, a long or short order can reduce or reverse an existing position. Hedge mode operates on the selected long or short side. Aster checks fees, available margin and final eligibility.'**
   String get liveOrderScope;
 
-  /// No description provided for @liveOrderReadContext.
-  ///
-  /// In en, this message translates to:
-  /// **'Read order settings (2 signatures)'**
-  String get liveOrderReadContext;
-
   /// No description provided for @liveOrderSettingsBusy.
   ///
   /// In en, this message translates to:
@@ -3524,12 +3518,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trigger price basis'**
   String get liveOrderTriggerBasis;
-
-  /// No description provided for @liveOrderTriggerReference.
-  ///
-  /// In en, this message translates to:
-  /// **'Reference price at read'**
-  String get liveOrderTriggerReference;
 
   /// No description provided for @liveOrderTriggerProtect.
   ///
@@ -3789,12 +3777,6 @@ abstract class AppLocalizations {
   /// **'Sign to query unconfirmed orders only'**
   String get batchCloseRecheck;
 
-  /// No description provided for @liveOrderFundsReadHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Read public rules and mark price, then sign separately for position mode, symbol positions, asset mode and account funds (4 signatures). Read validity is 30 seconds from the mark-price response. No order is submitted.'**
-  String get liveOrderFundsReadHint;
-
   /// No description provided for @liveOrderReadFunds.
   ///
   /// In en, this message translates to:
@@ -3986,66 +3968,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A long activation price must be below the selected latest price; a short activation price must be above it.'**
   String get liveTrailingImmediate;
-
-  /// No description provided for @liveTrailingHint.
-  ///
-  /// In en, this message translates to:
-  /// **'The exchange tracks favorable price extremes, then submits market execution after the configured pullback. This uses a fixed quantity, not entire close. It does not continuously reprice a limit order.'**
-  String get liveTrailingHint;
-
-  /// No description provided for @liveTrailingRate.
-  ///
-  /// In en, this message translates to:
-  /// **'Callback rate (%)'**
-  String get liveTrailingRate;
-
-  /// No description provided for @liveTrailingRateBounds.
-  ///
-  /// In en, this message translates to:
-  /// **'0.1–5; entering 1 means 1%.'**
-  String get liveTrailingRateBounds;
-
-  /// No description provided for @liveTrailingBasis.
-  ///
-  /// In en, this message translates to:
-  /// **'Tracking price basis'**
-  String get liveTrailingBasis;
-
-  /// No description provided for @liveTrailingActivation.
-  ///
-  /// In en, this message translates to:
-  /// **'Activation price ({asset}, optional)'**
-  String liveTrailingActivation(String asset);
-
-  /// No description provided for @liveTrailingDefault.
-  ///
-  /// In en, this message translates to:
-  /// **'Leave empty to use the selected price basis at exchange placement time. This snapshot is not submitted as the activation price.'**
-  String get liveTrailingDefault;
-
-  /// No description provided for @liveTrailingActivationDirection.
-  ///
-  /// In en, this message translates to:
-  /// **'If specified: long activation below the latest price; short activation above it. The exchange rechecks at placement.'**
-  String get liveTrailingActivationDirection;
-
-  /// No description provided for @liveTrailingBuy.
-  ///
-  /// In en, this message translates to:
-  /// **'After activation, a long order follows the lowest price and triggers on a rise by the callback percentage. Triggering does not guarantee an execution price.'**
-  String get liveTrailingBuy;
-
-  /// No description provided for @liveTrailingSell.
-  ///
-  /// In en, this message translates to:
-  /// **'After activation, a short order follows the highest price and triggers on a fall by the callback percentage. Triggering does not guarantee an execution price.'**
-  String get liveTrailingSell;
-
-  /// No description provided for @liveTrailingEstimateHint.
-  ///
-  /// In en, this message translates to:
-  /// **'There is no fixed execution price. Notional and opening margin use the current mark only as a reference; closing PnL is unavailable. Actual size eligibility, margin and execution depend on exchange state. Fees, funding and slippage are excluded.'**
-  String get liveTrailingEstimateHint;
 
   /// No description provided for @quickOrderInvalidAmount.
   ///
@@ -5481,90 +5403,6 @@ abstract class AppLocalizations {
   /// **'Scaled orders'**
   String get scaledTitle;
 
-  /// No description provided for @scaledRule.
-  ///
-  /// In en, this message translates to:
-  /// **'2–110 independent GTC limit orders, submitted from low to high price. Prices include both endpoints and are rounded down to distinct ticks. Quantities follow the selected distribution and valid quantity steps; review every child before signing.'**
-  String get scaledRule;
-
-  /// No description provided for @scaledRisk.
-  ///
-  /// In en, this message translates to:
-  /// **'Each order requires a fresh account check, a submission signature and a query signature. Orders are independent and may only partly succeed. A failure or unknown result stops the remaining orders. Stopping or leaving this page does not cancel orders already sent. Unsent orders are never resumed automatically.'**
-  String get scaledRisk;
-
-  /// No description provided for @scaledLow.
-  ///
-  /// In en, this message translates to:
-  /// **'Lowest price'**
-  String get scaledLow;
-
-  /// No description provided for @scaledHigh.
-  ///
-  /// In en, this message translates to:
-  /// **'Highest price'**
-  String get scaledHigh;
-
-  /// No description provided for @scaledCount.
-  ///
-  /// In en, this message translates to:
-  /// **'Number of orders'**
-  String get scaledCount;
-
-  /// No description provided for @scaledPreview.
-  ///
-  /// In en, this message translates to:
-  /// **'Order breakdown'**
-  String get scaledPreview;
-
-  /// No description provided for @scaledReview.
-  ///
-  /// In en, this message translates to:
-  /// **'Review scaled orders'**
-  String get scaledReview;
-
-  /// No description provided for @scaledConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign and submit these orders'**
-  String get scaledConfirm;
-
-  /// No description provided for @scaledTotalQuantity.
-  ///
-  /// In en, this message translates to:
-  /// **'Total quantity'**
-  String get scaledTotalQuantity;
-
-  /// No description provided for @scaledTotalNotional.
-  ///
-  /// In en, this message translates to:
-  /// **'Total limit notional'**
-  String get scaledTotalNotional;
-
-  /// No description provided for @scaledMarginReference.
-  ///
-  /// In en, this message translates to:
-  /// **'Margin reference before netting'**
-  String get scaledMarginReference;
-
-  /// No description provided for @scaledMarginHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Reference = total limit notional ÷ leverage. It excludes position netting, existing orders, fees and released margin. It is not the final margin requirement or an executable allowance. Aster checks each order.'**
-  String get scaledMarginHint;
-
-  /// No description provided for @scaledPortion.
-  ///
-  /// In en, this message translates to:
-  /// **'Share of total quantity (approx.)'**
-  String get scaledPortion;
-
-  /// No description provided for @scaledOrderNumber.
-  ///
-  /// In en, this message translates to:
-  /// **'Order {number}'**
-  String scaledOrderNumber(int number);
-
   /// No description provided for @scaledCountInvalid.
   ///
   /// In en, this message translates to:
@@ -5600,18 +5438,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Account mode, leverage or order rules changed. Remaining orders were stopped; refresh and review a new plan.'**
   String get scaledConfigurationChanged;
-
-  /// No description provided for @scaledStopped.
-  ///
-  /// In en, this message translates to:
-  /// **'Remaining orders stopped. Orders already sent stay active; check their results below.'**
-  String get scaledStopped;
-
-  /// No description provided for @scaledResults.
-  ///
-  /// In en, this message translates to:
-  /// **'Scaled order results'**
-  String get scaledResults;
 
   /// No description provided for @scaledRefreshRequired.
   ///
@@ -5808,7 +5634,7 @@ abstract class AppLocalizations {
   /// No description provided for @depositApprovalUnknown.
   ///
   /// In en, this message translates to:
-  /// **'The wallet result is unknown. Do not repeat the approval. Use the original transaction hash from your wallet to check it.'**
+  /// **'Network error. Check the records later to confirm.'**
   String get depositApprovalUnknown;
 
   /// No description provided for @depositApprovalMismatch.
@@ -5925,10 +5751,16 @@ abstract class AppLocalizations {
   /// **'Another wallet transaction request is still pending. Wait for it to finish.'**
   String get walletTransactionBusy;
 
+  /// No description provided for @fundingSwitchNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch your wallet to {network}, then try again.'**
+  String fundingSwitchNetwork(String network);
+
   /// No description provided for @walletTransactionWrongChain.
   ///
   /// In en, this message translates to:
-  /// **'Reconnect the same wallet on the selected deposit network before sending this step.'**
+  /// **'Switch your wallet to the selected deposit network, then try again.'**
   String get walletTransactionWrongChain;
 
   /// No description provided for @walletTransactionPermission.
@@ -6042,7 +5874,7 @@ abstract class AppLocalizations {
   /// No description provided for @rebalanceUnknown.
   ///
   /// In en, this message translates to:
-  /// **'The original request result is unknown. Current balances cannot prove that request completed. The API has no documented lookup by nonce, so the record and mutation block remain. Do not repeat the request.'**
+  /// **'Network error. Check the records later to confirm.'**
   String get rebalanceUnknown;
 
   /// No description provided for @rebalanceReplyPending.
@@ -6360,7 +6192,7 @@ abstract class AppLocalizations {
   /// No description provided for @internalTransferUnknown.
   ///
   /// In en, this message translates to:
-  /// **'The transfer outcome is unknown. The original client ID cannot be queried through a documented API. Balance changes do not prove completion. This record is retained and cannot be retried or cleared here; contact Aster with the original identifiers.'**
+  /// **'Network error. Check the records later to confirm.'**
   String get internalTransferUnknown;
 
   /// No description provided for @internalTransferReplyPending.
@@ -7152,7 +6984,7 @@ abstract class AppLocalizations {
   /// No description provided for @authorizationUnknown.
   ///
   /// In en, this message translates to:
-  /// **'The authorization result is unknown. Check access before making another explicit request.'**
+  /// **'Network error. Check the records later to confirm.'**
   String get authorizationUnknown;
 
   /// No description provided for @authorizationFuturesRead.
@@ -7404,7 +7236,7 @@ abstract class AppLocalizations {
   /// No description provided for @walletOperationUnknown.
   ///
   /// In en, this message translates to:
-  /// **'The request may have been accepted. Its result is unknown and its unsigned terms remain saved. No automatic retry will be sent.'**
+  /// **'Network error. Check the records later to confirm.'**
   String get walletOperationUnknown;
 
   /// No description provided for @walletOperationAcknowledged.
@@ -7484,6 +7316,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a positive amount within the selected token precision and a supported automatic withdrawal route.'**
   String get withdrawalAmountInvalid;
+
+  /// No description provided for @withdrawalReceiverInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid EVM receiving address.'**
+  String get withdrawalReceiverInvalid;
 
   /// No description provided for @withdrawalAssetChanged.
   ///
@@ -7632,7 +7470,7 @@ abstract class AppLocalizations {
   /// No description provided for @depositSubmissionUnknown.
   ///
   /// In en, this message translates to:
-  /// **'The wallet may have submitted the transaction. Keep the saved record and recover its status before another deposit.'**
+  /// **'Network error. Check the records later to confirm.'**
   String get depositSubmissionUnknown;
 
   /// No description provided for @depositSubmissionChanged.
@@ -8718,7 +8556,7 @@ abstract class AppLocalizations {
   /// No description provided for @marginAdjustUnknown.
   ///
   /// In en, this message translates to:
-  /// **'Outcome unconfirmed. Keep the original reference and check again; do not resubmit.'**
+  /// **'Network error. Check the records later to confirm.'**
   String get marginAdjustUnknown;
 
   /// No description provided for @marginAdjustRejected.
@@ -9291,23 +9129,11 @@ abstract class AppLocalizations {
   /// **'Order details are no longer current. Close this dialog and place the order again.'**
   String get orderConfirmExpired;
 
-  /// No description provided for @scaledTotalAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Total order amount'**
-  String get scaledTotalAmount;
-
   /// No description provided for @scaledAmountInvalid.
   ///
   /// In en, this message translates to:
   /// **'Enter a positive total order amount.'**
   String get scaledAmountInvalid;
-
-  /// No description provided for @scaledDistribution.
-  ///
-  /// In en, this message translates to:
-  /// **'Quantity distribution'**
-  String get scaledDistribution;
 
   /// No description provided for @scaledEqual.
   ///
@@ -9333,42 +9159,6 @@ abstract class AppLocalizations {
   /// **'Random'**
   String get scaledRandom;
 
-  /// No description provided for @scaledConstant.
-  ///
-  /// In en, this message translates to:
-  /// **'Distribution constant'**
-  String get scaledConstant;
-
-  /// No description provided for @scaledDifference.
-  ///
-  /// In en, this message translates to:
-  /// **'Difference'**
-  String get scaledDifference;
-
-  /// No description provided for @scaledRatio.
-  ///
-  /// In en, this message translates to:
-  /// **'Ratio'**
-  String get scaledRatio;
-
-  /// No description provided for @scaledDifferenceHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Quantity weights are 1:2:3… from low to high price for Increasing, reversed for Decreasing. Quantity steps may round the pattern.'**
-  String get scaledDifferenceHint;
-
-  /// No description provided for @scaledRatioHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Quantity weights are 1:2:4… from low to high price for Increasing, reversed for Decreasing. Every child must meet the minimum size; high counts may require a very large total.'**
-  String get scaledRatioHint;
-
-  /// No description provided for @scaledVariance.
-  ///
-  /// In en, this message translates to:
-  /// **'Random variance'**
-  String get scaledVariance;
-
   /// No description provided for @scaledVarianceInvalid.
   ///
   /// In en, this message translates to:
@@ -9386,66 +9176,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Generate a random breakdown before reviewing.'**
   String get scaledRandomRequired;
-
-  /// No description provided for @scaledRandomHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Each quantity stays within the selected percentage of the mean quantity. This breakdown stays fixed until you edit its inputs or reshuffle; changing language never redraws it.'**
-  String get scaledRandomHint;
-
-  /// No description provided for @scaledReshuffle.
-  ///
-  /// In en, this message translates to:
-  /// **'Reshuffle quantities'**
-  String get scaledReshuffle;
-
-  /// No description provided for @scaledUnallocatedQuote.
-  ///
-  /// In en, this message translates to:
-  /// **'Unallocated order amount'**
-  String get scaledUnallocatedQuote;
-
-  /// No description provided for @scaledAmountHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Order amount is the sum of child limit price × quantity, without leverage multiplication. Quote input is rounded down to valid base quantities; the unallocated amount is shown. This excludes fees and is not a margin or final execution-cost limit.'**
-  String get scaledAmountHint;
-
-  /// No description provided for @scaledBaseRemainderHint.
-  ///
-  /// In en, this message translates to:
-  /// **'The entered base quantity is conserved exactly. Remaining steps go to the largest fractional remainders, with ties assigned from low to high price.'**
-  String get scaledBaseRemainderHint;
-
-  /// No description provided for @scaledPreviousChildren.
-  ///
-  /// In en, this message translates to:
-  /// **'Previous orders'**
-  String get scaledPreviousChildren;
-
-  /// No description provided for @scaledNextChildren.
-  ///
-  /// In en, this message translates to:
-  /// **'Next orders'**
-  String get scaledNextChildren;
-
-  /// No description provided for @scaledChildType.
-  ///
-  /// In en, this message translates to:
-  /// **'Child order type'**
-  String get scaledChildType;
-
-  /// No description provided for @scaledEnteredSize.
-  ///
-  /// In en, this message translates to:
-  /// **'Entered total'**
-  String get scaledEnteredSize;
-
-  /// No description provided for @scaledPage.
-  ///
-  /// In en, this message translates to:
-  /// **'Orders {start}–{end} of {total}'**
-  String scaledPage(int start, int end, int total);
 
   /// No description provided for @scaledCountRange.
   ///
@@ -10821,6 +10551,18 @@ abstract class AppLocalizations {
   /// **'Symbols'**
   String get tradeSymbols;
 
+  /// No description provided for @marketOpenInterest.
+  ///
+  /// In en, this message translates to:
+  /// **'Open interest'**
+  String get marketOpenInterest;
+
+  /// No description provided for @marketSortBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by {column}'**
+  String marketSortBy(String column);
+
   /// No description provided for @accountsSelect.
   ///
   /// In en, this message translates to:
@@ -10982,6 +10724,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Amount'**
   String get fundingAmountLabel;
+
+  /// No description provided for @fundingReceiverHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your destination address'**
+  String get fundingReceiverHint;
 
   /// No description provided for @fundingBalance.
   ///
@@ -11919,6 +11667,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm'**
   String get modeConfirm;
+
+  /// No description provided for @marginModeSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} Margin mode'**
+  String marginModeSheetTitle(String symbol);
+
+  /// No description provided for @marginModeSheetScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin mode changes apply only to this contract'**
+  String get marginModeSheetScope;
+
+  /// No description provided for @marginModePositionsOrOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'This contract has open positions or orders. Close the positions and cancel the orders before switching margin mode.'**
+  String get marginModePositionsOrOrders;
+
+  /// No description provided for @marginModeCrossDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Shares available margin across cross positions. Profits and losses can offset each other, reducing liquidation risk.'**
+  String get marginModeCrossDescription;
+
+  /// No description provided for @marginModeIsolatedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses separate margin for each position. Losses are limited to the margin allocated to that position.'**
+  String get marginModeIsolatedDescription;
+
+  /// No description provided for @leverageSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} Adjust leverage'**
+  String leverageSheetTitle(String symbol);
+
+  /// No description provided for @leverageDecrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrease leverage'**
+  String get leverageDecrease;
+
+  /// No description provided for @leverageIncrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase leverage'**
+  String get leverageIncrease;
+
+  /// No description provided for @leverageRemainingNotional.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining openable notional value'**
+  String get leverageRemainingNotional;
+
+  /// No description provided for @leverageRemainingNotionalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The maximum notional value you can open under your current leverage and system risk control limits.'**
+  String get leverageRemainingNotionalHint;
+
+  /// No description provided for @leverageSheetNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Please note that leverage changing will also apply for open positions and open orders.\nSelecting higher leverage (such as 10x) increases your chances of liquidation.'**
+  String get leverageSheetNote;
 
   /// No description provided for @openOrdersCancelAll.
   ///
@@ -13378,6 +13192,12 @@ abstract class AppLocalizations {
   /// **'Confirm'**
   String get pushConfirm;
 
+  /// No description provided for @pushQuietHoursNotCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet hours were not turned off. Please try again later.'**
+  String get pushQuietHoursNotCleared;
+
   /// No description provided for @pushQuietSameTime.
   ///
   /// In en, this message translates to:
@@ -13431,6 +13251,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A download link has not been provided.'**
   String get settingsUpdateLinkUnavailable;
+
+  /// No description provided for @scaledChildInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Order {index} (price {price}, quantity {quantity}): {reason}'**
+  String scaledChildInvalid(int index, String price, String quantity, String reason);
+
+  /// No description provided for @scaledLowestPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowest Price'**
+  String get scaledLowestPrice;
+
+  /// No description provided for @scaledHighestPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Highest Price'**
+  String get scaledHighestPrice;
+
+  /// No description provided for @scaledOrderCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Order count'**
+  String get scaledOrderCount;
+
+  /// No description provided for @scaledDistributionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribution'**
+  String get scaledDistributionLabel;
+
+  /// No description provided for @scaledPreviewLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get scaledPreviewLink;
+
+  /// No description provided for @scaledConstDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'Const. difference'**
+  String get scaledConstDifference;
+
+  /// No description provided for @scaledConstRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Const. ratio'**
+  String get scaledConstRatio;
+
+  /// No description provided for @scaledSizeDistribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Size distribution'**
+  String get scaledSizeDistribution;
+
+  /// No description provided for @scaledEqualHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Equal size for each order'**
+  String get scaledEqualHint;
+
+  /// No description provided for @scaledRandomHintShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Random size for each order'**
+  String get scaledRandomHintShort;
+
+  /// No description provided for @scaledIncreasingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Size increases linearly with price'**
+  String get scaledIncreasingHint;
+
+  /// No description provided for @scaledDecreasingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Size decreases linearly with price'**
+  String get scaledDecreasingHint;
+
+  /// No description provided for @scaledConstantDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'Constant difference'**
+  String get scaledConstantDifference;
+
+  /// No description provided for @scaledConstantRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Constant ratio'**
+  String get scaledConstantRatio;
+
+  /// No description provided for @scaledSubOrderType.
+  ///
+  /// In en, this message translates to:
+  /// **'Sub-order type'**
+  String get scaledSubOrderType;
+
+  /// No description provided for @scaledPriceColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Price ({asset})'**
+  String scaledPriceColumn(String asset);
+
+  /// No description provided for @scaledSizeColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Size ({asset})'**
+  String scaledSizeColumn(String asset);
+
+  /// No description provided for @scaledAveragePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Average price'**
+  String get scaledAveragePrice;
+
+  /// No description provided for @scaledLowestPriceRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowest price'**
+  String get scaledLowestPriceRow;
+
+  /// No description provided for @scaledHighestPriceRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Highest price'**
+  String get scaledHighestPriceRow;
+
+  /// No description provided for @scaledSubOrderCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Sub-order count'**
+  String get scaledSubOrderCount;
+
+  /// No description provided for @scaledMaximumSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum qty is {value}'**
+  String scaledMaximumSize(String value);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

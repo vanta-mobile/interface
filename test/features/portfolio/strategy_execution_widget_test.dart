@@ -182,7 +182,7 @@ void main() {
     await tester.pump();
     expect(state().snapshot, same(previous));
     expect(state().failure!.key, 'strategyExecutionStopped');
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     gate.complete();
     await tester.pumpAndSettle();
     expect(state().snapshot, same(previous));

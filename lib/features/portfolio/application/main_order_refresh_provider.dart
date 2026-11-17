@@ -16,7 +16,6 @@ import 'main_order_capacity_provider.dart';
 import 'main_order_pricing_provider.dart';
 import 'main_order_pricing_wait.dart';
 import 'main_order_allocation_provider.dart';
-import 'symbol_settings_activity.dart';
 import 'order_review_activity_provider.dart';
 
 enum MainOrderRefreshStage { idle, monitoring, account, capacity, pricing }
@@ -123,13 +122,18 @@ class MainOrderRefreshController extends Notifier<MainOrderRefreshState> {
     state = const MainOrderRefreshState();
   }
 
+  /// Settings changes take priority over the periodic background refresh.
+  void stopBackground() {
+    if (state.background) stop();
+  }
+
   Future<bool> refresh(
     String symbol, {
     bool reconnectPrices = true,
     bool background = false,
   }) async {
     final auth = ref.read(authProvider), identity = auth.identity;
-    final live = ref.read(liveOrderProvider), activity = ref.read(symbolSettingsActivityProvider);
+    final live = ref.read(liveOrderProvider);
     if (ref.read(orderReviewActivityProvider) > 0 &&
             !(background && ref.read(mainOrderAllocationProvider).review?.input != null) ||
         state.failure?.requiresDeposit == true ||
@@ -141,9 +145,6 @@ class MainOrderRefreshController extends Notifier<MainOrderRefreshState> {
         auth.busy ||
         identity?.signingAvailable != true ||
         identity?.walletAddress == null ||
-        activity.owner != null ||
-        activity.recoveryBlocked ||
-        activity.unresolved ||
         symbol != ref.read(symbolProvider) ||
         !ref.read(quoteUpdatesActiveProvider)) {
       return false;

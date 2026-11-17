@@ -18,6 +18,11 @@ import 'wallet_error_message.dart';
 /// explicit ping error, or no answer for [probeTimeout] while this app holds
 /// the foreground, marks the session unresponsive. Time spent in the wallet
 /// never counts, so a user reviewing the request is not interrupted.
+///
+/// [responseTimeout] only ends a request while this app is in the foreground:
+/// if it passes while the user is in the wallet, the wallet's answer still
+/// wins when they return, and the timeout applies only if none arrives
+/// within [probeTimeout] of returning.
 Future<dynamic> requestReownWallet({
   required ReownAppKitModal modal,
   required String chainId,
@@ -34,8 +39,8 @@ Future<dynamic> requestReownWallet({
   final result = Completer<dynamic>();
   final topic = modal.session?.topic;
   final relay = modal.appKit?.core.relayClient;
-  Timer? responseTimer, probeTimer;
-  var answered = false, dispatched = false;
+  Timer? responseTimer, probeTimer, graceTimer;
+  var answered = false, dispatched = false, deadlinePassed = false;
   var probeRevision = 0, awaitingRelay = false;
   void current() {
     if (!isCurrent() || topic == null || modal.session?.topic != topic) {
@@ -79,6 +84,20 @@ Future<dynamic> requestReownWallet({
         unresponsive();
       }
     });
+  }
+
+  bool foreground() => switch (WidgetsBinding.instance.lifecycleState) {
+    null || AppLifecycleState.resumed => true,
+    _ => false,
+  };
+
+  void expire() {
+    if (result.isCompleted) return;
+    if (relay?.isConnected != true) {
+      return fail(const AuthFailure('authNetwork'), StackTrace.current);
+    }
+    if (!answered) return unresponsive();
+    fail(const AuthFailure('authWalletResponseTimeout'), StackTrace.current);
   }
 
   void pingPeer() {
@@ -145,12 +164,18 @@ Future<dynamic> requestReownWallet({
   final lifecycle = _LifecycleObserver((state) {
     if (state != AppLifecycleState.resumed) {
       probeTimer?.cancel();
+      graceTimer?.cancel();
       return;
     }
     // AppKit owns reconnection. Recheck a pending request's peer: its previous
     // pong does not prove that the wallet kept the session while backgrounded.
     pingPeer();
     probe();
+    // The deadline passed in the wallet: give its answer time to arrive.
+    if (deadlinePassed && dispatched && !result.isCompleted) {
+      graceTimer?.cancel();
+      graceTimer = Timer(probeTimeout, expire);
+    }
   });
 
   current();
@@ -182,13 +207,11 @@ Future<dynamic> requestReownWallet({
       // Queue the ping before the request launches the wallet.
       pingPeer();
       responseTimer = Timer(responseTimeout, () {
-        if (relay?.isConnected != true) {
-          return fail(const AuthFailure('authNetwork'), StackTrace.current);
-        }
-        if (!answered) return unresponsive();
-        fail(const AuthFailure('authWalletResponseTimeout'), StackTrace.current);
+        deadlinePassed = true;
+        // In the wallet, wait for the user to return before judging.
+        if (foreground()) expire();
       });
-      if (WidgetsBinding.instance.lifecycleState case null || AppLifecycleState.resumed) probe();
+      if (foreground()) probe();
       final value = await withWalletRequestGuard(
         isCurrent: () => !result.isCompleted && isCurrent(),
         request: () => modal.request(
@@ -209,6 +232,7 @@ Future<dynamic> requestReownWallet({
   } finally {
     responseTimer?.cancel();
     probeTimer?.cancel();
+    graceTimer?.cancel();
     WidgetsBinding.instance.removeObserver(lifecycle);
     unawaited(subscription.cancel());
     relayErrors?.unsubscribe(onRelayError);

@@ -154,7 +154,7 @@ void main() {
     controller().stop();
     expect(container.read(mainOrderAllocationProvider).preparing, false);
     expect(container.read(mainOrderAllocationProvider).percent, 20);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     capacities.gate = null;
     final review = (await prepare(buy: false))!;
     gate.complete();
@@ -270,20 +270,20 @@ void main() {
       expect(container.read(mainOrderAllocationProvider).percent, 0);
     });
   }
-  test('active settings block submission; diagnostic records do not', () async {
+  test('settings in progress and diagnostic records do not block submission', () async {
     await select();
     final review = (await prepare())!;
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.leverage)!;
-    expect(controller().matches(review), false);
-    activity.finish(lease, unresolved: false);
+    final lease = activity.acquire(SymbolSetting.leverage);
+    expect(controller().matches(review), true);
+    activity.finish(lease);
     await container
         .read(orderRecoveryJournalProvider)
         .prepare(OrderRecoveryRecord(query: OrderQuery.capture(liveIntent()), createdAt: now));
     await controller().submit(review);
     expect(orders.submits, 1);
   });
-  test('unknown result allows editing; explicit recheck keeps the original ID', () async {
+  test('an unconfirmed result is queried automatically and editing stays available', () async {
     await select();
     final review = (await prepare())!;
     orders.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
@@ -295,14 +295,8 @@ void main() {
     expect(container.read(mainOrderAllocationProvider).percent, isNull);
     expect(await prepare(), null);
     expect(capacities.reads, 2);
-    orders.result = LiveOrderResult(
-      orderId: '12345',
-      status: 'NEW',
-      executedQuantity: Decimal.zero,
-    );
-    await container.read(liveOrderProvider.notifier).recheck();
     expect(orders.submits, 1);
-    expect(orders.checks, 1);
+    expect(orders.checks, 1); // the automatic follow-up query
     expect(orders.lastIntent!.clientOrderId, review.intent.clientOrderId);
     expect(container.read(mainOrderAllocationProvider).percent, isNull);
   });
@@ -312,7 +306,6 @@ void main() {
     orders.failure = const AccountReadFailure('authWalletRejected');
     await controller().submit(review);
     expect(container.read(mainOrderAllocationProvider).percent, 20);
-    expect(container.read(liveOrderProvider).needsRecheck, false);
     expect(container.read(liveOrderProvider).failure!.key, 'authWalletRejected');
   });
 }

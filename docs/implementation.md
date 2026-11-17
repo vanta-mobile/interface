@@ -1,3 +1,134 @@
+## 2026-11-17 全部改动提交前验证
+
+- 范围：当前交易与合约设置界面、资金操作自动核实、Privy 提现收款地址、公开行情与持仓量、QA 修复、资源、接口契约和版本号等全部待提交改动。
+- `dart format --output=none --set-exit-if-changed lib test integration_test test_driver` 分两次检查共 1349 个文件，无格式改动；`flutter analyze --no-pub` 无问题；`git diff HEAD --check` 通过。
+- `flutter test --no-pub --reporter expanded`：5982 项通过、3 项跳过、零失败。环境提示缺少 Linux Rive 动态库，未影响测试结果。
+- 未启动应用、执行原生构建或进行真机／模拟器验证。
+
+## 2026-11-17 前端版本号更新为 0.0.5+5
+
+- `pubspec.yaml` 的版本号由 `0.0.4+4` 更新为 `0.0.5+5`；Android 与 iOS 沿用 Flutter 版本配置，版本名为 `0.0.5`，构建号为 `5`。
+- 验证：设置模块格式检查 16 个文件无改动；`flutter analyze --no-pub` 无问题；`flutter test --no-pub test/features/settings` 38 项全部通过。测试期间有 Linux Rive 原生库缺失提示，未影响测试结果；未启动应用、执行原生构建或设备验证。
+
+## 2026-11-17 安静行情的公共推送不再每 35 秒断线重连（TAS-5047）
+
+问题：AAPLUSDT 等成交清淡的品种（美股盘前），输入数量后 Est. Liq. Price／Margin／Max 显示“—”，Long／Short 下方没有“≈数量”；SOLUSDT 正常。原因：`AsterMarketStream` 35 秒收不到任何消息就判定连接失效，主动断开重连。实测 AAPL 的 `bookTicker` 45 秒只推 5 条、`aggTrade` 0 条，订阅约每 37–40 秒断一次。每次断开都把盘口、成交价置为未确认，下单预估要等重连、REST 再确认，约 1.3–2.8 秒不可用。
+
+- 心跳（`aster_stream.dart`）：连接空闲 20 秒时发送 `{"method":"LIST_SUBSCRIPTIONS","id":2}`，服务器回复（`{"id":2,"result":[...]}`）会重置空闲计时。35 秒内连心跳回复都没有时，仍按原逻辑断开重连。
+- 重连退避：原来只有收到行情事件才把延迟重置为 1 秒，安静品种连续重连时延迟会翻倍到 20 秒。现在收到订阅确认或心跳回复也会重置。
+- 边界：只改公共行情 WebSocket 生命周期，未改价格新鲜度规则、REST 轮询、私有账户流和下单校验。
+- 测试：`test/features/market/aster_stream_test.dart` 新增 3 项（有心跳回复时 2 分钟不断开、心跳无回复 35 秒后重连、只收到订阅确认也重置退避），这 3 项在改动前的代码上均失败；`flutter test test/features/market` 182 项、`test/features/portfolio` 3138 项全部通过，`flutter analyze` 无问题。全量 `flutter test` 5981 项通过、1 项失败（`portfolio_actions_test` “portfolio opens market close without submitting”），该项单独运行时修复前后都通过，属于全量并发下的偶发失败。线上实测：改动前 4 分钟内 AAPL 断开 3 次，改动后 3 分钟 0 次。未在设备上运行。
+
+## 2026-11-17 Trailing Stop 下单表单与确认弹窗按设计稿对齐
+
+依据：Figma 07.01 Trailing（331:61868）、双向持仓开/平（331:62046、331:62225）、二次确认（331:72693 做多、331:70675 做空）。
+
+- 表单（`LiveOrderTrailingControls`）：去掉 Material 输入框、说明文字、参考价行和单独的价格类型下拉框，改用下单区的 `EmbeddedInputBox`/`EmbeddedTextInput`。“回调幅度”卡片右侧是 `%` 单位和 `1%｜2%` 快捷选项，与输入值相等的选项高亮，点击后填入；“激活价格”卡片右侧复用 `TriggerBasisSelector`（标记/最新）。数量、滑杆、可用余额、仅减仓、保证金卡片等其余部分沿用公共组件，双向持仓的开/平按钮同样沿用公共组件，未改动。
+- 确认弹窗（`OrderConfirmationTerms`）：Trailing 订单不再显示“订单类型”和“追踪价格类型”两行。行顺序改为交易对/方向 → 回调幅度 → 委托价格（市价）→ 委托数量。用户填写了激活价时，在回调幅度后增加“激活价格”行，显示为“价格类型 价格 计价币”（按用户要求保留，设计稿中没有这一行）。
+- 删除不再使用的文案：`liveTrailingHint/Rate/RateBounds/Basis/Activation/Default/ActivationDirection/Buy/Sell/EstimateHint`、`liveOrderTriggerReference`（中英文）。回调幅度/激活价越界仍由已有的 review 校验提示（`liveTrailingRateInvalid` 等）。
+- 验证：`dart format`、`flutter analyze` 无问题；新增 `live_order_trailing_controls_test` 4 项（设计字段、快捷选项填值与高亮、禁用时不响应、确认弹窗行顺序和激活价行的有无），`flutter test test/features/portfolio` 全部通过。按用户要求，未做真机验证。
+
+## 2026-11-17 Privy 登录提现可填写收款地址
+
+依据：Aster 官网邮箱/Privy 登录的提现表单要求输入收款地址（线上 `DepositAndWithdrawDialogBase-lU_7YplV.js`，`autoWithdraw` 资产签名 `Action.destination` 并调用 `/bapi/futures/v1/private/future/aster/user-withdraw` 的 `receiver`）。我们使用的 `/fapi/v3/aster/user-withdraw` 是同一提现的 API 入口，官方文档（https://github.com/asterdex/api-docs/blob/master/demo/aster-deposit-withdrawal.md “withdraw by fapi[v3] [evm] [futures]”）对 `receiver` 只要求与签名一致。
+
+- 内嵌钱包（Privy，`WalletKind.embedded`）：提现页在网络下方显示“接收地址”输入框（`FundingAddressField`），必填。地址须为非零 EVM 地址；大小写混合时须符合 EIP-55 校验和（`withdrawal_receiver.dart`），否则显示“请输入有效的 EVM 收款地址。”并禁用提现。确认页显示可复制的完整收款地址。
+- 外部钱包（Reown）：不显示输入框，仍只提到自身地址；仓库层忽略传入的地址。
+- 签名 `destination`、请求 `receiver`、本地记录 `terms.receiver` 都用收款地址；`user`、`signer`、签名钱包和记录 `address` 仍是当前登录钱包。本地记录不再要求 `receiver` 等于签名地址。
+- 未验证：服务端是否对 fapi v3 的任意 `receiver` 另有限制（文档未写，未用真实账户提交）。
+- 测试：`withdrawal_repository_test` 新增内嵌钱包收款地址签名/请求/记录、5 种无效地址在任何请求前被拒、外部钱包忽略传入地址；`funding_withdraw_screen_test` 新增输入框必填、校验和错误提示、确认页展示与传递地址，以及外部钱包无输入框。
+
+## 2026-11-17 下单不再要求最新成交价在 10 秒内
+
+问题：成交清淡的币种 10 秒内没有新成交时，下单表单显示“No recent trade price is available. Refreshing automatically.”，USDT 数量换算、比例滑杆、Est. Liq. Price／Margin／Max 和 Long／Short 都不可用。PRD 中没有这条要求；Aster 官网前端（2026-11-11 缓存的 bundle）直接用价格 store 中的 lastPrice／markPrice 计算可开数量，不检查成交时间。
+
+- 最新成交价不再受“交易所成交时间距今 10 秒”限制（`order_reference_prices_repository.dart` 中 `_fresh(..., eventAge: false)`）。只要 10 秒内经推送或 REST 轮询确认过（安静行情每 5 秒轮询一次 `/fapi/v3/trades`，同一笔成交会刷新接收时间），就作为当前最新价使用。
+- 保留的限制：连接断开／连接中、时钟未校准、成交时间超前服务器 10 秒以上、REST 结果比已有成交更旧、价格无效或缺失；盘口与标记价格仍按原 10 秒规则。
+- 测试：`order_reference_prices_repository_test`、`order_reference_polling_test` 中 4 项按新规则更新（旧成交仍可用，接收超过 10 秒才失效）。market、portfolio、trade、core 测试 3622 项全部通过；静态分析仅剩未改动的 `reown_session_liveness_test.dart` 既有警告。未在设备上运行。
+
+## 2026-11-17 QA 回归问题修复（0.0.4 / 2004 人工复核报告）
+
+依据 QA 人工复核报告与 Notion「前端核对1」。会改变布局的裁剪问题（QA-005 周期选择器、QA-006 持仓卡、QA-008 委托价输入框）先与设计确认，确认后的实现见下方对应条目。
+
+- QA-001 行情详情：进入或切换交易对时立即读取 `ticker/24hr`，并订阅该交易对 `@ticker` 推送持续更新 24h 高低价、成交额与涨跌幅（直接用接口 `P`），不再沿用目录加载时的快照（`market_sync.dart`）。
+- QA-007 充提网络（2026-11-17 设计确认）：未手动选择时，外部钱包默认选中钱包当前网络，该网络充提不支持（如 Base）或未连接时显示「选择网络」；邮箱内嵌钱包默认 BNB Chain。手动选择优先。充值或授权发送交易时，钱包网络与所选网络不一致会像开启交易那样先请钱包切换，切换成功才发送；用户拒绝或钱包不支持时提示「请在钱包中切换到 {网络} 后重试。」（新增 `fundingSwitchNetwork`），不发送任何交易（`funding_selection.dart`、`privy_identity_repository.dart`）。注：WalletConnect 会话的网络在钱包内被切走时连接会失效、需要重新连接，这是现有行为。
+- QA-009 / 分段委托按 Figma 10.01–10.17（node 331:47119）重做：不再打开独立页面（原页面的手动读取按钮与签名次数说明随之去掉），作为交易页下单区的一种订单类型内嵌显示，复用下单区的下单配置与自动续期：最低/最高价格、订单数量、数量与单位选择、数量分布与等差/等比切换、可用余额、隐藏委托、仅减仓与 GTC（按 PRD 子单只有 GTC 或 HIDDEN）、多空保证金卡片；预览与下单确认为底部弹层，数量分布说明弹层使用设计稿曲线资源（`assets/trade/scaled-*.svg`）。参数未成立时不显示「预览」；数量超出最大可下数量时数量框红框并提示「最大数量为 …」：PRD 未给公式，按 Aster 官网前端（`isOverMaxAmount` 的 Scaled 分支）取交易对单笔上限与该方向限价可开数量（复用主下单表单容量，按计划均价计算）的较小值，整组总数量与之比较，USDT 单位按上限 × 均价提示，只减仓不检查；与官网一致，只在点击做多或做空时校验该方向，超出时数量框红框并提示该方向的最大数量、不进入确认，改动输入后提示清除；后台续期期间沿用上次算出的上限。子单草稿新增只减仓与有效期；确认后全部子单成交受理才关闭弹层，失败按子单原因提示。切换到分段委托时主下单表单隐藏并保留输入。原独立分段委托页面（`scaled_order_screen/form/options/review/status/details.dart`）、只测旧界面的两个 widget 测试及 34 条仅旧页面使用的文案已删除（`scaled_order_embedded.dart`、`scaled_order_sheets.dart`、`scaled_order_confirmation.dart`）。与 PRD 有出入、按设计稿保留的：默认单位为币（PRD 为报价币）；无随机偏差输入和重新随机按钮、预览不列名义金额与未分配金额、确认不列钱包与账户配置、提交后不逐笔列出结果（结果以 toast 提示，子单见挂单列表）。
+- QA-011 / toast：用户操作的成功提示替换当前失败提示；后台通知传 `preserveFailure` 保持原规则。所有 toast 显示关闭按钮，自动关闭的 toast 外圈倒计时圆环随 3 秒缩短，减少动态效果时为静态圆环。
+- QA-012 / QA-013 全部平仓、全部撤单：确认前后快照被替换或过期时不再静默返回。平仓静默重读持仓，集合不变即执行，变化则按新数量重新确认；撤单按已确认范围重读后执行。
+- QA-014 持仓刷新：有交易授权、App 在前台且持仓或挂单可见时，每 15 秒静默重读持仓与挂单，使交易所侧触发的成交在当前会话出现。自动接入账户推送的方案会让下单数据反复过期，已放弃。
+- QA-019 分段委托：子单校验失败时提示子单序号、价格、数量和原因（新增文案 `scaledChildInvalid`）。
+- QA-016 钱包签名等待：60 秒响应上限只在 Vanta 位于前台时生效。到点时用户仍在钱包里则不判超时；回到 Vanta 后再等最多 10 秒，期间钱包的签名或取消优先，仍无响应才提示「钱包未返回签名结果」。文案不变，所有钱包签名场景共用（`reown_signature_request.dart`）。auth、assistant、authorization 测试通过。
+- QA-005 积分周期选择器：按设计确认，选择器宽度随文案自适应（上限为行宽的 70%），由左侧标题省略（`points_period_section.dart`）。
+- QA-006 持仓卡：按设计确认，盈亏和仓位价值（USDT）固定 2 位小数，开仓价、标记价、强平价最多 4 位小数（新增 `TokenAmountFormatter.formatRoundedFixed`），小数点后有 4 个及以上 0 的价格（0 < |价格| < 0.0001）改用科学计数法，尾数最多 4 位小数，如 `1.2346e-5`（新增 `formatScientific`）；三列价格与盈亏行在空间不足时等比缩小，滚动动画不再越出列宽。
+- QA-008 委托价输入框：± 按设计稿 331:48603 改为两个 14px 图标、间距 8px，占宽由 56px 降为 36px；空间不足时仍隐藏 ±。设计稿中 ± 相对整个输入框垂直居中，但 360dp 中文下会把标题挤成「价格（USD...」，因此改为与价格同一行，标题占满宽度。限价与 Stop Limit 共用。
+- QA-018 免打扰：后端 8f0bcadc75 已支持显式 null 清除，契约同步到该提交。关闭后回查 `/v1/push/status` 若仍返回时段，提示「免打扰关闭未生效，请稍后重试。」（新增文案 `pushQuietHoursNotCleared`），不再静默回弹。
+
+真机验证（2026-11-17，M2007J17C）：分段委托在 ASTERUSDT 上验证了子单错误提示（第 1 笔子单的价格、数量与原因）、预览弹层（子单价格、数量与占比、平均价格、保证金）、等差/等比切换、数量分布说明弹层、高级设置与下单确认弹层（点取消，未实际提交）。显示密度临时设为 480 模拟 360dp，验证后已恢复：QA-005 积分页「Season 1 · Epoch 18」完整显示；QA-006 SOL 持仓卡盈亏 -0.66、仓位价值 10.86、开仓价 $76.816、标记价 $72.3906，三列无重叠、ROI 完整（科学计数法无实际小价格仓位，仅单元测试）；QA-008 BTC 限价 64340 与 ± 同行、标题完整，+ 按 tick 步进为 64340.1，限价止盈止损同样正常；QA-007 充值页默认选中 Arbitrum（钱包当前网络未在 App 外核对），未实际发送充值，切链未验证；QA-018 推送设置需钱包签名授权，未验证。
+
+验证：相关文件格式化检查通过，`dart analyze lib` 无问题；全量 `flutter test` 5,987 通过、3 跳过。真机（M2007J17C，显示密度临时设为 480 以模拟 360dp，验证后已恢复）验证了 QA-001（BTC、SOL 详情与公开接口一致并持续更新）和 toast 倒计时圆环与手动关闭。其余项需连接钱包，且全部平仓、全部撤单涉及真实资金操作，尚未真机验证。
+
+## 2026-11-17 下单、撤单与资金操作：不再出现“结果未知”
+
+按 AGENTS.md 新规则处理剩余功能。用户确认：没有服务端查询接口的操作（内部划转、再平衡、提现、子账户冻结/划转、没有交易哈希的充值）统一显示「网络异常，请稍后在记录中确认」作为错误，且不阻止再次提交。风险是交易所其实已执行时，用户手动重试可能重复操作；应用本身仍不会自动重发。
+
+- 下单（主表单、快捷下单、确认弹窗、平仓、止盈止损、附加止盈止损）：发出后结果未确认时，`LiveOrderController` 自动按原 clientOrderId 再查询一次（设备授权签名）。确认则按成功显示；仍未确认则作为错误（查询给出的原因）显示，不再有 `unknown` 状态、提示或“签名查询结果”按钮。去掉 `LiveOrderController.recheck`、`LiveOrderState.needsRecheck`、`OrderSubmissionKind.unknown`、`PositionOrderOutcome.unknown`；删除只为此显示的 `LiveOrderStatus`、`AttachedOrderStatus` 及其专用的摘要组件。恢复日志（order recovery journal）照旧在内部保留未确认记录。
+- 分批下单、批量平仓：每个子单发出后若未确认，自动再查询一次；发出后抛出异常也先查询。仍未确认则该项显示错误并停止后续子单，不重发。去掉手动重查按钮与 `recheck()`。
+- 撤单、批量撤单：撤单后若未确认，自动查询一次；仍未确认显示为错误，不锁住订单或其他操作（自动读取、改单、止盈止损列表均不再因此禁用）。改单：发出后的查询失败时，toast 显示该查询错误，内部结果改名为 `unverified`。
+- 逐仓保证金调整：调整后若未确认，自动按原编号再查询一次历史；不再因存在未确认记录而阻止读取或新的调整；记录列表去掉“核对原调整编号”按钮，未确认记录显示统一提示。
+- 内部划转、再平衡、钱包操作日志（提现、子账户）：不再因同一钱包已有未确认记录而拒绝新的提交（仅拒绝完全相同的记录）；存储解码也不再要求每个钱包最多一条未确认记录。删除首页／资金页的未确认提醒卡片（`InternalTransferRecoveryNotice`、`RebalanceRecoveryNotice`）。
+- 充值：链上确认中的交易（已有哈希）仍需先完成，再发起下一笔；没有哈希的记录不再阻止新充值。
+- 交易授权：授权结果未确认时自动查询一次授权状态。
+- 文案：`rebalanceUnknown`、`internalTransferUnknown`、`walletOperationUnknown`、`depositSubmissionUnknown`、`depositApprovalUnknown`、`marginAdjustUnknown`、`authorizationUnknown` 统一为「网络异常，请稍后在记录中确认」／“Network error. Check the records later to confirm.”。`apiErrorText` 对这类 key 仍在该提示后附上具体原因（超时、连接失败或服务端信息）。
+
+验证：相关 provider、仓库、widget 测试改为断言“自动查询一次、仍未确认显示错误、不重发、不阻塞”，新增“仍未确认即为错误”的用例；测试替身增加 `checkResult`。`flutter analyze` 无问题，格式检查无改动。全量 `flutter test`：5969 项通过、3 项跳过、4 项失败。4 项失败都在查找成功 toast 文案（“Cache cleared”“Order submitted”“Order modified.”“Exact adjustment found…”），源于另一会话正在修改的 `app_toast.dart`，已告知对方，本次未改动。按要求未启动 App。
+
+## 2026-11-17 合约设置：不串行、无“结果未知”、加载骨架屏、开启交易授权入口
+
+规则已写入 AGENTS.md：不在界面暴露“结果未知”状态和手动“签名查询结果”按钮；已发出的写请求由应用自动核实，期间按钮保持加载，最终只显示成功或失败（核实本身失败时显示具体错误）。互不相关的操作不再相互阻塞，只禁止同一操作重复提交。数据未读到时显示局部骨架屏，不显示多余文案或“刷新设置”按钮。需要交易授权而未开启时，按钮显示“开启交易”并跳转授权页。
+
+- 串行：`SymbolSettingsActivity` 改为记录进行中的操作（`running`），`acquire` 不再拒绝。删除 `owner`／`unresolved`／`recoveryBlocked`／`blocks()`，以及 `SymbolSettingsNotice` 提示（“请先处理尚未完成的合约设置”）。保留 `epoch`：任一写请求发出后，之前读到的确认数据仍标记为过期。下单、额度、快捷下单、分批、批量平仓、逐仓保证金、再平衡、内部划转、策略执行及自动续期中由此产生的互相阻塞全部去掉。同一功能的待确认记录（如未拿到回执的内部划转）仍只阻止该功能再次提交。充值钱包流程（`FundingTransactionActivity`）不在本次范围：外部钱包一次只能处理一个签名请求，仍保持串行。
+- 结果未知（四个合约设置及多资产开通）：写请求发出后结果不明，会在同一操作内自动再查询一次（设备授权签名，不弹钱包）。查到即按成功或“查询结果与目标不同”显示；仍失败则显示该错误。设置保持可用，不再锁定，也不提供手动重查；不会自动重发写请求。删除 provider 的 `needsRecheck`／`recheck()` 及相关界面。
+- 开启交易授权：新增 `modeAccessProvider`／`ModeAccessAction`，替换原来的 `ModeReadAction`。按账户状态依次为：检查中（按钮转圈）、连接钱包／创建钱包（打开账户弹窗）、开启交易（跳转 `EnableTradingScreen`）、就绪（显示 Confirm）。只有就绪时才自动读取，没有设备授权时不再提供绕过授权的手动读取。保证金模式、杠杆、资产模式、持仓模式和多资产开通共用这套规则。
+- 骨架屏：首次读取完成前，选项卡的勾选框、杠杆数值和剩余可开名义价值显示骨架；读取失败时显示错误，下拉刷新可重读。
+- 保证金模式：有持仓或挂单时，另一个选项禁用（变暗、不可点击），下方只显示一条合并原因：“当前合约有持仓或挂单，平掉持仓并撤销挂单后才能切换保证金模式。” 持仓模式按同样方式处理。
+- 删除不再使用的 `FuturesAssetModeScreen`／`FuturesPositionModeScreen` 及其 Form／Status，相关 label 和打开函数移入对应 sheet 文件。逐仓保证金的存储故障原先只靠全局锁拦截，现在由该功能自己的 `prepare` 检查。
+
+下单与资金部分见下一节。
+
+验证：重写 `symbol_settings_activity_test`（并发、自动核实、核实失败不阻塞、身份切换）、四个设置 provider 测试及其签名仓库测试、保证金模式／杠杆弹窗 widget 测试（骨架屏、开启交易跳转、合并阻止原因、自动核实成功或报错、改保证金时杠杆弹窗不受阻塞）、`mode_settings_sheet_test`，并把其余依赖旧阻塞语义的用例改为断言“不阻塞”。删除针对已移除页面的两个测试文件。`mode_settings_design_test` 的 5 张设计稿截图在提供交易授权后逐像素一致。全量 `flutter test`：5972 项通过、3 项跳过、零失败；`dart format` 无改动；`flutter analyze` 无问题。按要求未启动 App。
+
+## 2026-11-17 保证金模式／杠杆改为设计稿底部弹窗，选择页金额加 $
+
+- 选择页成交量与持仓量前加 `$`：公开目录只收录 USDT 计价的永续合约（`AsterInstrument.quote` 默认 USDT），两项都是 USDT 金额，按 PRD「USDT 市场按产品美元展示约定加 $」显示。
+- 交易页标题的最高杠杆徽标：已签名读取的档位优先，没有时用公开 brackets 的最大值，未登录也显示。
+- 保证金模式（Figma 331:54982）：原独立页面（读取按钮、下拉选择、确认对话框）换成 `PositionMarginModeSheet` 底部弹窗，复用资产模式弹窗的 `showModeSettingsSheet`／`ModeSheetBody`／`ModeOptionCard`。标题「{symbol} Margin mode」、仅对当前合约生效的说明、Cross／Isolated 两张带说明的选项卡、底部 48 高 Confirm（`ModeAction(large: true)`）。点选只改本地选择；Confirm 时如读取已过期或不是该合约，先重新读取，再签名修改。选择与当前一致时直接关闭；查询核实为目标模式后关闭。有持仓／挂单时在选项下方给出原因且不提交；结果未知时保留弹窗和选择，按钮换成「签名查询结果」，不会重新提交。
+- 杠杆（Figma 331:54742）：原独立页面（数字输入框＋确认对话框）换成 `PositionLeverageSheet`：标题「{symbol} Adjust leverage」、−／+ 步进器（图标从设计稿下载为 `assets/trade/minus.svg`、`plus.svg`）、滑杆、名义价值卡片、提示文字、Confirm。滑杆直接复用下单数量的 `MainOrderAmountSlider`：拖动连续，五个点和下方的 1x／四分位／最大值刻度只作参考，任意整数杠杆都能选中，不会吸附到刻度。上限沿用 `PositionLeverageContext.maximum`（档位最大值与 125 取小）。剩余可开名义价值＝允许所选杠杆的档位中最大的 notionalCap，减去该合约现有持仓的名义价值，不低于 0。持仓名义价值取自读取杠杆时已在请求的签名 positionRisk 中各方向 `notional` 的绝对值之和（对冲模式两侧相加），没有新增请求。positionRisk 的 `maxNotionalValue` 只对应当前杠杆，不能用于其他杠杆，所以没有采用；`notional` 缺失时显示 —。设计稿中的「Learn more」没有链接目标，未实现。错误（如保证金不足）用设计稿的红底提示框显示接口给出的原因。
+- 两个弹窗打开时：有有效设备交易授权就自动读取（新增 `symbolModeSettingsLoadProvider`，与资产／持仓模式相同的规则，不会弹钱包）；否则底部显示「读取／登录」按钮，读到之后才出现 Confirm。未登录时杠杆显示公开档位的默认值和范围，不能修改。多资产开通流程中「切换为全仓」也改为打开该弹窗并预选 Cross。删除旧的 `PositionMarginModeScreen`／`Form`／`Status` 与 `PositionLeverageScreen`／`Status`。
+
+验证：重写 `position_margin_mode_widget_test`（10 项）和 `position_leverage_widget_test`（8 项）：设计文案与选项、未登录只打开登录、选择当前值直接关闭、提交一次且忙碌时禁用、核实后关闭、未知结果只查询不重提、持仓／挂单阻止、过期读取在签名前重读、签名拒绝的错误、步进器／刻度、滑杆拖到两个刻度之间可选中该处的杠杆（如 11x）、剩余名义价值（97,500＝100,000−2,500；100x 时 7,500）、窄屏大字号与横屏中文。`position_leverage_mapper_test` 新增持仓名义价值（对冲两侧相加、缺字段为未知）与剩余值不低于 0。同步更新多资产开通、订单恢复、资产／持仓模式和后台续期测试中对旧页面的引用；多资产测试改为按固定时长推进帧，因为弹窗下层的进行中指示器会持续动画。全量 `flutter test`：5985 项通过、3 项跳过、零失败；`dart format` 检查 1359 个文件、零改动；`flutter analyze` 无问题。按要求未启动 App、未在真机上与设计稿目视比对。
+
+## 2026-11-16 样式问题合集（TAS-5043）修复
+
+来源：Notion「样式问题合集」。第 1 条的未登录初始配置（Cross／20×／Multi-assets 与 PRD 的 Isolated／10x／单资产不一致）按用户要求本轮不改。
+
+- 交易页方向卡片：「预估强平价／保证金／最大」框只有上圆角，下面的按钮四角圆角，接缝处露出框的直角并与按钮重叠。按钮改为只保留下圆角，与上方框拼成一个整体；未登录（`TradeOrderPending`）与已登录（`MainOrderDirectionCard`）两处一致。
+- 邮箱验证码错误：Privy SDK 报错形如 `apiError(httpCode: 422, error: …, description: "…")`，原先整串脱敏后显示。`failureFromPrivy` 现在优先取 `description` 中的服务端文案（如 “Invalid email and code combination”），仍经过同样的脱敏规则；错误分类 key 不变。
+- 交易对选择页：
+  - 去掉「N / M 个永续合约」、行情连接状态、更新时间和 Reconnect 这一块（设计稿没有）。按 PRD 本期不做分类标签，也不请求分类配置。行情离线时下拉刷新会重连行情流，失败字段仍显示 —。`MarketQuoteStatus` 已删除。
+  - 表头改为可排序的 Symbols／Funding rate、24h volume／Open interest、Price／24h change，各带排序箭头（`MarketListHeader`）。点击依次为降序、升序、恢复交易所目录顺序；Symbols 首次点击为升序。缺失值在两个方向都排最后，相同值保持目录顺序；精确搜索命中仍排在最前。默认（未选排序）时行情更新不会重排列表。
+  - 行高从 64 降为 48，收藏星标列宽 44 降为 28（点击高度仍为 44）。
+  - 第二行在资金费率前显示最高杠杆徽标，取公开 brackets（`publicLeverageProvider`，未登录可用）各档 `maxOpenPosLeverage` 的最大值；没有数据时不显示。徽标组件与交易页标题共用（`MaxLeverageBadge`）。
+  - 成交量下方显示持仓量：公开 `GET /fapi/v3/openInterest?symbol=` 返回基础币数量，乘以标记价换算为 USDT。标记价来自已有的 `premiumIndex` 快照与 `!markPrice@arr@1s` 行情流（`MarketQuote.markPrice`），与资金费率同组做版本保护。Aster 没有全市场持仓量接口，所以只有屏幕上的行才请求；`OpenInterestRepository` 最多 4 个并发请求，排队中被取消的请求不会发出。行离开屏幕后结果保留 30 秒，在屏幕上的行每 30 秒重读一次。读取失败或缺少标记价时显示 —，不显示 0。下拉刷新会等待持仓量与杠杆档位重读结束。
+  - 搜索框点击后键盘闪退：键盘弹出使页面高度低于 500，选择页在全屏布局和紧凑滚动布局之间切换，重建了搜索框，导致失焦。判断高度时现在加回键盘高度，键盘开合不再切换布局。
+- 交易页：
+  - 交易对名称的点击区域只覆盖图标、名称和下面的标签，右侧空白不再打开选择页。
+  - 保证金模式／杠杆／资产模式三个按钮：已登录时后台续期几乎一直在进行，其账户读取也占用 `order` 租约，三个按钮因此一直处于禁用状态。现在后台续期期间按钮可用；点击时先停止后台续期（`stopBackground`，同时释放租约），再打开设置页。前台读取、下单或其他设置进行中时仍禁用。
+  - 点击合约页空白处收起键盘；按钮、输入框等自身处理点击的控件不受影响。
+
+边界：持仓量接口未收录在所查 V3 文档中，USDT 口径（数量 × 标记价）与官网显示值是否完全一致仍需联调核对。最高杠杆徽标是交易所公布的上限，不是账户当前杠杆。未改动下单、签名或任何财务写入流程。
+
+验证：新增或更新的测试：排序（方向、缺失值、平局、持仓量估值、循环切换）；`OpenInterestRepository` 的并发上限、按顺序交接、全部结束后才算完成、负值／交易对不符视为格式错误、排队中取消不发请求；选择页显示徽标与持仓量、点击表头排序；键盘占用 500 高度时搜索框保持同一实例且不失焦（撤掉修复后该用例失败）；交易页空白处既不打开选择页，也会取消焦点；后台续期期间设置按钮可点，点击后停止续期、释放租约并打开保证金模式页；Privy `description` 提取。`widget_test` 与性能场景随删除的数量行和新增的持仓量读取更新了断言／替身。全量 `flutter test`：5980 项通过、3 项跳过、零失败；`dart format --set-exit-if-changed lib test` 检查 1362 个文件、零改动；`flutter analyze` 无问题。测试环境仍提示缺少 Linux Rive 动态库。按要求未启动 App、未在真机／模拟器上目视验收，未做平台构建。
+
 ## 2026-11-16 WalletConnect 前台恢复时的 relay 重连竞争
 
 排查“开启交易”签名提示 `The client closed with pending request "irn_subscribe".`：`requestReownSignature` 和 Reown AppKit 1.9.0 均监听 `resumed` 并调用 `reconnectRelay()`，网络恢复、心跳和 socket-close 恢复也可触发重连。实际使用的 reown_core 1.5.1 在 `_connect` 入口只检查已连接状态，未合并正在建立的连接；第二次连接在 JWT／socket 准备后会关闭第一条 JSON-RPC 连接，使其未完成的订阅失败。用 SDK 原版的真实 RelayClient／JSON-RPC 配合可控的本地 socket，两个回归用例在修复前分别复现“建立两条连接”和完全相同的 `irn_subscribe` 错误。这证明该竞争能够产生此报错；没有该次设备日志，尚不能确认用户当次错误的唯一原因。

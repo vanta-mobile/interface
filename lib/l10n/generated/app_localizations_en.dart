@@ -1825,9 +1825,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use this wallet to place real ordinary, conditional or trailing orders. Limit orders use a supported execution policy. In one-way mode, a long or short order can reduce or reverse an existing position. Hedge mode operates on the selected long or short side. Aster checks fees, available margin and final eligibility.';
 
   @override
-  String get liveOrderReadContext => 'Read order settings (2 signatures)';
-
-  @override
   String get liveOrderSettingsBusy =>
       'Finish the pending futures settings operation before placing an order.';
 
@@ -1894,9 +1891,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveOrderTriggerBasis => 'Trigger price basis';
-
-  @override
-  String get liveOrderTriggerReference => 'Reference price at read';
 
   @override
   String get liveOrderTriggerProtect => 'Trigger price protection';
@@ -2051,10 +2045,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get batchCloseRecheck => 'Sign to query unconfirmed orders only';
 
   @override
-  String get liveOrderFundsReadHint =>
-      'Read public rules and mark price, then sign separately for position mode, symbol positions, asset mode and account funds (4 signatures). Read validity is 30 seconds from the mark-price response. No order is submitted.';
-
-  @override
   String get liveOrderReadFunds =>
       'Read asset mode and account funds before reviewing an opening order. Missing amounts are unknown, not zero.';
 
@@ -2169,44 +2159,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get liveTrailingImmediate =>
       'A long activation price must be below the selected latest price; a short activation price must be above it.';
-
-  @override
-  String get liveTrailingHint =>
-      'The exchange tracks favorable price extremes, then submits market execution after the configured pullback. This uses a fixed quantity, not entire close. It does not continuously reprice a limit order.';
-
-  @override
-  String get liveTrailingRate => 'Callback rate (%)';
-
-  @override
-  String get liveTrailingRateBounds => '0.1–5; entering 1 means 1%.';
-
-  @override
-  String get liveTrailingBasis => 'Tracking price basis';
-
-  @override
-  String liveTrailingActivation(String asset) {
-    return 'Activation price ($asset, optional)';
-  }
-
-  @override
-  String get liveTrailingDefault =>
-      'Leave empty to use the selected price basis at exchange placement time. This snapshot is not submitted as the activation price.';
-
-  @override
-  String get liveTrailingActivationDirection =>
-      'If specified: long activation below the latest price; short activation above it. The exchange rechecks at placement.';
-
-  @override
-  String get liveTrailingBuy =>
-      'After activation, a long order follows the lowest price and triggers on a rise by the callback percentage. Triggering does not guarantee an execution price.';
-
-  @override
-  String get liveTrailingSell =>
-      'After activation, a short order follows the highest price and triggers on a fall by the callback percentage. Triggering does not guarantee an execution price.';
-
-  @override
-  String get liveTrailingEstimateHint =>
-      'There is no fixed execution price. Notional and opening margin use the current mark only as a reference; closing PnL is unavailable. Actual size eligibility, margin and execution depend on exchange state. Fees, funding and slippage are excluded.';
 
   @override
   String get quickOrderInvalidAmount => 'Enter a positive decimal amount.';
@@ -3111,53 +3063,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scaledTitle => 'Scaled orders';
 
   @override
-  String get scaledRule =>
-      '2–110 independent GTC limit orders, submitted from low to high price. Prices include both endpoints and are rounded down to distinct ticks. Quantities follow the selected distribution and valid quantity steps; review every child before signing.';
-
-  @override
-  String get scaledRisk =>
-      'Each order requires a fresh account check, a submission signature and a query signature. Orders are independent and may only partly succeed. A failure or unknown result stops the remaining orders. Stopping or leaving this page does not cancel orders already sent. Unsent orders are never resumed automatically.';
-
-  @override
-  String get scaledLow => 'Lowest price';
-
-  @override
-  String get scaledHigh => 'Highest price';
-
-  @override
-  String get scaledCount => 'Number of orders';
-
-  @override
-  String get scaledPreview => 'Order breakdown';
-
-  @override
-  String get scaledReview => 'Review scaled orders';
-
-  @override
-  String get scaledConfirm => 'Sign and submit these orders';
-
-  @override
-  String get scaledTotalQuantity => 'Total quantity';
-
-  @override
-  String get scaledTotalNotional => 'Total limit notional';
-
-  @override
-  String get scaledMarginReference => 'Margin reference before netting';
-
-  @override
-  String get scaledMarginHint =>
-      'Reference = total limit notional ÷ leverage. It excludes position netting, existing orders, fees and released margin. It is not the final margin requirement or an executable allowance. Aster checks each order.';
-
-  @override
-  String get scaledPortion => 'Share of total quantity (approx.)';
-
-  @override
-  String scaledOrderNumber(int number) {
-    return 'Order $number';
-  }
-
-  @override
   String get scaledCountInvalid => 'Enter a whole number from 2 to 110.';
 
   @override
@@ -3177,13 +3082,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get scaledConfigurationChanged =>
       'Account mode, leverage or order rules changed. Remaining orders were stopped; refresh and review a new plan.';
-
-  @override
-  String get scaledStopped =>
-      'Remaining orders stopped. Orders already sent stay active; check their results below.';
-
-  @override
-  String get scaledResults => 'Scaled order results';
 
   @override
   String get scaledRefreshRequired =>
@@ -3297,8 +3195,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Chain state or fees changed. Prepare and review the step again; nothing was sent.';
 
   @override
-  String get depositApprovalUnknown =>
-      'The wallet result is unknown. Do not repeat the approval. Use the original transaction hash from your wallet to check it.';
+  String get depositApprovalUnknown => 'Network error. Check the records later to confirm.';
 
   @override
   String get depositApprovalMismatch =>
@@ -3368,8 +3265,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Another wallet transaction request is still pending. Wait for it to finish.';
 
   @override
+  String fundingSwitchNetwork(String network) {
+    return 'Switch your wallet to $network, then try again.';
+  }
+
+  @override
   String get walletTransactionWrongChain =>
-      'Reconnect the same wallet on the selected deposit network before sending this step.';
+      'Switch your wallet to the selected deposit network, then try again.';
 
   @override
   String get walletTransactionPermission =>
@@ -3437,8 +3339,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'This wallet has an unresolved Rebalance. Check the current account; the request will never be resent automatically.';
 
   @override
-  String get rebalanceUnknown =>
-      'The original request result is unknown. Current balances cannot prove that request completed. The API has no documented lookup by nonce, so the record and mutation block remain. Do not repeat the request.';
+  String get rebalanceUnknown => 'Network error. Check the records later to confirm.';
 
   @override
   String get rebalanceReplyPending =>
@@ -3622,8 +3523,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'A previous transfer needs review. New transfers, orders and account settings are blocked.';
 
   @override
-  String get internalTransferUnknown =>
-      'The transfer outcome is unknown. The original client ID cannot be queried through a documented API. Balance changes do not prove completion. This record is retained and cannot be retried or cleared here; contact Aster with the original identifiers.';
+  String get internalTransferUnknown => 'Network error. Check the records later to confirm.';
 
   @override
   String get internalTransferReplyPending =>
@@ -4082,8 +3982,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Aster acknowledged the request. Run the access check to confirm what this wallet can read and the reported trading status.';
 
   @override
-  String get authorizationUnknown =>
-      'The authorization result is unknown. Check access before making another explicit request.';
+  String get authorizationUnknown => 'Network error. Check the records later to confirm.';
 
   @override
   String get authorizationFuturesRead => 'Futures signed API read';
@@ -4222,8 +4121,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'An earlier request from this wallet has an unknown result. Do not submit it again. Resolve it with Aster before another submission.';
 
   @override
-  String get walletOperationUnknown =>
-      'The request may have been accepted. Its result is unknown and its unsigned terms remain saved. No automatic retry will be sent.';
+  String get walletOperationUnknown => 'Network error. Check the records later to confirm.';
 
   @override
   String get walletOperationAcknowledged =>
@@ -4268,6 +4166,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get withdrawalAmountInvalid =>
       'Enter a positive amount within the selected token precision and a supported automatic withdrawal route.';
+
+  @override
+  String get withdrawalReceiverInvalid => 'Enter a valid EVM receiving address.';
 
   @override
   String get withdrawalAssetChanged =>
@@ -4354,8 +4255,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get depositSubmissionNoPending => 'No pending deposit for this wallet.';
 
   @override
-  String get depositSubmissionUnknown =>
-      'The wallet may have submitted the transaction. Keep the saved record and recover its status before another deposit.';
+  String get depositSubmissionUnknown => 'Network error. Check the records later to confirm.';
 
   @override
   String get depositSubmissionChanged =>
@@ -4973,8 +4873,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get marginAdjustVerified => 'Exact adjustment found in Aster history.';
 
   @override
-  String get marginAdjustUnknown =>
-      'Outcome unconfirmed. Keep the original reference and check again; do not resubmit.';
+  String get marginAdjustUnknown => 'Network error. Check the records later to confirm.';
 
   @override
   String get marginAdjustRejected =>
@@ -5328,13 +5227,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Order details are no longer current. Close this dialog and place the order again.';
 
   @override
-  String get scaledTotalAmount => 'Total order amount';
-
-  @override
   String get scaledAmountInvalid => 'Enter a positive total order amount.';
-
-  @override
-  String get scaledDistribution => 'Quantity distribution';
 
   @override
   String get scaledEqual => 'Equal';
@@ -5349,26 +5242,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scaledRandom => 'Random';
 
   @override
-  String get scaledConstant => 'Distribution constant';
-
-  @override
-  String get scaledDifference => 'Difference';
-
-  @override
-  String get scaledRatio => 'Ratio';
-
-  @override
-  String get scaledDifferenceHint =>
-      'Quantity weights are 1:2:3… from low to high price for Increasing, reversed for Decreasing. Quantity steps may round the pattern.';
-
-  @override
-  String get scaledRatioHint =>
-      'Quantity weights are 1:2:4… from low to high price for Increasing, reversed for Decreasing. Every child must meet the minimum size; high counts may require a very large total.';
-
-  @override
-  String get scaledVariance => 'Random variance';
-
-  @override
   String get scaledVarianceInvalid => 'Enter a variance from 0% to 10%.';
 
   @override
@@ -5377,41 +5250,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scaledRandomRequired => 'Generate a random breakdown before reviewing.';
-
-  @override
-  String get scaledRandomHint =>
-      'Each quantity stays within the selected percentage of the mean quantity. This breakdown stays fixed until you edit its inputs or reshuffle; changing language never redraws it.';
-
-  @override
-  String get scaledReshuffle => 'Reshuffle quantities';
-
-  @override
-  String get scaledUnallocatedQuote => 'Unallocated order amount';
-
-  @override
-  String get scaledAmountHint =>
-      'Order amount is the sum of child limit price × quantity, without leverage multiplication. Quote input is rounded down to valid base quantities; the unallocated amount is shown. This excludes fees and is not a margin or final execution-cost limit.';
-
-  @override
-  String get scaledBaseRemainderHint =>
-      'The entered base quantity is conserved exactly. Remaining steps go to the largest fractional remainders, with ties assigned from low to high price.';
-
-  @override
-  String get scaledPreviousChildren => 'Previous orders';
-
-  @override
-  String get scaledNextChildren => 'Next orders';
-
-  @override
-  String get scaledChildType => 'Child order type';
-
-  @override
-  String get scaledEnteredSize => 'Entered total';
-
-  @override
-  String scaledPage(int start, int end, int total) {
-    return 'Orders $start–$end of $total';
-  }
 
   @override
   String get scaledCountRange => '2–110';
@@ -6174,6 +6012,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradeSymbols => 'Symbols';
 
   @override
+  String get marketOpenInterest => 'Open interest';
+
+  @override
+  String marketSortBy(String column) {
+    return 'Sort by $column';
+  }
+
+  @override
   String get accountsSelect => 'Select';
 
   @override
@@ -6262,6 +6108,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fundingAmountLabel => 'Amount';
+
+  @override
+  String get fundingReceiverHint => 'Enter your destination address';
 
   @override
   String get fundingBalance => 'Balance';
@@ -6871,6 +6720,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get modeConfirm => 'Confirm';
+
+  @override
+  String marginModeSheetTitle(String symbol) {
+    return '$symbol Margin mode';
+  }
+
+  @override
+  String get marginModeSheetScope => 'Margin mode changes apply only to this contract';
+
+  @override
+  String get marginModePositionsOrOrders =>
+      'This contract has open positions or orders. Close the positions and cancel the orders before switching margin mode.';
+
+  @override
+  String get marginModeCrossDescription =>
+      'Shares available margin across cross positions. Profits and losses can offset each other, reducing liquidation risk.';
+
+  @override
+  String get marginModeIsolatedDescription =>
+      'Uses separate margin for each position. Losses are limited to the margin allocated to that position.';
+
+  @override
+  String leverageSheetTitle(String symbol) {
+    return '$symbol Adjust leverage';
+  }
+
+  @override
+  String get leverageDecrease => 'Decrease leverage';
+
+  @override
+  String get leverageIncrease => 'Increase leverage';
+
+  @override
+  String get leverageRemainingNotional => 'Remaining openable notional value';
+
+  @override
+  String get leverageRemainingNotionalHint =>
+      'The maximum notional value you can open under your current leverage and system risk control limits.';
+
+  @override
+  String get leverageSheetNote =>
+      'Please note that leverage changing will also apply for open positions and open orders.\nSelecting higher leverage (such as 10x) increases your chances of liquidation.';
 
   @override
   String get openOrdersCancelAll => 'Cancel all';
@@ -7743,6 +7634,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pushConfirm => 'Confirm';
 
   @override
+  String get pushQuietHoursNotCleared => 'Quiet hours were not turned off. Please try again later.';
+
+  @override
   String get pushQuietSameTime => 'Start and end time must be different.';
 
   @override
@@ -7780,4 +7674,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsUpdateLinkUnavailable => 'A download link has not been provided.';
+
+  @override
+  String scaledChildInvalid(int index, String price, String quantity, String reason) {
+    return 'Order $index (price $price, quantity $quantity): $reason';
+  }
+
+  @override
+  String get scaledLowestPrice => 'Lowest Price';
+
+  @override
+  String get scaledHighestPrice => 'Highest Price';
+
+  @override
+  String get scaledOrderCount => 'Order count';
+
+  @override
+  String get scaledDistributionLabel => 'Distribution';
+
+  @override
+  String get scaledPreviewLink => 'Preview';
+
+  @override
+  String get scaledConstDifference => 'Const. difference';
+
+  @override
+  String get scaledConstRatio => 'Const. ratio';
+
+  @override
+  String get scaledSizeDistribution => 'Size distribution';
+
+  @override
+  String get scaledEqualHint => 'Equal size for each order';
+
+  @override
+  String get scaledRandomHintShort => 'Random size for each order';
+
+  @override
+  String get scaledIncreasingHint => 'Size increases linearly with price';
+
+  @override
+  String get scaledDecreasingHint => 'Size decreases linearly with price';
+
+  @override
+  String get scaledConstantDifference => 'Constant difference';
+
+  @override
+  String get scaledConstantRatio => 'Constant ratio';
+
+  @override
+  String get scaledSubOrderType => 'Sub-order type';
+
+  @override
+  String scaledPriceColumn(String asset) {
+    return 'Price ($asset)';
+  }
+
+  @override
+  String scaledSizeColumn(String asset) {
+    return 'Size ($asset)';
+  }
+
+  @override
+  String get scaledAveragePrice => 'Average price';
+
+  @override
+  String get scaledLowestPriceRow => 'Lowest price';
+
+  @override
+  String get scaledHighestPriceRow => 'Highest price';
+
+  @override
+  String get scaledSubOrderCount => 'Sub-order count';
+
+  @override
+  String scaledMaximumSize(String value) {
+    return 'Maximum qty is $value';
+  }
 }

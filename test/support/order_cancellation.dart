@@ -8,6 +8,9 @@ class TestOrderCancellationRepository implements OrderCancellationRepository {
   int cancels = 0, checks = 0;
   Completer<void>? gate;
   AccountReadFailure? failure;
+
+  /// Result of the automatic follow-up query; defaults to [result].
+  OrderCancellationResult? checkResult;
   OrderCancellationResult result = const OrderCancellationResult(
     resolution: OrderResolution(symbol: 'BTCUSDT', orderId: '1917641', status: 'CANCELED'),
   );
@@ -36,6 +39,6 @@ class TestOrderCancellationRepository implements OrderCancellationRepository {
     onStep(OrderCancelStep.checkSigning);
     await gate?.future;
     if (failure case final error?) throw error;
-    return result;
+    return checkResult ?? result;
   }
 }

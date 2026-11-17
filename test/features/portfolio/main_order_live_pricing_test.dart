@@ -451,11 +451,11 @@ void main() {
     () async {
       await f.open();
       final activity = f.container.read(symbolSettingsActivityProvider.notifier);
-      final lease = activity.acquire(SymbolSetting.order)!;
+      final lease = activity.acquire(SymbolSetting.order);
       f.container.read(quoteUpdatesActiveProvider.notifier).setActive(false);
       expect(f.container.read(mainOrderQuotesActiveProvider), true);
       expect(f.valuation.availableMargin, d('150').toRational());
-      activity.finish(lease, unresolved: false);
+      activity.finish(lease);
       expect(f.container.read(mainOrderQuotesActiveProvider), false);
       expect(() => f.valuation, fails('liveCapacityPriceUnavailable'));
     },

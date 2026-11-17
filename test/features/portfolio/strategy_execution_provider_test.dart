@@ -69,12 +69,11 @@ void main() {
       expect(repository.calls, 1);
       expect(state().snapshot, isNotNull);
       expect(journal.snapshot.records.length, 1);
-      expect(container.read(symbolSettingsActivityProvider).recoveryBlocked, false);
-      expect(container.read(symbolSettingsActivityProvider).owner, null);
+      expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
       expect(identity.wallets, 0);
     },
   );
-  test('concurrent reads and other operation owners cannot request a second read', () async {
+  test('a duplicate read waits; a read for another order runs independently', () async {
     await setup();
     repository.gate = Completer<void>();
     final pending = controller().read();
@@ -82,25 +81,24 @@ void main() {
     await controller().read();
     final other = StrategyExecutionFixture();
     final otherListener = container.listen(strategyExecutionProvider(other.query), (_, _) {});
-    await container.read(strategyExecutionProvider(other.query).notifier).read();
-    otherListener.close();
-    expect(repository.calls, 1);
+    final otherRead = container.read(strategyExecutionProvider(other.query).notifier).read();
+    await Future<void>.delayed(Duration.zero);
+    expect(repository.calls, 2);
     expect(container.read(symbolSettingsActivityProvider).busy, true);
     repository.gate!.complete();
     await pending;
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    await otherRead;
+    otherListener.close();
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
   });
-  test('active write owner blocks this read without affecting its lease', () async {
+  test('an order in progress does not block this read or lose its own lease', () async {
     await setup();
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.order)!;
-    await controller().read();
-    expect(repository.calls, 0);
-    expect(container.read(symbolSettingsActivityProvider).owner, SymbolSetting.order);
-    activity.finish(lease, unresolved: true);
+    final lease = activity.acquire(SymbolSetting.order);
     await controller().read();
     expect(repository.calls, 1);
-    expect(container.read(symbolSettingsActivityProvider).unresolved, false);
+    expect(container.read(symbolSettingsActivityProvider).isRunning(SymbolSetting.order), isTrue);
+    activity.finish(lease);
   });
   test('corrupt diagnostic storage does not block explicit reads', () async {
     await setup();
@@ -109,7 +107,6 @@ void main() {
     );
     await controller().read();
     expect(repository.calls, 1);
-    expect(container.read(symbolSettingsActivityProvider).recoveryBlocked, false);
   });
   test('refresh failure preserves the prior snapshot, stale and retryable', () async {
     await setup();
@@ -137,7 +134,7 @@ void main() {
     expect(oldCurrent(), false);
     expect(state().snapshot, same(previous));
     expect(state().failure!.key, 'strategyExecutionStopped');
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     repository.gate!.complete();
     await pending;
     expect(state().snapshot, same(previous));
@@ -155,11 +152,14 @@ void main() {
     await old;
     expect(state().busy, true);
     expect(container.read(symbolSettingsActivityProvider).busy, true);
-    expect(container.read(symbolSettingsActivityProvider).owner, SymbolSetting.recovery);
+    expect(
+      container.read(symbolSettingsActivityProvider).isRunning(SymbolSetting.recovery),
+      isTrue,
+    );
     newGate.complete();
     await fresh;
     expect(state().snapshot, isNotNull);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
   });
   for (final change in ['identity', 'address', 'kind', 'signing']) {
     test('changing $change clears private data and invalidates in-flight responses', () async {
@@ -185,7 +185,7 @@ void main() {
       repository.gate!.complete();
       await pending;
       expect(state().snapshot, null);
-      expect(container.read(symbolSettingsActivityProvider).owner, null);
+      expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     });
   }
   test('disposal while reading releases ownership and rejects late result', () async {
@@ -197,7 +197,7 @@ void main() {
     await container.pump();
     await Future<void>.delayed(Duration.zero);
     expect(current(), false);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     repository.gate!.complete();
     await pending;
   });
@@ -222,9 +222,9 @@ void main() {
     await setup();
     await controller().read();
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.order)!;
+    final lease = activity.acquire(SymbolSetting.order);
     activity.submitted(lease);
-    activity.finish(lease, unresolved: false);
+    activity.finish(lease);
     expect(state().stale, true);
     expect(repository.calls, 1);
   });

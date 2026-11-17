@@ -144,7 +144,9 @@ void main() {
     expect(modifications.requests.single.quantity, Decimal.parse('0.5'));
 
     modifications.gate!.complete();
-    await tester.pumpAndSettle();
+    // The success toast counts down while visible; stop short of its close.
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
     expect(find.text('Order modified.'), findsOneWidget);
     expect(find.byKey(const Key('open-order-edit-sheet')), findsNothing);
     final updated = container
@@ -157,7 +159,9 @@ void main() {
     await close(tester, container);
   });
 
-  testWidgets('a rejection keeps the sheet and input; an unknown result closes it', (tester) async {
+  testWidgets('a rejection keeps the sheet; an unverified result shows the query error', (
+    tester,
+  ) async {
     final container = await open(tester);
     modifications.respond = (request) => OrderModificationResult(
       OrderModifyOutcome.rejected,
@@ -175,11 +179,15 @@ void main() {
     );
     await tester.pump(const Duration(seconds: 5));
 
-    modifications.respond = (_) => const OrderModificationResult(OrderModifyOutcome.unknown);
+    modifications.respond = (_) => const OrderModificationResult(
+      OrderModifyOutcome.unverified,
+      failure: AccountReadFailure('accountNetwork'),
+    );
     await tester.tap(find.byKey(const Key('open-order-edit-confirm')));
     await tester.pumpAndSettle();
     expect(modifications.requests, hasLength(2));
-    expect(find.textContaining('modification result is unconfirmed'), findsOneWidget);
+    expect(find.textContaining('modification result is unconfirmed'), findsNothing);
+    expect(find.byKey(const Key('app-toast')), findsOneWidget); // the query's own error
     expect(find.byKey(const Key('open-order-edit-sheet')), findsNothing);
     // The auto reader re-reads the stale snapshot silently once its 5 s spacing allows.
     expect(container.read(openOrdersReadProvider).stale, true);

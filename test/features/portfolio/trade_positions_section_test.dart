@@ -47,12 +47,13 @@ Future<TestIdentityRepository> _launch(
   TestOrderCancellationRepository? cancellation,
   bool exits = true,
   double width = 390,
+  TestPositionRiskRepository? positions,
 }) async {
   final identity = TestIdentityRepository()..restored = signingIdentity;
   addTearDown(identity.dispose);
   // Its funds read supplies the single-asset mode the cross ratio needs.
   live ??= TestLiveOrderRepository()..context = liveCloseContext();
-  final risk = TestPositionRiskRepository()
+  final risk = (positions ?? TestPositionRiskRepository())
     ..result = mapPositionRisk(
       [
         positionRiskRow()
@@ -184,6 +185,48 @@ Future<void> _openTpSlForm(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('a position opened on the exchange appears without a manual refresh', (tester) async {
+    final risk = TestPositionRiskRepository();
+    final identity = await _launch(tester, positions: risk);
+    expect(find.text('Positions (1)'), findsOneWidget);
+    final calls = risk.calls;
+    // A trailing stop fills on the exchange: nothing in the app signals it.
+    risk.result = mapPositionRisk(
+      [
+        positionRiskRow()
+          ..['positionAmt'] = '0.01'
+          ..['entryPrice'] = '79000'
+          ..['markPrice'] = '77250'
+          ..['liquidationPrice'] = '72000'
+          ..['marginType'] = 'cross'
+          ..['unRealizedProfit'] = '10'
+          ..['notional'] = '800'
+          ..['leverage'] = '10',
+        positionRiskRow()
+          ..['symbol'] = 'ETHUSDT'
+          ..['positionAmt'] = '0.1'
+          ..['entryPrice'] = '2000'
+          ..['markPrice'] = '2010'
+          ..['liquidationPrice'] = '1500'
+          ..['marginType'] = 'cross'
+          ..['unRealizedProfit'] = '1'
+          ..['notional'] = '201'
+          ..['leverage'] = '10',
+      ],
+      address: accountAddress,
+      receivedAt: _received.add(const Duration(seconds: 20)),
+      units: _units,
+    );
+    // Automatic reads keep a 5 s real-clock spacing after the first read.
+    await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: 5)));
+    await tester.pump(const Duration(seconds: 16));
+    await tester.pumpAndSettle();
+    expect(risk.calls, greaterThan(calls));
+    expect(find.text('Positions (2)'), findsOneWidget);
+    expect(identity.wallets, 0);
+    await _logout(tester, identity);
+  });
+
   testWidgets('the Positions tab reads silently and shows the designed card', (tester) async {
     final identity = await _launch(tester);
     expect(find.text('Positions (1)'), findsOneWidget);

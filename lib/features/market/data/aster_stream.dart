@@ -20,7 +20,7 @@ class AsterMarketStream {
   late final StreamController<Map<String, Object?>> _output;
   WebSocketChannel? _socket;
   StreamSubscription<dynamic>? _subscription;
-  Timer? _retry, _idle;
+  Timer? _retry, _idle, _heartbeat;
   bool _disposed = false;
   int _delay = 1;
   Stream<Map<String, Object?>> get events => _output.stream;
@@ -47,8 +47,20 @@ class AsterMarketStream {
     }
   }
 
+  /// A quiet market (for example a stock perpetual off hours) can send no
+  /// event for longer than the idle limit. Ask the server for its subscription
+  /// list before then; only a socket that also ignores that probe is dead.
   void _resetIdle() {
     _idle?.cancel();
+    _heartbeat?.cancel();
+    _heartbeat = Timer(const Duration(seconds: 20), () {
+      if (_disposed || _retry != null) return;
+      try {
+        _socket?.sink.add(jsonEncode({'method': 'LIST_SUBSCRIPTIONS', 'id': 2}));
+      } on Object {
+        unawaited(_disconnect());
+      }
+    });
     _idle = Timer(const Duration(seconds: 35), () => unawaited(_disconnect()));
   }
 
@@ -61,6 +73,9 @@ class AsterMarketStream {
         return;
       }
       _resetIdle();
+      // Any accepted reply, including the subscription acknowledgement and
+      // heartbeat, proves the session works; quiet markets keep a short retry.
+      _delay = 1;
       // Acknowledgements are control messages. Both combined and raw market
       // events are accepted, as defined by Aster's public stream protocol.
       final data = envelope is Map<String, dynamic> ? envelope['data'] ?? envelope : envelope;
@@ -68,7 +83,6 @@ class AsterMarketStream {
       // symbols changed in this update. Flatten without replacing any state.
       for (final event in data is List ? data : [data]) {
         if (event is Map<String, dynamic> && event['e'] is String) {
-          _delay = 1;
           _output.add(event);
         }
       }
@@ -80,6 +94,7 @@ class AsterMarketStream {
   Future<void> _disconnect() async {
     if (_disposed || _retry != null) return;
     _idle?.cancel();
+    _heartbeat?.cancel();
     _output.add({'disconnected': true});
     _retry = Timer(Duration(seconds: _delay), () {
       _retry = null;
@@ -102,6 +117,7 @@ class AsterMarketStream {
     _disposed = true;
     _retry?.cancel();
     _idle?.cancel();
+    _heartbeat?.cancel();
     await _closeSocket();
   }
 }

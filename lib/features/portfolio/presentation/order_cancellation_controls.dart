@@ -56,13 +56,11 @@ class OrderCancellationStatus extends ConsumerWidget {
         children: [
           SelectableText('${intent.order.symbol} · ${intent.order.orderId}'),
           if (state.busy) ...[const SizedBox(height: 8), OrderCancelProgress(step: state.step)],
-          if (state.result case final result?)
+          if (state.result?.resolution case final resolution?)
             Text(
-              result.needsRecheck
-                  ? l10n.orderCancelUnknown
-                  : result.newerOrderEvents
+              state.result!.newerOrderEvents
                   ? l10n.orderCancelEventsDuringCheck
-                  : switch (result.resolution!.status) {
+                  : switch (resolution.status) {
                       'CANCELED' => l10n.orderCancelVerified,
                       'FILLED' => l10n.orderCancelFilled,
                       'EXPIRED' => l10n.orderCancelExpired,
@@ -75,14 +73,6 @@ class OrderCancellationStatus extends ConsumerWidget {
             Text(
               accountErrorText(context, failure),
               style: const TextStyle(color: AppColors.negative),
-            ),
-          if (state.needsRecheck)
-            OutlinedButton(
-              key: const Key('recheck-order-cancel'),
-              onPressed: state.busy
-                  ? null
-                  : () => ref.read(orderCancellationProvider.notifier).recheck(),
-              child: Text(l10n.orderCancelRecheck),
             ),
         ],
       ),

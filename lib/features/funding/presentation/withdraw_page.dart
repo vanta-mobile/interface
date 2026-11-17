@@ -24,6 +24,7 @@ import '../domain/funding_catalog.dart';
 import '../domain/funding_fee.dart';
 import '../domain/transfer_history.dart';
 import '../domain/withdrawal_amount.dart';
+import '../domain/withdrawal_receiver.dart';
 import 'funding_components.dart';
 import 'funding_dropdown.dart';
 import 'funding_screen.dart';
@@ -64,7 +65,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
 
   void _edited() => setState(() => actionError = null);
 
-  Future<void> _withdraw(DepositWalletQuery query, Decimal fee) async {
+  Future<void> _withdraw(DepositWalletQuery query, Decimal fee, String? receiver) async {
     _edited();
     final error = await Navigator.of(context).push<FundingActionError>(
       MaterialPageRoute(
@@ -72,6 +73,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
           query: query,
           amount: selection.amount.text.trim(),
           shownFee: fee,
+          receiver: receiver,
         ),
       ),
     );
@@ -104,6 +106,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
     final choice = FundingChoice.of(
       catalog.catalog?.assets.where(_withdrawRoute) ?? const [],
       selection,
+      defaultChain: fundingDefaultChain(ref),
     );
     final asset = choice.asset;
     final info = ref.watch(withdrawInfoProvider);
@@ -119,7 +122,8 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
             withdrawable,
             fee: fee?.assetFee,
           );
-    final error = switch ((actionError, amountKey)) {
+    final receiverKey = _receiverKey();
+    final error = switch ((actionError, amountKey ?? receiverKey)) {
       (_, 'fundingBalanceInsufficient') => l.fundingBalanceInsufficient(asset!.asset),
       (_, 'fundingWithdrawalFeeInsufficient') => l.fundingWithdrawalFeeInsufficient(asset!.asset),
       (final FundingActionError e, _) => apiErrorText(context, e.key, e.details),
@@ -141,7 +145,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
       showBack: false,
       actions: fundingHeaderActions(context),
       onRefresh: () => _refresh(asset),
-      footer: _footer(l, asset, amountKey),
+      footer: _footer(l, asset, amountKey ?? receiverKey),
       children: [
         FundingTabs(operation: FundingOperation.withdraw, onChanged: widget.onOperation),
         const SizedBox(height: 12),
@@ -151,6 +155,16 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
         ),
         const SizedBox(height: 12),
         _network(l, choice),
+        if (_entersReceiver) ...[
+          const SizedBox(height: 12),
+          FundingAddressField(
+            label: l.withdrawalReceiver,
+            hint: l.fundingReceiverHint,
+            controller: selection.receiver,
+            error: receiverKey != null,
+            onChanged: (_) => _edited(),
+          ),
+        ],
         const SizedBox(height: 12),
         _amount(choice, amountKey != null),
         if (error != null) ...[const SizedBox(height: 12), FundingError(error)],
@@ -182,6 +196,20 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
     );
   }
 
+  bool get _entersReceiver =>
+      entersWithdrawalReceiver(ref.watch(authProvider.select((s) => s.identity)));
+
+  /// An entered receiver, or null when the wallet withdraws to itself.
+  String? get _receiver => _entersReceiver ? selection.receiver.text.trim() : null;
+
+  /// Empty input only disables the button; a malformed address is an error.
+  String? _receiverKey() {
+    final value = _receiver;
+    return value == null || value.isEmpty || validWithdrawalReceiver(value)
+        ? null
+        : 'withdrawalReceiverInvalid';
+  }
+
   Widget _network(AppLocalizations l, FundingChoice choice) => FundingDropdown<int>(
     options: [
       for (final id in choice.chains)
@@ -195,7 +223,9 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
     builder: (context, open, toggle) => FundingField(
       key: const Key('funding-network'),
       label: l.fundingNetworkLabel,
-      value: choice.chainId == null ? '—' : fundingNetworkName(l, choice.chainId!),
+      value: choice.chainId == null
+          ? l.fundingSelectNetwork
+          : fundingNetworkName(l, choice.chainId!),
       icon: choice.chainId == null ? null : FundingNetworkIcon(choice.chainId!),
       open: open,
       onTap: toggle,
@@ -225,17 +255,19 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
     );
   }
 
-  List<Widget> _footer(AppLocalizations l, FundingAsset? asset, String? amountKey) {
+  List<Widget> _footer(AppLocalizations l, FundingAsset? asset, String? inputKey) {
     final identity = ref.watch(authProvider.select((s) => s.identity));
     final entry = ref.watch(activeAccountEntryProvider);
     final child = entry != null && entry.roleKnown && !entry.main;
     final rebalance = ref.watch(rebalanceProvider).context;
     final fee = asset == null ? null : ref.watch(fundingFeeProvider(_feeQuery(asset))).quote;
+    final receiver = _receiver;
     final ready =
         asset != null &&
         fee != null &&
         selection.amount.text.trim().isNotEmpty &&
-        amountKey == null &&
+        receiver?.isEmpty != true &&
+        inputKey == null &&
         !ref.watch(authProvider).busy;
     final history = AccountAction(
       key: const Key('funding-view-history'),
@@ -270,6 +302,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
             : () => _withdraw(
                 DepositWalletQuery(market: TransferMarket.perp, asset: asset),
                 fee.assetFee,
+                receiver,
               ),
       ),
       const SizedBox(height: 12),

@@ -76,7 +76,7 @@ void main() {
         onStep: (_) {},
       );
       expect(result.resolution?.status, 'CANCELED');
-      expect(result.needsRecheck, false);
+      expect(result.resolution, isNotNull);
       expect(requests.map((r) => r.method), ['GET', 'DELETE', 'GET', 'GET']);
       final signed = requests.where((r) => r.url.path.endsWith('/order')).toList();
       for (var i = 0; i < signed.length; i++) {
@@ -132,7 +132,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     deleteGate!.completeError(TimeoutException('raw sensitive error'));
     final result = await pending;
-    expect(result.needsRecheck, true);
+    expect(result.resolution, isNull);
     expect(result.failure?.key, 'accountReadFailed');
     queryStatus = 200;
     final checked = await repository.recheck(
@@ -167,7 +167,7 @@ void main() {
         isCurrent: () => current,
         onStep: (_) {},
       );
-      expect(result.needsRecheck, true);
+      expect(result.resolution, isNull);
       expect(result.failure?.key, 'authWalletRejected');
       expect(requests.where((r) => r.method == 'DELETE').length, 1);
     },
@@ -189,7 +189,7 @@ void main() {
           isCurrent: () => current,
           onStep: (_) {},
         );
-        expect(result.needsRecheck, true);
+        expect(result.resolution, isNull);
         expect(result.failure?.key, 'accountDataInvalid');
       }
     },

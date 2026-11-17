@@ -31,8 +31,12 @@ class FundingWalletPage extends ConsumerWidget {
     required this.busy,
     required this.onOpen,
     required this.onCancel,
+    this.detail,
   });
   final String title, summary, hint;
+
+  /// Shown below the summary, such as an entered withdrawal destination.
+  final Widget? detail;
   final bool busy;
   final VoidCallback? onOpen;
   final VoidCallback onCancel;
@@ -72,6 +76,7 @@ class FundingWalletPage extends ConsumerWidget {
         Text(title, style: PortfolioTypography.heading),
         const SizedBox(height: 6),
         Text(summary, style: AccountTypography.secondary),
+        if (detail case final widget?) ...[const SizedBox(height: 12), widget],
         const SizedBox(height: 12),
         Text(
           fundingAccountText(l, ref.watch(activeAccountEntryProvider)),
@@ -182,10 +187,14 @@ class WithdrawConfirmScreen extends ConsumerStatefulWidget {
     required this.query,
     required this.amount,
     required this.shownFee,
+    this.receiver,
   });
   final DepositWalletQuery query;
   final String amount;
   final Decimal shownFee;
+
+  /// Entered destination; null withdraws to the signing wallet itself.
+  final String? receiver;
   @override
   ConsumerState<WithdrawConfirmScreen> createState() => _WithdrawConfirmScreenState();
 }
@@ -229,13 +238,26 @@ class _WithdrawConfirmScreenState extends ConsumerState<WithdrawConfirmScreen> {
       title: l.fundingConfirmWithdrawTitle,
       summary: l.fundingFuturesAmount(amount),
       hint: l.fundingConfirmWithdrawHint,
+      detail: widget.receiver == null
+          ? null
+          : AccountValueRow(
+              l.withdrawalReceiver,
+              widget.receiver!,
+              key: const Key('funding-confirm-receiver'),
+              copyable: true,
+            ),
       busy: state.busy || state.review != null,
       onOpen: state.busy || state.review != null
           ? null
           : () => unawaited(
               ref
                   .read(withdrawalProvider.notifier)
-                  .submit(widget.query, widget.amount, shownFee: widget.shownFee),
+                  .submit(
+                    widget.query,
+                    widget.amount,
+                    shownFee: widget.shownFee,
+                    receiver: widget.receiver,
+                  ),
             ),
       onCancel: _cancel,
     );

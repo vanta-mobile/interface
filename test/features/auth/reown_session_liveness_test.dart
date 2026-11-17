@@ -157,6 +157,88 @@ void main() {
     });
   });
 
+  test('a cancel made in the wallet after 60 s wins over the timeout on return', () {
+    fakeAsync((time) {
+      final binding = TestWidgetsFlutterBinding.instance;
+      modal.gate = Completer<void>();
+      AuthFailure? failure;
+      connection
+          .signPersonalMessage('first')
+          .then<void>((_) {}, onError: (Object error) => failure = error as AuthFailure);
+      time.flushMicrotasks();
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      time.elapse(const Duration(seconds: 90));
+      time.flushMicrotasks();
+      expect(failure, isNull);
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      time.elapse(const Duration(seconds: 2));
+      modal.onModalError.broadcast(UserRejectedRequest());
+      time.flushMicrotasks();
+      expect(failure?.key, 'authWalletRejected');
+      time.elapse(const Duration(seconds: 20));
+      time.flushMicrotasks();
+      expect(failure?.key, 'authWalletRejected');
+      modal.gate!.complete();
+      time.flushMicrotasks();
+    });
+  });
+
+  test('a signature returned after 60 s in the wallet still completes', () {
+    fakeAsync((time) {
+      final binding = TestWidgetsFlutterBinding.instance;
+      modal.gate = Completer<void>();
+      String? signature;
+      Object? error;
+      connection
+          .signPersonalMessage('first')
+          .then(
+            (value) => signature = value,
+            onError: (Object e) {
+              error = e;
+              return '';
+            },
+          );
+      time.flushMicrotasks();
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      time.elapse(const Duration(seconds: 90));
+      time.flushMicrotasks();
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      time.elapse(const Duration(seconds: 3));
+      modal.gate!.complete();
+      time.flushMicrotasks();
+      expect(error, isNull);
+      expect(signature, modal.result);
+    });
+  });
+
+  test('back from the wallet after 60 s with no answer, the timeout follows', () {
+    fakeAsync((time) {
+      final binding = TestWidgetsFlutterBinding.instance;
+      modal.gate = Completer<void>();
+      AuthFailure? failure;
+      connection
+          .signPersonalMessage('first')
+          .then<void>((_) {}, onError: (Object error) => failure = error as AuthFailure);
+      time.flushMicrotasks();
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      time.elapse(const Duration(seconds: 90));
+      time.flushMicrotasks();
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      time.elapse(const Duration(seconds: 9));
+      time.flushMicrotasks();
+      expect(failure, isNull);
+      time.elapse(const Duration(seconds: 1));
+      time.flushMicrotasks();
+      expect(failure?.key, 'authWalletResponseTimeout');
+      expect(connection.needsReconnect, false);
+      modal.gate!.complete();
+      time.flushMicrotasks();
+    });
+  });
+
   test('resume never pings an idle connection', () async {
     modal.sdk.pingFailure = StateError('Session missing');
     final binding = TestWidgetsFlutterBinding.instance;

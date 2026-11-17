@@ -2,9 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_provider.dart';
 import '../../market/application/market_providers.dart' show quoteUpdatesActiveProvider;
-import 'position_margin_storage_provider.dart';
-import 'rebalance_storage_provider.dart';
-import '../../funding/application/internal_transfer_storage_provider.dart';
 
 enum SymbolSetting {
   leverage,
@@ -20,23 +17,19 @@ enum SymbolSetting {
   internalTransfer,
 }
 
+/// Account operations in progress. Independent operations run concurrently;
+/// only the same action disables itself while it is pending. [epoch] counts
+/// dispatched writes so reads taken before another write can be marked stale.
 class SymbolSettingsActivity {
-  const SymbolSettingsActivity({
-    this.owner,
-    this.busy = false,
-    this.unresolved = false,
-    this.epoch = 0,
-    this.recoveryBlocked = false,
-  });
-  final SymbolSetting? owner;
-  final bool busy, unresolved;
+  SymbolSettingsActivity({Map<int, SymbolSetting> running = const {}, this.epoch = 0})
+    : running = Map.unmodifiable(running);
+  final Map<int, SymbolSetting> running;
   final int epoch;
-  final bool recoveryBlocked;
-  bool blocks(SymbolSetting setting) => recoveryBlocked || owner != null && owner != setting;
+  bool get busy => running.isNotEmpty;
+  bool isRunning(SymbolSetting setting) => running.containsValue(setting);
+  bool holds(int lease) => running.containsKey(lease);
 }
 
-/// Serializes active operations. Order records and settled unknown order
-/// outcomes are observational; other financial settings retain their guards.
 final symbolSettingsActivityProvider =
     NotifierProvider<SymbolSettingsActivityController, SymbolSettingsActivity>(
       SymbolSettingsActivityController.new,
@@ -52,28 +45,11 @@ final orderSessionActiveProvider = Provider.autoDispose<bool>((ref) {
 });
 
 bool orderSessionActive(bool foreground, SymbolSettingsActivity operation) =>
-    foreground || operation.busy && operation.owner == SymbolSetting.order;
+    foreground || operation.isRunning(SymbolSetting.order);
 
 class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> {
-  int _token = 0;
-  SymbolSettingsActivity _operation = const SymbolSettingsActivity();
+  int _token = 0, _epoch = 0;
   Object? _identityKey;
-  bool get _recoveryBlocked => _hasRecoveryBlock();
-
-  bool _hasRecoveryBlock() {
-    final rebalances = ref.read(rebalanceStorageProvider);
-    final transfers = ref.read(internalTransferStorageProvider);
-    final margins = ref.read(positionMarginStorageProvider);
-    return !margins.ready ||
-        margins.failed ||
-        ref.read(currentPositionMarginsProvider).any((r) => !r.acknowledged) ||
-        !transfers.ready ||
-        transfers.failure ||
-        ref.read(pendingInternalTransfersProvider).isNotEmpty ||
-        !rebalances.ready ||
-        rebalances.failure ||
-        ref.read(pendingRebalancesProvider).isNotEmpty;
-  }
 
   @override
   SymbolSettingsActivity build() {
@@ -87,83 +63,27 @@ class SymbolSettingsActivityController extends Notifier<SymbolSettingsActivity> 
         ),
       ),
     );
-    if (_identityKey != null && _identityKey != identityKey) {
-      _token++;
-      _operation = SymbolSettingsActivity(epoch: _operation.epoch + 1);
-    }
+    // Another account never inherits leases; its reads start a new epoch.
+    if (_identityKey != null && _identityKey != identityKey) _epoch++;
     _identityKey = identityKey;
-    // Derive recovery state during provider rebuilds. A wallet-scoped pending
-    // list can rebuild lazily while a widget renders after logout; writing this
-    // notifier from its listener would mutate state during widget build.
-    ref.watch(positionMarginStorageProvider);
-    ref.watch(currentPositionMarginsProvider);
-    ref.watch(internalTransferStorageProvider);
-    ref.watch(pendingInternalTransfersProvider);
-    ref.watch(rebalanceStorageProvider);
-    ref.watch(pendingRebalancesProvider);
-    return SymbolSettingsActivity(
-      owner: _operation.owner,
-      busy: _operation.busy,
-      unresolved: _operation.unresolved,
-      epoch: _operation.epoch,
-      recoveryBlocked: _recoveryBlocked,
-    );
+    return SymbolSettingsActivity(epoch: _epoch);
   }
 
-  int? acquire(SymbolSetting owner, {bool checkingOnly = false}) {
-    final rebalances = ref.read(rebalanceStorageProvider);
-    final transfers = ref.read(internalTransferStorageProvider);
-    final margins = ref.read(positionMarginStorageProvider);
-    if (!margins.ready ||
-        margins.failed ||
-        ref.read(currentPositionMarginsProvider).any((r) => !r.acknowledged) && !checkingOnly ||
-        !transfers.ready ||
-        transfers.failure ||
-        ref.read(pendingInternalTransfersProvider).isNotEmpty && !checkingOnly ||
-        !rebalances.ready ||
-        rebalances.failure ||
-        ref.read(pendingRebalancesProvider).isNotEmpty && !checkingOnly) {
-      return null;
-    }
-    if (state.busy ||
-        state.owner != null && state.owner != owner ||
-        state.unresolved && !checkingOnly) {
-      return null;
-    }
-    state = _operation = SymbolSettingsActivity(
-      owner: owner,
-      busy: true,
-      epoch: state.epoch,
-      recoveryBlocked: _recoveryBlocked,
-    );
-    return ++_token;
+  /// Registers an operation; never refused because another one is running.
+  int acquire(SymbolSetting owner) {
+    final lease = ++_token;
+    state = SymbolSettingsActivity(running: {...state.running, lease: owner}, epoch: _epoch);
+    return lease;
   }
 
-  void submitted(int token) {
-    if (!ref.mounted || token != _token) return;
-    state = _operation = SymbolSettingsActivity(
-      owner: state.owner,
-      busy: true,
-      epoch: state.epoch + 1,
-      recoveryBlocked: _recoveryBlocked,
-    );
+  /// A write was dispatched: reads taken before it are no longer current.
+  void submitted(int lease) {
+    if (!ref.mounted || !state.holds(lease)) return;
+    state = SymbolSettingsActivity(running: state.running, epoch: ++_epoch);
   }
 
-  void finish(int token, {required bool unresolved}) {
-    if (!ref.mounted || token != _token) return;
-    final holdsSettings =
-        unresolved &&
-        !const {
-          SymbolSetting.order,
-          SymbolSetting.scaled,
-          SymbolSetting.batchClose,
-          SymbolSetting.recovery,
-        }.contains(state.owner);
-    state = _operation = SymbolSettingsActivity(
-      owner: holdsSettings ? state.owner : null,
-      unresolved: holdsSettings,
-      epoch: state.epoch,
-      recoveryBlocked: _recoveryBlocked,
-    );
+  void finish(int lease) {
+    if (!ref.mounted || !state.holds(lease)) return;
+    state = SymbolSettingsActivity(running: {...state.running}..remove(lease), epoch: _epoch);
   }
 }

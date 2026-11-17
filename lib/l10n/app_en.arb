@@ -810,7 +810,6 @@
   "liveOrderEntry": "Place a live futures order",
   "liveOrderEntryHint": "The form above uses local demo funds. Live orders have a separate wallet confirmation.",
   "liveOrderScope": "Use this wallet to place real ordinary, conditional or trailing orders. Limit orders use a supported execution policy. In one-way mode, a long or short order can reduce or reverse an existing position. Hedge mode operates on the selected long or short side. Aster checks fees, available margin and final eligibility.",
-  "liveOrderReadContext": "Read order settings (2 signatures)",
   "liveOrderSettingsBusy": "Finish the pending futures settings operation before placing an order.",
   "liveOrderSubmitting": "Submitting the live order…",
   "liveOrderMarkPrice": "Reference mark price",
@@ -857,7 +856,6 @@
   "timeInForceGtc": "GTC (Good till canceled)",
   "timeInForceIoc": "IOC (Immediate or canceled)",
   "liveOrderTriggerBasis": "Trigger price basis",
-  "liveOrderTriggerReference": "Reference price at read",
   "liveOrderTriggerProtect": "Trigger price protection",
   "liveOrderProtectOn": "On",
   "liveOrderProtectOff": "Off",
@@ -908,7 +906,6 @@
       }
     }
   },
-  "liveOrderFundsReadHint": "Read public rules and mark price, then sign separately for position mode, symbol positions, asset mode and account funds (4 signatures). Read validity is 30 seconds from the mark-price response. No order is submitted.",
   "liveOrderReadFunds": "Read asset mode and account funds before reviewing an opening order. Missing amounts are unknown, not zero.",
   "liveOrderFundsChanged": "Account funds and the selected position or configuration do not agree. Refresh and review again.",
   "liveOrderTradingDisabled": "The signed account response reports trading disabled. Check your Aster account before placing an opening order.",
@@ -948,23 +945,6 @@
   "liveTrailingActivationInvalid": "Enter a positive decimal activation price, or leave it empty for the exchange default.",
   "liveTrailingActivationFilter": "The activation price does not match the exchange price range or step.",
   "liveTrailingImmediate": "A long activation price must be below the selected latest price; a short activation price must be above it.",
-  "liveTrailingHint": "The exchange tracks favorable price extremes, then submits market execution after the configured pullback. This uses a fixed quantity, not entire close. It does not continuously reprice a limit order.",
-  "liveTrailingRate": "Callback rate (%)",
-  "liveTrailingRateBounds": "0.1–5; entering 1 means 1%.",
-  "liveTrailingBasis": "Tracking price basis",
-  "liveTrailingActivation": "Activation price ({asset}, optional)",
-  "@liveTrailingActivation": {
-    "placeholders": {
-      "asset": {
-        "type": "String"
-      }
-    }
-  },
-  "liveTrailingDefault": "Leave empty to use the selected price basis at exchange placement time. This snapshot is not submitted as the activation price.",
-  "liveTrailingActivationDirection": "If specified: long activation below the latest price; short activation above it. The exchange rechecks at placement.",
-  "liveTrailingBuy": "After activation, a long order follows the lowest price and triggers on a rise by the callback percentage. Triggering does not guarantee an execution price.",
-  "liveTrailingSell": "After activation, a short order follows the highest price and triggers on a fall by the callback percentage. Triggering does not guarantee an execution price.",
-  "liveTrailingEstimateHint": "There is no fixed execution price. Notional and opening margin use the current mark only as a reference; closing PnL is unavailable. Actual size eligibility, margin and execution depend on exchange state. Fees, funding and slippage are excluded.",
   "quickOrderInvalidAmount": "Enter a positive decimal amount.",
   "quickOrderQuoteUnavailable": "Order book price is unavailable, so the amount cannot be converted. Try again shortly.",
   "quickOrderAmountTooSmall": "The amount is below the minimum order quantity.",
@@ -1354,36 +1334,13 @@
   "attachedEntryPegEstimate": "Notional and margin estimates use Mark price (the trigger price for conditional entries), not the selected book level or an execution price. Aster checks TP/SL against its resolved entry price and may reject the strategy.",
   "attachedEntryPegInvalid": "BBO entry pricing requires a limit or stop-limit entry with attached TP/SL and no entered limit price. Post Only BBO supports same-side level 1 only.",
   "scaledTitle": "Scaled orders",
-  "scaledRule": "2–110 independent GTC limit orders, submitted from low to high price. Prices include both endpoints and are rounded down to distinct ticks. Quantities follow the selected distribution and valid quantity steps; review every child before signing.",
-  "scaledRisk": "Each order requires a fresh account check, a submission signature and a query signature. Orders are independent and may only partly succeed. A failure or unknown result stops the remaining orders. Stopping or leaving this page does not cancel orders already sent. Unsent orders are never resumed automatically.",
-  "scaledLow": "Lowest price",
-  "scaledHigh": "Highest price",
-  "scaledCount": "Number of orders",
-  "scaledPreview": "Order breakdown",
-  "scaledReview": "Review scaled orders",
-  "scaledConfirm": "Sign and submit these orders",
-  "scaledTotalQuantity": "Total quantity",
-  "scaledTotalNotional": "Total limit notional",
-  "scaledMarginReference": "Margin reference before netting",
-  "scaledMarginHint": "Reference = total limit notional ÷ leverage. It excludes position netting, existing orders, fees and released margin. It is not the final margin requirement or an executable allowance. Aster checks each order.",
-  "scaledPortion": "Share of total quantity (approx.)",
-  "scaledOrderNumber": "Order {number}",
   "scaledCountInvalid": "Enter a whole number from 2 to 110.",
   "scaledRangeInvalid": "Enter positive prices with the highest price above the lowest.",
   "scaledRangeTooNarrow": "The price range has too few ticks for distinct child orders.",
   "scaledQuantityTooSmall": "The total quantity cannot cover the minimum quantity of every child order.",
   "scaledQuantityStep": "The total quantity cannot be split exactly into valid quantity steps. Adjust it without rounding away quantity.",
   "scaledConfigurationChanged": "Account mode, leverage or order rules changed. Remaining orders were stopped; refresh and review a new plan.",
-  "scaledStopped": "Remaining orders stopped. Orders already sent stay active; check their results below.",
-  "scaledResults": "Scaled order results",
   "scaledRefreshRequired": "Refresh the account and review the plan again before submitting.",
-  "@scaledOrderNumber": {
-    "placeholders": {
-      "number": {
-        "type": "int"
-      }
-    }
-  },
   "depositGasTitle": "Next-step gas estimate",
   "depositGasEstimate": "Estimate next step",
   "depositGasScope": "Public simulation only: no wallet signature or transaction is sent. Estimates cover this step only. Approval, deposit, receipts and platform credit are separate steps. User/platform limits are still unknown.",
@@ -1415,7 +1372,7 @@
   "depositApprovalPending": "This wallet has an unresolved approval. Check that transaction before sending another one.",
   "depositApprovalNotNeeded": "This amount needs no approval step. Deposit submission still requires verified platform limits and credit recovery.",
   "depositApprovalChanged": "Chain state or fees changed. Prepare and review the step again; nothing was sent.",
-  "depositApprovalUnknown": "The wallet result is unknown. Do not repeat the approval. Use the original transaction hash from your wallet to check it.",
+  "depositApprovalUnknown": "Network error. Check the records later to confirm.",
   "depositApprovalMismatch": "This transaction does not match the saved wallet, chain or nonce. The saved record was kept.",
   "depositApprovalRecovery": "Pending token approvals",
   "depositApprovalOpenRecovery": "Review pending approvals",
@@ -1435,7 +1392,15 @@
   "depositApprovalPreparedAt": "Prepared at (UTC)",
   "walletTransactionInvalid": "The wallet transaction details are invalid. Nothing was sent.",
   "walletTransactionBusy": "Another wallet transaction request is still pending. Wait for it to finish.",
-  "walletTransactionWrongChain": "Reconnect the same wallet on the selected deposit network before sending this step.",
+  "fundingSwitchNetwork": "Switch your wallet to {network}, then try again.",
+  "@fundingSwitchNetwork": {
+    "placeholders": {
+      "network": {
+        "type": "String"
+      }
+    }
+  },
+  "walletTransactionWrongChain": "Switch your wallet to the selected deposit network, then try again.",
   "walletTransactionPermission": "This wallet session has no transaction sending permission. Disconnect and reconnect the same wallet to grant it.",
   "depositApprovalReceiptReplaced": "Another transaction consumed the saved nonce on-chain. The original approval is not confirmed. Re-read the current allowance before preparing anything else.",
   "rebalanceTitle": "Rebalance collateral",
@@ -1454,7 +1419,7 @@
   "rebalanceStale": "This account read is historical. Read again before reviewing.",
   "rebalanceStorage": "The Rebalance recovery record cannot be read or saved. New Rebalance requests, order submissions and contract setting changes are blocked until storage recovers.",
   "rebalancePending": "This wallet has an unresolved Rebalance. Check the current account; the request will never be resent automatically.",
-  "rebalanceUnknown": "The original request result is unknown. Current balances cannot prove that request completed. The API has no documented lookup by nonce, so the record and mutation block remain. Do not repeat the request.",
+  "rebalanceUnknown": "Network error. Check the records later to confirm.",
   "rebalanceReplyPending": "The server response was saved. Read the current account to finish checking; this will not resend Rebalance.",
   "rebalanceNoExchange": "The server returned an empty response: no asset exchange was reported. The current account is shown separately.",
   "rebalanceReported": "The server reported an asset exchange. These are its returned balance and account reference, not a conversion quote or proof that all debt is cleared.",
@@ -1521,7 +1486,7 @@
   "internalTransferTooLarge": "The amount exceeds the source transferable amount.",
   "internalTransferStorage": "Transfer recovery storage is unavailable. Retry reading storage before submitting new orders, settings or transfers.",
   "internalTransferPending": "A previous transfer needs review. New transfers, orders and account settings are blocked.",
-  "internalTransferUnknown": "The transfer outcome is unknown. The original client ID cannot be queried through a documented API. Balance changes do not prove completion. This record is retained and cannot be retried or cleared here; contact Aster with the original identifiers.",
+  "internalTransferUnknown": "Network error. Check the records later to confirm.",
   "internalTransferReplyPending": "Aster reported SUCCESS. Read both accounts to finish refreshing balances; do not resubmit the transfer.",
   "internalTransferReported": "Aster reported transfer SUCCESS; both account balances were read again. This internal transfer is not an on-chain transaction.",
   "internalTransferClientId": "Original client transfer ID",
@@ -1762,7 +1727,7 @@
   "authorizationGrant": "Signer: device agent. Spot and Futures trading: allowed. Withdrawal: not granted. Valid for 30 days. No builder or fee grant.",
   "authorizationConfirm": "Confirm and sign authorization",
   "authorizationAcknowledged": "Aster acknowledged the request. Run the access check to confirm what this wallet can read and the reported trading status.",
-  "authorizationUnknown": "The authorization result is unknown. Check access before making another explicit request.",
+  "authorizationUnknown": "Network error. Check the records later to confirm.",
   "authorizationFuturesRead": "Futures signed API read",
   "authorizationSpotRead": "Spot signed API read",
   "authorizationReadAccepted": "Signed read accepted for this wallet",
@@ -1804,7 +1769,7 @@
   "walletOperationReference": "Request nonce",
   "walletOperationStorage": "Saved request storage is unavailable. New submissions are blocked; retry loading storage.",
   "walletOperationPending": "An earlier request from this wallet has an unknown result. Do not submit it again. Resolve it with Aster before another submission.",
-  "walletOperationUnknown": "The request may have been accepted. Its result is unknown and its unsigned terms remain saved. No automatic retry will be sent.",
+  "walletOperationUnknown": "Network error. Check the records later to confirm.",
   "walletOperationAcknowledged": "Aster acknowledged this request. This is not a fresh status, balance or on-chain confirmation.",
   "withdrawalSubmit": "Withdraw",
   "withdrawalScope": "Withdraw to this wallet’s own registered address. A fresh signed master-account directory, withdrawal limits and fee estimate are required. Spot and Futures balances remain separate.",
@@ -1818,6 +1783,7 @@
   "withdrawalConfirm": "Confirm withdrawal and sign",
   "withdrawalAcknowledged": "Aster returned a withdrawal request ID. Check history for completion; the returned signature digest is not a transaction hash.",
   "withdrawalAmountInvalid": "Enter a positive amount within the selected token precision and a supported automatic withdrawal route.",
+  "withdrawalReceiverInvalid": "Enter a valid EVM receiving address.",
   "withdrawalAssetChanged": "Asset availability, contract or precision changed. Reload the asset list and prepare again.",
   "withdrawalFeeChanged": "The fee changed. Prepare a new review before signing.",
   "withdrawalLimitsUnknown": "A required withdrawal limit or asset USD price is unavailable. Submission is blocked.",
@@ -1842,7 +1808,7 @@
   "depositSubmissionStorage": "Deposit recovery storage is unavailable. New deposits are blocked; reload saved records.",
   "depositSubmissionPending": "A deposit from this wallet still needs chain or platform confirmation.",
   "depositSubmissionNoPending": "No pending deposit for this wallet.",
-  "depositSubmissionUnknown": "The wallet may have submitted the transaction. Keep the saved record and recover its status before another deposit.",
+  "depositSubmissionUnknown": "Network error. Check the records later to confirm.",
   "depositSubmissionChanged": "Balance, allowance, transaction or Gas changed. Prepare and review again.",
   "depositSubmissionApprovalNeeded": "ERC-20 allowance is insufficient. Complete and verify the separate approval step first.",
   "depositSubmissionHashNeeded": "Read and bind a matching transaction hash before checking platform credit.",
@@ -2071,7 +2037,7 @@
   "marginAdjustHistoryEmpty": "No margin adjustment records for this wallet.",
   "marginAdjustCheck": "Check original reference",
   "marginAdjustVerified": "Exact adjustment found in Aster history.",
-  "marginAdjustUnknown": "Outcome unconfirmed. Keep the original reference and check again; do not resubmit.",
+  "marginAdjustUnknown": "Network error. Check the records later to confirm.",
   "marginAdjustRejected": "Aster explicitly rejected this adjustment. No successful adjustment is claimed.",
   "marginAdjustStorage": "Margin records are unavailable or could not be saved. Submission is blocked; reload the records.",
   "marginAdjustReload": "Reload saved records",
@@ -2218,45 +2184,14 @@
   "orderConfirmSell": "Short",
   "orderConfirmSubmitted": "Order submitted",
   "orderConfirmExpired": "Order details are no longer current. Close this dialog and place the order again.",
-  "scaledTotalAmount": "Total order amount",
   "scaledAmountInvalid": "Enter a positive total order amount.",
-  "scaledDistribution": "Quantity distribution",
   "scaledEqual": "Equal",
   "scaledIncreasing": "Increasing",
   "scaledDecreasing": "Decreasing",
   "scaledRandom": "Random",
-  "scaledConstant": "Distribution constant",
-  "scaledDifference": "Difference",
-  "scaledRatio": "Ratio",
-  "scaledDifferenceHint": "Quantity weights are 1:2:3… from low to high price for Increasing, reversed for Decreasing. Quantity steps may round the pattern.",
-  "scaledRatioHint": "Quantity weights are 1:2:4… from low to high price for Increasing, reversed for Decreasing. Every child must meet the minimum size; high counts may require a very large total.",
-  "scaledVariance": "Random variance",
   "scaledVarianceInvalid": "Enter a variance from 0% to 10%.",
   "scaledVarianceStep": "The quantity step cannot represent this random distribution within the selected variance. Increase the total, change the variance or reshuffle.",
   "scaledRandomRequired": "Generate a random breakdown before reviewing.",
-  "scaledRandomHint": "Each quantity stays within the selected percentage of the mean quantity. This breakdown stays fixed until you edit its inputs or reshuffle; changing language never redraws it.",
-  "scaledReshuffle": "Reshuffle quantities",
-  "scaledUnallocatedQuote": "Unallocated order amount",
-  "scaledAmountHint": "Order amount is the sum of child limit price × quantity, without leverage multiplication. Quote input is rounded down to valid base quantities; the unallocated amount is shown. This excludes fees and is not a margin or final execution-cost limit.",
-  "scaledBaseRemainderHint": "The entered base quantity is conserved exactly. Remaining steps go to the largest fractional remainders, with ties assigned from low to high price.",
-  "scaledPreviousChildren": "Previous orders",
-  "scaledNextChildren": "Next orders",
-  "scaledChildType": "Child order type",
-  "scaledEnteredSize": "Entered total",
-  "scaledPage": "Orders {start}–{end} of {total}",
-  "@scaledPage": {
-    "placeholders": {
-      "start": {
-        "type": "int"
-      },
-      "end": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
   "scaledCountRange": "2–110",
   "orderTypeTrailing": "Trailing Stop",
   "orderTypeTitle": "Order Type",
@@ -2608,6 +2543,15 @@
   "tradeLow24h": "24h Low",
   "tradeFutures": "Futures",
   "tradeSymbols": "Symbols",
+  "marketOpenInterest": "Open interest",
+  "marketSortBy": "Sort by {column}",
+  "@marketSortBy": {
+    "placeholders": {
+      "column": {
+        "type": "String"
+      }
+    }
+  },
   "accountsSelect": "Select",
   "accountsDifferentSource": "Choose a different account from the source.",
   "accountsTransferUnavailable": "Transfer unavailable",
@@ -2652,6 +2596,7 @@
   "fundingWithdrawFrom": "Withdraw from",
   "fundingNetworkLabel": "Network",
   "fundingAmountLabel": "Amount",
+  "fundingReceiverHint": "Enter your destination address",
   "fundingBalance": "Balance",
   "fundingMax": "Max",
   "fundingNetworkBnb": "BNB Chain",
@@ -3039,6 +2984,31 @@
   "modeNegativeUsdt": "Your available USDT assets are negative. Please rebalance your assets before switching asset mode.",
   "modeRefresh": "Refresh settings",
   "modeConfirm": "Confirm",
+  "marginModeSheetTitle": "{symbol} Margin mode",
+  "marginModeSheetScope": "Margin mode changes apply only to this contract",
+  "marginModePositionsOrOrders": "This contract has open positions or orders. Close the positions and cancel the orders before switching margin mode.",
+  "marginModeCrossDescription": "Shares available margin across cross positions. Profits and losses can offset each other, reducing liquidation risk.",
+  "marginModeIsolatedDescription": "Uses separate margin for each position. Losses are limited to the margin allocated to that position.",
+  "leverageSheetTitle": "{symbol} Adjust leverage",
+  "leverageDecrease": "Decrease leverage",
+  "leverageIncrease": "Increase leverage",
+  "leverageRemainingNotional": "Remaining openable notional value",
+  "leverageRemainingNotionalHint": "The maximum notional value you can open under your current leverage and system risk control limits.",
+  "leverageSheetNote": "Please note that leverage changing will also apply for open positions and open orders.\nSelecting higher leverage (such as 10x) increases your chances of liquidation.",
+  "@marginModeSheetTitle": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "@leverageSheetTitle": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
   "openOrdersCancelAll": "Cancel all",
   "openOrdersAmountUnit": "Filled / Total amount ({unit})",
   "openOrdersTriggerCondition": "{basis} {operator} {price}",
@@ -3549,6 +3519,7 @@
   "pushHour": "Hour",
   "pushMinute": "Minute",
   "pushConfirm": "Confirm",
+  "pushQuietHoursNotCleared": "Quiet hours were not turned off. Please try again later.",
   "pushQuietSameTime": "Start and end time must be different.",
   "tradingHistoryEstimatedRoe": "Estimated ROE%",
   "tradingHistoryEstimateHint": "Leverage and margin mode are the first values observed in this cycle. ROE is an estimate before fees, not an Aster historical return.",
@@ -3568,6 +3539,66 @@
   "@notificationTransferKind": {
     "placeholders": {
       "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "scaledChildInvalid": "Order {index} (price {price}, quantity {quantity}): {reason}",
+  "@scaledChildInvalid": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      },
+      "quantity": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "scaledLowestPrice": "Lowest Price",
+  "scaledHighestPrice": "Highest Price",
+  "scaledOrderCount": "Order count",
+  "scaledDistributionLabel": "Distribution",
+  "scaledPreviewLink": "Preview",
+  "scaledConstDifference": "Const. difference",
+  "scaledConstRatio": "Const. ratio",
+  "scaledSizeDistribution": "Size distribution",
+  "scaledEqualHint": "Equal size for each order",
+  "scaledRandomHintShort": "Random size for each order",
+  "scaledIncreasingHint": "Size increases linearly with price",
+  "scaledDecreasingHint": "Size decreases linearly with price",
+  "scaledConstantDifference": "Constant difference",
+  "scaledConstantRatio": "Constant ratio",
+  "scaledSubOrderType": "Sub-order type",
+  "scaledPriceColumn": "Price ({asset})",
+  "@scaledPriceColumn": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "scaledSizeColumn": "Size ({asset})",
+  "@scaledSizeColumn": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "scaledAveragePrice": "Average price",
+  "scaledLowestPriceRow": "Lowest price",
+  "scaledHighestPriceRow": "Highest price",
+  "scaledSubOrderCount": "Sub-order count",
+  "scaledMaximumSize": "Maximum qty is {value}",
+  "@scaledMaximumSize": {
+    "placeholders": {
+      "value": {
         "type": "String"
       }
     }

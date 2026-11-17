@@ -3,6 +3,9 @@ class PublicLeverage {
   PublicLeverage(Iterable<(int, int)> ranges) : ranges = List.unmodifiable(ranges);
   final List<(int, int)> ranges;
 
+  /// Highest leverage any bracket opens, as advertised for the market.
+  int get maximumLeverage => ranges.map((range) => range.$2).reduce((a, b) => a > b ? a : b);
+
   int defaultLeverage({int preferred = 20}) {
     final supported = <int>{
       for (final range in ranges)

@@ -44,6 +44,9 @@ class TestFuturesAssetModeRepository implements FuturesAssetModeRepository {
   AccountReadFailure? readFailure, changeFailure;
   bool submit = true;
   FuturesAssetModeContext? context;
+
+  /// Result of the verification query; defaults to [result].
+  AssetModeResult? checkResult;
   AssetModeResult result = AssetModeResult(
     observed: FuturesAssetMode.multi,
     checkedAt: assetModeClock,
@@ -88,6 +91,6 @@ class TestFuturesAssetModeRepository implements FuturesAssetModeRepository {
     latestCurrent = isCurrent;
     onStep(AssetModeStep.checkSigning);
     await checkGate?.future;
-    return result;
+    return checkResult ?? result;
   }
 }

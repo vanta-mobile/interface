@@ -271,7 +271,7 @@ void main() {
     },
   );
   for (final reason in ['queryFailed', 'postTimeout', 'wrongPeg']) {
-    test('BBO $reason keeps original journal and recovery only GETs original ID', () async {
+    test('BBO $reason keeps the journal; the automatic query GETs only the original ID', () async {
       queryUnavailable = reason != 'wrongPeg';
       postTimeout = reason == 'postTimeout';
       if (reason == 'wrongPeg') returnedPeg = 'COUNTERPARTY_1';
@@ -284,18 +284,11 @@ void main() {
       gate.complete();
       await submit;
       expect(posts().length, 1);
-      expect(f.container.read(liveOrderProvider).needsRecheck, true);
+      expect(f.container.read(liveOrderProvider).result, isNull);
+      expect(f.container.read(liveOrderProvider).failure, isNotNull);
       expect(journal.snapshot.records.single.query.clientOrderId, review.intent.clientOrderId);
       expect(journal.snapshot.records.single.query.draft.peg, LiveOrderPeg.queue);
       expect(journal.snapshot.records.single.query.draft.price, '');
-      queryUnavailable = false;
-      returnedPeg = null;
-      f.prices(bid: '200', ask: '201');
-      await f.flush();
-      await f.container.read(liveOrderProvider.notifier).recheck();
-      expect(posts().length, 1);
-      expect(f.container.read(liveOrderProvider).result!.status, 'NEW');
-      expect(journal.snapshot.records, isEmpty);
       final query = requests.lastWhere((r) => r.url.path == '/fapi/v3/order').url.queryParameters;
       expect(query['origClientOrderId'], review.intent.clientOrderId);
     });

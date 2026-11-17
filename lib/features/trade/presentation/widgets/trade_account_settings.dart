@@ -4,12 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../market/application/public_leverage_provider.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../portfolio/application/main_order_refresh_provider.dart';
 import '../../../portfolio/domain/futures_asset_mode.dart';
 import '../../../portfolio/domain/live_order.dart';
 import '../../../portfolio/domain/position_margin_mode.dart';
-import '../../../portfolio/presentation/futures_asset_mode_screen.dart';
-import '../../../portfolio/presentation/position_leverage_screen.dart';
-import '../../../portfolio/presentation/position_margin_mode_screen.dart';
+import '../../../portfolio/presentation/futures_asset_mode_sheet.dart';
+import '../../../portfolio/presentation/position_leverage_sheet.dart';
+import '../../../portfolio/presentation/position_margin_mode_sheet.dart';
 import '../trade_theme.dart';
 
 class TradeAccountSettings extends ConsumerWidget {
@@ -68,7 +69,12 @@ class TradeAccountSettings extends ConsumerWidget {
               child: Tooltip(
                 message: '${entry.$1}: ${entry.$2}',
                 child: TextButton(
-                  onPressed: enabled ? entry.$3 : null,
+                  onPressed: enabled
+                      ? () {
+                          ref.read(mainOrderRefreshProvider.notifier).stopBackground();
+                          entry.$3();
+                        }
+                      : null,
                   style: TextButton.styleFrom(
                     backgroundColor: TradeColors.card,
                     minimumSize: const Size(44, 27),

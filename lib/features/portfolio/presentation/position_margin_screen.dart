@@ -6,12 +6,10 @@ import '../../auth/application/auth_provider.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
 import '../../trade/presentation/widgets/primitives.dart';
 import '../application/position_margin_provider.dart';
-import '../application/symbol_settings_activity.dart';
 import '../domain/position_margin_adjustment.dart';
 import 'position_margin_form.dart';
 import 'position_margin_history.dart';
 import 'position_margin_status.dart';
-import 'symbol_settings_notice.dart';
 import '../../../core/presentation/app_toast.dart';
 
 void openPositionMargin(BuildContext context, {String? symbol, String? side}) =>
@@ -65,7 +63,6 @@ class _PositionMarginScreenState extends ConsumerState<PositionMarginScreen> {
     final settings =
         target && c?.position.symbol == widget.symbol && c?.position.side == widget.side ? c : null;
     final intent = settings == null ? null : controller.prepare(direction, amount.text);
-    final blocked = ref.watch(symbolSettingsActivityProvider).blocks(SymbolSetting.positionMargin);
     return PopScope(
       onPopInvokedWithResult: (popped, _) {
         if (popped) controller.stop();
@@ -84,10 +81,9 @@ class _PositionMarginScreenState extends ConsumerState<PositionMarginScreen> {
               if (target) ...[
                 SelectableText('${widget.symbol} · ${widget.side}'),
                 if (identity?.walletAddress case final address?) SelectableText(address),
-                const SymbolSettingsNotice(setting: SymbolSetting.positionMargin),
                 FilledButton.icon(
                   key: const Key('margin-adjust-read'),
-                  onPressed: state.busy || auth.busy || blocked
+                  onPressed: state.busy || auth.busy
                       ? null
                       : identity?.signingAvailable == true && identity?.walletAddress != null
                       ? () => controller.load(widget.symbol!, widget.side!)

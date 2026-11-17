@@ -53,21 +53,19 @@ class SignedPositionLeverageRepository implements PositionLeverageRepository {
         symbol,
       );
       final receivedAt = now();
-      final current = mapCurrentLeverage(
-        await _request(service.positionRisk).read(
-          address: address,
-          parameters: {'symbol': symbol},
-          isCurrent: isCurrent,
-          onStep: progress,
-        ),
-        symbol,
+      final positions = await _request(service.positionRisk).read(
+        address: address,
+        parameters: {'symbol': symbol},
+        isCurrent: isCurrent,
+        onStep: progress,
       );
       return PositionLeverageContext(
         address: address,
         symbol: symbol,
-        current: current,
+        current: mapCurrentLeverage(positions, symbol),
         receivedAt: receivedAt,
         brackets: brackets,
+        positionNotional: mapPositionNotional(positions, symbol),
       );
     } on FormatException {
       throw const AccountReadFailure('accountDataInvalid');

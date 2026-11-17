@@ -56,8 +56,7 @@ class _PositionTpSlListScreenState extends ConsumerState<PositionTpSlListScreen>
         session.identity?.signingAvailable == true &&
         !session.busy &&
         !busy &&
-        !cancellation.busy &&
-        !cancellation.needsRecheck;
+        !cancellation.busy;
     final groups = walletPositionExitGroups(
       p,
       orders,
@@ -150,7 +149,7 @@ class _PositionTpSlListScreenState extends ConsumerState<PositionTpSlListScreen>
         await controller.cancel(intent);
         if (!mounted) return;
         final state = ref.read(orderCancellationProvider);
-        if (state.failure != null || state.needsRecheck || state.result?.failure != null) break;
+        if (state.failure != null || state.result?.failure != null) break;
       }
     } finally {
       if (mounted) setState(() => cancelling = null);

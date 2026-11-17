@@ -227,6 +227,61 @@ class FundingAmountField extends StatelessWidget {
   }
 }
 
+/// Withdrawal destination card, styled like [FundingField] with an input.
+class FundingAddressField extends StatelessWidget {
+  const FundingAddressField({
+    super.key,
+    required this.label,
+    required this.hint,
+    required this.controller,
+    required this.onChanged,
+    this.error = false,
+  });
+  final String label, hint;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final bool error;
+  @override
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(minHeight: 52),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      color: PortfolioColors.card,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: error ? PortfolioColors.negative : PortfolioColors.line),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label, style: FundingTypography.fieldLabel),
+        const SizedBox(height: 2),
+        TextField(
+          key: const Key('funding-receiver'),
+          controller: controller,
+          keyboardType: TextInputType.visiblePassword,
+          autocorrect: false,
+          enableSuggestions: false,
+          style: AccountTypography.body,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: AccountTypography.body.copyWith(color: PortfolioColors.secondary),
+            isCollapsed: true,
+            isDense: true,
+            filled: false,
+            contentPadding: EdgeInsets.zero,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            disabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+          ),
+          onChanged: onChanged,
+        ),
+      ],
+    ),
+  );
+}
+
 /// Tappable asset label inside [FundingAmountField].
 class FundingAssetSelector extends StatelessWidget {
   const FundingAssetSelector({super.key, required this.asset, this.onTap, this.open = false});

@@ -79,15 +79,12 @@ void main() {
       liveDraft(timeInForce: LiveOrderTimeInForce.ioc),
     )!;
     repository.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
-    await controller().submit(prepared);
-    expect(container.read(liveOrderProvider).needsRecheck, true);
-    expect(controller().prepare('BTCUSDT', liveDraft()), null);
-    repository.result = LiveOrderResult(
+    repository.checkResult = LiveOrderResult(
       orderId: '12345',
       status: 'EXPIRED',
       executedQuantity: Decimal.parse('0.0004'),
     );
-    await controller().recheck();
+    await controller().submit(prepared);
     expect(repository.lastIntent!.draft.timeInForce, LiveOrderTimeInForce.ioc);
     expect(repository.lastIntent!.clientOrderId, prepared.clientOrderId);
     expect(repository.submits, 1);
@@ -117,15 +114,12 @@ void main() {
     );
     final prepared = controller().prepare('BTCUSDT', liveDraft(market: true, trigger: trigger))!;
     repository.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
-    await controller().submit(prepared);
-    expect(container.read(liveOrderProvider).needsRecheck, true);
-    expect(controller().prepare('BTCUSDT', liveDraft()), null);
-    repository.result = LiveOrderResult(
+    repository.checkResult = LiveOrderResult(
       orderId: '12345',
       status: 'NEW',
       executedQuantity: Decimal.zero,
     );
-    await controller().recheck();
+    await controller().submit(prepared);
     expect(repository.lastIntent!.clientOrderId, prepared.clientOrderId);
     expect(repository.lastIntent!.draft.trigger, trigger);
     expect(repository.submits, 1);
@@ -152,7 +146,6 @@ void main() {
     repository.submitGate!.complete();
     await pending;
     expect(container.read(liveOrderProvider).failure?.key, 'liveOrderContextExpired');
-    expect(container.read(liveOrderProvider).needsRecheck, false);
   });
   test('normal external-wallet background does not invalidate an active signature', () async {
     await controller().load('BTCUSDT');
@@ -170,41 +163,47 @@ void main() {
     await controller().submit(old);
     expect(repository.submits, 0);
   });
-  test('duplicate confirm submits once and settings are locked during write', () async {
+  test('duplicate confirm submits once; settings stay available during the write', () async {
     await controller().load('BTCUSDT');
     final old = intent();
     repository.submitGate = Completer<void>();
     final pending = controller().submit(old);
     await controller().submit(old);
     expect(repository.submits, 1);
-    expect(
-      container.read(symbolSettingsActivityProvider.notifier).acquire(SymbolSetting.leverage),
-      null,
-    );
+    final activity = container.read(symbolSettingsActivityProvider.notifier);
+    activity.finish(activity.acquire(SymbolSetting.leverage));
     repository.submitGate!.complete();
     await pending;
     expect(container.read(liveOrderProvider).result?.orderId, '12345');
     expect(container.read(liveOrderProvider).stale, true);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
   });
-  test('unknown outcome releases lease and explicit recheck retains original ID', () async {
+  test('an unconfirmed order is queried automatically by its original ID', () async {
     await controller().load('BTCUSDT');
     final old = intent();
     repository.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
-    await controller().submit(old);
-    expect(container.read(liveOrderProvider).needsRecheck, true);
-    expect(container.read(symbolSettingsActivityProvider).unresolved, false);
-    expect(container.read(symbolSettingsActivityProvider).owner, isNull);
-    repository.result = LiveOrderResult(
+    repository.checkResult = LiveOrderResult(
       orderId: '12345',
       status: 'NEW',
       executedQuantity: Decimal.zero,
     );
-    await controller().recheck();
+    await controller().submit(old);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     expect(repository.lastIntent?.clientOrderId, old.clientOrderId);
     expect(repository.submits, 1);
     expect(repository.checks, 1);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
+  });
+  test('a still-unconfirmed order becomes the query error and nothing is re-sent', () async {
+    await controller().load('BTCUSDT');
+    repository.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
+    await controller().submit(intent());
+    final state = container.read(liveOrderProvider);
+    expect(repository.submits, 1);
+    expect(repository.checks, 1);
+    expect(state.result, isNull);
+    expect(state.failure?.key, 'accountNetwork');
+    expect(state.busy, isFalse);
   });
   test('unknown order permits a fresh read and a newly confirmed intent', () async {
     await controller().load('BTCUSDT');
@@ -219,13 +218,14 @@ void main() {
     await controller().submit(next);
     expect(repository.submits, 2);
   });
-  test('unexpected exception after submission also stays query-only', () async {
+  test('an exception after submission is also verified by query only', () async {
     await controller().load('BTCUSDT');
     repository.failure = const AccountReadFailure('accountNetwork');
     repository.throwAfterSubmit = true;
     await controller().submit(intent());
-    expect(container.read(liveOrderProvider).needsRecheck, true);
-    expect(container.read(symbolSettingsActivityProvider).unresolved, false);
+    // The order is queried again automatically, not left unknown.
+    expect(repository.checks, 1);
+    expect(repository.submits, 1);
   });
   test('wallet change discards late callbacks and creates no extra wallet', () async {
     await controller().load('BTCUSDT');
@@ -243,9 +243,9 @@ void main() {
     await controller().load('BTCUSDT');
     final old = intent();
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.leverage)!;
+    final lease = activity.acquire(SymbolSetting.leverage);
     activity.submitted(lease);
-    activity.finish(lease, unresolved: false);
+    activity.finish(lease);
     await controller().submit(old);
     expect(repository.submits, 0);
   });
@@ -326,7 +326,6 @@ void main() {
     repository.submitGate!.complete();
     await pending;
     expect(container.read(liveOrderProvider).failure!.key, 'liveOrderContextExpired');
-    expect(container.read(liveOrderProvider).needsRecheck, false);
   });
   test('unknown ordinary BBO preserves peg and original client ID for query-only retry', () async {
     await controller().load('BTCUSDT');
@@ -335,15 +334,12 @@ void main() {
       liveDraft(peg: LiveOrderPeg.counterparty, price: ''),
     )!;
     repository.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
-    await controller().submit(prepared);
-    expect(container.read(liveOrderProvider).needsRecheck, true);
-    expect(controller().prepare('BTCUSDT', liveDraft()), null);
-    repository.result = LiveOrderResult(
+    repository.checkResult = LiveOrderResult(
       orderId: '12345',
       status: 'NEW',
       executedQuantity: Decimal.zero,
     );
-    await controller().recheck();
+    await controller().submit(prepared);
     expect(repository.submits, 1);
     expect(repository.checks, 1);
     expect(repository.lastIntent!.clientOrderId, prepared.clientOrderId);

@@ -17,17 +17,15 @@ void main() {
         preparedAt: now,
         terms: {'child': fixtureChild, 'name': 'Desk A'},
       );
-  test(
-    'pending master request blocks other operations, another wallet remains independent',
-    () async {
-      final j = MemoryWalletOperationJournal();
-      addTearDown(j.close);
-      await j.prepare(record());
-      await expectLater(j.prepare(record(nonce: 2)), throwsA(isA<WalletOperationPending>()));
-      await j.prepare(record(address: '0x3333333333333333333333333333333333333333'));
-      expect(j.snapshot.records.length, 2);
-    },
-  );
+  test('an unconfirmed request does not block another; the same record is stored once', () async {
+    final j = MemoryWalletOperationJournal();
+    addTearDown(j.close);
+    await j.prepare(record());
+    await expectLater(j.prepare(record()), throwsA(isA<WalletOperationPending>()));
+    await j.prepare(record(nonce: 2));
+    await j.prepare(record(address: '0x3333333333333333333333333333333333333333'));
+    expect(j.snapshot.records.length, 3);
+  });
   test('acknowledgement is retained and permits a separately prepared operation', () async {
     final j = MemoryWalletOperationJournal();
     addTearDown(j.close);
@@ -107,7 +105,8 @@ void main() {
     addTearDown(restored.close);
     await restored.reload();
     expect(restored.snapshot.records.single.key, record().key);
-    await expectLater(restored.prepare(record(nonce: 2)), throwsA(isA<WalletOperationPending>()));
+    // The restored record still refuses a duplicate but blocks nothing else.
+    await expectLater(restored.prepare(record()), throwsA(isA<WalletOperationPending>()));
     await restored.report(record().key);
     final body = await File('${d.path}/wallet-operations-v1.json').readAsString();
     expect(jsonDecode(body)['records'][0]['acknowledged'], true);

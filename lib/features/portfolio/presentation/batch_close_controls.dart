@@ -8,22 +8,33 @@ import '../domain/batch_close.dart';
 import 'open_order_cancel_prompts.dart';
 
 /// Design confirmation sheet; confirming closes every listed position at
-/// market straight away.
+/// market straight away. Positions are re-read silently when the snapshot has
+/// gone stale; if they changed meanwhile, the new set is confirmed again.
 Future<void> confirmBatchClose(BuildContext context, WidgetRef ref, {String? symbol}) async {
-  final controller = ref.read(batchCloseProvider.notifier),
-      intent = controller.prepare(symbol: symbol);
-  if (intent == null) return;
-  final l10n = AppLocalizations.of(context), count = intent.targets.length;
-  final confirmed = await showWarningConfirmSheet(
-    context,
-    title: l10n.positionsCloseAll,
-    message: intent.symbol == null
-        ? l10n.positionsCloseAllQuestion(count)
-        : l10n.positionsCloseSymbolQuestion(intent.symbol!, count),
-    confirmKey: const Key('batch-close-confirm'),
-  );
-  if (confirmed && context.mounted) await controller.submit(intent);
+  final controller = ref.read(batchCloseProvider.notifier);
+  var intent = await controller.prepareCurrent(symbol: symbol);
+  while (intent != null) {
+    if (!context.mounted) return;
+    final l10n = AppLocalizations.of(context), count = intent.targets.length;
+    final confirmed = await showWarningConfirmSheet(
+      context,
+      title: l10n.positionsCloseAll,
+      message: intent.symbol == null
+          ? l10n.positionsCloseAllQuestion(count)
+          : l10n.positionsCloseSymbolQuestion(intent.symbol!, count),
+      confirmKey: const Key('batch-close-confirm'),
+    );
+    if (!confirmed || !context.mounted) return;
+    final current = await controller.renew(intent);
+    if (current == null) return;
+    if (_sameTargets(current, intent)) return controller.submit(current);
+    intent = current;
+  }
 }
+
+bool _sameTargets(BatchCloseIntent a, BatchCloseIntent b) =>
+    a.targets.map((t) => t.key).toSet().containsAll(b.targets.map((t) => t.key)) &&
+    a.targets.length == b.targets.length;
 
 class BatchCloseTargetDetails extends StatelessWidget {
   const BatchCloseTargetDetails({super.key, required this.target});

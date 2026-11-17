@@ -2,7 +2,6 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/wallet_operation.dart';
-import '../../../core/application/wallet_operation_provider.dart';
 import '../../../core/errors/api_error_details.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../auth/domain/auth_session.dart';
@@ -76,9 +75,6 @@ class AccountTransferController extends Notifier<AccountTransferState> {
         destination == null ||
         current.address.toLowerCase() == target.toLowerCase()) {
       throw const AccountReadFailure('authWalletChanged');
-    }
-    if (ref.read(currentWalletOperationsProvider).any((r) => !r.acknowledged)) {
-      throw const AccountReadFailure('walletOperationPending');
     }
     if (current.freezeRequested || destination.freezeRequested) {
       throw const AccountReadFailure('accountsFrozenNotice');

@@ -8,12 +8,10 @@ import '../application/main_order_refresh_provider.dart';
 import '../application/order_entry_gate_provider.dart';
 import '../../auth/application/auth_provider.dart';
 import '../application/live_order_provider.dart';
-import '../application/symbol_settings_activity.dart';
 import '../domain/live_order_entry_mode.dart';
 import 'live_order_form.dart';
 import 'live_order_mode_selector.dart';
-import 'live_order_status.dart';
-import 'scaled_order_screen.dart';
+import 'scaled_order_embedded.dart';
 import '../../trade/presentation/widgets/trade_order_pending.dart';
 import '../../trade/presentation/widgets/trade_account_settings.dart';
 import '../../trade/application/providers.dart' show orderPriceProvider, symbolProvider;
@@ -28,44 +26,62 @@ class LiveOrderScreen extends ConsumerStatefulWidget {
 
 class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
   LiveOrderEntryMode mode = LiveOrderEntryMode.limit;
+
+  /// The ordinary form keeps its last inline type while Scaled Order shows.
+  LiveOrderEntryMode inlineMode = LiveOrderEntryMode.limit;
   String get symbol => widget.symbol;
 
   @override
   void didUpdateWidget(covariant LiveOrderScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.symbol != symbol) mode = LiveOrderEntryMode.limit;
+    if (oldWidget.symbol != symbol) mode = inlineMode = LiveOrderEntryMode.limit;
   }
 
   void _selectMode(LiveOrderEntryMode next) {
     if (!mounted) return;
-    final live = ref.read(liveOrderProvider), activity = ref.read(symbolSettingsActivityProvider);
+    final live = ref.read(liveOrderProvider);
     final background = ref.read(mainOrderRefreshProvider).background;
     if ((!background && (ref.read(mainOrderRefreshProvider).loading || live.busy)) ||
         live.intent != null && live.busy ||
-        !background && activity.owner != null ||
-        activity.recoveryBlocked ||
         ref.read(authProvider).busy) {
       return;
     }
     if (!next.inline && next != LiveOrderEntryMode.scaled) return;
-    if (next.inline) setState(() => mode = next);
-    if (next == LiveOrderEntryMode.scaled) openScaledOrder(context, symbol);
+    setState(() {
+      mode = next;
+      if (next.inline) inlineMode = next;
+    });
   }
 
   Future<void> _refresh() => ref.read(mainOrderRefreshProvider.notifier).refresh(symbol);
 
-  /// Kept alive while hidden so in-progress input survives reads and failures.
-  Widget _orderForm(LiveOrderContext data, {required bool visible}) => Visibility(
-    key: ValueKey(('order-form-section', data.address, data.symbol)),
-    visible: visible,
-    maintainState: true,
-    child: LiveOrderForm(
-      key: ValueKey((data.address, data.symbol)),
-      data: data,
-      mode: mode,
-      onModeChanged: (next) => setState(() => mode = next),
-    ),
-  );
+  /// Kept alive while hidden so in-progress input survives reads, failures
+  /// and a visit to Scaled Order.
+  Widget _orderForm(LiveOrderContext data, {required bool visible}) {
+    final scaled = mode == LiveOrderEntryMode.scaled;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Visibility(
+          key: ValueKey(('order-form-section', data.address, data.symbol)),
+          visible: visible && !scaled,
+          maintainState: true,
+          child: LiveOrderForm(
+            key: ValueKey((data.address, data.symbol)),
+            data: data,
+            mode: inlineMode,
+            onModeChanged: (next) => setState(() => mode = inlineMode = next),
+          ),
+        ),
+        if (scaled && visible)
+          ScaledOrderEmbeddedForm(
+            key: ValueKey(('scaled-order', data.address, data.symbol)),
+            data: data,
+            enabled: !ref.watch(authProvider).busy,
+          ),
+      ],
+    );
+  }
 
   /// Symbol changes clear a book-selected price; identity changes reset the
   /// entry mode so another wallet never inherits it.
@@ -85,7 +101,7 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
         ),
       ),
       (previous, next) {
-        if (previous != next) setState(() => mode = LiveOrderEntryMode.limit);
+        if (previous != next) setState(() => mode = inlineMode = LiveOrderEntryMode.limit);
       },
     );
   }
@@ -95,7 +111,6 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
     _listenSelection();
     final state = ref.watch(liveOrderProvider);
     final auth = ref.watch(authProvider);
-    final settings = ref.watch(symbolSettingsActivityProvider);
     final refresh = ref.watch(mainOrderRefreshProvider);
     final gate = ref.watch(orderEntryGateProvider);
     final data = state.context?.symbol == symbol && gate == OrderEntryGate.ready
@@ -114,13 +129,12 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
         TradeAccountSettings(
           symbol: symbol,
           data: data,
+          // A periodic background refresh must not lock the settings; opening
+          // one stops that refresh first (see [TradeAccountSettings]).
           enabled:
-              !refresh.loading &&
-              !state.busy &&
-              !auth.busy &&
-              !settings.busy &&
-              settings.owner == null &&
-              !settings.recoveryBlocked,
+              (!refresh.loading || refresh.background) &&
+              (!state.busy || refresh.background && state.intent == null) &&
+              !auth.busy,
         ),
         const SizedBox(height: 8),
         LiveOrderModeSelector(
@@ -128,8 +142,6 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
           enabled:
               (!refresh.loading || refresh.background) &&
               (!state.busy || refresh.background && state.intent == null) &&
-              (settings.owner == null || refresh.background) &&
-              !settings.recoveryBlocked &&
               !auth.busy,
           onSelected: _selectMode,
         ),
@@ -143,7 +155,6 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
             loading: reading && gate == OrderEntryGate.ready,
           ),
         if (failed) EmbeddedOrderFailure(failure: readFailure, retry: _refresh, loading: reading),
-        const LiveOrderStatus(),
       ],
     );
   }

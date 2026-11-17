@@ -78,7 +78,7 @@ class SignedOrderModificationRepository implements OrderModificationRepository {
     final resolution = checked.resolution;
     if (resolution == null || !resolution.consistent) {
       return OrderModificationResult(
-        OrderModifyOutcome.unknown,
+        OrderModifyOutcome.unverified,
         failure: checked.failure ?? failure,
       );
     }

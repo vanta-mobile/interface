@@ -7,17 +7,16 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../trade/presentation/trade_theme.dart';
 import '../application/futures_asset_mode_provider.dart';
-import '../application/symbol_settings_activity.dart';
 import '../application/open_orders_provider.dart';
 import '../application/position_risk_provider.dart';
 import '../../../core/presentation/status_view.dart';
 import '../domain/futures_asset_mode.dart';
 import '../domain/position_margin_mode.dart';
 import '../domain/position_risk.dart';
-import 'mode_read_action.dart';
+import 'mode_access_action.dart';
 import 'mode_settings_sheet.dart';
 import 'portfolio_components.dart';
-import 'position_margin_mode_screen.dart';
+import 'position_margin_mode_sheet.dart';
 import 'account_position_card.dart';
 import 'aster_open_orders_panel.dart';
 
@@ -58,13 +57,11 @@ class _MultiAssetActivationSheetState extends ConsumerState<MultiAssetActivation
       ...markets.values.where((m) => m.requiresCross).map((m) => m.symbol),
     }.toList()..sort();
     final known = symbols.every(markets.containsKey);
-    final blocked = ref.watch(symbolSettingsActivityProvider).blocks(SymbolSetting.assetMode);
-    final intent = known ? controller.prepare(FuturesAssetMode.multi) : null;
     final failure = state.failure ?? state.result?.failure;
     return ModeSheetBody(
       key: const Key('multi-asset-activation-sheet'),
       title: l.modeActivateMulti,
-      onRefresh: state.needsRecheck ? controller.recheck : controller.load,
+      onRefresh: controller.load,
       children: [
         Text(
           l.modeMultiRequirements,
@@ -82,12 +79,11 @@ class _MultiAssetActivationSheetState extends ConsumerState<MultiAssetActivation
               key: ValueKey('affected-$symbol'),
               symbol: symbol,
               market: markets[symbol],
-              enabled: !state.busy && !managing && !blocked && !state.needsRecheck,
+              enabled: !state.busy && !managing,
               onManage: () => _manage(symbol, markets[symbol]),
             ),
         ],
         if (failure != null) ModeError(accountErrorText(context, failure)),
-        if (state.needsRecheck) ModeError(l.assetModeOutcomeUnknown),
         if (state.result?.observed != null && state.result!.observed != state.intent?.target)
           ModeError(
             l.assetModeObservedDifferent(
@@ -97,28 +93,32 @@ class _MultiAssetActivationSheetState extends ConsumerState<MultiAssetActivation
               l.modeMultiShort,
             ),
           ),
-        if (state.stale || state.needsRecheck)
-          ModeReadAction(
-            key: const Key('multi-asset-refresh'),
-            onRead: state.needsRecheck ? controller.recheck : controller.load,
-            busy: state.busy,
-            blocked: blocked || managing,
-            recheck: state.needsRecheck,
-          ),
         const SizedBox(height: 36),
-        ModeAction(
-          key: const Key('multi-asset-confirm'),
-          label: l.modeConfirm,
-          busy: state.busy || managing,
-          onPressed: intent == null ? null : () => _confirm(intent),
+        ModeAccessAction(
+          ready: ModeAction(
+            key: const Key('multi-asset-confirm'),
+            label: l.modeConfirm,
+            busy: state.busy || managing,
+            // Markets that still need Cross keep Confirm disabled.
+            onPressed:
+                known && state.context != null && !state.context!.blocks(FuturesAssetMode.multi)
+                ? _confirm
+                : null,
+          ),
         ),
       ],
     );
   }
 
-  Future<void> _confirm(AssetModeIntent intent) async {
+  Future<void> _confirm() async {
     final identity = ref.read(authProvider).identity;
-    await ref.read(futuresAssetModeProvider.notifier).change(intent);
+    final controller = ref.read(futuresAssetModeProvider.notifier);
+    // An expired read is refreshed before signing instead of asking for it.
+    if (ref.read(futuresAssetModeProvider).stale) await controller.load();
+    if (!mounted || identity != ref.read(authProvider).identity) return;
+    final intent = controller.prepare(FuturesAssetMode.multi);
+    if (intent == null) return;
+    await controller.change(intent);
     if (mounted &&
         ModalRoute.of(context)?.isCurrent == true &&
         identity == ref.read(authProvider).identity &&
@@ -132,32 +132,29 @@ class _MultiAssetActivationSheetState extends ConsumerState<MultiAssetActivation
     affected.add(symbol);
     setState(() => managing = true);
     try {
-      await Navigator.of(context).push<void>(
-        MaterialPageRoute(
-          builder: (_) => market?.blocked != false
-              ? market?.hasPosition == true || market?.hasCollateral == true
-                    ? _MarketPositionsPage(symbol: symbol)
-                    : Scaffold(
-                        appBar: AppBar(
-                          title: Text(AppLocalizations.of(context).asterOpenOrdersTitle),
+      if (market?.blocked == false) {
+        // Switch the market to Cross with the margin mode sheet.
+        await openMarginModeSettings(context, symbol, initialTarget: PositionMarginMode.cross);
+      } else {
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute(
+            builder: (_) => market?.hasPosition == true || market?.hasCollateral == true
+                ? _MarketPositionsPage(symbol: symbol)
+                : Scaffold(
+                    appBar: AppBar(title: Text(AppLocalizations.of(context).asterOpenOrdersTitle)),
+                    body: SafeArea(
+                      child: RefreshIndicator(
+                        onRefresh: ref.read(openOrdersReadProvider.notifier).refresh,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: AsterOpenOrdersPanel(symbol: symbol),
                         ),
-                        body: SafeArea(
-                          child: RefreshIndicator(
-                            onRefresh: ref.read(openOrdersReadProvider.notifier).refresh,
-                            child: SingleChildScrollView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              child: AsterOpenOrdersPanel(symbol: symbol),
-                            ),
-                          ),
-                        ),
-                      )
-              : PositionMarginModeScreen(
-                  symbol: symbol,
-                  initialTarget: PositionMarginMode.cross,
-                  readOnOpen: true,
-                ),
-        ),
-      );
+                      ),
+                    ),
+                  ),
+          ),
+        );
+      }
       if (!mounted || identity != ref.read(authProvider).identity) return;
       await ref.read(futuresAssetModeProvider.notifier).load();
     } finally {

@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 
 import '../../../core/domain/wallet_operation.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../auth/application/auth_provider.dart';
 import '../../trade/presentation/widgets/primitives.dart';
 import '../application/position_margin_provider.dart';
 import '../application/position_margin_storage_provider.dart';
@@ -34,8 +33,6 @@ class PositionMarginHistory extends ConsumerWidget {
     final l = AppLocalizations.of(context), storage = ref.watch(positionMarginStorageProvider);
     final records = ref.watch(currentPositionMarginsProvider);
     final state = ref.watch(positionMarginProvider);
-    final controller = ref.read(positionMarginProvider.notifier);
-    final auth = ref.watch(authProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -49,18 +46,7 @@ class PositionMarginHistory extends ConsumerWidget {
           ),
         if (records.isEmpty && storage.ready && !storage.failed)
           StatusEmptyView(message: l.marginAdjustHistoryEmpty),
-        for (final record in records.reversed)
-          _Record(
-            record: record,
-            onCheck:
-                state.busy ||
-                    auth.busy ||
-                    auth.identity?.signingAvailable != true ||
-                    storage.failed ||
-                    !storage.ready
-                ? null
-                : () => controller.check(record),
-          ),
+        for (final record in records.reversed) _Record(record: record),
         Text(l.marginAdjustStopHint, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
@@ -68,9 +54,8 @@ class PositionMarginHistory extends ConsumerWidget {
 }
 
 class _Record extends StatelessWidget {
-  const _Record({required this.record, required this.onCheck});
+  const _Record({required this.record});
   final WalletOperationRecord record;
-  final VoidCallback? onCheck;
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context), t = record.terms;
@@ -96,12 +81,6 @@ class _Record extends StatelessWidget {
                 ? l.marginAdjustVerified
                 : l.marginAdjustUnknown,
           ),
-          if (!record.acknowledged)
-            OutlinedButton(
-              key: ValueKey('margin-adjust-check-${record.key}'),
-              onPressed: onCheck,
-              child: Text(l.marginAdjustCheck),
-            ),
         ],
       ),
     );

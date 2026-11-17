@@ -142,7 +142,10 @@ class MainOrderDirectionCard extends StatelessWidget {
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             disabledBackgroundColor: color.withValues(alpha: .35),
             disabledForegroundColor: TradeColors.text,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            // Closes the summary box above: its border has only top corners.
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
+            ),
             textStyle: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
           ),
           child: pending

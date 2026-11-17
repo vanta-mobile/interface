@@ -101,7 +101,9 @@ void main() {
     expect(find.byType(OrderConfirmationDialog), findsOneWidget);
 
     gate.complete(const OrderSubmissionOutcome(OrderSubmissionKind.success));
-    await tester.pumpAndSettle();
+    // The success toast counts down while visible; stop short of its close.
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
     expect(find.byType(OrderConfirmationDialog), findsNothing);
     expect(find.text(l10n.orderConfirmSubmitted), findsOneWidget);
     AppToast.dismiss();
@@ -133,17 +135,10 @@ void main() {
     expect(find.byType(OrderConfirmationDialog), findsNothing);
   });
 
-  testWidgets('unknown and unsent outcomes toast their cause without closing', (tester) async {
-    var outcome = const OrderSubmissionOutcome(OrderSubmissionKind.unknown);
+  testWidgets('an unsent outcome toasts its cause without closing', (tester) async {
+    const outcome = OrderSubmissionOutcome(OrderSubmissionKind.notSubmitted);
     await _open(tester, _intent(liveDraft()), () async => outcome);
     final l10n = _l10n(tester);
-    await tester.tap(find.byKey(const Key('live-order-confirm')));
-    await tester.pumpAndSettle();
-    expect(find.textContaining(l10n.liveOrderOutcomeUnknown), findsOneWidget);
-    expect(find.byType(OrderConfirmationDialog), findsOneWidget);
-    outcome = const OrderSubmissionOutcome(OrderSubmissionKind.notSubmitted);
-    AppToast.dismiss();
-    await tester.pump();
     await tester.tap(find.byKey(const Key('live-order-confirm')));
     await tester.pumpAndSettle();
     expect(find.text(l10n.orderConfirmExpired), findsOneWidget);

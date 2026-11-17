@@ -89,36 +89,27 @@ void main() {
       ),
       true,
     );
-    expect(state().items.every((i) => i.submitted && !i.needsRecheck), true);
+    expect(state().items.every((i) => i.submitted && i.failure == null), true);
     expect(state().busy, false);
     expect(container.read(liveOrderProvider).stale, true);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     expect(() => state().items.clear(), throwsUnsupportedError);
     await controller().submit(intent); // no replay of confirmed plan
     expect(repository.posts.length, 3);
   });
-  test('unknown first child releases lease; recheck only queries its original ID', () async {
+  test('an unconfirmed first child is queried automatically and stops the plan', () async {
     final intent = await prepare();
     repository.unknown = true;
     await controller().submit(intent);
     expect(repository.posts.length, 1);
+    expect(repository.checks.single.clientOrderId, intent.clientIds.first); // automatic
     expect(state().items.map((i) => i.submitted), [true, false, false]);
-    expect(state().needsRecheck, true);
-    expect(container.read(symbolSettingsActivityProvider).unresolved, false);
+    expect(state().items.first.failure, isNotNull);
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.leverage);
-    expect(lease, isNotNull);
-    activity.finish(lease!, unresolved: false);
-    await controller().submit(intent);
+    activity.finish(activity.acquire(SymbolSetting.leverage));
+    await controller().submit(intent); // the same confirmed plan is never replayed
     expect(repository.posts.length, 1);
-    repository.unknown = false;
-    await controller().recheck();
-    expect(repository.checks.single.clientOrderId, intent.clientIds.first);
-    expect(repository.posts.length, 1);
-    expect(repository.reads.length, 2);
-    expect(state().items.skip(1).every((i) => !i.submitted), true);
-    expect(state().needsRecheck, false);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
   });
   test('refused signature preserves all unsent IDs and releases lock', () async {
     final intent = await prepare();
@@ -127,8 +118,7 @@ void main() {
     expect(repository.posts, isEmpty);
     expect(state().items.first.failure?.key, 'authWalletRejected');
     expect(state().items.map((i) => i.clientId), intent.clientIds);
-    expect(state().needsRecheck, false);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
   });
   for (final status in ['REJECTED', 'CANCELED', 'EXPIRED', 'EXPIRED_IN_MATCH']) {
     test('verified terminal unsuccessful child $status stops remaining plan', () async {
@@ -136,7 +126,6 @@ void main() {
       repository.status = status;
       await controller().submit(intent);
       expect(repository.posts.length, 1);
-      expect(state().needsRecheck, false);
       expect(state().items.skip(1).every((i) => !i.submitted), true);
     });
   }
@@ -213,9 +202,9 @@ void main() {
   test('external configuration epoch invalidates an open confirmation', () async {
     final intent = await prepare();
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.leverage)!;
+    final lease = activity.acquire(SymbolSetting.leverage);
     activity.submitted(lease);
-    activity.finish(lease, unresolved: false);
+    activity.finish(lease);
     await controller().submit(intent);
     expect(repository.posts, isEmpty);
   });
@@ -243,12 +232,10 @@ void main() {
       expect(state().busy, false);
     });
   }
-  test('shared busy owner blocks preparing and submitting', () async {
-    final intent = await prepare();
+  test('a settings operation in progress does not block preparing a scaled order', () async {
+    await prepare();
     container.read(symbolSettingsActivityProvider.notifier).acquire(SymbolSetting.leverage);
-    expect(controller().prepare('BTCUSDT', scaledDraft()), null);
-    await controller().submit(intent);
-    expect(repository.posts, isEmpty);
+    expect(controller().prepare('BTCUSDT', scaledDraft()), isNotNull);
   });
   test('replayed same-time account event during signing still blocks POST', () async {
     await container.read(accountChangeProvider.notifier).authorize();
@@ -285,17 +272,14 @@ void main() {
     await controller().submit(intent);
     expect(repository.posts.length, 3);
   });
-  test('unexpected error after POST stays unknown and permits GET only', () async {
+  test('an unexpected error after POST is verified by query; nothing is re-sent', () async {
     final intent = await prepare();
     repository.afterPost = () => throw StateError('fixture');
     await controller().submit(intent);
-    expect(repository.posts.length, 1);
-    expect(state().needsRecheck, true);
-    expect(state().items.first.failure?.key, 'accountReadFailed');
-    await controller().recheck();
-    expect(repository.posts.length, 1);
-    expect(repository.checks.length, 1);
-    expect(state().needsRecheck, false);
+    // Each child is POSTed once; its post-send error is resolved by a query.
+    expect(repository.posts.map((p) => p.clientOrderId), intent.clientIds);
+    expect(repository.checks.map((c) => c.clientOrderId), intent.clientIds);
+    expect(state().items.every((i) => i.failure == null && i.result?.orderId != null), true);
   });
   for (final unit in ScaledSizeUnit.values) {
     for (final count in [6, 110]) {
@@ -320,12 +304,8 @@ void main() {
         expect(state().items.length, count);
         expect(repository.posts.length, 1);
         expect(state().items.skip(1).every((i) => !i.submitted), true);
-        repository.unknown = false;
-        await controller().recheck();
-        expect(repository.posts.length, 1);
-        expect(repository.checks.single.clientOrderId, intent.clientIds.first);
-        expect(repository.checks.single.draft.quantity, intent.plan.orders.first.quantity);
-        expect(state().needsRecheck, false);
+        expect(repository.checks.first.clientOrderId, intent.clientIds.first);
+        expect(repository.checks.first.draft.quantity, intent.plan.orders.first.quantity);
         expect(identity.wallets, 0);
       });
     }

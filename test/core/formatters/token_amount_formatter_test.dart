@@ -240,5 +240,24 @@ void main() {
         throwsRangeError,
       );
     });
+
+    test('rounds display values to an exact fraction length', () {
+      String fixed(String value) =>
+          TokenAmountFormatter.formatRoundedFixed(DecimalValue(value), fractionDigits: 2);
+      expect(fixed('1234.5'), '1,234.50');
+      expect(fixed('-12.345'), '-12.35');
+      expect(fixed('7'), '7.00');
+      expect(fixed('-0.001'), '0.00');
+    });
+
+    test('formats tiny values in scientific notation', () {
+      String sci(String value) => TokenAmountFormatter.formatScientific(DecimalValue(value));
+      expect(sci('0.0000123456'), '1.2346e-5');
+      expect(sci('0.00009'), '9e-5');
+      expect(sci('-0.000001234'), '-1.234e-6');
+      expect(sci('0.0000999999'), '1e-4');
+      expect(() => sci('0'), throwsArgumentError);
+      expect(() => sci('1.5'), throwsArgumentError);
+    });
   });
 }

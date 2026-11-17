@@ -64,75 +64,65 @@ void main() {
     await identity.dispose();
   });
 
-  test('lazy wallet-scoped recovery rebuild resets the old identity lease', () async {
+  test('an account switch drops old leases and starts a new epoch', () async {
     final controller = container.read(symbolSettingsActivityProvider.notifier);
-    final old = controller.acquire(SymbolSetting.order)!;
+    final old = controller.acquire(SymbolSetting.order);
     final epoch = container.read(symbolSettingsActivityProvider).epoch;
     identity.events.add(null);
     container.read(pendingWalletOrdersProvider);
     expect(container.read(symbolSettingsActivityProvider).busy, false);
-    expect(container.read(symbolSettingsActivityProvider).owner, isNull);
     expect(container.read(symbolSettingsActivityProvider).epoch, epoch + 1);
     identity.restored = signingIdentity;
     await container.read(authProvider.notifier).bootstrap();
-    final next = controller.acquire(SymbolSetting.leverage)!;
-    controller.finish(old, unresolved: false);
-    expect(container.read(symbolSettingsActivityProvider).owner, SymbolSetting.leverage);
-    expect(container.read(symbolSettingsActivityProvider).busy, true);
-    controller.finish(next, unresolved: false);
-    expect(container.read(symbolSettingsActivityProvider).owner, isNull);
+    final next = controller.acquire(SymbolSetting.leverage);
+    controller.finish(old); // an old lease cannot release the new one
+    expect(container.read(symbolSettingsActivityProvider).isRunning(SymbolSetting.leverage), true);
+    controller.finish(next);
+    expect(container.read(symbolSettingsActivityProvider).busy, false);
   });
 
-  test(
-    'a settings read serializes signatures across both routes and releases after completion',
-    () async {
-      leverage.readGate = Completer<void>();
-      final pending = container.read(positionLeverageProvider.notifier).load('BTCUSDT');
-      await container.read(positionMarginModeProvider.notifier).load('BTCUSDT');
-      expect(margin.reads, 0);
-      expect(container.read(symbolSettingsActivityProvider).busy, true);
-      leverage.readGate!.complete();
-      await pending;
-      await container.read(positionMarginModeProvider.notifier).load('BTCUSDT');
-      expect(margin.reads, 1);
-      expect(container.read(symbolSettingsActivityProvider).owner, null);
-    },
-  );
-  test(
-    'unknown leverage write blocks margin mode reads until GET-only verification resolves it',
-    () async {
-      final controller = container.read(positionLeverageProvider.notifier);
-      await controller.load('BTCUSDT');
-      leverage.result = const LeverageResult(failure: AccountReadFailure('accountNetwork'));
-      await controller.change(controller.prepare('BTCUSDT', '20')!);
-      expect(container.read(symbolSettingsActivityProvider).unresolved, true);
-      await container.read(positionMarginModeProvider.notifier).load('BTCUSDT');
-      expect(margin.reads, 0);
-      leverage.result = LeverageResult(observed: 20, checkedAt: leverageClock);
-      await controller.recheck();
-      await container.read(positionMarginModeProvider.notifier).load('BTCUSDT');
-      expect(margin.reads, 1);
-      expect(leverage.changes, 1);
-      expect(leverage.checks, 1);
-    },
-  );
-  test('unknown margin mode write blocks leverage; resolving it never resubmits POST', () async {
+  test('independent settings reads run concurrently', () async {
+    leverage.readGate = Completer<void>();
+    final pending = container.read(positionLeverageProvider.notifier).load('BTCUSDT');
+    await container.read(positionMarginModeProvider.notifier).load('BTCUSDT');
+    await container.read(futuresPositionModeProvider.notifier).load();
+    expect(margin.reads, 1);
+    expect(position.reads, 1);
+    expect(container.read(symbolSettingsActivityProvider).isRunning(SymbolSetting.leverage), true);
+    leverage.readGate!.complete();
+    await pending;
+    expect(leverage.reads, 1);
+    expect(container.read(symbolSettingsActivityProvider).busy, false);
+  });
+
+  test('an unverified write is queried automatically, once, and never resubmitted', () async {
+    final controller = container.read(positionLeverageProvider.notifier);
+    await controller.load('BTCUSDT');
+    leverage.result = const LeverageResult(failure: AccountReadFailure('accountNetwork'));
+    leverage.checkResult = LeverageResult(observed: 20, checkedAt: leverageClock);
+    await controller.change(controller.prepare('BTCUSDT', '20')!);
+    expect(leverage.changes, 1);
+    expect(leverage.checks, 1);
+    expect(container.read(positionLeverageProvider).result?.observed, 20);
+    expect(container.read(positionLeverageProvider).failure, isNull);
+    // Other settings were never blocked.
+    await container.read(positionMarginModeProvider.notifier).load('BTCUSDT');
+    expect(margin.reads, 1);
+  });
+
+  test('a failed verification is reported as the concrete error, without blocking', () async {
     final controller = container.read(positionMarginModeProvider.notifier);
     await controller.load('BTCUSDT');
     margin.result = const MarginModeResult(failure: AccountReadFailure('accountNetwork'));
     await controller.change(controller.prepare('BTCUSDT', PositionMarginMode.isolated)!);
-    await container.read(positionLeverageProvider.notifier).load('BTCUSDT');
-    expect(leverage.reads, 0);
-    margin.result = MarginModeResult(
-      observed: PositionMarginMode.isolated,
-      checkedAt: marginModeClock,
-    );
-    await controller.recheck();
-    await container.read(positionLeverageProvider.notifier).load('BTCUSDT');
-    expect(leverage.reads, 1);
     expect(margin.changes, 1);
     expect(margin.checks, 1);
+    expect(container.read(positionMarginModeProvider).failure?.key, 'accountNetwork');
+    expect(container.read(positionMarginModeProvider).result, isNull);
+    await container.read(positionLeverageProvider.notifier).load('BTCUSDT');
+    expect(leverage.reads, 1);
   });
+
   test('submitting either setting invalidates the other cached confirmation', () async {
     final a = container.read(positionLeverageProvider.notifier),
         b = container.read(positionMarginModeProvider.notifier);
@@ -151,19 +141,6 @@ void main() {
     await b.change(oldMode);
     expect(margin.changes, 1);
   });
-  test('old completion cannot release another identity scope or a newer lease', () async {
-    leverage.readGate = Completer<void>();
-    final pending = container.read(positionLeverageProvider.notifier).load('BTCUSDT');
-    await container.read(authProvider.notifier).logout();
-    expect(leverage.latestCurrent!(), false);
-    final activity = container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.marginMode)!;
-    leverage.readGate!.complete();
-    await pending;
-    expect(container.read(symbolSettingsActivityProvider).owner, SymbolSetting.marginMode);
-    activity.finish(lease, unresolved: false);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
-  });
   test('read failures release the shared operation while preserving their safe error', () async {
     margin.readFailure = const AccountReadFailure('accountNetwork');
     await container.read(positionMarginModeProvider.notifier).load('BTCUSDT');
@@ -172,32 +149,7 @@ void main() {
     expect(leverage.reads, 1);
   });
   test(
-    'account-wide unresolved mode change blocks both symbol settings until query resolves',
-    () async {
-      final controller = container.read(futuresPositionModeProvider.notifier);
-      await controller.load();
-      position.result = const PositionModeResult(failure: AccountReadFailure('accountNetwork'));
-      await controller.change(controller.prepare(FuturesPositionMode.hedge)!);
-      expect(container.read(symbolSettingsActivityProvider).owner, SymbolSetting.positionMode);
-      await container.read(positionLeverageProvider.notifier).load('ETHUSDT');
-      await container.read(positionMarginModeProvider.notifier).load('BTCUSDT');
-      expect(leverage.reads, 0);
-      expect(margin.reads, 0);
-      position.result = PositionModeResult(
-        observed: FuturesPositionMode.hedge,
-        checkedAt: positionModeClock,
-      );
-      await controller.recheck();
-      await container.read(positionLeverageProvider.notifier).load('ETHUSDT');
-      await container.read(positionMarginModeProvider.notifier).load('BTCUSDT');
-      expect(leverage.reads, 1);
-      expect(margin.reads, 1);
-      expect(position.changes, 1);
-      expect(position.checks, 1);
-    },
-  );
-  test(
-    'account-mode read waits for symbol operations; symbol submit invalidates account confirmation',
+    'account-mode read runs beside symbol operations; symbol submit invalidates confirmation',
     () async {
       final controller = container.read(futuresPositionModeProvider.notifier);
       final leverageController = container.read(positionLeverageProvider.notifier);
@@ -206,7 +158,7 @@ void main() {
       leverage.readGate = Completer<void>();
       final pending = leverageController.load('BTCUSDT');
       await controller.load();
-      expect(position.reads, 1);
+      expect(position.reads, 2);
       leverage.readGate!.complete();
       await pending;
       await leverageController.change(leverageController.prepare('BTCUSDT', '20')!);
@@ -231,38 +183,6 @@ void main() {
     expect(container.read(positionMarginModeProvider).stale, true);
     expect(leverage.changes, 0);
     expect(margin.changes, 0);
-  });
-  test('unknown asset-mode change blocks all other settings until GET-only recovery', () async {
-    final controller = container.read(futuresAssetModeProvider.notifier);
-    await controller.load();
-    asset.result = const AssetModeResult(failure: AccountReadFailure('accountNetwork'));
-    await controller.change(controller.prepare(FuturesAssetMode.multi)!);
-    expect(container.read(symbolSettingsActivityProvider).owner, SymbolSetting.assetMode);
-    await container.read(positionLeverageProvider.notifier).load('ETHUSDT');
-    await container.read(positionMarginModeProvider.notifier).load('BTCUSDT');
-    await container.read(futuresPositionModeProvider.notifier).load();
-    expect(leverage.reads, 0);
-    expect(margin.reads, 0);
-    expect(position.reads, 0);
-    asset.result = AssetModeResult(observed: FuturesAssetMode.multi, checkedAt: assetModeClock);
-    await controller.recheck();
-    await container.read(futuresPositionModeProvider.notifier).load();
-    expect(position.reads, 1);
-    expect(asset.changes, 1);
-    expect(asset.checks, 1);
-  });
-  test('asset-mode read waits for other settings and unresolved position-mode result', () async {
-    final controller = container.read(futuresPositionModeProvider.notifier);
-    position.readGate = Completer<void>();
-    final pending = controller.load();
-    await container.read(futuresAssetModeProvider.notifier).load();
-    expect(asset.reads, 0);
-    position.readGate!.complete();
-    await pending;
-    position.result = const PositionModeResult(failure: AccountReadFailure('accountNetwork'));
-    await controller.change(controller.prepare(FuturesPositionMode.hedge)!);
-    await container.read(futuresAssetModeProvider.notifier).load();
-    expect(asset.reads, 0);
   });
   test('asset-mode submit invalidates all three prior setting confirmations', () async {
     final a = container.read(positionLeverageProvider.notifier);

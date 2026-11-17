@@ -323,6 +323,9 @@ class LiveOrderResult {
 
   /// Explicit gateway parameter rejection, independent of display text.
   final bool rejected;
+
+  /// Not confirmed by a query yet. Internal to verification: the controller
+  /// queries again and reports a still-unconfirmed order as an error.
   bool get needsRecheck => !rejected && orderId == null && strategy == null;
 }
 
@@ -342,7 +345,6 @@ class LiveOrderState {
   final LiveOrderStep step;
   final bool stale;
   bool get busy => step != LiveOrderStep.idle;
-  bool get needsRecheck => intent != null && result?.needsRecheck == true;
 }
 
 abstract interface class LiveOrderRepository {

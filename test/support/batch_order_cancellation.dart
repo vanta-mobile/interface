@@ -7,6 +7,9 @@ class TestBatchCancellationRepository implements BatchOrderCancellationRepositor
   final cancelled = <String>[];
   final checked = <String>[];
   final results = <String, BatchSymbolCancellation>{};
+
+  /// Results of the automatic follow-up query; default to [results].
+  final checkResults = <String, BatchSymbolCancellation>{};
   final gates = <String, Completer<void>>{};
   BatchSymbolCancellation _result(String address, String symbol) =>
       results[symbol] ??
@@ -45,6 +48,6 @@ class TestBatchCancellationRepository implements BatchOrderCancellationRepositor
     checked.add(symbol);
     onStep(OrderCancelStep.checkSigning);
     await gates[symbol]?.future;
-    return _result(address, symbol);
+    return checkResults[symbol] ?? _result(address, symbol);
   }
 }

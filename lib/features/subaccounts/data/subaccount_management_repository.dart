@@ -49,14 +49,6 @@ class AsterSubaccountManagementRepository implements SubaccountManagementReposit
     if (!journal.snapshot.ready || journal.snapshot.failed) {
       throw const AccountReadFailure('walletOperationStorage');
     }
-    if (journal.snapshot.records.any(
-      (r) =>
-          !r.acknowledged &&
-          r.kind != WalletOperationKind.withdrawal &&
-          r.address.toLowerCase() == address.toLowerCase(),
-    )) {
-      throw const AccountReadFailure('walletOperationPending');
-    }
   }
 
   Future<SubaccountDirectory> _directory(AuthIdentity i, bool Function() current) =>

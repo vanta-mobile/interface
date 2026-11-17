@@ -6,13 +6,12 @@ import 'package:vanta/features/portfolio/data/order_recovery_journal.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/order_query.dart';
 import 'package:vanta/features/portfolio/domain/order_recovery.dart';
-import 'package:vanta/features/portfolio/presentation/futures_asset_mode_screen.dart';
-import 'package:vanta/features/portfolio/presentation/futures_position_mode_screen.dart';
+import 'package:vanta/features/portfolio/presentation/futures_asset_mode_sheet.dart';
+import 'package:vanta/features/portfolio/presentation/futures_position_mode_sheet.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
-import 'package:vanta/features/portfolio/presentation/position_leverage_screen.dart';
-import 'package:vanta/features/portfolio/presentation/position_margin_mode_screen.dart';
+import 'package:vanta/features/portfolio/presentation/position_leverage_sheet.dart';
+import 'package:vanta/features/portfolio/presentation/position_margin_mode_sheet.dart';
 import 'package:vanta/features/portfolio/presentation/position_tpsl_screen.dart';
-import 'package:vanta/features/portfolio/presentation/scaled_order_screen.dart';
 import 'package:vanta/features/trade/presentation/widgets/trading_header.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
@@ -58,11 +57,10 @@ void main() {
         await launch(tester, container);
         final pages = <Widget>[
           PositionTpSlScreen(position: positionRiskFixture().positions.first),
-          const PositionLeverageScreen(symbol: 'BTCUSDT'),
-          const PositionMarginModeScreen(symbol: 'BTCUSDT'),
-          const FuturesPositionModeScreen(),
-          const FuturesAssetModeScreen(),
-          const ScaledOrderScreen(symbol: 'BTCUSDT'),
+          const Scaffold(body: PositionLeverageSheet(symbol: 'BTCUSDT')),
+          const Scaffold(body: PositionMarginModeSheet(symbol: 'BTCUSDT')),
+          const Scaffold(body: FuturesPositionModeSheet()),
+          const Scaffold(body: FuturesAssetModeSheet()),
           const Scaffold(
             body: SingleChildScrollView(child: LiveOrderScreen(symbol: 'BTCUSDT')),
           ),

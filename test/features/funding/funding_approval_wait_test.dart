@@ -115,6 +115,7 @@ void main() {
     expect(find.byKey(_submit), findsNothing);
     await tester.tap(find.byKey(const Key('open-funding')));
     await tester.pumpAndSettle();
+    await h.selectNetwork(tester, 56);
     await _chooseUsdt(tester);
     await tester.enterText(find.byKey(const Key('funding-amount')), '5');
     await h.settleGas(tester);

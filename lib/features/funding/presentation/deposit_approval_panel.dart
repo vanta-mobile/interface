@@ -37,7 +37,8 @@ class DepositApprovalPanel extends ConsumerWidget {
           onPressed:
               !canPrepare ||
                   state.busy ||
-                  pending.isNotEmpty ||
+                  // Only an approval still confirming on chain blocks another.
+                  pending.any((r) => r.hash != null) ||
                   !storage.ready ||
                   storage.failure != null
               ? null

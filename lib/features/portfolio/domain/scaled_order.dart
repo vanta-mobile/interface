@@ -59,14 +59,15 @@ class ScaledOrderIntent {
             a.price == b.price &&
             a.quantity == b.quantity &&
             !b.market &&
-            !b.reducing &&
+            b.reduceOnly == plan.draft.reduceOnly &&
+            b.closingSide == null &&
             !b.entireClose &&
             !b.quickEntry &&
             b.trigger == null &&
             b.trailing == null &&
             b.attachment == null &&
             b.peg == null &&
-            b.timeInForce == LiveOrderTimeInForce.gtc;
+            b.timeInForce == plan.draft.timeInForce;
       }).every((same) => same);
     } on AccountReadFailure {
       return false;
@@ -91,7 +92,6 @@ class ScaledOrderItem {
   final bool submitted;
   final LiveOrderResult? result;
   final AccountReadFailure? failure;
-  bool get needsRecheck => submitted && result?.needsRecheck != false;
 }
 
 class ScaledOrderState {
@@ -108,5 +108,4 @@ class ScaledOrderState {
   final bool stopRequested;
   final int? currentIndex;
   bool get busy => step != LiveOrderStep.idle;
-  bool get needsRecheck => items.any((i) => i.needsRecheck);
 }

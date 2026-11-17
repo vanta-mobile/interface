@@ -1,15 +1,18 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-import '../../trade/presentation/widgets/primitives.dart';
-import '../domain/live_order.dart';
+import '../../trade/presentation/trade_theme.dart';
+import '../domain/live_order_draft.dart';
 import '../domain/live_order_trigger.dart';
+import 'live_order_embedded_inputs.dart';
+import 'live_order_embedded_triggers.dart';
 
+/// Trailing stop inputs from the design: callback rate with its quick
+/// presets, then the optional activation price with its price type.
 class LiveOrderTrailingControls extends StatelessWidget {
   const LiveOrderTrailingControls({
     super.key,
-    required this.data,
-    required this.selected,
     required this.enabled,
     required this.rate,
     required this.activation,
@@ -17,107 +20,107 @@ class LiveOrderTrailingControls extends StatelessWidget {
     required this.onBasis,
     required this.onInput,
   });
-  final LiveOrderContext data;
-  final bool selected, enabled;
+  final bool enabled;
   final TextEditingController rate, activation;
   final LiveOrderTriggerBasis basis;
   final ValueChanged<LiveOrderTriggerBasis> onBasis;
   final VoidCallback onInput;
 
+  static final _presets = [Decimal.one, Decimal.fromInt(2)];
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final current = parseOrderDecimal(rate.text.trim());
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (selected) ...[
-          Text(l10n.liveTrailingHint),
-          TextField(
-            key: const Key('live-trailing-rate'),
-            controller: rate,
-            readOnly: !enabled,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: l10n.liveTrailingRate,
-              helperText: l10n.liveTrailingRateBounds,
-              helperMaxLines: 3,
-            ),
-            onChanged: (_) => onInput(),
-          ),
-          const SizedBox(height: 12),
-          InputDecorator(
-            decoration: InputDecoration(labelText: l10n.liveTrailingBasis),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<LiveOrderTriggerBasis>(
-                key: const Key('live-trailing-basis'),
-                isExpanded: true,
-                value: basis,
-                items: [
-                  for (final value in LiveOrderTriggerBasis.values)
-                    DropdownMenuItem(
-                      value: value,
-                      child: Text(
-                        value == LiveOrderTriggerBasis.mark
-                            ? l10n.openOrdersMarkPrice
-                            : l10n.openOrdersLastPrice,
-                      ),
-                    ),
-                ],
-                onChanged: enabled
-                    ? (value) {
-                        if (value != null) onBasis(value);
-                      }
-                    : null,
+        EmbeddedInputBox(
+          label: l10n.openOrdersCallbackRate,
+          child: Row(
+            children: [
+              Expanded(
+                child: EmbeddedTextInput(
+                  fieldKey: const Key('live-trailing-rate'),
+                  controller: rate,
+                  enabled: enabled,
+                  onChanged: onInput,
+                ),
               ),
-            ),
+              Text('%', style: TradeTypography.body),
+              const SizedBox(width: 8),
+              for (final (i, preset) in _presets.indexed) ...[
+                if (i > 0) Container(width: 1, height: 12, color: TradeColors.line),
+                _RatePreset(
+                  key: Key('live-trailing-rate-$preset'),
+                  label: '$preset%',
+                  selected: current == preset,
+                  onTap: enabled
+                      ? () {
+                          rate.text = '$preset';
+                          onInput();
+                        }
+                      : null,
+                ),
+              ],
+            ],
           ),
-          ValueRow(
-            l10n.liveOrderTriggerReference,
-            '${basis == LiveOrderTriggerBasis.mark ? data.markPrice : data.lastPrice ?? '—'} ${data.rules.quoteAsset}',
+        ),
+        const SizedBox(height: 8),
+        EmbeddedInputBox(
+          label: l10n.openOrdersActivationPrice,
+          child: Row(
+            children: [
+              Expanded(
+                child: EmbeddedTextInput(
+                  fieldKey: const Key('live-trailing-activation'),
+                  controller: activation,
+                  enabled: enabled,
+                  onChanged: onInput,
+                ),
+              ),
+              TriggerBasisSelector(
+                key: const Key('live-trailing-basis'),
+                basis: basis,
+                enabled: enabled,
+                onChanged: onBasis,
+              ),
+            ],
           ),
-          TextField(
-            key: const Key('live-trailing-activation'),
-            controller: activation,
-            readOnly: !enabled,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: l10n.liveTrailingActivation(data.rules.quoteAsset),
-              helperText: l10n.liveTrailingDefault,
-              helperMaxLines: 5,
-            ),
-            onChanged: (_) => onInput(),
-          ),
-          Text(l10n.liveTrailingActivationDirection),
-        ],
+        ),
+        const SizedBox(height: 8),
       ],
     );
   }
 }
 
-class LiveOrderTrailingSummary extends StatelessWidget {
-  const LiveOrderTrailingSummary({super.key, required this.data, required this.draft});
-  final LiveOrderContext data;
-  final LiveOrderDraft draft;
+class _RatePreset extends StatelessWidget {
+  const _RatePreset({super.key, required this.label, required this.selected, required this.onTap});
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
   @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context), trailing = draft.trailing!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ValueRow(l10n.liveTrailingRate, '${trailing.callbackRate}%'),
-        ValueRow(
-          l10n.liveTrailingBasis,
-          trailing.basis == LiveOrderTriggerBasis.mark
-              ? l10n.openOrdersMarkPrice
-              : l10n.openOrdersLastPrice,
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: selected,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 32),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Center(
+            widthFactor: 1,
+            child: Text(
+              label,
+              style: TradeTypography.body.copyWith(
+                color: selected ? TradeColors.text : TradeColors.muted,
+              ),
+            ),
+          ),
         ),
-        if (trailing.activationPrice case final price?)
-          ValueRow(l10n.liveTrailingActivation(data.rules.quoteAsset), price)
-        else
-          Text(l10n.liveTrailingDefault),
-        Text(draft.buy ? l10n.liveTrailingBuy : l10n.liveTrailingSell),
-        Text(l10n.liveTrailingEstimateHint),
-      ],
-    );
-  }
+      ),
+    ),
+  );
 }

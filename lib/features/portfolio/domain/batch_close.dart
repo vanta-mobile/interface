@@ -51,7 +51,6 @@ class BatchCloseItem {
   final bool submitted;
   final LiveOrderResult? result;
   final AccountReadFailure? failure;
-  bool get needsRecheck => submitted && result?.needsRecheck != false;
 }
 
 class BatchCloseState {
@@ -70,5 +69,4 @@ class BatchCloseState {
   final bool stopRequested;
   final DateTime? remainingAfter;
   bool get busy => step != LiveOrderStep.idle;
-  bool get needsRecheck => items.values.any((i) => i.needsRecheck);
 }

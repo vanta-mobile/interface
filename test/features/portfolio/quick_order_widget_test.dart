@@ -60,7 +60,7 @@ void main() {
     for (final hedge in [false, true]) {
       for (final buy in [false, true]) {
         testWidgets(
-          'chart quick entry confirmation/unknown recovery 320 large/landscape $language $hedge $buy',
+          'chart quick entry confirmation and automatic verification 320 large/landscape $language $hedge $buy',
           (tester) async {
             final identity = TestIdentityRepository()..restored = signingIdentity;
             final orders = TestLiveOrderRepository()
@@ -69,7 +69,12 @@ void main() {
                 ask: '80001',
                 mode: hedge ? FuturesPositionMode.hedge : FuturesPositionMode.oneWay,
               )
-              ..result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
+              ..result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'))
+              ..checkResult = LiveOrderResult(
+                orderId: '12345',
+                status: 'FILLED',
+                executedQuantity: Decimal.parse('0.001'),
+              );
             final sizing = TestQuickOrderRepository(),
                 preference = MemoryOrderConfirmationPreferences();
             addTearDown(identity.dispose);
@@ -122,22 +127,10 @@ void main() {
               hedge ? (buy ? 'LONG' : 'SHORT') : 'BOTH',
             );
             expect(orders.lastIntent!.parameters['reduceOnly'], hedge ? null : 'false');
-            expect(quantity(tester), '80.01');
-            await visible(tester, 'quick-order-quantity');
-            expect(
-              tester.widget<TextField>(find.byKey(const Key('quick-order-quantity'))).readOnly,
-              true,
-            );
-            final id = orders.lastIntent!.clientOrderId;
-            orders.result = LiveOrderResult(
-              orderId: '12345',
-              status: 'FILLED',
-              executedQuantity: Decimal.parse('0.001'),
-            );
-            await tap(tester, 'live-order-recheck');
+            // The unconfirmed order was queried automatically and confirmed.
+            expect(find.byKey(const Key('live-order-recheck')), findsNothing);
             expect(orders.submits, 1);
             expect(orders.checks, 1);
-            expect(orders.lastIntent!.clientOrderId, id);
             expect(quantity(tester), '');
             expect(identity.wallets, 0);
             expect(tester.takeException(), null);

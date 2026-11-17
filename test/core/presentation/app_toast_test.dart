@@ -33,7 +33,8 @@ void main() {
 
     expect(find.text('Saved'), findsOneWidget);
     expect(svgAsset(tester), 'assets/feedback/success.svg');
-    expect(find.byKey(const Key('app-toast-close')), findsNothing);
+    expect(find.byKey(const Key('app-toast-close')), findsOneWidget);
+    expect(find.byKey(const Key('app-toast-countdown')), findsOneWidget);
     final toast = tester.getRect(find.byKey(const Key('app-toast')));
     expect(toast.width, 313);
     expect(toast.height, 46);
@@ -55,6 +56,7 @@ void main() {
 
     expect(svgAsset(tester), 'assets/feedback/fail.svg');
     expect(find.byKey(const Key('app-toast-close')), findsOneWidget);
+    expect(find.byKey(const Key('app-toast-countdown')), findsNothing);
     await tester.pump(const Duration(minutes: 5));
     expect(find.text('Request failed'), findsOneWidget);
     await tester.tap(find.byKey(const Key('app-toast-close')));
@@ -62,7 +64,7 @@ void main() {
     expect(find.text('Request failed'), findsNothing);
   });
 
-  testWidgets('success feedback cannot replace an unread error', (tester) async {
+  testWidgets('action success replaces an error; background notices keep it', (tester) async {
     late BuildContext toastContext;
     await tester.pumpWidget(
       buildTestApp((context) {
@@ -72,18 +74,53 @@ void main() {
     );
     await tester.tap(find.text('Show'));
     await tester.pump();
-    AppToast.showSuccess(toastContext, 'Refreshed');
+    AppToast.showSuccess(toastContext, 'Deposit completed', preserveFailure: true);
     await tester.pump(const Duration(minutes: 1));
     expect(find.text('Margin is insufficient.'), findsOneWidget);
-    expect(find.text('Refreshed'), findsNothing);
-    await tester.tap(find.byKey(const Key('app-toast-close')));
+    expect(find.text('Deposit completed'), findsNothing);
+    AppToast.showSuccess(toastContext, 'Order submitted');
     await tester.pump();
-    AppToast.showSuccess(toastContext, 'Refreshed');
-    await tester.pump();
-    expect(find.text('Refreshed'), findsOneWidget);
+    expect(find.text('Margin is insufficient.'), findsNothing);
+    expect(find.text('Order submitted'), findsOneWidget);
     await tester.pump(AppToast.autoDismissDuration);
     await tester.pump();
-    expect(find.text('Refreshed'), findsNothing);
+    expect(find.text('Order submitted'), findsNothing);
+  });
+
+  testWidgets('auto-dismiss close button closes early and its ring shrinks', (tester) async {
+    await tester.pumpWidget(buildTestApp((context) => AppToast.showSuccess(context, 'Saved')));
+    await tester.tap(find.text('Show'));
+    await tester.pump();
+    double ring() =>
+        (tester.widget<CustomPaint>(find.byKey(const Key('app-toast-countdown'))).painter!
+                    as dynamic)
+                .fraction
+            as double;
+    expect(ring(), 1);
+    await tester.pump(AppToast.autoDismissDuration ~/ 2);
+    expect(ring(), closeTo(0.5, 0.01));
+    await tester.tap(find.byKey(const Key('app-toast-close')));
+    await tester.pump();
+    expect(find.text('Saved'), findsNothing);
+  });
+
+  testWidgets('reduced motion keeps a static ring and still dismisses', (tester) async {
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(disableAnimations: true),
+        child: buildTestApp((context) => AppToast.showSuccess(context, 'Saved')),
+      ),
+    );
+    await tester.tap(find.text('Show'));
+    await tester.pump(AppToast.autoDismissDuration ~/ 2);
+    expect(
+      (tester.widget<CustomPaint>(find.byKey(const Key('app-toast-countdown'))).painter! as dynamic)
+          .fraction,
+      1,
+    );
+    await tester.pump(AppToast.autoDismissDuration);
+    await tester.pump();
+    expect(find.text('Saved'), findsNothing);
   });
 
   testWidgets('replaced success timer cannot close an error', (tester) async {

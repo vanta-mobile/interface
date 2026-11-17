@@ -183,6 +183,7 @@ class _DepositPageState extends ConsumerState<DepositPage> {
     final choice = FundingChoice.of(
       catalog.catalog?.assets.where(_depositRoute) ?? const [],
       selection,
+      defaultChain: fundingDefaultChain(ref),
     );
     final asset = choice.asset;
     final query = asset == null
@@ -247,7 +248,9 @@ class _DepositPageState extends ConsumerState<DepositPage> {
         builder: (context, open, toggle) => FundingField(
           key: const Key('funding-network'),
           label: l.fundingNetworkLabel,
-          value: choice.chainId == null ? '—' : fundingNetworkName(l, choice.chainId!),
+          value: choice.chainId == null
+              ? l.fundingSelectNetwork
+              : fundingNetworkName(l, choice.chainId!),
           icon: choice.chainId == null ? null : FundingNetworkIcon(choice.chainId!),
           open: open,
           onTap: toggle,
@@ -337,6 +340,9 @@ class _DepositPageState extends ConsumerState<DepositPage> {
         actionError?.key == 'depositGasBalanceInsufficient') {
       final l = AppLocalizations.of(context), native = fundingNativeSymbol(query.asset.chainId);
       error = query.asset.isNative ? l.fundingGasInsufficient(native) : l.fundingGasTopUp(native);
+    } else if (actionError?.key == 'walletTransactionWrongChain') {
+      final l = AppLocalizations.of(context);
+      error = l.fundingSwitchNetwork(fundingNetworkName(l, query.asset.chainId));
     } else if (actionError case final e?) {
       error = apiErrorText(context, e.key, e.details, fallbackText: depositMessage(context, e.key));
     } else if (check.errorKey case final key? when !transient) {

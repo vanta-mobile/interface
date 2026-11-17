@@ -231,7 +231,9 @@ void main() {
     );
     await review(tester);
     await tester.tap(find.byKey(const Key('margin-adjust-confirm')));
-    await tester.pumpAndSettle();
+    // The success toast counts down while visible; stop short of its close.
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
     expect(find.byType(PositionMarginScreen), findsNothing);
     expect(repository.changes, 1);
     expect(find.text('Exact adjustment found in Aster history.'), findsOneWidget);
@@ -259,18 +261,13 @@ void main() {
     await cleanup(tester);
   });
   testWidgets(
-    'startup pending record remains reachable without any open position; explicit check only',
+    'an earlier unconfirmed record stays visible with the network message, no manual check',
     (tester) async {
       await journal.prepare(marginRecord());
       await open(tester, home: const PositionMarginScreen());
-      expect(repository.reads, 0);
       expect(repository.checks, 0);
-      expect(find.byKey(const Key('margin-adjust-read')), findsNothing);
-      final check = find.byKey(ValueKey('margin-adjust-check-${marginRecord().key}'));
-      await tester.ensureVisible(check);
-      await tester.tap(check);
-      await tester.pumpAndSettle();
-      expect(repository.checks, 1);
+      expect(find.byKey(ValueKey('margin-adjust-check-${marginRecord().key}')), findsNothing);
+      expect(find.text('Network error. Check the records later to confirm.'), findsWidgets);
       expect(repository.changes, 0);
       await cleanup(tester);
     },

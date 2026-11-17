@@ -224,17 +224,17 @@ void main() {
     expect(find.text(messages(tester).liveCapacityStale), findsOneWidget);
     expect(repository.reads, 1);
   });
-  panelTest('other settings disable reads without requesting new signatures', (tester) async {
+  panelTest('other settings in progress keep reads available', (tester) async {
     await open(tester);
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.leverage)!;
+    final lease = activity.acquire(SymbolSetting.leverage);
     await tester.pumpAndSettle();
     expect(
       tester.widget<OutlinedButton>(find.byKey(const Key('main-order-capacity-read'))).onPressed,
-      null,
+      isNotNull,
     );
     expect(repository.reads, 0);
-    activity.finish(lease, unresolved: false);
+    activity.finish(lease);
   });
   panelTest('changing symbols hides previous capacity without a new request', (tester) async {
     await open(tester);

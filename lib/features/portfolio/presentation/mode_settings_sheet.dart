@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../../core/presentation/status_view.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
@@ -114,63 +115,82 @@ class ModeOptionCard extends StatelessWidget {
     required this.selected,
     this.onTap,
     this.busy = false,
+    this.loading = false,
+    this.disabled = false,
   });
   final String title, description;
   final bool selected, busy;
+
+  /// The current choice is not known yet: the check box is a skeleton.
+  final bool loading;
+
+  /// Not selectable for a known reason, shown dimmed.
+  final bool disabled;
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 8),
     child: Semantics(
       selected: selected,
+      enabled: !disabled,
       button: true,
-      child: Material(
-        color: TradeColors.card,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
+      child: Opacity(
+        opacity: disabled ? .4 : 1,
+        child: Material(
+          color: TradeColors.card,
           borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: busy
-                      ? const SizedBox.square(
-                          dimension: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Container(
-                          width: 20,
-                          height: 20,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: selected ? TradeColors.accent : null,
-                            border: selected ? null : Border.all(color: TradeColors.muted),
-                            borderRadius: BorderRadius.circular(8),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: busy
+                        ? const SizedBox.square(
+                            dimension: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : loading
+                        ? const SkeletonBox(
+                            width: 20,
+                            height: 20,
+                            radius: 8,
+                            color: StatusColors.skeletonOnCard,
+                          )
+                        : Container(
+                            width: 20,
+                            height: 20,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: selected ? TradeColors.accent : null,
+                              border: selected ? null : Border.all(color: TradeColors.muted),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: selected
+                                ? const TradeIcon('check', size: 12, color: TradeColors.background)
+                                : null,
                           ),
-                          child: selected
-                              ? const TradeIcon('check', size: 12, color: TradeColors.background)
-                              : null,
-                        ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: TradeTypography.symbol),
-                      const SizedBox(height: 6),
-                      Text(
-                        description,
-                        style: TradeTypography.body.copyWith(color: TradeColors.muted),
-                      ),
-                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: TradeTypography.symbol),
+                        const SizedBox(height: 6),
+                        Text(
+                          description,
+                          style: TradeTypography.body.copyWith(color: TradeColors.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -195,10 +215,19 @@ class ModeError extends StatelessWidget {
 }
 
 class ModeAction extends StatelessWidget {
-  const ModeAction({super.key, required this.label, this.onPressed, this.busy = false});
+  const ModeAction({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.busy = false,
+    this.large = false,
+  });
   final String label;
   final VoidCallback? onPressed;
   final bool busy;
+
+  /// The sheets' bottom Confirm: 48 px high with 16 px bold text.
+  final bool large;
   @override
   Widget build(BuildContext context) => FilledButton(
     onPressed: busy ? null : onPressed,
@@ -207,11 +236,12 @@ class ModeAction extends StatelessWidget {
       foregroundColor: TradeColors.background,
       disabledBackgroundColor: TradeColors.card,
       disabledForegroundColor: TradeColors.muted,
-      minimumSize: const Size(0, 44),
-      textStyle: const TextStyle(
+      minimumSize: Size(0, large ? 48 : 44),
+      shape: large ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)) : null,
+      textStyle: TextStyle(
         fontFamily: 'Inter',
-        fontSize: 13,
-        height: 18 / 13,
+        fontSize: large ? 16 : 13,
+        height: large ? 24 / 16 : 18 / 13,
         fontWeight: FontWeight.w700,
       ),
     ),

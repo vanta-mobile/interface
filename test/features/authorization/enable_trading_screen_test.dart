@@ -314,7 +314,8 @@ void main() {
     expect(find.text('Sign to enable trading'), findsOneWidget);
     await tester.tap(find.byKey(const Key('enable-trading-sign')));
     await tester.pumpAndSettle();
-    expect(authorization.checks, 2);
+    // An unconfirmed grant is checked automatically right after the attempt.
+    expect(authorization.checks, 3);
     expect(authorization.enables, 1);
     expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
     expect(container.read(tradingAuthorizationProvider).result, TradingAuthorizationResult.unknown);

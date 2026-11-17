@@ -14,7 +14,7 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
         if (contextData.fundsFailure case final failure?)
           _errorText(accountErrorText(context, failure)),
         if (contextData.funds?.account.canTrade == false) _errorText(l10n.liveOrderTradingDisabled),
-        if (trailing) _trailingControls(contextData, enabled),
+        if (trailing) _trailingControls(enabled),
         if (conditional && !trailing) ...[
           EmbeddedTriggerField(
             controller: triggerPrice,
@@ -68,7 +68,7 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
           amount: _allocationPercent == null ? parseOrderDecimal(_manualSizeInput.text) : null,
           onAmount: _onSliderAmount,
         ),
-        _availableRow(contextData),
+        EmbeddedAvailableRow(data: contextData),
         EmbeddedAdvancedSection(children: _advancedControls(contextData, entry, enabled)),
         MainOrderCapacityPanel(
           data: widget.data,
@@ -220,39 +220,6 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
         peg = value.counterparty ? LiveOrderPeg.counterparty : LiveOrderPeg.queue;
       }
     });
-  }
-
-  Widget _availableRow(LiveOrderContext data) {
-    final l10n = AppLocalizations.of(context);
-    final available = data.funds?.account.availableBalance;
-    return Row(
-      key: const Key('live-order-available'),
-      children: [
-        Expanded(
-          child: Text(
-            l10n.available,
-            style: TradeTypography.body.copyWith(color: TradeColors.secondary),
-          ),
-        ),
-        Text(
-          available == null
-              ? '—'
-              : '${TokenAmountFormatter.formatCompact(DecimalValue(available.toString()))} '
-                    '${data.rules.quoteAsset}',
-          style: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
-        ),
-        IconButton(
-          key: const Key('live-order-deposit'),
-          tooltip: l10n.fundingDeposit,
-          onPressed: () => openFunding(context, FundingOperation.deposit),
-          icon: const Icon(Icons.add_circle_outline, size: 14),
-          color: TradeColors.accent,
-          visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints.tightFor(width: 28, height: 32),
-          padding: EdgeInsets.zero,
-        ),
-      ],
-    );
   }
 
   Widget _errorText(String text) => Padding(

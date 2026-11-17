@@ -17,7 +17,7 @@ void main() {
       await launch(tester, f.container);
       await f.container.read(liveOrderProvider.notifier).load('BTCUSDT');
       final activity = f.container.read(symbolSettingsActivityProvider.notifier);
-      final lease = activity.acquire(SymbolSetting.order)!;
+      final lease = activity.acquire(SymbolSetting.order);
       final auth = f.container.read(authProvider);
       final initializations = f.identity.initializations;
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
@@ -33,7 +33,7 @@ void main() {
       expect(f.identity.initializations, initializations);
       expect(f.container.read(authProvider), same(auth));
       expect(f.container.read(liveOrderProvider).stale, false);
-      activity.finish(lease, unresolved: false);
+      activity.finish(lease);
       await tester.pumpAndSettle();
       expect(f.identity.initializations, initializations + 1);
       expect(f.container.read(authProvider), same(auth));

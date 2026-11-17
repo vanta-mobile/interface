@@ -13,8 +13,11 @@ AuthFailure failureFromPrivy(String message) {
       : lower.contains('client') || lower.contains('app id') || lower.contains('configuration')
       ? 'authConfiguration'
       : 'authUnavailable';
+  // Prefer the server description wrapped in SDK errors such as
+  // `apiError(httpCode: 422, error: …, description: "…")`.
+  final description = RegExp(r'description:\s*"([^"\n]+)"').firstMatch(message)?.group(1);
   // Retain a concise SDK reason, without code values, credentials or payloads.
-  var reason = message.split('\n').first.trim();
+  var reason = (description ?? message.split('\n').first).trim();
   reason = reason.replaceAll(
     RegExp(r'\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b'),
     '[redacted]',

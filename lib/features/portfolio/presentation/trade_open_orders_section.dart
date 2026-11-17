@@ -69,7 +69,6 @@ class _TradeOpenOrdersSectionState extends ConsumerState<TradeOpenOrdersSection>
         !session.busy &&
         !state.busy &&
         !cancellation.busy &&
-        !cancellation.needsRecheck &&
         !modifying;
     final symbol = ref.watch<String>(symbolProvider);
     final all = state.account?.orders;

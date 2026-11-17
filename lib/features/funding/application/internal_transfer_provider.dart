@@ -221,9 +221,6 @@ class InternalTransferController extends Notifier<InternalTransferState> {
           .singleOrNull;
       if (pending?.reply != null && journal.snapshot.ready && !journal.snapshot.failure) {
         await journal.complete(pending!.key);
-        final activity = ref.read(symbolSettingsActivityProvider.notifier),
-            lease = activity.acquire(SymbolSetting.internalTransfer, checkingOnly: true);
-        if (lease != null) activity.finish(lease, unresolved: false);
       }
       if (!current()) return;
       _acceptBalances(c);
@@ -256,9 +253,7 @@ class InternalTransferController extends Notifier<InternalTransferState> {
         !_fresh(c) ||
         c.validate(state.amount) != null ||
         !storage.ready ||
-        storage.failure ||
-        ref.read(pendingInternalTransfersProvider).isNotEmpty ||
-        ref.read(symbolSettingsActivityProvider).blocks(SymbolSetting.internalTransfer)) {
+        storage.failure) {
       return null;
     }
     final review = InternalTransferReview(
@@ -303,7 +298,6 @@ class InternalTransferController extends Notifier<InternalTransferState> {
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier),
         lease = activity.acquire(SymbolSetting.internalTransfer);
-    if (lease == null) return;
     final generation = _generation, epoch = _epoch;
     bool current() => _current(i!, generation);
     bool canSubmit() => current() && epoch == _epoch && _fresh(review.context);
@@ -377,14 +371,7 @@ class InternalTransferController extends Notifier<InternalTransferState> {
       }
     } finally {
       _working = false;
-      activity.finish(
-        lease,
-        unresolved:
-            current() &&
-            journal.snapshot.records.any(
-              (r) => r.address.toLowerCase() == review.context.address.toLowerCase(),
-            ),
-      );
+      activity.finish(lease);
     }
   }
 }

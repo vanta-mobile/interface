@@ -61,8 +61,7 @@ class BatchCloseController extends Notifier<BatchCloseState> {
         snapshot == null ||
         !_fresh(snapshot.receivedAt) ||
         auth.identity?.signingAvailable != true ||
-        auth.identity?.walletAddress?.toLowerCase() != snapshot.address.toLowerCase() ||
-        ref.read(symbolSettingsActivityProvider).owner != null) {
+        auth.identity?.walletAddress?.toLowerCase() != snapshot.address.toLowerCase()) {
       return null;
     }
     final positions =
@@ -88,10 +87,34 @@ class BatchCloseController extends Notifier<BatchCloseState> {
     );
   }
 
-  Future<void> submit(BatchCloseIntent intent) => _run(intent, checkingOnly: false);
-  Future<void> recheck() async {
-    final intent = state.intent;
-    if (intent != null && state.needsRecheck) await _run(intent, checkingOnly: true);
+  /// [prepare], re-reading positions silently first when the current snapshot
+  /// cannot back a confirmation (refreshed, stale or past its read window).
+  Future<BatchCloseIntent?> prepareCurrent({String? symbol}) async {
+    if (prepare(symbol: symbol) case final ready?) return ready;
+    if (state.busy || ref.read(authProvider).busy) return null;
+    await ref.read(positionRiskProvider.notifier).refresh();
+    return ref.mounted ? prepare(symbol: symbol) : null;
+  }
+
+  /// A confirmation can outlast its snapshot: renewal and account events
+  /// replace it, and reads expire after 30 s. Returns [intent] while it can
+  /// still run, otherwise a fresh intent for the same scope; the caller must
+  /// confirm again when its positions differ.
+  Future<BatchCloseIntent?> renew(BatchCloseIntent intent) async =>
+      _runnable(intent) ? intent : prepareCurrent(symbol: intent.symbol);
+
+  Future<void> submit(BatchCloseIntent intent) => _run(intent);
+
+  bool _runnable(BatchCloseIntent intent) {
+    final risk = ref.read(positionRiskProvider);
+    return intent.revision == _revision &&
+        !risk.busy &&
+        !risk.stale &&
+        risk.failure == null &&
+        identical(risk.account, intent.snapshot) &&
+        _fresh(intent.snapshot.receivedAt) &&
+        intent.validTargets &&
+        ref.read(symbolSettingsActivityProvider).epoch == intent.epoch;
   }
 
   void stop() {
@@ -100,7 +123,7 @@ class BatchCloseController extends Notifier<BatchCloseState> {
     _emit(state.intent!, state.items, state.step, state.currentKey, state.remainingAfter);
   }
 
-  Future<void> _run(BatchCloseIntent intent, {required bool checkingOnly}) async {
+  Future<void> _run(BatchCloseIntent intent) async {
     final auth = ref.read(authProvider), identity = auth.identity;
     if (state.busy ||
         auth.busy ||
@@ -108,24 +131,9 @@ class BatchCloseController extends Notifier<BatchCloseState> {
         identity?.walletAddress?.toLowerCase() != intent.address.toLowerCase()) {
       return;
     }
-    if (!checkingOnly) {
-      final risk = ref.read(positionRiskProvider);
-      if (intent.revision != _revision ||
-          risk.busy ||
-          risk.stale ||
-          risk.failure != null ||
-          !identical(risk.account, intent.snapshot) ||
-          !_fresh(intent.snapshot.receivedAt) ||
-          !intent.validTargets ||
-          ref.read(symbolSettingsActivityProvider).epoch != intent.epoch) {
-        return;
-      }
-    } else if (!identical(state.intent, intent)) {
-      return;
-    }
+    if (!_runnable(intent)) return;
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.batchClose, checkingOnly: checkingOnly);
-    if (lease == null) return;
+    final lease = activity.acquire(SymbolSetting.batchClose);
     final revision = ++_revision;
     bool current() =>
         ref.mounted &&
@@ -134,12 +142,8 @@ class BatchCloseController extends Notifier<BatchCloseState> {
         ref.read(authProvider).identity?.walletAddress?.toLowerCase() ==
             intent.address.toLowerCase() &&
         ref.read(authProvider).identity?.signingAvailable == true;
-    final items = checkingOnly
-        ? {...state.items}
-        : {for (final target in intent.targets) target.key: BatchCloseItem(target: target)};
-    final targets = checkingOnly
-        ? items.values.where((i) => i.needsRecheck).map((i) => i.target).toList()
-        : intent.targets;
+    final items = {for (final target in intent.targets) target.key: BatchCloseItem(target: target)};
+    final targets = intent.targets;
     _stop = false;
     _emit(intent, items, LiveOrderStep.preparing, targets.firstOrNull?.key, null);
     try {
@@ -147,57 +151,48 @@ class BatchCloseController extends Notifier<BatchCloseState> {
         if (!current()) return;
         if (_stop) break;
         _emit(intent, items, LiveOrderStep.preparing, target.key, null);
-        final item = await _execute(target, items[target.key]!, current, checkingOnly, (step) {
+        final item = await _execute(target, current, (step) {
           if (current()) _emit(intent, items, step, target.key, null);
         }, () => activity.submitted(lease));
         if (!current()) return;
         items[target.key] = item;
         if (item.submitted) _markOutputsStale();
         _emit(intent, items, LiveOrderStep.checking, target.key, null);
-        if (item.failure != null || item.result?.failure != null || item.needsRecheck) break;
+        if (item.failure != null || item.result?.failure != null) break;
       }
       if (!current()) return;
       final cutoff = items.values.any((i) => i.submitted) ? _now : null;
       _emit(intent, items, LiveOrderStep.checkingPosition, null, cutoff);
       // The explicit confirmation includes one final signed position read.
-      // A refused/unknown order check stops prompts; recovery never resumes POSTs.
-      if (!checkingOnly &&
-          cutoff != null &&
-          items.values.every(
-            (i) => !i.needsRecheck && i.failure == null && i.result?.failure == null,
-          )) {
+      // A failed or unconfirmed close stops the batch; nothing is re-sent.
+      if (cutoff != null &&
+          items.values.every((i) => i.failure == null && i.result?.failure == null)) {
         await ref.read(positionRiskProvider.notifier).refresh();
       }
       if (current()) _emit(intent, items, LiveOrderStep.idle, null, cutoff);
     } finally {
-      activity.finish(lease, unresolved: current() && state.needsRecheck);
+      activity.finish(lease);
     }
   }
 
   Future<BatchCloseItem> _execute(
     BatchCloseTarget target,
-    BatchCloseItem previous,
     bool Function() current,
-    bool checkingOnly,
     void Function(LiveOrderStep) progress,
     void Function() submitted,
   ) async {
     final repository = ref.read(liveOrderRepositoryProvider);
-    LiveOrderIntent? order = previous.order;
-    var sent = previous.submitted;
+    LiveOrderIntent? order;
+    var sent = false, queried = false;
     try {
       LiveOrderResult result;
-      if (checkingOnly) {
-        if (order == null) throw const AccountReadFailure('accountDataInvalid');
-        result = await repository.recheck(intent: order, isCurrent: current, onStep: progress);
-      } else {
+      {
         final epoch = ref.read(symbolSettingsActivityProvider).epoch;
         final event = ref.read(accountChangeProvider).lastEventAt;
         bool unchanged() =>
             current() &&
             !_stop &&
             ref.read(symbolSettingsActivityProvider).epoch == epoch &&
-            ref.read(symbolSettingsActivityProvider).owner == SymbolSetting.batchClose &&
             ref.read(accountChangeProvider).lastEventAt == event;
         final context = await repository.read(
           address: state.intent!.address,
@@ -249,8 +244,32 @@ class BatchCloseController extends Notifier<BatchCloseState> {
         );
       }
       if (!sent) throw const AccountReadFailure('accountDataInvalid');
+      // A sent close is looked up again by its client ID, never re-sent; one
+      // still unconfirmed is reported as the query's error.
+      if (result.needsRecheck && current()) {
+        queried = true;
+        result = await repository.recheck(intent: order, isCurrent: current, onStep: progress);
+      }
+      if (result.needsRecheck) {
+        throw result.failure ?? const AccountReadFailure('accountNetwork');
+      }
       return BatchCloseItem(target: target, order: order, submitted: sent, result: result);
     } catch (error) {
+      // Thrown after sending: query the order once instead of guessing.
+      if (sent && !queried && order != null && current()) {
+        try {
+          final checked = await repository.recheck(
+            intent: order,
+            isCurrent: current,
+            onStep: progress,
+          );
+          if (!checked.needsRecheck) {
+            return BatchCloseItem(target: target, order: order, submitted: sent, result: checked);
+          }
+        } catch (_) {
+          // Reported below as the original failure.
+        }
+      }
       return BatchCloseItem(
         target: target,
         order: order,

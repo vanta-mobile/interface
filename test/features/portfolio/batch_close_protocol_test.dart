@@ -154,17 +154,13 @@ void main() {
         final controller = container.read(batchCloseProvider.notifier);
         final intent = controller.prepare()!;
         await controller.submit(intent);
-        var state = container.read(batchCloseProvider);
+        final state = container.read(batchCloseProvider);
         if (timeout) {
-          expect(state.needsRecheck, true);
+          // The unconfirmed close was queried automatically, reported as an
+          // error, and stopped the batch; nothing is re-sent.
+          expect(state.items.values.first.failure, isNotNull);
           expect(orders.length, 1);
           expect(state.items.values.skip(1).every((i) => !i.submitted), true);
-          final readsBefore = requests.where((r) => r.url.path.endsWith('/positionRisk')).length;
-          unknown = false;
-          await controller.recheck();
-          state = container.read(batchCloseProvider);
-          expect(state.needsRecheck, false);
-          expect(requests.where((r) => r.url.path.endsWith('/positionRisk')).length, readsBefore);
           expect(requests.where((r) => r.method == 'POST').length, 1);
           expect(orders.keys.single, intent.targets.first.clientOrderId);
         } else {

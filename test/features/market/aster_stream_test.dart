@@ -1,11 +1,43 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:vanta/features/market/data/aster_service.dart';
+import 'package:vanta/features/market/data/aster_stream.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+
+class _Sink implements WebSocketSink {
+  final sent = <Map<String, Object?>>[];
+  @override
+  void add(Object? data) => sent.add(jsonDecode(data! as String) as Map<String, Object?>);
+  @override
+  Future<void> close([int? closeCode, String? closeReason]) async {}
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _Socket implements WebSocketChannel {
+  final incoming = StreamController<dynamic>();
+  @override
+  final _Sink sink = _Sink();
+  @override
+  Stream<dynamic> get stream => incoming.stream;
+  @override
+  Future<void> get ready => Future.value();
+  @override
+  String? get protocol => null;
+  @override
+  int? get closeCode => null;
+  @override
+  String? get closeReason => null;
+  List<Object?> get methods => [for (final m in sink.sent) m['method']];
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
   group('Aster market streams', () {
@@ -214,6 +246,80 @@ void main() {
         emitsError(isArgumentError),
       );
       expect(connections, isEmpty);
+    });
+  });
+
+  group('Aster market stream heartbeat', () {
+    test('a quiet market stays connected while heartbeats are answered', () {
+      fakeAsync((async) {
+        final sockets = <_Socket>[];
+        final events = <Map<String, Object?>>[];
+        final stream = AsterMarketStream(Uri.parse('wss://example.test/stream'), [
+          'aaplusdt@aggTrade',
+        ], (_) => (sockets..add(_Socket())).last);
+        final subscription = stream.events.listen(events.add);
+        async.flushMicrotasks();
+        sockets.single.incoming.add('{"id":1,"result":null}');
+
+        for (var round = 0; round < 6; round++) {
+          async.elapse(const Duration(seconds: 20));
+          expect(sockets.single.methods.last, 'LIST_SUBSCRIPTIONS');
+          sockets.single.incoming.add('{"id":2,"result":["aaplusdt@aggTrade"]}');
+          async.flushMicrotasks();
+        }
+
+        expect(sockets, hasLength(1));
+        expect(events.where((e) => e['disconnected'] == true), isEmpty);
+        unawaited(subscription.cancel());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('an unanswered heartbeat still reconnects after the idle limit', () {
+      fakeAsync((async) {
+        final sockets = <_Socket>[];
+        final events = <Map<String, Object?>>[];
+        final stream = AsterMarketStream(Uri.parse('wss://example.test/stream'), [
+          'aaplusdt@aggTrade',
+        ], (_) => (sockets..add(_Socket())).last);
+        final subscription = stream.events.listen(events.add);
+        async.flushMicrotasks();
+
+        async.elapse(const Duration(seconds: 20));
+        expect(sockets.single.methods, ['SUBSCRIBE', 'LIST_SUBSCRIPTIONS']);
+        async.elapse(const Duration(seconds: 15));
+        expect(events.last, {'disconnected': true});
+
+        async.elapse(const Duration(seconds: 1));
+        expect(sockets, hasLength(2));
+        unawaited(subscription.cancel());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('an acknowledged reconnect resets the retry delay without market events', () {
+      fakeAsync((async) {
+        final sockets = <_Socket>[];
+        final stream = AsterMarketStream(Uri.parse('wss://example.test/stream'), [
+          'aaplusdt@aggTrade',
+        ], (_) => (sockets..add(_Socket())).last);
+        final subscription = stream.events.listen((_) {});
+        async.flushMicrotasks();
+
+        // Two unanswered sessions grow the delay to 4 s.
+        async.elapse(const Duration(seconds: 35 + 1 + 35));
+        expect(sockets, hasLength(2));
+        async.elapse(const Duration(seconds: 2));
+        expect(sockets, hasLength(3));
+        sockets.last.incoming.add('{"id":1,"result":null}');
+        async.flushMicrotasks();
+
+        async.elapse(const Duration(seconds: 35));
+        async.elapse(const Duration(seconds: 1));
+        expect(sockets, hasLength(4));
+        unawaited(subscription.cancel());
+        async.flushMicrotasks();
+      });
     });
   });
 }

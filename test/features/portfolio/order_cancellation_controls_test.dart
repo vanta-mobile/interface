@@ -108,12 +108,15 @@ void main() {
     expect(tester.takeException(), null);
   });
 
-  testWidgets('unknown result preserves order; recheck has no duplicate cancellation', (
+  testWidgets('an unconfirmed cancellation is queried automatically; no duplicate DELETE', (
     tester,
   ) async {
     final identity = TestIdentityRepository()..restored = signingIdentity;
     final cancellation = TestOrderCancellationRepository()
-      ..result = const OrderCancellationResult(failure: AccountReadFailure('accountNetwork'));
+      ..result = const OrderCancellationResult(failure: AccountReadFailure('accountNetwork'))
+      ..checkResult = const OrderCancellationResult(
+        resolution: OrderResolution(symbol: 'BTCUSDT', orderId: '1917641', status: 'CANCELED'),
+      );
     addTearDown(identity.dispose);
     final container = setup(
       tester,
@@ -129,15 +132,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('confirm-order-cancel')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Cancellation outcome is unconfirmed'), findsOneWidget);
-    expect(tester.widget<OpenOrderChipButton>(find.byKey(cancelKey)).onPressed, null);
-    cancellation.result = const OrderCancellationResult(
-      resolution: OrderResolution(symbol: 'BTCUSDT', orderId: '1917641', status: 'CANCELED'),
-    );
-    await tester.ensureVisible(find.byKey(const Key('recheck-order-cancel')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('recheck-order-cancel')));
-    await tester.pumpAndSettle();
+    expect(find.textContaining('Cancellation outcome is unconfirmed'), findsNothing);
+    expect(find.byKey(const Key('recheck-order-cancel')), findsNothing);
     expect(cancellation.checks, 1);
     expect(cancellation.cancels, 1);
     expect(find.byKey(cancelKey), findsNothing);
@@ -166,40 +162,43 @@ void main() {
   });
 
   for (final variant in [(360.0, 844.0, 1.5, 'en'), (844.0, 390.0, 1.5, 'zh')]) {
-    testWidgets('confirmation and unknown state fit ${variant.$1}x${variant.$2} ${variant.$4}', (
-      tester,
-    ) async {
-      final identity = TestIdentityRepository()..restored = signingIdentity;
-      final cancellation = TestOrderCancellationRepository()
-        ..result = const OrderCancellationResult();
-      addTearDown(identity.dispose);
-      final container = setup(
-        tester,
-        identityRepository: identity,
-        openOrdersRepository: TestOpenOrdersRepository(),
-        orderCancellationRepository: cancellation,
-        width: variant.$1,
-        scale: variant.$3,
-        language: Locale(variant.$4),
-      );
-      tester.view.physicalSize = Size(variant.$1, variant.$2);
-      await _showOpenOrders(tester, container);
-      await tester.ensureVisible(find.byKey(cancelKey));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(cancelKey));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), null);
-      await tester.ensureVisible(find.byKey(const Key('confirm-order-cancel')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('confirm-order-cancel')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('order-cancel-result')), findsOneWidget);
-      expect(tester.takeException(), null);
-      container.read(localeProvider.notifier).select(variant.$4 == 'en' ? 'zh' : 'en');
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), null);
-      await tester.pumpWidget(const SizedBox());
-      container.dispose();
-    });
+    testWidgets(
+      'confirmation and unconfirmed error fit ${variant.$1}x${variant.$2} ${variant.$4}',
+      (tester) async {
+        final identity = TestIdentityRepository()..restored = signingIdentity;
+        final cancellation = TestOrderCancellationRepository()
+          ..result = const OrderCancellationResult();
+        addTearDown(identity.dispose);
+        final container = setup(
+          tester,
+          identityRepository: identity,
+          openOrdersRepository: TestOpenOrdersRepository(),
+          orderCancellationRepository: cancellation,
+          width: variant.$1,
+          scale: variant.$3,
+          language: Locale(variant.$4),
+        );
+        tester.view.physicalSize = Size(variant.$1, variant.$2);
+        await _showOpenOrders(tester, container);
+        await tester.ensureVisible(find.byKey(cancelKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(cancelKey));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), null);
+        await tester.ensureVisible(find.byKey(const Key('confirm-order-cancel')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('confirm-order-cancel')));
+        await tester.pumpAndSettle();
+        // Unconfirmed after the automatic query: shown as an error, no result line.
+        expect(find.byKey(const Key('order-cancel-result')), findsNothing);
+        expect(cancellation.checks, 1);
+        expect(tester.takeException(), null);
+        container.read(localeProvider.notifier).select(variant.$4 == 'en' ? 'zh' : 'en');
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), null);
+        await tester.pumpWidget(const SizedBox());
+        container.dispose();
+      },
+    );
   }
 }

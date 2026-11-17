@@ -62,7 +62,7 @@
   "withdrawals": {
     "futures_path": "POST /fapi/v3/aster/user-withdraw",
     "spot_path": "POST https://sapi.asterdex.com/api/v3/aster/user-withdraw",
-    "receiver": "Own registered current wallet only",
+    "receiver": "External wallet: own registered current wallet only. Embedded (Privy) wallet: user-entered EVM address (nonzero, EIP-55 checksum when mixed case), signed as Action.destination and sent as receiver; user/signer stay the current wallet",
     "review": "Fresh master directory, catalog, signed info and fee; repeat before submit, 30s expiry, amount+fee conservative quantity/USD caps",
     "business_domain": "Aster / version1 / selected EVM chain",
     "business_fields": [

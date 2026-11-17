@@ -53,9 +53,12 @@ class _DepositSubmissionPanelState extends ConsumerState<DepositSubmissionPanel>
         if (a != b) setState(() => acknowledged = false);
       },
     );
+    // A transaction still confirming on chain (it has a hash) must settle
+    // first; a record without a hash is an unconfirmed attempt and does not
+    // block a new deposit.
     final blocked =
-        ref.watch(pendingDepositSubmissionsProvider).isNotEmpty ||
-        ref.watch(pendingDepositApprovalsProvider).isNotEmpty;
+        ref.watch(pendingDepositSubmissionsProvider).any((r) => r.hash != null) ||
+        ref.watch(pendingDepositApprovalsProvider).any((r) => r.hash != null);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

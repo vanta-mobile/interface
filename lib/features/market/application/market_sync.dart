@@ -66,6 +66,9 @@ class MarketSync {
     // The current chart's REST request never waits for a WS handshake.
     _connect();
     retry();
+    // The catalog snapshot can be minutes old; the symbol's own 24h ticker
+    // stream keeps it current once connected.
+    unawaited(_refreshTicker());
     _reconcile = Timer.periodic(const Duration(seconds: 60), (_) {
       retry();
       unawaited(_refreshTicker());
@@ -80,9 +83,8 @@ class MarketSync {
 
   void _connect() {
     final generation = ++_generation;
-    _subscription = service.stream(['${instrument.symbol.toLowerCase()}@kline_$interval']).listen((
-      event,
-    ) {
+    final stream = instrument.symbol.toLowerCase();
+    _subscription = service.stream(['$stream@kline_$interval', '$stream@ticker']).listen((event) {
       if (_active && generation == _generation) _onEvent(event);
     });
   }
@@ -160,6 +162,10 @@ class MarketSync {
       connected = false;
       _needsRefresh = true;
       _changed = true;
+      return;
+    }
+    if (event['e'] == '24hrTicker') {
+      if (event['s'] == instrument.symbol) _onTicker(event);
       return;
     }
     final raw = event['k'];
@@ -251,6 +257,20 @@ class MarketSync {
     }
   }
 
+  /// Rolling 24h statistics, in the REST ticker's field names.
+  void _onTicker(Map<String, Object?> event) {
+    final fields = {
+      'openPrice': event['o'],
+      'highPrice': event['h'],
+      'lowPrice': event['l'],
+      'quoteVolume': event['q'],
+      'priceChangePercent': event['P'],
+    };
+    if (fields.values.any((value) => Decimal.tryParse('$value') == null)) return;
+    _ticker = {..._ticker, ...fields};
+    _changed = true;
+  }
+
   Market? market(String symbol) {
     if (symbol != instrument.symbol || !initialized || series.candles.isEmpty) return null;
     final recent = series.candles;
@@ -267,7 +287,10 @@ class MarketSync {
       symbol: symbol,
       interval: interval,
       price: Decimal.parse(close.toString()),
-      change: (close - open) / open * 100,
+      // The exchange's own 24h change, as the market list shows it.
+      change: _ticker['priceChangePercent'] == null
+          ? (close - open) / open * 100
+          : AsterService.numeric(_ticker['priceChangePercent']),
       mark: AsterService.numeric(_ticker['markPrice'] ?? close),
       index: AsterService.numeric(_ticker['indexPrice'] ?? close),
       high: AsterService.numeric(_ticker['highPrice']),

@@ -47,7 +47,6 @@ class PositionModeResult {
   final FuturesPositionMode? observed;
   final DateTime? checkedAt;
   final AccountReadFailure? failure;
-  bool get needsRecheck => observed == null;
 }
 
 class FuturesPositionModeState {
@@ -66,7 +65,6 @@ class FuturesPositionModeState {
   final PositionModeStep step;
   final bool stale;
   bool get busy => step != PositionModeStep.idle;
-  bool get needsRecheck => result?.needsRecheck == true;
 }
 
 abstract interface class FuturesPositionModeRepository {

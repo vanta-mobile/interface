@@ -374,15 +374,14 @@ class _PositionTpSlScreenState extends ConsumerState<PositionTpSlScreen> {
       final result = results.where((r) => r.kind == leg.kind).firstOrNull;
       lines.add(switch (result?.outcome) {
         PositionOrderOutcome.placed => l10n.positionTpslLegPlaced(name(leg.kind)),
-        PositionOrderOutcome.unknown => l10n.positionTpslLegUnknown(name(leg.kind)),
         PositionOrderOutcome.failed => l10n.positionTpslLegFailed(
           name(leg.kind),
           result!.failure == null ? '' : accountErrorText(context, result.failure!),
         ),
         null => l10n.positionTpslNotSubmitted(name(leg.kind)),
       });
-      // A placed or unconfirmed order must not be sent again by another tap;
-      // failed and unsent legs keep their input for correction.
+      // A placed order must not be sent again by another tap; failed and
+      // unsent legs keep their input for correction.
       if (result != null && result.outcome != PositionOrderOutcome.failed) {
         setState(leg.clear);
       }

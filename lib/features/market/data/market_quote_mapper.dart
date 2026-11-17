@@ -17,6 +17,7 @@ MarketQuote mapMarketQuote(AsterInstrument instrument) {
     change: number('priceChangePercent'),
     quoteVolume: number('quoteVolume', nonnegative: true),
     funding: number('lastFundingRate'),
+    markPrice: number('markPrice', nonnegative: true),
     descriptor: instrument.descriptor,
   );
 }

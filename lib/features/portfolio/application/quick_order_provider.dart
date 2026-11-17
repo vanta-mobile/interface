@@ -79,7 +79,7 @@ class QuickOrderController extends Notifier<QuickOrderState> {
   bool get backgroundBusy {
     final live = ref.read(liveOrderProvider);
     return live.busy && live.intent == null ||
-        ref.read(symbolSettingsActivityProvider).owner != null;
+        ref.read(symbolSettingsActivityProvider).isRunning(SymbolSetting.order);
   }
 
   /// A tap during background work waits for it instead of being dropped.
@@ -296,7 +296,7 @@ class QuickOrderController extends Notifier<QuickOrderState> {
     } catch (_) {
       throw const AccountReadFailure('accountReadFailed');
     } finally {
-      if (held != null) activity.finish(held, unresolved: false);
+      if (held != null) activity.finish(held);
     }
   }
 }

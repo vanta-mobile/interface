@@ -228,7 +228,15 @@ class PushDeviceController extends Notifier<PushDeviceState> {
       if (!current()) return;
       _keys.remove('prefs:$operation');
       final status = await RequestScope.runOwned(current, repository.status);
-      if (current()) state = PushDeviceState(status: status, bound: state.bound);
+      if (!current()) return;
+      // The server is the source of truth; a window it still echoes after a
+      // clear is reported instead of letting the switch silently flip back.
+      final kept = update.clearQuietHours && status.preferences.quietStart != null;
+      state = PushDeviceState(
+        status: status,
+        bound: state.bound,
+        error: kept ? const VantaApiFailure('pushQuietHoursNotCleared') : null,
+      );
     } catch (error) {
       if (current()) {
         state = PushDeviceState(

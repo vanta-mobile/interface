@@ -92,7 +92,6 @@ void main() {
       expect(identity.wallets, 0);
       await controller().confirm(r);
       expect(repository.posts, 1);
-      expect(c.read(symbolSettingsActivityProvider).recoveryBlocked, false);
     },
   );
   transferTest('cancel preserves context and never dispatches', (tester) async {
@@ -174,9 +173,9 @@ void main() {
   transferTest('settings epoch invalidates review before dispatch', (tester) async {
     final r = await review();
     final activity = c.read(symbolSettingsActivityProvider.notifier),
-        lease = activity.acquire(SymbolSetting.leverage)!;
+        lease = activity.acquire(SymbolSetting.leverage);
     activity.submitted(lease);
-    activity.finish(lease, unresolved: false);
+    activity.finish(lease);
     await controller().confirm(r);
     expect(repository.posts, 0);
     expect(state().review, null);
@@ -184,9 +183,9 @@ void main() {
   transferTest('other unknown mutation blocks new rebalance', (tester) async {
     await controller().load();
     final activity = c.read(symbolSettingsActivityProvider.notifier),
-        lease = activity.acquire(SymbolSetting.assetMode)!;
+        lease = activity.acquire(SymbolSetting.assetMode);
     activity.submitted(lease);
-    activity.finish(lease, unresolved: true);
+    activity.finish(lease);
     expect(controller().prepare(), null);
     expect(repository.posts, 0);
   });
@@ -253,20 +252,19 @@ void main() {
       expect(journal.snapshot.records, isEmpty);
     });
   }
-  transferTest('unknown POST persisted and locks new orders/configuration across checks', (
-    tester,
-  ) async {
+  transferTest('an unconfirmed POST is persisted, reported, and blocks nothing', (tester) async {
     repository.submitFailure = const AccountReadFailure('accountNetwork');
     await controller().confirm(await review());
     expect(journal.snapshot.records.single.reply, null);
     expect(state().failure, 'accountNetwork');
-    expect(c.read(symbolSettingsActivityProvider.notifier).acquire(SymbolSetting.order), null);
+    // Orders and settings are independent of the pending transfer.
+    final activity = c.read(symbolSettingsActivityProvider.notifier);
+    activity.finish(activity.acquire(SymbolSetting.order));
     repository.context = transferContext(now: now);
     await controller().load();
     expect(journal.snapshot.records.length, 1);
-    expect(controller().prepare(), null);
+    expect(controller().prepare(), isNotNull); // the user may explicitly try again
     expect(repository.posts, 1);
-    expect(c.read(symbolSettingsActivityProvider).recoveryBlocked, true);
   });
   transferTest('known response with failed account check can only recheck then releases lock', (
     tester,
@@ -279,11 +277,10 @@ void main() {
     repository.readFailure = null;
     await controller().load();
     expect(journal.snapshot.records, isEmpty);
-    expect(c.read(symbolSettingsActivityProvider).owner, null);
-    expect(c.read(symbolSettingsActivityProvider).recoveryBlocked, false);
+    expect(c.read(symbolSettingsActivityProvider).busy, isFalse);
     final lease = c.read(symbolSettingsActivityProvider.notifier).acquire(SymbolSetting.order);
     expect(lease, isNotNull);
-    c.read(symbolSettingsActivityProvider.notifier).finish(lease!, unresolved: false);
+    c.read(symbolSettingsActivityProvider.notifier).finish(lease);
   });
   for (final loss in ['stop', 'logout', 'dispose']) {
     transferTest('server reply after $loss persists under original wallet', (tester) async {
@@ -447,14 +444,15 @@ void main() {
     expect(journal.snapshot.records, isEmpty);
   });
   transferTest(
-    'transfer pending blocks order, configuration and Rebalance but belongs only to original wallet',
+    'a pending transfer belongs only to its original wallet and blocks no other operation',
     (tester) async {
       repository.submitFailure = const AccountReadFailure('accountNetwork');
       await controller().confirm(await review());
       final activity = c.read(symbolSettingsActivityProvider.notifier);
       for (final kind in [SymbolSetting.order, SymbolSetting.leverage, SymbolSetting.rebalance]) {
-        expect(activity.acquire(kind), null);
+        activity.finish(activity.acquire(kind));
       }
+      expect(c.read(pendingInternalTransfersProvider), isNotEmpty);
       identity.events.add(
         const AuthIdentity(
           id: 'other',
@@ -467,7 +465,7 @@ void main() {
       expect(c.read(pendingInternalTransfersProvider), isEmpty);
       final lease = activity.acquire(SymbolSetting.order);
       expect(lease, isNotNull);
-      activity.finish(lease!, unresolved: false);
+      activity.finish(lease);
       expect(journal.snapshot.records.length, 1);
     },
   );

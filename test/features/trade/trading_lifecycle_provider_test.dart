@@ -28,7 +28,7 @@ void main() {
       'resume defers session reconciliation until $owner finishes without clearing capacity',
       () async {
         final activity = f.container.read(symbolSettingsActivityProvider.notifier);
-        final lease = activity.acquire(owner)!;
+        final lease = activity.acquire(owner);
         final capacity = f.container.read(mainOrderCapacityProvider).snapshot;
         final auth = f.container.read(authProvider);
         lifecycle.onChanged(AppLifecycleState.paused);
@@ -37,7 +37,7 @@ void main() {
         await f.flush();
         expect(f.identity.initializations, 1);
         expect(f.container.read(authProvider), same(auth));
-        activity.finish(lease, unresolved: false);
+        activity.finish(lease);
         await f.flush();
         expect(f.identity.initializations, 2);
         expect(f.container.read(authProvider), same(auth));
@@ -49,11 +49,11 @@ void main() {
 
   test('lease release in background waits for foreground and coalesces pending resumes', () async {
     final activity = f.container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.order)!;
+    final lease = activity.acquire(SymbolSetting.order);
     lifecycle.onChanged(AppLifecycleState.resumed);
     await f.flush();
     lifecycle.onChanged(AppLifecycleState.hidden);
-    activity.finish(lease, unresolved: false);
+    activity.finish(lease);
     await f.flush();
     expect(f.identity.initializations, 1);
     expect(f.container.read(quoteUpdatesActiveProvider), false);
@@ -65,10 +65,10 @@ void main() {
 
   test('inactive wallet prompt does not reconcile when an operation finishes', () async {
     final activity = f.container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.order)!;
+    final lease = activity.acquire(SymbolSetting.order);
     lifecycle.onChanged(AppLifecycleState.resumed);
     lifecycle.onChanged(AppLifecycleState.inactive);
-    activity.finish(lease, unresolved: false);
+    activity.finish(lease);
     await f.flush();
     expect(f.identity.initializations, 1);
     lifecycle.onChanged(AppLifecycleState.resumed);

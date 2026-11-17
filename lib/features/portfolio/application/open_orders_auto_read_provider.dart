@@ -21,7 +21,7 @@ final openOrdersAutoReadProvider = Provider.autoDispose<void>((ref) {
     openOrdersReadProvider,
     blocked: () {
       final cancellation = ref.read(orderCancellationProvider);
-      return cancellation.busy || cancellation.needsRecheck;
+      return cancellation.busy;
     },
     triggers: [orderCancellationProvider],
   );

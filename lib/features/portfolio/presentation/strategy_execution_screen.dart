@@ -9,7 +9,6 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../trade/presentation/widgets/primitives.dart';
 import '../application/strategy_execution_provider.dart';
-import '../application/symbol_settings_activity.dart';
 import '../domain/order_query.dart';
 import '../domain/strategy_execution.dart';
 import 'strategy_execution_leg_card.dart';
@@ -98,7 +97,7 @@ class _ReadControls extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(strategyExecutionProvider(query));
-    final auth = ref.watch(authProvider), activity = ref.watch(symbolSettingsActivityProvider);
+    final auth = ref.watch(authProvider);
     final controller = ref.read(strategyExecutionProvider(query).notifier);
     final sameWallet =
         auth.identity?.walletAddress?.toLowerCase() == query.order.address.toLowerCase();
@@ -108,11 +107,7 @@ class _ReadControls extends ConsumerWidget {
         FilledButton(
           key: const Key('strategy-execution-read'),
           onPressed:
-              state.busy ||
-                  auth.busy ||
-                  !sameWallet ||
-                  auth.identity?.signingAvailable != true ||
-                  activity.owner != null
+              state.busy || auth.busy || !sameWallet || auth.identity?.signingAvailable != true
               ? null
               : controller.read,
           child: Text(l10n.strategyExecutionRead),

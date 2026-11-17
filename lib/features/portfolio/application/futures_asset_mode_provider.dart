@@ -91,16 +91,11 @@ class FuturesAssetModeController extends Notifier<FuturesAssetModeState> {
   Future<void> load() async {
     final auth = ref.read(authProvider), identity = ref.read(authProvider).identity;
     final address = identity?.walletAddress;
-    if (state.busy ||
-        state.needsRecheck ||
-        auth.busy ||
-        address == null ||
-        identity?.signingAvailable != true) {
+    if (state.busy || auth.busy || address == null || identity?.signingAvailable != true) {
       return;
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
     final lease = activity.acquire(SymbolSetting.assetMode);
-    if (lease == null) return;
     final revision = ++_revision, staleRevision = _staleRevision;
     final previous = state.context;
     _expiry?.cancel();
@@ -142,15 +137,13 @@ class FuturesAssetModeController extends Notifier<FuturesAssetModeState> {
         state = FuturesAssetModeState(context: previous, stale: true, failure: _failure(error));
       }
     } finally {
-      activity.finish(lease, unresolved: false);
+      activity.finish(lease);
     }
   }
 
   AssetModeIntent? prepare(FuturesAssetMode target) {
     final context = state.context, auth = ref.read(authProvider);
     if (state.busy ||
-        ref.read(symbolSettingsActivityProvider).blocks(SymbolSetting.assetMode) ||
-        state.needsRecheck ||
         context == null ||
         !_fresh(context) ||
         context.blocks(target) ||
@@ -163,13 +156,9 @@ class FuturesAssetModeController extends Notifier<FuturesAssetModeState> {
     return AssetModeIntent(context: context, target: target, revision: _revision);
   }
 
-  Future<void> change(AssetModeIntent intent) => _run(intent, checkingOnly: false);
-  Future<void> recheck() async {
-    final intent = state.intent;
-    if (intent != null && state.needsRecheck) await _run(intent, checkingOnly: true);
-  }
+  Future<void> change(AssetModeIntent intent) => _run(intent);
 
-  Future<void> _run(AssetModeIntent intent, {required bool checkingOnly}) async {
+  Future<void> _run(AssetModeIntent intent) async {
     final auth = ref.read(authProvider), identity = ref.read(authProvider).identity;
     if (state.busy ||
         intent.revision != _revision ||
@@ -178,12 +167,11 @@ class FuturesAssetModeController extends Notifier<FuturesAssetModeState> {
         identity?.walletAddress?.toLowerCase() != intent.context.address.toLowerCase()) {
       return;
     }
-    if (!checkingOnly && (state.context != intent.context || prepare(intent.target) == null)) {
+    if (state.context != intent.context || prepare(intent.target) == null) {
       return;
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.assetMode, checkingOnly: checkingOnly);
-    if (lease == null) return;
+    final lease = activity.acquire(SymbolSetting.assetMode);
     final revision = ++_revision;
     final active = AssetModeIntent(
       context: intent.context,
@@ -204,7 +192,7 @@ class FuturesAssetModeController extends Notifier<FuturesAssetModeState> {
       step: AssetModeStep.preparing,
       stale: state.stale,
     );
-    var submitted = checkingOnly;
+    var submitted = false;
     try {
       void progress(AssetModeStep step) {
         if (!current()) return;
@@ -222,17 +210,33 @@ class FuturesAssetModeController extends Notifier<FuturesAssetModeState> {
       }
 
       final repository = ref.read(futuresAssetModeRepositoryProvider);
-      final result = checkingOnly
-          ? await repository.recheck(intent: active, isCurrent: current, onStep: progress)
-          : await repository.change(
-              intent: active,
-              isCurrent: current,
-              canSubmit: () => current() && _fresh(intent.context),
-              onStep: progress,
-            );
+      AssetModeResult result;
+      try {
+        result = await repository.change(
+          intent: active,
+          isCurrent: current,
+          canSubmit: () => current() && _fresh(intent.context),
+          onStep: progress,
+        );
+      } catch (error) {
+        if (!submitted || !current()) rethrow;
+        result = AssetModeResult(failure: _failure(error));
+      }
+      // A dispatched change is verified automatically, never left unknown.
+      if (result.observed == null && submitted && current()) {
+        result = await repository.recheck(intent: active, isCurrent: current, onStep: progress);
+      }
       if (!current()) return;
       _invalidate();
-      state = FuturesAssetModeState(context: context, intent: active, result: result, stale: true);
+      state = FuturesAssetModeState(
+        context: context,
+        intent: active,
+        result: result.observed == null ? null : result,
+        failure: result.observed == null
+            ? result.failure ?? const AccountReadFailure('accountReadFailed')
+            : null,
+        stale: true,
+      );
     } catch (error) {
       if (!current()) return;
       if (submitted) _invalidate();
@@ -240,11 +244,10 @@ class FuturesAssetModeController extends Notifier<FuturesAssetModeState> {
         context: context,
         intent: active,
         stale: true,
-        result: submitted ? AssetModeResult(failure: _failure(error)) : null,
-        failure: submitted ? null : _failure(error),
+        failure: _failure(error),
       );
     } finally {
-      activity.finish(lease, unresolved: current() && state.needsRecheck);
+      activity.finish(lease);
     }
   }
 

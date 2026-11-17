@@ -142,7 +142,36 @@ void main() {
     expect(tester.takeException(), null);
     await dispose(tester, container);
   });
-  testWidgets('unknown batch stays query-only; failure and unsubmitted positions remain visible', (
+  testWidgets('a snapshot replaced while confirming is re-read and the close still runs', (
+    tester,
+  ) async {
+    final identity = TestIdentityRepository()..restored = signingIdentity;
+    final risk = TestPositionRiskRepository()..result = batchRiskFixture();
+    final repository = TestBatchLiveRepository(risk.result);
+    addTearDown(identity.dispose);
+    final container = setup(
+      tester,
+      language: const Locale('en'),
+      identityRepository: identity,
+      positionRiskRepository: risk,
+      liveOrderRepository: repository,
+      liveClock: () => liveOrderClock,
+    );
+    await open(tester, container);
+    await container.read(positionRiskProvider.notifier).refresh();
+    await tester.pumpAndSettle();
+    await tap(tester, 'position-risk-current-symbol');
+    await tap(tester, 'batch-close-open');
+    // A background renewal replaces the snapshot behind the open sheet.
+    container.read(positionRiskProvider.notifier).markStale();
+    await tester.tap(find.byKey(const Key('batch-close-confirm')));
+    await tester.pumpAndSettle();
+    expect(risk.calls, greaterThanOrEqualTo(2));
+    expect(repository.posts.map((p) => p.context.symbol), ['BTCUSDT']);
+    expect(tester.takeException(), null);
+    await dispose(tester, container);
+  });
+  testWidgets('an unconfirmed close shows its error; unsubmitted positions stay visible', (
     tester,
   ) async {
     final identity = TestIdentityRepository()..restored = signingIdentity;
@@ -163,18 +192,13 @@ void main() {
     await tap(tester, 'batch-close-open');
     await tester.tap(find.byKey(const Key('batch-close-confirm')));
     await tester.pumpAndSettle();
-    await visible(tester, 'batch-close-recheck');
-    expect(find.text('Not submitted'), findsOneWidget);
-    expect(repository.posts.length, 1);
-    repository.unknown = false;
-    await tester.tap(find.byKey(const Key('batch-close-recheck')));
-    await tester.pumpAndSettle();
-    expect(repository.posts.length, 1);
-    expect(repository.reads.length, 1);
-    expect(risk.calls, 1);
     await visible(tester, 'batch-close-result-ETHUSDT:BOTH');
     expect(find.text('Not submitted'), findsOneWidget);
+    expect(repository.posts.length, 1);
+    expect(repository.checks.length, 2); // after sending, then one automatic follow-up
+    expect(risk.calls, 1);
     expect(find.byKey(const Key('batch-close-recheck')), findsNothing);
+    expect(find.textContaining('unknown'), findsNothing);
     expect(tester.takeException(), null);
     await dispose(tester, container);
   });
@@ -258,7 +282,6 @@ void main() {
       await tap(tester, 'batch-close-read-remaining');
       expect(remainingBtc, findsNothing);
       expect(repository.posts.length, 2);
-      expect(container.read(batchCloseProvider).needsRecheck, false);
       expect(tester.takeException(), null);
       await dispose(tester, container);
     },

@@ -97,11 +97,6 @@ class GeneratedAccountController extends Notifier<GeneratedAccountState> {
       if (!operations.ready || operations.failed) {
         throw const AccountReadFailure('walletOperationStorage');
       }
-      if (operations.records.any(
-        (r) => !r.acknowledged && r.address.toLowerCase() == identity.walletAddress!.toLowerCase(),
-      )) {
-        throw const AccountReadFailure('walletOperationPending');
-      }
       // Persist before obtaining signatures or dispatching a financial write.
       wallet = await store.generate(owner: identity.walletAddress!, name: name.trim());
       ref.invalidate(generatedWalletsProvider);

@@ -74,7 +74,6 @@ class OrderCancellationController extends Notifier<OrderCancellationState>
     final snapshot = ref.read(openOrdersReadProvider);
     final address = identity?.walletAddress;
     if (state.busy ||
-        state.needsRecheck ||
         auth.busy ||
         address == null ||
         identity?.signingAvailable != true ||
@@ -86,15 +85,7 @@ class OrderCancellationController extends Notifier<OrderCancellationState>
     return OrderCancelIntent(address: address, order: order, revision: _revision);
   }
 
-  Future<void> cancel(OrderCancelIntent intent) => _run(intent, checkingOnly: false);
-
-  Future<void> recheck() async {
-    final intent = state.intent;
-    if (intent == null || !state.needsRecheck) return;
-    await _run(intent, checkingOnly: true);
-  }
-
-  Future<void> _run(OrderCancelIntent intent, {required bool checkingOnly}) async {
+  Future<void> cancel(OrderCancelIntent intent) async {
     if (state.busy || intent.revision != _revision) return;
     final auth = ref.read(authProvider);
     final identity = auth.identity;
@@ -103,7 +94,7 @@ class OrderCancellationController extends Notifier<OrderCancellationState>
         identity?.walletAddress != intent.address) {
       return;
     }
-    if (!checkingOnly && (state.needsRecheck || prepare(intent.order) == null)) return;
+    if (prepare(intent.order) == null) return;
     final revision = ++_revision;
     // The updated revision also keeps recheck tied to this operation.
     final active = OrderCancelIntent(
@@ -121,16 +112,30 @@ class OrderCancellationController extends Notifier<OrderCancellationState>
     final repository = ref.read(orderCancellationRepositoryProvider);
     final eventsAtStart = ref.read(openOrdersReadProvider.notifier).eventRevision;
     try {
-      final operation = checkingOnly ? repository.recheck : repository.cancel;
-      var result = await operation(
+      void progress(OrderCancelStep step) {
+        if (current()) state = OrderCancellationState(intent: active, step: step);
+      }
+
+      var result = await repository.cancel(
         address: intent.address,
         order: intent.order,
         isCurrent: current,
-        onStep: (step) {
-          if (current()) state = OrderCancellationState(intent: active, step: step);
-        },
+        onStep: progress,
       );
+      // An unconfirmed cancellation is queried again automatically; one still
+      // unconfirmed is reported as the query's error, never as "unknown".
+      if (result.resolution == null && current()) {
+        result = await repository.recheck(
+          address: intent.address,
+          order: intent.order,
+          isCurrent: current,
+          onStep: progress,
+        );
+      }
       if (!current()) return;
+      if (result.resolution == null && result.failure == null) {
+        result = const OrderCancellationResult(failure: AccountReadFailure('accountNetwork'));
+      }
       final resolution = result.resolution;
       if (resolution != null &&
           (!resolution.consistent ||
@@ -181,7 +186,7 @@ class OrderCancellationController extends Notifier<OrderCancellationState>
           : error is FormatException
           ? const AccountReadFailure('orderEventsCapacity')
           : const AccountReadFailure('accountReadFailed');
-      state = checkingOnly || error is FormatException
+      state = error is FormatException
           ? OrderCancellationState(
               intent: active,
               result: OrderCancellationResult(failure: failure),

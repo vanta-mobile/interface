@@ -57,7 +57,7 @@ List<RebalanceRecord> decodeRebalanceJournal(String source) {
   if (m['version'] != '1' || m['records'] is! List || (m['records'] as List).length > 100) {
     throw const FormatException();
   }
-  final addresses = <String>{}, records = <RebalanceRecord>[];
+  final keys = <String>{}, records = <RebalanceRecord>[];
   for (final v in m['records'] as List) {
     final r = exactRebalanceMap(v, {'address', 'nonce', 'preparedAt', 'usdt', 'reply'});
     final record = RebalanceRecord(
@@ -67,7 +67,8 @@ List<RebalanceRecord> decodeRebalanceJournal(String source) {
       previousUsdt: rebalanceMoney(r['usdt']),
       reply: r['reply'] == null ? null : decodeRebalanceReply(r['reply']),
     );
-    if (!addresses.add(record.address.toLowerCase())) throw const FormatException();
+    // Several unconfirmed records may exist per wallet; each is unique.
+    if (!keys.add(record.key)) throw const FormatException();
     records.add(record);
   }
   return List.unmodifiable(records);

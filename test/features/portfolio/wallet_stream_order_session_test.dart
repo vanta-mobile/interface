@@ -48,7 +48,7 @@ void main() {
 
       test('active order keeps the original socket during wallet switch; release in background pauses it', () async {
         final activity = c.read(symbolSettingsActivityProvider.notifier);
-        final lease = activity.acquire(SymbolSetting.order)!;
+        final lease = activity.acquire(SymbolSetting.order);
         final connected = state();
         c.read(quoteUpdatesActiveProvider.notifier).setActive(false);
         expect(state(), same(connected));
@@ -57,7 +57,7 @@ void main() {
         expect(state(), same(connected));
         expect(changes.channels.length, 1);
         c.read(quoteUpdatesActiveProvider.notifier).setActive(false);
-        activity.finish(lease, unresolved: false);
+        activity.finish(lease);
         expect(state().connection, AccountChangeConnection.paused);
         expect(changes.canceled, 1);
         expect(changes.authorizations, 1);
@@ -83,10 +83,10 @@ void main() {
 
       test('idle or non-order background still pauses; identity loss closes immediately', () async {
         final activity = c.read(symbolSettingsActivityProvider.notifier);
-        final lease = activity.acquire(SymbolSetting.leverage)!;
+        final lease = activity.acquire(SymbolSetting.leverage);
         c.read(quoteUpdatesActiveProvider.notifier).setActive(false);
         expect(state().connection, AccountChangeConnection.paused);
-        activity.finish(lease, unresolved: false);
+        activity.finish(lease);
         c.read(quoteUpdatesActiveProvider.notifier).setActive(true);
         activity.acquire(SymbolSetting.order);
         identity.events.add(null);

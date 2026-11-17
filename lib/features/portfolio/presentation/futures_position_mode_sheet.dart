@@ -6,10 +6,15 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../application/futures_position_mode_provider.dart';
 import '../application/mode_settings_load_provider.dart';
-import '../application/symbol_settings_activity.dart';
 import '../domain/futures_position_mode.dart';
-import 'mode_read_action.dart';
+import 'mode_access_action.dart';
 import 'mode_settings_sheet.dart';
+
+Future<void> openPositionModeSettings(BuildContext context) =>
+    showModeSettingsSheet<void>(context, const FuturesPositionModeSheet());
+
+String positionModeLabel(AppLocalizations l10n, FuturesPositionMode mode) =>
+    mode == FuturesPositionMode.oneWay ? l10n.positionModeOneWay : l10n.positionModeHedge;
 
 class FuturesPositionModeSheet extends ConsumerStatefulWidget {
   const FuturesPositionModeSheet({super.key});
@@ -20,7 +25,7 @@ class FuturesPositionModeSheet extends ConsumerStatefulWidget {
 class _FuturesPositionModeSheetState extends ConsumerState<FuturesPositionModeSheet> {
   int selectionRevision = 0;
   FuturesPositionMode? pending;
-  bool selecting = false, blockedSelection = false;
+  bool selecting = false;
   @override
   Widget build(BuildContext context) {
     ref.watch(modeSettingsLoadProvider(AccountModeSetting.position));
@@ -38,58 +43,51 @@ class _FuturesPositionModeSheetState extends ConsumerState<FuturesPositionModeSh
           selectionRevision++;
           selecting = false;
           pending = null;
-          blockedSelection = false;
         });
       },
     );
     final state = ref.watch(futuresPositionModeProvider), l = AppLocalizations.of(context);
     final controller = ref.read(futuresPositionModeProvider.notifier);
     final current = state.result?.observed ?? state.context?.current;
-    final blocked = ref.watch(symbolSettingsActivityProvider).blocks(SymbolSetting.positionMode);
     final failure = state.failure ?? state.result?.failure;
+    final busy = state.busy || selecting;
+    final ready = ref.watch(modeAccessProvider) == ModeAccess.ready;
+    // Until the first read lands, the current mode shows as a skeleton.
+    final loading = ready && state.context == null && failure == null;
+    // Positions or orders lock the account to its current mode.
+    final locked = state.context?.blocked == true;
     return ModeSheetBody(
       key: const Key('position-mode-sheet'),
       title: l.modePositionTitle,
-      onRefresh: state.needsRecheck ? controller.recheck : controller.load,
+      onRefresh: ready ? controller.load : null,
       children: [
         for (final mode in FuturesPositionMode.values)
           ModeOptionCard(
             key: ValueKey('position-mode-${mode.name}'),
-            title: mode == FuturesPositionMode.oneWay ? l.positionModeOneWay : l.positionModeHedge,
+            title: positionModeLabel(l, mode),
             description: mode == FuturesPositionMode.oneWay
                 ? l.modeOneWayDescription
                 : l.modeHedgeDescription,
-            selected: current == mode,
-            busy: (state.busy || selecting) && pending == mode,
-            onTap: state.busy || selecting || blocked || state.needsRecheck || current == mode
-                ? null
-                : () => _select(mode),
+            selected: !loading && current == mode,
+            loading: loading && pending != mode,
+            busy: busy && pending == mode,
+            disabled: locked && mode != current,
+            onTap: !ready || busy || current == mode || locked ? null : () => _select(mode),
           ),
-        if (blockedSelection) ModeError(l.modePositionBlocked),
+        if (locked) ModeError(l.modePositionBlocked),
         if (failure != null) ModeError(accountErrorText(context, failure)),
-        if (state.needsRecheck) ModeError(l.positionModeOutcomeUnknown),
         if (state.result?.observed != null &&
             state.intent != null &&
             state.result!.observed != state.intent!.target)
           ModeError(
             l.positionModeObservedDifferent(
-              state.result!.observed == FuturesPositionMode.oneWay
-                  ? l.positionModeOneWay
-                  : l.positionModeHedge,
-              state.intent!.target == FuturesPositionMode.oneWay
-                  ? l.positionModeOneWay
-                  : l.positionModeHedge,
+              positionModeLabel(l, state.result!.observed!),
+              positionModeLabel(l, state.intent!.target),
             ),
           ),
-        if (state.context == null || state.stale || state.needsRecheck || state.busy) ...[
+        if (!ready) ...[
           const SizedBox(height: 8),
-          ModeReadAction(
-            key: const Key('position-mode-sheet-read'),
-            onRead: state.needsRecheck ? controller.recheck : controller.load,
-            busy: state.busy,
-            blocked: blocked,
-            recheck: state.needsRecheck,
-          ),
+          const ModeAccessAction(ready: SizedBox.shrink()),
         ],
       ],
     );
@@ -101,7 +99,6 @@ class _FuturesPositionModeSheetState extends ConsumerState<FuturesPositionModeSh
     setState(() {
       pending = target;
       selecting = true;
-      blockedSelection = false;
     });
     final controller = ref.read(futuresPositionModeProvider.notifier);
     try {
@@ -109,10 +106,7 @@ class _FuturesPositionModeSheetState extends ConsumerState<FuturesPositionModeSh
       if (state.context == null || state.stale) await controller.load();
       if (!mounted || identity != ref.read(authProvider).identity) return;
       state = ref.read(futuresPositionModeProvider);
-      if (state.context?.blocked == true) {
-        setState(() => blockedSelection = true);
-        return;
-      }
+      if (state.context?.blocked == true) return;
       final intent = controller.prepare(target);
       if (intent == null) return;
       await controller.change(intent);

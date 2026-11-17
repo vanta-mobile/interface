@@ -38,6 +38,9 @@ class TestFuturesPositionModeRepository implements FuturesPositionModeRepository
   AccountReadFailure? readFailure, changeFailure;
   bool submit = true;
   FuturesPositionModeContext? context;
+
+  /// Result of the verification query; defaults to [result].
+  PositionModeResult? checkResult;
   PositionModeResult result = PositionModeResult(
     observed: FuturesPositionMode.hedge,
     checkedAt: positionModeClock,
@@ -82,6 +85,6 @@ class TestFuturesPositionModeRepository implements FuturesPositionModeRepository
     latestCurrent = isCurrent;
     onStep(PositionModeStep.checkSigning);
     await checkGate?.future;
-    return result;
+    return checkResult ?? result;
   }
 }

@@ -73,7 +73,6 @@ class OrderModificationController extends Notifier<OrderModificationState> {
         address != null &&
         auth.identity?.signingAvailable == true &&
         !cancellation.busy &&
-        !cancellation.needsRecheck &&
         !snapshot.busy &&
         snapshot.account?.address.toLowerCase() == address.toLowerCase() &&
         snapshot.account?.orders.contains(order) == true;
@@ -124,7 +123,7 @@ class OrderModificationController extends Notifier<OrderModificationState> {
     if (!current()) return null;
     final original = request.order;
     final snapshot = ref.read(openOrdersReadProvider).account;
-    if (result.outcome == OrderModifyOutcome.unknown || snapshot == null) {
+    if (result.outcome == OrderModifyOutcome.unverified || snapshot == null) {
       orders.markStale();
     } else if (result.order != null || result.closed) {
       final updated = snapshot.orders

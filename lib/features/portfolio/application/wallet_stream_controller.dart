@@ -59,7 +59,7 @@ abstract class WalletStreamController extends Notifier<AccountChangeState> {
     // effect before another synchronous intent can use the old stream state.
     ref.listen(quoteUpdatesActiveProvider, (_, _) => updateActivity());
     ref.listen(
-      symbolSettingsActivityProvider.select((s) => (s.busy, s.owner)),
+      symbolSettingsActivityProvider.select((s) => s.isRunning(SymbolSetting.order)),
       (_, _) => updateActivity(),
     );
     ref.onDispose(() {

@@ -13,11 +13,12 @@ class MarketQuote {
     this.change,
     this.quoteVolume,
     this.funding,
+    this.markPrice,
     this.descriptor = const MarketDescriptor.empty(),
   });
 
   final String symbol, base;
   final MarketPrecision precision;
-  final Decimal? price, change, quoteVolume, funding;
+  final Decimal? price, change, quoteVolume, funding, markPrice;
   final MarketDescriptor descriptor;
 }

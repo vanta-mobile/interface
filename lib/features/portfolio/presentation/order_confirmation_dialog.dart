@@ -10,7 +10,7 @@ import '../domain/live_order.dart';
 import '../domain/live_order_size.dart';
 import 'order_confirmation_terms.dart';
 
-enum OrderSubmissionKind { success, failed, unknown, notSubmitted }
+enum OrderSubmissionKind { success, failed, notSubmitted }
 
 /// Observed outcome of one confirmation attempt. Display text never decides
 /// financial success or retry safety.
@@ -26,13 +26,6 @@ void showOrderSubmissionOutcome(BuildContext context, OrderSubmissionOutcome out
   switch (outcome.kind) {
     case OrderSubmissionKind.success:
       AppToast.showSuccess(context, l10n.orderConfirmSubmitted);
-    case OrderSubmissionKind.unknown:
-      AppToast.showFailure(
-        context,
-        outcome.failure == null
-            ? l10n.liveOrderOutcomeUnknown
-            : accountErrorText(context, outcome.failure!),
-      );
     case OrderSubmissionKind.failed:
       AppToast.showFailure(
         context,
@@ -149,7 +142,7 @@ class _OrderConfirmationDialogState extends State<OrderConfirmationDialog> {
                 Row(
                   children: [
                     Expanded(
-                      child: _ActionButton(
+                      child: OrderConfirmationActionButton(
                         key: const Key('live-order-cancel'),
                         label: l10n.cancel,
                         color: TradeColors.card,
@@ -159,7 +152,7 @@ class _OrderConfirmationDialogState extends State<OrderConfirmationDialog> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _ActionButton(
+                      child: OrderConfirmationActionButton(
                         key: const Key('live-order-confirm'),
                         label: direction,
                         color: draft.buy ? TradeColors.positive : TradeColors.negative,
@@ -208,8 +201,8 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
+class OrderConfirmationActionButton extends StatelessWidget {
+  const OrderConfirmationActionButton({
     super.key,
     required this.label,
     required this.color,

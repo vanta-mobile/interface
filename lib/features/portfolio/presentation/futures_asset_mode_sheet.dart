@@ -7,11 +7,16 @@ import '../../auth/application/auth_provider.dart';
 import '../../trade/presentation/trade_theme.dart';
 import '../application/futures_asset_mode_provider.dart';
 import '../application/mode_settings_load_provider.dart';
-import '../application/symbol_settings_activity.dart';
 import '../domain/futures_asset_mode.dart';
-import 'mode_read_action.dart';
+import 'mode_access_action.dart';
 import 'mode_settings_sheet.dart';
 import 'multi_asset_activation_sheet.dart';
+
+Future<void> openAssetModeSettings(BuildContext context) =>
+    showModeSettingsSheet<void>(context, const FuturesAssetModeSheet());
+
+String assetModeLabel(AppLocalizations l10n, FuturesAssetMode mode) =>
+    mode == FuturesAssetMode.single ? l10n.assetModeSingle : l10n.assetModeMulti;
 
 class FuturesAssetModeSheet extends ConsumerStatefulWidget {
   const FuturesAssetModeSheet({super.key});
@@ -47,74 +52,62 @@ class _FuturesAssetModeSheetState extends ConsumerState<FuturesAssetModeSheet> {
     final state = ref.watch(futuresAssetModeProvider), l = AppLocalizations.of(context);
     final current = state.result?.observed ?? state.context?.current;
     final busy = state.busy || selecting;
-    final blocked = ref.watch(symbolSettingsActivityProvider).blocks(SymbolSetting.assetMode);
+    final failure = state.failure ?? state.result?.failure;
+    final ready = ref.watch(modeAccessProvider) == ModeAccess.ready;
+    // Until the first read lands, the current mode shows as a skeleton.
+    final loading = ready && state.context == null && failure == null;
+    Widget option(FuturesAssetMode mode, String key, String title, String description) =>
+        ModeOptionCard(
+          key: Key(key),
+          title: title,
+          description: description,
+          selected: !loading && current == mode,
+          loading: loading && pending != mode,
+          busy: busy && pending == mode,
+          onTap: !ready || busy || current == mode ? null : () => _select(mode),
+        );
     return ModeSheetBody(
       key: const Key('asset-mode-sheet'),
       title: l.modeAssetTitle,
-      onRefresh: state.needsRecheck
-          ? ref.read(futuresAssetModeProvider.notifier).recheck
-          : ref.read(futuresAssetModeProvider.notifier).load,
+      onRefresh: ready ? ref.read(futuresAssetModeProvider.notifier).load : null,
       children: [
-        ModeOptionCard(
-          key: const Key('asset-mode-single'),
-          title: l.modeSingleTitle,
-          description: l.modeSingleDescription,
-          selected: current == FuturesAssetMode.single,
-          busy: busy && pending == FuturesAssetMode.single,
-          onTap: busy || blocked || state.needsRecheck || current == FuturesAssetMode.single
-              ? null
-              : () => _select(FuturesAssetMode.single),
+        option(
+          FuturesAssetMode.single,
+          'asset-mode-single',
+          l.modeSingleTitle,
+          l.modeSingleDescription,
         ),
-        ModeOptionCard(
-          key: const Key('asset-mode-multi'),
-          title: l.modeMultiTitle,
-          description: l.modeMultiDescription,
-          selected: current == FuturesAssetMode.multi,
-          busy: busy && pending == FuturesAssetMode.multi,
-          onTap: busy || blocked || state.needsRecheck || current == FuturesAssetMode.multi
-              ? null
-              : () => _select(FuturesAssetMode.multi),
+        option(
+          FuturesAssetMode.multi,
+          'asset-mode-multi',
+          l.modeMultiTitle,
+          l.modeMultiDescription,
         ),
         const _MultiAssetAbout(),
-        ..._feedback(context),
+        if (negativeBalance)
+          ModeError(
+            state.context?.usdtWalletBalance == null ? l.rebalanceUnknownUsdt : l.modeNegativeUsdt,
+          ),
+        if (failure != null) ModeError(accountErrorText(context, failure)),
+        if (state.result?.observed != null &&
+            state.intent != null &&
+            state.result!.observed != state.intent!.target)
+          ModeError(
+            l.assetModeObservedDifferent(
+              state.result!.observed == FuturesAssetMode.single
+                  ? l.modeSingleShort
+                  : l.modeMultiShort,
+              state.intent!.target == FuturesAssetMode.single
+                  ? l.modeSingleShort
+                  : l.modeMultiShort,
+            ),
+          ),
+        if (!ready) ...[
+          const SizedBox(height: 8),
+          const ModeAccessAction(ready: SizedBox.shrink()),
+        ],
       ],
     );
-  }
-
-  List<Widget> _feedback(BuildContext context) {
-    final state = ref.watch(futuresAssetModeProvider), l = AppLocalizations.of(context);
-    final controller = ref.read(futuresAssetModeProvider.notifier);
-    final blocked = ref.watch(symbolSettingsActivityProvider).blocks(SymbolSetting.assetMode);
-    final failure = state.failure ?? state.result?.failure;
-    return [
-      if (negativeBalance)
-        ModeError(
-          state.context?.usdtWalletBalance == null ? l.rebalanceUnknownUsdt : l.modeNegativeUsdt,
-        ),
-      if (failure != null) ModeError(accountErrorText(context, failure)),
-      if (state.needsRecheck) ModeError(l.assetModeOutcomeUnknown),
-      if (state.result?.observed != null &&
-          state.intent != null &&
-          state.result!.observed != state.intent!.target)
-        ModeError(
-          l.assetModeObservedDifferent(
-            state.result!.observed == FuturesAssetMode.single
-                ? l.modeSingleShort
-                : l.modeMultiShort,
-            state.intent!.target == FuturesAssetMode.single ? l.modeSingleShort : l.modeMultiShort,
-          ),
-        ),
-      if (state.context == null || state.stale || state.needsRecheck || state.busy) ...[
-        const SizedBox(height: 8),
-        ModeReadAction(
-          key: const Key('asset-mode-sheet-read'),
-          onRead: state.needsRecheck ? controller.recheck : controller.load,
-          busy: state.busy,
-          blocked: blocked,
-          recheck: state.needsRecheck,
-        ),
-      ],
-    ];
   }
 
   Future<void> _select(FuturesAssetMode target) async {
@@ -131,7 +124,7 @@ class _FuturesAssetModeSheetState extends ConsumerState<FuturesAssetModeSheet> {
       if (state.context == null || state.stale) await controller.load();
       if (!mounted || identity != ref.read(authProvider).identity) return;
       state = ref.read(futuresAssetModeProvider);
-      if (state.context == null || state.stale || state.needsRecheck || state.busy) return;
+      if (state.context == null || state.stale || state.busy) return;
       if (target == FuturesAssetMode.multi) {
         setState(() {
           selecting = false;

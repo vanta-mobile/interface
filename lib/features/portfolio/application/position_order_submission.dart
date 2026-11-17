@@ -4,7 +4,7 @@ import '../domain/account_snapshot.dart';
 import '../domain/live_order.dart';
 import 'live_order_provider.dart';
 
-enum PositionOrderOutcome { placed, failed, unknown }
+enum PositionOrderOutcome { placed, failed }
 
 typedef PositionOrderAttempt = ({PositionOrderOutcome outcome, AccountReadFailure? failure});
 
@@ -34,7 +34,7 @@ Future<PositionOrderAttempt> submitPositionOrder(
   final intent = live.prepare(symbol, draft, clientOrderId: clientOrderId);
   if (intent == null) return failed(expired);
   await live.submit(intent);
-  if (!ref.mounted) return (outcome: PositionOrderOutcome.unknown, failure: null);
+  if (!ref.mounted) return failed(expired);
   final after = ref.read(liveOrderProvider);
   // Without this intent in the state, the controller refused it before sending.
   if (after.intent?.clientOrderId != intent.clientOrderId) return failed(after.failure ?? expired);
@@ -42,7 +42,6 @@ Future<PositionOrderAttempt> submitPositionOrder(
   if (result != null && result.failure == null && !result.needsRecheck) {
     return (outcome: PositionOrderOutcome.placed, failure: null);
   }
-  if (after.needsRecheck) return (outcome: PositionOrderOutcome.unknown, failure: result?.failure);
   return failed(after.failure ?? result?.failure ?? expired);
 }
 

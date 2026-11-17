@@ -16,7 +16,6 @@ import '../application/main_order_refresh_provider.dart';
 import '../application/main_order_capacity_preview_provider.dart';
 import '../application/main_order_pricing_provider.dart';
 import '../domain/main_order_pricing.dart';
-import '../application/symbol_settings_activity.dart';
 import '../domain/live_order.dart';
 import '../domain/live_order_size.dart';
 import '../domain/main_order_capacity_preview.dart';
@@ -159,7 +158,6 @@ class _MainOrderCapacityPanelState extends ConsumerState<MainOrderCapacityPanel>
     final state = ref.watch(mainOrderCapacityProvider);
     final allocation = ref.watch(mainOrderAllocationProvider);
     final live = ref.watch(liveOrderProvider);
-    final operation = ref.watch(symbolSettingsActivityProvider);
     final auth = ref.watch(authProvider);
     final selectedSymbol = ref.watch(symbolProvider);
     final controller = ref.read(mainOrderCapacityProvider.notifier);
@@ -213,11 +211,7 @@ class _MainOrderCapacityPanelState extends ConsumerState<MainOrderCapacityPanel>
         !state.loading &&
         !allocation.preparing &&
         !live.busy &&
-        live.context == widget.data &&
-        !operation.busy &&
-        operation.owner == null &&
-        !operation.recoveryBlocked &&
-        !operation.unresolved;
+        live.context == widget.data;
     final enabled = ready && !live.stale;
     final backgroundRead = refresh.loading && refresh.background && live.intent == null;
     // A click can take over a silent read and request fresh facts. It is not
@@ -232,11 +226,7 @@ class _MainOrderCapacityPanelState extends ConsumerState<MainOrderCapacityPanel>
         (!state.loading || backgroundRead) &&
         (!live.busy || backgroundRead) &&
         !allocation.preparing &&
-        live.context == widget.data &&
-        (!operation.busy && operation.owner == null ||
-            backgroundRead && operation.owner == SymbolSetting.order) &&
-        !operation.recoveryBlocked &&
-        !operation.unresolved;
+        live.context == widget.data;
     final facts = (
       state: state,
       allocation: allocation,

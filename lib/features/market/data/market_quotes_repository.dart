@@ -152,7 +152,7 @@ class MarketQuotesRepository {
     final key = (quote.symbol, funding);
     if (time < (_eventTimes[key] ?? -1)) return;
     final fields = funding
-        ? {'lastFundingRate': event['r']}
+        ? {'lastFundingRate': event['r'], 'markPrice': event['p']}
         : {'lastPrice': event['c'], 'priceChangePercent': event['P'], 'quoteVolume': event['q']};
     // Bad deltas never replace a usable value with a fabricated zero.
     if (fields.entries.any((entry) => !_valid(entry.key, entry.value))) {
@@ -175,7 +175,8 @@ class MarketQuotesRepository {
 
   bool _valid(String key, Object? raw) {
     final value = Decimal.tryParse('$raw');
-    return value != null && (key != 'lastPrice' && key != 'quoteVolume' || value >= Decimal.zero);
+    return value != null &&
+        (!const {'lastPrice', 'quoteVolume', 'markPrice'}.contains(key) || value >= Decimal.zero);
   }
 
   MarketQuote _merge(MarketQuote current, Map<String, Object?> fields) {
@@ -190,6 +191,7 @@ class MarketQuotesRepository {
       change: value('priceChangePercent', current.change),
       quoteVolume: value('quoteVolume', current.quoteVolume),
       funding: value('lastFundingRate', current.funding),
+      markPrice: value('markPrice', current.markPrice),
     );
   }
 
@@ -228,8 +230,14 @@ class MarketQuotesRepository {
         final current = _quotes[entry.key];
         if (current == null) continue;
         final fields = <String, Object?>{};
-        for (final key in ['lastPrice', 'priceChangePercent', 'quoteVolume', 'lastFundingRate']) {
-          final group = (entry.key, key == 'lastFundingRate');
+        for (final key in [
+          'lastPrice',
+          'priceChangePercent',
+          'quoteVolume',
+          'lastFundingRate',
+          'markPrice',
+        ]) {
+          final group = (entry.key, key == 'lastFundingRate' || key == 'markPrice');
           // A delayed HTTP response cannot overwrite a delta received since
           // its request began. Funding and trade fields have separate versions.
           if ((_versions[group] ?? 0) != (versions[group] ?? 0)) continue;

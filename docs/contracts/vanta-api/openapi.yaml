@@ -1466,6 +1466,8 @@ paths:
         六个类别开关 + 静默时段 + 最小金额阈值；只传要改的字段，其余沿用当前值。
         **强平与追保没有开关，不可关闭**，也不受静默时段与频控限制。静默时段按**设备**本地时间解释，
         起止必须同时提供且不能相同；`min_notional` 只对成交类通知生效。
+        QA-018 约定：客户端关闭免打扰发送双 null（`{"quiet_start":null,"quiet_end":null}`）；
+        回查 `/v1/push/status` 若仍回显窗口，应提示"关闭未生效"而非静默回弹（客户端职责）。
       security: [{bearerAuth: []}]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1514,6 +1516,36 @@ paths:
                   note: {type: string}
         "401": {$ref: "#/components/responses/Unauthorized"}
         "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/broadcasts:
+    post:
+      tags: [Notifications]
+      operationId: createBroadcast
+      summary: 写入公告/维护广播（内部运维接口）
+      description: |
+        P1-28 的广播事件源：写入 `push_broadcasts` 并立即按设备分批展开投递（每批 500 台、
+        批间隔 60s），App 通知中心在 `GET /v1/notifications` 看到 `kind=broadcast`、
+        `event_key=broadcast:{id}`，标已读走 `broadcast_up_to`。
+
+        **内部接口**：`Authorization: Bearer <BROADCAST_TOKEN>` 是服务端配置的运维 token
+        （非用户会话、非 `[S]`，不按用户限流）；未配置该 token → `not_implemented`(501)，
+        带错/缺 token → `unauthenticated`(401)。**不提供幂等**（幂等认领挂在用户 id 上，
+        这里没有用户）：重复 POST 会产生重复公告，调用方自行保证不重发。
+      security: [{broadcastToken: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/BroadcastCreate"}
+      responses:
+        "201":
+          description: 已落库并展开投递
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/BroadcastCreated"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "501": {$ref: "#/components/responses/NotImplemented"}
 
   /v1/portfolio/summary:
     get:
@@ -1699,6 +1731,13 @@ components:
         `session_expired`：
         先 `POST /v1/auth/refresh`，**只重试一次**；`session_revoked` /
         `unauthenticated` 不重试，走登录。
+
+    broadcastToken:
+      type: http
+      scheme: bearer
+      description: |
+        内部运维 token（服务端配置 `BROADCAST_TOKEN`），只用于 `POST /v1/broadcasts`，
+        与登录签发的 access token 无关；未配置时该端点返回 `not_implemented`。
 
   parameters:
     IdempotencyKey:
@@ -2530,7 +2569,7 @@ components:
           $ref: "#/components/schemas/NullableDecimal"
         tran_id:
           type: [string, "null"]
-          description: Aster income 的唯一流水引用（`tranId`）；仅端上报的完整流水行携带，合成行为 null
+          description: Aster income 的流水引用（`tranId`，同一 incomeType 内唯一）；仅端上报的完整流水行携带，合成行为 null
         data_source:
           type: string
           enum: [app_report, fill_archive]
@@ -2738,7 +2777,7 @@ components:
             自动兑换 …）落 `archived_incomes`（完整资金流水）"
         tranId:
           type: string
-          description: Aster income 的唯一流水引用；去重优先靠它（没带退回全行去重）
+          description: Aster income 的流水引用（同一 incomeType 内唯一）；去重优先靠它（没带退回全行去重）
         tradeId:
           type: integer
           format: int64
@@ -2862,7 +2901,7 @@ components:
               （`distance` = |mark − liq| / mark 的**小数比例**，如 0.08 = 距强平 8%；不是百分数也不是价差）
             - `TRANSFER`：kind / asset / amount / reference / network（链，端上报携带时）
             - `FUNDING`：symbol / asset / amount
-            - `ANNOUNCE` / `MAINTENANCE`：广播自定内容（无固定 schema）
+            - `ANNOUNCE` / `MAINTENANCE`：广播自定内容（`POST /v1/broadcasts` 写入的形状是 `title` / `body`）
             端上报来源的事件额外带 `source: "report"`；回读来源带 trade_id 等上表字段。
             base_asset / quote_asset 未携带：以 `/v1/symbols` 的交易对元数据为准，不在事件里重复。
         read:
@@ -2871,6 +2910,41 @@ components:
           $ref: "#/components/schemas/NullableTimestamp"
         created_at:
           $ref: "#/components/schemas/Timestamp"
+    BroadcastCreate:
+      type: object
+      required: [kind, title, body, expires_at]
+      properties:
+        kind:
+          type: string
+          enum: [ANNOUNCE, MAINTENANCE]
+          description: 与 `push_broadcasts.kind` 的 CHECK 同口径；其它值 `invalid_param`
+        title:
+          type: string
+          minLength: 1
+          description: 公告标题（落 `payload.title`，通知中心回显）；纯空白串也会被 `invalid_param` 拒绝
+        body:
+          type: string
+          minLength: 1
+          description: 公告正文（落 `payload.body`）；纯空白串也会被 `invalid_param` 拒绝
+        publish_at:
+          type: string
+          format: date-time
+          description: 发布时间（RFC3339）；缺省 = 当前时间；不能晚于当前时间（投递在写入时立即展开，无定时广播；否则推送会早于收件箱可见），否则 `invalid_param`(400)
+        expires_at:
+          type: string
+          format: date-time
+          description: 过期时间（RFC3339）；必须晚于 `publish_at`，否则 `invalid_param`(400)
+    BroadcastCreated:
+      type: object
+      required: [id, enqueued]
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 广播 id（通知里的 `event_key` 即 `broadcast:{id}`）
+        enqueued:
+          type: integer
+          description: 本次按设备展开的投递条数（无有效设备时为 0）
     PushRegister:
       type: object
       required: [platform, token, app_id]
@@ -2929,10 +3003,11 @@ components:
           type: boolean
           description: 公告
         quiet_start:
-          type: string
-          description: "`HH:MM` 或 `HH:MM:SS`；与 `quiet_end` 必须同时提供且不能相同"
+          type: [string, "null"]
+          description: "`HH:MM` 或 `HH:MM:SS`；缺省=保留旧值；null=清除。起止必须同时设置或同时清除，落库成一端有一端无 → invalid_param（已无窗口时单侧 null 等价清除，返回 200）"
         quiet_end:
-          type: string
+          type: [string, "null"]
+          description: 与 quiet_start 同设或同清；落库成一端有一端无 → invalid_param
         min_notional:
           type: string
           description: 非负十进制字符串；低于它的成交类通知不推送

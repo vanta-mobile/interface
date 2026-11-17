@@ -64,19 +64,18 @@ class BatchCloseStatus extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 BatchCloseTargetDetails(target: item.target),
-                Text(
-                  state.busy && state.currentKey == item.target.key
-                      ? l10n.batchCancelInProgress
-                      : !item.submitted
-                      ? l10n.batchCancelNotSubmitted
-                      : item.needsRecheck
-                      ? l10n.liveOrderOutcomeUnknown
-                      : l10n.liveOrderVerifiedResult(
-                          item.result!.status!,
-                          item.result!.executedQuantity!.toString(),
-                          item.result!.orderId!,
-                        ),
-                ),
+                if (state.busy && state.currentKey == item.target.key)
+                  Text(l10n.batchCancelInProgress)
+                else if (!item.submitted)
+                  Text(l10n.batchCancelNotSubmitted)
+                else if (item.result?.orderId != null)
+                  Text(
+                    l10n.liveOrderVerifiedResult(
+                      item.result!.status!,
+                      item.result!.executedQuantity!.toString(),
+                      item.result!.orderId!,
+                    ),
+                  ),
                 if (item.result?.orderId case final id?) SelectableText(id),
                 if (item.failure ?? item.result?.failure case final failure?)
                   Text(
@@ -91,14 +90,6 @@ class BatchCloseStatus extends ConsumerWidget {
                   ),
               ],
             ),
-          ),
-        if (state.needsRecheck)
-          OutlinedButton(
-            key: const Key('batch-close-recheck'),
-            onPressed: state.busy || auth.busy || auth.identity?.signingAvailable != true
-                ? null
-                : controller.recheck,
-            child: Text(l10n.batchCloseRecheck),
           ),
         if (state.remainingAfter != null)
           OutlinedButton(

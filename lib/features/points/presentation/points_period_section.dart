@@ -62,17 +62,28 @@ class PointsPeriodSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(child: Text(l10n.pointsByPeriod, style: PointsTypography.section)),
-            const SizedBox(width: 8),
-            Flexible(
-              child: _PeriodSelector(
-                label: pointsPeriodLabel(campaign, period, l10n),
-                onTap: () => _showPeriodSheet(context, period),
+        // The selector keeps its content width; the title gives way first.
+        LayoutBuilder(
+          builder: (context, constraints) => Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.pointsByPeriod,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: PointsTypography.section,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.7),
+                child: _PeriodSelector(
+                  label: pointsPeriodLabel(campaign, period, l10n),
+                  onTap: () => _showPeriodSheet(context, period),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
         _CampaignCard(campaign: campaign, period: period),
@@ -87,34 +98,31 @@ class _PeriodSelector extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Align(
-    alignment: Alignment.centerRight,
-    child: Material(
-      color: PointsColors.card,
+  Widget build(BuildContext context) => Material(
+    color: PointsColors.card,
+    borderRadius: BorderRadius.circular(8),
+    child: InkWell(
+      key: const Key('points-period-selector'),
       borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        key: const Key('points-period-selector'),
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 32),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: PointsTypography.labelPrimary,
-                  ),
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 32),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: PointsTypography.labelPrimary,
                 ),
-                const SizedBox(width: 8),
-                const PortfolioIcon('chevron-down.svg', size: 16),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              const PortfolioIcon('chevron-down.svg', size: 16),
+            ],
           ),
         ),
       ),

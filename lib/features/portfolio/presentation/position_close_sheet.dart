@@ -282,13 +282,6 @@ class _PositionCloseSheetState extends ConsumerState<PositionCloseSheet> {
           wasLimit ? l10n.positionCloseLimitPlaced : l10n.positionClosePlaced,
         );
         Navigator.of(context).maybePop();
-      case PositionOrderOutcome.unknown:
-        // An unconfirmed close must not be sent again by another tap.
-        _render(() {
-          percent = null;
-          amount.clear();
-        });
-        AppToast.showFailure(context, l10n.positionCloseUnknown);
       case PositionOrderOutcome.failed:
       case null:
         AppToast.showFailure(

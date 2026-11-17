@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vanta/features/portfolio/presentation/scaled_order_screen.dart';
-import 'package:vanta/l10n/generated/app_localizations.dart';
 
-import 'trade_fixture.dart';
+import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
+import 'package:vanta/features/authorization/domain/trading_agent.dart';
+
+import 'aster_account.dart';
+import 'trading_agents.dart';
 
 Future<void> visible(WidgetTester tester, String key) async {
   await tester.ensureVisible(find.byKey(Key(key)));
@@ -28,20 +30,19 @@ Future<void> field(WidgetTester tester, String key, String value) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> open(WidgetTester tester, ProviderContainer container) async {
-  await launch(tester, container);
-  openScaledOrder(tester.element(find.byType(Navigator).first), 'BTCUSDT');
-  await tester.pumpAndSettle();
-  await tap(tester, 'scaled-read');
+/// Activates a device trading grant for [signingIdentity] so order facts
+/// are read silently.
+Future<void> grantTrading(WidgetTester tester, ProviderContainer container) async {
+  final store = container.read(tradingAgentStoreProvider);
+  await tester.runAsync(() async {
+    final agent = await store.prepare(
+      signingIdentity.id,
+      accountAddress,
+      DateTime.now().add(const Duration(days: 30)),
+    );
+    await store.setStatus(agent, TradingAgentStatus.unknown);
+    await store.setStatus(agent, TradingAgentStatus.active);
+  });
+  container.invalidate(tradingAgentProvider);
+  await awaitTradingAgent(tester, container);
 }
-
-Future<void> fill(WidgetTester tester) async {
-  await field(tester, 'scaled-low', '79000');
-  await field(tester, 'scaled-high', '81000');
-  await tap(tester, 'scaled-unit-base');
-  await field(tester, 'scaled-quantity', '0.008');
-  await field(tester, 'scaled-count', '3');
-}
-
-AppLocalizations messages(WidgetTester tester) =>
-    AppLocalizations.of(tester.element(find.byType(ScaledOrderScreen)));

@@ -203,14 +203,16 @@ void main() {
       expect(repository.submits, 1);
     });
 
-    test('an unconfirmed leg is reported unknown and never resubmitted', () async {
+    test('an unconfirmed leg is queried automatically and never resubmitted', () async {
       repository
         ..failure = const AccountReadFailure('liveOrderResultUnknown')
-        ..throwAfterSubmit = true;
+        ..throwAfterSubmit = true
+        ..checkResult = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
       await container.read(positionTpSlProvider.notifier).submit('BTCUSDT', legs());
       final results = container.read(positionTpSlProvider).results;
-      expect(results.single.outcome, PositionOrderOutcome.unknown);
-      expect((repository.submits, repository.checks), (1, 0));
+      expect(results.single.outcome, PositionOrderOutcome.failed);
+      expect(results.single.failure?.key, 'accountNetwork');
+      expect((repository.submits, repository.checks), (1, 1));
     });
 
     test('an invalid leg is not submitted', () async {

@@ -52,8 +52,7 @@ class FakeAster extends AsterService {
   int get serverNow => currentMinute * 60000 + 30000;
   @override
   Stream<Map<String, Object?>> stream(List<String> streams) {
-    expect(streams, ['coin88usdt@kline_1m']);
-    expect(streams.every((e) => e.endsWith('@kline_1m')), true);
+    expect(streams, ['coin88usdt@kline_1m', 'coin88usdt@ticker']);
     listening = true;
     scheduleMicrotask(() => events.add({'connected': true}));
     return events.stream;
@@ -99,6 +98,53 @@ Future<void> until(bool Function() done) async {
 }
 
 void main() {
+  test('the detail reads the 24h ticker on start and follows its stream', () async {
+    final service = FakeAster();
+    final sync = MarketSync(service, instruments()[88], '1m');
+    addTearDown(() async {
+      await sync.dispose();
+      await service.events.close();
+      service.client.close();
+    });
+    sync.start();
+    await until(() => service.tickerRequests == 1 && sync.market('COIN88USDT') != null);
+    service.events.add({
+      'e': '24hrTicker',
+      's': 'COIN88USDT',
+      'o': '101',
+      'h': '125.5',
+      'l': '88.25',
+      'q': '20000.5',
+      'P': '-1.25',
+    });
+    await until(() => sync.market('COIN88USDT')!.high == 125.5);
+    final market = sync.market('COIN88USDT')!;
+    expect(market.low, 88.25);
+    expect(market.volume, 20000.5);
+    expect(market.change, -1.25);
+    // Another symbol's ticker or a malformed one leaves the statistics alone.
+    service.events.add({
+      'e': '24hrTicker',
+      's': 'COIN1USDT',
+      'h': '1',
+      'l': '1',
+      'q': '1',
+      'o': '1',
+      'P': '1',
+    });
+    service.events.add({
+      'e': '24hrTicker',
+      's': 'COIN88USDT',
+      'h': 'x',
+      'l': '1',
+      'q': '1',
+      'o': '1',
+      'P': '1',
+    });
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    expect(sync.market('COIN88USDT')!.high, 125.5);
+  });
+
   test(
     'page refresh joins active history and waits for ticker without scheduling another load',
     () async {
@@ -115,7 +161,8 @@ void main() {
       await until(() => service.requests.isNotEmpty);
       var completed = false;
       final refresh = sync.refresh().then((_) => completed = true);
-      await until(() => service.tickerRequests == 1);
+      // One read when the chart starts, one for the refresh.
+      await until(() => service.tickerRequests == 2);
       service.historyGate!.complete();
       await until(() => sync.overview.repairing == 0);
       expect(completed, false);

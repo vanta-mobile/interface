@@ -27,8 +27,9 @@ enum OrderModifyOutcome {
   /// The order was verified to keep other terms, or the request never left.
   rejected,
 
-  /// The request may have reached Aster and its state could not be read.
-  unknown,
+  /// The request may have reached Aster and the automatic query that follows
+  /// it also failed. Shown as that query's error; the order list re-reads.
+  unverified,
 }
 
 class OrderModificationResult {

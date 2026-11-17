@@ -1,4 +1,8 @@
+import 'dart:async';
+
+import 'package:vanta/features/market/application/open_interest_provider.dart';
 import 'package:vanta/features/market/application/public_leverage_provider.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
@@ -25,6 +29,7 @@ final class PerformanceFixture {
     container = ProviderContainer(
       overrides: [
         publicLeverageProvider.overrideWith((ref) async => const {}),
+        openInterestProvider.overrideWith((ref, symbol) => Completer<Decimal>().future),
         asterServiceProvider.overrideWith((ref) {
           transportAccesses++;
           throw StateError('Performance must not access live market transport');

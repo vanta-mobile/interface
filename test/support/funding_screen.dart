@@ -61,6 +61,7 @@ class FundingIdentity extends ApprovalIdentityRepository {
 
 class TestWithdrawalRepository implements WithdrawalRepository {
   final prepared = <(DepositWalletQuery, String)>[];
+  final receivers = <String?>[];
   int submits = 0;
   Completer<void>? gate;
   Object? failure;
@@ -71,8 +72,10 @@ class TestWithdrawalRepository implements WithdrawalRepository {
     required DepositWalletQuery query,
     required String amount,
     required bool Function() isCurrent,
+    String? receiver,
   }) async {
     prepared.add((query, amount));
+    receivers.add(receiver);
     final quote = fundingFeeFixture(fundingFeeQuery);
     return WithdrawalReview(
       identity: identity,
@@ -81,6 +84,7 @@ class TestWithdrawalRepository implements WithdrawalRepository {
       fee: feeQuoteWith(quote, fee),
       info: withdrawInfoFixture(),
       preparedAt: DateTime.now().toUtc(),
+      receiver: receiver ?? identity.walletAddress!,
     );
   }
 
@@ -105,7 +109,7 @@ class TestWithdrawalRepository implements WithdrawalRepository {
         'asset': review.query.asset.asset,
         'amount': review.amount.toString(),
         'fee': review.fee.assetFee.toString(),
-        'receiver': accountAddress,
+        'receiver': review.receiver,
       },
     );
   }
@@ -155,6 +159,8 @@ class FundingHarness {
     double textScale = 1,
     double topInset = 0,
     bool deviceGrant = false,
+    // The form has no default network; tests pick one as a user would.
+    int? network = 56,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -229,7 +235,18 @@ class FundingHarness {
     );
     await tester.tap(find.byKey(const Key('open-funding')));
     await tester.pumpAndSettle();
+    if (network != null) await selectNetwork(tester, network);
     await settleIcons(tester);
+  }
+
+  Future<void> selectNetwork(WidgetTester tester, int chainId) async {
+    final field = find.byKey(const Key('funding-network'));
+    if (field.evaluate().isEmpty) return;
+    await tester.ensureVisible(field);
+    await tester.tap(field);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(Key('funding-option-$chainId')).last);
+    await tester.pumpAndSettle();
   }
 
   /// Wait for native image codecs, which run outside the widget fake clock.

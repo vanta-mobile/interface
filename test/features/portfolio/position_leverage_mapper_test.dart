@@ -96,6 +96,28 @@ void main() {
     expect(high.target('126'), null);
     expect(high.target('125'), 125);
   });
+  test('remaining notional subtracts both position sides from the selected bracket cap', () {
+    expect(mapPositionNotional(leverageRows(), 'BTCUSDT'), Decimal.zero);
+    expect(
+      mapPositionNotional(leverageRows(hedge: true, notional: '1200.5'), 'BTCUSDT'),
+      Decimal.parse('2401'),
+    );
+    expect(
+      mapPositionNotional([
+        {'symbol': 'BTCUSDT', 'leverage': '10', 'positionSide': 'BOTH'},
+      ], 'BTCUSDT'),
+      isNull,
+    );
+    final context = leverageContext(positionNotional: Decimal.parse('2500'));
+    expect(context.remainingNotional(10), Decimal.parse('97500')); // 100,000 cap
+    expect(context.remainingNotional(100), Decimal.parse('7500')); // 10,000 cap
+    expect(
+      leverageContext(positionNotional: Decimal.parse('20000')).remainingNotional(100),
+      Decimal.zero,
+    );
+    expect(context.remainingNotional(101), isNull); // no bracket allows it
+  });
+
   test('malformed symbols cannot become signed scope parameters', () {
     for (final symbol in ['', 'BTCUSDT&leverage=100', 'BTC/USDT', 'BTC USDT']) {
       expect(() => validateLeverageSymbol(symbol), throwsFormatException);

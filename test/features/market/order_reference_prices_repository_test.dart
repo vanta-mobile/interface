@@ -118,13 +118,14 @@ void main() {
     service.now = service.now.add(const Duration(seconds: 4));
     service.clocks.single.complete({'serverTime': serverTime});
     await flush();
-    // The transaction is six seconds older than the server timestamp. With
-    // four seconds of clock-request uncertainty its safe age is ten seconds.
+    // The quote is six seconds older than the server timestamp. With four
+    // seconds of clock-request uncertainty its safe age is ten seconds. The
+    // last trade has no exchange-age deadline, only a receipt deadline.
     service.books.single.complete(orderBookPayload(time: serverTime - 6000));
     service.trades.single.complete(orderTradePayload(time: serverTime - 6000));
     await flush();
     expect(repository.state.bookFresh, false);
-    expect(repository.state.tradeFresh, false);
+    expect(repository.state.tradeFresh, true);
     service.controllers.single.add(orderBookEvent(time: serverTime));
     service.controllers.single.add(orderTradeEvent(time: serverTime));
     await flush();
@@ -132,7 +133,7 @@ void main() {
     expect(repository.state.tradeFresh, true);
     service.now = service.now.add(const Duration(seconds: 6));
     expect(repository.state.bookFresh, false);
-    expect(repository.state.tradeFresh, false);
+    expect(repository.state.tradeFresh, true);
   });
   test(
     'related cross symbol requests Last only and never downloads or subscribes a book',
@@ -272,7 +273,7 @@ void main() {
     await flush();
     expect(repository.state.tradeFresh, true);
   });
-  test('a recently received old REST transaction still expires at its exchange deadline', () async {
+  test('an old REST book expires at its exchange deadline; an old last trade does not', () async {
     listen();
     service.now = service.now.add(const Duration(seconds: 9));
     await service.connect();
@@ -282,6 +283,8 @@ void main() {
     expect(repository.state.bookFresh, true);
     service.now = service.now.add(const Duration(seconds: 1));
     expect(repository.state.bookFresh, false);
+    expect(repository.state.tradeFresh, true);
+    service.now = service.now.add(const Duration(seconds: 9));
     expect(repository.state.tradeFresh, false);
   });
   test('calibrated server time tolerates a skewed local clock, rollback invalidates', () async {

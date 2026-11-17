@@ -91,16 +91,11 @@ class MainOrderCapacityController extends Notifier<MainOrderCapacityState> {
   MainOrderCapacitySnapshot? get current {
     if (!ref.mounted || state.loading || state.stale) return null;
     final data = state.snapshot, live = ref.read(liveOrderProvider), auth = ref.read(authProvider);
-    final activity = ref.read(symbolSettingsActivityProvider);
     if (data == null ||
         data.context != live.context ||
         data.context.symbol != ref.read(symbolProvider) ||
         live.busy ||
         live.stale ||
-        activity.busy ||
-        activity.owner != null ||
-        activity.unresolved ||
-        activity.recoveryBlocked ||
         auth.busy ||
         auth.identity?.signingAvailable != true ||
         auth.identity?.walletAddress?.toLowerCase() != data.context.address.toLowerCase()) {
@@ -122,7 +117,7 @@ class MainOrderCapacityController extends Notifier<MainOrderCapacityState> {
 
   void _releaseRead() {
     if (_lease case final lease?) {
-      ref.read(symbolSettingsActivityProvider.notifier).finish(lease, unresolved: false);
+      ref.read(symbolSettingsActivityProvider.notifier).finish(lease);
       _lease = null;
     }
   }
@@ -152,14 +147,6 @@ class MainOrderCapacityController extends Notifier<MainOrderCapacityState> {
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
     final lease = activity.acquire(SymbolSetting.order);
-    if (lease == null) {
-      state = MainOrderCapacityState(
-        snapshot: state.snapshot,
-        stale: true,
-        failure: const AccountReadFailure('liveOrderSettingsBusy'),
-      );
-      return;
-    }
     _lease = lease;
     final epoch = ref.read(symbolSettingsActivityProvider).epoch;
     final revision = ++_revision, previous = state.snapshot;
@@ -174,10 +161,7 @@ class MainOrderCapacityController extends Notifier<MainOrderCapacityState> {
           !state.busy &&
           !state.stale &&
           operation.epoch == epoch &&
-          operation.owner == SymbolSetting.order &&
-          operation.busy &&
-          !operation.unresolved &&
-          !operation.recoveryBlocked &&
+          operation.holds(lease) &&
           !identity.busy &&
           identity.identity?.id == auth.identity?.id &&
           identity.identity?.walletKind == auth.identity?.walletKind &&
@@ -220,7 +204,7 @@ class MainOrderCapacityController extends Notifier<MainOrderCapacityState> {
         );
       }
     } finally {
-      activity.finish(lease, unresolved: false);
+      activity.finish(lease);
       if (_lease == lease) _lease = null;
     }
   }

@@ -131,7 +131,7 @@ void main() {
     queryStatus = 503;
     queryPayload = {'msg': 'unavailable'};
     final result = await modify();
-    expect(result.outcome, OrderModifyOutcome.unknown);
+    expect(result.outcome, OrderModifyOutcome.unverified);
     expect(result.order, null);
     expect(methods(), ['PUT', 'GET', 'GET', 'GET']);
   });
@@ -144,7 +144,7 @@ void main() {
       queryStatus = 400;
       queryPayload = putPayload;
       final result = await modify();
-      expect(result.outcome, OrderModifyOutcome.unknown);
+      expect(result.outcome, OrderModifyOutcome.unverified);
       expect(result.failure?.code, -1000);
       expect(result.failure?.details?.message, 'No agent found');
       expect(methods(), ['PUT', 'GET']);

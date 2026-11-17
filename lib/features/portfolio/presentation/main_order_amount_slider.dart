@@ -18,6 +18,7 @@ class MainOrderAmountSlider extends StatefulWidget {
     required this.continuous,
     required this.onCommit,
     required this.semanticLabel,
+    this.sliderKey = const Key('main-order-percentage'),
   });
 
   /// Committed position, 0–1.
@@ -27,6 +28,7 @@ class MainOrderAmountSlider extends StatefulWidget {
   final bool continuous;
   final ValueChanged<double>? onCommit;
   final String Function(double position) semanticLabel;
+  final Key sliderKey;
 
   @override
   State<MainOrderAmountSlider> createState() => _MainOrderAmountSliderState();
@@ -67,7 +69,7 @@ class _MainOrderAmountSliderState extends State<MainOrderAmountSlider> {
         child: Semantics(
           container: true,
           child: Slider(
-            key: const Key('main-order-percentage'),
+            key: widget.sliderKey,
             divisions: widget.continuous ? null : 4,
             value: (_drag ?? widget.position).clamp(0, 1),
             semanticFormatterCallback: widget.semanticLabel,

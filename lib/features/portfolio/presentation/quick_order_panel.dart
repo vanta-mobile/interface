@@ -138,8 +138,7 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
     // the keyboard and drop taps); a tap during them waits for them instead.
     // Only this entry's own read, an order being submitted, an auth change and
     // an unknown outcome lock it.
-    final busy =
-        state.loading || live.busy && live.intent != null || live.needsRecheck || auth.busy;
+    final busy = state.loading || live.busy && live.intent != null || auth.busy;
     final text = state.percent == null ? state.quantity : '${state.percent}%';
     if (quantity.text != text) quantity.text = text;
     final available = data?.funds?.account.availableBalance;

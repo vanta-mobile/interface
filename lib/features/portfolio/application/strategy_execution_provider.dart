@@ -75,7 +75,7 @@ class StrategyExecutionController extends Notifier<StrategyExecutionState> {
       _lease = null;
       _activity = null;
       if (lease != null) {
-        scheduleMicrotask(() => activity?.finish(lease, unresolved: false));
+        scheduleMicrotask(() => activity?.finish(lease));
       }
     });
     return const StrategyExecutionState();
@@ -85,7 +85,7 @@ class StrategyExecutionController extends Notifier<StrategyExecutionState> {
     final lease = _lease, activity = _activity;
     _lease = null;
     _activity = null;
-    if (lease != null) activity?.finish(lease, unresolved: false);
+    if (lease != null) activity?.finish(lease);
   }
 
   void markStale() {
@@ -121,13 +121,11 @@ class StrategyExecutionController extends Notifier<StrategyExecutionState> {
         auth.busy ||
         identity == null ||
         !identity.signingAvailable ||
-        identity.walletAddress?.toLowerCase() != query.order.address.toLowerCase() ||
-        ref.read(symbolSettingsActivityProvider).owner != null) {
+        identity.walletAddress?.toLowerCase() != query.order.address.toLowerCase()) {
       return;
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.recovery, checkingOnly: true);
-    if (lease == null) return;
+    final lease = activity.acquire(SymbolSetting.recovery);
     _lease = lease;
     _activity = activity;
     final revision = ++_revision, events = _events;

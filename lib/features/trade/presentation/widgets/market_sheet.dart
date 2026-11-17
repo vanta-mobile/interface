@@ -9,15 +9,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/strings.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../market/application/market_providers.dart';
+import '../../../market/application/open_interest_provider.dart';
+import '../../../market/application/public_leverage_provider.dart';
+import '../../../market/domain/market_quotes.dart';
 import '../../../market/application/market_selection_provider.dart';
 import '../../../market/domain/market_quote.dart';
 import '../../application/providers.dart';
 import 'favorite_toggle.dart';
 import 'market_list_row.dart';
 import 'market_list_skeleton.dart';
-import 'market_quote_status.dart';
+import 'market_list_header.dart';
 import 'market_search_controls.dart';
-import 'primitives.dart';
 
 void openMarketSelector(BuildContext context) =>
     Navigator.of(context)
@@ -26,19 +28,25 @@ void openMarketSelector(BuildContext context) =>
 class _MarketSelectorPage extends ConsumerWidget {
   const _MarketSelectorPage();
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
-    backgroundColor: TradeColors.background,
-    body: SafeArea(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxHeight < 500 || MediaQuery.textScalerOf(context).scale(12) > 18) {
-            return const SingleChildScrollView(padding: EdgeInsets.all(16), child: MarketSheet());
-          }
-          return const Padding(padding: EdgeInsets.all(16), child: MarketSheet(fullscreen: true));
-        },
+  Widget build(BuildContext context, WidgetRef ref) {
+    // The keyboard shrinks the body; adding its inset back keeps the layout
+    // (and the focused search field's state) unchanged while it is open.
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    return Scaffold(
+      backgroundColor: TradeColors.background,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxHeight + keyboard < 500 ||
+                MediaQuery.textScalerOf(context).scale(12) > 18) {
+              return const SingleChildScrollView(padding: EdgeInsets.all(16), child: MarketSheet());
+            }
+            return const Padding(padding: EdgeInsets.all(16), child: MarketSheet(fullscreen: true));
+          },
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class MarketSheet extends ConsumerWidget {
@@ -47,7 +55,6 @@ class MarketSheet extends ConsumerWidget {
   final VoidCallback? onSelect;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final instruments = ref.watch(liveMarketQuotesProvider);
     final favorites = ref.watch(favoriteSymbolsProvider);
     final results = ref.watch(selectedMarketsProvider);
     final l10n = AppLocalizations.of(context);
@@ -69,50 +76,8 @@ class MarketSheet extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         const MarketSearchControls(),
-        const SizedBox(height: 8),
-        MutedText(
-          l10n.marketResultsCount(
-            results.value?.length ?? 0,
-            instruments.value?.quotes.length ?? 0,
-          ),
-        ),
-        if (instruments.value case final quotes?)
-          MarketQuoteStatus(
-            quotes: quotes,
-            onRetry: () => ref.read(quoteReconnectProvider.notifier).reconnect(),
-          ),
-        const SizedBox(height: 6),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(
-            children: [
-              Expanded(
-                flex: 5,
-                child: Text(
-                  '${l10n.tradeSymbols}\n${tr(context, 'fundingRate')}',
-                  style: TradeTypography.small,
-                ),
-              ),
-              Expanded(
-                flex: 4,
-                child: Text(
-                  '${tr(context, 'volume24h')}\nUSDT',
-                  textAlign: TextAlign.right,
-                  style: TradeTypography.small,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 3,
-                child: Text(
-                  '${tr(context, 'price')}\n${tr(context, 'change')}',
-                  textAlign: TextAlign.right,
-                  style: TradeTypography.small,
-                ),
-              ),
-            ],
-          ),
-        ),
+        const SizedBox(height: 4),
+        const Padding(padding: EdgeInsets.only(bottom: 8), child: MarketListHeader()),
         if (fullscreen)
           Expanded(child: _refresh(context, ref, results, favorites))
         else
@@ -131,10 +96,17 @@ class MarketSheet extends ConsumerWidget {
     Set<String> favorites,
   ) => RefreshIndicator(
     onRefresh: () async {
+      // Pull-to-refresh also restores a dropped quote stream.
+      if (ref.read(liveMarketQuotesProvider).value?.connection == QuoteConnection.offline) {
+        ref.read(quoteReconnectProvider.notifier).reconnect();
+      }
       final markets = ref.read(pageRefreshProvider).markets();
+      final openInterest = refreshOpenInterest(ref);
+      ref.invalidate(publicLeverageProvider);
+      final leverage = ref.read(publicLeverageProvider.future).then<void>((_) {}, onError: (_) {});
       // Joins the watchlist read that [markets] starts; reports its failure.
       final failure = await ref.read(favoriteSymbolsProvider.notifier).refresh();
-      await markets;
+      await Future.wait([markets, openInterest, leverage]);
       if (failure != null && context.mounted) showFavoriteFailure(context, failure);
     },
     child: _results(context, ref, results, favorites),

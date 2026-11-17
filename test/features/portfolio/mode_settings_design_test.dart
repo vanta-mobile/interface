@@ -16,6 +16,7 @@ import '../../support/futures_asset_mode.dart';
 import '../../support/futures_position_mode.dart';
 import '../../support/identity_repository.dart';
 import '../../support/trade_fixture.dart';
+import '../../support/trading_agents.dart';
 
 void main() {
   for (final name in ['asset', 'position', 'blocked', 'resolving', 'ready']) {
@@ -45,6 +46,7 @@ void main() {
         t,
         width: 393,
         identityRepository: identity,
+        tradingAgentStore: await activeAgentStore(),
         futuresAssetModeRepository: r,
         assetModeClock: () => assetModeClock,
         futuresPositionModeRepository: TestFuturesPositionModeRepository(),
@@ -53,6 +55,7 @@ void main() {
       );
       t.view.physicalSize = const Size(393, 852);
       await launch(t, c);
+      await awaitTradingAgent(t, c);
       await c.read(futuresAssetModeProvider.notifier).load();
       await c.read(futuresPositionModeProvider.notifier).load();
       final widget = switch (name) {

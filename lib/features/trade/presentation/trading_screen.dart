@@ -80,7 +80,14 @@ class _TradingScreenState extends ConsumerState<TradingScreen> with WidgetsBindi
         top: ownHeader,
         bottom: false,
         child: switch (destination) {
-          AppDestination.futures => const FuturesWorkspace(),
+          // Tapping outside the inputs dismisses the keyboard; controls that
+          // handle the tap themselves win the gesture arena.
+          AppDestination.futures => GestureDetector(
+            key: const Key('futures-dismiss-keyboard'),
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: const FuturesWorkspace(),
+          ),
           AppDestination.portfolio => const PortfolioPage(),
           AppDestination.assistant => const AssistantPage(),
           AppDestination.points => const PointsPage(),

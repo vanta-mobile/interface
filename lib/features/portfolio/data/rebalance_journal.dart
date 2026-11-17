@@ -29,7 +29,9 @@ class MemoryRebalanceJournal implements RebalanceJournal {
   @override
   Future<void> prepare(RebalanceRecord record) async {
     ready();
-    if (snapshot.records.any((r) => r.address.toLowerCase() == record.address.toLowerCase())) {
+    // An unconfirmed earlier record does not block a new one; only the
+    // same record cannot be stored twice.
+    if (snapshot.records.any((r) => r.key == record.key)) {
       throw const AccountReadFailure('rebalancePending');
     }
     publish(
@@ -131,7 +133,9 @@ class FileRebalanceJournal extends MemoryRebalanceJournal {
   Future<void> prepare(RebalanceRecord record) => _serial(() async {
     ready();
     final f = await _file(), records = await _read(f);
-    if (records.any((r) => r.address.toLowerCase() == record.address.toLowerCase())) {
+    // An unconfirmed earlier record does not block a new one; only the
+    // same record cannot be stored twice.
+    if (records.any((r) => r.key == record.key)) {
       throw const AccountReadFailure('rebalancePending');
     }
     await _write(f, [...records, record]);

@@ -31,7 +31,9 @@ class MemoryInternalTransferJournal implements InternalTransferJournal {
   @override
   Future<void> prepare(InternalTransferRecord record) async {
     ready();
-    if (snapshot.records.any((r) => r.address.toLowerCase() == record.address.toLowerCase())) {
+    // An unconfirmed earlier record does not block a new one; only the
+    // same record cannot be stored twice.
+    if (snapshot.records.any((r) => r.key == record.key)) {
       throw const AccountReadFailure('internalTransferPending');
     }
     publish(
@@ -147,7 +149,9 @@ class FileInternalTransferJournal extends MemoryInternalTransferJournal {
     ready();
     final f = await _file(), records = await _read(f);
     _checkRetained(records);
-    if (records.any((r) => r.address.toLowerCase() == record.address.toLowerCase())) {
+    // An unconfirmed earlier record does not block a new one; only the
+    // same record cannot be stored twice.
+    if (records.any((r) => r.key == record.key)) {
       throw const AccountReadFailure('internalTransferPending');
     }
     await _write(f, [...records, record]);

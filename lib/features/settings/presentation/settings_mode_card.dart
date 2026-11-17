@@ -8,8 +8,8 @@ import '../../portfolio/application/futures_position_mode_provider.dart';
 import '../../portfolio/application/live_order_provider.dart';
 import '../../portfolio/domain/futures_asset_mode.dart';
 import '../../portfolio/domain/futures_position_mode.dart';
-import '../../portfolio/presentation/futures_asset_mode_screen.dart';
-import '../../portfolio/presentation/futures_position_mode_screen.dart';
+import '../../portfolio/presentation/futures_asset_mode_sheet.dart';
+import '../../portfolio/presentation/futures_position_mode_sheet.dart';
 import 'settings_components.dart';
 
 /// Reloads both account modes for the same identity; awaited by pull-to-refresh.
@@ -17,13 +17,9 @@ Future<void> refreshAccountModes(WidgetRef ref, BuildContext context) async {
   final identity = ref.read(authProvider).identity;
   final assetController = ref.read(futuresAssetModeProvider.notifier);
   final positionController = ref.read(futuresPositionModeProvider.notifier);
-  await (ref.read(futuresAssetModeProvider).needsRecheck
-      ? assetController.recheck()
-      : assetController.load());
+  await assetController.load();
   if (!context.mounted || ref.read(authProvider).identity != identity) return;
-  await (ref.read(futuresPositionModeProvider).needsRecheck
-      ? positionController.recheck()
-      : positionController.load());
+  await positionController.load();
 }
 
 /// Asset and position mode rows; the newest of the mode reads and the live

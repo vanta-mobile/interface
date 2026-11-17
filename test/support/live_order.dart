@@ -272,6 +272,9 @@ class TestLiveOrderRepository implements LiveOrderRepository {
   bool throwAfterSubmit = false;
   bool? lastIncludeFunds;
   LiveOrderContext context = liveContext();
+
+  /// Result of the automatic follow-up query; defaults to [result].
+  LiveOrderResult? checkResult;
   LiveOrderResult result = LiveOrderResult(
     orderId: '12345',
     status: 'NEW',
@@ -322,6 +325,6 @@ class TestLiveOrderRepository implements LiveOrderRepository {
     lastIntent = intent;
     onStep(LiveOrderStep.checkSigning);
     await checkGate?.future;
-    return result;
+    return checkResult ?? result;
   }
 }

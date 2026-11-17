@@ -420,7 +420,9 @@ void main() {
       expect(find.text(locale == 'en' ? 'Deposit processing' : '充值处理中'), findsOneWidget);
       history.records = [transferRecord(status: locale == 'en' ? 'SUCCESS' : 'FAILED')];
       await tester.pump(const Duration(seconds: 11));
-      await tester.pumpAndSettle();
+      // The success toast's countdown ring animates, so settle frames only.
+      await tester.pump();
+      await tester.pump();
       expect(state().pending, isEmpty);
       expect(find.byKey(const Key('app-toast')), findsOneWidget);
       expect(find.text(locale == 'en' ? 'Deposit successful' : '充值失败'), findsOneWidget);

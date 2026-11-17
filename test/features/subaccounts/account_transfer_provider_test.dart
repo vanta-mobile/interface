@@ -62,7 +62,7 @@ void main() {
   });
   for (final acknowledged in [false, true]) {
     testWidgets(
-      'freeze intent acknowledged=$acknowledged blocks transfers without claiming remote frozen status',
+      'freeze intent acknowledged=$acknowledged: the freeze request, not the record, blocks transfers',
       (t) async {
         final f = GeneratedAccountsFixture(
           t,
@@ -82,10 +82,8 @@ void main() {
         await f.container
             .read(accountTransferProvider.notifier)
             .prepare(target: generatedChildAddress, asset: 'USDT', amount: '1');
-        expect(
-          f.container.read(accountTransferProvider).failure,
-          acknowledged ? 'accountsFrozenNotice' : 'walletOperationPending',
-        );
+        // An unconfirmed record no longer blocks by itself (AGENTS.md).
+        expect(f.container.read(accountTransferProvider).failure, 'accountsFrozenNotice');
         expect(f.repository.sends, 0);
         expect(f.account.calls, 0);
         await f.close(t);

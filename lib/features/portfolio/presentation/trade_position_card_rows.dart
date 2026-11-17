@@ -22,7 +22,7 @@ class _PnlBlock extends StatelessWidget {
         ? hiddenAmount
         : value == null
         ? openOrderPlaceholder
-        : '${signed(value, portfolioAmount(value))}'
+        : '${signed(value, _usdtAmount(value))}'
               '${roe == null ? '' : ' (${signed(roe!, roe!.toStringAsFixed(2))}%)'}';
     return Container(
       padding: const EdgeInsets.all(8),
@@ -36,18 +36,22 @@ class _PnlBlock extends StatelessWidget {
               children: [
                 Text(l10n.portfolioPnlUnit(unit), style: caption),
                 const SizedBox(height: 4),
-                AnimatedNumberText(
-                  text,
-                  style: TradeTypography.symbol.copyWith(
-                    fontSize: 14,
-                    height: 20 / 14,
-                    color: hidden || value == null || value == Decimal.zero
-                        ? TradeColors.text
-                        : value > Decimal.zero
-                        ? TradeColors.positive
-                        : TradeColors.negative,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedNumberText(
+                    text,
+                    style: TradeTypography.symbol.copyWith(
+                      fontSize: 14,
+                      height: 20 / 14,
+                      color: hidden || value == null || value == Decimal.zero
+                          ? TradeColors.text
+                          : value > Decimal.zero
+                          ? TradeColors.positive
+                          : TradeColors.negative,
+                    ),
+                    textAlign: TextAlign.left,
                   ),
-                  textAlign: TextAlign.left,
                 ),
               ],
             ),
@@ -68,7 +72,7 @@ class _PnlBlock extends StatelessWidget {
                       ? hiddenAmount
                       : size == null
                       ? openOrderPlaceholder
-                      : portfolioAmount(size),
+                      : _usdtAmount(size!),
                   style: TradeTypography.body,
                   textAlign: TextAlign.right,
                 ),
@@ -103,9 +107,19 @@ class _Metric extends StatelessWidget {
       children: [
         Text(label, style: TradeTypography.body.copyWith(color: TradeColors.muted)),
         const SizedBox(height: 4),
-        animated
-            ? AnimatedNumberText(value, style: TradeTypography.body, textAlign: align)
-            : Text(value, style: TradeTypography.body, textAlign: align),
+        // Narrow columns shrink the price rather than letting it spill into
+        // the neighbouring column.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: switch (alignment) {
+            CrossAxisAlignment.center => Alignment.center,
+            CrossAxisAlignment.end => Alignment.centerRight,
+            _ => Alignment.centerLeft,
+          },
+          child: animated
+              ? AnimatedNumberText(value, style: TradeTypography.body, textAlign: align)
+              : Text(value, style: TradeTypography.body, textAlign: align, maxLines: 1),
+        ),
       ],
     );
   }

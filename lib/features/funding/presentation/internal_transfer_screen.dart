@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
-import '../../portfolio/application/symbol_settings_activity.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
 import '../application/internal_transfer_provider.dart';
 import '../application/internal_transfer_storage_provider.dart';
@@ -99,7 +98,6 @@ class _ReviewButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(internalTransferProvider),
         storage = ref.watch(internalTransferStorageProvider),
-        activity = ref.watch(symbolSettingsActivityProvider),
         controller = ref.read(internalTransferProvider.notifier),
         l10n = AppLocalizations.of(context);
     final enabled =
@@ -109,13 +107,10 @@ class _ReviewButton extends ConsumerWidget {
         state.context!.validate(state.amount) == null &&
         storage.ready &&
         !storage.failure &&
-        ref.watch(pendingInternalTransfersProvider).isEmpty &&
-        !activity.blocks(SymbolSetting.internalTransfer) &&
         ref.watch(authProvider).identity?.signingAvailable == true;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (activity.blocks(SymbolSetting.internalTransfer)) Text(l10n.internalTransferBlocked),
         OutlinedButton(
           key: const Key('internal-transfer-review'),
           onPressed: enabled

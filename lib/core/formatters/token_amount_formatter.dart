@@ -99,6 +99,46 @@ abstract final class TokenAmountFormatter {
     return _groupIntegerDigits(trimmed == '-0' ? '0' : trimmed);
   }
 
+  /// Formats a grouped display value rounded half away from zero to exactly
+  /// [fractionDigits], padding trailing zeros.
+  static String formatRoundedFixed(DecimalValue amount, {required int fractionDigits}) {
+    _validateDecimals(fractionDigits);
+    final fixed = _padFractionDigits(
+      _roundToFractionDigits(amount.value, fractionDigits),
+      fractionDigits,
+    );
+    return _groupIntegerDigits(RegExp(r'^-0(\.0+)?$').hasMatch(fixed) ? fixed.substring(1) : fixed);
+  }
+
+  /// Formats a non-zero value below one as `<mantissa>e-<exponent>`, rounding
+  /// the mantissa half away from zero to at most [maxFractionDigits] and
+  /// trimming trailing zeros, e.g. `0.0000123456` → `1.2346e-5`.
+  static String formatScientific(DecimalValue amount, {int maxFractionDigits = 4}) {
+    _validateDecimals(maxFractionDigits);
+    final negative = amount.value.startsWith('-');
+    final unsigned = negative ? amount.value.substring(1) : amount.value;
+    final parts = unsigned.split('.');
+    if (parts.first != '0' || parts.length == 1 || _isZeroDecimal(unsigned)) {
+      throw ArgumentError.value(amount.value, 'amount', 'must be non-zero and below one');
+    }
+    final fraction = parts.last;
+    final zeros = fraction.length - fraction.replaceFirst(RegExp('^0+'), '').length;
+    final digits = fraction.substring(zeros);
+    var exponent = -(zeros + 1);
+    var mantissa = _trimInsignificantZeros(
+      _roundToFractionDigits(
+        digits.length == 1 ? digits : '${digits[0]}.${digits.substring(1)}',
+        maxFractionDigits,
+      ),
+    );
+    // 9.99995 rounds up to 10; carry into the exponent.
+    if (mantissa == '10') {
+      mantissa = '1';
+      exponent++;
+    }
+    return '${negative ? '-' : ''}${mantissa}e$exponent';
+  }
+
   /// Formats a percentage for display with at most two fractional digits.
   ///
   /// Market API values can contain high-precision decimal values, which are

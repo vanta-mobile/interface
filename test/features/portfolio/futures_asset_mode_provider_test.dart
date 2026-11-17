@@ -83,38 +83,38 @@ void main() {
       expect(repository.reads, 1);
     },
   );
-  test(
-    'unknown result blocks new submits and configuration loads; recheck does not resubmit',
-    () async {
-      await getController().load();
-      repository.result = const AssetModeResult(failure: AccountReadFailure('accountNetwork'));
-      await getController().change(getIntent());
-      expect(container.read(futuresAssetModeProvider).needsRecheck, true);
-      await getController().load();
-      expect(repository.reads, 1);
-      expect(getController().prepare(FuturesAssetMode.multi), null);
-      repository.result = AssetModeResult(observed: FuturesAssetMode.multi, checkedAt: now);
-      await getController().recheck();
-      expect(repository.checks, 1);
-      expect(repository.changes, 1);
-      expect(container.read(futuresAssetModeProvider).needsRecheck, false);
-    },
-  );
-  test(
-    'pre-submit signature refusal is recoverable; post-submit exception remains unknown',
-    () async {
-      await getController().load();
-      repository.submit = false;
-      repository.changeFailure = const AccountReadFailure('authWalletRejected');
-      await getController().change(getIntent());
-      expect(container.read(futuresAssetModeProvider).needsRecheck, false);
-      expect(container.read(futuresAssetModeProvider).failure?.key, 'authWalletRejected');
-      await getController().load();
-      repository.submit = true;
-      await getController().change(getIntent());
-      expect(container.read(futuresAssetModeProvider).needsRecheck, true);
-    },
-  );
+  test('an unverified change is queried automatically and never resubmitted', () async {
+    await getController().load();
+    repository.result = const AssetModeResult(failure: AccountReadFailure('accountNetwork'));
+    repository.checkResult = AssetModeResult(observed: FuturesAssetMode.multi, checkedAt: now);
+    await getController().change(getIntent());
+    expect(repository.changes, 1);
+    expect(repository.checks, 1);
+    expect(container.read(futuresAssetModeProvider).result?.observed, FuturesAssetMode.multi);
+    expect(container.read(futuresAssetModeProvider).failure, isNull);
+  });
+  test('a failed verification becomes the concrete error and leaves the setting usable', () async {
+    await getController().load();
+    repository.result = const AssetModeResult(failure: AccountReadFailure('accountNetwork'));
+    await getController().change(getIntent());
+    expect(repository.checks, 1);
+    expect(container.read(futuresAssetModeProvider).failure?.key, 'accountNetwork');
+    expect(container.read(futuresAssetModeProvider).result, isNull);
+    await getController().load();
+    expect(repository.reads, 2);
+  });
+  test('pre-submit signature refusal is recoverable; post-submit exception is verified', () async {
+    await getController().load();
+    repository.submit = false;
+    repository.changeFailure = const AccountReadFailure('authWalletRejected');
+    await getController().change(getIntent());
+    expect(container.read(futuresAssetModeProvider).failure?.key, 'authWalletRejected');
+    await getController().load();
+    repository.submit = true;
+    await getController().change(getIntent());
+    expect(repository.checks, 1);
+    expect(container.read(futuresAssetModeProvider).failure, isNull);
+  });
   test('wallet logout during submit invalidates callback and discards late result', () async {
     await getController().load();
     repository.changeGate = Completer<void>();

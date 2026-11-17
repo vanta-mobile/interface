@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/domain/decimal_value.dart';
+import '../../../core/formatters/token_amount_formatter.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../funding/domain/funding_catalog.dart';
+import '../../funding/presentation/funding_screen.dart';
 import '../../trade/presentation/trade_theme.dart';
 import '../../trade/presentation/widgets/trade_icon.dart';
 import '../../trade/presentation/widgets/trade_option_sheet.dart';
+import '../domain/live_order.dart';
 
 /// Collapsed by default so optional order settings stay out of the main flow.
 class EmbeddedAdvancedSection extends StatelessWidget {
@@ -173,6 +178,45 @@ class EmbeddedSelector extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Available margin of the order form, with the deposit shortcut.
+class EmbeddedAvailableRow extends StatelessWidget {
+  const EmbeddedAvailableRow({super.key, required this.data});
+  final LiveOrderContext data;
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final available = data.funds?.account.availableBalance;
+    return Row(
+      key: const Key('live-order-available'),
+      children: [
+        Expanded(
+          child: Text(
+            l10n.available,
+            style: TradeTypography.body.copyWith(color: TradeColors.secondary),
+          ),
+        ),
+        Text(
+          available == null
+              ? '—'
+              : '${TokenAmountFormatter.formatCompact(DecimalValue(available.toString()))} '
+                    '${data.rules.quoteAsset}',
+          style: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
+        ),
+        IconButton(
+          key: const Key('live-order-deposit'),
+          tooltip: l10n.fundingDeposit,
+          onPressed: () => openFunding(context, FundingOperation.deposit),
+          icon: const Icon(Icons.add_circle_outline, size: 14),
+          color: TradeColors.accent,
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints.tightFor(width: 28, height: 32),
+          padding: EdgeInsets.zero,
+        ),
+      ],
     );
   }
 }

@@ -1726,9 +1726,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '使用当前钱包提交真实普通单、条件单或跟踪委托；限价使用交易对支持的成交策略。单向模式的做多／做空订单可能减仓或反转现有持仓；双向模式操作所选多仓或空仓。费用、可用保证金及最终资格由 Aster 校验。';
 
   @override
-  String get liveOrderReadContext => '读取下单配置（2 次签名）';
-
-  @override
   String get liveOrderSettingsBusy => '请先完成待处理的合约配置操作，再提交订单。';
 
   @override
@@ -1791,9 +1788,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get liveOrderTriggerBasis => '触发价格依据';
-
-  @override
-  String get liveOrderTriggerReference => '读取时的参考价格';
 
   @override
   String get liveOrderTriggerProtect => '触发价格保护';
@@ -1930,10 +1924,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get batchCloseRecheck => '签名查询未确认的订单，不重新下单';
 
   @override
-  String get liveOrderFundsReadHint =>
-      '读取公开规则和标记价，再分别签名读取持仓模式、交易对仓位、资产模式和账户资金（4 次签名）。从标记价响应起 30 秒内有效；读取不会下单。';
-
-  @override
   String get liveOrderReadFunds => '开仓确认前请读取资产模式和账户资金。缺失金额表示未知，不是零。';
 
   @override
@@ -2033,39 +2023,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get liveTrailingImmediate => '做多激活价须低于所选最新价；做空激活价须高于所选最新价。';
-
-  @override
-  String get liveTrailingHint => '交易所跟踪有利方向的价格极值，回调达到设定比例后按市价执行。使用固定数量，不是触发时全部平仓，也不会持续修改限价挂单。';
-
-  @override
-  String get liveTrailingRate => '回调比例（%）';
-
-  @override
-  String get liveTrailingRateBounds => '范围 0.1～5；输入 1 表示 1%。';
-
-  @override
-  String get liveTrailingBasis => '跟踪价格依据';
-
-  @override
-  String liveTrailingActivation(String asset) {
-    return '激活价格（$asset，选填）';
-  }
-
-  @override
-  String get liveTrailingDefault => '留空时使用交易所下单时对应价格依据的最新价。不会将当前快照价作为激活价提交。';
-
-  @override
-  String get liveTrailingActivationDirection => '若填写：做多激活价低于最新价，做空激活价高于最新价；交易所在下单时再次校验。';
-
-  @override
-  String get liveTrailingBuy => '激活后做多单跟踪最低价，价格从最低点上涨达到回调比例后触发；触发不保证成交价格。';
-
-  @override
-  String get liveTrailingSell => '激活后做空单跟踪最高价，价格从最高点下跌达到回调比例后触发；触发不保证成交价格。';
-
-  @override
-  String get liveTrailingEstimateHint =>
-      '没有固定成交价；名义金额及开仓保证金仅按当前标记价参考估算，不提供平仓 PnL 估算。实际数量资格、保证金和成交由交易所当时状态决定，不含手续费、资金费和滑点。';
 
   @override
   String get quickOrderInvalidAmount => '请输入正数十进制金额。';
@@ -2912,52 +2869,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scaledTitle => '分段委托';
 
   @override
-  String get scaledRule =>
-      '拆为 2–110 笔独立 GTC 限价单，按价格从低到高提交。包含两个端点，价格按最小变动单位向下对齐且互不重复。数量按所选分布及数量步长拆分；签名前请核对逐笔预览。';
-
-  @override
-  String get scaledRisk =>
-      '每笔分别复核账户、签名提交、签名查询，可能需要多次钱包确认。子单独立执行，可能部分成功；失败或结果未知即停止后续提交。停止或离开页面不会撤销已发送订单，未发送子单不会自动续跑。';
-
-  @override
-  String get scaledLow => '价格下限';
-
-  @override
-  String get scaledHigh => '价格上限';
-
-  @override
-  String get scaledCount => '子单数量';
-
-  @override
-  String get scaledPreview => '子单预览';
-
-  @override
-  String get scaledReview => '确认分段委托';
-
-  @override
-  String get scaledConfirm => '签名提交这些子单';
-
-  @override
-  String get scaledTotalQuantity => '总委托量';
-
-  @override
-  String get scaledTotalNotional => '限价总名义价值';
-
-  @override
-  String get scaledMarginReference => '未扣净额的保证金参考';
-
-  @override
-  String get scaledMarginHint => '参考值 = 限价总名义价值 ÷ 杠杆，未计仓位净额、已有挂单、手续费和释放保证金，不是最终占用或可执行额度；每笔由平台校验。';
-
-  @override
-  String get scaledPortion => '占总委托量（约）';
-
-  @override
-  String scaledOrderNumber(int number) {
-    return '子单 $number';
-  }
-
-  @override
   String get scaledCountInvalid => '子单数量请输入 2–110 的整数。';
 
   @override
@@ -2974,12 +2885,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get scaledConfigurationChanged => '账户模式、杠杆或下单规则已变化，后续子单已停止；请刷新并重新确认方案。';
-
-  @override
-  String get scaledStopped => '已停止后续子单；已发送订单仍可能执行，请核对下方结果。';
-
-  @override
-  String get scaledResults => '分段委托结果';
 
   @override
   String get scaledRefreshRequired => '请重新读取账户并确认方案后提交。';
@@ -3080,7 +2985,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get depositApprovalChanged => '链状态或费用已变化，请重新准备并确认本步骤；尚未发送交易。';
 
   @override
-  String get depositApprovalUnknown => '钱包返回结果未知，请勿重复授权。请从钱包取得原交易哈希进行核对。';
+  String get depositApprovalUnknown => '网络异常，请稍后在记录中确认';
 
   @override
   String get depositApprovalMismatch => '此交易与保存的钱包、网络或交易序号不匹配，已保留原记录。';
@@ -3143,7 +3048,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get walletTransactionBusy => '另一笔钱包交易请求仍在等待，请先等待其结束。';
 
   @override
-  String get walletTransactionWrongChain => '请在所选充值网络重新连接同一个钱包，再发送此步骤。';
+  String fundingSwitchNetwork(String network) {
+    return '请在钱包中切换到 $network 后重试。';
+  }
+
+  @override
+  String get walletTransactionWrongChain => '请在钱包中切换到所选充值网络后重试。';
 
   @override
   String get walletTransactionPermission => '当前钱包会话没有交易发送权限。请断开后重新连接同一个钱包以授予权限。';
@@ -3201,7 +3111,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rebalancePending => '当前钱包存在未决 Rebalance。可核对当前账户，不会自动重发请求。';
 
   @override
-  String get rebalanceUnknown => '原请求结果未知。当前余额不能证明该请求已完成；官方未提供按 nonce 查询的协议，因此保留记录并阻止新修改，请勿重复请求。';
+  String get rebalanceUnknown => '网络异常，请稍后在记录中确认';
 
   @override
   String get rebalanceReplyPending => '已保存服务器响应，请读取当前账户完成核对；不会重发 Rebalance。';
@@ -3367,8 +3277,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get internalTransferPending => '有一笔划转待核对，新的划转、订单及账户设置暂不可提交。';
 
   @override
-  String get internalTransferUnknown =>
-      '划转结果未知。官方尚未提供按原客户端编号查询的接口，余额变化不能证明完成。记录将保留，此处不能重发或清除；请携带原始编号联系 Aster 核对。';
+  String get internalTransferUnknown => '网络异常，请稍后在记录中确认';
 
   @override
   String get internalTransferReplyPending => 'Aster 已返回 SUCCESS，请读取双方账户完成余额刷新，勿重复提交划转。';
@@ -3791,7 +3700,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authorizationAcknowledged => 'Aster 已确认收到授权请求。请核对该钱包的实际读取权限及平台返回的交易状态。';
 
   @override
-  String get authorizationUnknown => '授权结果未知。再次申请前请先核对权限。';
+  String get authorizationUnknown => '网络异常，请稍后在记录中确认';
 
   @override
   String get authorizationFuturesRead => '合约签名 API 读取';
@@ -3918,7 +3827,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get walletOperationPending => '该钱包有结果未知的请求。请勿重复提交；联系 Aster 核对结果后再继续。';
 
   @override
-  String get walletOperationUnknown => '请求可能已被接受，结果未知，已保留未签名的操作内容；不会自动重试。';
+  String get walletOperationUnknown => '网络异常，请稍后在记录中确认';
 
   @override
   String get walletOperationAcknowledged => 'Aster 已确认该请求；这不代表已取得最新状态、余额或链上确认。';
@@ -3959,6 +3868,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get withdrawalAmountInvalid => '请输入符合代币精度的正数金额，并选择支持自动提现的资产路径。';
+
+  @override
+  String get withdrawalReceiverInvalid => '请输入有效的 EVM 收款地址。';
 
   @override
   String get withdrawalAssetChanged => '资产可用性、合约或精度已变化，请刷新资产列表后重新准备。';
@@ -4037,7 +3949,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get depositSubmissionNoPending => '该钱包暂无待确认充值。';
 
   @override
-  String get depositSubmissionUnknown => '钱包可能已提交交易，请保留记录并恢复状态后再充值。';
+  String get depositSubmissionUnknown => '网络异常，请稍后在记录中确认';
 
   @override
   String get depositSubmissionChanged => '余额、授权、交易内容或 Gas 已变化，请重新准备及确认。';
@@ -4599,7 +4511,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get marginAdjustVerified => '已在 Aster 历史中核对到该笔调整。';
 
   @override
-  String get marginAdjustUnknown => '结果尚未确认。保留原编号并再次查询，请勿重新提交。';
+  String get marginAdjustUnknown => '网络异常，请稍后在记录中确认';
 
   @override
   String get marginAdjustRejected => 'Aster 已明确拒绝本次调整，未认定调整成功。';
@@ -4921,13 +4833,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get orderConfirmExpired => '订单信息已失效，请关闭弹窗后重新下单。';
 
   @override
-  String get scaledTotalAmount => '总委托金额';
-
-  @override
   String get scaledAmountInvalid => '请输入正数总委托金额。';
-
-  @override
-  String get scaledDistribution => '数量分布';
 
   @override
   String get scaledEqual => '等量';
@@ -4942,24 +4848,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scaledRandom => '随机';
 
   @override
-  String get scaledConstant => '分布常数方式';
-
-  @override
-  String get scaledDifference => '等差';
-
-  @override
-  String get scaledRatio => '等比';
-
-  @override
-  String get scaledDifferenceHint => '递增按价格从低到高使用 1:2:3… 数量权重，递减反向排列。实际分布受数量步长取整影响。';
-
-  @override
-  String get scaledRatioHint => '递增按价格从低到高使用 1:2:4… 数量权重，递减反向排列。每笔均需满足最小数量；子单较多时可能需要很大的总量。';
-
-  @override
-  String get scaledVariance => '随机偏差';
-
-  @override
   String get scaledVarianceInvalid => '随机偏差请输入 0%–10%。';
 
   @override
@@ -4967,39 +4855,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get scaledRandomRequired => '请先生成随机分配方案，再确认。';
-
-  @override
-  String get scaledRandomHint => '每笔数量与平均数量的偏差不超过所填比例。当前方案保持固定，修改输入或重新分配才会变化；切换语言不会重新抽样。';
-
-  @override
-  String get scaledReshuffle => '重新随机分配';
-
-  @override
-  String get scaledUnallocatedQuote => '未分配委托金额';
-
-  @override
-  String get scaledAmountHint =>
-      '委托金额为各子单限价 × 数量之和，不乘杠杆。计价币输入向下取整为有效基础币数量，尾差显示为未分配金额。不含手续费，不是保证金或最终成交支出上限。';
-
-  @override
-  String get scaledBaseRemainderHint => '输入的基础币总量保持不变。尾差按小数余量从大到小分配，相同余量按价格从低到高分配。';
-
-  @override
-  String get scaledPreviousChildren => '上一组子单';
-
-  @override
-  String get scaledNextChildren => '下一组子单';
-
-  @override
-  String get scaledChildType => '子单类型';
-
-  @override
-  String get scaledEnteredSize => '输入总量／金额';
-
-  @override
-  String scaledPage(int start, int end, int total) {
-    return '子单 $start–$end，共 $total 笔';
-  }
 
   @override
   String get scaledCountRange => '2–110';
@@ -5722,6 +5577,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tradeSymbols => '交易对';
 
   @override
+  String get marketOpenInterest => '持仓量';
+
+  @override
+  String marketSortBy(String column) {
+    return '按$column排序';
+  }
+
+  @override
   String get accountsSelect => '选择';
 
   @override
@@ -5805,6 +5668,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fundingAmountLabel => '数量';
+
+  @override
+  String get fundingReceiverHint => '请输入收款地址';
 
   @override
   String get fundingBalance => '余额';
@@ -6381,6 +6247,43 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get modeConfirm => '确认';
+
+  @override
+  String marginModeSheetTitle(String symbol) {
+    return '$symbol 保证金模式';
+  }
+
+  @override
+  String get marginModeSheetScope => '保证金模式的调整仅对当前合约生效';
+
+  @override
+  String get marginModePositionsOrOrders => '当前合约有持仓或挂单，平掉持仓并撤销挂单后才能切换保证金模式。';
+
+  @override
+  String get marginModeCrossDescription => '全仓仓位共用可用保证金，盈亏可以相互抵消，降低强平风险。';
+
+  @override
+  String get marginModeIsolatedDescription => '每个仓位使用独立的保证金，亏损以该仓位分配的保证金为限。';
+
+  @override
+  String leverageSheetTitle(String symbol) {
+    return '$symbol 调整杠杆';
+  }
+
+  @override
+  String get leverageDecrease => '降低杠杆';
+
+  @override
+  String get leverageIncrease => '提高杠杆';
+
+  @override
+  String get leverageRemainingNotional => '剩余可开名义价值';
+
+  @override
+  String get leverageRemainingNotionalHint => '在当前杠杆和系统风控限额下，最多可开仓的名义价值。';
+
+  @override
+  String get leverageSheetNote => '请注意，调整杠杆也会作用于当前持仓和挂单。\n选择更高的杠杆（例如 10x）会增加强平的可能。';
 
   @override
   String get openOrdersCancelAll => '全部撤单';
@@ -7224,6 +7127,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pushConfirm => '确认';
 
   @override
+  String get pushQuietHoursNotCleared => '免打扰关闭未生效，请稍后重试。';
+
+  @override
   String get pushQuietSameTime => '开始时间和结束时间不能相同。';
 
   @override
@@ -7259,4 +7165,81 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsUpdateLinkUnavailable => '暂未提供下载链接。';
+
+  @override
+  String scaledChildInvalid(int index, String price, String quantity, String reason) {
+    return '第 $index 笔子单（价格 $price，数量 $quantity）：$reason';
+  }
+
+  @override
+  String get scaledLowestPrice => '最低价格';
+
+  @override
+  String get scaledHighestPrice => '最高价格';
+
+  @override
+  String get scaledOrderCount => '订单数量';
+
+  @override
+  String get scaledDistributionLabel => '数量分布';
+
+  @override
+  String get scaledPreviewLink => '预览';
+
+  @override
+  String get scaledConstDifference => '等差';
+
+  @override
+  String get scaledConstRatio => '等比';
+
+  @override
+  String get scaledSizeDistribution => '数量分布';
+
+  @override
+  String get scaledEqualHint => '每笔订单数量相同';
+
+  @override
+  String get scaledRandomHintShort => '每笔订单数量随机';
+
+  @override
+  String get scaledIncreasingHint => '数量随价格线性递增';
+
+  @override
+  String get scaledDecreasingHint => '数量随价格线性递减';
+
+  @override
+  String get scaledConstantDifference => '等差';
+
+  @override
+  String get scaledConstantRatio => '等比';
+
+  @override
+  String get scaledSubOrderType => '子单类型';
+
+  @override
+  String scaledPriceColumn(String asset) {
+    return '价格 ($asset)';
+  }
+
+  @override
+  String scaledSizeColumn(String asset) {
+    return '数量 ($asset)';
+  }
+
+  @override
+  String get scaledAveragePrice => '平均价格';
+
+  @override
+  String get scaledLowestPriceRow => '最低价格';
+
+  @override
+  String get scaledHighestPriceRow => '最高价格';
+
+  @override
+  String get scaledSubOrderCount => '子单数量';
+
+  @override
+  String scaledMaximumSize(String value) {
+    return '最大数量为 $value';
+  }
 }

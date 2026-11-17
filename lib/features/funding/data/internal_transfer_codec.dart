@@ -35,7 +35,7 @@ List<InternalTransferRecord> decodeInternalTransferJournal(String source) {
   if (source.length > 131072) throw const FormatException();
   final m = _map(decodeFundingJson(source), {'version', 'records'}), rows = m['records'];
   if (m['version'] != '1' || rows is! List || rows.length > 100) throw const FormatException();
-  final addresses = <String>{};
+  final keys = <String>{};
   return List.unmodifiable(
     rows.map((v) {
       final r = _map(v, {
@@ -60,7 +60,8 @@ List<InternalTransferRecord> decodeInternalTransferJournal(String source) {
         preparedAt: DateTime.fromMillisecondsSinceEpoch(_integer(r['preparedAt']), isUtc: true),
         reply: r['reply'] == null ? null : InternalTransferReply(_text(r['reply'])),
       );
-      if (!addresses.add(record.address.toLowerCase())) throw const FormatException();
+      // Several unconfirmed records may exist per wallet; each is unique.
+      if (!keys.add(record.key)) throw const FormatException();
       return record;
     }),
   );

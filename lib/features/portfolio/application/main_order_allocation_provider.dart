@@ -339,11 +339,7 @@ class MainOrderAllocationController extends Notifier<MainOrderAllocationState> {
         capacity.snapshot == review.capacity &&
         !capacity.stale &&
         !capacity.loading &&
-        !operation.recoveryBlocked &&
-        !operation.unresolved &&
-        (submitting && live.busy
-            ? operation.owner == SymbolSetting.order && operation.busy
-            : operation.owner == null && !operation.busy) &&
+        (!(submitting && live.busy) || operation.isRunning(SymbolSetting.order)) &&
         !age.isNegative &&
         age < const Duration(seconds: 30);
     if (!matches) return false;

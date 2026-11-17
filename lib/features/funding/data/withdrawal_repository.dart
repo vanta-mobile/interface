@@ -16,6 +16,7 @@ import '../domain/deposit_wallet.dart';
 import '../domain/funding_catalog.dart';
 import '../domain/funding_fee.dart';
 import '../domain/withdrawal.dart';
+import '../domain/withdrawal_receiver.dart';
 import 'signed_withdraw_info_repository.dart';
 
 class AsterWithdrawalRepository implements WithdrawalRepository {
@@ -54,6 +55,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
     required DepositWalletQuery query,
     required String amount,
     required bool Function() isCurrent,
+    String? receiver,
   }) => RequestScope.run(isCurrent, () async {
     void current() {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
@@ -64,6 +66,11 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
       final address = identity.walletAddress, asset = query.asset;
       if (address == null || !validOperationAddress(address) || !identity.signingAvailable) {
         throw const AccountReadFailure('authWalletReconnect');
+      }
+      final destination = entersWithdrawalReceiver(identity) ? receiver : address;
+      if (destination == null ||
+          entersWithdrawalReceiver(identity) && !validWithdrawalReceiver(destination)) {
+        throw const AccountReadFailure('withdrawalReceiverInvalid');
       }
       if (amount.length > 160 || !RegExp(r'^(0|[1-9]\d*)(?:\.\d+)?$').hasMatch(amount)) {
         throw const FormatException();
@@ -122,6 +129,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
         fee: fee,
         info: info,
         preparedAt: started,
+        receiver: destination,
       );
       validateWithdrawalReview(review, now().toUtc());
       return review;
@@ -151,6 +159,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
         query: review.query,
         amount: review.amount.toString(),
         isCurrent: isCurrent,
+        receiver: review.receiver,
       );
       current();
       if (fresh.fee.assetFee != review.fee.assetFee) {
@@ -179,7 +188,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
           'asset': fresh.query.asset.asset,
           'amount': fresh.amount.toString(),
           'fee': fresh.fee.assetFee.toString(),
-          'receiver': address,
+          'receiver': fresh.receiver,
           'userNonce': '$userNonce',
           'signatureType': 'EOA',
           'userSignature': business,
@@ -206,7 +215,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
           'asset': fresh.query.asset.asset,
           'amount': fresh.amount.toString(),
           'fee': fresh.fee.assetFee.toString(),
-          'receiver': address,
+          'receiver': fresh.receiver,
         },
       );
       await journal.prepare(record);
@@ -261,6 +270,9 @@ void validateWithdrawalReview(WithdrawalReview r, DateTime now) {
   }
   if (address == null ||
       r.info.address.toLowerCase() != address.toLowerCase() ||
+      (entersWithdrawalReceiver(r.identity)
+          ? !validWithdrawalReceiver(r.receiver)
+          : r.receiver != address) ||
       r.fee.query !=
           FundingFeeQuery(market: r.query.market, chainId: asset.chainId, asset: asset.asset) ||
       r.amount <= Decimal.zero ||
@@ -321,7 +333,7 @@ Map<String, Object?> withdrawalTypedData(WithdrawalReview r, int nonce) => {
   },
   'message': {
     'type': 'Withdraw',
-    'destination': r.identity.walletAddress,
+    'destination': r.receiver,
     'destination Chain': switch (r.query.asset.chainId) {
       1 => 'ETH',
       56 => 'BSC',

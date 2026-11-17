@@ -34,7 +34,7 @@ void main() {
   tearDown(AppToast.dismiss);
 
   for (final language in ['en', 'zh']) {
-    for (final kind in [OrderSubmissionKind.failed, OrderSubmissionKind.unknown]) {
+    for (final kind in [OrderSubmissionKind.failed]) {
       testWidgets('$kind retains concrete error and dialog until manual dismissal in $language', (
         tester,
       ) async {
@@ -225,7 +225,6 @@ void main() {
       expect(find.text(l.orderRecoveryPending), findsNothing);
       expect(journal.snapshot.records.single.key, record.key);
       expect(f.container.read(pendingWalletOrdersProvider).single.key, record.key);
-      expect(f.container.read(symbolSettingsActivityProvider).recoveryBlocked, isFalse);
       expect(
         tester.widget<LiveOrderModeSelector>(find.byType(LiveOrderModeSelector)).enabled,
         isTrue,

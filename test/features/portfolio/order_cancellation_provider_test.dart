@@ -67,27 +67,34 @@ void main() {
   );
 
   test(
-    'unknown result keeps order, blocks a repeat DELETE and allows only a status recheck',
+    'an unconfirmed cancellation is queried automatically; a failed query is an error',
     () async {
       cancellation.result = const OrderCancellationResult();
-      final action = container.read(orderCancellationProvider.notifier);
-      final confirmation = intent();
-      await action.cancel(confirmation);
-      expect(container.read(openOrdersReadProvider).account!.orders.length, 2);
-      expect(container.read(orderCancellationProvider).needsRecheck, true);
-      expect(action.prepare(confirmation.order), null);
-      await action.cancel(confirmation);
-      expect(cancellation.cancels, 1);
-      cancellation.result = const OrderCancellationResult(
+      cancellation.checkResult = const OrderCancellationResult(
         resolution: OrderResolution(symbol: 'BTCUSDT', orderId: '1917641', status: 'FILLED'),
       );
-      await action.recheck();
-      expect(cancellation.checks, 1);
+      final action = container.read(orderCancellationProvider.notifier);
+      await action.cancel(intent());
       expect(cancellation.cancels, 1);
-      expect(container.read(orderCancellationProvider).needsRecheck, false);
+      expect(cancellation.checks, 1);
+      expect(container.read(orderCancellationProvider).result?.resolution?.status, 'FILLED');
       expect(container.read(openOrdersReadProvider).account!.orders.length, 1);
     },
   );
+
+  test('a cancellation still unconfirmed after the query is an error, not unknown', () async {
+    cancellation.result = const OrderCancellationResult();
+    final action = container.read(orderCancellationProvider.notifier);
+    final confirmation = intent();
+    await action.cancel(confirmation);
+    expect(cancellation.cancels, 1);
+    expect(cancellation.checks, 1);
+    expect(container.read(orderCancellationProvider).result?.failure?.key, 'accountNetwork');
+    expect(container.read(orderCancellationProvider).result?.resolution, isNull);
+    expect(container.read(openOrdersReadProvider).account!.orders.length, 2);
+    // Nothing is locked: the order can be confirmed for cancellation again.
+    expect(action.prepare(confirmation.order), isNotNull);
+  });
 
   test('logout and restoration of the same identity invalidate an open confirmation', () async {
     final confirmation = intent();
@@ -104,7 +111,6 @@ void main() {
     );
     await container.read(orderCancellationProvider.notifier).cancel(intent());
     expect(container.read(openOrdersReadProvider).account!.orders.length, 2);
-    expect(container.read(orderCancellationProvider).needsRecheck, true);
     expect(container.read(orderCancellationProvider).result?.failure?.key, 'accountDataInvalid');
   });
 

@@ -278,14 +278,13 @@ void main() {
       };
       await allocation().submit(review);
       expect(posts().length, 1);
-      expect(container.read(liveOrderProvider).needsRecheck, isFalse);
-      expect(container.read(symbolSettingsActivityProvider).owner, isNull);
+      expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     });
   }
 
   for (final manual in [false, true]) {
     test(
-      '${manual ? 'manual' : 'percentage'} actual unknown POST is journaled and recovery only queries its original ID',
+      '${manual ? 'manual' : 'percentage'} unconfirmed POST is journaled, queried automatically and reported as an error',
       () async {
         if (manual) allocation().manual();
         final review = (await allocation().prepare(
@@ -295,21 +294,17 @@ void main() {
         unknown = true;
         await allocation().submit(review);
         expect(posts().length, 1);
-        expect(container.read(liveOrderProvider).needsRecheck, true);
+        expect(container.read(liveOrderProvider).result, isNull);
+        expect(container.read(liveOrderProvider).failure, isNotNull);
         expect(container.read(mainOrderAllocationProvider).percent, manual ? null : 20);
+        // The record stays journaled internally for later reconciliation.
         expect(
           container.read(orderRecoveryJournalProvider).snapshot.records.single.query.clientOrderId,
           review.intent.clientOrderId,
         );
-        unknown = false;
-        await container.read(liveOrderProvider.notifier).recheck();
-        expect(posts().length, 1);
-        expect(container.read(liveOrderProvider).result!.orderId, '12345');
-        expect(container.read(orderRecoveryJournalProvider).snapshot.records, isEmpty);
-        expect(container.read(mainOrderAllocationProvider).percent, manual ? null : 0);
-        for (final query in requests.where(
-          (r) => r.method == 'GET' && r.url.path == '/fapi/v3/order',
-        )) {
+        final queries = requests.where((r) => r.method == 'GET' && r.url.path == '/fapi/v3/order');
+        expect(queries.length, greaterThanOrEqualTo(2)); // the automatic follow-up
+        for (final query in queries) {
           expect(query.url.queryParameters['origClientOrderId'], review.intent.clientOrderId);
         }
       },

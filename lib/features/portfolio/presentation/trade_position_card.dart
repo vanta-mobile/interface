@@ -2,6 +2,8 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/domain/decimal_value.dart';
+import '../../../core/formatters/token_amount_formatter.dart';
 import '../../../core/motion/animated_number_text.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../market/domain/market_precision.dart';
@@ -175,8 +177,21 @@ class TradePositionCard extends ConsumerWidget {
       ? hiddenAmount
       : value == null
       ? openOrderPlaceholder
-      : '\$${marketNumber(value)}';
+      : '\$${_positionPrice(value)}';
 }
+
+/// Entry, mark and liquidation prices show at most four decimals; prices with
+/// four or more leading fractional zeros switch to scientific notation.
+String _positionPrice(Decimal value) {
+  final amount = DecimalValue('$value');
+  return value != Decimal.zero && value.abs() < Decimal.parse('0.0001')
+      ? TokenAmountFormatter.formatScientific(amount)
+      : TokenAmountFormatter.formatRounded(amount, maxFractionDigits: 4);
+}
+
+/// PnL and position value are USDT amounts, shown with two decimals.
+String _usdtAmount(Decimal value) =>
+    TokenAmountFormatter.formatRoundedFixed(DecimalValue('$value'), fractionDigits: 2);
 
 /// Masked value shown while balances are hidden.
 const hiddenAmount = '••••';

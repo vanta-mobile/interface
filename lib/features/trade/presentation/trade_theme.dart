@@ -77,6 +77,15 @@ abstract final class TradeTypography {
     height: 16 / 11,
     fontWeight: FontWeight.w400,
   );
+
+  /// Section titles inside sheets, e.g. Size distribution.
+  static const section = TextStyle(
+    fontFamily: 'Inter',
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w700,
+    color: TradeColors.text,
+  );
   static const action = TextStyle(
     fontFamily: 'Inter',
     fontSize: 16,

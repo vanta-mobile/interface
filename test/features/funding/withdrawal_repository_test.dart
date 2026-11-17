@@ -313,4 +313,72 @@ void main() {
     );
     expect(reconcileWithdrawal(pending, history()), null);
   });
+
+  group('entered receiver', () {
+    const embedded = AuthIdentity(
+      id: 'master',
+      walletAddress: fixtureMaster,
+      signingAvailable: true,
+    );
+    // EIP-55 reference vector.
+    const receiver = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed';
+    Future<WithdrawalReview> prepareFor(AuthIdentity who, String? to) => repo.prepare(
+      identity: who,
+      query: query(),
+      amount: '1',
+      receiver: to,
+      isCurrent: () => current,
+    );
+
+    test('embedded wallet signs and sends the entered destination from its own account', () async {
+      final r = await prepareFor(embedded, receiver);
+      await repo.submit(r, isCurrent: () => current);
+      final p = requests
+          .singleWhere((r) => r.url.path.endsWith('/user-withdraw'))
+          .url
+          .queryParameters;
+      expect(p['receiver'], receiver);
+      expect(p['user'], fixtureMaster);
+      expect(p['signer'], fixtureMaster);
+      final action = signed.singleWhere((d) => d['primaryType'] == 'Action');
+      expect((action['message'] as Map)['destination'], receiver);
+      expect(journal.snapshot.records.single.address, fixtureMaster);
+      expect(journal.snapshot.records.single.terms['receiver'], receiver);
+      // The journal round-trips a record whose receiver is not the signer.
+      expect(
+        decodeWalletOperations(encodeWalletOperations(journal.snapshot.records)).single.terms,
+        journal.snapshot.records.single.terms,
+      );
+    });
+
+    for (final bad in [
+      null,
+      '',
+      '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAeD',
+      '0x${'0' * 40}',
+      '5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed',
+    ]) {
+      test('embedded wallet rejects receiver $bad before any request', () async {
+        await expectLater(
+          prepareFor(embedded, bad),
+          throwsA(
+            isA<AccountReadFailure>().having((e) => e.key, 'key', 'withdrawalReceiverInvalid'),
+          ),
+        );
+        expect(signed, isEmpty);
+        expect(requests, isEmpty);
+      });
+    }
+
+    test('external wallet always withdraws to itself', () async {
+      final r = await prepareFor(identity, receiver);
+      expect(r.receiver, fixtureMaster);
+      await repo.submit(r, isCurrent: () => current);
+      final p = requests
+          .singleWhere((r) => r.url.path.endsWith('/user-withdraw'))
+          .url
+          .queryParameters;
+      expect(p['receiver'], fixtureMaster);
+    });
+  });
 }

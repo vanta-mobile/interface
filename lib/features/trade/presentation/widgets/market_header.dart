@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/motion/animated_number_text.dart';
 import '../../../../core/strings.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../market/application/public_leverage_provider.dart';
 import '../../../market/domain/market.dart';
 import '../../application/navigation_provider.dart';
 import '../../application/providers.dart';
 import '../../../portfolio/application/symbol_maximum_leverage_provider.dart';
 import '../trade_theme.dart';
 import 'market_sheet.dart';
+import 'max_leverage_badge.dart';
 import 'primitives.dart';
 import 'futures_workspace_tabs.dart';
 export 'futures_workspace_tabs.dart';
@@ -27,66 +29,81 @@ class MarketHeader extends ConsumerWidget {
         Row(
           children: [
             Expanded(
-              child: InkWell(
-                key: const Key('trade-market-selector'),
-                onTap: () => openMarketSelector(context),
-                borderRadius: BorderRadius.circular(12),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 48),
-                  child: Row(
-                    children: [
-                      CoinIcon(base: base, size: 32),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Flexible(
-                                  child: Text.rich(
-                                    TextSpan(
-                                      children: [
-                                        TextSpan(text: base),
-                                        TextSpan(
-                                          text: 'USDT',
-                                          style: TradeTypography.symbol.copyWith(
-                                            color: TradeColors.muted,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    style: TradeTypography.symbol,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.arrow_drop_down,
-                                  size: 16,
-                                  color: TradeColors.muted,
-                                ),
-                              ],
-                            ),
-                            if (!chart)
+              // Only the symbol itself opens the selector, not the blank space after it.
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: InkWell(
+                  key: const Key('trade-market-selector'),
+                  onTap: () => openMarketSelector(context),
+                  borderRadius: BorderRadius.circular(12),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 48),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CoinIcon(base: base, size: 32),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  if (ref.watch(symbolMaximumLeverageProvider)[symbol]
-                                      case final leverage?) ...[
-                                    _LeverageBadge(leverage),
-                                    const SizedBox(width: 4),
-                                  ],
-                                  Flexible(child: _Change(market: market)),
+                                  Flexible(
+                                    child: Text.rich(
+                                      TextSpan(
+                                        children: [
+                                          TextSpan(text: base),
+                                          TextSpan(
+                                            text: 'USDT',
+                                            style: TradeTypography.symbol.copyWith(
+                                              color: TradeColors.muted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      style: TradeTypography.symbol,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.arrow_drop_down,
+                                    size: 16,
+                                    color: TradeColors.muted,
+                                  ),
                                 ],
-                              )
-                            else
-                              Text(tr(context, 'perpetual'), style: TradeTypography.small),
-                          ],
+                              ),
+                              if (!chart)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Signed brackets first; the public brackets
+                                    // cover a wallet that has not read them yet.
+                                    if (ref.watch(symbolMaximumLeverageProvider)[symbol] ??
+                                            ref.watch(
+                                              publicLeverageProvider.select(
+                                                (s) => s.value?[symbol]?.maximumLeverage,
+                                              ),
+                                            )
+                                        case final leverage?) ...[
+                                      MaxLeverageBadge(
+                                        leverage,
+                                        key: const Key('trade-max-leverage'),
+                                      ),
+                                      const SizedBox(width: 4),
+                                    ],
+                                    Flexible(child: _Change(market: market)),
+                                  ],
+                                )
+                              else
+                                Text(tr(context, 'perpetual'), style: TradeTypography.small),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -99,22 +116,6 @@ class MarketHeader extends ConsumerWidget {
       ],
     );
   }
-}
-
-/// Exchange-advertised maximum, not the account's current leverage setting.
-class _LeverageBadge extends StatelessWidget {
-  const _LeverageBadge(this.leverage);
-  final int leverage;
-  @override
-  Widget build(BuildContext context) => Container(
-    key: const Key('trade-max-leverage'),
-    height: 16,
-    constraints: const BoxConstraints(minWidth: 40),
-    padding: const EdgeInsets.symmetric(horizontal: 6),
-    alignment: Alignment.center,
-    decoration: BoxDecoration(color: TradeColors.card, borderRadius: BorderRadius.circular(8)),
-    child: Text('${leverage}x', style: TradeTypography.small.copyWith(color: TradeColors.text)),
-  );
 }
 
 class _ChartSummary extends StatelessWidget {

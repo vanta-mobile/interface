@@ -8,6 +8,7 @@ String tr(BuildContext context, String key) {
   final messages = AppLocalizations.of(context);
   return switch (key) {
     'incomeArchiveReferenceConflict' => messages.incomeArchiveReferenceConflict,
+    'pushQuietHoursNotCleared' => messages.pushQuietHoursNotCleared,
     'builderAuthorizationRequired' => messages.authorizationRequired,
     'builderApprovalUnknown' => messages.authorizationUnknown,
     'builderFeeAboveBudget' => messages.liveOrderContextExpired,
@@ -209,6 +210,7 @@ String tr(BuildContext context, String key) {
     'withdrawalConfirm' => messages.withdrawalConfirm,
     'withdrawalAcknowledged' => messages.withdrawalAcknowledged,
     'withdrawalAmountInvalid' => messages.withdrawalAmountInvalid,
+    'withdrawalReceiverInvalid' => messages.withdrawalReceiverInvalid,
     'withdrawalAssetChanged' => messages.withdrawalAssetChanged,
     'withdrawalFeeChanged' => messages.withdrawalFeeChanged,
     'withdrawalLimitsUnknown' => messages.withdrawalLimitsUnknown,

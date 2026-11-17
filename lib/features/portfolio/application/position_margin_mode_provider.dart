@@ -91,16 +91,11 @@ class PositionMarginModeController extends Notifier<PositionMarginModeState> {
   Future<void> load(String symbol) async {
     final auth = ref.read(authProvider), identity = ref.read(authProvider).identity;
     final address = identity?.walletAddress;
-    if (state.busy ||
-        state.needsRecheck ||
-        auth.busy ||
-        address == null ||
-        identity?.signingAvailable != true) {
+    if (state.busy || auth.busy || address == null || identity?.signingAvailable != true) {
       return;
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
     final lease = activity.acquire(SymbolSetting.marginMode);
-    if (lease == null) return;
     final revision = ++_revision, staleRevision = _staleRevision;
     final previous = state.context?.symbol == symbol ? state.context : null;
     _expiry?.cancel();
@@ -145,15 +140,13 @@ class PositionMarginModeController extends Notifier<PositionMarginModeState> {
         state = PositionMarginModeState(context: previous, stale: true, failure: _failure(error));
       }
     } finally {
-      activity.finish(lease, unresolved: false);
+      activity.finish(lease);
     }
   }
 
   MarginModeIntent? prepare(String symbol, PositionMarginMode target) {
     final context = state.context, auth = ref.read(authProvider);
     if (state.busy ||
-        ref.read(symbolSettingsActivityProvider).blocks(SymbolSetting.marginMode) ||
-        state.needsRecheck ||
         context == null ||
         !_fresh(context) ||
         context.symbol != symbol ||
@@ -167,29 +160,19 @@ class PositionMarginModeController extends Notifier<PositionMarginModeState> {
     return MarginModeIntent(context: context, target: target, revision: _revision);
   }
 
-  Future<void> change(MarginModeIntent intent) => _run(intent, checkingOnly: false);
-  Future<void> recheck() async {
-    final intent = state.intent;
-    if (intent != null && state.needsRecheck) await _run(intent, checkingOnly: true);
-  }
-
-  Future<void> _run(MarginModeIntent intent, {required bool checkingOnly}) async {
+  Future<void> change(MarginModeIntent intent) async {
     final auth = ref.read(authProvider), identity = ref.read(authProvider).identity;
     if (state.busy ||
         intent.revision != _revision ||
         auth.busy ||
         identity?.signingAvailable != true ||
-        identity?.walletAddress?.toLowerCase() != intent.context.address.toLowerCase()) {
-      return;
-    }
-    if (!checkingOnly &&
-        (state.context != intent.context ||
-            prepare(intent.context.symbol, intent.target) == null)) {
+        identity?.walletAddress?.toLowerCase() != intent.context.address.toLowerCase() ||
+        state.context != intent.context ||
+        prepare(intent.context.symbol, intent.target) == null) {
       return;
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.marginMode, checkingOnly: checkingOnly);
-    if (lease == null) return;
+    final lease = activity.acquire(SymbolSetting.marginMode);
     final revision = ++_revision;
     final active = MarginModeIntent(
       context: intent.context,
@@ -210,38 +193,49 @@ class PositionMarginModeController extends Notifier<PositionMarginModeState> {
       step: MarginModeStep.preparing,
       stale: state.stale,
     );
-    var submitted = checkingOnly;
-    try {
-      void progress(MarginModeStep step) {
-        if (!current()) return;
-        if (step == MarginModeStep.submitting) {
-          submitted = true;
-          activity.submitted(lease);
-          _invalidate();
-        }
-        state = PositionMarginModeState(
-          context: context,
-          intent: active,
-          step: step,
-          stale: state.stale,
-        );
+    var submitted = false;
+    void progress(MarginModeStep step) {
+      if (!current()) return;
+      if (step == MarginModeStep.submitting) {
+        submitted = true;
+        activity.submitted(lease);
+        _invalidate();
       }
+      state = PositionMarginModeState(
+        context: context,
+        intent: active,
+        step: step,
+        stale: state.stale,
+      );
+    }
 
+    try {
       final repository = ref.read(positionMarginModeRepositoryProvider);
-      final result = checkingOnly
-          ? await repository.recheck(intent: active, isCurrent: current, onStep: progress)
-          : await repository.change(
-              intent: active,
-              isCurrent: current,
-              canSubmit: () => current() && _fresh(intent.context),
-              onStep: progress,
-            );
+      MarginModeResult result;
+      try {
+        result = await repository.change(
+          intent: active,
+          isCurrent: current,
+          canSubmit: () => current() && _fresh(intent.context),
+          onStep: progress,
+        );
+      } catch (error) {
+        if (!submitted || !current()) rethrow;
+        result = MarginModeResult(failure: _failure(error));
+      }
+      // A dispatched change is verified automatically, never left unknown.
+      if (result.observed == null && submitted && current()) {
+        result = await repository.recheck(intent: active, isCurrent: current, onStep: progress);
+      }
       if (!current()) return;
       _invalidate();
       state = PositionMarginModeState(
         context: context,
         intent: active,
-        result: result,
+        result: result.observed == null ? null : result,
+        failure: result.observed == null
+            ? result.failure ?? const AccountReadFailure('accountReadFailed')
+            : null,
         stale: true,
       );
     } catch (error) {
@@ -251,11 +245,10 @@ class PositionMarginModeController extends Notifier<PositionMarginModeState> {
         context: context,
         intent: active,
         stale: true,
-        result: submitted ? MarginModeResult(failure: _failure(error)) : null,
-        failure: submitted ? null : _failure(error),
+        failure: _failure(error),
       );
     } finally {
-      activity.finish(lease, unresolved: current() && state.needsRecheck);
+      activity.finish(lease);
     }
   }
 

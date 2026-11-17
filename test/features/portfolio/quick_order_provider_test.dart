@@ -94,26 +94,19 @@ void main() {
       expect(orders.lastIntent!.draft.quickEntry, true);
     },
   );
-  test('unknown outcome allows editing while explicit recheck keeps original intent', () async {
+  test('an unconfirmed order is verified automatically and editing stays available', () async {
     await controller().load();
     controller().setQuantity('80.01');
     orders.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
-    await controller().submit(controller().prepare(true)!);
-    final intent = orders.lastIntent!;
-    expect(container.read(quickOrderProvider).quantity, '80.01');
-    controller().setQuantity('1');
-    expect(container.read(quickOrderProvider).quantity, '1');
-    expect(orders.submits, 1);
-    orders.result = LiveOrderResult(
+    orders.checkResult = LiveOrderResult(
       orderId: '12345',
       status: 'FILLED',
       executedQuantity: Decimal.parse('0.001'),
     );
-    await container.read(liveOrderProvider.notifier).recheck();
+    await controller().submit(controller().prepare(true)!);
     expect(orders.submits, 1);
     expect(orders.checks, 1);
-    expect(orders.lastIntent!.clientOrderId, intent.clientOrderId);
-    expect(container.read(quickOrderProvider).quantity, '');
+    expect(container.read(liveOrderProvider).result?.orderId, '12345');
   });
   test('snapshot age and changes after confirmation block quick submission', () async {
     await controller().load();
@@ -154,7 +147,7 @@ void main() {
     expect(container.read(quickOrderProvider).sizing, null);
     expect(container.read(quickOrderProvider).quantity, '80.01');
     expect(controller().prepare(true), null);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
   });
   test('logout invalidates pending sizing and clears the wallet input scope', () async {
     sizing.gate = Completer<void>();
@@ -169,15 +162,13 @@ void main() {
     expect(container.read(quickOrderProvider).sizing, null);
     expect(controller().prepare(true), null);
   });
-  test('settings exclusion blocks quick confirmation and percentage read', () async {
+  test('a settings operation in progress does not block quick confirmation or reads', () async {
     await controller().load();
     controller().setQuantity('80.01');
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.leverage)!;
-    expect(controller().prepare(true), null);
-    await controller().load();
-    expect(sizing.reads, 1);
-    activity.finish(lease, unresolved: false);
+    final lease = activity.acquire(SymbolSetting.leverage);
+    expect(controller().prepare(true), isNotNull);
+    activity.finish(lease);
   });
   test('balance pre-check counts only the opening part of a market entry', () {
     final flat = liveContext(bid: '79999', ask: '80001');

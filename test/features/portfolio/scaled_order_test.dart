@@ -120,6 +120,15 @@ void main() {
     expect(
       () => planScaledOrder(liveContext(), scaledDraft(low: '1', high: '2', quantity: '0.003')),
       failure('liveOrderNotionalFilter'),
+    ); // The failure names the first child that breaks the rule and its terms.
+    expect(
+      () => planScaledOrder(liveContext(), scaledDraft(low: '1', high: '2', quantity: '0.003')),
+      throwsA(
+        isA<ScaledChildFailure>()
+            .having((e) => e.index, 'index', 0)
+            .having((e) => e.order.price, 'price', '1')
+            .having((e) => e.key, 'key', 'liveOrderNotionalFilter'),
+      ),
     );
   });
   test('fresh funds, trade eligibility and GTC/LIMIT capability are required', () {

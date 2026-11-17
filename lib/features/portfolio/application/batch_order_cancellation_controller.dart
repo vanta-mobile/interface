@@ -14,7 +14,6 @@ mixin BatchOrderCancellation on Notifier<OrderCancellationState> {
     final snapshot = read.account;
     final address = identity?.walletAddress;
     if (state.busy ||
-        state.needsRecheck ||
         auth.busy ||
         read.busy ||
         address == null ||
@@ -39,13 +38,27 @@ mixin BatchOrderCancellation on Notifier<OrderCancellationState> {
     );
   }
 
-  Future<void> cancelBatch(BatchCancelIntent intent) => _runBatch(intent, checkingOnly: false);
-
-  Future<void> recheckBatch() async {
-    final batch = state.batch;
-    if (batch == null || !batch.needsRecheck) return;
-    await _runBatch(batch.intent, checkingOnly: true);
+  /// [prepareBatch], first joining or starting a quiet open-orders read when
+  /// none is usable yet.
+  Future<BatchCancelIntent?> prepareCurrentBatch({String? symbol}) async {
+    if (prepareBatch(symbol: symbol) case final ready?) return ready;
+    if (state.busy || ref.read(authProvider).busy) return null;
+    await ref.read(openOrdersReadProvider.notifier).refresh();
+    return ref.mounted ? prepareBatch(symbol: symbol) : null;
   }
+
+  /// The confirmation names a scope, not single orders. When a renewal or
+  /// order event replaced the snapshot meanwhile, re-read and cancel the
+  /// same scope instead of dropping the confirmed request.
+  Future<BatchCancelIntent?> renewBatch(BatchCancelIntent intent, {String? symbol}) async {
+    if (intent.revision == _revision &&
+        identical(ref.read(openOrdersReadProvider).account, intent.snapshot)) {
+      return intent;
+    }
+    return prepareCurrentBatch(symbol: symbol);
+  }
+
+  Future<void> cancelBatch(BatchCancelIntent intent) => _runBatch(intent);
 
   void stopBatch() {
     final batch = state.batch;
@@ -54,7 +67,7 @@ mixin BatchOrderCancellation on Notifier<OrderCancellationState> {
     _emitBatch(batch.intent, batch.results, batch.step, batch.currentSymbol);
   }
 
-  Future<void> _runBatch(BatchCancelIntent intent, {required bool checkingOnly}) async {
+  Future<void> _runBatch(BatchCancelIntent intent) async {
     if (state.busy || intent.revision != _revision) return;
     final identity = ref.read(authProvider).identity;
     if (ref.read(authProvider).busy ||
@@ -63,13 +76,10 @@ mixin BatchOrderCancellation on Notifier<OrderCancellationState> {
         intent.symbols.isEmpty) {
       return;
     }
-    if (!checkingOnly &&
-        (state.needsRecheck ||
-            !identical(ref.read(openOrdersReadProvider).account, intent.snapshot) ||
-            intent.symbols.any((s) => !intent.snapshot.orders.any((o) => o.symbol == s)))) {
+    if (!identical(ref.read(openOrdersReadProvider).account, intent.snapshot) ||
+        intent.symbols.any((s) => !intent.snapshot.orders.any((o) => o.symbol == s))) {
       return;
     }
-    final previous = state.batch;
     final revision = ++_revision;
     final active = intent.atRevision(revision);
     bool current() =>
@@ -78,15 +88,11 @@ mixin BatchOrderCancellation on Notifier<OrderCancellationState> {
         ref.read(authProvider).identity?.id == identity?.id &&
         ref.read(authProvider).identity?.walletAddress == intent.address &&
         ref.read(authProvider).identity?.signingAvailable == true;
-    final results = checkingOnly && previous != null
-        ? {...previous.results}
-        : {
-            for (final symbol in intent.symbols)
-              symbol: BatchSymbolCancellation(symbol: symbol, submitted: false),
-          };
-    final targets = checkingOnly
-        ? results.values.where((r) => r.needsRecheck).map((r) => r.symbol).toList()
-        : intent.symbols;
+    final results = {
+      for (final symbol in intent.symbols)
+        symbol: BatchSymbolCancellation(symbol: symbol, submitted: false),
+    };
+    final targets = intent.symbols;
     _batchStopRequested = false;
     _emitBatch(active, results, OrderCancelStep.preparing, targets.firstOrNull);
     final repository = ref.read(batchOrderCancellationRepositoryProvider);
@@ -97,16 +103,27 @@ mixin BatchOrderCancellation on Notifier<OrderCancellationState> {
       final eventsAtStart = ref.read(openOrdersReadProvider.notifier).eventRevision;
       BatchSymbolCancellation result;
       try {
-        final operation = checkingOnly ? repository.recheckSymbol : repository.cancelSymbol;
-        result = await operation(
+        void progress(OrderCancelStep step) {
+          if (current()) _emitBatch(active, results, step, symbol);
+        }
+
+        result = await repository.cancelSymbol(
           address: intent.address,
           symbol: symbol,
           originalOrders: intent.snapshot.orders,
           isCurrent: current,
-          onStep: (step) {
-            if (current()) _emitBatch(active, results, step, symbol);
-          },
+          onStep: progress,
         );
+        // A sent cancellation is queried again automatically, never re-sent.
+        if (result.submitted && result.snapshot == null && current()) {
+          result = await repository.recheckSymbol(
+            address: intent.address,
+            symbol: symbol,
+            originalOrders: intent.snapshot.orders,
+            isCurrent: current,
+            onStep: progress,
+          );
+        }
       } catch (error) {
         if (!current()) return;
         result = BatchSymbolCancellation(
@@ -149,12 +166,18 @@ mixin BatchOrderCancellation on Notifier<OrderCancellationState> {
           failure: const AccountReadFailure('orderEventsCapacity'),
         );
       }
+      if (result.submitted && result.snapshot == null && result.failure == null) {
+        result = BatchSymbolCancellation(
+          symbol: symbol,
+          submitted: true,
+          failure: const AccountReadFailure('accountNetwork'),
+        );
+      }
       results[symbol] = result;
       _emitBatch(active, results, OrderCancelStep.checking, symbol);
-      // A refused request or an unconfirmed outcome stops further DELETEs.
-      // Remaining symbols are visible as not submitted; they require a new
-      // confirmation, even if a later GET resolves the uncertain symbol.
-      if (!result.submitted || result.needsRecheck) break;
+      // A refused request or an unconfirmed cancellation stops further
+      // DELETEs; remaining symbols stay visible as not submitted.
+      if (!result.submitted || result.snapshot == null) break;
     }
     if (current()) _emitBatch(active, results, OrderCancelStep.idle, null);
   }

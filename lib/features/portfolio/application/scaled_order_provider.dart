@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/application/auth_provider.dart';
 import '../domain/account_snapshot.dart';
 import '../domain/live_order.dart';
+import '../domain/live_order_time_in_force.dart';
 import '../domain/scaled_order.dart';
 import 'account_change_provider.dart';
 import 'account_read_provider.dart';
@@ -62,8 +63,6 @@ class ScaledOrderController extends Notifier<ScaledOrderState> {
         data == null ||
         data.symbol != symbol ||
         !_fresh(data) ||
-        activity.owner != null ||
-        activity.recoveryBlocked ||
         auth.identity?.signingAvailable != true ||
         auth.identity?.walletAddress?.toLowerCase() != data.address.toLowerCase()) {
       return null;
@@ -90,14 +89,7 @@ class ScaledOrderController extends Notifier<ScaledOrderState> {
     _emit(state.intent!, state.items, state.step, state.currentIndex);
   }
 
-  Future<void> submit(ScaledOrderIntent intent) => _run(intent, checkingOnly: false);
-  Future<void> recheck() async {
-    if (state.intent case final intent? when state.needsRecheck && !state.busy) {
-      await _run(intent, checkingOnly: true);
-    }
-  }
-
-  Future<void> _run(ScaledOrderIntent intent, {required bool checkingOnly}) async {
+  Future<void> submit(ScaledOrderIntent intent) async {
     final auth = ref.read(authProvider), identity = auth.identity;
     if (state.busy ||
         auth.busy ||
@@ -105,23 +97,18 @@ class ScaledOrderController extends Notifier<ScaledOrderState> {
         identity?.walletAddress?.toLowerCase() != intent.address.toLowerCase()) {
       return;
     }
-    if (checkingOnly) {
-      if (!identical(state.intent, intent)) return;
-    } else {
-      final live = ref.read(liveOrderProvider), activity = ref.read(symbolSettingsActivityProvider);
-      if (intent.revision != _revision ||
-          live.busy ||
-          live.stale ||
-          !identical(live.context, intent.context) ||
-          !_fresh(intent.context) ||
-          activity.epoch != intent.epoch ||
-          !intent.valid) {
-        return;
-      }
+    final live = ref.read(liveOrderProvider), operation = ref.read(symbolSettingsActivityProvider);
+    if (intent.revision != _revision ||
+        live.busy ||
+        live.stale ||
+        !identical(live.context, intent.context) ||
+        !_fresh(intent.context) ||
+        operation.epoch != intent.epoch ||
+        !intent.valid) {
+      return;
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.scaled, checkingOnly: checkingOnly);
-    if (lease == null) return;
+    final lease = activity.acquire(SymbolSetting.scaled);
     final revision = ++_revision;
     bool current() =>
         ref.mounted &&
@@ -131,23 +118,16 @@ class ScaledOrderController extends Notifier<ScaledOrderState> {
         ref.read(authProvider).identity?.walletAddress?.toLowerCase() ==
             intent.address.toLowerCase() &&
         ref.read(authProvider).identity?.signingAvailable == true;
-    final items = checkingOnly
-        ? [...state.items]
-        : List.generate(
-            intent.plan.orders.length,
-            (i) => ScaledOrderItem(
-              index: i,
-              draft: intent.plan.orders[i],
-              clientId: intent.clientIds[i],
-            ),
-          );
+    final items = List.generate(
+      intent.plan.orders.length,
+      (i) => ScaledOrderItem(index: i, draft: intent.plan.orders[i], clientId: intent.clientIds[i]),
+    );
     _stop = false;
     _emit(intent, items, LiveOrderStep.preparing, null);
     try {
       for (var i = 0; i < items.length; i++) {
         if (!current()) return;
         if (_stop) break;
-        if (checkingOnly && !items[i].needsRecheck) continue;
         void progress(LiveOrderStep step) {
           if (current()) _emit(intent, items, step, i);
         }
@@ -157,7 +137,6 @@ class ScaledOrderController extends Notifier<ScaledOrderState> {
           intent,
           items[i],
           current,
-          checkingOnly,
           progress,
           () => activity.submitted(lease),
         );
@@ -165,16 +144,21 @@ class ScaledOrderController extends Notifier<ScaledOrderState> {
         items[i] = item;
         if (item.submitted) _markStale();
         _emit(intent, items, LiveOrderStep.checking, i);
+        // An IOC child's unfilled remainder expires by design; it is not a stop.
+        final ioc = intent.plan.draft.timeInForce == LiveOrderTimeInForce.ioc;
         if (item.failure != null ||
             item.result?.failure != null ||
-            item.needsRecheck ||
-            {'REJECTED', 'EXPIRED', 'EXPIRED_IN_MATCH', 'CANCELED'}.contains(item.result?.status)) {
+            {
+              'REJECTED',
+              'CANCELED',
+              if (!ioc) ...['EXPIRED', 'EXPIRED_IN_MATCH'],
+            }.contains(item.result?.status)) {
           break;
         }
       }
       if (current()) _emit(intent, items, LiveOrderStep.idle, null);
     } finally {
-      activity.finish(lease, unresolved: current() && state.needsRecheck);
+      activity.finish(lease);
     }
   }
 
@@ -182,25 +166,20 @@ class ScaledOrderController extends Notifier<ScaledOrderState> {
     ScaledOrderIntent intent,
     ScaledOrderItem previous,
     bool Function() current,
-    bool checkingOnly,
     void Function(LiveOrderStep) progress,
     void Function() submitted,
   ) async {
     final repository = ref.read(liveOrderRepositoryProvider);
-    var sent = previous.submitted;
-    LiveOrderIntent? order = previous.order;
+    var sent = false, queried = false;
+    LiveOrderIntent? order;
     try {
       LiveOrderResult result;
-      if (checkingOnly) {
-        if (order == null) throw const AccountReadFailure('accountDataInvalid');
-        result = await repository.recheck(intent: order, isCurrent: current, onStep: progress);
-      } else {
+      {
         final epoch = ref.read(symbolSettingsActivityProvider).epoch;
         final event = ref.read(accountChangeProvider);
         bool unchanged() =>
             current() &&
             !_stop &&
-            ref.read(symbolSettingsActivityProvider).owner == SymbolSetting.scaled &&
             ref.read(symbolSettingsActivityProvider).epoch == epoch &&
             identical(ref.read(accountChangeProvider), event);
         final data = await repository.read(
@@ -242,6 +221,15 @@ class ScaledOrderController extends Notifier<ScaledOrderState> {
         );
       }
       if (!sent) throw const AccountReadFailure('accountDataInvalid');
+      // A sent child is looked up again by its client ID, never re-sent; one
+      // still unconfirmed is reported as the query's error.
+      if (result.needsRecheck && current()) {
+        queried = true;
+        result = await repository.recheck(intent: order, isCurrent: current, onStep: progress);
+      }
+      if (result.needsRecheck) {
+        throw result.failure ?? const AccountReadFailure('accountNetwork');
+      }
       return ScaledOrderItem(
         index: previous.index,
         draft: previous.draft,
@@ -251,6 +239,28 @@ class ScaledOrderController extends Notifier<ScaledOrderState> {
         result: result,
       );
     } catch (error) {
+      // Thrown after sending: query the order once instead of guessing.
+      if (sent && !queried && order != null && current()) {
+        try {
+          final checked = await repository.recheck(
+            intent: order,
+            isCurrent: current,
+            onStep: progress,
+          );
+          if (!checked.needsRecheck) {
+            return ScaledOrderItem(
+              index: previous.index,
+              draft: previous.draft,
+              clientId: previous.clientId,
+              order: order,
+              submitted: true,
+              result: checked,
+            );
+          }
+        } catch (_) {
+          // Reported below as the original failure.
+        }
+      }
       return ScaledOrderItem(
         index: previous.index,
         draft: previous.draft,

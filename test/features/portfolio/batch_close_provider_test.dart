@@ -89,7 +89,7 @@ void main() {
       expect(state().busy, false);
       expect(risk.calls, 2);
       expect(container.read(positionRiskProvider).stale, false);
-      expect(container.read(symbolSettingsActivityProvider).owner, null);
+      expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
       expect(() => state().items.clear(), throwsUnsupportedError);
     },
   );
@@ -133,9 +133,9 @@ void main() {
   test('configuration epoch change invalidates old batch confirmation', () async {
     final intent = await prepare();
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.leverage)!;
+    final lease = activity.acquire(SymbolSetting.leverage);
     activity.submitted(lease);
-    activity.finish(lease, unresolved: false);
+    activity.finish(lease);
     await controller().submit(intent);
     expect(repository.reads, isEmpty);
   });
@@ -150,7 +150,6 @@ void main() {
       expect(repository.posts, isEmpty);
       expect(state().items['BTCUSDT:BOTH']!.failure!.key, 'liveClosePositionChanged');
       expect(state().items['ETHUSDT:BOTH']!.submitted, false);
-      expect(state().needsRecheck, false);
       expect(risk.calls, 1);
     },
   );
@@ -172,53 +171,54 @@ void main() {
     expect(state().items.values.first.failure!.key, 'authWalletRejected');
     expect(repository.reads.length, 1);
     expect(risk.calls, 1);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
   });
-  test('unknown outcome releases trade settings; explicit recovery queries original ID', () async {
+  test('an unconfirmed close is queried automatically, reported, and stops the batch', () async {
     final intent = await prepare();
     repository.unknown = true;
     await controller().submit(intent);
     expect(repository.posts.length, 1);
-    expect(state().needsRecheck, true);
-    expect(container.read(symbolSettingsActivityProvider).unresolved, false);
-    final activity = container.read(symbolSettingsActivityProvider.notifier);
-    for (final setting in [SymbolSetting.order, SymbolSetting.leverage]) {
-      final lease = activity.acquire(setting);
-      expect(lease, isNotNull);
-      activity.finish(lease!, unresolved: false);
-    }
-    repository.unknown = false;
-    await controller().recheck();
-    expect(state().needsRecheck, false);
-    expect(repository.posts.length, 1);
-    expect(repository.reads.length, 1);
-    expect(repository.checks.last.clientOrderId, intent.targets.first.clientOrderId);
+    // The query after sending, then one automatic follow-up; both by the original ID.
+    expect(repository.checks.length, 2);
+    expect(
+      repository.checks.every((c) => c.clientOrderId == intent.targets.first.clientOrderId),
+      true,
+    );
+    expect(state().items['BTCUSDT:BOTH']!.failure, isNotNull);
     expect(state().items['ETHUSDT:BOTH']!.submitted, false);
     expect(risk.calls, 1);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    final activity = container.read(symbolSettingsActivityProvider.notifier);
+    for (final setting in [SymbolSetting.order, SymbolSetting.leverage]) {
+      activity.finish(activity.acquire(setting));
+    }
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
   });
-  test('exception after send retains frozen order for query without POST retry', () async {
+  test('an exception after sending is verified by query, never by a second POST', () async {
     final intent = await prepare();
     repository
       ..failure = const AccountReadFailure('accountNetwork')
       ..failAfterPost = true;
     await controller().submit(intent);
-    expect(state().needsRecheck, true);
-    repository.failure = null;
-    await controller().recheck();
-    expect(repository.posts.length, 1);
-    expect(repository.checks.single.clientOrderId, intent.targets.first.clientOrderId);
-    expect(state().needsRecheck, false);
+    // Each position is POSTed once; its post-send error is resolved by a query.
+    expect(
+      repository.posts.map((p) => p.clientOrderId),
+      intent.targets.map((t) => t.clientOrderId),
+    );
+    expect(
+      repository.checks.map((c) => c.clientOrderId),
+      intent.targets.map((t) => t.clientOrderId),
+    );
+    expect(state().items.values.every((i) => i.result?.status == 'FILLED'), true);
   });
-  test('duplicate confirms and single trades cannot enter during batch', () async {
+  test('a duplicate confirm cannot enter during the batch', () async {
     final intent = await prepare();
     repository.signGate = Completer<void>();
     final pending = controller().submit(intent);
     await Future<void>.delayed(Duration.zero);
     await controller().submit(intent);
     expect(
-      container.read(symbolSettingsActivityProvider.notifier).acquire(SymbolSetting.order),
-      null,
+      container.read(symbolSettingsActivityProvider).isRunning(SymbolSetting.batchClose),
+      isTrue,
     );
     repository.signGate!.complete();
     await pending;
@@ -263,7 +263,7 @@ void main() {
     await pending;
     expect(repository.posts, isEmpty);
     expect(state().intent, null);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     expect(identity.wallets, 0);
   });
   test(
@@ -276,7 +276,6 @@ void main() {
       expect(state().items.values.every((i) => i.result!.status == 'FILLED'), true);
       expect(container.read(positionRiskProvider).failure!.key, 'authWalletRejected');
       expect(container.read(positionRiskProvider).stale, true);
-      expect(state().needsRecheck, false);
       expect(state().busy, false);
     },
   );
@@ -301,11 +300,11 @@ void main() {
   test('settled unknown single order lease allows a new batch confirmation', () async {
     final intent = await prepare();
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.order)!;
+    final lease = activity.acquire(SymbolSetting.order);
     activity.submitted(lease);
-    activity.finish(lease, unresolved: true);
+    activity.finish(lease);
     expect(controller().prepare(), isNotNull);
-    expect(container.read(symbolSettingsActivityProvider).owner, isNull);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     // A previously frozen pre-write confirmation is still invalidated by epoch.
     await controller().submit(intent);
     expect(repository.reads, isEmpty);
@@ -323,7 +322,6 @@ void main() {
     expect(state().items['BTCUSDT:BOTH']!.result!.status, 'FILLED');
     expect(state().items['ETHUSDT:BOTH']!.failure!.key, 'liveClosePositionChanged');
     expect(state().items['ETHUSDT:BOTH']!.submitted, false);
-    expect(state().needsRecheck, false);
     expect(state().remainingAfter, now);
     expect(risk.calls, 1);
   });

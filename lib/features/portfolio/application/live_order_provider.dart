@@ -110,7 +110,7 @@ class LiveOrderController extends Notifier<LiveOrderState> {
     final activity = ref.read(symbolSettingsActivityProvider);
     // Capacity and quick-sizing reads hold the order lease while prompting the
     // wallet. Preserve their original deadline across the expected app switch.
-    if (!state.busy && !(activity.busy && activity.owner == SymbolSetting.order)) markStale();
+    if (!state.busy && !activity.isRunning(SymbolSetting.order)) markStale();
   }
 
   bool _identityCurrent(String id, String address, int revision) {
@@ -138,7 +138,6 @@ class LiveOrderController extends Notifier<LiveOrderState> {
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
     final lease = activity.acquire(SymbolSetting.order);
-    if (lease == null) return;
     _readLease = lease;
     final revision = ++_revision, staleRevision = _staleRevision;
     final previous = state.context;
@@ -176,7 +175,7 @@ class LiveOrderController extends Notifier<LiveOrderState> {
         state = LiveOrderState(context: previous, failure: _failure(error), stale: true);
       }
     } finally {
-      activity.finish(lease, unresolved: false);
+      activity.finish(lease);
       if (_readLease == lease) _readLease = null;
     }
   }
@@ -186,7 +185,7 @@ class LiveOrderController extends Notifier<LiveOrderState> {
     if (!state.busy || state.intent != null || _readLease == null) return;
     _revision++;
     _expiry?.cancel();
-    ref.read(symbolSettingsActivityProvider.notifier).finish(_readLease!, unresolved: false);
+    ref.read(symbolSettingsActivityProvider.notifier).finish(_readLease!);
     _readLease = null;
     state = LiveOrderState(context: state.context, stale: true);
   }
@@ -203,8 +202,6 @@ class LiveOrderController extends Notifier<LiveOrderState> {
         !_fresh(context) ||
         state.busy ||
         auth.busy ||
-        ref.read(symbolSettingsActivityProvider).owner != null ||
-        ref.read(symbolSettingsActivityProvider).recoveryBlocked ||
         auth.identity?.signingAvailable != true ||
         auth.identity?.walletAddress?.toLowerCase() != context.address.toLowerCase() ||
         pricingContext != null && !context.sameAccountAnchor(pricingContext) ||
@@ -224,20 +221,7 @@ class LiveOrderController extends Notifier<LiveOrderState> {
     );
   }
 
-  Future<void> submit(LiveOrderIntent intent, {bool Function()? submitGuard}) =>
-      _run(intent, checkingOnly: false, submitGuard: submitGuard);
-  Future<void> recheck() async {
-    final intent = state.intent;
-    if (intent != null && (state.needsRecheck || state.result?.strategy != null)) {
-      await _run(intent, checkingOnly: true);
-    }
-  }
-
-  Future<void> _run(
-    LiveOrderIntent intent, {
-    required bool checkingOnly,
-    bool Function()? submitGuard,
-  }) async {
+  Future<void> submit(LiveOrderIntent intent, {bool Function()? submitGuard}) async {
     bool allowed() {
       try {
         return submitGuard?.call() ?? true;
@@ -254,16 +238,14 @@ class LiveOrderController extends Notifier<LiveOrderState> {
         identity?.walletAddress?.toLowerCase() != intent.context.address.toLowerCase()) {
       return;
     }
-    if (!checkingOnly &&
-        (!allowed() ||
-            state.context != intent.context ||
-            intent.executionContext.validate(intent.draft) != null ||
-            !_fresh(intent.context))) {
+    if (!allowed() ||
+        state.context != intent.context ||
+        intent.executionContext.validate(intent.draft) != null ||
+        !_fresh(intent.context)) {
       return;
     }
     final activity = ref.read(symbolSettingsActivityProvider.notifier);
-    final lease = activity.acquire(SymbolSetting.order, checkingOnly: checkingOnly);
-    if (lease == null) return;
+    final lease = activity.acquire(SymbolSetting.order);
     final revision = ++_revision;
     final active = LiveOrderIntent(
       context: intent.context,
@@ -281,69 +263,60 @@ class LiveOrderController extends Notifier<LiveOrderState> {
         !state.stale &&
         staleRevision == _staleRevision &&
         ref.read(symbolSettingsActivityProvider).epoch == epoch &&
-        ref.read(symbolSettingsActivityProvider).owner == SymbolSetting.order &&
+        ref.read(symbolSettingsActivityProvider).holds(lease) &&
         _now.difference(active.context.receivedAt) >= Duration.zero &&
         _now.difference(active.context.receivedAt) < const Duration(seconds: 30);
     state = LiveOrderState(context: intent.context, intent: active, step: LiveOrderStep.preparing);
-    var unresolved = false, submitted = false;
+    var submitted = false;
+    void progress(LiveOrderStep step) {
+      if (!current()) return;
+      if (step == LiveOrderStep.submitting) {
+        submitted = true;
+        activity.submitted(lease);
+      }
+      state = LiveOrderState(
+        context: intent.context,
+        intent: active,
+        step: step,
+        stale: state.stale || step == LiveOrderStep.checkSigning || step == LiveOrderStep.checking,
+      );
+    }
+
     try {
       final repository = ref.read(liveOrderRepositoryProvider);
-      final result = checkingOnly
-          ? await repository.recheck(
-              intent: active,
-              isCurrent: current,
-              onStep: (step) {
-                if (current()) {
-                  state = LiveOrderState(
-                    context: intent.context,
-                    intent: active,
-                    step: step,
-                    stale: true,
-                  );
-                }
-              },
-            )
-          : await repository.submit(
-              intent: active,
-              isCurrent: current,
-              canSubmit: canSubmit,
-              onStep: (step) {
-                if (current()) {
-                  if (step == LiveOrderStep.submitting) {
-                    submitted = true;
-                    activity.submitted(lease);
-                  }
-                  state = LiveOrderState(
-                    context: intent.context,
-                    intent: active,
-                    step: step,
-                    stale:
-                        state.stale ||
-                        step == LiveOrderStep.checkSigning ||
-                        step == LiveOrderStep.checking,
-                  );
-                }
-              },
-            );
+      LiveOrderResult result;
+      try {
+        result = await repository.submit(
+          intent: active,
+          isCurrent: current,
+          canSubmit: canSubmit,
+          onStep: progress,
+        );
+      } catch (error) {
+        if (!submitted || !current()) rethrow;
+        result = LiveOrderResult(failure: _failure(error));
+      }
+      // A dispatched order is looked up again automatically by its client ID;
+      // it is never re-sent and never left as an "unknown" result.
+      if (result.needsRecheck && submitted && current()) {
+        result = await repository.recheck(intent: active, isCurrent: current, onStep: progress);
+      }
       if (!current()) return;
-      unresolved = result.needsRecheck;
       _markAccountOutputsStale();
-      state = LiveOrderState(context: intent.context, intent: active, result: result, stale: true);
+      state = result.needsRecheck
+          ? LiveOrderState(
+              context: intent.context,
+              stale: true,
+              failure: result.failure ?? const AccountReadFailure('accountNetwork'),
+            )
+          : LiveOrderState(context: intent.context, intent: active, result: result, stale: true);
     } catch (error) {
       if (current()) {
-        unresolved = submitted || checkingOnly;
-        if (unresolved) _markAccountOutputsStale();
-        state = unresolved
-            ? LiveOrderState(
-                context: intent.context,
-                intent: active,
-                stale: true,
-                result: LiveOrderResult(failure: _failure(error)),
-              )
-            : LiveOrderState(context: intent.context, stale: true, failure: _failure(error));
+        if (submitted) _markAccountOutputsStale();
+        state = LiveOrderState(context: intent.context, stale: true, failure: _failure(error));
       }
     } finally {
-      activity.finish(lease, unresolved: unresolved);
+      activity.finish(lease);
     }
   }
 

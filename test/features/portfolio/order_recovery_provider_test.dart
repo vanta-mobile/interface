@@ -58,11 +58,10 @@ void main() {
     expect(identity.wallets, 0);
     expect(container.read(pendingWalletOrdersProvider).single.key, record.key);
     final activity = container.read(symbolSettingsActivityProvider.notifier);
-    expect(container.read(symbolSettingsActivityProvider).recoveryBlocked, false);
     for (final setting in SymbolSetting.values.where((s) => s != SymbolSetting.recovery)) {
       final lease = activity.acquire(setting);
       expect(lease, isNotNull);
-      activity.finish(lease!, unresolved: false);
+      activity.finish(lease);
     }
     await container.read(liveOrderProvider.notifier).load('BTCUSDT');
     expect(orders.reads, 1);
@@ -70,7 +69,6 @@ void main() {
     expect(reader.calls, 1);
     expect(reader.latestQuery!.clientOrderId, 'vanta-test-123');
     expect(journal.snapshot.records, isEmpty);
-    expect(container.read(symbolSettingsActivityProvider).recoveryBlocked, false);
     await container.read(liveOrderProvider.notifier).load('BTCUSDT');
     expect(orders.reads, 2);
   });
@@ -92,7 +90,6 @@ void main() {
         await live.submit(intent!);
         expect(orders.submits, 1);
         expect(journal.snapshot.records.single.key, record.key);
-        expect(container.read(symbolSettingsActivityProvider).recoveryBlocked, false);
       },
     );
   }
@@ -100,7 +97,6 @@ void main() {
     reader.result = const LiveOrderResult(failure: AccountReadFailure('accountNetwork'));
     await controller().query(record.key);
     expect(journal.snapshot.records.length, 1);
-    expect(container.read(symbolSettingsActivityProvider).unresolved, false);
     reader.result = orders.result;
     await controller().query(record.key);
     expect(reader.calls, 2);
@@ -121,12 +117,12 @@ void main() {
     final activity = container.read(symbolSettingsActivityProvider.notifier);
     final token = activity.acquire(SymbolSetting.leverage);
     expect(token, isNotNull);
-    activity.finish(token!, unresolved: false);
+    activity.finish(token);
     identity.events.add(signingIdentity);
     expect(container.read(pendingWalletOrdersProvider).single.key, record.key);
     final returned = activity.acquire(SymbolSetting.leverage);
     expect(returned, isNotNull);
-    activity.finish(returned!, unresolved: false);
+    activity.finish(returned);
   });
   test(
     'same address with unavailable signer requires reconnect and never creates wallet',
@@ -168,7 +164,7 @@ void main() {
     final activity = container.read(symbolSettingsActivityProvider.notifier);
     final lease = activity.acquire(SymbolSetting.order);
     expect(lease, isNotNull);
-    activity.finish(lease!, unresolved: false);
+    activity.finish(lease);
     await controller().query(record.key);
     expect(reader.calls, 1);
   });
@@ -181,8 +177,8 @@ void main() {
     expect(lease, isNotNull);
     reader.gate!.complete();
     await pending;
-    expect(container.read(symbolSettingsActivityProvider).owner, SymbolSetting.order);
-    activity.finish(lease!, unresolved: false);
+    expect(container.read(symbolSettingsActivityProvider).isRunning(SymbolSetting.order), isTrue);
+    activity.finish(lease);
   });
   test('duplicate tap does not open multiple wallet prompts', () async {
     reader.gate = Completer<void>();

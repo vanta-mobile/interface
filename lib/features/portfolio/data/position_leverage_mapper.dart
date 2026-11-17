@@ -22,6 +22,19 @@ int mapCurrentLeverage(Object? payload, String symbol) {
   return leverage!;
 }
 
+/// Sum of absolute `notional` over the symbol's position sides, or null if
+/// any row lacks a valid value. Zero-sized rows contribute zero.
+Decimal? mapPositionNotional(Object? payload, String symbol) {
+  var total = Decimal.zero;
+  for (final row in positionConfigurationRows(payload, symbol)) {
+    final raw = row['notional'];
+    final value = raw is String ? Decimal.tryParse(raw) : null;
+    if (value == null) return null;
+    total += value.abs();
+  }
+  return total;
+}
+
 List<LeverageBracket> mapLeverageBrackets(Object? payload, String symbol) {
   // The symbol-scoped endpoint documents an object; tolerate its documented
   // array variant only when it contains exactly the requested symbol.

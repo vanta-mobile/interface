@@ -26,7 +26,6 @@ class OrderCancellationResult {
   final OrderResolution? resolution;
   final AccountReadFailure? failure;
   final bool newerOrderEvents;
-  bool get needsRecheck => resolution == null;
 }
 
 abstract interface class OrderCancellationRepository {
@@ -74,7 +73,6 @@ class BatchSymbolCancellation {
   final AsterOpenOrders? snapshot;
   final AccountReadFailure? failure;
   final bool newerOrderEvents;
-  bool get needsRecheck => submitted && snapshot == null;
 }
 
 class BatchCancelIntent {
@@ -107,7 +105,6 @@ class BatchCancellationState {
   final OrderCancelStep step;
   final bool stopRequested;
   bool get busy => step != OrderCancelStep.idle;
-  bool get needsRecheck => results.values.any((r) => r.needsRecheck);
 }
 
 /// Captured before confirmation; a logout/reconnect invalidates the revision.
@@ -132,5 +129,4 @@ class OrderCancellationState {
   final AccountReadFailure? failure;
   final BatchCancellationState? batch;
   bool get busy => step != OrderCancelStep.idle || batch?.busy == true;
-  bool get needsRecheck => result?.needsRecheck == true || batch?.needsRecheck == true;
 }

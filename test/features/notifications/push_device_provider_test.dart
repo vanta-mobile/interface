@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/localization/locale_provider.dart';
+import 'package:vanta/core/vanta_api/vanta_api_failure.dart';
 import 'package:vanta/features/auth/application/vanta_api_session_provider.dart';
 import 'package:vanta/features/notifications/application/push_device_provider.dart';
 import 'package:vanta/features/notifications/application/push_messaging_provider.dart';
@@ -225,5 +226,25 @@ void main() {
     expect(maxActive, 1);
     expect(state().busy, isFalse);
     expect(f.backend.requests.where((r) => r.url.path == '/v1/push/prefs'), hasLength(2));
+  });
+
+  test('a quiet-hours clear the server still echoes is reported, not silently reverted', () async {
+    await start();
+    var quiet = <String, Object?>{'quiet_start': '00:00', 'quiet_end': '01:00'};
+    f.backend.routes['GET /v1/push/status'] = (_) => json(pushStatusJson(prefs: quiet));
+    f.backend.routes['POST /v1/push/prefs'] = (_) => json({});
+    await controller().updatePreferences(PushPreferencesUpdate(clearQuietHours: true));
+    final body = jsonDecode(
+      f.backend.requests.lastWhere((r) => r.url.path == '/v1/push/prefs').body,
+    );
+    expect(body, containsPair('quiet_start', null));
+    expect(body, containsPair('quiet_end', null));
+    expect(state().status?.preferences.quietStart, '00:00');
+    expect((state().error as VantaApiFailure?)?.key, 'pushQuietHoursNotCleared');
+
+    quiet = {};
+    await controller().updatePreferences(PushPreferencesUpdate(clearQuietHours: true));
+    expect(state().status?.preferences.quietStart, isNull);
+    expect(state().error, isNull);
   });
 }

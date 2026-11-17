@@ -66,22 +66,21 @@ void main() {
     expect(controller().current!.context, orders.context);
     expect(controller().current!.availableMargin.toString(), '100');
     expect(state().failure, null);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
   });
-  test('loading holds shared order lease and refuses duplicate reads', () async {
+  test('loading holds the order lease and refuses duplicate reads', () async {
     repository.gate = Completer<void>();
     final future = controller().load('BTCUSDT');
     expect(state().loading, true);
     expect(state().stale, true);
     expect(controller().current, null);
-    expect(container.read(symbolSettingsActivityProvider).owner, SymbolSetting.order);
-    expect(activity().acquire(SymbolSetting.leverage), null);
+    expect(container.read(symbolSettingsActivityProvider).isRunning(SymbolSetting.order), isTrue);
     await controller().load('BTCUSDT');
     expect(repository.reads, 1);
     repository.gate!.complete();
     await future;
     expect(controller().current, isNotNull);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
   });
   for (final error in [
     const AccountReadFailure('authWalletRejected'),
@@ -101,7 +100,7 @@ void main() {
           state().failure!.key,
           error is AccountReadFailure ? 'authWalletRejected' : 'accountReadFailed',
         );
-        expect(container.read(symbolSettingsActivityProvider).owner, null);
+        expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
         repository.failure = null;
         await controller().load('BTCUSDT');
         expect(controller().current, isNotNull);
@@ -131,7 +130,7 @@ void main() {
       await future;
       expect(state().snapshot, null);
       expect(state().failure!.key, 'liveOrderContextExpired');
-      expect(container.read(symbolSettingsActivityProvider).owner, null);
+      expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     });
   }
   test('last microsecond before deadline is current', () async {
@@ -159,7 +158,7 @@ void main() {
     final future = controller().load('BTCUSDT');
     container.read(liveOrderProvider.notifier).markStale();
     expect(repository.latestCurrent!(), false);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     repository.gate!.complete();
     await future;
     expect(state().snapshot, null);
@@ -183,7 +182,7 @@ void main() {
     final future = controller().load('BTCUSDT');
     container.read(symbolProvider.notifier).select('ETHUSDT');
     expect(repository.latestCurrent!(), false);
-    expect(container.read(symbolSettingsActivityProvider).owner, null);
+    expect(container.read(symbolSettingsActivityProvider).busy, isFalse);
     repository.gate!.complete();
     await future;
     expect(state().snapshot, null);
@@ -250,13 +249,16 @@ void main() {
     controller().stop();
     expect(repository.latestCurrent!(), false);
     expect(state().loading, false);
-    final newLease = activity().acquire(SymbolSetting.leverage)!;
+    final newLease = activity().acquire(SymbolSetting.leverage);
     repository.gate!.complete();
     await future;
     expect(state().snapshot, null);
-    expect(container.read(symbolSettingsActivityProvider).owner, SymbolSetting.leverage);
+    expect(
+      container.read(symbolSettingsActivityProvider).isRunning(SymbolSetting.leverage),
+      isTrue,
+    );
     expect(container.read(symbolSettingsActivityProvider).busy, true);
-    activity().finish(newLease, unresolved: false);
+    activity().finish(newLease);
   });
   test('stopped read cannot overwrite a newer successful capacity', () async {
     final gate = repository.gate = Completer<void>();
@@ -271,16 +273,13 @@ void main() {
     expect(controller().current, same(current));
     expect(repository.reads, 2);
   });
-  test('another setting or unresolved operation blocks reading and current capacity', () async {
+  test('a settings operation in progress does not hide capacity; its write stales it', () async {
     await controller().load('BTCUSDT');
-    final lease = activity().acquire(SymbolSetting.leverage)!;
+    final lease = activity().acquire(SymbolSetting.leverage);
+    expect(controller().current, isNotNull);
+    activity().submitted(lease); // a dispatched leverage change outdates the capacity
     expect(controller().current, null);
-    await controller().load('BTCUSDT');
-    expect(repository.reads, 1);
-    expect(state().failure!.key, 'liveOrderSettingsBusy');
-    activity().finish(lease, unresolved: true);
-    await controller().load('BTCUSDT');
-    expect(repository.reads, 1);
+    activity().finish(lease);
   });
   test('a diagnostic record during a read does not invalidate capacity', () async {
     repository.gate = Completer<void>();

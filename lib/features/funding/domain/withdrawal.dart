@@ -16,9 +16,13 @@ class WithdrawalReview {
     required this.fee,
     required this.info,
     required this.preparedAt,
+    required this.receiver,
   });
   final AuthIdentity identity;
   final DepositWalletQuery query;
+
+  /// The withdrawal destination; the signer is always [identity]'s wallet.
+  final String receiver;
   final Decimal amount;
   final FundingFeeQuote fee;
   final WithdrawInfo info;
@@ -31,6 +35,7 @@ abstract interface class WithdrawalRepository {
     required DepositWalletQuery query,
     required String amount,
     required bool Function() isCurrent,
+    String? receiver,
   });
   Future<WalletOperationRecord> submit(
     WithdrawalReview review, {

@@ -4,10 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../portfolio/presentation/futures_asset_mode_status.dart';
+import '../../portfolio/presentation/futures_asset_mode_sheet.dart';
 import '../../trade/presentation/widgets/primitives.dart';
 import '../application/internal_transfer_provider.dart';
-import '../application/internal_transfer_storage_provider.dart';
 import '../domain/internal_transfer.dart';
 
 String internalTransferDirectionLabel(AppLocalizations l10n, InternalTransferDirection d) =>
@@ -43,7 +42,7 @@ class _InternalTransferFormState extends ConsumerState<InternalTransferForm> {
       }
     });
     final c = state.context;
-    final editable = !state.busy && ref.watch(pendingInternalTransfersProvider).isEmpty;
+    final editable = !state.busy;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

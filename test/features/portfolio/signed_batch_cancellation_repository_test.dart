@@ -76,7 +76,7 @@ void main() {
     );
     expect(result.submitted, true);
     expect(result.snapshot!.orders, isEmpty);
-    expect(result.needsRecheck, false);
+    expect(result.snapshot, isNotNull);
     expect(requests.map((r) => r.method), ['GET', 'DELETE', 'GET', 'GET']);
     final signed = requests.where((r) => !r.url.path.endsWith('/time')).toList();
     for (var i = 0; i < signed.length; i++) {
@@ -125,7 +125,7 @@ void main() {
         onStep: (_) {},
       );
       expect(result.submitted, true);
-      expect(result.needsRecheck, true);
+      expect(result.snapshot, isNull);
       expect(result.failure?.key, 'accountReadFailed');
       queryStatus = 200;
       final checked = await repository.recheckSymbol(
@@ -163,7 +163,7 @@ void main() {
         isCurrent: () => current,
         onStep: (_) {},
       );
-      expect(uncertain.needsRecheck, true);
+      expect(uncertain.snapshot, isNull);
       expect(uncertain.failure?.key, 'authWalletRejected');
     },
   );
@@ -183,7 +183,7 @@ void main() {
         isCurrent: () => current,
         onStep: (_) {},
       );
-      expect(result.needsRecheck, true);
+      expect(result.snapshot, isNull);
       expect(result.failure?.key, 'accountDataInvalid');
     }
     expect(requests.where((r) => r.method == 'DELETE'), isEmpty);
