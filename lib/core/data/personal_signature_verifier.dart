@@ -26,7 +26,9 @@ bool verifyPersonalSignature(String address, String message, String signature) {
     final digest = evm.keccak256(
       Uint8List.fromList([...utf8.encode('\x19Ethereum Signed Message:\n${body.length}'), ...body]),
     );
-    final public = evm.ecRecover(digest, evm.MsgSignature(r, s, v));
+    final recovered = evm.ecRecover(digest, evm.MsgSignature(r, s, v));
+    // web3dart strips leading zero bytes of the 64-byte public key (~1 in 256 keys).
+    final public = Uint8List(64)..setRange(64 - recovered.length, 64, recovered);
     return evm.bytesToHex(evm.publicKeyToAddress(public), include0x: true).toLowerCase() ==
         address.toLowerCase();
   } catch (_) {

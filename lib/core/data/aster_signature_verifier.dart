@@ -62,7 +62,9 @@ bool verifyAsterWalletSignature(String address, Map<String, Object?> data, Strin
         s > order >> 1) {
       return false;
     }
-    final public = evm.ecRecover(asterTypedDataDigest(data), evm.MsgSignature(r, s, v));
+    final recovered = evm.ecRecover(asterTypedDataDigest(data), evm.MsgSignature(r, s, v));
+    // web3dart strips leading zero bytes of the 64-byte public key (~1 in 256 keys).
+    final public = Uint8List(64)..setRange(64 - recovered.length, 64, recovered);
     return evm.bytesToHex(evm.publicKeyToAddress(public), include0x: true).toLowerCase() ==
         address.toLowerCase();
   } catch (_) {
