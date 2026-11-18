@@ -22,6 +22,11 @@ class StartupSplash extends StatefulWidget {
   @visibleForTesting
   static rive.Factory Function() riveFactory = () => rive.Factory.rive;
 
+  /// Native performance journeys remount the app every sample; they measure
+  /// the trading UI, not the fixed 3 s intro.
+  @visibleForTesting
+  static bool skipIntro = false;
+
   final VoidCallback? onIntroCompleted;
 
   @override
@@ -40,6 +45,7 @@ class _StartupSplashState extends State<StartupSplash> {
     super.didChangeDependencies();
     if (_loading) return;
     _loading = true;
+    if (StartupSplash.skipIntro && widget.onIntroCompleted != null) return _complete();
     _load(
       widget.onIntroCompleted != null && !MediaQuery.disableAnimationsOf(context),
       DefaultAssetBundle.of(context),

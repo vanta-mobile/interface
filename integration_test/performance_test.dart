@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:vanta/features/auth/presentation/startup_splash.dart';
 
 import '../test/performance/performance_scenarios.dart';
 
@@ -28,6 +29,8 @@ void main() {
     // Register the test channel so enterText uses the actual active client ID.
     // This also excludes native IME animations from the quote measurement.
     binding.testTextInput.register();
+    // Each sample remounts the app; the decorative intro is not under test.
+    StartupSplash.skipIntro = true;
     final recorder = PerformanceRecorder(recordFrames: true)..start();
     try {
       await runPerformanceScenarios(
@@ -70,6 +73,7 @@ void main() {
     } finally {
       recorder.stop();
       binding.testTextInput.unregister();
+      StartupSplash.skipIntro = false;
       debugProfileBuildsEnabled = false;
       debugProfileLayoutsEnabled = false;
       debugProfilePaintsEnabled = false;

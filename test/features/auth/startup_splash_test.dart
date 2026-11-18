@@ -93,6 +93,34 @@ Future<void> main() async {
     expect(completed, 1);
     expect(find.byKey(const Key('startup-splash')), findsOneWidget);
   });
+
+  testWidgets('performance journeys skip the intro without reading the file', (tester) async {
+    StartupSplash.skipIntro = true;
+    addTearDown(() => StartupSplash.skipIntro = false);
+    final bundle = _CountingBundle();
+    var completed = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DefaultAssetBundle(
+          bundle: bundle,
+          child: StartupSplash(onIntroCompleted: () => completed++),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(completed, 1);
+    expect(bundle.loads, 0);
+  });
+}
+
+class _CountingBundle extends _MissingBundle {
+  int loads = 0;
+
+  @override
+  Future<ByteData> load(String key) {
+    loads++;
+    return super.load(key);
+  }
 }
 
 class _MissingBundle extends CachingAssetBundle {
