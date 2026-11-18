@@ -1,3 +1,9 @@
+## 2026-11-18 签名恢复补零与原生性能测试跳过启动动画
+
+- 签名校验：web3dart `ecRecover` 会去掉 64 字节公钥的前导零字节（约 1/256 的密钥），`publicKeyToAddress` 因而算出错误地址，合法签名被拒绝。`verifyAsterWalletSignature` 与 `verifyPersonalSignature` 现将恢复出的公钥左补零到 64 字节后再派生地址。影响提现、Agent／Builder 授权、子账户与账户切换的签名核对；CI 中 `agent_authorization_repository_test.dart` 的 malformed 用例偶发失败即由随机设备 Agent 密钥触发。
+- 原生性能：启动 Rive 动画（3 秒）在每次挂载 `VantaApp` 时播放，性能旅程每轮挂载 5 次、共 32 轮，额外约 8 分钟，使 `flutter drive` 超出脚本 25 分钟上限（`spawnSync flutter ETIMEDOUT`）。新增仅供测试的 `StartupSplash.skipIntro`，设备性能测试中直接结束动画且不读取文件；测量范围与 11-10 基线（无动画）一致，应用行为不变。
+- 验证：新增 key 153（公钥首字节为 0）的 EIP-712 与 personal_sign 回归用例，修复前失败、修复后通过；malformed 场景本地重复 400 次，修复前 2～3 次失败，修复后全部通过；新增 `skipIntro` 不读文件即完成的用例。`dart format` 1348 个文件零改动；`flutter analyze --no-pub` 无问题；`flutter test --no-pub` 5984 项通过、3 项跳过、零失败（环境提示缺少 Linux Rive 动态库）。未在模拟器上运行性能测试，需以 CI 的 Native Performance 结果确认。
+
 ## 2026-11-17 全部改动提交前验证
 
 - 范围：当前交易与合约设置界面、资金操作自动核实、Privy 提现收款地址、公开行情与持仓量、QA 修复、资源、接口契约和版本号等全部待提交改动。
