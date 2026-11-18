@@ -25,6 +25,9 @@ env:
   REOWN_PROJECT_ID: ${{ vars.REOWN_PROJECT_ID }}
   WALLET_LOGIN_ORIGIN: ${{ vars.WALLET_LOGIN_ORIGIN || 'https://app.vanta.exchange' }}
   VANTA_API_ORIGIN: ${{ vars.VANTA_API_ORIGIN }}
+  SENTRY_DSN: ${{ vars.SENTRY_DSN }}
+  SENTRY_ENVIRONMENT: ${{ vars.SENTRY_ENVIRONMENT }}
+  SENTRY_DIST: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
   detect-release:
@@ -143,6 +146,9 @@ jobs:
     if: needs.detect-release.outputs.should_build == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    env:
+      # Readable app version in Sentry; SENTRY_DIST keeps the exact source commit.
+      SENTRY_RELEASE: vanta@${{ needs.detect-release.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -195,7 +201,9 @@ jobs:
             echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD"
           } >> "$GITHUB_ENV"
       - name: Create Flutter environment file
-        run: python3 scripts/ci_config.py
+        run: |
+          python3 scripts/ci_config.py
+          mkdir -p build/obfuscation
       - name: Build Android split APKs
         shell: bash
         run: >-
@@ -203,6 +211,7 @@ jobs:
           --target-platform android-arm64,android-x64
           --dart-define-from-file=config/ci.local.json
           --split-debug-info=build/symbols/android
+          --extra-gen-snapshot-options=--save-obfuscation-map=build/obfuscation/android.json
       # Collect the APKs before building the bundle: rebuilding a release
       # variant rewrites shared intermediates.
       - name: Collect split APKs
@@ -219,6 +228,17 @@ jobs:
           --target-platform android-arm64,android-x64
           --dart-define-from-file=config/ci.local.json
           --split-debug-info=build/symbols/android-bundle
+          --extra-gen-snapshot-options=--save-obfuscation-map=build/obfuscation/android-bundle.json
+      - name: Install Sentry CLI
+        if: env.SENTRY_DSN != ''
+        run: npm install --global @sentry/cli@2.58.2
+      - name: Upload Android Sentry symbols
+        if: env.SENTRY_DSN != ''
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        run: python3 scripts/upload_sentry_symbols.py android
       - name: Verify App Bundle signing
         shell: bash
         run: |
@@ -326,6 +346,7 @@ jobs:
     timeout-minutes: 60
     env:
       APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      SENTRY_RELEASE: vanta@${{ needs.detect-release.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -385,7 +406,9 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
       - name: Create Flutter environment file
-        run: python3 scripts/ci_config.py
+        run: |
+          python3 scripts/ci_config.py
+          mkdir -p build/obfuscation
       - name: Build and export signed IPA
         env:
           RELEASE_VERSION: ${{ needs.detect-release.outputs.version }}
@@ -400,7 +423,8 @@ jobs:
             --build-name="${RELEASE_VERSION%%[-+]*}" \
             --build-number="${RELEASE_VERSION##*+}" \
             --dart-define-from-file=config/ci.local.json \
-            --split-debug-info=build/symbols/ios
+            --split-debug-info=build/symbols/ios \
+            --extra-gen-snapshot-options=--save-obfuscation-map=build/obfuscation/ios.json
           shopt -s nullglob
           ipa_files=(build/ios/ipa/*.ipa)
           if (( ${#ipa_files[@]} != 1 )); then
@@ -410,6 +434,16 @@ jobs:
           if [[ "${ipa_files[0]}" != "build/ios/ipa/vanta-ios.ipa" ]]; then
             cp "${ipa_files[0]}" build/ios/ipa/vanta-ios.ipa
           fi
+      - name: Install Sentry CLI
+        if: env.SENTRY_DSN != ''
+        run: npm install --global @sentry/cli@2.58.2
+      - name: Upload iOS Sentry symbols
+        if: env.SENTRY_DSN != ''
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        run: python3 scripts/upload_sentry_symbols.py ios
       - name: Verify signed IPA and capabilities
         id: verify-ipa
         run: python3 scripts/ios_release.py verify-ipa --ipa build/ios/ipa/vanta-ios.ipa

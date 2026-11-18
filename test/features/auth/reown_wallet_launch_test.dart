@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reown_appkit/modal/services/explorer_service/models/redirect.dart';
+import 'package:reown_appkit/modal/services/uri_service/launch_url_exception.dart';
 import 'package:reown_appkit/modal/services/uri_service/request_wallet_launcher.dart';
 import 'package:reown_appkit/modal/utils/core_utils.dart';
 import 'package:reown_appkit/modal/utils/platform_utils.dart';
@@ -105,4 +106,62 @@ void main() {
       expect(launches, 1);
     });
   }
+
+  test('refused OS launch reports a concrete cause instead of "App not installed"', () async {
+    await expectLater(
+      launchWalletRequest(
+        cachedRedirect: null,
+        nativeRedirect: 'bnc://',
+        universalRedirect: null,
+        topic: 'fixture-topic',
+        requestId: 1,
+        platform: PlatformType.mobile,
+        openRedirect: (redirect, {wcURI, pType}) async => throw CanNotLaunchUrl(),
+      ),
+      throwsA(
+        isA<WalletRequestLaunchException>().having(
+          (e) => e.toString(),
+          'reason',
+          'The operating system could not open the connected wallet app',
+        ),
+      ),
+    );
+    expect(CanNotLaunchUrl().toString(), 'App not installed');
+  });
+
+  test('launch failures carry their kind and the targeted wallet link', () async {
+    Future<WalletRequestLaunchException> launchFailure(
+      Future<bool> Function() open, {
+      String? native = 'bnc://app.binance.com/cedefi',
+    }) async {
+      try {
+        await launchWalletRequest(
+          cachedRedirect: null,
+          nativeRedirect: native,
+          universalRedirect: null,
+          topic: 'fixture-topic',
+          requestId: 7,
+          platform: PlatformType.mobile,
+          timeout: const Duration(milliseconds: 10),
+          openRedirect: (redirect, {wcURI, pType}) => open(),
+        );
+      } on WalletRequestLaunchException catch (error) {
+        return error;
+      }
+      throw TestFailure('launch unexpectedly succeeded');
+    }
+
+    final refused = await launchFailure(() async => throw CanNotLaunchUrl());
+    expect(refused.failure, WalletLaunchFailure.refused);
+    expect(refused.redirect.toString(), 'bnc://app.binance.com/cedefi');
+    expect(refused.redirect.toString(), isNot(contains('fixture-topic')));
+    expect((await launchFailure(() async => false)).failure, WalletLaunchFailure.invalidLink);
+    expect(
+      (await launchFailure(() => Completer<bool>().future)).failure,
+      WalletLaunchFailure.timeout,
+    );
+    final missing = await launchFailure(() async => true, native: null);
+    expect(missing.failure, WalletLaunchFailure.noRedirect);
+    expect(missing.redirect, isNull);
+  });
 }

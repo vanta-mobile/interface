@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../core/monitoring/error_monitoring.dart';
 import '../../../firebase_options.dart';
 import '../domain/push_registration.dart';
 
@@ -20,9 +21,11 @@ Future<PushMessagingRepository?> initializeFirebaseMessaging() async {
       FirebaseMessaging.instance,
       isIOS: defaultTargetPlatform == TargetPlatform.iOS,
     );
-  } catch (_) {
+  } catch (error, stackTrace) {
     // Push setup must not prevent access to the trading app. Do not log SDK
-    // errors, payloads, registration identifiers, or native stack traces.
+    // errors, payloads, registration identifiers, or native stack traces;
+    // the monitoring filter keeps only the error type and code location.
+    reportHandledFailure(error, stackTrace, operation: 'push.initialize');
     debugPrint('Firebase Messaging initialization failed; push notifications are unavailable.');
     return null;
   }

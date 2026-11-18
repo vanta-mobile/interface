@@ -1,11 +1,23 @@
 import 'dart:async';
 
 import 'package:reown_appkit/modal/services/explorer_service/models/redirect.dart';
+import 'package:reown_appkit/modal/services/uri_service/launch_url_exception.dart';
 import 'package:reown_appkit/modal/utils/platform_utils.dart';
 
+enum WalletLaunchFailure { unavailable, noRedirect, invalidLink, timeout, refused }
+
 class WalletRequestLaunchException implements Exception {
-  const WalletRequestLaunchException(this.message);
+  const WalletRequestLaunchException(
+    this.message, {
+    this.failure = WalletLaunchFailure.unavailable,
+    this.redirect,
+  });
   final String message;
+  final WalletLaunchFailure failure;
+
+  /// The wallet link the launch targeted, before the request topic and ID
+  /// were appended.
+  final Uri? redirect;
   @override
   String toString() => message;
 }
@@ -30,6 +42,7 @@ Future<void> launchWalletRequest({
       cachedRedirect == null && mobileLink == null) {
     throw const WalletRequestLaunchException(
       'Connected wallet has no app redirect. Reconnect the wallet on this device.',
+      failure: WalletLaunchFailure.noRedirect,
     );
   }
   // CoreUtils adds /wc when formatting a pending WalletConnect request.
@@ -43,19 +56,37 @@ Future<void> launchWalletRequest({
   final redirect = (cachedRedirect ?? WalletRedirect()).copyWith(
     mobile: mobileLink == null ? null : removeWcPath(mobileLink),
   );
-  final opened =
-      await openRedirect(
-        redirect,
-        pType: platform,
-        wcURI: 'requestId=$requestId&sessionTopic=$topic',
-      ).timeout(
-        timeout,
-        onTimeout: () =>
-            throw const WalletRequestLaunchException('Opening the connected wallet timed out'),
-      );
-  if (!opened) {
-    throw const WalletRequestLaunchException(
+  final link = Uri.tryParse(redirect.mobile ?? redirect.desktop ?? redirect.web ?? '');
+  final bool opened;
+  try {
+    opened =
+        await openRedirect(
+          redirect,
+          pType: platform,
+          wcURI: 'requestId=$requestId&sessionTopic=$topic',
+        ).timeout(
+          timeout,
+          onTimeout: () => throw WalletRequestLaunchException(
+            'Opening the connected wallet timed out',
+            failure: WalletLaunchFailure.timeout,
+            redirect: link,
+          ),
+        );
+  } on LaunchUrlException {
+    // UriService reports any refused launch as "App not installed", even when
+    // the connected wallet is installed. Report what is actually known.
+    throw WalletRequestLaunchException(
       'The operating system could not open the connected wallet app',
+      failure: WalletLaunchFailure.refused,
+      redirect: link,
+    );
+  }
+  // UriService answers false only when it cannot build a link from the redirect.
+  if (!opened) {
+    throw WalletRequestLaunchException(
+      'The connected wallet app link is invalid',
+      failure: WalletLaunchFailure.invalidLink,
+      redirect: link,
     );
   }
 }

@@ -30,7 +30,7 @@ class LocalEnvironmentTests(unittest.TestCase):
                 self.check(app=value)
 
     def test_secrets_and_unknown_keys_cannot_be_compiled_into_the_app(self):
-        for key in ["OPENAI_KEY", "ANDROID_KEYSTORE_PASSWORD", "APP_STORE_CONNECT_PRIVATE_KEY_BASE64", "TYPO"]:
+        for key in ["SENTRY_AUTH_TOKEN", "OPENAI_KEY", "ANDROID_KEYSTORE_PASSWORD", "APP_STORE_CONNECT_PRIVATE_KEY_BASE64", "TYPO"]:
             with self.subTest(key=key), self.assertRaisesRegex(ValueError, "Unsupported") as error:
                 self.check(f"{key}=sensitive-value\n")
             self.assertNotIn("sensitive-value", str(error.exception))

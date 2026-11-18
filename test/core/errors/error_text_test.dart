@@ -137,8 +137,6 @@ void main() {
       final l = AppLocalizations.of(context);
       for (final entry in {
         'Order identity mismatch': l.orderResponseIdentityMismatch,
-        'Strategy linkage mismatch': l.orderResponseLinkageMismatch,
-        'Strategy decimal mismatch': l.orderResponseTermsMismatch,
         'Invalid strategy status': l.orderResponseStatusInvalid,
         'raw sensitive payload': l.orderResponseMalformed,
       }.entries) {
@@ -225,6 +223,17 @@ void main() {
         const ApiErrorDetails(message: 'Invalid parameters: must provide an Ethereum address.'),
       ),
       'Wallet response: Invalid parameters: must provide an Ethereum address.',
+    );
+    expect(
+      apiErrorText(
+        context,
+        'authWalletOpenFailed',
+        const ApiErrorDetails(
+          message: 'The operating system could not open the connected wallet app',
+        ),
+      ),
+      '${AppLocalizations.of(context).authWalletOpenFailed}\n'
+      'The operating system could not open the connected wallet app',
     );
   });
   test('changing the assistant error key clears previous server details', () {

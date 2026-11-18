@@ -1,7 +1,7 @@
 name: vanta
 description: Vanta mobile perpetual trading experience built with Flutter.
 publish_to: none
-version: 0.0.5+5
+version: 0.0.6+6
 environment:
   sdk: ^3.13.0
 dependencies:
@@ -40,6 +40,8 @@ dependencies:
   firebase_messaging: ^17.0.1
   # Deliver native wallet return payloads to Reown's pending request.
   app_links: ^7.2.2
+  # Filtered Android/iOS Flutter errors; no tracing, replay or private payloads.
+  sentry_flutter: 10.5.0
 dev_dependencies:
   fake_async: ^1.3.3
   integration_test:

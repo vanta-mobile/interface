@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -17,6 +18,21 @@ def configuration(environment):
     # Optional until the backend is deployed; empty disables Vanta API portfolio statistics.
     api = environment.get("VANTA_API_ORIGIN", "").strip()
     values["VANTA_API_ORIGIN"] = _origin("VANTA_API_ORIGIN", api) if api else ""
+    # Explicit environment is mandatory whenever monitoring is enabled.
+    dsn = environment.get("SENTRY_DSN", "").strip()
+    sentry_environment = environment.get("SENTRY_ENVIRONMENT", "").strip()
+    if dsn:
+        url = urlparse(dsn)
+        if (url.scheme != "https" or not url.hostname or not url.username
+                or url.password is not None or not re.fullmatch(r"/[0-9]+", url.path)
+                or url.query or url.fragment):
+            raise ValueError("SENTRY_DSN must be a public HTTPS project DSN without a secret key.")
+        if sentry_environment not in ("development", "staging", "production"):
+            raise ValueError("SENTRY_ENVIRONMENT must be development, staging, or production.")
+    for key in ("SENTRY_DSN", "SENTRY_ENVIRONMENT", "SENTRY_RELEASE", "SENTRY_DIST"):
+        value = environment.get(key, "").strip()
+        if value:
+            values[key] = value
     return values
 
 

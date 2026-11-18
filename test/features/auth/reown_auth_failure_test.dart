@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reown_appkit/reown_appkit.dart';
 import 'package:vanta/features/auth/data/reown_auth_failure.dart';
+import 'package:vanta/features/auth/data/wallet_error_message.dart';
 
 void main() {
   test(
@@ -120,4 +121,11 @@ void main() {
       expect(failureFromReown(JsonRpcError(code: 5000, message: message)).reason, isNull);
     }
   });
+
+  test('Dart default object text is never shown as a wallet reason', () {
+    expect(walletReason("Instance of 'Xib'"), isNull);
+    expect(failureFromReown(_Opaque()).reason, isNull);
+  });
 }
+
+class _Opaque implements Exception {}

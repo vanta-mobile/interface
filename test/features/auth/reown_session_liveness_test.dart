@@ -43,6 +43,32 @@ void main() {
     await pumpEventQueue();
   });
 
+  test('MetaMask Invalid Id for an unknown session topic requires reconnection', () async {
+    // MetaMask answers pings at SDK level even after its manager dropped the topic.
+    modal.failure = JsonRpcError(code: 1, message: 'Invalid Id');
+    await expectLater(
+      connection.signTypedData({'types': {}}),
+      throwsA(
+        isA<AuthFailure>()
+            .having((e) => e.key, 'key', 'authWalletSessionUnverified')
+            .having((e) => e.reason, 'reason', 'Invalid Id'),
+      ),
+    );
+    expect(connection.isCurrent, false);
+    expect(connection.needsReconnect, true);
+    expect(modal.requests, hasLength(1));
+  });
+
+  test('other wallet JSON-RPC errors keep the session', () async {
+    modal.failure = JsonRpcError(code: -32602, message: 'Invalid parameters');
+    await expectLater(
+      connection.signTypedData({'types': {}}),
+      throwsA(isA<AuthFailure>().having((e) => e.key, 'key', 'authWalletUnavailable')),
+    );
+    expect(connection.isCurrent, true);
+    expect(connection.needsReconnect, false);
+  });
+
   test('a wallet that never opens and never answers fails within the probe window', () {
     fakeAsync((time) {
       modal.gate = Completer<void>();

@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:reown_appkit/reown_appkit.dart';
 import 'package:reown_appkit/modal/services/uri_service/relay_wallet_request.dart';
+import 'package:reown_appkit/modal/services/uri_service/request_wallet_launcher.dart';
 
 import '../domain/auth_session.dart';
 import 'reown_auth_failure.dart';
 import 'wallet_error_message.dart';
+import 'wallet_launch_report.dart';
 
 /// Keep dispatch and wallet launch inside AppKit. Its modal error events and
 /// async-void launch errors can arrive without settling `request`, so bridge
@@ -224,6 +226,15 @@ Future<dynamic> requestReownWallet({
       current();
       if (!result.isCompleted) result.complete(value);
     } catch (error, stack) {
+      // The modal error event already settled this request; the launch error
+      // itself arrives here with its kind and target link.
+      if (error is WalletRequestLaunchException) {
+        reportWalletLaunchFailure(error, stack, walletName: modal.session?.peer?.metadata.name);
+      }
+      // MetaMask answers code 1 "Invalid Id" when its WalletConnect manager no
+      // longer holds this session topic. Its SDK still answers pings, so only
+      // this reply reveals the orphaned session: require a reconnection.
+      if (_orphanedWalletSession(error)) return unresponsive(error);
       fail(error, stack);
     }
   }, fail);
@@ -249,3 +260,6 @@ class _LifecycleObserver with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) => onChange(state);
 }
+
+bool _orphanedWalletSession(Object error) =>
+    error is JsonRpcError && error.code == 1 && error.message == 'Invalid Id';

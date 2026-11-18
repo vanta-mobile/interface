@@ -21,6 +21,9 @@ String apiErrorText(
     caseSensitive: false,
   ).hasMatch(key);
   if (message != null) {
+    // Failing to open the wallet is this device's launch error, not a wallet
+    // answer: keep the localized instruction above the concrete cause.
+    if (key == 'authWalletOpenFailed') return '$fallback\n$message';
     // A wallet's own rejection must read as the wallet's answer, not an app fault.
     final text = key.startsWith('authWallet')
         ? AppLocalizations.of(context).walletResponseReason(message)

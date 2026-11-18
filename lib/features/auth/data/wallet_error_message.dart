@@ -13,6 +13,9 @@ String? walletReason(String? message) {
     text = inner is String ? inner.trim() : null;
   }
   if (text == null ||
+      // Dart's default text for an object without toString (class names are
+      // obfuscated in release builds), not the provider's explanation.
+      text.startsWith("Instance of '") ||
       RegExp(
         r'^(?:#\d+\s|at\s|Traceback\b|Stack\s*trace\b)',
         caseSensitive: false,

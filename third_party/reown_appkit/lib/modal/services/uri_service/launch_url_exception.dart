@@ -1,6 +1,8 @@
-class LaunchUrlException {
+class LaunchUrlException implements Exception {
   final String message;
   LaunchUrlException(this.message);
+  @override
+  String toString() => message;
 }
 
 class CanNotLaunchUrl extends LaunchUrlException {

@@ -32,27 +32,33 @@ import 'features/notifications/application/push_device_provider.dart';
 import 'features/notifications/data/firebase_push_messaging_repository.dart';
 import 'features/notifications/application/push_open_provider.dart';
 import 'features/notifications/data/push_open_source.dart';
+import 'core/monitoring/error_monitoring.dart';
 
-Future<void> main() async {
+Future<void> main() => runWithErrorMonitoring(_runApp);
+
+Future<void> _runApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   final pushMessaging = await initializeFirebaseMessaging();
   final recovery = FileOrderRecoveryJournal(getApplicationSupportDirectory);
   final rebalances = FileRebalanceJournal(getApplicationSupportDirectory);
   try {
     await rebalances.reload();
-  } catch (_) {
+  } catch (error, stackTrace) {
+    reportHandledFailure(error, stackTrace, operation: 'journal.rebalance.reload');
     /* Preserve blocking storage state. */
   }
   final internalTransfers = FileInternalTransferJournal(getApplicationSupportDirectory);
   try {
     await internalTransfers.reload();
-  } catch (_) {
+  } catch (error, stackTrace) {
+    reportHandledFailure(error, stackTrace, operation: 'journal.internal_transfer.reload');
     /* Keep blocking storage state. */
   }
   final walletOperations = FileWalletOperationJournal(getApplicationSupportDirectory);
   try {
     await walletOperations.reload();
-  } catch (_) {
+  } catch (error, stackTrace) {
+    reportHandledFailure(error, stackTrace, operation: 'journal.wallet_operation.reload');
     /* Block writes on storage failure. */
   }
   final margins = FileWalletOperationJournal(
@@ -61,24 +67,28 @@ Future<void> main() async {
   );
   try {
     await margins.reload();
-  } catch (_) {
+  } catch (error, stackTrace) {
+    reportHandledFailure(error, stackTrace, operation: 'journal.position_margin.reload');
     /* Preserve blocked margin state. */
   }
   final deposits = FileDepositSubmissionJournal(getApplicationSupportDirectory);
   try {
     await deposits.reload();
-  } catch (_) {
+  } catch (error, stackTrace) {
+    reportHandledFailure(error, stackTrace, operation: 'journal.deposit_submission.reload');
     /* Block new deposits on storage failure. */
   }
   final approvals = FileDepositApprovalJournal(getApplicationSupportDirectory);
   try {
     await approvals.reload();
-  } catch (_) {
+  } catch (error, stackTrace) {
+    reportHandledFailure(error, stackTrace, operation: 'journal.deposit_approval.reload');
     /* A corrupt funding journal blocks writes. */
   }
   try {
     await recovery.reload();
-  } catch (_) {
+  } catch (error, stackTrace) {
+    reportHandledFailure(error, stackTrace, operation: 'journal.order_recovery.reload');
     // The journal retains a safe blocking error; public/demo use remains available.
   }
   String? saved;
@@ -89,6 +99,7 @@ Future<void> main() async {
   }
   runApp(
     ProviderScope(
+      observers: [ErrorMonitoringObserver()],
       overrides: [
         pushMessagingRepositoryProvider.overrideWithValue(pushMessaging),
         // Notification taps exist only when Firebase initialized.
