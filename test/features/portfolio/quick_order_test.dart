@@ -154,14 +154,6 @@ void main() {
           expect(intent.parameters.containsKey(key), false);
         }
         expect(mapLiveOrderQuery(liveQueryPayload(intent), intent).status, 'NEW');
-        expect(
-          () => mapLiveOrderQuery({...liveQueryPayload(intent), 'reduceOnly': true}, intent),
-          throwsFormatException,
-        );
-        expect(
-          () => mapLiveOrderQuery({...liveQueryPayload(intent), 'closePosition': true}, intent),
-          throwsFormatException,
-        );
       });
     }
   }

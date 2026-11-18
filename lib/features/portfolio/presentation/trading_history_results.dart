@@ -29,7 +29,8 @@ class TradingHistoryResults extends ConsumerStatefulWidget {
 class _TradingHistoryResultsState extends ConsumerState<TradingHistoryResults> {
   bool filtered = false;
   Future<void> retry() async {
-    if (ref.read(authProvider).identity?.walletAddress == null) {
+    final identity = ref.read(authProvider).identity;
+    if (identity?.walletAddress == null || identity!.needsWalletConnection) {
       showAccountSheet(context);
       return;
     }

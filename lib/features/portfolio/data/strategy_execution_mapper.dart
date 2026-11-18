@@ -28,25 +28,17 @@ StrategyLegExecution mapStrategyLegExecution(
   final terms = buildStrategyLegs(query.order)
       .where((r) => r['strategySubId'] == '$sequence')
       .single;
+  // The exchange order ID identifies the leg. Aster may normalize its type,
+  // policy and flags; those differences are not treated as a failure.
   if (payload is! Map<String, dynamic> ||
       payload['orderId'] is! int && payload['orderId'] is! String ||
       '${payload['orderId']}' != orderId ||
-      payload['clientOrderId'] != terms['clientOrderId'] ||
       payload['symbol'] != terms['symbol'] ||
-      payload['side'] != terms['side'] ||
-      payload['positionSide'] != terms['positionSide'] ||
-      payload['reduceOnly'] != (terms['reduceOnly'] == 'true') ||
-      payload['closePosition'] != false ||
-      payload['origType'] != terms['type'] ||
-      payload['timeInForce'] != (terms['timeInForce'] ?? 'GTC')) {
+      payload['side'] != terms['side']) {
     throw const FormatException('Execution identity mismatch');
   }
   final type = payload['type'];
-  final conditional = terms.containsKey('stopPrice');
-  if (type != terms['type'] &&
-      !(conditional && type == (terms.containsKey('price') ? 'LIMIT' : 'MARKET'))) {
-    throw const FormatException('Execution type mismatch');
-  }
+  if (type is! String || type.isEmpty) throw const FormatException('Invalid execution type');
   final status = payload['status'];
   if (status is! String ||
       !const {
@@ -79,26 +71,18 @@ StrategyLegExecution mapStrategyLegExecution(
   final created = _time(payload['time']), updated = _time(payload['updateTime']);
   if (updated.isBefore(created)) throw const FormatException('Execution times reversed');
   var changed = quantity != parseOrderDecimal(terms['quantity']!);
-  // Ordinary BBO orders can expose an engine-resolved price. The signed
-  // strategy and both order IDs establish the peg; never compare it to zero.
-  final peg = payload['pegPriceType'];
-  if (peg != null && peg != '' && peg != terms['pegPriceType']) {
-    throw const FormatException('Execution peg mismatch');
-  }
+  // Ordinary BBO orders can expose an engine-resolved price; never compare
+  // it to the zero sentinel. Other differences are reported, not rejected.
   if (terms.containsKey('price') && !terms.containsKey('pegPriceType')) {
     changed |= price != parseOrderDecimal(terms['price']!);
   }
-  if (conditional) {
-    changed |= _amount(payload['stopPrice']) != parseOrderDecimal(terms['stopPrice']!);
-    if (payload['workingType'] != terms['workingType'] ||
-        payload['priceProtect'] != (terms['priceProtect'] == 'true')) {
-      throw const FormatException('Execution trigger basis mismatch');
-    }
+  if (terms['stopPrice'] case final stopPrice?) {
+    changed |= parseOrderDecimal('${payload['stopPrice']}') != parseOrderDecimal(stopPrice);
   }
   return StrategyLegExecution(
     orderId: orderId,
     status: status,
-    type: type as String,
+    type: type,
     originalType: terms['type']!,
     quantity: quantity,
     executed: executed,

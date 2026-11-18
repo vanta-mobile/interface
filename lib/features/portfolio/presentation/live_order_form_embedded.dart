@@ -20,13 +20,15 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
             controller: triggerPrice,
             basis: triggerBasis,
             enabled: enabled,
+            error: _triggerReachedTerms == _formTerms ? l10n.liveOrderTriggerReached : null,
             onPrice: () => _render(() {}),
             onBasis: (value) => _render(() => triggerBasis = value),
           ),
           const SizedBox(height: 8),
         ],
-        // Stop/take-profit market orders have only a trigger price, as designed.
-        if (!(market && (conditional || trailing)))
+        // Market orders have no price box, as designed; stop/take-profit
+        // market orders keep only their trigger price.
+        if (!market)
           EmbeddedPriceField(
             controller: price,
             asset: contextData.rules.quoteAsset,
@@ -34,12 +36,14 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
             enabled: enabled,
             fixedLabel: market ? l10n.market : null,
             bboSelected: entry.pegged,
-            onBbo: market || trailing ? null : () => _toggleBbo(postOnly),
+            // As on Aster's site, BBO is unavailable while TP/SL is checked.
+            onBbo: market || trailing || attaching ? null : () => _toggleBbo(postOnly),
+            bboVisible: true,
             bboLevel: market || !entry.pegged ? null : bboLevel,
             onBboLevel: () => _chooseBboLevel(postOnly),
             onChanged: () => _render(() => _limitEdited = true),
           ),
-        if (!(market && (conditional || trailing))) const SizedBox(height: 8),
+        if (!market) const SizedBox(height: 8),
         EmbeddedSizeField(
           minimumHint: minimumOrderSizeHint(
             context,
@@ -59,7 +63,8 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
           onUnit: _onSizeUnit,
           onInput: _onSizeInput,
         ),
-        const SizedBox(height: 8),
+        // The 24px slider box centres its 12px design track 8px below the field.
+        const SizedBox(height: 2),
         MainOrderPercentageControl(
           unit: sizeUnit,
           manualCheck: entry.attachment?.entryPeg == null,
@@ -96,7 +101,12 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
   }
 
   /// Design rows: TP/SL, Hidden Order, then Reduce only with the remaining
-  /// time-in-force choices. Market orders have no time-in-force.
+  /// time-in-force choices. Market orders have no time-in-force, Post Only
+  /// fixes it, conditional orders have no Hidden Order, and hedge mode has no
+  /// Reduce only. Exclusive options follow the latest choice, as on Aster's
+  /// site: checking TP/SL clears BBO, Hidden Order and Reduce only; checking
+  /// Hidden Order or Reduce only clears TP/SL; GTC/IOC clears Hidden Order.
+  /// Hidden Order and Reduce only may be combined.
   List<Widget> _advancedControls(LiveOrderContext data, LiveOrderDraft entry, bool enabled) {
     final l10n = AppLocalizations.of(context);
     final fixed = widget.mode == LiveOrderEntryMode.postOnly;
@@ -108,26 +118,47 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
     void policy(LiveOrderTimeInForce value) {
       _render(() {
         timeInForce = value;
+        if (policies.contains(value)) _policy = value;
         if (value == LiveOrderTimeInForce.postOnly) _constrainPostOnly();
+        if (value == LiveOrderTimeInForce.hidden) _clearAttachment();
       });
       widget.onModeChanged?.call(liveOrderEntryMode(draft));
     }
 
     final oneWay = data.mode == FuturesPositionMode.oneWay;
-    final showPolicy = !market && !hidden && policies.isNotEmpty;
+    final showPolicy = !market && !fixed && policies.isNotEmpty;
+    final selector = showPolicy
+        ? EmbeddedTimeInForceSelector(
+            key: const Key('live-order-policy'),
+            selected: hidden ? _policy : timeInForce,
+            inactive: hidden,
+            available: policies,
+            onChanged: enabled ? policy : null,
+          )
+        : null;
     return [
       LiveOrderAttachmentControls(
         key: ValueKey((data.address, attachmentGeneration, 'attachment')),
-        allowed: !reducing && !trailing,
+        // Closing a hedge position takes no entry TP/SL.
+        allowed: !trailing && !_hedgeClosing,
         enabled: enabled,
         data: data,
         entry: attachmentEntry,
         compact: true,
-        onChanged: (value) => _render(() => attachment = value),
+        onChanged: (value) => _render(() {
+          final checked = attachment == null && value != null;
+          attachment = value;
+          if (checked) {
+            reduceOnly = false;
+            peg = null;
+            if (timeInForce == LiveOrderTimeInForce.hidden) timeInForce = _policy;
+          }
+        }),
       ),
       if (!market &&
           !fixed &&
           !trailing &&
+          !conditional &&
           data.rules.timeInForce.contains(LiveOrderTimeInForce.hidden))
         EmbeddedCheckRow(
           key: const Key('live-order-hidden'),
@@ -135,69 +166,62 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
           help: l10n.tradeHiddenOrderHelp,
           value: hidden,
           onChanged: enabled
-              ? (value) => policy(value ? LiveOrderTimeInForce.hidden : LiveOrderTimeInForce.gtc)
+              ? (value) => policy(value ? LiveOrderTimeInForce.hidden : _policy)
               : null,
         ),
-      if (oneWay || showPolicy)
+      if (oneWay)
         EmbeddedCheckRow(
           key: const Key('live-order-reduce-only'),
           label: l10n.reduceOnly,
           help: l10n.tradeReduceOnlyHelp,
           value: entry.reduceOnly,
-          onChanged: oneWay && enabled ? (value) => _render(() => reduceOnly = value) : null,
-          trailing: showPolicy
-              ? EmbeddedTimeInForceSelector(
-                  key: const Key('live-order-policy'),
-                  selected: timeInForce,
-                  available: policies,
-                  onChanged: enabled && !fixed ? policy : null,
-                )
-              : null,
-        ),
+          onChanged: enabled ? _setReduceOnly : null,
+          trailing: selector,
+        )
+      else if (selector != null)
+        Align(alignment: AlignmentDirectional.centerEnd, child: selector),
     ];
   }
 
-  void _toggleBbo(bool postOnly) => _render(() {
-    if (attaching) {
-      entryPeg = entryPeg != null
-          ? null
-          : postOnly
-          ? AttachedEntryPeg.queue1
-          : AttachedEntryPeg.counterparty1;
-    } else {
-      peg = peg != null
-          ? null
-          : postOnly
-          ? LiveOrderPeg.queue
-          : LiveOrderPeg.counterparty;
-    }
+  void _setReduceOnly(bool value) => _render(() {
+    reduceOnly = value;
+    if (value) _clearAttachment();
   });
 
-  /// Ordinary pegs map onto their level-1 equivalents so one sheet serves
-  /// both endpoints.
-  AttachedEntryPeg? get _bboLevel => attaching
-      ? entryPeg
-      : switch (peg) {
-          LiveOrderPeg.counterparty => AttachedEntryPeg.counterparty1,
-          LiveOrderPeg.queue => AttachedEntryPeg.queue1,
-          null => null,
-        };
+  /// Remounting the TP/SL controls clears their checkbox and inputs.
+  void _clearAttachment() {
+    if (attachment == null) return;
+    attachment = null;
+    attachmentGeneration++;
+  }
+
+  void _toggleBbo(bool postOnly) => _render(() {
+    peg = peg != null
+        ? null
+        : postOnly
+        ? LiveOrderPeg.queue
+        : LiveOrderPeg.counterparty;
+  });
+
+  /// The sheet lists ordinary pegs by their level-1 names.
+  AttachedEntryPeg? get _bboLevel => switch (peg) {
+    LiveOrderPeg.counterparty => AttachedEntryPeg.counterparty1,
+    LiveOrderPeg.queue => AttachedEntryPeg.queue1,
+    null => null,
+  };
 
   String _bboLevelLabel(AppLocalizations l10n, AttachedEntryPeg level) => level.counterparty
       ? l10n.liveOrderBboCounterparty(level.depth)
       : l10n.liveOrderBboQueue(level.depth);
 
-  /// Offers every documented level: compound entries support ten depths,
-  /// ordinary orders only level one, and Post Only BBO only same-side level one.
+  /// Ordinary orders (`POST /fapi/v3/order`) document only level one, and
+  /// Post Only BBO only same-side level one.
   Future<void> _chooseBboLevel(bool postOnly) async {
-    final current = _bboLevel, attached = attaching;
+    final current = _bboLevel;
     if (current == null) return;
     final l10n = AppLocalizations.of(context);
     final levels = [
-      for (final level
-          in attached
-              ? AttachedEntryPeg.values
-              : const [AttachedEntryPeg.counterparty1, AttachedEntryPeg.queue1])
+      for (final level in const [AttachedEntryPeg.counterparty1, AttachedEntryPeg.queue1])
         if (!postOnly || level == AttachedEntryPeg.queue1) level,
     ];
     final value = await showTradeOptionSheet(
@@ -211,15 +235,8 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
           (value: level, label: _bboLevelLabel(l10n, level), description: null),
       ],
     );
-    // The form may have switched between ordinary and compound pricing.
-    if (value == null || !mounted || attaching != attached || _bboLevel == null) return;
-    _render(() {
-      if (attached) {
-        entryPeg = value;
-      } else {
-        peg = value.counterparty ? LiveOrderPeg.counterparty : LiveOrderPeg.queue;
-      }
-    });
+    if (value == null || !mounted || _bboLevel == null) return;
+    _render(() => peg = value.counterparty ? LiveOrderPeg.counterparty : LiveOrderPeg.queue);
   }
 
   Widget _errorText(String text) => Padding(
@@ -289,6 +306,10 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
     }
     final contextData = _pricingContext ?? widget.data, size = sizing;
     final invalid = size.failure ?? attachmentFailure ?? contextData.validate(draft);
+    if (invalid == _triggerReachedKey) {
+      _render(() => _triggerReachedTerms = _formTerms);
+      return;
+    }
     if (invalid != null) {
       final failure = _pricing.failure?.key == invalid ? _pricing.failure! : null;
       _render(
@@ -296,18 +317,38 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
       );
       return;
     }
+    // Public prices can lag the account read a click just renewed; their
+    // anchor must match the current account facts to price this order.
+    final live = ref.read(liveOrderProvider).context, pricing = _pricingContext;
     final intent = ref
         .read(liveOrderProvider.notifier)
-        .prepare(contextData.symbol, draft, pricingContext: _pricingContext);
-    if (intent != null) {
-      final placed = await reviewLiveOrder(
-        context,
-        ref,
-        intent,
-        sizing: size,
-        alwaysConfirm: _prefilled,
+        .prepare(
+          contextData.symbol,
+          draft,
+          pricingContext: pricing != null && live != null && live.sameAccountAnchor(pricing)
+              ? pricing
+              : null,
+        );
+    if (intent == null) {
+      // The click is answered with its concrete cause, never silently ignored.
+      final current = ref.read(liveOrderProvider);
+      _render(
+        () => _reviewFailure = (
+          failure:
+              current.failure ??
+              AccountReadFailure(current.context?.validate(draft) ?? 'liveAllocationChanged'),
+          terms: _formTerms,
+        ),
       );
-      if (placed) _clearSize();
+      return;
     }
+    final placed = await reviewLiveOrder(
+      context,
+      ref,
+      intent,
+      sizing: size,
+      alwaysConfirm: _prefilled,
+    );
+    if (placed) _clearSize();
   }
 }

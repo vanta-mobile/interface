@@ -8,6 +8,7 @@ import '../../portfolio/presentation/futures_asset_mode_sheet.dart';
 import '../../trade/presentation/widgets/primitives.dart';
 import '../application/internal_transfer_provider.dart';
 import '../domain/internal_transfer.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 String internalTransferDirectionLabel(AppLocalizations l10n, InternalTransferDirection d) =>
     d == InternalTransferDirection.spotToFutures
@@ -53,13 +54,15 @@ class _InternalTransferFormState extends ConsumerState<InternalTransferForm> {
           runSpacing: 8,
           children: [
             for (final d in InternalTransferDirection.values)
-              ChoiceChip(
-                key: Key('internal-transfer-${d.name}'),
-                label: Text(internalTransferDirectionLabel(l10n, d)),
-                selected: state.direction == d,
-                onSelected: editable && c != null && d != state.direction
-                    ? (_) => controller.select(direction: d)
-                    : null,
+              NoPressFeedback(
+                child: ChoiceChip(
+                  key: Key('internal-transfer-${d.name}'),
+                  label: Text(internalTransferDirectionLabel(l10n, d)),
+                  selected: state.direction == d,
+                  onSelected: editable && c != null && d != state.direction
+                      ? (_) => controller.select(direction: d)
+                      : null,
+                ),
               ),
           ],
         ),

@@ -16,7 +16,7 @@ class MainOrderPriceAssumption {
     if (!draft.validPegShape || !draft.validTrailingShape || !draft.validEntireShape) {
       throw const AccountReadFailure('accountDataInvalid');
     }
-    if (draft.attachment?.entryPeg != null) {
+    if (draft.attachment?.entryPeg != null && draft.bookPeg == null) {
       // Deeper compound pegs require their own depth quote, never level one.
       throw const AccountReadFailure(
         'liveCapacityPriceUnavailable',
@@ -55,13 +55,13 @@ class MainOrderPriceAssumption {
       }
       return MainOrderPriceAssumption(margin: execution, loss: execution);
     }
-    final entered = draft.peg == null
+    final entered = draft.bookPeg == null
         ? parseOrderDecimal(draft.price)
         : context.referenceExecutionPrice(draft);
     if (entered == null || entered <= Decimal.zero) {
       throw AccountReadFailure(
-        draft.peg == null ? 'liveOrderInvalidPrice' : 'liveCapacityPriceUnavailable',
-        reasonKey: draft.peg == null ? null : 'livePriceBookMissing',
+        draft.bookPeg == null ? 'liveOrderInvalidPrice' : 'liveCapacityPriceUnavailable',
+        reasonKey: draft.bookPeg == null ? null : 'livePriceBookMissing',
       );
     }
     var execution = entered;

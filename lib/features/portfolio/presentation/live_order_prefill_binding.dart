@@ -43,7 +43,6 @@ extension _LiveOrderPrefillBinding on _LiveOrderFormState {
         price.text = value;
         _limitEdited = true;
         peg = null;
-        entryPeg = null;
       }
       if (prefill.size case final size?) {
         sizeUnit = size.unit;

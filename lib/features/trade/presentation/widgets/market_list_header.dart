@@ -6,6 +6,7 @@ import '../../../../l10n/generated/app_localizations.dart';
 import '../../../market/application/market_selection_provider.dart';
 import '../../../market/domain/market_selection.dart';
 import '../trade_theme.dart';
+import '../../../../core/presentation/no_press_feedback.dart';
 
 /// Column titles of the market list; each title sorts by its own value.
 class MarketListHeader extends StatelessWidget {
@@ -60,25 +61,27 @@ class _SortTitle extends ConsumerWidget {
       selected: active,
       label: AppLocalizations.of(context).marketSortBy(label),
       excludeSemantics: true,
-      child: InkWell(
-        key: ValueKey('market-sort-${sort.name}'),
-        onTap: () => ref.read(marketSelectionProvider.notifier).sortBy(sort),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(child: Text(label, style: TradeTypography.small)),
-              Icon(
-                !active
-                    ? Icons.unfold_more_rounded
-                    : descending
-                    ? Icons.arrow_downward_rounded
-                    : Icons.arrow_upward_rounded,
-                size: 12,
-                color: active ? TradeColors.accent : TradeColors.muted,
-              ),
-            ],
+      child: NoPressFeedback(
+        child: InkWell(
+          key: ValueKey('market-sort-${sort.name}'),
+          onTap: () => ref.read(marketSelectionProvider.notifier).sortBy(sort),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: Text(label, style: TradeTypography.small)),
+                Icon(
+                  !active
+                      ? Icons.unfold_more_rounded
+                      : descending
+                      ? Icons.arrow_downward_rounded
+                      : Icons.arrow_upward_rounded,
+                  size: 12,
+                  color: active ? TradeColors.accent : TradeColors.muted,
+                ),
+              ],
+            ),
           ),
         ),
       ),

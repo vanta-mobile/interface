@@ -41,7 +41,8 @@ class AccountBalanceText extends ConsumerWidget {
           textAlign: TextAlign.right,
           style: PortfolioTypography.caption,
         ),
-        if (failure != null)
+        // An account Aster has not opened yet (no deposit) simply has no balance.
+        if (failure != null && !failure.requiresDeposit)
           Text(
             accountErrorText(context, failure),
             textAlign: TextAlign.right,

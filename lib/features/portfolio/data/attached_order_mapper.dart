@@ -43,6 +43,40 @@ LiveOrderResult mapAttachedOrderQuery(
   DateTime checkedAt,
 ) => mapRecoveredStrategyQuery(payload, OrderQuery.capture(intent), checkedAt);
 
+/// A successful `placeStrategyOrder` response is the placement evidence. It
+/// carries no legs, so leg details stay with the explicit strategy reads.
+/// Returns null when the response cannot be tied to this submission.
+LiveOrderResult? mapStrategyAcknowledgement(
+  Object? payload,
+  OrderQuery intent,
+  DateTime checkedAt,
+) {
+  if (payload is! Map<String, dynamic> ||
+      payload['failureCode'] != 0 ||
+      payload['clientStrategyId'] != intent.clientOrderId ||
+      payload['strategyType'] != intent.draft.attachment!.strategyType) {
+    return null;
+  }
+  try {
+    final strategyId = _orderId(payload['strategyId']);
+    if (strategyId == null) return null;
+    return LiveOrderResult(
+      checkedAt: checkedAt,
+      strategy: AttachedOrderSnapshot(
+        strategyId: strategyId,
+        status: _status(payload['strategyStatus']),
+        legs: const [],
+      ),
+    );
+  } on FormatException {
+    return null;
+  }
+}
+
+/// Confirms that [payload] is the strategy placed under the frozen client
+/// strategy ID and reads each leg's status and order ID. Leg terms are not
+/// compared: Aster may normalize types, prices and policies, and a difference
+/// there must not turn an accepted strategy into a reported failure.
 LiveOrderResult mapRecoveredStrategyQuery(Object? payload, OrderQuery intent, DateTime checkedAt) {
   final expected = buildStrategyLegs(intent);
   if (payload is! Map<String, dynamic> ||
@@ -73,55 +107,9 @@ LiveOrderResult mapRecoveredStrategyQuery(Object? payload, OrderQuery intent, Da
     final row = rows[sequence];
     if (row == null ||
         _orderId(row['strategyId']) != strategyId ||
-        !{'USDT_FUTURES', 'FUTURE'}.contains(row['securityType']) ||
         row['symbol'] != terms['symbol'] ||
-        row['side'] != terms['side'] ||
-        row['positionSide'] != terms['positionSide'] ||
-        row['clientOrderId'] != terms['clientOrderId'] ||
-        row['reduceOnly'] != (terms['reduceOnly'] == 'true') ||
-        row['closePosition'] != false) {
+        row['side'] != terms['side']) {
       throw const FormatException('Strategy leg identity mismatch');
-    }
-    // A zero price alone never proves BBO identity. Also reject an unexpected
-    // peg on fixed-price entries/exits; otherwise a different strategy could be
-    // reported as verified even when its numeric price happens to match.
-    final peg = row['pegPriceType'];
-    if (terms.containsKey('pegPriceType')
-        ? peg != terms['pegPriceType']
-        : peg != null && peg != '') {
-      throw const FormatException('Strategy peg mismatch');
-    }
-    final conditional = terms.containsKey('stopPrice');
-    if (row['type'] != terms['type'] &&
-        !(conditional &&
-            row['origType'] == terms['type'] &&
-            row['type'] == (terms.containsKey('price') ? 'LIMIT' : 'MARKET'))) {
-      throw const FormatException('Strategy leg type mismatch');
-    }
-    for (final key in ['quantity', 'price', 'stopPrice']) {
-      if (terms[key] case final text?) {
-        final value = row[key];
-        if (value is! String ||
-            parseOrderDecimal(value) == null ||
-            parseOrderDecimal(value) != parseOrderDecimal(text)) {
-          throw const FormatException('Strategy decimal mismatch');
-        }
-      }
-    }
-    if (row['timeInForce'] != (terms['timeInForce'] ?? 'GTC') ||
-        row['workingType'] != (terms['workingType'] ?? 'CONTRACT_PRICE') ||
-        row['priceProtect'] != (terms['priceProtect'] == 'true')) {
-      throw const FormatException('Strategy leg policy mismatch');
-    }
-    for (final prefix in ['first', 'second']) {
-      final driver = terms['${prefix}DrivenId'];
-      final actualDriver = row['${prefix}DrivenId'];
-      if (actualDriver is! int && actualDriver is! String ||
-          '$actualDriver' != (driver ?? '0') ||
-          row['${prefix}DrivenOn'] != (terms['${prefix}DrivenOn'] ?? '') ||
-          row['${prefix}Trigger'] != (terms['${prefix}Trigger'] ?? '')) {
-        throw const FormatException('Strategy linkage mismatch');
-      }
     }
     final id = _orderId(row['orderId']);
     if (id != null && !ids.add(id)) throw const FormatException('Duplicate leg order ID');

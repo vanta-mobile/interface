@@ -199,7 +199,7 @@ class AssistantFailureCard extends ConsumerWidget {
                 minimumSize: const Size.fromHeight(40),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 textStyle: AssistantTypography.button,
-              ),
+              ).copyWith(overlayColor: PressFeedback.overlay),
               child: Text(l10n.assistantRetry),
             ),
           ],

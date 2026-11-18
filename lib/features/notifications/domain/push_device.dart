@@ -2,7 +2,7 @@ import 'package:decimal/decimal.dart';
 
 enum PushCapability { full, inboxOnly, noServerVisibility }
 
-enum PushCategory { fills, triggers, orders, funding, transfers, announcements }
+enum PushCategory { fills, triggers, orders, funding, announcements }
 
 enum PushPlatform { ios, android }
 
@@ -86,12 +86,13 @@ class PushStatus {
     required this.devices,
     required this.preferences,
     this.reason,
-    this.note,
   });
   final PushCapability capability;
   final int devices;
   final PushPreferences preferences;
-  final String? reason, note;
+
+  /// Upstream code when the server cannot observe the account (`-5052` etc.).
+  final String? reason;
 }
 
 class PushRegisterResult {

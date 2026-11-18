@@ -9,6 +9,7 @@ import 'package:vanta/core/data/wallet_operation_journal.dart';
 import 'package:vanta/core/errors/api_error_details.dart';
 import 'package:vanta/core/domain/wallet_operation.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
+import 'package:vanta/features/auth/domain/wallet_signing_preparation.dart';
 import 'package:vanta/features/funding/data/withdrawal_repository.dart';
 import 'package:vanta/features/funding/domain/deposit_wallet.dart';
 import 'package:vanta/features/funding/domain/funding_fee.dart';
@@ -23,6 +24,19 @@ import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import '../../support/aster_signatures.dart';
 import '../../support/deposit_wallet.dart';
 import '../../support/funding_info.dart';
+
+class _Network implements WalletSigningPreparation {
+  final chains = <int>[];
+  @override
+  Future<void> prepareSigning({
+    required String expectedAddress,
+    required int chainId,
+    required bool Function() isCurrent,
+  }) async {
+    expect(expectedAddress, fixtureMaster);
+    chains.add(chainId);
+  }
+}
 
 class _Fee implements FundingFeeRepository {
   _Fee(this.clock);
@@ -59,6 +73,7 @@ void main() {
   late Map<String, Object?> info;
   late bool parent;
   Object? reply;
+  late int replyStatus;
   setUp(() {
     now = DateTime.utc(2026, 11, 4, 8);
     journal = MemoryWalletOperationJournal();
@@ -70,6 +85,7 @@ void main() {
     postHook = null;
     parent = true;
     reply = {'withdrawId': '1234567', 'hash': '0x${'c' * 64}'};
+    replyStatus = 200;
     info = withdrawInfoPayload();
     catalog = TestFundingCatalogRepository();
     fees = _Fee(() => now);
@@ -97,7 +113,7 @@ void main() {
       expect(encodeWalletOperations(journal.snapshot.records).contains('Signature'), false);
       await postHook?.call();
       if (postFailure != null) throw postFailure!;
-      return http.Response(jsonEncode(reply), 200);
+      return http.Response(jsonEncode(reply), replyStatus);
     });
     addTearDown(client.close);
     addTearDown(journal.close);
@@ -164,6 +180,85 @@ void main() {
         expect(journal.snapshot.records.single.reference, '1234567');
         expect(catalog.calls.length, 2);
         expect(requests.where((r) => r.url.path.endsWith('/getSubAccountList')).length, 2);
+      },
+    );
+  }
+  for (final chain in [56, 1]) {
+    test(
+      'chain $chain: agent signs the review reads; owner signs the Action and envelope',
+      () async {
+        if (chain != 56) {
+          catalog.rows = [fundingAssetRow(chain: chain)];
+          info = withdrawInfoPayload();
+          ((info['balances'] as Map)['USDT'] as Map)['chainBalances'] = {
+            '$chain': withdrawChainRow()..['chainId'] = chain,
+          };
+        }
+        final client = MockClient((r) async {
+          requests.add(r);
+          if (r.url.path.endsWith('/time')) {
+            return http.Response(jsonEncode({'serverTime': now.millisecondsSinceEpoch}), 200);
+          }
+          if (r.url.path.endsWith('/getSubAccountList')) {
+            return http.Response(
+              jsonEncode([
+                {'accountId': 1, 'subAccountName': '', 'parentAccount': true},
+              ]),
+              200,
+            );
+          }
+          if (r.url.path.endsWith('/user-withdraw-info')) {
+            return http.Response(jsonEncode(info), 200);
+          }
+          return http.Response(jsonEncode(reply), 200);
+        });
+        addTearDown(client.close);
+        final agentSigned = <Map<String, Object?>>[], network = _Network();
+        repo = AsterWithdrawalRepository(
+          AsterAccountService(client: client),
+          AsterSpotService(client: client),
+          catalog,
+          fees,
+          ({required expectedAddress, required typedData}) async {
+            expect(expectedAddress, fixtureMaster);
+            signed.add(typedData);
+            return fixtureSign(typedData);
+          },
+          journal,
+          nonces: AsterReadNonces(),
+          authorization: (owner) async => AccountRequestIdentity(
+            address: fixtureChild,
+            sign: ({required expectedAddress, required typedData}) async {
+              expect(expectedAddress, fixtureChild);
+              agentSigned.add(typedData);
+              return fixtureSign(typedData, child: true);
+            },
+          ),
+          signingPreparation: network,
+          now: () => now,
+        );
+        final review = await repo.prepare(
+          identity: identity,
+          query: depositQuery(route: 'autoWithdraw', minimum: null, chain: chain),
+          amount: '1',
+          isCurrent: () => current,
+        );
+        final result = await repo.submit(review, isCurrent: () => current);
+        expect(result.reference, '1234567');
+        // Two reads per review: the explicit prepare and the one repeated at submit.
+        expect(agentSigned, hasLength(4));
+        expect(agentSigned.every((d) => (d['domain'] as Map)['chainId'] == 1666), true);
+        expect(signed.map((d) => d['primaryType']), ['Action', 'Message']);
+        expect((signed.first['domain'] as Map)['chainId'], chain);
+        expect((signed.last['domain'] as Map)['chainId'], 56);
+        expect(network.chains, chain == 56 ? [56] : [chain, 56]);
+        final post = requests.singleWhere((r) => r.url.path.endsWith('/user-withdraw')),
+            p = post.url.queryParameters;
+        expect(p['user'], fixtureMaster);
+        expect(p['signer'], fixtureMaster);
+        expect(p['signatureChainId'], '56');
+        expect(p['chainId'], '$chain');
+        expect((signed.last['message'] as Map)['msg'], post.url.query.split('&signature=').first);
       },
     );
   }
@@ -247,6 +342,36 @@ void main() {
     expect(journal.snapshot.records.map((r) => r.key).toSet(), hasLength(2));
     expect(requests.where((r) => r.url.path.endsWith('/user-withdraw')).length, 2);
   });
+  test('an explicit Aster refusal shows its error and clears the record', () async {
+    final r = await prepare();
+    replyStatus = 401;
+    reply = {'code': -2015, 'msg': 'Invalid API-key, IP, or permissions for action.'};
+    await expectLater(
+      repo.submit(r, isCurrent: () => current),
+      throwsA(
+        isA<AccountReadFailure>()
+            .having((e) => e.code, 'code', -2015)
+            .having(
+              (e) => e.details?.message,
+              'message',
+              'Invalid API-key, IP, or permissions for action.',
+            ),
+      ),
+    );
+    expect(journal.snapshot.records, isEmpty);
+  });
+  for (final status in [429, 500, 503]) {
+    test('HTTP $status after dispatch keeps the outcome for recovery', () async {
+      final r = await prepare();
+      replyStatus = status;
+      reply = {'code': -1000, 'msg': 'error'};
+      await expectLater(
+        repo.submit(r, isCurrent: () => current),
+        throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'walletOperationUnknown')),
+      );
+      expect(journal.snapshot.records.single.acknowledged, false);
+    });
+  }
   test('scope lost during business signing never submits or persists', () async {
     final r = await prepare();
     signHook = (d) async {

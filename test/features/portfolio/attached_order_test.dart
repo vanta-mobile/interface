@@ -215,13 +215,26 @@ void main() {
     );
     checkAttachedOrderAcknowledgement({'failureCode': 0});
   });
-  final mutations = <String, Object?>{
+  final identity = <String, Object?>{
     'symbol': 'ETHUSDT',
     'side': 'BUY',
-    'positionSide': 'LONG',
-    'clientOrderId': 'wrong',
     'strategyId': 1,
     'strategySubId': 1,
+    'status': 'raw sensitive response',
+    'orderId': 1.5,
+  };
+  for (final change in identity.entries) {
+    test('query cannot resolve mismatched linked exit ${change.key}', () {
+      final intent = attachedIntent(), payload = attachedQuery(attachedIntent());
+      ((payload['subOrders'] as List)[1] as Map)[change.key] = change.value;
+      expect(() => mapAttachedOrderQuery(payload, intent, liveOrderClock), throwsFormatException);
+    });
+  }
+  // Aster may normalize leg terms; the client strategy ID already proves
+  // which strategy this is, so a term difference is not a failure.
+  final terms = <String, Object?>{
+    'positionSide': 'LONG',
+    'clientOrderId': 'normalized',
     'quantity': '0.002',
     'stopPrice': '81000.1',
     'reduceOnly': false,
@@ -237,14 +250,12 @@ void main() {
     'secondDrivenId': 1,
     'secondTrigger': 'PLACE_ORDER',
     'secondDrivenOn': 'NEW',
-    'status': 'raw sensitive response',
-    'orderId': 1.5,
   };
-  for (final change in mutations.entries) {
-    test('query cannot resolve mismatched linked exit ${change.key}', () {
+  for (final change in terms.entries) {
+    test('query tolerates normalized linked exit ${change.key}', () {
       final intent = attachedIntent(), payload = attachedQuery(attachedIntent());
       ((payload['subOrders'] as List)[1] as Map)[change.key] = change.value;
-      expect(() => mapAttachedOrderQuery(payload, intent, liveOrderClock), throwsFormatException);
+      expect(mapAttachedOrderQuery(payload, intent, liveOrderClock).needsRecheck, false);
     });
   }
   test('out of order rows are matched by sequence; duplicate IDs and missing legs rejected', () {

@@ -21,21 +21,10 @@ class PushVisibilityNotice extends ConsumerWidget {
       liveRegion: true,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 4,
-          children: [
-            Text(
-              l.pushVisibilityTitle,
-              style: NotificationTypography.detailSection.copyWith(
-                color: NotificationColors.warning,
-              ),
-            ),
-            Text(
-              [l.pushNoServerVisibility, ?push.status?.note].join('\n'),
-              style: NotificationTypography.detailLabel,
-            ),
-          ],
+        // One line by design; the API `note` and `reason` are server diagnostics.
+        child: Text(
+          l.pushVisibilityTitle,
+          style: NotificationTypography.detailSection.copyWith(color: NotificationColors.warning),
         ),
       ),
     );

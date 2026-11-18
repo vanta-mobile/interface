@@ -63,7 +63,7 @@ class TradingHeader extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 backgroundColor: demo ? AppColors.accentSoft : AppColors.accent,
                 foregroundColor: demo ? AppColors.accent : AppColors.onAccent,
-              ),
+              ).copyWith(overlayColor: PressFeedback.overlay),
               child: Text(
                 demo ? tr(context, 'demo') : accountLabel,
                 style: const TextStyle(fontSize: 11),

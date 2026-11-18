@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/notifications/application/api_notification_provider.dart';
 import 'package:vanta/features/notifications/data/api_notification_mapper.dart';
 import 'package:vanta/features/notifications/domain/api_notification.dart';
-import 'package:vanta/features/notifications/domain/notification_status.dart';
 
 import '../../support/api_notifications.dart';
 import '../../support/vanta_api.dart';
@@ -66,7 +65,7 @@ void main() {
       await f.start();
       expect(f.state.unreadCountCapped, isTrue);
       expect(f.container.read(serverUnreadLabelProvider), '99+');
-      await f.controller.filter(NotificationFilter.orders, true);
+      await f.controller.setUnreadOnly(true);
       expect(f.state.unreadCountCapped, isTrue);
       f.backend.routes['GET /v1/notifications'] = (_) =>
           json({'code': 'internal_error', 'message': 'Inbox offline'}, 503);

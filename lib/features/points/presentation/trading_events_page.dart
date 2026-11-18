@@ -9,6 +9,7 @@ import 'event_document_view.dart';
 import 'points_status.dart';
 import 'trading_event_page.dart';
 import '../../../core/presentation/status_view.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 String tradingEventStatus(String status, AppLocalizations l10n) => status == 'OPEN_FOR_REGISTRATION'
     ? l10n.eventRegistrationOpen
@@ -47,16 +48,18 @@ class _TradingEventsPageState extends ConsumerState<TradingEventsPage> {
             spacing: 8,
             children: [
               for (final value in TradingEventType.values)
-                ChoiceChip(
-                  key: Key('event-type-${value.name}'),
-                  label: Text(
-                    value == TradingEventType.retail ? l10n.eventRetailTab : l10n.eventChannelTab,
+                NoPressFeedback(
+                  child: ChoiceChip(
+                    key: Key('event-type-${value.name}'),
+                    label: Text(
+                      value == TradingEventType.retail ? l10n.eventRetailTab : l10n.eventChannelTab,
+                    ),
+                    selected: type == value,
+                    onSelected: (_) => setState(() {
+                      type = value;
+                      page = 0;
+                    }),
                   ),
-                  selected: type == value,
-                  onSelected: (_) => setState(() {
-                    type = value;
-                    page = 0;
-                  }),
                 ),
             ],
           ),

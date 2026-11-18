@@ -96,6 +96,21 @@ void main() {
     expect(action.prepare(confirmation.order), isNotNull);
   });
 
+  test('a list refresh while the confirmation is open still sends the cancellation', () async {
+    final action = container.read(orderCancellationProvider.notifier);
+    final confirmation = intent();
+    // A new read returns new instances of the same exchange orders.
+    orders.result = openOrdersFixture();
+    await container.read(openOrdersReadProvider.notifier).refresh();
+    final refreshed = container
+        .read(openOrdersReadProvider)
+        .account!
+        .orders
+        .firstWhere((o) => o.symbol == 'BTCUSDT');
+    expect(identical(refreshed, confirmation.order), false);
+    await action.cancel(confirmation);
+    expect(cancellation.cancels, 1);
+  });
   test('logout and restoration of the same identity invalidate an open confirmation', () async {
     final confirmation = intent();
     identity.events.add(null);

@@ -98,6 +98,15 @@ void main() {
       expect(signed[i].url.queryParameters['symbol'], 'BTCUSDT');
     }
   });
+  test('an explicit success response is the result without a verification GET', () async {
+    postBody = jsonEncode({'leverage': 20, 'maxNotionalValue': '1000000', 'symbol': 'BTCUSDT'});
+    final result = await change();
+    expect(result.observed, 20);
+    expect(result.checkedAt, leverageClock);
+    expect(result.failure, null);
+    final signed = requests.where((r) => !r.url.path.endsWith('/time')).toList();
+    expect(signed.map((r) => r.method), ['POST']);
+  });
   test('POST exact signed body then fresh signed GET; same EOA with distinct nonces', () async {
     final result = await change();
     expect(result.observed, 20);

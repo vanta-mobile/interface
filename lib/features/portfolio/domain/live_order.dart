@@ -173,7 +173,7 @@ class LiveOrderContext {
   /// conditional orders whose future engine price is still unknown. Deeper
   /// compound pegs retain their separate indicative Mark/trigger reference.
   Decimal? referenceExecutionPrice(LiveOrderDraft draft) {
-    if (draft.peg case final peg?) {
+    if (draft.bookPeg case final peg?) {
       if (!draft.validPegShape ||
           bid == null ||
           ask == null ||

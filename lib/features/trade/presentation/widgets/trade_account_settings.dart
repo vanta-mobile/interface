@@ -13,6 +13,9 @@ import '../../../portfolio/presentation/position_leverage_sheet.dart';
 import '../../../portfolio/presentation/position_margin_mode_sheet.dart';
 import '../trade_theme.dart';
 
+/// Button text and full name; most settings show the same text in both.
+(String, String) _same(String value) => (value, value);
+
 class TradeAccountSettings extends ConsumerWidget {
   const TradeAccountSettings({
     super.key,
@@ -35,31 +38,35 @@ class TradeAccountSettings extends ConsumerWidget {
         for (final entry in [
           (
             l.accountMarginMode,
-            data == null
-                ? l.cross
-                : data!.marginMode == PositionMarginMode.cross
-                ? l.cross
-                : l.accountIsolatedMode,
+            _same(
+              data == null
+                  ? l.cross
+                  : data!.marginMode == PositionMarginMode.cross
+                  ? l.cross
+                  : l.accountIsolatedMode,
+            ),
             () => openMarginModeSettings(context, symbol),
           ),
           (
             l.leverageSettings,
-            data != null
-                ? '${data!.leverage}×'
-                : publicLeverage == null
-                ? '—'
-                : '$publicLeverage×',
+            _same(
+              data != null
+                  ? '${data!.leverage}×'
+                  : publicLeverage == null
+                  ? '—'
+                  : '$publicLeverage×',
+            ),
             () => openLeverageSettings(context, symbol),
           ),
           (
             l.assetModeSettings,
-            funds == null
-                ? data == null
-                      ? l.assetModeMulti
-                      : '—'
-                : funds.assetMode == FuturesAssetMode.multi
-                ? l.assetModeMulti
-                : l.assetModeSingle,
+            // Guests see the PRD first-visit preset: single-asset mode. The
+            // button shows the design's S/M; the tooltip keeps the full name.
+            switch (funds?.assetMode ?? (data == null ? FuturesAssetMode.single : null)) {
+              FuturesAssetMode.multi => (l.assetModeMultiShort, l.assetModeMulti),
+              FuturesAssetMode.single => (l.assetModeSingleShort, l.assetModeSingle),
+              null => ('—', '—'),
+            },
             () => openAssetModeSettings(context),
           ),
         ])
@@ -67,7 +74,7 @@ class TradeAccountSettings extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2),
               child: Tooltip(
-                message: '${entry.$1}: ${entry.$2}',
+                message: '${entry.$1}: ${entry.$2.$2}',
                 child: TextButton(
                   onPressed: enabled
                       ? () {
@@ -83,7 +90,7 @@ class TradeAccountSettings extends ConsumerWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: Text(
-                    entry.$2,
+                    entry.$2.$1,
                     style: TradeTypography.caption.copyWith(color: TradeColors.text),
                     textAlign: TextAlign.center,
                   ),

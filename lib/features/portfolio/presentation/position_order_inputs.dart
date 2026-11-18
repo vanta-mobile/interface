@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/presentation/drag_throttle.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
 import '../../trade/presentation/widgets/trade_icon.dart';
+import '../../../core/presentation/no_press_feedback.dart';
+import '../../../core/theme.dart' show PressFeedback;
 
 // Shared controls of the position TP/SL page and the Close Position sheet,
 // drawn to the Futures design: 12 px-radius fields with a 10 px caption, a
@@ -120,10 +123,14 @@ class PositionValueInput extends StatelessWidget {
     this.suffix,
     this.signed = false,
     this.bold = true,
+    this.sign,
   });
   final Key fieldKey;
   final TextEditingController controller;
   final bool enabled, signed;
+
+  /// A fixed `+` / `-` before an unsigned value; signs cannot then be typed.
+  final String? sign;
 
   /// Design values are 14 px bold; limit prices are 12 px medium.
   final bool bold;
@@ -145,13 +152,20 @@ class PositionValueInput extends StatelessWidget {
       height: bold ? 22 : 18,
       child: Row(
         children: [
+          if (sign case final value?) Text(value, key: ValueKey((fieldKey, 'sign')), style: style),
           Expanded(
             child: TextField(
               key: fieldKey,
               controller: controller,
               readOnly: !enabled,
               style: style,
-              keyboardType: TextInputType.numberWithOptions(decimal: true, signed: signed),
+              keyboardType: TextInputType.numberWithOptions(
+                decimal: true,
+                signed: signed && sign == null,
+              ),
+              inputFormatters: sign == null
+                  ? null
+                  : [FilteringTextInputFormatter.deny(RegExp('[-+]'))],
               decoration: InputDecoration(
                 isCollapsed: true,
                 filled: false,
@@ -416,28 +430,30 @@ class PositionTabs<T> extends StatelessWidget {
             Semantics(
               selected: value == selected,
               button: true,
-              child: InkWell(
-                key: ValueKey('position-tab-$value'),
-                onTap: onSelect == null ? null : () => onSelect!(value),
-                child: IntrinsicWidth(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          label,
-                          style: TradeTypography.action.copyWith(
-                            color: value == selected ? TradeColors.text : TradeColors.secondary,
+              child: NoPressFeedback(
+                child: InkWell(
+                  key: ValueKey('position-tab-$value'),
+                  onTap: onSelect == null ? null : () => onSelect!(value),
+                  child: IntrinsicWidth(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            label,
+                            style: TradeTypography.action.copyWith(
+                              color: value == selected ? TradeColors.text : TradeColors.secondary,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          height: 1,
-                          color: value == selected ? TradeColors.accent : TradeColors.transparent,
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          Container(
+                            height: 1,
+                            color: value == selected ? TradeColors.accent : TradeColors.transparent,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -480,7 +496,7 @@ class PositionActionButton extends StatelessWidget {
         padding: const EdgeInsets.all(8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         textStyle: TradeTypography.action,
-      ),
+      ).copyWith(overlayColor: PressFeedback.overlay),
       child: pending
           ? SizedBox.square(
               key: const Key('position-action-loading'),

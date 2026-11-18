@@ -12,6 +12,7 @@ import '../application/deposit_submission_provider.dart';
 import '../application/deposit_approval_provider.dart';
 import '../domain/deposit_wallet.dart';
 import 'deposit_gas_details.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 class DepositSubmissionPanel extends ConsumerStatefulWidget {
   const DepositSubmissionPanel({
@@ -65,12 +66,14 @@ class _DepositSubmissionPanelState extends ConsumerState<DepositSubmissionPanel>
         const Divider(),
         Text(l.depositSubmissionScope),
         Text(l.depositPlatformLimitsUnknown),
-        CheckboxListTile(
-          key: const Key('deposit-limits-acknowledgement'),
-          contentPadding: EdgeInsets.zero,
-          value: acknowledged,
-          onChanged: s.busy ? null : (v) => setState(() => acknowledged = v ?? false),
-          title: Text(l.depositLimitsAcknowledgement),
+        NoPressFeedback(
+          child: CheckboxListTile(
+            key: const Key('deposit-limits-acknowledgement'),
+            contentPadding: EdgeInsets.zero,
+            value: acknowledged,
+            onChanged: s.busy ? null : (v) => setState(() => acknowledged = v ?? false),
+            title: Text(l.depositLimitsAcknowledgement),
+          ),
         ),
         FilledButton(
           key: const Key('deposit-submit-prepare'),

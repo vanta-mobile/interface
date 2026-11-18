@@ -59,9 +59,19 @@ void main() {
       isNull,
     );
 
+    // A highest price outside the exchange's percent band is reported under
+    // that field, not as a child-order message.
     await field(tester, 'scaled-low', '79000');
-    await field(tester, 'scaled-high', '81000');
+    await field(tester, 'scaled-high', '90000');
     await field(tester, 'scaled-size', '0.002');
+    expect(find.byKey(const Key('scaled-error')), findsNothing);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('scaled-high-error'))).data,
+      l10n.scaledPriceOutOfRange,
+    );
+
+    await field(tester, 'scaled-high', '81000');
+    expect(find.byKey(const Key('scaled-high-error')), findsNothing);
     expect(find.byKey(const Key('scaled-error')), findsNothing);
     // 0.001 × 79000 + 0.001 × 81000 = 160 USDT at 10× leverage.
     expect(find.textContaining('16.00'), findsNWidgets(2));

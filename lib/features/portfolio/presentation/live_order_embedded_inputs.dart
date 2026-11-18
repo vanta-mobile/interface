@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -80,43 +83,54 @@ class EmbeddedPriceField extends StatelessWidget {
         final priceWidth = MediaQuery.textScalerOf(context).scale(_minPriceWidth);
         // 20: the input box's horizontal padding.
         final steppers = constraints.maxWidth - bboWidth - 20 >= _steppersWidth + priceWidth;
+        // One fixed value line keeps the box the same height whether it shows
+        // the price input or the BBO mode, and stops the text field's larger
+        // intrinsic height from stretching the row.
+        final valueHeight = math.max(32.0, _lineHeight(context) + 12);
         return IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
                 child: bboLevel != null
-                    ? _BboModeBox(level: bboLevel!, onTap: enabled ? onBboLevel : null)
+                    ? _BboModeBox(
+                        level: bboLevel!,
+                        height: valueHeight,
+                        onTap: enabled ? onBboLevel : null,
+                      )
                     : EmbeddedInputBox(
                         label: l.tradeOrderPrice(asset),
                         // Steppers sit on the price line so the caption keeps
                         // the full width.
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: fixedLabel != null
-                                  ? Text(fixedLabel!, style: TradeTypography.body, maxLines: 1)
-                                  : EmbeddedTextInput(
-                                      fieldKey: const Key('live-order-price'),
-                                      controller: controller!,
-                                      enabled: enabled,
-                                      onChanged: onChanged,
-                                    ),
-                            ),
-                            if (steppers) ...[
-                              const SizedBox(width: 8),
-                              _StepButton(
-                                asset: 'minus',
-                                tooltip: l.tradePriceDown,
-                                onPressed: editable ? () => _step(-1) : null,
+                        child: SizedBox(
+                          height: valueHeight,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: fixedLabel != null
+                                    ? Text(fixedLabel!, style: TradeTypography.body, maxLines: 1)
+                                    : EmbeddedTextInput(
+                                        fieldKey: const Key('live-order-price'),
+                                        controller: controller!,
+                                        enabled: enabled,
+                                        onChanged: onChanged,
+                                      ),
                               ),
-                              _StepButton(
-                                asset: 'plus',
-                                tooltip: l.tradePriceUp,
-                                onPressed: editable ? () => _step(1) : null,
-                              ),
+                              if (steppers) ...[
+                                const SizedBox(width: 8),
+                                _StepButton(
+                                  asset: 'minus',
+                                  tooltip: l.tradePriceDown,
+                                  onPressed: editable ? () => _step(-1) : null,
+                                ),
+                                _StepButton(
+                                  asset: 'plus',
+                                  tooltip: l.tradePriceUp,
+                                  onPressed: editable ? () => _step(1) : null,
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
               ),
@@ -155,6 +169,18 @@ class EmbeddedPriceField extends StatelessWidget {
     );
   }
 
+  static double _lineHeight(BuildContext context) {
+    final painter = TextPainter(
+      text: TextSpan(text: '0', style: TradeTypography.body),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final height = painter.height;
+    painter.dispose();
+    return height;
+  }
+
   static double _textWidth(BuildContext context, String text) {
     final painter = TextPainter(
       text: TextSpan(text: text, style: TradeTypography.body),
@@ -171,8 +197,9 @@ class EmbeddedPriceField extends StatelessWidget {
 /// BBO price source from the design: the caption names the mode and the
 /// value opens the level sheet.
 class _BboModeBox extends StatelessWidget {
-  const _BboModeBox({required this.level, required this.onTap});
+  const _BboModeBox({required this.level, required this.height, required this.onTap});
   final String level;
+  final double height;
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
@@ -185,8 +212,8 @@ class _BboModeBox extends StatelessWidget {
         onTap: onTap,
         child: EmbeddedInputBox(
           label: l.liveOrderBboModeLabel,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 32),
+          child: SizedBox(
+            height: height,
             child: Row(
               children: [
                 Expanded(child: Text(level, style: TradeTypography.body, maxLines: 1)),
@@ -322,6 +349,7 @@ class EmbeddedTextInput extends StatelessWidget {
     required this.onChanged,
     this.hint = '0',
     this.signed = false,
+    this.inputFormatters,
   });
   final Key fieldKey;
   final TextEditingController controller;
@@ -329,6 +357,7 @@ class EmbeddedTextInput extends StatelessWidget {
   final VoidCallback onChanged;
   final String hint;
   final bool signed;
+  final List<TextInputFormatter>? inputFormatters;
   @override
   Widget build(BuildContext context) {
     return TextField(
@@ -337,6 +366,7 @@ class EmbeddedTextInput extends StatelessWidget {
       readOnly: !enabled,
       style: TradeTypography.body,
       keyboardType: TextInputType.numberWithOptions(decimal: true, signed: signed),
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         isCollapsed: true,
         filled: false,

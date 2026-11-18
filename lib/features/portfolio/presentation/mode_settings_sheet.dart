@@ -8,6 +8,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
 import '../../trade/presentation/widgets/trade_icon.dart';
 import 'portfolio_components.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 Future<T?> showModeSettingsSheet<T>(BuildContext context, Widget child) => showGeneralDialog<T>(
   context: context,
@@ -139,57 +140,63 @@ class ModeOptionCard extends StatelessWidget {
         child: Material(
           color: TradeColors.card,
           borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: busy
-                        ? const SizedBox.square(
-                            dimension: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : loading
-                        ? const SkeletonBox(
-                            width: 20,
-                            height: 20,
-                            radius: 8,
-                            color: StatusColors.skeletonOnCard,
-                          )
-                        : Container(
-                            width: 20,
-                            height: 20,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: selected ? TradeColors.accent : null,
-                              border: selected ? null : Border.all(color: TradeColors.muted),
-                              borderRadius: BorderRadius.circular(8),
+          child: NoPressFeedback(
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: busy
+                          ? const SizedBox.square(
+                              dimension: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : loading
+                          ? const SkeletonBox(
+                              width: 20,
+                              height: 20,
+                              radius: 8,
+                              color: StatusColors.skeletonOnCard,
+                            )
+                          : Container(
+                              width: 20,
+                              height: 20,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: selected ? TradeColors.accent : null,
+                                border: selected ? null : Border.all(color: TradeColors.muted),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: selected
+                                  ? const TradeIcon(
+                                      'check',
+                                      size: 12,
+                                      color: TradeColors.background,
+                                    )
+                                  : null,
                             ),
-                            child: selected
-                                ? const TradeIcon('check', size: 12, color: TradeColors.background)
-                                : null,
-                          ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(title, style: TradeTypography.symbol),
-                        const SizedBox(height: 6),
-                        Text(
-                          description,
-                          style: TradeTypography.body.copyWith(color: TradeColors.muted),
-                        ),
-                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(title, style: TradeTypography.symbol),
+                          const SizedBox(height: 6),
+                          Text(
+                            description,
+                            style: TradeTypography.body.copyWith(color: TradeColors.muted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -244,7 +251,7 @@ class ModeAction extends StatelessWidget {
         height: large ? 24 / 16 : 18 / 13,
         fontWeight: FontWeight.w700,
       ),
-    ),
+    ).copyWith(overlayColor: PressFeedback.overlay),
     child: busy
         ? SizedBox.square(
             dimension: 18,

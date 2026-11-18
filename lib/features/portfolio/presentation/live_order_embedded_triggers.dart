@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
@@ -74,33 +75,49 @@ class EmbeddedTriggerField extends StatelessWidget {
     required this.enabled,
     required this.onPrice,
     required this.onBasis,
+    this.error,
   });
   final TextEditingController controller;
   final LiveOrderTriggerBasis basis;
   final bool enabled;
   final VoidCallback onPrice;
   final ValueChanged<LiveOrderTriggerBasis> onBasis;
+
+  /// Design 1649:27293: red outline with the cause below the field.
+  final String? error;
   @override
-  Widget build(BuildContext context) => EmbeddedInputBox(
-    label: AppLocalizations.of(context).openOrdersTriggerPrice,
-    child: Row(
-      children: [
-        Expanded(
-          child: EmbeddedTextInput(
-            fieldKey: const Key('live-order-trigger-price'),
-            controller: controller,
-            enabled: enabled,
-            onChanged: onPrice,
-          ),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      EmbeddedInputBox(
+        label: AppLocalizations.of(context).openOrdersTriggerPrice,
+        error: error != null,
+        child: Row(
+          children: [
+            Expanded(
+              child: EmbeddedTextInput(
+                fieldKey: const Key('live-order-trigger-price'),
+                controller: controller,
+                enabled: enabled,
+                onChanged: onPrice,
+              ),
+            ),
+            TriggerBasisSelector(
+              key: const Key('live-order-trigger-basis'),
+              basis: basis,
+              enabled: enabled,
+              onChanged: onBasis,
+            ),
+          ],
         ),
-        TriggerBasisSelector(
-          key: const Key('live-order-trigger-basis'),
-          basis: basis,
-          enabled: enabled,
-          onChanged: onBasis,
+      ),
+      if (error case final text?)
+        Padding(
+          key: const Key('live-order-trigger-error'),
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(text, style: TradeTypography.small.copyWith(color: TradeColors.negative)),
         ),
-      ],
-    ),
+    ],
   );
 }
 
@@ -154,13 +171,21 @@ class EmbeddedExitField extends StatelessWidget {
           ),
           child: Row(
             children: [
+              // PnL/ROI amounts are entered unsigned; the sign is fixed by the
+              // exit (TP +, SL −) and cannot be typed or deleted.
+              if (mode != AttachedExitInputMode.price)
+                Text(
+                  takeProfit ? '+' : '-',
+                  key: Key('attached-$name-sign'),
+                  style: TradeTypography.body,
+                ),
               Expanded(
                 child: EmbeddedTextInput(
                   fieldKey: Key('attached-$name-price'),
                   controller: controller,
                   enabled: enabled,
                   hint: takeProfit ? l.tradeTp : l.tradeSl,
-                  signed: mode != AttachedExitInputMode.price,
+                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp('[-+]'))],
                   onChanged: onValue,
                 ),
               ),

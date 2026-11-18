@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
 import '../domain/live_order.dart';
+import '../../../core/theme.dart' show PressFeedback;
 
 /// Direction summary and order button of the Scaled Order form, styled like
 /// the main order card: Margin for both sides, Max on the long side.
@@ -91,7 +92,7 @@ class ScaledSideCard extends StatelessWidget {
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
             ),
             textStyle: TradeTypography.body.copyWith(fontSize: 14, fontWeight: FontWeight.w700),
-          ),
+          ).copyWith(overlayColor: PressFeedback.overlay),
           child: pending
               ? const SizedBox.square(
                   dimension: 16,

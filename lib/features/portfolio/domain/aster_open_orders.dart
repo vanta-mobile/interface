@@ -84,13 +84,38 @@ class OpenOrderStrategy {
     this.sequence,
     this.takeProfit,
     this.stopLoss,
+    this.legs = const [],
   });
   final String strategyId;
   final String? type;
   final int? sequence;
   final Decimal? takeProfit, stopLoss;
+
+  /// All legs read with `strategyOpenOrder`, by sequence; empty when the
+  /// linkage came from the open-order row alone.
+  final List<OpenOrderStrategyLeg> legs;
   bool get entry => sequence == null || sequence == 1;
   bool get hasExits => takeProfit != null || stopLoss != null;
+}
+
+/// One leg of an OTO/OTOCO strategy: 1 is the entry, 2/3 its exits.
+class OpenOrderStrategyLeg {
+  const OpenOrderStrategyLeg({
+    required this.sequence,
+    required this.type,
+    required this.status,
+    required this.buy,
+    required this.quantity,
+    this.stopPrice,
+    this.reduceOnly = false,
+  });
+  final int sequence;
+
+  /// Exchange order type and status, e.g. `TAKE_PROFIT_MARKET` / `NEW`.
+  final String type, status;
+  final bool buy, reduceOnly;
+  final Decimal quantity;
+  final Decimal? stopPrice;
 }
 
 int compareOpenOrders(AsterOpenOrder a, AsterOpenOrder b) {

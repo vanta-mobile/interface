@@ -69,20 +69,30 @@ void main() {
     expect(liveIntent().parameters['positionSide'], 'BOTH');
     expect(liveIntent().parameters['timeInForce'], 'GTC');
   });
-  test('query verifies identity, quantity, limit terms and fill consistency', () {
+  test('query verifies identity and status; normalized terms are tolerated', () {
     final intent = liveIntent();
     final payload = liveQueryPayload(intent, status: 'FILLED');
     expect(mapLiveOrderQuery(payload, intent).executedQuantity, Decimal.parse('0.001'));
     for (final entry in {
       'clientOrderId': 'different',
-      'origQty': '1',
-      'executedQty': '0',
-      'price': '80000.1',
-      'timeInForce': 'IOC',
-      'positionSide': 'LONG',
+      'symbol': 'ETHUSDT',
+      'side': 'SELL',
+      'orderId': 0,
+      'status': 'UNKNOWN',
+      'executedQty': '-1',
     }.entries) {
       final wrong = {...payload, entry.key: entry.value};
       expect(() => mapLiveOrderQuery(wrong, intent), throwsFormatException, reason: entry.key);
+    }
+    for (final entry in {
+      'origQty': '1',
+      'price': '80000.1',
+      'timeInForce': 'IOC',
+      'positionSide': 'LONG',
+      'type': 'MARKET',
+    }.entries) {
+      final normalized = {...payload, entry.key: entry.value};
+      expect(mapLiveOrderQuery(normalized, intent).status, 'FILLED', reason: entry.key);
     }
   });
 }

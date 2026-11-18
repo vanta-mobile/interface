@@ -7,6 +7,7 @@ import '../../../core/data/aster_signature_verifier.dart';
 import '../../../core/data/wallet_operation_journal.dart';
 import '../../../core/domain/wallet_operation.dart';
 import '../../auth/domain/auth_session.dart';
+import '../../auth/domain/wallet_signing_preparation.dart';
 import '../../portfolio/data/aster_account_service.dart';
 import '../../portfolio/data/aster_spot_service.dart';
 import '../../portfolio/data/signed_account_request.dart';
@@ -28,6 +29,8 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
     this.sign,
     this.journal, {
     required this.nonces,
+    this.authorization,
+    this.signingPreparation,
     DateTime Function()? now,
     AsterAccountService? infoService,
   }) : now = now ?? DateTime.now,
@@ -40,6 +43,20 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
   final WalletOperationJournal journal;
   final AsterReadNonces nonces;
   final DateTime Function() now;
+
+  /// Signs the review reads (chain 1666) as the authorized device agent.
+  /// External wallets refuse a domain chain that is not their active network.
+  final AccountRequestAuthorization? authorization;
+
+  /// Trial: an agent without `canWithdraw` is refused (-2015), and Aster
+  /// requires an IP whitelist to grant it, which a phone cannot keep. The owner
+  /// therefore signs the withdrawal envelope itself on BNB Chain and declares
+  /// it as `signatureChainId`, as approveAgent does. The fapi withdrawal
+  /// documentation does not list this parameter; live acceptance is unverified.
+  static const envelopeSignatureChainId = 56;
+
+  /// Selects the withdrawal network before the owner signs the `Action`.
+  final WalletSigningPreparation? signingPreparation;
 
   /// Withdrawal limits keep reported numbers exact; see [decodeWithdrawInfoJson].
   final AsterAccountService infoService;
@@ -104,6 +121,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
       final directory = await SignedSubaccountListRepository(
         futures,
         sign,
+        authorization: authorization,
         nonces: nonces,
         now: now,
       ).read(address: address, isCurrent: isCurrent, onStep: (_) {});
@@ -114,6 +132,7 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
       final info = await SignedWithdrawInfoRepository(
         infoService,
         sign,
+        authorization: authorization,
         nonces: nonces,
         now: now,
       ).read(address: address, isCurrent: isCurrent, onStep: (_) {});
@@ -166,6 +185,14 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
         throw const AccountReadFailure('withdrawalFeeChanged');
       }
       validateWithdrawalReview(fresh, now().toUtc());
+      // Switch before the nonce so the network prompt uses none of its lifetime.
+      await signingPreparation?.prepareSigning(
+        expectedAddress: address,
+        chainId: fresh.query.asset.chainId,
+        isCurrent: isCurrent,
+      );
+      current();
+      validateWithdrawalReview(fresh, now().toUtc());
       final server = await futures.serverTime();
       current();
       // The Action field table, numeric EVM examples and current official web
@@ -179,6 +206,15 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
         throw const AccountReadFailure('authWalletSignature');
       }
       validateWithdrawalReview(fresh, now().toUtc());
+      if (fresh.query.asset.chainId != envelopeSignatureChainId) {
+        await signingPreparation?.prepareSigning(
+          expectedAddress: address,
+          chainId: envelopeSignatureChainId,
+          isCurrent: isCurrent,
+        );
+        current();
+        validateWithdrawalReview(fresh, now().toUtc());
+      }
       final apiClock = Stopwatch()..start(), apiTime = await futures.serverTime();
       current();
       final nonce = nonces.next(apiTime);
@@ -195,10 +231,11 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
           'nonce': '$nonce',
           'user': address,
           'signer': address,
+          'signatureChainId': '$envelopeSignatureChainId',
         },
       ).query;
-      final apiData = asterReadTypedData(query),
-          signature = await sign(expectedAddress: address, typedData: asterReadTypedData(query));
+      final apiData = asterReadTypedData(query, chainId: envelopeSignatureChainId),
+          signature = await sign(expectedAddress: address, typedData: apiData);
       current();
       if (!verifyAsterWalletSignature(address, apiData, signature)) {
         throw const AccountReadFailure('authWalletSignature');
@@ -246,6 +283,12 @@ class AsterWithdrawalRepository implements WithdrawalRepository {
       return record.reported(id);
     } catch (e) {
       if (saved && !sent && record != null) await journal.removeNotSent(record.key);
+      if (sent && record != null && e is AccountReadFailure && e.refusedWrite) {
+        // An explicit refusal created no withdrawal: show Aster's error and
+        // clear the record so it neither blocks nor awaits recovery.
+        await journal.removeNotSent(record.key);
+        rethrow;
+      }
       if (sent) throw AccountReadFailure('walletOperationUnknown', details: errorDetailsOf(e));
       if (e is AuthFailure) throw AccountReadFailure(e.key, details: e.details);
       if (e is WalletOperationPending) throw const AccountReadFailure('walletOperationPending');

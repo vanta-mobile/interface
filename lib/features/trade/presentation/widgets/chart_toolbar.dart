@@ -5,6 +5,7 @@ import '../../../../core/strings.dart';
 import '../../../../core/theme.dart';
 import '../../../market/domain/candle_series.dart';
 import '../../application/providers.dart';
+import '../../../../core/presentation/no_press_feedback.dart';
 
 /// Timeframe row; [trailing] holds the fullscreen entry or exit, as designed.
 class ChartTimeframes extends ConsumerWidget {
@@ -22,24 +23,26 @@ class ChartTimeframes extends ConsumerWidget {
             Semantics(
               selected: value == interval,
               button: true,
-              child: InkWell(
-                key: Key('timeframe-$value'),
-                onTap: () => ref.read(intervalProvider.notifier).select(value),
-                borderRadius: BorderRadius.circular(4),
-                child: Container(
-                  constraints: const BoxConstraints(minHeight: 44, minWidth: 46),
-                  alignment: Alignment.center,
+              child: NoPressFeedback(
+                child: InkWell(
+                  key: Key('timeframe-$value'),
+                  onTap: () => ref.read(intervalProvider.notifier).select(value),
+                  borderRadius: BorderRadius.circular(4),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: value == interval ? AppColors.raised : null,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: value == interval ? AppColors.text : AppColors.muted,
+                    constraints: const BoxConstraints(minHeight: 44, minWidth: 46),
+                    alignment: Alignment.center,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: value == interval ? AppColors.raised : null,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        value,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: value == interval ? AppColors.text : AppColors.muted,
+                        ),
                       ),
                     ),
                   ),

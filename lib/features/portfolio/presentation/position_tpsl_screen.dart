@@ -111,13 +111,20 @@ class _PositionTpSlScreenState extends ConsumerState<PositionTpSlScreen> {
     mode: input,
   );
 
-  /// Re-derives both estimate boxes after the quantity or input mode changed.
-  void _resync() {
+  /// Re-derives each leg after the quantity, scope or input mode changed: a
+  /// typed PnL/ROI keeps its value and moves the trigger price, otherwise the
+  /// estimate follows the price. A mode change always converts from the price.
+  void _resync({bool modeChanged = false}) {
     final view = _view;
     if (view == null) return;
     final estimate = _estimate(view.position, view.mark, view.data);
-    takeProfit.syncEstimate(estimate);
-    stopLoss.syncEstimate(estimate);
+    for (final leg in [takeProfit, stopLoss]) {
+      if (!modeChanged && leg.estimateTyped && leg.estimate.text.trim().isNotEmpty) {
+        leg.syncTrigger(estimate, view.data);
+      } else {
+        leg.syncEstimate(estimate);
+      }
+    }
   }
 
   /// Position value at the current mark: the slider's range.
@@ -311,7 +318,7 @@ class _PositionTpSlScreenState extends ConsumerState<PositionTpSlScreen> {
     if (value == null || value == input || !mounted) return;
     _render(() {
       input = value;
-      _resync();
+      _resync(modeChanged: true);
     });
   }
 

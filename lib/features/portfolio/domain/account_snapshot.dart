@@ -14,6 +14,20 @@ class AccountReadFailure implements Exception, DetailedApiFailure {
   /// Neither a zero balance nor the displayed server text proves this status.
   bool get requiresDeposit => code == -5050;
 
+  /// Aster answered a dispatched write with an explicit client error code, so
+  /// it was refused rather than executed. Timeouts, rate limits, redirects,
+  /// 5xx and undecodable responses never qualify; display text is never read.
+  bool get refusedWrite {
+    final status = details?.status;
+    return code != null &&
+        status != null &&
+        status >= 400 &&
+        status < 500 &&
+        status != 408 &&
+        status != 418 &&
+        status != 429;
+  }
+
   /// A read was refused for missing permission, or no local grant is usable.
   /// This says nothing about the outcome or retry safety of a financial write.
   bool get requiresAuthorization =>

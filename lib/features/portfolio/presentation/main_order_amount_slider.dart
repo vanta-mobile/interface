@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/presentation/drag_throttle.dart';
+import '../../trade/presentation/trade_theme.dart';
 
 /// Shown-unit range of the trade-workspace slider: the smaller directional
 /// maximum, so every intermediate amount fits both directions, and the
@@ -58,11 +59,20 @@ class _MainOrderAmountSliderState extends State<MainOrderAmountSlider> {
   Widget build(BuildContext context) {
     final enabled = widget.onCommit != null;
     return SliderTheme(
+      // Figma 331:57678: 4px control-grey track, 12px stops ringed in the
+      // page background, and a 12px white thumb.
       data: SliderTheme.of(context).copyWith(
         trackHeight: 4,
+        activeTrackColor: TradeColors.text,
+        inactiveTrackColor: TradeColors.control,
+        disabledActiveTrackColor: TradeColors.secondary,
+        disabledInactiveTrackColor: TradeColors.control,
+        thumbColor: TradeColors.text,
+        disabledThumbColor: TradeColors.secondary,
         thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6, disabledThumbRadius: 6),
         overlayShape: SliderComponentShape.noOverlay,
-        trackShape: widget.continuous ? const _StopTrackShape() : null,
+        tickMarkShape: SliderTickMarkShape.noTickMark,
+        trackShape: const _StopTrackShape(),
       ),
       child: SizedBox(
         height: 24,
@@ -92,8 +102,8 @@ class _MainOrderAmountSliderState extends State<MainOrderAmountSlider> {
   }
 }
 
-/// Default rounded track plus the design's five stop dots, which Flutter only
-/// paints for a discrete slider.
+/// Default rounded track plus the design's five stops, painted in both the
+/// continuous and the snapping mode.
 class _StopTrackShape extends RoundedRectSliderTrackShape {
   const _StopTrackShape();
 
@@ -109,7 +119,7 @@ class _StopTrackShape extends RoundedRectSliderTrackShape {
     Offset? secondaryOffset,
     bool isDiscrete = false,
     bool isEnabled = false,
-    double additionalActiveTrackHeight = 2,
+    double additionalActiveTrackHeight = 0,
   }) {
     super.paint(
       context,
@@ -124,8 +134,6 @@ class _StopTrackShape extends RoundedRectSliderTrackShape {
       isEnabled: isEnabled,
       additionalActiveTrackHeight: additionalActiveTrackHeight,
     );
-    final tick = sliderTheme.tickMarkShape;
-    if (tick == null) return;
     final rect = getPreferredRect(
       parentBox: parentBox,
       offset: offset,
@@ -133,17 +141,24 @@ class _StopTrackShape extends RoundedRectSliderTrackShape {
       isEnabled: isEnabled,
       isDiscrete: isDiscrete,
     );
+    final ring = Paint()..color = TradeColors.background;
     for (var i = 0; i <= 4; i++) {
-      tick.paint(
-        context,
-        Offset(rect.left + rect.width * i / 4, rect.center.dy),
-        parentBox: parentBox,
-        sliderTheme: sliderTheme,
-        enableAnimation: enableAnimation,
-        textDirection: textDirection,
-        thumbCenter: thumbCenter,
-        isEnabled: isEnabled,
-      );
+      final center = Offset(rect.left + rect.width * i / 4, rect.center.dy);
+      final passed = textDirection == TextDirection.ltr
+          ? center.dx <= thumbCenter.dx
+          : center.dx >= thumbCenter.dx;
+      final fill = Paint()
+        ..color = passed
+            ? (isEnabled ? sliderTheme.activeTrackColor! : sliderTheme.disabledActiveTrackColor!)
+            : sliderTheme.inactiveTrackColor!;
+      // The first stop is the design's smaller 6px dot.
+      if (i == 0) {
+        context.canvas.drawCircle(center, 3, fill);
+        continue;
+      }
+      context.canvas
+        ..drawCircle(center, 6, ring)
+        ..drawCircle(center, 4, fill);
     }
   }
 }

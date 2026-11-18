@@ -7,6 +7,7 @@ import '../domain/live_order_attachment.dart';
 import '../domain/live_order_trigger.dart';
 import 'attached_exit_input_controls.dart';
 import 'live_order_embedded_controls.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 class LiveOrderAttachmentControls extends StatefulWidget {
   const LiveOrderAttachmentControls({
@@ -62,12 +63,14 @@ class _LiveOrderAttachmentControlsState extends State<LiveOrderAttachmentControl
               onChanged: !widget.enabled ? null : toggle,
             )
           else
-            SwitchListTile(
-              key: const Key('live-order-attached'),
-              contentPadding: EdgeInsets.zero,
-              title: Text(l10n.attachedOrderTitle),
-              value: selected,
-              onChanged: !widget.enabled ? null : toggle,
+            NoPressFeedback(
+              child: SwitchListTile(
+                key: const Key('live-order-attached'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.attachedOrderTitle),
+                value: selected,
+                onChanged: !widget.enabled ? null : toggle,
+              ),
             ),
           Visibility(
             visible: selected,
@@ -77,17 +80,19 @@ class _LiveOrderAttachmentControlsState extends State<LiveOrderAttachmentControl
               children: [
                 if (!widget.compact) Text(l10n.attachedOrderLifecycle),
                 if (!widget.compact)
-                  SwitchListTile(
-                    key: const Key('attached-advanced'),
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(l10n.attachedOrderAdvanced),
-                    value: advanced,
-                    onChanged: !widget.enabled
-                        ? null
-                        : (value) {
-                            setState(() => advanced = value);
-                            emit();
-                          },
+                  NoPressFeedback(
+                    child: SwitchListTile(
+                      key: const Key('attached-advanced'),
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(l10n.attachedOrderAdvanced),
+                      value: advanced,
+                      onChanged: !widget.enabled
+                          ? null
+                          : (value) {
+                              setState(() => advanced = value);
+                              emit();
+                            },
+                    ),
                   ),
                 for (final kind in LiveOrderTriggerKind.values.reversed)
                   AttachedExitInputControls(

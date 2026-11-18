@@ -8,6 +8,10 @@ class RpcDepositWalletRepository implements DepositWalletRepository {
   RpcDepositWalletRepository(this.service, {DateTime Function()? now}) : now = now ?? DateTime.now;
   final DepositRpcService service;
   final DateTime Function() now;
+
+  /// Reads per call when the checked block keeps changing underneath them.
+  static const maxAttempts = 3;
+
   @override
   Future<DepositWalletSnapshot> read({
     required String address,
@@ -18,6 +22,24 @@ class RpcDepositWalletRepository implements DepositWalletRepository {
       if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
     }
 
+    // A fast chain or load-balanced RPC can move the head mid-read. These are
+    // safe reads, so retry immediately on a fresh head; cancellation still
+    // stops the loop through [current].
+    for (var attempt = 1; ; attempt++) {
+      try {
+        return await _readOnce(address, query, current);
+      } on AccountReadFailure catch (failure) {
+        if (failure.key != 'depositRpcReorg' || attempt >= maxAttempts) rethrow;
+        current();
+      }
+    }
+  });
+
+  Future<DepositWalletSnapshot> _readOnce(
+    String address,
+    DepositWalletQuery query,
+    void Function() current,
+  ) async {
     try {
       final asset = query.asset, spender = depositVaults[query.asset.chainId];
       final ownerWord = rpcAddressWord(address);
@@ -99,5 +121,5 @@ class RpcDepositWalletRepository implements DepositWalletRepository {
     } on FormatException {
       throw const AccountReadFailure('depositRpcInvalid');
     }
-  });
+  }
 }

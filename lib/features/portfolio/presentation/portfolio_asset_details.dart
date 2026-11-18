@@ -201,17 +201,21 @@ class _AssetMetrics extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
+                  // Right-aligned to the card edge, not just after the label.
                   Flexible(
-                    child: AnimatedNumberText(
-                      value,
-                      key: ValueKey('asset-details-metric-$index'),
-                      softWrap: true,
-                      textAlign: TextAlign.right,
-                      style: PortfolioTypography.caption.copyWith(
-                        fontWeight: index == 2 ? FontWeight.w500 : FontWeight.w400,
-                        color: index == 2 && !hidden
-                            ? portfolioPnlColor(asset.pnlUsd)
-                            : PortfolioColors.text,
+                    child: Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: AnimatedNumberText(
+                        value,
+                        key: ValueKey('asset-details-metric-$index'),
+                        softWrap: true,
+                        textAlign: TextAlign.right,
+                        style: PortfolioTypography.caption.copyWith(
+                          fontWeight: index == 2 ? FontWeight.w500 : FontWeight.w400,
+                          color: index == 2 && !hidden
+                              ? portfolioPnlColor(asset.pnlUsd)
+                              : PortfolioColors.text,
+                        ),
                       ),
                     ),
                   ),

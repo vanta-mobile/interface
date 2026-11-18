@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
 import 'portfolio_components.dart';
+import '../../../core/theme.dart' show PressFeedback;
 
 /// Centered confirmation from the Open Orders design: blurred scrim, title,
 /// divider, message and a Cancel / Confirm pair. Resolves true on confirm.
@@ -162,7 +163,7 @@ class _PromptActions extends StatelessWidget {
       foregroundColor: foreground,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       textStyle: TradeTypography.action,
-    );
+    ).copyWith(overlayColor: PressFeedback.overlay);
     return Row(
       children: [
         Expanded(

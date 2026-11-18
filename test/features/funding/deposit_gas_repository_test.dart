@@ -71,7 +71,7 @@ void main() {
     response = normal;
     service = DepositRpcService(
       client: MockClient((request) async {
-        expect(request.url.toString(), depositRpcOrigins[query.asset.chainId]);
+        expect(request.url.toString(), depositRpcOrigins[query.asset.chainId]!.first);
         expect(request.followRedirects, false);
         final payload = jsonDecode(request.body) as Map<String, dynamic>;
         calls.add(payload);

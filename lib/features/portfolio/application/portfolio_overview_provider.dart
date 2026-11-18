@@ -70,10 +70,12 @@ final portfolioOverviewProvider = Provider<PortfolioOverview>((ref) {
 final portfolioPositionsProvider = Provider<List<PositionRisk>?>((ref) {
   if (ref.watch(portfolioPreviewProvider)) return portfolioPreviewPositions();
   if (ref.watch(authProvider.select((s) => s.identity)) == null) return const [];
-  return ref
-      .watch(positionRiskProvider.select((s) => s.account?.positions))
-      ?.where((p) => !p.balanceOnly)
-      .toList();
+  final (positions, depositRequired) = ref.watch(
+    positionRiskProvider.select((s) => (s.account?.positions, s.failure?.requiresDeposit == true)),
+  );
+  // An account Aster has not opened yet (no deposit) has no positions.
+  if (positions == null && depositRequired) return const [];
+  return positions?.where((p) => !p.balanceOnly).toList();
 });
 
 /// [calendarMonth] is the PnL calendar month currently shown, if any.

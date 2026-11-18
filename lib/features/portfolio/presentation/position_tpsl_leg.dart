@@ -11,6 +11,13 @@ class _LegInput {
   bool limit = false;
   LiveOrderPeg? peg;
 
+  /// The PnL/ROI box was typed last: a quantity change keeps it and derives
+  /// the trigger price from it, instead of overwriting it from the price.
+  bool estimateTyped = false;
+
+  /// PnL/ROI is entered unsigned; take profit gains, stop loss loses.
+  String get estimateSign => kind == LiveOrderTriggerKind.takeProfit ? '+' : '-';
+
   bool get active => trigger.text.trim().isNotEmpty;
   Decimal? get triggerPrice => parseOrderDecimal(trigger.text.trim());
   String? get limitPrice =>
@@ -25,12 +32,24 @@ class _LegInput {
     peg: partial && limit ? peg : null,
   );
 
-  void syncEstimate(_LegEstimate value) => estimate.text = value.text(triggerPrice) ?? '';
+  void syncEstimate(_LegEstimate value) {
+    estimateTyped = false;
+    estimate.text = value.text(triggerPrice) ?? '';
+  }
+
+  /// Sets the trigger price from the typed PnL/ROI. An estimate that cannot
+  /// be reached (or is empty) clears the price rather than leaving a stale one.
+  void syncTrigger(_LegEstimate value, LiveOrderContext? data) {
+    estimateTyped = true;
+    final text = estimate.text.trim();
+    trigger.text = text.isEmpty ? '' : value.price(data, '$estimateSign$text') ?? '';
+  }
 
   void clear() {
     trigger.clear();
     estimate.clear();
     limitInput.clear();
+    estimateTyped = false;
   }
 
   void dispose() {
@@ -70,7 +89,8 @@ class _LegEstimate {
             leverage: leverage,
             trigger: trigger,
           );
-    return value == null ? null : '${value > Decimal.zero ? '+' : ''}${value.toStringAsFixed(2)}';
+    // Unsigned: the box shows the leg's fixed sign before the value.
+    return value?.abs().toStringAsFixed(2);
   }
 
   /// Trigger price on the exchange tick for a typed estimate, or null.
@@ -147,14 +167,22 @@ class _LegSection extends StatelessWidget {
     final partial = scope == PositionTpSlScope.partial;
     final name = takeProfit ? 'tp' : 'sl';
     final pnlMode = estimate.mode == PositionTriggerInput.pnl;
+    // Both legs pick Mark/Last in the price box. The take-profit mode switch
+    // (limit vs trigger order) is out of scope this release (product, 11-18),
+    // so the title has no switch icon. Entire close labels Gain/Loss.
+    final basis = PositionSuffix(
+      key: Key('position-tpsl-$name-basis'),
+      label: leg.basis == LiveOrderTriggerBasis.mark
+          ? l10n.openOrdersMarkPrice
+          : l10n.openOrdersLastPrice,
+      tooltip: l10n.positionTpslTriggerTitle,
+      onTap: enabled ? () => _chooseBasis(context) : null,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         PositionTpSlSectionHeader(
           title: title,
-          inline: takeProfit
-              ? PositionTriggerSwitch(onTap: enabled ? () => _chooseBasis(context) : null)
-              : null,
           trailing: partial
               ? TradeCheckOption(
                   inline: true,
@@ -171,21 +199,14 @@ class _LegSection extends StatelessWidget {
         const SizedBox(height: 8),
         PositionTriggerRow(
           name: name,
-          priceLabel: takeProfit && leg.basis == LiveOrderTriggerBasis.mark
-              ? l10n.positionTpslMarkPrice
-              : l10n.positionTpslTriggerPrice,
+          priceLabel: l10n.positionTpslTriggerPrice,
           price: leg.trigger,
-          priceSuffix: takeProfit
-              ? Text(quoteAsset, style: TradeTypography.body)
-              : PositionSuffix(
-                  key: Key('position-tpsl-$name-basis'),
-                  label: leg.basis == LiveOrderTriggerBasis.mark
-                      ? l10n.openOrdersMarkPrice
-                      : l10n.openOrdersLastPrice,
-                  tooltip: l10n.positionTpslTriggerTitle,
-                  onTap: enabled ? () => _chooseBasis(context) : null,
-                ),
-          estimateLabel: pnlMode ? l10n.positionTpslPnl : l10n.positionTpslRoi,
+          priceSuffix: basis,
+          estimateLabel: !partial
+              ? (takeProfit ? l10n.positionTpslGain : l10n.positionTpslLoss)
+              : pnlMode
+              ? l10n.positionTpslPnl
+              : l10n.positionTpslRoi,
           estimate: leg.estimate,
           estimateSuffix: PositionSuffix(
             key: Key('position-tpsl-$name-mode'),
@@ -195,12 +216,9 @@ class _LegSection extends StatelessWidget {
           ),
           enabled: enabled,
           gap: partial && leg.limit ? 0 : 2,
+          estimateSign: leg.estimateSign,
           onPrice: () => onChanged(() => leg.syncEstimate(estimate)),
-          onEstimate: () => onChanged(() {
-            if (estimate.price(data, leg.estimate.text.trim()) case final price?) {
-              leg.trigger.text = price;
-            }
-          }),
+          onEstimate: () => onChanged(() => leg.syncTrigger(estimate, data)),
         ),
         if (partial && leg.limit) ...[
           const SizedBox(height: 6),

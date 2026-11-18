@@ -81,8 +81,6 @@ void main() {
     canSubmit: () => canSend,
     onStep: (_) {},
   );
-  Future<LiveOrderResult> recheck() =>
-      repository.recheck(intent: intent, isCurrent: () => true, onStep: (_) {});
 
   for (final explicit in [false, true]) {
     test('exact trailing POST then independent query, explicit activation=$explicit', () async {
@@ -137,14 +135,12 @@ void main() {
       });
     }
   }
-  test('timeout plus callback mismatch preserves query-only recovery', () async {
+  test('timeout plus normalized callback resolves by original-ID GET only', () async {
     postTimeout = true;
-    payload = {...payload, 'priceRate': '1.3'};
-    expect((await submit()).needsRecheck, true);
-    payload = liveQueryPayload(intent, status: 'FILLED');
-    expect((await recheck()).status, 'FILLED');
+    payload = {...liveQueryPayload(intent, status: 'FILLED'), 'priceRate': '1.3'};
+    expect((await submit()).status, 'FILLED');
     final orders = requests.where((r) => r.url.path.endsWith('/order')).toList();
-    expect(orders.map((r) => r.method), ['POST', 'GET', 'GET']);
+    expect(orders.map((r) => r.method), ['POST', 'GET']);
     expect(orders.last.url.queryParameters['origClientOrderId'], intent.clientOrderId);
     expect(Uri.splitQueryString(orders.first.body)['callbackRate'], '1.25');
   });

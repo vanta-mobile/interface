@@ -9,6 +9,7 @@ import '../data/aster_account_service.dart';
 import '../data/signed_open_order_strategy_repository.dart';
 import '../domain/aster_open_orders.dart';
 import '../domain/open_order_strategy.dart';
+import '../domain/account_snapshot.dart';
 import 'account_read_provider.dart';
 import 'open_orders_auto_read_provider.dart';
 import 'open_orders_provider.dart';
@@ -23,6 +24,40 @@ final openOrderStrategyRepositoryProvider = Provider<OpenOrderStrategyRepository
     authorization: ref.watch(asterRequestAuthorizationProvider),
   );
 });
+
+/// Every leg of the strategy behind [order] for the order-details sheet, read
+/// once per opening with `strategyOpenOrder` by its strategy ID. Without an
+/// active device grant it fails instead of prompting the wallet. A failure is
+/// shown, not retried; reopening the sheet reads again.
+final openOrderStrategyDetailsProvider = FutureProvider.autoDispose
+    .family<OpenOrderStrategy, ({AsterOpenOrder order, OpenOrderStrategy linked})>((
+      ref,
+      key,
+    ) async {
+      final (:order, linked: known) = key;
+      final address = ref.read(openOrdersReadProvider).account?.address;
+      if (address == null) throw const AccountReadFailure('accountDataInvalid');
+      if (activeTradingGrant(ref) == null) {
+        throw const AccountReadFailure('authorizationRequired');
+      }
+      var alive = true;
+      ref.onDispose(() => alive = false);
+      final strategy = await ref
+          .read(openOrderStrategyRepositoryProvider)
+          .read(
+            address: address,
+            order: order,
+            query: OpenOrderStrategyQuery(
+              parameters: {'strategyId': known.strategyId},
+              types: known.type == null ? const ['OTOCO', 'OTO'] : [known.type!],
+            ),
+            isCurrent: () => alive,
+          );
+      // A strategy no longer open, or legs the read could not validate.
+      if (strategy == null) throw const AccountReadFailure('openOrdersStrategyClosed');
+      if (strategy.legs.isEmpty) throw const AccountReadFailure('accountDataInvalid');
+      return strategy;
+    }, retry: (_, _) => null);
 
 /// TP/SL exits and strategy linkage of open orders, keyed `symbol:orderId`.
 /// Filled from the open-order rows when the exchange reports them, otherwise
@@ -128,6 +163,7 @@ OpenOrderStrategy _merge(OpenOrderStrategy? row, OpenOrderStrategy read) => Open
   sequence: read.sequence ?? row?.sequence,
   takeProfit: row?.takeProfit ?? read.takeProfit,
   stopLoss: row?.stopLoss ?? read.stopLoss,
+  legs: read.legs,
 );
 
 bool _sameEntries(Map<String, OpenOrderStrategy> a, Map<String, OpenOrderStrategy> b) =>

@@ -34,17 +34,17 @@ void main() {
     }
 
     await show('BTCUSDT');
-    expect(find.text('20×'), findsOneWidget);
+    expect(find.text('10×'), findsOneWidget);
     final l = AppLocalizations.of(t.element(find.byType(TradeAccountSettings)));
     expect(find.text(l.cross), findsOneWidget);
-    expect(find.text(l.assetModeMulti), findsOneWidget);
+    expect(find.text(l.assetModeSingleShort), findsOneWidget);
     await show('SUSHIUSDT');
     expect(find.text('5×'), findsOneWidget);
-    expect(find.text('20×'), findsNothing);
+    expect(find.text('10×'), findsNothing);
     await show('UNKNOWNUSDT');
     expect(find.text('—'), findsOneWidget);
     expect(find.text(l.cross), findsOneWidget);
-    expect(find.text(l.assetModeMulti), findsOneWidget);
+    expect(find.text(l.assetModeSingleShort), findsOneWidget);
     expect(t.takeException(), isNull);
   });
 }

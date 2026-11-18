@@ -11,6 +11,7 @@ import 'candle_chart.dart';
 import 'chart_indicator_sheet.dart';
 import 'chart_settings_sheets.dart';
 import 'trade_icon.dart';
+import '../../../../core/presentation/no_press_feedback.dart';
 
 // Rows of the Figma `chart` component (12.01 / 12.08). Each fills the height
 // its parent gives it, so the K-line tab and the trade-page panel can use the
@@ -51,16 +52,18 @@ class _RowOption extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     selected: selected,
     button: true,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        constraints: const BoxConstraints(minWidth: 32),
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TradeTypography.caption.copyWith(color: selected ? selectedColor : color),
+    child: NoPressFeedback(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          constraints: const BoxConstraints(minWidth: 32),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TradeTypography.caption.copyWith(color: selected ? selectedColor : color),
+          ),
         ),
       ),
     ),

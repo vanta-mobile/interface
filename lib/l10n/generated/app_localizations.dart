@@ -2106,7 +2106,7 @@ abstract class AppLocalizations {
   /// No description provided for @orderCancelConfirmHint.
   ///
   /// In en, this message translates to:
-  /// **'Cancel only the unfilled remainder of this perpetual order. Filled positions remain. Your current wallet will sign the cancellation, then a separate status query. Aster authorization is required.'**
+  /// **'Cancel only the unfilled remainder of this perpetual order. Filled positions remain. Your wallet signs the cancellation and the follow-up status check; Vanta runs the check automatically.'**
   String get orderCancelConfirmHint;
 
   /// No description provided for @orderCancelSigning.
@@ -2148,7 +2148,7 @@ abstract class AppLocalizations {
   /// No description provided for @orderCancelVerified.
   ///
   /// In en, this message translates to:
-  /// **'Aster confirmed this order is cancelled. Any filled position remains; account balances need refreshing.'**
+  /// **'Order cancelled. Any filled position remains.'**
   String get orderCancelVerified;
 
   /// No description provided for @orderCancelFilled.
@@ -3411,12 +3411,6 @@ abstract class AppLocalizations {
   /// **'Finish the pending futures settings operation before placing an order.'**
   String get liveOrderSettingsBusy;
 
-  /// No description provided for @liveOrderSubmitting.
-  ///
-  /// In en, this message translates to:
-  /// **'Submitting the live order…'**
-  String get liveOrderSubmitting;
-
   /// No description provided for @liveOrderMarkPrice.
   ///
   /// In en, this message translates to:
@@ -3452,12 +3446,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Client order reference'**
   String get liveOrderClientId;
-
-  /// No description provided for @liveOrderVerifiedResult.
-  ///
-  /// In en, this message translates to:
-  /// **'Signed query: {status}; executed quantity {executed}; order {orderId}.'**
-  String liveOrderVerifiedResult(String status, String executed, String orderId);
 
   /// No description provided for @liveOrderQueryScope.
   ///
@@ -3579,29 +3567,11 @@ abstract class AppLocalizations {
   /// **'The trigger price is already reached at this read. Adjust it according to the displayed direction and review again. Aster checks the actual price at submission.'**
   String get liveOrderTriggerImmediate;
 
-  /// No description provided for @liveOrderPolicyGtc.
-  ///
-  /// In en, this message translates to:
-  /// **'GTC'**
-  String get liveOrderPolicyGtc;
-
-  /// No description provided for @liveOrderPolicyIoc.
-  ///
-  /// In en, this message translates to:
-  /// **'IOC'**
-  String get liveOrderPolicyIoc;
-
   /// No description provided for @liveOrderPolicyPostOnly.
   ///
   /// In en, this message translates to:
   /// **'Post Only (GTX)'**
   String get liveOrderPolicyPostOnly;
-
-  /// No description provided for @liveOrderPolicyHidden.
-  ///
-  /// In en, this message translates to:
-  /// **'Hidden (HIDDEN)'**
-  String get liveOrderPolicyHidden;
 
   /// No description provided for @liveOrderPolicyGtcHint.
   ///
@@ -3638,12 +3608,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Direction'**
   String get liveOrderSide;
-
-  /// No description provided for @liveOrderType.
-  ///
-  /// In en, this message translates to:
-  /// **'Order type'**
-  String get liveOrderType;
 
   /// No description provided for @liveOrderInvalidQuantity.
   ///
@@ -3723,59 +3687,11 @@ abstract class AppLocalizations {
   /// **'This submits a real reduction order. Sign to recheck the position first, then sign to place the order and separately to query it. A changed quantity, entry price or configuration stops submission. Market price can move; limit execution follows the policy shown below. The exchange validates concurrent activity.'**
   String get liveCloseConfirmHint;
 
-  /// No description provided for @liveCloseResultScope.
-  ///
-  /// In en, this message translates to:
-  /// **'An order status does not prove that the entire position is closed. Sign separately to read the remaining position. This does not cancel other orders, and later activity can change the position again.'**
-  String get liveCloseResultScope;
-
-  /// No description provided for @liveCloseReadRemaining.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign to read remaining positions'**
-  String get liveCloseReadRemaining;
-
-  /// No description provided for @liveCloseRemaining.
-  ///
-  /// In en, this message translates to:
-  /// **'Remaining quantity at this read'**
-  String get liveCloseRemaining;
-
   /// No description provided for @liveOrderReduceHedge.
   ///
   /// In en, this message translates to:
   /// **'The reduceOnly parameter is unavailable in hedge mode. Use the position’s close action to reduce its LONG or SHORT side.'**
   String get liveOrderReduceHedge;
-
-  /// No description provided for @batchCloseAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Close all listed live positions'**
-  String get batchCloseAll;
-
-  /// No description provided for @batchCloseCurrent.
-  ///
-  /// In en, this message translates to:
-  /// **'Close all current-symbol live positions'**
-  String get batchCloseCurrent;
-
-  /// No description provided for @batchCloseCount.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirmed scope: {count} positions'**
-  String batchCloseCount(int count);
-
-  /// No description provided for @batchCloseStopped.
-  ///
-  /// In en, this message translates to:
-  /// **'Further submissions stopped. Unsubmitted positions require a fresh read and confirmation.'**
-  String get batchCloseStopped;
-
-  /// No description provided for @batchCloseRecheck.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign to query unconfirmed orders only'**
-  String get batchCloseRecheck;
 
   /// No description provided for @liveOrderReadFunds.
   ///
@@ -5316,7 +5232,7 @@ abstract class AppLocalizations {
   /// No description provided for @depositRpcReorg.
   ///
   /// In en, this message translates to:
-  /// **'The chain block changed during the read. Refresh to obtain a consistent snapshot.'**
+  /// **'The balance could not be read while the chain was updating. Pull down to try again.'**
   String get depositRpcReorg;
 
   /// No description provided for @depositAmountInvalid.
@@ -8766,7 +8682,7 @@ abstract class AppLocalizations {
   /// No description provided for @attachedOrderTargetSign.
   ///
   /// In en, this message translates to:
-  /// **'Enter a positive take-profit or negative stop-loss amount / ROI. Zero is not a target.'**
+  /// **'Enter a take-profit / stop-loss amount or ROI greater than zero.'**
   String get attachedOrderTargetSign;
 
   /// No description provided for @attachedOrderPreviewUnavailable.
@@ -8955,12 +8871,6 @@ abstract class AppLocalizations {
   /// **'The required conversion price is unavailable. Refresh the order snapshot or enter a base-asset quantity.'**
   String get liveAmountReferenceUnavailable;
 
-  /// No description provided for @liveAmountResolvedQuantity.
-  ///
-  /// In en, this message translates to:
-  /// **'Base quantity to submit'**
-  String get liveAmountResolvedQuantity;
-
   /// No description provided for @futuresHistoryTitle.
   ///
   /// In en, this message translates to:
@@ -9122,12 +9032,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Order submitted'**
   String get orderConfirmSubmitted;
-
-  /// No description provided for @orderConfirmExpired.
-  ///
-  /// In en, this message translates to:
-  /// **'Order details are no longer current. Close this dialog and place the order again.'**
-  String get orderConfirmExpired;
 
   /// No description provided for @scaledAmountInvalid.
   ///
@@ -9374,12 +9278,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Both sides independently assume a full fill using the same account and current prices. Opening cost includes incremental margin and opening loss. Liquidation estimates use the signed taker fee and risk tiers, holding other prices and collateral rates fixed; actual fills, fees and funding can differ. Missing facts or no positive estimate show —.'**
   String get liveCapacityEstimateHint;
-
-  /// No description provided for @liveCapacityPendingUnknown.
-  ///
-  /// In en, this message translates to:
-  /// **'Capacity is unavailable because the reserved notional of a pending order cannot be verified.'**
-  String get liveCapacityPendingUnknown;
 
   /// No description provided for @liveCapacityRatesUnavailable.
   ///
@@ -9696,19 +9594,19 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioPnlDetails.
   ///
   /// In en, this message translates to:
-  /// **'PnL details'**
+  /// **'Realized PnL details'**
   String get portfolioPnlDetails;
 
   /// No description provided for @portfolioTodayPnl.
   ///
   /// In en, this message translates to:
-  /// **'Today’s PnL'**
+  /// **'Today’s Realized PnL'**
   String get portfolioTodayPnl;
 
   /// No description provided for @portfolioPnl7d.
   ///
   /// In en, this message translates to:
-  /// **'PnL · 7D'**
+  /// **'Realized PnL · 7D'**
   String get portfolioPnl7d;
 
   /// No description provided for @portfolioVolume7d.
@@ -9716,12 +9614,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Volume · 7D'**
   String get portfolioVolume7d;
-
-  /// No description provided for @portfolioTransfer.
-  ///
-  /// In en, this message translates to:
-  /// **'Transfer between accounts'**
-  String get portfolioTransfer;
 
   /// No description provided for @portfolioMainAccount.
   ///
@@ -9786,13 +9678,13 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioMissingPnl.
   ///
   /// In en, this message translates to:
-  /// **'PnL data unavailable for this account'**
+  /// **'Realized PnL data unavailable for this account'**
   String get portfolioMissingPnl;
 
   /// No description provided for @portfolioMissingDay.
   ///
   /// In en, this message translates to:
-  /// **'Daily PnL unavailable'**
+  /// **'Daily Realized PnL unavailable'**
   String get portfolioMissingDay;
 
   /// No description provided for @portfolioMissingValue.
@@ -9816,7 +9708,7 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioMonthlyPnl.
   ///
   /// In en, this message translates to:
-  /// **'Monthly PnL'**
+  /// **'Monthly Realized PnL'**
   String get portfolioMonthlyPnl;
 
   /// No description provided for @vantaApiSignInAction.
@@ -9882,7 +9774,7 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioCalendarNote.
   ///
   /// In en, this message translates to:
-  /// **'Daily PnL uses UTC · Values in USD'**
+  /// **'Daily Realized PnL uses UTC · Values in USD'**
   String get portfolioCalendarNote;
 
   /// No description provided for @portfolioPreviousMonth.
@@ -9930,13 +9822,13 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioLast7Days.
   ///
   /// In en, this message translates to:
-  /// **'PnL · Last 7 days'**
+  /// **'Realized PnL · Last 7 days'**
   String get portfolioLast7Days;
 
   /// No description provided for @portfolioPnlPeriod.
   ///
   /// In en, this message translates to:
-  /// **'PnL · {period}'**
+  /// **'Realized PnL · {period}'**
   String portfolioPnlPeriod(String period);
 
   /// No description provided for @portfolioVolumePeriod.
@@ -9954,7 +9846,7 @@ abstract class AppLocalizations {
   /// No description provided for @portfolioDayUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'{date} · Daily PnL unavailable'**
+  /// **'{date} · Daily Realized PnL unavailable'**
   String portfolioDayUnavailable(String date);
 
   /// No description provided for @portfolioPositionsCount.
@@ -11199,6 +11091,156 @@ abstract class AppLocalizations {
   /// **'TP/SL'**
   String get tradeTpSl;
 
+  /// No description provided for @assetModeSingleShort.
+  ///
+  /// In en, this message translates to:
+  /// **'S'**
+  String get assetModeSingleShort;
+
+  /// No description provided for @assetModeMultiShort.
+  ///
+  /// In en, this message translates to:
+  /// **'M'**
+  String get assetModeMultiShort;
+
+  /// No description provided for @liveOrderTriggerReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Trigger price already reached. Please adjust.'**
+  String get liveOrderTriggerReached;
+
+  /// No description provided for @scaledPriceOutOfRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Price exceeds the allowed range'**
+  String get scaledPriceOutOfRange;
+
+  /// No description provided for @batchCloseDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed {count} positions.'**
+  String batchCloseDone(int count);
+
+  /// No description provided for @orderDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order details'**
+  String get orderDetailsTitle;
+
+  /// No description provided for @orderDetailsLeg.
+  ///
+  /// In en, this message translates to:
+  /// **'Order {letter}'**
+  String orderDetailsLeg(String letter);
+
+  /// No description provided for @orderDetailsPlacesBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'If order A is executed, orders B and C are placed.'**
+  String get orderDetailsPlacesBoth;
+
+  /// No description provided for @orderDetailsPlacesOne.
+  ///
+  /// In en, this message translates to:
+  /// **'If order A is executed, order B is placed.'**
+  String get orderDetailsPlacesOne;
+
+  /// No description provided for @orderDetailsCancelsC.
+  ///
+  /// In en, this message translates to:
+  /// **'If order B is executed, order C is canceled.'**
+  String get orderDetailsCancelsC;
+
+  /// No description provided for @orderDetailsCancelsB.
+  ///
+  /// In en, this message translates to:
+  /// **'If order C is executed, order B is canceled.'**
+  String get orderDetailsCancelsB;
+
+  /// No description provided for @orderDetailsClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This strategy is no longer open.'**
+  String get orderDetailsClosed;
+
+  /// No description provided for @orderDetailsSide.
+  ///
+  /// In en, this message translates to:
+  /// **'Side'**
+  String get orderDetailsSide;
+
+  /// No description provided for @orderDetailsAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get orderDetailsAmount;
+
+  /// No description provided for @orderDetailsStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get orderDetailsStop;
+
+  /// No description provided for @orderDetailsTpMarket.
+  ///
+  /// In en, this message translates to:
+  /// **'TP Market'**
+  String get orderDetailsTpMarket;
+
+  /// No description provided for @orderDetailsSlMarket.
+  ///
+  /// In en, this message translates to:
+  /// **'SL Market'**
+  String get orderDetailsSlMarket;
+
+  /// No description provided for @orderDetailsTpLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'TP Limit'**
+  String get orderDetailsTpLimit;
+
+  /// No description provided for @orderDetailsSlLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'SL Limit'**
+  String get orderDetailsSlLimit;
+
+  /// No description provided for @tradeHedgeOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get tradeHedgeOpen;
+
+  /// No description provided for @tradeHedgeClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get tradeHedgeClose;
+
+  /// No description provided for @tradeOpenLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Long'**
+  String get tradeOpenLong;
+
+  /// No description provided for @tradeOpenShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Short'**
+  String get tradeOpenShort;
+
+  /// No description provided for @tradeCloseLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Long'**
+  String get tradeCloseLong;
+
+  /// No description provided for @tradeCloseShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Short'**
+  String get tradeCloseShort;
+
   /// No description provided for @tradeHiddenOrder.
   ///
   /// In en, this message translates to:
@@ -11384,24 +11426,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Min {amount}'**
   String liveOrderMinimumPlaceholder(String amount);
-
-  /// No description provided for @notificationFilterAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All'**
-  String get notificationFilterAll;
-
-  /// No description provided for @notificationFilterTransfers.
-  ///
-  /// In en, this message translates to:
-  /// **'Transfers'**
-  String get notificationFilterTransfers;
-
-  /// No description provided for @notificationFilterOrders.
-  ///
-  /// In en, this message translates to:
-  /// **'Orders'**
-  String get notificationFilterOrders;
 
   /// No description provided for @notificationUnreadOnly.
   ///
@@ -11884,18 +11908,6 @@ abstract class AppLocalizations {
   /// **'Aster returned an order reference, symbol or side that does not match this order.'**
   String get orderResponseIdentityMismatch;
 
-  /// No description provided for @orderResponseLinkageMismatch.
-  ///
-  /// In en, this message translates to:
-  /// **'Aster returned TP/SL links that do not match this order.'**
-  String get orderResponseLinkageMismatch;
-
-  /// No description provided for @orderResponseTermsMismatch.
-  ///
-  /// In en, this message translates to:
-  /// **'Aster returned a price, quantity or execution setting that does not match this order.'**
-  String get orderResponseTermsMismatch;
-
   /// No description provided for @orderResponseStatusInvalid.
   ///
   /// In en, this message translates to:
@@ -12046,12 +12058,6 @@ abstract class AppLocalizations {
   /// **'Mark price'**
   String get positionTpslMarkPrice;
 
-  /// No description provided for @positionTpslSwitchBasis.
-  ///
-  /// In en, this message translates to:
-  /// **'Switch take-profit trigger price type'**
-  String get positionTpslSwitchBasis;
-
   /// No description provided for @positionTpslPnl.
   ///
   /// In en, this message translates to:
@@ -12063,6 +12069,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'ROI'**
   String get positionTpslRoi;
+
+  /// No description provided for @positionTpslGain.
+  ///
+  /// In en, this message translates to:
+  /// **'Gain'**
+  String get positionTpslGain;
+
+  /// No description provided for @positionTpslLoss.
+  ///
+  /// In en, this message translates to:
+  /// **'Loss'**
+  String get positionTpslLoss;
 
   /// No description provided for @positionTpslAmount.
   ///
@@ -12772,12 +12790,6 @@ abstract class AppLocalizations {
   /// **'{type, select, fill{Order Filled} trigger{Conditional Order Triggered} order{Order Updated} liquidation{Liquidation} marginCall{Margin Call} funding{Funding Fee} transfer{Transfer Update} announce{Announcement} maintenance{Maintenance} other{Notification}}'**
   String notificationApiType(String type);
 
-  /// No description provided for @incomeArchiveReferenceConflict.
-  ///
-  /// In en, this message translates to:
-  /// **'Income records of different types share a transaction reference. The archive cannot safely deduplicate them; reporting has stopped.'**
-  String get incomeArchiveReferenceConflict;
-
   /// No description provided for @notificationApiField.
   ///
   /// In en, this message translates to:
@@ -12787,14 +12799,14 @@ abstract class AppLocalizations {
   /// No description provided for @pushVisibilityTitle.
   ///
   /// In en, this message translates to:
-  /// **'Background notifications unavailable'**
+  /// **'System notifications unavailable'**
   String get pushVisibilityTitle;
 
-  /// No description provided for @pushNoServerVisibility.
+  /// No description provided for @portfolioRealizedPnl.
   ///
   /// In en, this message translates to:
-  /// **'The notification server cannot observe this account. You will not receive account notifications while the app is closed.'**
-  String get pushNoServerVisibility;
+  /// **'Realized PnL'**
+  String get portfolioRealizedPnl;
 
   /// No description provided for @assistantRemainingToday.
   ///
@@ -13149,12 +13161,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Funding Fees'**
   String get pushFundingFees;
-
-  /// No description provided for @pushTransfers.
-  ///
-  /// In en, this message translates to:
-  /// **'Deposits & Withdrawals'**
-  String get pushTransfers;
 
   /// No description provided for @pushAnnouncements.
   ///

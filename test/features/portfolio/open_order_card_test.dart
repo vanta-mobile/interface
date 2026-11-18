@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/application/open_order_strategies_provider.dart';
 import 'package:vanta/features/portfolio/application/order_explorer_provider.dart';
 import 'package:vanta/features/portfolio/domain/aster_account.dart';
 import 'package:vanta/features/portfolio/domain/aster_open_orders.dart';
@@ -42,6 +45,7 @@ Future<void> _pump(
   Widget card, {
   Locale locale = const Locale('en'),
   List<Uri>? launched,
+  Future<OpenOrderStrategy> Function()? details,
 }) => tester.pumpWidget(
   ProviderScope(
     overrides: [
@@ -49,6 +53,7 @@ Future<void> _pump(
         launched?.add(uri);
         return true;
       }),
+      if (details != null) openOrderStrategyDetailsProvider.overrideWith((ref, key) => details()),
     ],
     child: MaterialApp(
       locale: locale,
@@ -221,5 +226,78 @@ void main() {
     expect(find.text('77'), findsOneWidget);
     await _pump(tester, AsterOpenOrderCard(order: _order()));
     expect(find.text('TP/SL'), findsNothing);
+  });
+
+  OpenOrderStrategyLeg leg(int sequence, String type, String status, {bool buy = false}) =>
+      OpenOrderStrategyLeg(
+        sequence: sequence,
+        type: type,
+        status: status,
+        buy: buy,
+        quantity: Decimal.parse('0.03'),
+        stopPrice: sequence == 1 ? null : Decimal.parse(sequence == 2 ? '375.22' : '280.5'),
+        reduceOnly: sequence != 1,
+      );
+  final exit = _order(type: 'TAKE_PROFIT_MARKET', side: 'SELL', price: '0', stop: '375.22');
+  const linked = OpenOrderStrategy(strategyId: '39842202', type: 'OTOCO', sequence: 2);
+
+  testWidgets('linked order opens the strategy details sheet (design 331:77732)', (tester) async {
+    await _pump(
+      tester,
+      AsterOpenOrderCard(order: exit, strategy: linked),
+      details: () async => OpenOrderStrategy(
+        strategyId: '39842202',
+        type: 'OTOCO',
+        sequence: 2,
+        legs: [
+          leg(1, 'MARKET', 'FILLED', buy: true),
+          leg(2, 'TAKE_PROFIT_MARKET', 'NEW'),
+          leg(3, 'STOP_MARKET', 'NEW'),
+        ],
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('open-order-link-39842202')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('open-order-strategy-sheet')), findsOneWidget);
+    expect(find.text('Order details'), findsOneWidget);
+    for (final name in ['Order A', 'Order B', 'Order C']) {
+      expect(find.text(name), findsOneWidget);
+    }
+    expect(find.text('If order A is executed, orders B and C are placed.'), findsOneWidget);
+    expect(find.text('If order B is executed, order C is canceled.'), findsOneWidget);
+    expect(find.text('If order C is executed, order B is canceled.'), findsOneWidget);
+    final entry = find.byKey(const ValueKey('open-order-strategy-leg-1'));
+    expect(find.descendant(of: entry, matching: find.text('Market')), findsOneWidget);
+    expect(find.descendant(of: entry, matching: find.text('Long')), findsOneWidget);
+    expect(find.descendant(of: entry, matching: find.text('Reduce only')), findsOneWidget);
+    final tp = find.byKey(const ValueKey('open-order-strategy-leg-2'));
+    expect(find.descendant(of: tp, matching: find.text('TP Market')), findsOneWidget);
+    expect(find.descendant(of: tp, matching: find.text('New')), findsOneWidget);
+    expect(find.descendant(of: tp, matching: find.text('Short')), findsOneWidget);
+    expect(find.descendant(of: tp, matching: find.text('0.03 AAPL')), findsOneWidget);
+    expect(find.descendant(of: tp, matching: find.text('375.22')), findsOneWidget);
+    final sl = find.byKey(const ValueKey('open-order-strategy-leg-3'));
+    expect(find.descendant(of: sl, matching: find.text('SL Market')), findsOneWidget);
+    // Exit cards are indented below the entry, as designed.
+    expect(tester.getTopLeft(tp).dx, greaterThan(tester.getTopLeft(entry).dx));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('details sheet shows loading, then a strategy that is no longer open', (
+    tester,
+  ) async {
+    final pending = Completer<OpenOrderStrategy>();
+    await _pump(
+      tester,
+      AsterOpenOrderCard(order: exit, strategy: linked),
+      details: () => pending.future,
+    );
+    await tester.tap(find.byKey(const ValueKey('open-order-link-39842202')));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const Key('open-order-strategy-loading')), findsOneWidget);
+    pending.completeError(const AccountReadFailure('openOrdersStrategyClosed'));
+    await tester.pumpAndSettle();
+    expect(find.text('This strategy is no longer open.'), findsOneWidget);
+    expect(find.byKey(const Key('open-order-strategy-loading')), findsNothing);
   });
 }

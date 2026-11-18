@@ -10,6 +10,7 @@ import '../domain/live_order_attachment.dart';
 import '../domain/live_order_trigger.dart';
 import 'attached_exit_preview.dart';
 import 'live_order_embedded_triggers.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 class AttachedExitInputControls extends StatefulWidget {
   const AttachedExitInputControls({
@@ -119,17 +120,19 @@ class _AttachedExitInputControlsState extends State<AttachedExitInputControls> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CheckboxListTile(
-          key: Key('attached-$name-enabled'),
-          contentPadding: EdgeInsets.zero,
-          title: Text(label),
-          value: selected,
-          onChanged: !widget.enabled
-              ? null
-              : (value) {
-                  selected = value ?? false;
-                  changed();
-                },
+        NoPressFeedback(
+          child: CheckboxListTile(
+            key: Key('attached-$name-enabled'),
+            contentPadding: EdgeInsets.zero,
+            title: Text(label),
+            value: selected,
+            onChanged: !widget.enabled
+                ? null
+                : (value) {
+                    selected = value ?? false;
+                    changed();
+                  },
+          ),
         ),
         if (selected) ...[
           _valueControls(l10n),
@@ -142,17 +145,19 @@ class _AttachedExitInputControlsState extends State<AttachedExitInputControls> {
             derived: mode != AttachedExitInputMode.price,
           ),
           if (issue != null) Text(issue, style: const TextStyle(color: AppColors.negative)),
-          CheckboxListTile(
-            key: Key('attached-$name-protect'),
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.attachedOrderPriceProtect),
-            value: protect,
-            onChanged: !widget.enabled
-                ? null
-                : (value) {
-                    protect = value ?? false;
-                    changed();
-                  },
+          NoPressFeedback(
+            child: CheckboxListTile(
+              key: Key('attached-$name-protect'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.attachedOrderPriceProtect),
+              value: protect,
+              onChanged: !widget.enabled
+                  ? null
+                  : (value) {
+                      protect = value ?? false;
+                      changed();
+                    },
+            ),
           ),
         ],
       ],

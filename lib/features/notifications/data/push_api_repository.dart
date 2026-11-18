@@ -1,6 +1,5 @@
 import 'package:decimal/decimal.dart';
 
-import '../../../core/errors/api_error_parser.dart';
 import '../../../core/vanta_api/vanta_api_failure.dart';
 import '../../auth/data/vanta_api_session_repository.dart';
 import '../domain/push_device.dart';
@@ -19,7 +18,6 @@ class PushApiRepository {
         devices: devices,
         preferences: mapPushPreferences(prefs),
         reason: _optionalText(json['reason']),
-        note: safeApiMessage(json['note']),
       );
     });
   }

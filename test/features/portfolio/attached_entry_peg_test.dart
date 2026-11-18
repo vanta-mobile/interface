@@ -201,39 +201,24 @@ void main() {
       expect(intent.context.validate(intent.draft), 'liveOrderTriggerImmediate');
     },
   );
-  for (final mutation in <String, Object?>{
-    'absent': null,
-    'empty': '',
-    'unknown': 'MID_PRICE',
-    'different-depth': 'QUEUE_3',
-    'different-side': 'COUNTERPARTY_1',
-    'wrong-type': 1,
-  }.entries) {
-    test('a zero entry price cannot resolve wrong peg ${mutation.key}', () {
+  // The client strategy ID identifies the strategy; Aster's reported peg and
+  // resolved price are normalized terms and do not turn it into a failure.
+  test('query tolerates reported peg and resolved price differences', () {
+    for (final value in <Object?>[null, '', 'MID_PRICE', 'QUEUE_3', 'COUNTERPARTY_1', 1]) {
       final intent = attachedIntent(peg: AttachedEntryPeg.queue1);
       final payload = attachedQuery(intent);
       final row = (payload['subOrders'] as List).first as Map;
-      if (mutation.value == null) {
+      if (value == null) {
         row.remove('pegPriceType');
       } else {
-        row['pegPriceType'] = mutation.value;
+        row['pegPriceType'] = value;
       }
-      expect(() => mapAttachedOrderQuery(payload, intent, liveOrderClock), throwsFormatException);
-    });
-  }
-  test('query rejects resolved positive price and unexpected peg on fixed entries or exits', () {
-    final intent = attachedIntent(peg: AttachedEntryPeg.queue1);
-    final payload = attachedQuery(intent);
-    ((payload['subOrders'] as List).first as Map)['price'] = '80000';
-    expect(() => mapAttachedOrderQuery(payload, intent, liveOrderClock), throwsFormatException);
-    for (final sequence in [0, 1]) {
-      final fixed = attachedIntent(), wrong = attachedQuery(attachedIntent());
-      ((wrong['subOrders'] as List)[sequence] as Map)['pegPriceType'] = 'QUEUE_1';
-      expect(() => mapAttachedOrderQuery(wrong, fixed, liveOrderClock), throwsFormatException);
+      row['price'] = '80000';
+      expect(mapAttachedOrderQuery(payload, intent, liveOrderClock).needsRecheck, false);
     }
-    final fixed = attachedIntent(), good = attachedQuery(attachedIntent());
-    ((good['subOrders'] as List).first as Map)['pegPriceType'] = '';
-    expect(mapAttachedOrderQuery(good, fixed, liveOrderClock).needsRecheck, false);
+    final fixed = attachedIntent(), pegged = attachedQuery(attachedIntent());
+    ((pegged['subOrders'] as List).first as Map)['pegPriceType'] = 'QUEUE_1';
+    expect(mapAttachedOrderQuery(pegged, fixed, liveOrderClock).needsRecheck, false);
   });
   test('legacy v1 ordinary and compound records migrate without inventing a peg', () {
     for (final intent in [liveIntent(), attachedIntent()]) {

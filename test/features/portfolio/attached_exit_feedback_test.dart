@@ -53,7 +53,11 @@ void main() {
         expect(find.text(dependencyIssue), findsNothing);
         expect(find.textContaining(l.liveOrderInvalidQuantity), findsNothing);
         expect(tester.widget<TextField>(field).controller!.text, '2');
+        // Signs cannot be typed: '-2' stays '2'. Zero is the remaining input error.
         await tester.enterText(field, '-2');
+        await tester.pump();
+        expect(tester.widget<TextField>(field).controller!.text, '2');
+        await tester.enterText(field, '0');
         await tester.pump();
         final invalid = l.attachedOrderExitIssue(
           l.attachedOrderTakeProfit,

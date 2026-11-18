@@ -44,7 +44,7 @@ class AuthLegalNotice extends StatelessWidget {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.standard,
                           textStyle: AuthTypography.caption.copyWith(fontWeight: FontWeight.w700),
-                        ),
+                        ).copyWith(overlayColor: PressFeedback.overlay),
                         child: Text(
                           terms ? l.authTermsOfUse : l.authPrivacyPolicy,
                           textAlign: TextAlign.center,

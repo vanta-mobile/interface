@@ -1,4 +1,5 @@
 import '../../../core/network/request_scope.dart';
+import '../../auth/domain/wallet_signing_preparation.dart';
 import '../../portfolio/data/aster_account_service.dart';
 import '../../portfolio/data/aster_spot_service.dart';
 import '../../portfolio/data/aster_read_service.dart';
@@ -22,12 +23,27 @@ class SignedInternalTransferRepository implements InternalTransferRepository {
     this.catalog,
     this.sign, {
     required this.nonces,
+    this.authorization,
+    this.signingPreparation,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
   final AsterAccountService futures;
   final AsterSpotService spot;
   final InternalTransferCatalogService catalog;
   final AccountRequestSigner sign;
+
+  /// Signs the account reads (chain 1666) as the authorized device agent;
+  /// external wallets refuse a domain chain that is not their active network.
+  final AccountRequestAuthorization? authorization;
+
+  /// Selects the envelope signing network before the transfer nonce.
+  final WalletSigningPreparation? signingPreparation;
+
+  /// Trial, as for withdrawals: TRANSFER moves assets out of an account, which
+  /// an agent without `canWithdraw` is expected to be refused, and that grant
+  /// requires an IP whitelist. The owner signs the transfer on BNB Chain and
+  /// declares it as `signatureChainId`; live acceptance is unverified.
+  static const envelopeSignatureChainId = 56;
   final AsterReadNonces nonces;
   final DateTime Function() now;
   bool _fresh(InternalTransferContext c) {
@@ -54,6 +70,7 @@ class SignedInternalTransferRepository implements InternalTransferRepository {
       serverTime: service.serverTime,
       send: send,
       sign: sign,
+      authorization: authorization,
       nonces: nonces,
       signatureLifetime: const Duration(seconds: 30),
     ).read(address: address, isCurrent: isCurrent, onStep: (_) {});
@@ -113,6 +130,13 @@ class SignedInternalTransferRepository implements InternalTransferRepository {
     if (fresh.terms != c.terms || fresh.validate(review.amount) != null) {
       throw const AccountReadFailure('internalTransferChanged');
     }
+    // Network approval may need its own prompt; finish it before the nonce.
+    await signingPreparation?.prepareSigning(
+      expectedAddress: c.address,
+      chainId: envelopeSignatureChainId,
+      isCurrent: canSubmit,
+    );
+    check();
     final serverTime = await futures.serverTime();
     check();
     final nonce = nonces.next(serverTime);
@@ -128,10 +152,14 @@ class SignedInternalTransferRepository implements InternalTransferRepository {
         'nonce': '$nonce',
         'user': c.address,
         'signer': c.address,
+        'signatureChainId': '$envelopeSignatureChainId',
       },
     ).query;
     final stopwatch = Stopwatch()..start();
-    final signature = await sign(expectedAddress: c.address, typedData: asterReadTypedData(query));
+    final signature = await sign(
+      expectedAddress: c.address,
+      typedData: asterReadTypedData(query, chainId: envelopeSignatureChainId),
+    );
     check();
     if (!RegExp(r'^0x[a-fA-F0-9]{130}$').hasMatch(signature)) {
       throw const AccountReadFailure('authWalletSignature');

@@ -60,10 +60,12 @@ class PortfolioAccountValue extends StatelessWidget {
         ),
         LayoutBuilder(
           builder: (context, constraints) {
+            // Design 329:33130 keeps the 112px sparkline beside the value at
+            // phone width (about 329px); narrower or enlarged text drops it.
             final showSparkline =
                 visible &&
                 p.history.length >= 2 &&
-                constraints.maxWidth >= 350 &&
+                constraints.maxWidth >= 300 &&
                 MediaQuery.textScalerOf(context).scale(1) <= 1.2;
             return Row(
               children: [

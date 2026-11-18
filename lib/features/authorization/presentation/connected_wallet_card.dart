@@ -167,7 +167,7 @@ class _WalletConnectionDetails extends StatelessWidget {
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             alignment: Alignment.centerLeft,
             textStyle: AuthTypography.caption,
-          ),
+          ).copyWith(overlayColor: PressFeedback.overlay),
           child: Text(l.enableTradingUseAnother),
         ),
       ],

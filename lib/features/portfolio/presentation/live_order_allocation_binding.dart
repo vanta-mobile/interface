@@ -2,6 +2,9 @@ part of 'live_order_form.dart';
 
 /// Account facts that moved after the last read (fills, margin, settings).
 /// A direction click re-reads and quotes again instead of stopping on these.
+/// Shown under the trigger field (design 1649:27293) rather than as a toast.
+const _triggerReachedKey = 'liveOrderTriggerImmediate';
+
 const _changedFacts = {
   'liveCapacityChanged',
   'liveCapacityStale',
@@ -65,9 +68,7 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
         ref.read(liveOrderProvider).busy) {
       return;
     }
-    final side = _allocationSide(
-      rawDraft(attaching ? LiveOrderAttachment(entryPeg: market ? null : entryPeg) : null),
-    );
+    final side = _allocationSide(rawDraft(_entryAttachment));
     // Keep the previous display during an unsuccessful refresh. It cannot be
     // submitted without a fresh resolution; never relabel an old unit value.
     final text = _allocationPercent == 0
@@ -132,7 +133,6 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
     quantity.text,
     quoteAmount.text,
     attachment,
-    entryPeg,
     widget.data.address,
     widget.data.symbol,
     _allocationPercent,
@@ -147,10 +147,10 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
       isFormCurrent: () => mounted && _formTerms == terms,
       input: MainOrderReviewInput(
         // A retained BBO entry choice does not apply to a market entry.
-        draft: rawDraft(attaching ? LiveOrderAttachment(entryPeg: market ? null : entryPeg) : null),
+        draft: rawDraft(_entryAttachment),
         size: _manualSizeInput,
         percent: _allocationPercent,
-        attachment: attaching ? attachment : null,
+        attachment: _compound ? _filledAttachment : null,
       ),
     );
     if (!mounted) return;
@@ -163,6 +163,10 @@ extension _LiveOrderAllocationBinding on _LiveOrderFormState {
         final side = buy;
         if (!await _refreshForReview(side) || !mounted || _formTerms != terms) return;
         return _reviewAllocated(direction: side, retried: true);
+      }
+      if (failure?.key == _triggerReachedKey) {
+        _render(() => _triggerReachedTerms = terms);
+        return;
       }
       // A clicked review reports its cause until dismissed, not inline where
       // the next background renewal would clear it.

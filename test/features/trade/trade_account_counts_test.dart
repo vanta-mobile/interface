@@ -46,6 +46,9 @@ Future<({ProviderContainer container, NavigationIdentity identity})> mount(
     tradingAgentStore: store!,
     language: const Locale('en'),
   );
+  // The book now ends with the order form, so a shorter screen keeps the
+  // account tabs below the fold as this test requires.
+  t.view.physicalSize = const Size(390, 670);
   await launch(t, c);
   for (var i = 0; i < 50 && c.read(tradingAgentProvider).isLoading; i++) {
     await t.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 10)));

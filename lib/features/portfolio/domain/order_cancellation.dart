@@ -109,10 +109,18 @@ class BatchCancellationState {
 
 /// Captured before confirmation; a logout/reconnect invalidates the revision.
 class OrderCancelIntent {
-  const OrderCancelIntent({required this.address, required this.order, required this.revision});
+  const OrderCancelIntent({
+    required this.address,
+    required this.order,
+    required this.revision,
+    this.events = 0,
+  });
   final String address;
   final AsterOpenOrder order;
   final int revision;
+
+  /// Order-event revision when the confirmation was prepared.
+  final int events;
 }
 
 class OrderCancellationState {

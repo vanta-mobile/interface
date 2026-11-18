@@ -15,6 +15,7 @@ import 'asset_identity.dart';
 import '../application/asset_metadata_provider.dart';
 import '../domain/asset_metadata.dart';
 import '../../../core/presentation/status_view.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 class SpotBalanceRows extends ConsumerStatefulWidget {
   const SpotBalanceRows({super.key, required this.account, this.accountStale = false});
@@ -62,20 +63,24 @@ class _SpotBalanceRowsState extends ConsumerState<SpotBalanceRows> {
           ),
           onChanged: (value) => setState(() => query = value.trim().toLowerCase()),
         ),
-        CheckboxListTile(
-          key: const Key('spot-hide-zero-balance'),
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.accountHideZero),
-          value: hideZero,
-          onChanged: (value) => setState(() => hideZero = value ?? true),
+        NoPressFeedback(
+          child: CheckboxListTile(
+            key: const Key('spot-hide-zero-balance'),
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.accountHideZero),
+            value: hideZero,
+            onChanged: (value) => setState(() => hideZero = value ?? true),
+          ),
         ),
-        CheckboxListTile(
-          key: const Key('spot-hide-low-balance'),
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.assetValueHideLow),
-          subtitle: Text(l10n.assetValueHideLowScope),
-          value: hideLow,
-          onChanged: (value) => setState(() => hideLow = value ?? false),
+        NoPressFeedback(
+          child: CheckboxListTile(
+            key: const Key('spot-hide-low-balance'),
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.assetValueHideLow),
+            subtitle: Text(l10n.assetValueHideLowScope),
+            value: hideLow,
+            onChanged: (value) => setState(() => hideLow = value ?? false),
+          ),
         ),
         if (balances.isEmpty)
           StatusEmptyView(

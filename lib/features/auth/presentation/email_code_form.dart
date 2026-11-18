@@ -80,7 +80,7 @@ class _EmailCodeFormState extends ConsumerState<EmailCodeForm> {
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.authAccent,
                 textStyle: AuthTypography.caption,
-              ),
+              ).copyWith(overlayColor: PressFeedback.overlay),
               child: Text(l10n.changeEmail),
             ),
           ],
@@ -135,7 +135,7 @@ class _EmailCodeFormState extends ConsumerState<EmailCodeForm> {
             foregroundColor: AppColors.authSecondary,
             disabledForegroundColor: AppColors.authSecondary,
             textStyle: AuthTypography.caption,
-          ),
+          ).copyWith(overlayColor: PressFeedback.overlay),
           child: _resending && session.busy
               ? const SizedBox.square(
                   dimension: 20,

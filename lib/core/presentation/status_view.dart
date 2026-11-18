@@ -200,7 +200,7 @@ class _StatusActionButtonState extends State<StatusActionButton> {
           side: const BorderSide(color: StatusColors.actionBorder),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: StatusTypography.action,
-        ),
+        ).copyWith(overlayColor: PressFeedback.overlay),
         child: loading
             ? const SizedBox.square(
                 key: Key('status-action-loading'),

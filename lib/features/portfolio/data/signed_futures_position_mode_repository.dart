@@ -86,26 +86,32 @@ class SignedFuturesPositionModeRepository implements FuturesPositionModeReposito
     var submitted = false;
     AccountReadFailure? submitFailure;
     try {
-      await _request(({required query, required signature}) {
-        if (!canSubmit()) throw const AccountReadFailure('positionModeContextExpired');
-        submitted = true;
-        onStep(PositionModeStep.submitting);
-        return service.changePositionMode(query: query, signature: signature);
-      }).read(
-        address: intent.context.address,
-        parameters: {'dualSidePosition': intent.target.parameter},
-        isCurrent: isCurrent,
-        onStep: (step) {
-          if (!canSubmit()) throw const AccountReadFailure('positionModeContextExpired');
-          if (step != AccountReadStep.loading) {
-            onStep(
-              step == AccountReadStep.signing
-                  ? PositionModeStep.signing
-                  : PositionModeStep.preparing,
-            );
-          }
-        },
-      );
+      final payload =
+          await _request(({required query, required signature}) {
+            if (!canSubmit()) throw const AccountReadFailure('positionModeContextExpired');
+            submitted = true;
+            onStep(PositionModeStep.submitting);
+            return service.changePositionMode(query: query, signature: signature);
+          }).read(
+            address: intent.context.address,
+            parameters: {'dualSidePosition': intent.target.parameter},
+            isCurrent: isCurrent,
+            onStep: (step) {
+              if (!canSubmit()) throw const AccountReadFailure('positionModeContextExpired');
+              if (step != AccountReadStep.loading) {
+                onStep(
+                  step == AccountReadStep.signing
+                      ? PositionModeStep.signing
+                      : PositionModeStep.preparing,
+                );
+              }
+            },
+          );
+      // An explicit success response is the result; only an unconfirmed
+      // outcome is read back.
+      if (payload is Map<String, dynamic> && '${payload['code']}' == '200') {
+        return PositionModeResult(observed: intent.target, checkedAt: now());
+      }
     } on AccountReadFailure catch (failure) {
       if (!submitted || !isCurrent()) rethrow;
       submitFailure = AccountReadFailure(

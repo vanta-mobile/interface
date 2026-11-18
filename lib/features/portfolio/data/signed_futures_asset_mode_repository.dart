@@ -98,24 +98,30 @@ class SignedFuturesAssetModeRepository implements FuturesAssetModeRepository {
     var submitted = false;
     AccountReadFailure? submitFailure;
     try {
-      await _request(({required query, required signature}) {
-        if (!canSubmit()) throw const AccountReadFailure('assetModeContextExpired');
-        submitted = true;
-        onStep(AssetModeStep.submitting);
-        return service.changeAssetMode(query: query, signature: signature);
-      }).read(
-        address: intent.context.address,
-        parameters: {'multiAssetsMargin': intent.target.parameter},
-        isCurrent: isCurrent,
-        onStep: (step) {
-          if (!canSubmit()) throw const AccountReadFailure('assetModeContextExpired');
-          if (step != AccountReadStep.loading) {
-            onStep(
-              step == AccountReadStep.signing ? AssetModeStep.signing : AssetModeStep.preparing,
-            );
-          }
-        },
-      );
+      final payload =
+          await _request(({required query, required signature}) {
+            if (!canSubmit()) throw const AccountReadFailure('assetModeContextExpired');
+            submitted = true;
+            onStep(AssetModeStep.submitting);
+            return service.changeAssetMode(query: query, signature: signature);
+          }).read(
+            address: intent.context.address,
+            parameters: {'multiAssetsMargin': intent.target.parameter},
+            isCurrent: isCurrent,
+            onStep: (step) {
+              if (!canSubmit()) throw const AccountReadFailure('assetModeContextExpired');
+              if (step != AccountReadStep.loading) {
+                onStep(
+                  step == AccountReadStep.signing ? AssetModeStep.signing : AssetModeStep.preparing,
+                );
+              }
+            },
+          );
+      // An explicit success response is the result; only an unconfirmed
+      // outcome is read back.
+      if (payload is Map<String, dynamic> && '${payload['code']}' == '200') {
+        return AssetModeResult(observed: intent.target, checkedAt: now());
+      }
     } on AccountReadFailure catch (failure) {
       if (!submitted || !isCurrent()) rethrow;
       submitFailure = failure;

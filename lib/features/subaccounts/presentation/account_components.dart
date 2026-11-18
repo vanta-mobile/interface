@@ -166,7 +166,7 @@ class AccountAction extends StatelessWidget {
         disabledBackgroundColor: faded ? PortfolioColors.accent : PortfolioColors.card,
         disabledForegroundColor: faded ? PortfolioColors.onAccent : PortfolioColors.secondary,
         textStyle: Theme.of(context).textTheme.labelLarge?.merge(PortfolioTypography.section),
-      ),
+      ).copyWith(overlayColor: PressFeedback.overlay),
       child: busy
           ? Semantics(
               label: label,

@@ -120,6 +120,15 @@ void main() {
       }
     },
   );
+  test('an explicit success response is the result without a verification GET', () async {
+    postBody = jsonEncode({'code': 200, 'msg': 'success'});
+    final result = await change();
+    expect(result.observed, FuturesPositionMode.hedge);
+    expect(result.checkedAt, positionModeClock);
+    expect(result.failure, null);
+    final signed = requests.where((r) => !r.url.path.endsWith('/time')).toList();
+    expect(signed.map((r) => r.method), ['POST']);
+  });
   test('POST exact signed body then fresh signed GET; same EOA with distinct nonces', () async {
     final result = await change();
     expect(result.observed, FuturesPositionMode.hedge);

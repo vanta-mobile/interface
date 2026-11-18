@@ -35,6 +35,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
     this.journal,
     this.builder,
     DateTime Function()? now,
+    this.notFoundRetryDelays = SignedOrderQueryRepository.defaultNotFoundRetryDelays,
   }) : now = now ?? DateTime.now;
 
   final AsterAccountService service;
@@ -43,6 +44,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
   final DateTime Function() now;
   final OrderRecoveryJournal? journal;
   final BuilderOrderPreflight? builder;
+  final List<Duration> notFoundRetryDelays;
 
   SignedAccountRequest _request(
     Future<Object?> Function({required String query, required String signature}) send, {
@@ -247,6 +249,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
         journal: journal,
         authorization: authorization,
         builder: builder,
+        notFoundRetryDelays: notFoundRetryDelays,
       ).submit(intent: intent, isCurrent: isCurrent, canSubmit: canSubmit, onStep: onStep);
     }
     var submitted = false;
@@ -259,29 +262,31 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
       isCurrent: isCurrent,
       canSubmit: canSubmit,
     );
+    final Object? payload;
     try {
-      await _request(({required query, required signature}) async {
-        // Check again after the wallet prompt, immediately before the POST.
-        if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
-        quote?.checkFresh();
-        recordOrderAttempt(journal, intent, now());
-        if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
-        submitted = true;
-        onStep(LiveOrderStep.submitting);
-        return service.newOrder(query: query, signature: signature);
-      }).read(
-        address: context.address,
-        parameters: {...intent.parameters, ...?quote?.parameters},
-        isCurrent: isCurrent,
-        onStep: (step) {
-          if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
-          if (step != AccountReadStep.loading) {
-            onStep(
-              step == AccountReadStep.signing ? LiveOrderStep.signing : LiveOrderStep.preparing,
-            );
-          }
-        },
-      );
+      payload =
+          await _request(({required query, required signature}) async {
+            // Check again after the wallet prompt, immediately before the POST.
+            if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
+            quote?.checkFresh();
+            recordOrderAttempt(journal, intent, now());
+            if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
+            submitted = true;
+            onStep(LiveOrderStep.submitting);
+            return service.newOrder(query: query, signature: signature);
+          }).read(
+            address: context.address,
+            parameters: {...intent.parameters, ...?quote?.parameters},
+            isCurrent: isCurrent,
+            onStep: (step) {
+              if (!canSubmit()) throw const AccountReadFailure('liveOrderContextExpired');
+              if (step != AccountReadStep.loading) {
+                onStep(
+                  step == AccountReadStep.signing ? LiveOrderStep.signing : LiveOrderStep.preparing,
+                );
+              }
+            },
+          );
     } on AccountReadFailure catch (failure) {
       // A refused signature cannot have placed an order. After the POST boundary,
       // only query the frozen client ID; never repeat the placement request.
@@ -289,7 +294,16 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
       final checked = await recheck(intent: intent, isCurrent: isCurrent, onStep: onStep);
       return checked.orderId == null ? LiveOrderResult(failure: failure) : checked;
     }
-    return recheck(intent: intent, isCurrent: isCurrent, onStep: onStep);
+    // An accepted response for this client ID is the placement result. Only
+    // a response that cannot be tied to the submission is looked up again.
+    final query = OrderQuery.capture(intent);
+    try {
+      final placed = mapRecoveredOrderQuery(payload, query, checkedAt: now());
+      completeOrderRecord(journal, query.key);
+      return placed;
+    } on FormatException {
+      return recheck(intent: intent, isCurrent: isCurrent, onStep: onStep);
+    }
   });
 
   Future<void> _verifyPositionSnapshot(
@@ -351,6 +365,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
       now,
       journal: journal,
       authorization: authorization,
+      notFoundRetryDelays: notFoundRetryDelays,
     ).query(OrderQuery.capture(intent), isCurrent: isCurrent, onStep: onStep);
   });
 }

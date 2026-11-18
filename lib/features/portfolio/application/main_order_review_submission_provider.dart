@@ -45,15 +45,24 @@ class MainOrderReviewSubmissionController extends Notifier<bool> {
       }
       final value = ref.read(mainOrderReviewProvider(original));
       final pricing = ref.read(mainOrderPricingProvider);
-      if (value.review case final review?) {
+      final review = value.review;
+      // A review that can still be computed may rest on facts older than the
+      // submission window; it is renewed rather than rejected.
+      if (review != null && ref.read(mainOrderAllocationProvider.notifier).matches(review)) {
         completed.complete(review);
-      } else if (value.failure case final failure?) {
+        return;
+      }
+      if (value.failure case final failure?) {
         completed.completeError(failure);
-      } else if (!renewed &&
+        return;
+      }
+      final idle =
           !ref.read(mainOrderRefreshProvider).loading &&
           !ref.read(liveOrderProvider).busy &&
           !ref.read(mainOrderCapacityProvider).loading &&
-          !(pricing is MainOrderMarketData && pricing.pending)) {
+          !(pricing is MainOrderMarketData && pricing.pending);
+      if (!idle) return;
+      if (!renewed) {
         // Expired facts are renewed on this click, including after background
         // suspension. The existing read path owns cancellation and timeouts.
         renewed = true;
@@ -62,6 +71,9 @@ class MainOrderReviewSubmissionController extends Notifier<bool> {
               .read(mainOrderRefreshProvider.notifier)
               .refresh(original.intent.context.symbol, reconnectPrices: false, background: true),
         );
+      } else if (review != null) {
+        // Renewed facts still do not support these terms: report the change.
+        completed.completeError(const AccountReadFailure('liveAllocationChanged'));
       }
     }
 

@@ -63,7 +63,7 @@ class AccountChangePanel extends ConsumerWidget {
             _ => l10n.accountReadPreparing,
           }),
         ],
-        if (state.failure case final failure?)
+        if (state.failure case final failure? when !failure.requiresDeposit)
           Text(
             accountErrorText(context, failure),
             style: const TextStyle(color: AppColors.negative),

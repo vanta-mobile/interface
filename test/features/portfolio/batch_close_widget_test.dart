@@ -5,7 +5,7 @@ import 'package:vanta/features/portfolio/application/batch_close_provider.dart';
 import 'package:vanta/features/portfolio/application/position_risk_provider.dart';
 import 'package:vanta/features/portfolio/domain/position_risk.dart';
 import 'package:vanta/features/portfolio/presentation/batch_close_controls.dart';
-import 'package:vanta/features/portfolio/presentation/batch_close_status.dart';
+import 'package:vanta/l10n/generated/app_localizations.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/portfolio/application/symbol_settings_activity.dart';
 
@@ -41,6 +41,14 @@ void main() {
     await visible(tester, key);
     await tester.tap(find.byKey(Key(key)));
     await tester.pumpAndSettle();
+  }
+
+  /// Runs the close without settling past the 3 s success toast.
+  Future<void> confirm(WidgetTester tester) async {
+    await tester.tap(find.byKey(const Key('batch-close-confirm')));
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
   }
 
   Future<void> dispose(WidgetTester tester, ProviderContainer container) async {
@@ -103,7 +111,7 @@ void main() {
     expect(container.read(batchCloseProvider).intent, null);
     await dispose(tester, container);
   });
-  testWidgets('current-symbol scope sends only confirmed position and displays remaining read', (
+  testWidgets('current-symbol scope sends only the confirmed position and reports success', (
     tester,
   ) async {
     final identity = TestIdentityRepository()..restored = signingIdentity;
@@ -132,13 +140,13 @@ void main() {
       receivedAt: liveOrderClock,
       positions: [],
     );
-    await tester.tap(find.byKey(const Key('batch-close-confirm')));
-    await tester.pumpAndSettle();
+    await confirm(tester);
     expect(repository.posts.map((p) => p.context.symbol), ['BTCUSDT']);
     expect(risk.calls, 2);
-    await visible(tester, 'batch-close-read-remaining');
-    expect(find.text('0 BTC'), findsOneWidget);
-    expect(find.textContaining('Signed query: FILLED'), findsOneWidget);
+    // The outcome is a toast; no status block is added to the page.
+    expect(find.text('Closed 1 positions.'), findsOneWidget);
+    expect(find.textContaining('Signed query'), findsNothing);
+    await tester.pumpAndSettle();
     expect(tester.takeException(), null);
     await dispose(tester, container);
   });
@@ -171,7 +179,7 @@ void main() {
     expect(tester.takeException(), null);
     await dispose(tester, container);
   });
-  testWidgets('an unconfirmed close shows its error; unsubmitted positions stay visible', (
+  testWidgets('an unconfirmed close reports its error and stops the remaining closes', (
     tester,
   ) async {
     final identity = TestIdentityRepository()..restored = signingIdentity;
@@ -192,8 +200,8 @@ void main() {
     await tap(tester, 'batch-close-open');
     await tester.tap(find.byKey(const Key('batch-close-confirm')));
     await tester.pumpAndSettle();
-    await visible(tester, 'batch-close-result-ETHUSDT:BOTH');
-    expect(find.text('Not submitted'), findsOneWidget);
+    expect(find.textContaining('Closed'), findsNothing);
+    expect(find.byKey(const Key('batch-close-result-ETHUSDT:BOTH')), findsNothing);
     expect(repository.posts.length, 1);
     expect(repository.checks.length, 2); // after sending, then one automatic follow-up
     expect(risk.calls, 1);
@@ -203,60 +211,18 @@ void main() {
     await dispose(tester, container);
   });
   for (final locale in ['en', 'zh']) {
-    testWidgets(
-      'close-all confirmation and per-position results fit narrow enlarged and landscape $locale',
-      (tester) async {
-        final identity = TestIdentityRepository()..restored = signingIdentity;
-        final risk = TestPositionRiskRepository()..result = batchRiskFixture(hedge: true);
-        final repository = TestBatchLiveRepository(risk.result, hedge: true);
-        addTearDown(identity.dispose);
-        final container = setup(
-          tester,
-          width: 320,
-          scale: 1.5,
-          language: Locale(locale),
-          identityRepository: identity,
-          positionRiskRepository: risk,
-          liveOrderRepository: repository,
-          liveClock: () => liveOrderClock,
-        );
-        await open(tester, container);
-        await container.read(positionRiskProvider.notifier).refresh();
-        await tester.pumpAndSettle();
-        await tap(tester, 'batch-close-open');
-        expect(find.byKey(const Key('batch-close-confirm')), findsOneWidget);
-        expect(tester.takeException(), null);
-        tester.view.physicalSize = const Size(844, 390);
-        await tester.pumpAndSettle();
-        expect(tester.takeException(), null);
-        risk.result = PositionRiskSnapshot(
-          address: accountAddress,
-          receivedAt: liveOrderClock,
-          positions: [],
-        );
-        await tester.tap(find.byKey(const Key('batch-close-confirm')));
-        await tester.pumpAndSettle();
-        await visible(tester, 'batch-close-read-remaining');
-        expect(repository.posts.length, 3);
-        expect(find.text('0 BTC'), findsNWidgets(2));
-        expect(find.text('0 ETH'), findsOneWidget);
-        expect(tester.takeException(), null);
-        expect(identity.wallets, 0);
-        await dispose(tester, container);
-      },
-    );
-  }
-
-  testWidgets(
-    'remaining read preserves current signed quantity and suppresses stale or failed data',
-    (tester) async {
+    testWidgets('close-all confirmation and outcome fit narrow enlarged and landscape $locale', (
+      tester,
+    ) async {
       final identity = TestIdentityRepository()..restored = signingIdentity;
-      final risk = TestPositionRiskRepository()..result = batchRiskFixture();
-      final repository = TestBatchLiveRepository(risk.result);
+      final risk = TestPositionRiskRepository()..result = batchRiskFixture(hedge: true);
+      final repository = TestBatchLiveRepository(risk.result, hedge: true);
       addTearDown(identity.dispose);
       final container = setup(
         tester,
-        language: const Locale('en'),
+        width: 320,
+        scale: 1.5,
+        language: Locale(locale),
         identityRepository: identity,
         positionRiskRepository: risk,
         liveOrderRepository: repository,
@@ -266,30 +232,30 @@ void main() {
       await container.read(positionRiskProvider.notifier).refresh();
       await tester.pumpAndSettle();
       await tap(tester, 'batch-close-open');
-      risk.result = batchRiskFixture(btcQuantity: '-0.003');
-      await tester.tap(find.byKey(const Key('batch-close-confirm')));
-      await tester.pumpAndSettle();
-      await visible(tester, 'batch-close-read-remaining');
-      final btcResult = find.byKey(const Key('batch-close-result-BTCUSDT:BOTH'));
-      final ethResult = find.byKey(const Key('batch-close-result-ETHUSDT:BOTH'));
-      final remainingBtc = find.descendant(of: btcResult, matching: find.text('-0.003 BTC'));
-      expect(remainingBtc, findsOneWidget);
-      expect(find.descendant(of: ethResult, matching: find.text('-0.02 ETH')), findsOneWidget);
-      container.read(positionRiskProvider.notifier).markStale();
-      await tester.pumpAndSettle();
-      expect(remainingBtc, findsNothing);
-      risk.failure = const AccountReadFailure('authWalletRejected');
-      await tap(tester, 'batch-close-read-remaining');
-      expect(remainingBtc, findsNothing);
-      expect(repository.posts.length, 2);
+      expect(find.byKey(const Key('batch-close-confirm')), findsOneWidget);
       expect(tester.takeException(), null);
+      tester.view.physicalSize = const Size(844, 390);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), null);
+      risk.result = PositionRiskSnapshot(
+        address: accountAddress,
+        receivedAt: liveOrderClock,
+        positions: [],
+      );
+      await confirm(tester);
+      expect(repository.posts.length, 3);
+      final l10n = AppLocalizations.of(tester.element(find.byType(_BatchCloseHost)));
+      expect(find.text(l10n.batchCloseDone(3)), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), null);
+      expect(identity.wallets, 0);
       await dispose(tester, container);
-    },
-  );
+    });
+  }
 }
 
-/// The production close-all flow (enabled only when preparation succeeds, the
-/// design confirmation sheet and the shared result status) on a bare page.
+/// The production close-all flow (enabled only when preparation succeeds and
+/// the design confirmation sheet) on a bare page.
 class _BatchCloseHost extends ConsumerStatefulWidget {
   const _BatchCloseHost();
   @override
@@ -321,7 +287,6 @@ class _BatchCloseHostState extends ConsumerState<_BatchCloseHost> {
             onPressed: enabled ? () => confirmBatchClose(context, ref, symbol: symbol) : null,
             child: const Text('Close all'),
           ),
-          const BatchCloseStatus(),
         ],
       ),
     );

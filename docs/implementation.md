@@ -1,3 +1,203 @@
+## 2026-11-18 确认下单不再提示「订单信息已失效」；撤单／改单不因列表刷新失效（TAS-5048）
+
+真机发现：确认框打开稍久（超过 30 秒）或期间后台刷新过下单数据，点确认会不发请求、不报错，界面只显示兜底文案「订单信息已失效，请关闭弹窗后重新下单」。只减仓、快捷下单、平仓等固定确认冻结了打开时的下单数据，`LiveOrderController.submit` 在数据过期、被替换或版本号不符时直接返回；主表单确认在数据仍可计算但已超出 30 秒时也不刷新，提交环节再拒绝。撤单、改单则用 `orders.contains(order)`（对象实例相等）判断订单仍在列表中，列表一刷新就悄悄不执行。
+
+- 固定确认：点确认时数据过期／被替换就地重新读取（`load(allowDuringReview: true)`），以同一下单内容与 clientOrderId 重新生成并提交，按钮保持加载。确认后若杠杆、保证金模式、持仓模式变化，或设置写入使设置 epoch 变化，按「下单输入、账户数据或额度已变化」拒绝；平仓／只减仓时持仓数量或开仓价变化按「持仓已变化」拒绝。签名中的时限与身份检查不变。
+- 主表单确认：可计算的确认数据若已不满足提交条件（如超出 30 秒），先刷新一次再提交；刷新后仍不满足时报告具体原因。
+- 确认入口按账户 id 与钱包地址判断身份，不再比较身份对象实例；未提交时总是显示具体原因，删除 `orderConfirmExpired` 文案。
+- 主表单只减仓／BBO 等固定确认：点击后若价格数据尚未跟上刚刷新的账户数据（account anchor 不一致），改用账户数据生成订单，不再无响应；仍无法生成时在按钮下显示具体原因。数据过期时的就地刷新同样适用于带价格数据的固定确认。
+- 交易页持仓、挂单列表：已有数据时刷新失败不再在列表上方显示红色报错，保留已展示数据，下次读取成功后替换；没有数据时仍显示失败页与重试，设备授权失效仍引导开启交易。
+- 撤单按 symbol＋orderId 判断订单仍在列表中；确认期间列表读取中不再阻止已确认的撤单；只有该订单自身在确认后收到推送事件才失效。改单按 symbol、orderId、价格、数量、已成交量判断，保留基于过期订单改单的保护。
+
+验证：`flutter analyze` 仅余 `open_order_card_test.dart` 一条非本次改动的 info；全量 `flutter test` 6051 项通过（`pub get` 当时因网络失败，使用 `--no-pub`）。新增确认期间列表刷新仍能撤单的用例；更新确认期间切后台、标记过期后续能提交，以及设置变化、持仓变化时拒绝并给出原因的用例。真机（Android，完整重启后）：止损腿撤单后列表即时移除；主表单只减仓市价 0.08 SOL 点「做空」可打开确认框，确认框打开 36 秒后确认，自动重读后「下单成功」，仓位价值由约 17.1 降至 11.1 USDT。第一次重读遇到账户读取网络失败，显示「无法连接服务器」且未提交，再点一次成功；持仓区读取期间也间歇出现同一网络错误，原因未查。
+
+## 2026-11-18 点击效果按设计稿统一（TAS-5039）
+
+来源：Notion「按钮点击后的残影」，设计稿 Figma `1649-27292`「点击效果」。残影是 Material 默认水波纹（扩散后淡出）。
+
+- 全局主题（`vantaTheme`）：去掉水波纹（`NoSplash`），按压时叠加 `AppColors.pressOverlay`（#FFFFFF 6%）。`InkWell`/`ListTile` 用 `highlightColor`；Filled/Outlined/Text/Icon 按钮主题的 `overlayColor` 用 `PressFeedback.overlay`；Checkbox/Switch/Radio/TabBar 不叠加。
+- 局部 `styleFrom` 指定了 `foregroundColor` 的按钮会自动用前景色派生按压色，已追加 `.copyWith(overlayColor: PressFeedback.overlay)`；历史记录页签和 PnL 日历/列表切换用 `PressFeedback.none`。
+- 状态切换型控件（设计 03/09/10：Primary Tabs、页签、分段/筛选选项、勾选、开关行、周期/时间粒度、底部导航、排序表头、指标标签、选项卡片）外包 `NoPressFeedback`（`lib/core/presentation/no_press_feedback.dart`），只用选中样式反馈。
+- 主按钮、图标按钮、下拉/选择器、输入框、列表/卡片、文字按钮、日历日期格使用统一 6% 叠加。
+- AGENTS.md 增加点击效果规则。
+
+验证：新增 `press_feedback_test`（主题按压色、无水波纹、`NoPressFeedback` 去掉高亮）；全量 `flutter test` 6044 项通过（3 项跳过），`flutter analyze` 仅剩他人未提交文件 `open_order_card_test.dart` 的 1 条 info。按要求未启动 App，未做真机目测。
+
+## 2026-11-18 样式问题合集（TAS-5043）第五轮
+
+来源：Notion「样式问题合集」11-18 晚间新增条目。
+
+- 交易页订单簿档位随右侧下单表单高度增减：表单高度变化后，订单簿用实测的每对档位高度增减档位（买卖两侧数量相同，3–20 档），使底部不低于表单且差距不到一对档位；同一高度最多调整 6 次，不会来回跳动。K 线面板打开时保持原来的 6 档；窄屏上下排列时保持 8 档。新增 `MeasuredHeight` 组件。
+- 交易对选择页：收藏星标靠左对齐到 Symbols 表头和上方页签。
+- 持仓止盈止损设置页：
+  - PnL / ROI 框只填正数，前面固定显示止盈「+」、止损「-」，不能输入正负号（与下单区一致）。
+  - 先填 PnL 再填数量（或改数量、切换全部 / 部分）时保留已填的 PnL，并按新数量重算触发价；之前会被触发价（空）覆盖清空。
+  - 输入的 PnL 无法达到（如 1 USDT 的仓位亏 2 USDT）或清空时，同时清空触发价，预估 PnL 不再显示旧触发价的结果。切换 PnL / ROI 时仍按触发价换算。
+- 委托和持仓区块读取时遇到需要交易授权的错误（如 Aster 返回 -1000「No agent found」，即本机的设备交易授权在交易所已失效），显示错误原因和「开启交易」按钮（复用 `EmbeddedOrderFailure`），不再只显示原始报错。该错误原本已被识别为 `accountPermissionRequired` 并作废本机授权。为什么 iOS 上的授权会失效（例如在模拟器上重新授权后旧授权被替换）未在本次确认。
+
+验证：新增订单簿档位适配（两侧数量相同、底部与表单差距小于一对档位）、持仓止盈止损 PnL 正负号 / 先填 PnL 后填数量 / 无法达到的 PnL 清空触发价、授权失效显示开启交易的测试；更新依赖页面高度的两个 K 线快捷指标测试（先完整滚到可见再点击）和账户页签测试（缩小屏幕高度以保持页签在首屏下方），以及读取失败重试测试改用非授权错误。相关测试 748 项全部通过，`flutter analyze lib` 无问题。签名仓库层另一会话的改动未纳入。按要求未启动 App。
+
+## 2026-11-18 双向持仓已有仓位时下单方向卡片变灰块（QA-020）
+
+来源：Notion「2026-11-18 前端分析（补充）· AI自动化测试报告」QA-020（0.0.4 / 2004，B39-04、B39-07）。灰块是发布版中构建异常被替换成的 ErrorWidget。
+
+- 原因：`mainOrderLiquidationText`（`main_order_direction_card.dart`）用 `toDecimal(scaleOnInfinitePrecision:, toBigInt:)` 舍入强平价，但该参数只对无限小数生效；有限小数（如 236.6875，价格精度 2）原样返回，随后 `TokenAmountFormatter.formatFixed` 拒绝截断并抛 `FormatException`，整张方向卡片（估算行与按钮）在构建时出错。双向持仓有反向仓位时强平价多一条腿，更容易出现有限小数，所以与持仓有关、重启后仍复现。
+- 修改：强平价按价格精度显式四舍五入后再格式化（与同文件保证金向上、最大值向下取两位的方式一致），设计不变。排查了其余进入 `formatFixed` 的数值（保证金、最大值、内部划转金额、历史记录、最小下单量），都已按显示精度处理，不受影响。
+- 测试：`live_order_embedded_layout_test` 新增强平价有限小数用例（236.6875→236.69、236.6849→236.68，卡片无 ErrorWidget）；去掉修复后该用例以同一 `FormatException` 失败。该文件与 `main_order_*` 测试共 415 项通过，`flutter analyze --no-pub` 仅剩他人未提交文件 `open_order_card_test.dart` 的 1 条 info。未在真机复现（需双向持仓并持有单侧仓位）。
+
+## 2026-11-18 持仓 Set TP/SL 整仓按设计稿调整
+
+来源：Figma「13.19 · Positions · Entire close」（node 331:78126）。
+
+- Entire close 下止盈、止损都在触发价框右侧显示 Mark / Last 下拉（打开 Select Trigger Type 弹窗），止盈不再用标题旁的切换图标，触发价框标题固定为「Trigger price」。
+- 右侧预估框标题改为止盈「Gain」、止损「Loss」（中文「盈利」/「亏损」），`$` / `%` 切换不变。Partial close 保持原样。
+- 测试：`trade_positions_section_test` 的整仓用例新增两侧下拉、Gain/Loss 文案、止盈切换为 Mark 后提交的 `basis`；该文件与 `position_tpsl_test` 共 22 项通过，`flutter analyze` 无问题。按要求未启动 App。
+
+## 2026-11-18 资金流水归档：同一流水号的不同类型分别上报
+
+来源：Notion「2026-11-18 前端分析（补充）· AI自动化测试报告」资金流水归档（报告 4 条）。Aster 的 tranId 只在同一 incomeType 内唯一。归档接口曾按 `(user_id, tran_id)` 全局去重，客户端因此在发现跨类型共用流水号时抛 `incomeArchiveReferenceConflict` 并停止上报。vanta-api 迁移 0015（be2f3d7，已含在客户端锁定契约 8f0bcad 中）改为 `(user_id, income_type, tran_id)` 唯一；2026-11-18 确认 staging 部署的是 vanta-api 当前 main。
+
+- `income_archive_repository.dart` 去掉跨类型冲突保护，各类型照常上报；同一行内容冲突仍报数据无效、不上报。
+- 删除不再使用的文案 `incomeArchiveReferenceConflict` 及其映射。
+- 测试：`income_archive_repository_test` 改为验证 COMMISSION 与 REALIZED_PNL 共用 tranId 时各上报一次，原“内容冲突不上报”单独保留；12 项全部通过，`flutter analyze` 无问题。未在真机验证（测试账户无此类流水）。
+
+## 2026-11-18 样式问题合集（TAS-5043）第四轮
+
+来源：Notion「样式问题合集」11-18 下午新增条目。
+
+- 快速下单（K 线页）：
+  - 确认弹窗改用普通 Market 单的确认弹窗（`reviewLiveOrder`，提交仍走 `QuickOrderController.submit` 的快速下单校验），跳过确认沿用共享的 Market 设置；删除原快速下单专用弹窗及其「不再显示」勾选。
+  - 点击 25% / 50% / 75% / 100% 后输入框显示对应金额（`percentAmount()`：两个方向按 ask / bid 折算的报价币金额取较小值，向下取到 2 位小数），读取到额度前仍显示百分比；下单数量仍按该方向的百分比计算。
+  - 输入框内「Avbl.」提示字号改为 12。
+- 全部平仓：去掉点击后在持仓列表下方展示的调试式状态区（地址、客户端编号、签名查询结果、读取剩余持仓按钮等，`batch_close_status.dart` 已删除）。执行期间 Close all 按钮显示加载，结束后以 toast 提示：全部成功「已平仓 N 个仓位」，否则显示第一个失败原因。删除仅该状态区使用的 10 条文案。
+- 资产详情弹窗：Margin balance / Available for order / Unrealized PnL 的数值靠右对齐到卡片边缘。
+- 持仓止盈止损设置页：PnL 输入框去掉描边。
+- 委托卡片 Linked order（设计稿 331:76644 → 331:77732）：点击策略编号打开「Order details」底部弹层，长按复制编号。弹层按策略 ID 现读 `GET /fapi/v3/strategyOpenOrder`（设备交易授权，不弹钱包；没有授权时显示授权错误），展示主单 A 与止盈 B、止损 C：类型与状态、方向、数量、A 的只减仓 / B、C 的触发价，以及「A 成交后挂出 B 和 C」「B 成交后撤销 C」等说明，B、C 缩进并用 2px 连接线连到 A。读取中显示骨架，策略已不在当前委托时提示「该策略已不在当前委托中」，失败不自动重试，重新打开即重读。`OpenOrderStrategy` 新增 `legs`（`OpenOrderStrategyLeg`），映射层逐条校验 side / status / type / quantity，任一腿缺字段时只清空明细（弹层显示数据错误），原有 TP/SL 价格显示不受影响。与设计稿的差异：数量显示为基础币数量（如 0.02 AAPL），设计稿为 USDT 金额；第三张卡标题按含义为「Order C」（设计稿写作 Order B）。
+- 持仓止盈止损设置页的止盈 ⇋ 图标：其应打开的「Take Profit Mode」（限价止盈）本期不做（开远，2026-11-18）。去掉该图标（原先打开的是 Last/Mark 选择）；部分平仓时止盈价格框右侧改为与止损相同的 Last/Mark 下拉，标题统一为「触发价格」。删除 `PositionTriggerSwitch`、`assets/trade/position-trans.svg` 与 `positionTpslSwitchBasis` 文案。
+
+验证：`open_order_strategy_test` 新增按顺序保留每条腿、缺字段只清空明细不影响 TP/SL；`open_order_card_test` 新增点击 Linked order 打开弹层（A/B/C、说明、类型、方向、数量、触发价、缩进）与加载后策略已关闭的提示；用 Inter 字体渲染弹层与设计稿 331:77732 目视比对一致。`quick_order_widget_test` 改为断言复用的确认弹窗、共享确认设置和百分比显示金额；`batch_close_widget_test` 改为断言成功 / 失败 toast，删除针对已删状态区的用例。相关测试（快速下单、全部平仓、TP/SL、资产、交易页、下单表单、确认弹窗、core）587 项连续两次全部通过；`flutter analyze lib` 无问题。另一会话正在修改的签名仓库层测试未纳入。按要求未启动 App。
+
+## 2026-11-18 有挂单或 BBO 带止盈止损时仍能估算 Margin／Max（TAS-5048）
+
+问题：同一合约只要有一张开仓方向的挂单不是固定价格 LIMIT（条件单、追踪止损，或 Aster 返回 `price: "0"` 的 BBO 限价单），`capacitySymbolExposure` 就抛 `liveCapacityPendingUnknown`，所有下单类型的 Margin／Max 变成 “—”，方向按钮也无法进入确认。BBO 勾选止盈止损时 `entryPeg` 一律不估算。
+
+- 未触发的条件单（`STOP`、`STOP_MARKET`、`TAKE_PROFIT`、`TAKE_PROFIT_MARKET`、`TRAILING_STOP_MARKET`）不计入挂单占用；触发后交易所按 LIMIT／MARKET 返回，再按其价格计入。这是对 Aster 沿用 Binance 规则（条件单触发前不占保证金）的假设，需联调确认。
+- 价格为正的 LIMIT 仍按其价格计入；价格未知（BBO 返回 0）或其他类型按当前 Mark 估算——文档说明 `openOrderInitialMargin` 本身就按当前 Mark 计算。删除 `liveCapacityPendingUnknown` 文案。
+- `LiveOrderDraft.bookPeg`：普通 BBO 或 1 档复合 BBO（`COUNTERPARTY_1`／`QUEUE_1`，界面只提供这两档）都按盘口一档估算参考价、保证金与 Max；更深档位仍显示无法估算。
+
+验证：`flutter analyze` 无问题；更新挂单占用、重估、容量仓库与 BBO 测试，新增 1 档复合 BBO 与同档普通 BBO 估算一致的用例。全量 `flutter test` 6030 项通过、14 项失败，全部在 `quick_order_widget_test.dart`，对应的 `quick_order_provider.dart`、`quick_order_panel.dart`、`quick_order_review.dart` 正由另一处同时修改，与本改动无关。未在设备上验证。
+
+## 2026-11-18 写请求明确成功即采用返回结果，不再回读比对（TAS-5048）
+
+问题：下单与止盈止损都已成功，却提示“Aster 返回的价格、数量或执行设置与本次委托不一致”（`/fapi/v3/strategyOpenOrder`）；BBO 带止盈止损下单后提示 `-2013 Order does not exist`。原因是下单接口成功后仍签名回读一次，并逐字段比对价格、数量、类型、`timeInForce`、`workingType`、peg、联动关系等；交易所规整后的字段或回读时尚未可查都会把已成功的写操作显示为失败。
+
+- 普通单（`newOrder`）：返回中的 `clientOrderId`、`symbol`、`side` 与本次一致且订单 ID、状态有效，即为结果，结束恢复日志，不再 GET。无法对应本次提交时才按原 clientOrderId 回读。
+- 策略单（`placeStrategyOrder`）：`failureCode` 为 0 且 `clientStrategyId`、`strategyType` 一致、`strategyId` 有效，即为结果，不再查询 `strategyOpenOrder`。`failureCode` 非 0 或返回不完整时仍按原逻辑回读核实（策略服务可能在返回失败码时已建单），不重发。
+- 回读（仅结果不确定时）只核对身份：普通单为 `symbol`、`clientOrderId`、`side`、订单 ID、状态与 `executedQty`；策略单为 `clientStrategyId`、`strategyType`、`strategyId`、各腿序号、`symbol`、`side`、状态。价格、数量、类型、策略、peg、联动关系的差异不再判为失败。删除只用于这些比对的 `orderResponseTermsMismatch`、`orderResponseLinkageMismatch` 文案。
+- 回读遇到 `-2013` 时按 1 秒、2 秒各重试一次（`SignedOrderQueryRepository.notFoundRetryDelays`），等待以 100ms 分片检查 `isCurrent`，离开或换钱包立即停止；从不重发写请求。
+- 撤单：`DELETE /order` 返回的订单与本单 `symbol`／`orderId` 一致即为结果，不再 GET。一键撤单：`allOpenOrders` 返回 `code 200` 即视为该合约已无挂单，挂单列表随后按既有逻辑标记过期并刷新。
+- 杠杆返回目标杠杆与 `symbol`、保证金模式／仓位模式／多资产模式返回 `code 200` 即为结果，不再回读 `positionRisk` 等。
+- 资金划转：划转返回成功后刷新余额失败，不再显示为划转失败；显示成功并清空金额，数据标记过期，已上报的恢复记录在下次成功读取时完成。
+- 策略执行详情：按交易所订单 ID 查询各腿时只核对订单 ID、`symbol`、`side`；类型、`timeInForce`、触发依据等差异不再报错，价格／触发价差异照旧以 `termsChanged` 标示。
+- 改单、提现、子账户写操作、交易授权本来就直接采用接口结果，未改。
+
+验证：`dart format`、`flutter analyze` 无问题；全量 `flutter test` 6021 项全部通过。新增／改写用例覆盖：普通单、策略单、撤单、一键撤单、四项合约设置的成功返回直接采用且不再发 GET；返回无法对应本次提交时回读；规整后的字段差异仍能确认订单；`-2013` 重试后查到；退避期间离开即停止且不再签名；划转后余额刷新失败仍显示成功。未在设备上验证，真实交易所返回字段仍需联调确认。
+
+## 2026-11-18 链上读取改为多节点失败转移
+
+充值余额、Gas 估算、授权/充值回执和充提记录回执都经 `DepositRpcService` 读取公共节点。原来每条链只有一个 publicnode 节点，它会以 HTTP 403「Archive requests require a personal token」拒绝较早交易的回执。
+
+- `depositRpcOrigins` 每条链改为按优先级排列的多个公共节点（来自不同运营方，2026-11-18 在真机网络实测可用）：以太坊 publicnode → drpc → 1rpc；BNB Chain 官方 dataseed → publicnode → defibit → 1rpc（官方 dataseed、defibit、1rpc 可读较早回执；drpc 对旧交易返回 null，未采用）；Arbitrum 官方 arb1 → publicnode → drpc。llamarpc、merkle、cloudflare-eth 当时返回 525/429 或方法受限，未采用。
+- 失败转移：传输错误、超时、非 200（含 429 与 403）、响应格式错误和 JSON-RPC 错误都换下一个节点重试，每次请求每个节点最多一次；全部失败时报告最后一个节点的错误。`eth_estimateGas` 的执行失败是链上结果，不换节点。请求被取消时立即停止，不换节点。只开放只读方法，重试安全；429 冷却仍由 `BackendHttpPool` 按主机处理。
+- 最后成功的节点保持优先，同一次快照的后续请求尽量落在同一节点，减少跨节点区块不一致。
+
+验证：新增 `deposit_rpc_service_test.dart` 9 项（每链多运营方、403 转移并保持优先、429/JSON-RPC 错误/格式错误/网络错误转移、全部失败只轮一遍、Gas 模拟失败不转移、取消不转移）；`test/features/funding` 中与本改动相关的测试全部通过。真机热重启后充值页 BNB 余额经官方 dataseed 正常读出。全量 `flutter test` 当时有 77 项失败，集中在下单/撤单签名仓库与内部划转，均来自同一时间另一会话正在修改的文件（`signed_*_repository.dart`、`internal_transfer_provider.dart`），与本改动无关。
+
+## 2026-11-18 通知中心去掉分类页签，推送设置去掉充提开关
+
+产品取消充值 / 提现类通知，所以通知中心不再按分类筛选，推送设置也不再提供这一类开关。
+
+- 通知列表去掉「全部 / 充提 / 订单」页签。`GET /v1/notifications` 不再传 `category`，由服务端按默认的 `all` 返回（含公告广播）；「只看未读」、分页、下拉刷新和全部已读保持不变。`ApiNotificationInboxController.filter` 改为 `setUnreadOnly`，状态里不再保留分类。删除 `notificationFilterAll/Transfers/Orders` 文案和不再使用的 `NotificationTypography.tab`。本地旧通知使用的 `NotificationFilter` / `notificationMatches` 未改动。
+- 推送设置去掉「充值与提现」开关：`PushCategory` 删除 `transfers`，读取 `prefs` 时忽略服务端返回的 `transfers` 字段，写入时也不会提交它，同时删除 `pushTransfers` 文案。服务端原有的 `transfers` 偏好值没有被修改；是否停止发送这一类推送由后端决定。
+- 此前真机抓包（staging）：`/v1/notifications` 返回空列表；`/v1/push/status` 返回 `status: no_server_visibility`、`reason: null`，所以通知中心显示「后台通知暂不可用」和通用原因。这是后端判定看不到该账户，与本次改动无关。
+
+验证：`dart format` 已执行；`dart analyze lib test` 无问题；`test/features/notifications` 与 `test/features/settings` 共 247 项全部通过。测试改动：只看未读改为不带 `category` 的请求，迟到旧页取消改用未读筛选切换，挂件测试断言页签不存在、请求不带 `category`，推送偏好断言 `PushCategory` 不含 `transfers`，测试替身不再按分类过滤。未运行全量测试；未启动或重载 App，未在真机上目视检查。
+
+## 2026-11-18 样式问题合集（TAS-5043）第三轮
+
+来源：Notion「样式问题合集」11-18 新增条目，依据 Figma 331:57678（滑动条）、919:29692（Available / Advanced 区块）、1649:27293（触发价错误）与 331:49047（Post Only）。
+
+- Market 单不显示价格框（已登录与未登录一致）。
+- 资产模式按钮显示缩写：单资产 S、多资产 M（新增 `assetModeSingleShort` / `assetModeMultiShort`），提示文字仍为全称。
+- 下单区纵向间距按设计稿：滑动条与上方输入框 8，Available 行、Advanced 标题与各选项行行距 21（13 高行 + 8 间距，`embeddedCheckRowHeight` 由 32 改为 21，字号放大时随文字增高）；Available 数字与充值图标右对齐、间距 4，充值图标 12px。未登录表单使用相同的滑动条与行距。
+- 滑动条按设计稿：4px 灰色轨道、12px 圆点（外圈为页面背景色）、12px 白色滑块，首个圆点 6px；连续模式和吸附模式一致。交易页收藏改用与交易对选择页相同的实心星标，删除不再使用的 `assets/trade/favorite.svg`。
+- TP/SL 勾选但未填写时按普通单提交：未填写的止盈 / 止损被忽略，两者都未填写时不附加 TP/SL，确认弹窗也不显示；勾选 TP/SL 时选的一档 BBO 按普通一档 BBO 下单，五档仍需填写 TP/SL。
+- TP/SL 的 PnL / ROI 输入只填正数：输入框前固定显示 TP「+」、SL「-」，禁止输入正负号；未带符号的止损目标按亏损计算，显式带符号的旧输入保持原含义。目标为 0 时提示「金额或收益率需大于零」。Price 模式不变。
+- 触发价已触达时，错误显示在触发价输入框下方并标红（`liveOrderTriggerReached`），不再弹 toast；修改任一输入后消失。判断仍在点击做多 / 做空时进行，因为同一触发价对买卖方向的结论不同。
+- Post Only 方向卡片不显示预估强平价，只显示 Margin / Max。
+- 分段委托最高价 / 最低价超出交易所价格范围（PERCENT_PRICE / PRICE_FILTER）时，在对应输入框下显示「Price exceeds the allowed range」并标红；其余子单错误仍在下方按子单说明。
+- 按 Aster 官网对齐（核对线上前端 `useUMColumn-KUC5K38v.js`、`perp-BWHGzfd1.js`，PRD 对应处为「待确认」）：
+  - 互斥：勾选 TP/SL 时关掉 BBO、Hidden Order 和 Reduce only，并禁用 BBO 按钮；勾选 Hidden Order 或 Reduce only 时关掉 TP/SL；Hidden Order 与 Reduce only 可同时选。2026-11-18 产品确认保持此官网规则（Luna 曾回复按 PRD 不修改，PRD 未规定 TP/SL 与另两项的关系）。
+  - 去掉「TP/SL + BBO」的复合下单入口（官网开 TP/SL 时 BBO 不可用），表单不再产生带 entryPeg 的复合主单；领域与恢复层对已有记录的支持不变。BBO 档位只剩普通单的对手一档 / 同侧一档（Post Only 只有同侧一档）。官网普通单的五档走其私有接口 `/bapi/futures/v1/private/future/order/place-order`，我们使用的 `/fapi/v3/order` 文档只有一档。
+  - Stop Limit / Stop Market 按触发价自动选 STOP 或 TAKE_PROFIT：买单触发价高于参考价（Mark / Last 按所选）为 STOP，否则为 TAKE_PROFIT；卖单相反。因此只有触发价等于参考价时才会提示「触发价格已触达」。
+- 待 Luna 确认（已在 Notion 评论）：分段委托是否加 IOC（PRD 规定子单只有 GTC / HIDDEN）。
+
+验证：`live_order_advanced_rows_test` 新增 TP/SL 与 BBO / Hidden 互斥及 Hidden 与 Reduce only 可共存、BBO 档位只有一档、触发价四种方向组合的自动 STOP / TAKE_PROFIT，以及 Market 无价格框、触发价错误显示在输入框下且修改后消失、勾选 TP/SL 未填写时确认弹窗无 TP/SL；`scaled_order_embedded_test` 新增最高价超范围的字段提示；更新符号输入、有效期选择器行高和未登录配置缩写的断言。对齐官网之前全量 `flutter test --no-pub` 6013 项通过、3 项跳过、零失败。对齐官网之后，本次相关的交易、下单表单、确认弹窗、TP/SL、分段委托测试 272 项通过；同时工作区中另一会话正在修改签名仓库层（`lib/features/portfolio/data/*` 等），`flutter test test/features/portfolio` 有 16 项仓库层测试失败，均不涉及本次改动的文件，`flutter analyze` 仅剩该会话测试文件中的 1 条 unused_element 警告。按要求未启动 App，未在真机 / 模拟器上目视验收。
+
+## 2026-11-18 AI 设计走查前端问题修复
+
+来源：Notion「AI 走查轨迹」中的「2026-11-18 AI设计走查」与「2026-11-18 前端分析 · AI设计走查」，设计稿 237:16108（月历无数据）、329:33130（Portfolio 总览）。
+
+- PF-001：Portfolio 历史盈亏文案统一为 Realized PnL / 已实现盈亏（今日、7D、详情标题、月度、月历说明、缺数据提示、区间标题）；Performance 入口按设计稿显示「Realized PnL」（新增 `portfolioRealizedPnl`）。仓位上的 Unrealized PnL 不变。数值仍为 realized − fees + funding（`portfolioNetPnl`）；2026-11-18 产品确认按此口径，不改计算。
+- PF-002：月历固定 6 行，切换月份时卡片高度不变；星期用本地化单字母（读屏仍读完整星期）；无数据日期显示「—」；当月无数据时在月度指标下显示「{月份} · Daily Realized PnL unavailable」（复用 `portfolioDayUnavailable`）。
+- VIS-PF-003：资产趋势线宽度阈值由 350 改为 300，393 宽手机（卡片内宽约 329）可显示；大字号（>1.2）和更窄窗口仍隐藏。趋势线仍需接口返回至少 2 个点。
+- NTF-001：`/v1/push/status` 的 `note` 是服务端诊断文案，不再解析和显示。按用户要求，服务端不可见时提示只保留一句「System notifications unavailable / 系统通知暂不可用」，不显示原因和错误码（删除不再使用的 `pushNoServerVisibility`）。该提示说明的是后台推送通道，与通知列表是两份数据：列表为空时仍显示原有空状态（文案已说明“列表为空不代表账户未发生事件”）。
+- FTR-005：单笔撤单确认文案说明钱包需签名撤单和随后的状态查询，状态查询由 Vanta 自动发起（外部钱包会弹两次签名，内嵌钱包静默签名）。
+- QA-013 补充证据：撤单成功文案去掉「账户余额需另行刷新」，余额已在标记过期后自动重读。列表与计数同步逻辑此前已修复，需新包复验。
+- FUNC-ACC-001：充值余额读取遇到区块在读取期间变化（`depositRpcReorg`）时，在 repository 内立即重读，最多 3 次；身份或请求作用域失效时停止重试。仍失败时沿用 `FundingError` 提示，文案改为提示下拉刷新。未改为读取较早区块：会影响授权基准块与回执恢复的比较。
+- FUNC-ACC-002：Aster `deposit-withdraw-history` 的 `state` 只有 PROCESSING / SUCCESS / FAILED，文档未定义 SUCCESS 是否含链上确认。按讨论结论：记录已 SUCCESS 时第一步直接显示「On-chain transaction confirmed」（交易所已入账或完成提现，链上步骤必然完成）；只有 PROCESSING 且有 EVM 交易哈希、链受支持时，经 provider 读取交易回执（新增 `RpcTransactionConfirmationRepository`，复用 `DepositRpcService`），回执成功且区块仍为规范链才显示已确认，未上链、失败、重组或读取失败时保持「On-chain confirmation unavailable」。读取中仅该步显示卡片骨架；不自动重试；详情页下拉刷新会等回执读取结束。处理中的交易都是近期交易，公共 RPC 可以读取。
+
+验证：`dart format` 无改动，`flutter analyze` 无问题，`flutter test` 全部通过（6013 项，含新增：月历无数据态、不可见账户通知页（提示与空状态并存）、回执确认仓库 5 项、进度组件 4 项、充值重读 2 项）。
+
+真机验证（2026-11-18，Android M2007J17C，`make run` 后热重启，中文）：
+- Portfolio：今日已实现盈亏、已实现盈亏 · 7日、「已实现盈亏」入口、「已实现盈亏详情」标题正确。测试账户没有权益曲线数据，趋势线不显示，无法验证 VIS-PF-003 的显示效果。
+- 月历：2026 年 11 月与 10 月均为单字母星期、每日「—」、「十一月 · 暂无每日已实现盈亏数据」；10 月（5 周）与 11 月（6 周）卡片高度和底部说明位置一致。
+- 通知中心：只显示一句「系统通知暂不可用」，不再包含接口原文和错误码；下方列表为空时显示原有空状态。显示的是通用原因，说明测试账户返回的 `reason` 不是三个已知错误码之一。
+- 撤单确认弹窗文案正确（只打开弹窗后取消，未撤单）。
+- 充值页连续下拉刷新 5 次，余额均正常读出，未出现读取错误（未能在真机上复现区块变化）。
+- 充提记录：成功的 BNB Chain 充值记录（2026-11-11）两步均为绿色「链上交易已确认」「充值已完成」，与设计稿一致。此前版本对成功记录读取回执时被 publicnode 以 403「Archive requests require a personal token」拒绝，并因骨架屏与卡片同色、Riverpod 自动重试导致约 15 秒空白，均已修正。
+- 限制：测试账户没有处理中的充提记录，处理中时的回执读取未在真机验证（单元测试覆盖）。
+
+## 2026-11-18 iOS 开屏动画不显示（Rive 符号导出）
+
+原因与 rwa-interface 的 RWA-2F（0889c31、55f2005）相同：iOS 通过 Swift Package Manager 静态链接 `rive_native`，Rive 运行时用 `dlsym` 查找 `_init`、`_initBindingCallbacks`、`_loadRiveFile`。未强制链接和导出时，这些符号会在链接（LTO、dead strip）或归档 strip 阶段被删掉，`rive.File.asset` 失败，`StartupSplash` 捕获异常后直接跳过动画，界面上表现为没有开屏动画。
+
+- 新增 `ios/Flutter/RiveLinking.xcconfig`：`-Wl,-u,_init -Wl,-export_dynamic`，Debug 与 Release（Profile 共用 Release）都引入。
+- `Release.xcconfig` 设置 `STRIP_STYLE = non-global`：Xcode 默认的 `all` 即使有 `-export_dynamic` 也会删掉这些导出；局部符号仍会被删除。
+- `scripts/ios_release.py verify-ipa` 新增 `verify_rive_symbols`：用 `xcrun dyld_info -exports` 检查 IPA 主程序导出了上述三个符号，缺失时在上传 TestFlight 前失败并列出缺少的符号。
+- 验证：`python3 -m unittest ios_release_test` 28 项通过、1 项跳过（新增导出检查、逐个缺失、全部缺失、非法可执行文件名、xcconfig 配置共 5 项）。Linux 环境无法构建 iOS，未做 iOS 构建、未检查真实 IPA 的导出、未在设备上看动画；导出全局符号可能让 IPA 略增大。需在下一次 iOS 发布（verify-ipa 会检查导出）后于真机冷启动确认。
+
+## 2026-11-18 样式问题合集（TAS-5043）第二轮
+
+来源：Notion「样式问题合集」11-16 之后新增的条目，依据 Figma 03.24（331:48187）、BBO（331:55412）、Stop Limit 双向（331:59761）、Post Only 双向（331:49047）、确认弹窗（331:68866、331:73627）与 PRD 首访配置。
+
+- 未登录首访显示「全仓 · 10× · 单资产」（PRD：默认单资产、单向、全仓、10×）。`PublicLeverage.defaultLeverage` 默认偏好 20 改为 10，交易对不支持 10× 时取其下最近的可用值，否则取最小值；杠杆弹窗未登录时同样显示该值。
+- 下单区间距：已登录时模式选择与价格框之间是 16＋8，改为与未登录一致的 8。
+- BBO：价格框内文本框的固有高度为 48，`IntrinsicHeight` 把价格框撑到 76，选 BBO 后变成 60。价格行和 BBO 模式行改为同一固定高度（max(32, 行高＋12)），切换不再跳动。附带 TP/SL（复合下单）时档位按设计稿只列对手 1/5 档、同侧 1/5 档（原为 10 项）。普通下单（`POST /fapi/v3/order`）文档只支持一档，PRD 也写明「普通 V3 接入：对手一档、同侧一档」，所以不带 TP/SL 时仍只有 2 项。
+- Advanced：
+  - 行高统一为 32（`embeddedCheckRowHeight`），有效期选择器最小高度由 44 改为 32，各行间距一致。
+  - 互斥项后选生效：勾选 Reduce only 清掉 TP/SL（TP/SL 行不再隐藏），勾选 TP/SL 清掉 Reduce only；勾选 Hidden Order 时有效期选择器保留、变灰，再选 GTC/IOC 即取消 Hidden。Hidden 与 Reduce only 按 PRD 可同时选择，未改。
+  - 双向持仓不显示 Reduce only，只保留右侧有效期选择器；Stop Limit / Stop Market 等条件单不显示 Hidden Order（切到条件单时如已选 Hidden 恢复原有效期）；Post Only 不显示有效期选择器（固定 GTX）。
+  - 说明图标（问号）已在 11-16 加入。
+- 双向持仓 Open/Close（新增 `HedgeIntentSwitch`，位于保证金/杠杆/资产模式按钮上方，只在双向持仓显示）：Open 下两个按钮为 Open Long / Open Short；Close 下为 Close Short（BUY + positionSide=SHORT）与 Close Long（SELL + positionSide=LONG），草稿带 `closingSide`、不传 reduceOnly，复用已有的平仓校验与提交路径（`LiveOrderContext.validate` 校验对应持仓存在且数量不超）。Close 下不显示 TP/SL。切换交易对或账户时回到 Open。
+- 下单确认弹窗按设计稿：去掉「订单类型」「Base quantity to submit」和有效期（Post Only (GTX) 等）三行；触发价移到委托价前。删除只为这些行使用的 `liveOrderTypeLabel`、`liveOrderPolicyLabel` 及文案。
+- 持仓卡：没有整仓 / 部分止盈止损时不显示对应行，通过下方 TP/SL 按钮添加。
+- 委托卡底部三个按钮文字单行显示，空间不足时缩小，「View Explorer」不再折成两行。
+- 去掉资产页「Transfer between accounts」以及 Futures / Spot 账户面板的内部划转入口；页面代码保留但无入口。
+- iOS 开屏动画不显示：见下一节。
+
+验证：新增 `live_order_advanced_rows_test`（行高一致、TP/SL 与 Reduce only 互斥、Hidden 时选择器保留并可取消、条件单与 Post Only 的行、双向持仓 Open/Close 文案与 TP/SL、单向无切换）；`live_order_embedded_layout_test` 新增价格框选 BBO 前后高度一致；更新确认弹窗、杠杆默认值、未登录配置和有效期选择器高度的断言。`dart format` 1349 个文件零改动；`flutter analyze --no-pub` 无问题；全量 `flutter test --no-pub` 5994 项通过、3 项跳过、零失败。按要求未启动 App，未在真机/模拟器上目视验收，Close 下单未用真实账户提交。
+
 ## 2026-11-18 签名恢复补零与原生性能测试跳过启动动画
 
 - 签名校验：web3dart `ecRecover` 会去掉 64 字节公钥的前导零字节（约 1/256 的密钥），`publicKeyToAddress` 因而算出错误地址，合法签名被拒绝。`verifyAsterWalletSignature` 与 `verifyPersonalSignature` 现将恢复出的公钥左补零到 64 字节后再派生地址。影响提现、Agent／Builder 授权、子账户与账户切换的签名核对；CI 中 `agent_authorization_repository_test.dart` 的 malformed 用例偶发失败即由随机设备 Agent 密钥触发。
@@ -10,6 +210,11 @@
 - `dart format --output=none --set-exit-if-changed lib test integration_test test_driver` 分两次检查共 1349 个文件，无格式改动；`flutter analyze --no-pub` 无问题；`git diff HEAD --check` 通过。
 - `flutter test --no-pub --reporter expanded`：5982 项通过、3 项跳过、零失败。环境提示缺少 Linux Rive 动态库，未影响测试结果。
 - 未启动应用、执行原生构建或进行真机／模拟器验证。
+
+## 2026-11-18 前端版本号更新为 0.0.6+6
+
+- `pubspec.yaml` 的版本号由 `0.0.5+5` 更新为 `0.0.6+6`；Android 与 iOS 沿用 Flutter 版本配置，版本名为 `0.0.6`，构建号为 `6`。发布流水线据此生成 Sentry release `vanta@0.0.6+6`。
+- 未启动应用、执行原生构建或设备验证。
 
 ## 2026-11-17 前端版本号更新为 0.0.5+5
 
@@ -24,6 +229,53 @@
 - 重连退避：原来只有收到行情事件才把延迟重置为 1 秒，安静品种连续重连时延迟会翻倍到 20 秒。现在收到订阅确认或心跳回复也会重置。
 - 边界：只改公共行情 WebSocket 生命周期，未改价格新鲜度规则、REST 轮询、私有账户流和下单校验。
 - 测试：`test/features/market/aster_stream_test.dart` 新增 3 项（有心跳回复时 2 分钟不断开、心跳无回复 35 秒后重连、只收到订阅确认也重置退避），这 3 项在改动前的代码上均失败；`flutter test test/features/market` 182 项、`test/features/portfolio` 3138 项全部通过，`flutter analyze` 无问题。全量 `flutter test` 5981 项通过、1 项失败（`portfolio_actions_test` “portfolio opens market close without submitting”），该项单独运行时修复前后都通过，属于全量并发下的偶发失败。线上实测：改动前 4 分钟内 AAPL 断开 3 次，改动后 3 分钟 0 次。未在设备上运行。
+
+## 2026-11-18 内部划转提交改为主钱包签名（与提现方案 A 一致）
+
+依据：Aster 文档中 `/fapi/v3/asset/wallet/transfer` 属于 TRANSFER 类型；agent 只有 canSpotTrade / canPerpTrade / canWithdraw 三项权限，账户信息将 `canWithdraw` 注释为“能否转出资产”，推断 `canWithdraw=false` 的 agent 提交划转同样会被 -2015 拒绝（未实测）。
+
+- `SignedInternalTransferRepository.submit`：外层签名由主钱包签，`signer` 为主钱包地址，domain chainId 56，查询加入 `signatureChainId=56`；签名前通过 `WalletSigningPreparation` 切到 56（在取 nonce 之前）。三次账户读取仍由 agent 签 1666。外部钱包提交划转时弹一次签名。
+- `InternalTransferController.confirm`：发送后若为 `refusedWrite`（4xx 且带 Aster 错误码），删除本地待确认记录并显示 Aster 原始错误，不再阻塞下一次划转；超时、断网、429、5xx 仍保留记录。
+- 范围：内部划转页面入口 `InternalTransferEntry` 当前未被任何页面引用，用户无法进入，本改动仅由测试验证；Aster 是否接受主钱包签名划转未实测。
+- 测试：`signed_internal_transfer_repository_test` 原 agent 外层用例改为“agent 只签 6 次读取、主钱包在 56 签 1 次提交”，原两项完整提交用例补充 `signatureChainId` 与 domain 56 断言；`internal_transfer_provider_test` 新增明确拒绝清除记录且保留错误。`flutter test test/features/funding` 805 项通过。
+
+## 2026-11-18 提现被 Aster 明确拒绝时显示真实错误（-2015）
+
+问题：外部钱包提现签名成功后，提示“网络异常，请稍候在记录中确认”，下方是 Aster 返回的 “Invalid API-key, IP, or permissions for action”（-2015）。
+
+- 原因：提现外层签名改由设备 agent 签名后（见下文 0x682 一节），Aster 要求该 agent 具有 `canWithdraw` 权限；文档（aster-finance-futures-api-v3 approveAgent）规定 `canWithdraw=true` 时 `ipWhitelist` 必填，手机 IP 不固定，App 的 agent 均为 `canWithdraw=false`，因此被拒。
+- 显示修复：`withdrawal_repository.dart` 原来把发送后的任何错误都当作结果未知。现在新增 `AccountReadFailure.refusedWrite`：HTTP 4xx（不含 408/418/429）且带 Aster 错误码，视为明确拒绝、未执行，删除本地待确认记录并显示 Aster 原始错误。超时、断网、429、5xx、无法解析的响应仍按结果未知处理，保留记录待自动核对。
+- 测试：`withdrawal_repository_test` 新增 4 项（401/-2015 显示原错误且清除记录；429/500/503 保持未知并保留记录）。funding、subaccounts 测试 1013 项通过。
+- 签名者方案 A（待实测）：提现提交的外层签名改回主钱包签，`signer` 为主钱包地址，EIP-712 domain chainId 为 56，查询中加入 `signatureChainId=56`（与 approveAgent、approveBuilder 相同做法；Aster 文档在 aster-finance-futures-api-v3 中写明 EVM 地址签名链为 56）。提现前的子账户目录与 withdraw-info 读取仍由 agent 签 1666。签名顺序：切到提现链 → 主钱包签 `Action` →（提现链不是 56 时再切到 56）→ 主钱包签外层。fapi 提现文档未列出 `signatureChainId`，Aster 是否接受未验证；若被拒，按上条显示 Aster 原始错误且不留待确认记录。
+- 测试：`withdrawal_repository_test` 原“agent 签外层”用例改为按链 56、1 各一项（agent 只签 4 次读取；主钱包签 `Action`(提现链) 与外层(56)；网络切换顺序；`signer`、`signatureChainId` 与签名消息一致）。`flutter test test/features/funding` 804 项通过。
+
+## 2026-11-18 钱包需重新连接时，操作按钮直接进入连接
+
+问题：外部钱包被判定需要重新连接（例如 MetaMask 返回 “Invalid Id”）后，账户保留地址但不能签名（`needsWalletConnection`）。提现、充值等按钮只判断“有没有地址”，仍显示原操作；点击后只报“请重新连接钱包”，或跳到钱包却没有任何请求，用户找不到重连入口。
+
+- 新增 `walletConnectionAction`（`account_sheet.dart`）：没有地址时打开账户入口（原行为）；需要重新连接时直接调用 `connectWallet` 重连同一地址；可签名时返回 null。
+- 使用位置：提现页 Withdraw、充值页 Deposit/Approve、提现确认页“准备”、交易授权页“开启”。需要重新连接时按钮文案为“连接钱包”（复用 `reconnectExternalWallet`），点击直接进入钱包连接；表单输入保留，连接成功后恢复原按钮。交易记录页重试在需要重连时打开账户入口。
+- 未改：充值页“读取钱包余额”只读公开链上数据，不需要签名，保持原样；交易授权 Enable trading 页、资金变动授权、合约设置入口原本已区分重连状态。
+- 测试：`funding_withdraw_screen_test` 新增 2 项（提现、充值按钮在需要重连时显示“连接钱包”，点击调用一次连接、不发起提现，连接后恢复原按钮）。`flutter test` funding、authorization、auth、account_operations、trade 及 trading_history 共 1479 项通过；`flutter analyze` 仅有他人未提交文件（`batch_close_widget_test.dart`、`signed_trailing_order_repository_test.dart`）的问题。未做真机验证。
+
+## 2026-11-18 MetaMask 返回 “Invalid Id” 时要求重新连接钱包
+
+问题：提现时钱包返回 “Invalid Id”。来源是 MetaMask Mobile `app/core/WalletConnect/WalletConnectV2.ts`：`onSessionRequest` 在其 WalletConnect 管理器中找不到请求的会话 topic 时，回复 `{code: 1, message: 'Invalid Id'}`；`removePendings` 清理待处理请求时也回复同一错误。这与签名内容无关，而是 App 仍认为已连接、MetaMask 端已没有该会话。MetaMask 的 SDK 层仍会应答 session ping，所以现有 ping 检测发现不了。
+
+- `requestReownWallet`（`reown_signature_request.dart`）：请求返回 `JsonRpcError(code: 1, message: 'Invalid Id')` 时，按“会话无法确认”处理：结果为 `authWalletSessionUnverified`（保留原因 “Invalid Id”），连接标记为需要重新连接，提示“无法确认钱包会话。请打开钱包检查连接，并重新连接后继续。”不重发请求。其他 JSON-RPC 错误仍按原逻辑处理，不影响连接。
+- 用户侧处理：重新连接钱包后再提现。若在 MetaMask 中断开过 Vanta、清除过连接、重装／重置钱包，或连接数超出 MetaMask 上限被自动移除最旧会话，都会出现此错误。
+- 测试：`reown_session_liveness_test` 新增 2 项（Invalid Id 要求重新连接；其他 JSON-RPC 错误保持连接）。`flutter test test/features/auth` 405 项通过。`flutter analyze` 仅有 `signed_trailing_order_repository_test.dart` 的未使用变量警告（该文件有他人未提交改动，与本次无关）。未做真机验证。
+
+## 2026-11-18 外部钱包提现时 MetaMask 报 “Active chainId is 0x38 but received 0x682”
+
+问题：Portfolio → Withdraw（Futures / BNB Chain）→ Withdraw → Open wallet，MetaMask 弹出 “Active chainId is 0x38 but received 0x682”。`AsterWithdrawalRepository` 把 V3 外层请求签名（`AsterSignTransaction`，chainId 1666 = 0x682）交给登录钱包签，外部钱包拒签与当前网络不一致的 domain chainId。提现页的 withdraw-info 等其他签名读取都已由本机交易授权 agent 签名，只有提现仓库没有接入。
+
+- 依据：官方文档（https://github.com/asterdex/api-docs/blob/master/demo/aster-deposit-withdrawal.md）中 `signer` 为 API 下发的 EOA，外层 `signature` 由该私钥签，示例 chainId 为 1666；`userSignature`（`Action`，domain `Aster`，chainId 为提现链）由用户钱包签。
+- 修改：`withdrawalRepositoryProvider` 注入 `asterRequestAuthorizationProvider` 和 `WalletSigningPreparation`。提现前的子账户目录、withdraw-info 读取和 `user-withdraw` 外层签名都由 agent 签名，`signer` 为 agent 地址，`user` 仍为主钱包；主钱包只签 `Action`。签 `Action` 前先把外部钱包切到提现链（ETH/Arbitrum 时同样适用），内嵌钱包不受影响。
+- 未验证：Aster 是否要求 agent 具备 `canWithdraw` 才接受由 agent 签外层的提现（文档未提及）；未用真实账户提交。
+- 同类问题：内部划转（`SignedInternalTransferRepository`，`/fapi/v3/asset/wallet/transfer`）的三次账户读取和划转提交同样由钱包签 1666，现改为注入 `asterRequestAuthorizationProvider`，由 agent 签名，`signer` 为 agent 地址。未开启交易授权时，划转页“读取”按钮显示 Enable trading 并打开 `EnableTradingScreen`，不再进入会失败的读取。
+- 未处理：子账户冻结／解冻／账户间划转（`AsterSubaccountManagementRepository`）仍由主钱包签 1666，外部钱包可能同样被拒。这些写操作是否接受 agent 作为 `signer` 未确认，且记录与查询绑定需同步调整，本次未改。
+- 测试：`withdrawal_repository_test` 新增 1 项（agent 签全部 1666 外层，主钱包只签 `Action`，签名前切换到 56，请求 `signer` 为 agent）；`signed_internal_transfer_repository_test` 新增 1 项（agent 签全部 7 个外层，钱包不签名，`signer` 为 agent）；`internal_transfer_widget_test` 原有用例改用已激活授权，新增无授权时按钮打开 Enable trading 且不读取。`flutter test test/features/funding` 787 项通过，`flutter analyze` 无问题。全量 `flutter test` 仅 `embedded_time_in_force_selector_test` 4 项失败（期望 21.0、实际 32.0），该文件及其组件在本次修改前已有未提交改动，与本次无关。按用户要求，未做真机验证。
 
 ## 2026-11-17 Trailing Stop 下单表单与确认弹窗按设计稿对齐
 
@@ -431,9 +683,71 @@
 - 验证（续）：`position_risk_provider_test` 新增写入后 2 秒再次标过期；`order_polling_review_widget_test` 确认下单成功后数量清空、价格保留（去掉清空时失败）。全仓 `flutter analyze`、格式检查通过；`test/features/portfolio` 3162 项通过，`test/features/trade` 各文件逐个运行全部通过。
 
 
+## 2026-11-18 Sentry mobile error monitoring
+
+- Inspected Flutter 3.47.4/Dart 3.13, Riverpod, Android minSdk 28, iOS 17.0 and existing mobile release workflows. No previous Sentry SDK/configuration was found. Added pinned `sentry_flutter` 10.5.0; retained all pre-existing dependency versions in the final lockfile.
+- `lib/main.dart` wraps startup in `lib/core/monitoring/error_monitoring.dart` before binding/Firebase/recovery initialization. Public compile-time DSN and explicit development/staging/production environment control activation; absent/invalid settings leave monitoring disabled. Added public `.env.example` keys and local/CI validation; no credential is compiled into the app.
+- Error events use an allowlist filter: preserve error types, code locations, handled flags, debug IDs and release metadata; discard exception values, user/request/business data, arbitrary messages, contexts, breadcrumbs, source snippets and absolute paths. Screenshots, view hierarchy, session tracking, replay and tracing are off; log/metric callbacks drop payloads. No paid product or account-plan change. Native crash/ANR/app-hang/watchdog reporting is intentionally disabled because those envelopes bypass the Dart privacy filter. Background/custom isolates are not explicitly instrumented. This is Flutter/root-Dart error monitoring, not complete native crash coverage.
+- Release workflow optionally installs pinned CLI 2.58.2 and uploads both Android Dart symbol sets or iOS Dart symbols/archive dSYMs via `scripts/upload_sentry_symbols.py`, awaiting processing and excluding sources. CI Secret `SENTRY_AUTH_TOKEN` is scoped to upload steps; public repository variables select DSN/environment/org/project. Release/dist use the source SHA. No remote CI settings were changed and no symbols were uploaded.
+- Provisioning: default PATH had no CLI; Nix supplied 2.58.2. Existing user-level authorization is valid, with organization/project read and event/alert scopes, but no project creation scope and no default target. CLI supports project listing only; organization listing hit a response-parser incompatibility. A read-only API fallback found `dodo-k4/rwa` (Flutter), no `vanta`. No project was created or reused without confirmation. User was asked whether to create `dodo-k4/vanta`, reuse `rwa`, or select another target. Administrator web/API creation alternatives, required configuration and acceptance steps are in [sentry.md](sentry.md).
+
+### Sentry project connection follow-up
+
+- Re-enumerated organizations and organization-scoped projects with existing local authorization after user creation. Confirmed the single visible `vanta` candidate: organization `dodo-k4`, team `dodo`, platform `flutter`, including project detail. Global project listing returned empty despite organization-scoped visibility. No duplicate project creation or reuse of `rwa`.
+- Read the active public DSN directly into ignored `.env`, with explicit `development` environment; preserved other local configuration and unrelated working-tree edits. No auth token was copied, printed or added to app configuration. Existing release integration remains applicable; remote Actions variables/secrets were not configured, no workflow was dispatched, and upload permission was not exercised. Confirmed future target values and configuration boundaries in `docs/sentry.md`.
+- Sent one minimal synthetic envelope without application/account data. HTTP 200 was followed by a successful project event API lookup (after two transient 404s); event ID `3cf27a9ff93042b3a1ebfccee519eaab`, environment `development`, release `vanta-sentry-ingestion-check`. This verifies ingestion only, separately from SDK recording-transport tests.
+- Verification: Dart formatting checked 3 monitoring/startup files with 0 changes; whole-repository `dart analyze` reported no issues; 5 monitoring Flutter tests passed; Python script suite ran 57 tests successfully with 1 skip; local environment validator passed without printing values. Bridge reported no running runtimes. Default Nix Flutter wrapper initially failed because its artifact cache points into the read-only store; using the installed SDK-links Flutter entrypoint resolved testing. Python tests required execution outside the sandbox.
+- No mobile launch, native/device checks, Android/iOS packaging, release, deployment or symbol upload occurred. Actual mobile error hooks, background isolates, release job configuration, debug-file permissions/processing and obfuscated-stack restoration remain unverified. Native crash capture remains disabled; no additional paid features were enabled. No commit or push.
+- Verification: dependency resolution succeeded; changed Dart files formatted; repository-wide `dart analyze` reported no issues. Monitoring tests passed (5), including SDK capture through a recording transport and privacy filtering; existing root widget tests passed (14). Python script tests passed (52 run, 1 skipped), including configuration validation, auth-token exclusion and mocked symbol uploads. Workflow YAML parsing and both upload-step presence were checked. Root widget tests emitted existing missing Linux Rive native-library warnings while using the configured canvas fallback. No application launch, reload/restart, Android/iOS package/build, device/emulator test, commit or push was performed.
+- Acceptance still pending: confirmed target project/DSN, server receipt of a synthetic event, device behavior on Android/iOS, release CI execution, symbol upload/processing and real obfuscated-stack symbolication. A recording transport proves SDK filtering only. No event was sent to an unconfirmed project; neither build success nor a returned event ID establishes online monitoring. Bridge status showed no running project environment; checks used the installed Flutter SDK.
+
+### Sentry diagnostics improvements
+
+- Scope: make events actionable without relaxing the allowlist. Split filter/reporting out of `error_monitoring.dart` into `error_event_filter.dart` and `failure_reporter.dart`. Typed failures (`DetailedApiFailure`, `MarketFailure`) contribute `error.status/cause/endpoint/key/code` tags and a summary exception value built only from them; server messages are never sent. Coarse OS/device/app/locale contexts and lifecycle, memory pressure and typed failure breadcrumbs (max 30) are kept; everything else stays dropped. See the table in [sentry.md](sentry.md).
+- Handled failures: root `ProviderScope` uses `ErrorMonitoringObserver` (programming errors, malformed payloads, storage failures and 5xx/invalid responses are reported; expected API/network failures become breadcrumbs; cancellation ignored), de-duplicated for 10 minutes. Startup journal reload failures in `lib/main.dart` report via `reportHandledFailure` with `journal.<name>.reload`. No UI or financial logic changes.
+- Release: Sentry release is `vanta@<pubspec version>` (job-level env, since workflow-level env cannot read `needs`), dist stays the source SHA. Android APK/AAB and iOS builds save obfuscation maps under `build/obfuscation/`; `scripts/upload_sentry_symbols.py` uploads each map paired with its Dart debug files via `dart-symbol-map upload` with the plugin's debug-ID marker, failing on missing maps.
+- Second batch: enabled automatic session tracking (release health; native sessions carry a random installation ID, no user/IP). Push initialization failures in `firebase_push_messaging_repository.dart` now report `push.initialize` instead of being silently swallowed. Not done by decision: native crash/ANR/app-hang reporting (requires app-owned native init with Kotlin/Swift privacy filters; Swift cannot be compiled on this Linux host, user chose to defer), navigation breadcrumbs (user dropped; routes are unnamed), background message isolate (handler only initializes Firebase; a second Sentry init would re-initialize the shared native SDK). Verification: monitoring + notifications tests 218 passed; `dart analyze` no issues; formatting unchanged. Session envelopes on devices and the Sentry Releases view are unverified.
+- Verification: changed Dart files formatted (0 changes); repository-wide `dart analyze` no issues; monitoring tests 9 passed (filter/contexts/tags/breadcrumbs/classification, provider observer through a recording transport with retry disabled); full `flutter test` 6028 passed, 3 skipped; Python script suite 64 passed, 1 skipped (map pairing, debug-ID marker, missing-map failure); `actionlint` on `release.yml` passed. No app launch, native build, device test, release job, symbol/map upload or real deobfuscation was performed; obfuscation-map output paths and iOS `App.framework.dSYM` location are unverified until the next release run.
+
 ## 2026-11-16 Integrated changes and pre-commit verification
 
 - Integrated owner-signed Aster Builder approval/update for the configured public Vanta address. The client never needs a Builder private key. Live binding reads confirm approval; durable journals retain uncertain writes, and only a renewed explicit action after verification permits a missing Builder grant to be signed again. Wallet initialization, relay correlation and launch recovery use the scoped, documented Reown patches with upstream licenses. Builder signing uses a 50-second local deadline within the general V3 60-second nonce window; Agent registration retains its separate stricter deadline.
 - Crypto and RWA targets remain total Maker 0.015% / Taker 0.05%. New order/strategy placement reads current symbol commission and binding, computes one additional Builder fee with Decimal for every possible entry/protection fill, rejects applicable base fees above budget and signs the exact attribution bytes. Uncertain orders are queried by their original IDs without replay. The additive fee formula, actual fill accounting and backend Builder discovery/archive completeness remain operational acceptance boundaries; successful wallet signing alone does not establish them.
 - Included backend history/notification contract updates, income archival, quantity-unit mapping, app-update handling, safe-read cancellation/backoff and order input/allocation feedback and refresh improvements. Financial writes do not use automatic read retries. Builder fixes retain the agreed authorization UI and copy; unrelated UI changes in this working tree belong to their existing feature work.
 - Before committing all current changes, `dart format --output=none --set-exit-if-changed lib test` checked 1,357 files with no changes, `flutter analyze --no-pub` reported no issues, and the full `flutter test --no-pub` suite passed **5,973 tests with 3 skipped**. Application whitespace checks passed. Staged whitespace diagnostics in vendored licenses, README and generated SDK files were verified byte-for-byte against the published package cache; their upstream formatting was retained. Logs: `/tmp/vanta-commit-format.log`, `/tmp/vanta-commit-analysis.log`, `/tmp/vanta-commit-tests.log`. The existing Linux Rive native-library warnings/skips remain. No app launch, reload/restart, native build or real signed financial write was performed for this verification.
+
+## 2026-11-18 未充值账户（Aster -5050）按空数据显示
+
+邮箱登录生成的新钱包未在 Aster 充值时，私有读取返回业务码 -5050（"This function can only be used after deposit"）。此前下单入口已按 `OrderEntryGate.deposit` 处理，但以下区块把它当读取失败，显示「加载失败 + Aster 错误代码 + 重试」，重试结果不变。
+
+- 改为按「账户尚未开立、没有数据」显示（按 `AccountReadFailure.requiresDeposit` 判断，只认业务码，不看文案）：
+  - 交易页持仓 `trade_positions_section.dart`、当前委托 `trade_open_orders_section.dart`：视为空列表，显示既有空状态；
+  - 资产页持仓：`portfolioPositionsProvider` 在 -5050 且无数据时返回空列表；
+  - 账户切换余额 `account_balance_text.dart`：余额显示「—」，不显示错误；
+  - 账户读取控件 `account_read_controls.dart`（Aster 账户面板、子账户列表）、账户变动流 `account_change_panel.dart`：不显示失败视图或错误文字；
+  - 子账户管理 `account_management_screen.dart`：目录读取返回 -5050 且无数据时显示既有空状态「暂无子账户」（不显示读取按钮）；本地已知的子账户仍照常列出；数量仍显示「—」，创建入口保持不可用。
+- 其他失败（含授权缺失）的显示与重试不变。交易记录走 Vanta 归档，Aster 同步失败只记为 `refreshFailure` 不展示，不受影响；下单相关面板已由 `OrderEntryGate.deposit` 改为「充值」按钮。
+- 验证：新增 widget 测试（委托读取、子账户目录读取返回 -5050 时显示空状态、无失败视图；回退修复后两项测试均失败）；`test/features/subaccounts` 206 项通过；`test/features/portfolio`、`test/features/subaccounts`、`test/features/trade` 共 3480 项通过；`dart format` 无改动；`dart analyze --fatal-infos` 仅剩 `test/features/portfolio/open_order_card_test.dart` 一条多余 import 提示（另一会话正在修改的文件，非本改动）。未启动 App、未在真机验证。
+
+## 2026-11-18 打开钱包失败时显示 “钱包返回：Instance of 'Xib'”
+
+问题：交易授权页签名时，iOS 拉起 Binance Wallet 失败，页面显示 “钱包返回：Instance of 'Xib'”。链路：`UriService._launchUrlFunc` 在系统拒绝打开时抛 `CanNotLaunchUrl`；其基类 `LaunchUrlException`（Reown 补丁包）未实现 `Exception`／`toString`，`_launchRequestOnWallet` 用 `e.toString()` 作为 `ErrorOpeningWallet.description`，得到 Dart 默认文本 `Instance of '类名'`（release 包混淆后为 `Xib`）；`walletReason` 未过滤此文本；`apiErrorText` 又给所有 `authWallet*` 加上“钱包返回：”。
+
+- `launch_url_exception.dart`：`LaunchUrlException` 实现 `Exception`，`toString()` 返回其 message。
+- `launchWalletRequest`：`openRedirect` 抛出的 `LaunchUrlException`（Reown 一律写作 “App not installed”，钱包已安装时也是）改为与返回 false 相同的 `WalletRequestLaunchException('The operating system could not open the connected wallet app')`；其他异常照旧透传。
+- `walletReason`：以 `Instance of '` 开头的文本不作为原因，回退本地化文案。
+- `apiErrorText`：`authWalletOpenFailed` 不再加“钱包返回：”，显示本地化的“无法打开已连接的钱包…”并在下一行附具体原因。
+- 未解决：系统为何拒绝打开 Binance Wallet（scheme／重定向链接或 App 状态）需要设备日志确认。
+- Sentry 上报：此前打开失败不会上报（`requestReownWallet` 在 modal 错误事件后已结束请求，随后到达的异常被忽略；授权页把失败写入状态，不触发 `providerDidFail`；即使触发也只是 breadcrumb）。现在 `requestReownWallet` 捕获到 `WalletRequestLaunchException` 时调用 `reportWalletLaunchFailure`（`wallet_launch_report.dart`），以 `vanta.operation=wallet.launch` 上报事件，附加标签 `wallet.launch`（`unavailable`／`noRedirect`／`invalidLink`／`timeout`／`refused`）、`wallet.name`（会话 peer 名称）、`wallet.scheme`、`wallet.host`。完整链接（含 `sessionTopic`、`requestId`、路径与查询）不上报；`sanitizeErrorEvent` 的标签白名单新增这四个键，异常文本仍为 `[redacted]`。沿用 10 分钟去重。
+- 补丁：`WalletRequestLaunchException` 新增 `failure`、`redirect`（拼接请求参数前的钱包链接）；`openRedirect` 返回 false（UriService 仅在无法从重定向生成链接时返回 false）改为 “The connected wallet app link is invalid”，不再与系统拒绝打开混用。
+- 测试补充：`reown_wallet_launch_test` 校验各失败类型与链接不含 topic；`wallet_launch_report_test` 校验标签只含类型／钱包名／scheme／host，经隐私过滤后保留、其他标签与异常文本被去除。`flutter test --no-pub test/features/auth test/features/authorization test/core/monitoring test/core/errors` 552 项通过、3 项既有跳过；`flutter analyze --no-pub` 无问题。未在启用 Sentry 的真机上确认事件到达。
+- 测试：`reown_wallet_launch_test` 新增系统拒绝打开的原因映射；`reown_auth_failure_test` 新增 `Instance of` 过滤；`error_text_test` 新增打开失败文案。`flutter test` reown_wallet_launch、reown_auth_failure、error_text、reown_signature_request、reown_signing_network、reown_request_delivery 共 81 项通过；`flutter analyze --no-pub lib test` 及补丁目录无问题。未启动 App、未在真机验证。
+
+
+## 2026-11-18 提交前整体验证
+
+- 范围：本轮交易、资金、账户与通知交互修复，统一按压反馈，钱包拉起错误与 Sentry 监控，以及 iOS Rive 导出和发布脚本；各项行为与边界见上文。
+- `dart format --output=none --set-exit-if-changed` 检查 `lib`、`test` 和两个变更的 Reown URI 补丁文件，共 1,363 个文件，0 改动；`dart analyze --fatal-infos` 全仓无问题。
+- `flutter test --no-pub` 全量通过 6,053 项，跳过 3 项；`python3 -m unittest discover -s scripts -p '*_test.py'` 运行 64 项，成功，跳过 1 项。暂存区与工作区 `git diff --check` 均通过。
+- 日志：`/tmp/vanta-push-format.log`、`/tmp/vanta-push-analysis.log`、`/tmp/vanta-push-tests.log`、`/tmp/vanta-push-python.log`。Flutter 测试使用已安装 SDK 的 SDK-links 入口，日志仍有既有 Linux Rive 原生库提示。
+- 本轮验证未启动、热重载或重启 App，未执行 Android/iOS 打包构建、设备/模拟器验证、签名金融操作或 Sentry 符号上传；移动端与发布验收边界保持上文记录。

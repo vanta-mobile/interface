@@ -27,7 +27,7 @@ void main() {
     await launch(t, f.container);
     final l = AppLocalizations.of(t.element(find.byType(LiveOrderScreen)));
     expect(find.text(l.cross), findsOneWidget);
-    expect(find.text(l.assetModeMulti), findsOneWidget);
+    expect(find.text(l.assetModeSingleShort), findsOneWidget);
     f.expectNoAccountMutation();
     await f.close(t);
   });

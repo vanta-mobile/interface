@@ -1059,7 +1059,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get orderCancelConfirmHint =>
-      'Cancel only the unfilled remainder of this perpetual order. Filled positions remain. Your current wallet will sign the cancellation, then a separate status query. Aster authorization is required.';
+      'Cancel only the unfilled remainder of this perpetual order. Filled positions remain. Your wallet signs the cancellation and the follow-up status check; Vanta runs the check automatically.';
 
   @override
   String get orderCancelSigning => 'Confirm the cancellation signature in your wallet.';
@@ -1082,8 +1082,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orderCancelRecheck => 'Sign and check status';
 
   @override
-  String get orderCancelVerified =>
-      'Aster confirmed this order is cancelled. Any filled position remains; account balances need refreshing.';
+  String get orderCancelVerified => 'Order cancelled. Any filled position remains.';
 
   @override
   String get orderCancelFilled =>
@@ -1829,9 +1828,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Finish the pending futures settings operation before placing an order.';
 
   @override
-  String get liveOrderSubmitting => 'Submitting the live order…';
-
-  @override
   String get liveOrderMarkPrice => 'Reference mark price';
 
   @override
@@ -1853,11 +1849,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveOrderClientId => 'Client order reference';
-
-  @override
-  String liveOrderVerifiedResult(String status, String executed, String orderId) {
-    return 'Signed query: $status; executed quantity $executed; order $orderId.';
-  }
 
   @override
   String get liveOrderQueryScope =>
@@ -1929,16 +1920,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'The trigger price is already reached at this read. Adjust it according to the displayed direction and review again. Aster checks the actual price at submission.';
 
   @override
-  String get liveOrderPolicyGtc => 'GTC';
-
-  @override
-  String get liveOrderPolicyIoc => 'IOC';
-
-  @override
   String get liveOrderPolicyPostOnly => 'Post Only (GTX)';
-
-  @override
-  String get liveOrderPolicyHidden => 'Hidden (HIDDEN)';
 
   @override
   String get liveOrderPolicyGtcHint =>
@@ -1962,9 +1944,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveOrderSide => 'Direction';
-
-  @override
-  String get liveOrderType => 'Order type';
 
   @override
   String get liveOrderInvalidQuantity => 'Enter a positive decimal quantity.';
@@ -2013,36 +1992,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'This submits a real reduction order. Sign to recheck the position first, then sign to place the order and separately to query it. A changed quantity, entry price or configuration stops submission. Market price can move; limit execution follows the policy shown below. The exchange validates concurrent activity.';
 
   @override
-  String get liveCloseResultScope =>
-      'An order status does not prove that the entire position is closed. Sign separately to read the remaining position. This does not cancel other orders, and later activity can change the position again.';
-
-  @override
-  String get liveCloseReadRemaining => 'Sign to read remaining positions';
-
-  @override
-  String get liveCloseRemaining => 'Remaining quantity at this read';
-
-  @override
   String get liveOrderReduceHedge =>
       'The reduceOnly parameter is unavailable in hedge mode. Use the position’s close action to reduce its LONG or SHORT side.';
-
-  @override
-  String get batchCloseAll => 'Close all listed live positions';
-
-  @override
-  String get batchCloseCurrent => 'Close all current-symbol live positions';
-
-  @override
-  String batchCloseCount(int count) {
-    return 'Confirmed scope: $count positions';
-  }
-
-  @override
-  String get batchCloseStopped =>
-      'Further submissions stopped. Unsubmitted positions require a fresh read and confirmation.';
-
-  @override
-  String get batchCloseRecheck => 'Sign to query unconfirmed orders only';
 
   @override
   String get liveOrderReadFunds =>
@@ -3007,7 +2958,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get depositRpcReorg =>
-      'The chain block changed during the read. Refresh to obtain a consistent snapshot.';
+      'The balance could not be read while the chain was updating. Pull down to try again.';
 
   @override
   String get depositAmountInvalid =>
@@ -4998,7 +4949,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get attachedOrderTargetSign =>
-      'Enter a positive take-profit or negative stop-loss amount / ROI. Zero is not a target.';
+      'Enter a take-profit / stop-loss amount or ROI greater than zero.';
 
   @override
   String get attachedOrderPreviewUnavailable =>
@@ -5110,9 +5061,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'The required conversion price is unavailable. Refresh the order snapshot or enter a base-asset quantity.';
 
   @override
-  String get liveAmountResolvedQuantity => 'Base quantity to submit';
-
-  @override
   String get futuresHistoryTitle => 'Futures history';
 
   @override
@@ -5221,10 +5169,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get orderConfirmSubmitted => 'Order submitted';
-
-  @override
-  String get orderConfirmExpired =>
-      'Order details are no longer current. Close this dialog and place the order again.';
 
   @override
   String get scaledAmountInvalid => 'Enter a positive total order amount.';
@@ -5364,10 +5308,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get liveCapacityEstimateHint =>
       'Both sides independently assume a full fill using the same account and current prices. Opening cost includes incremental margin and opening loss. Liquidation estimates use the signed taker fee and risk tiers, holding other prices and collateral rates fixed; actual fills, fees and funding can differ. Missing facts or no positive estimate show —.';
-
-  @override
-  String get liveCapacityPendingUnknown =>
-      'Capacity is unavailable because the reserved notional of a pending order cannot be verified.';
 
   @override
   String get liveCapacityRatesUnavailable =>
@@ -5539,19 +5479,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioFuturesAssets => 'Futures assets';
 
   @override
-  String get portfolioPnlDetails => 'PnL details';
+  String get portfolioPnlDetails => 'Realized PnL details';
 
   @override
-  String get portfolioTodayPnl => 'Today’s PnL';
+  String get portfolioTodayPnl => 'Today’s Realized PnL';
 
   @override
-  String get portfolioPnl7d => 'PnL · 7D';
+  String get portfolioPnl7d => 'Realized PnL · 7D';
 
   @override
   String get portfolioVolume7d => 'Volume · 7D';
-
-  @override
-  String get portfolioTransfer => 'Transfer between accounts';
 
   @override
   String get portfolioMainAccount => 'Main account';
@@ -5585,10 +5522,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioOpenHistory => 'Expand value history';
 
   @override
-  String get portfolioMissingPnl => 'PnL data unavailable for this account';
+  String get portfolioMissingPnl => 'Realized PnL data unavailable for this account';
 
   @override
-  String get portfolioMissingDay => 'Daily PnL unavailable';
+  String get portfolioMissingDay => 'Daily Realized PnL unavailable';
 
   @override
   String get portfolioMissingValue => 'Value history unavailable for this account';
@@ -5601,7 +5538,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioCalendar => 'Calendar';
 
   @override
-  String get portfolioMonthlyPnl => 'Monthly PnL';
+  String get portfolioMonthlyPnl => 'Monthly Realized PnL';
 
   @override
   String get vantaApiSignInAction => 'Sign';
@@ -5636,7 +5573,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Statistics requests are temporarily limited. Try again shortly.';
 
   @override
-  String get portfolioCalendarNote => 'Daily PnL uses UTC · Values in USD';
+  String get portfolioCalendarNote => 'Daily Realized PnL uses UTC · Values in USD';
 
   @override
   String get portfolioPreviousMonth => 'Previous month';
@@ -5660,11 +5597,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioAssets => 'Assets';
 
   @override
-  String get portfolioLast7Days => 'PnL · Last 7 days';
+  String get portfolioLast7Days => 'Realized PnL · Last 7 days';
 
   @override
   String portfolioPnlPeriod(String period) {
-    return 'PnL · $period';
+    return 'Realized PnL · $period';
   }
 
   @override
@@ -5679,7 +5616,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String portfolioDayUnavailable(String date) {
-    return '$date · Daily PnL unavailable';
+    return '$date · Daily Realized PnL unavailable';
   }
 
   @override
@@ -6391,6 +6328,85 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradeTpSl => 'TP/SL';
 
   @override
+  String get assetModeSingleShort => 'S';
+
+  @override
+  String get assetModeMultiShort => 'M';
+
+  @override
+  String get liveOrderTriggerReached => 'Trigger price already reached. Please adjust.';
+
+  @override
+  String get scaledPriceOutOfRange => 'Price exceeds the allowed range';
+
+  @override
+  String batchCloseDone(int count) {
+    return 'Closed $count positions.';
+  }
+
+  @override
+  String get orderDetailsTitle => 'Order details';
+
+  @override
+  String orderDetailsLeg(String letter) {
+    return 'Order $letter';
+  }
+
+  @override
+  String get orderDetailsPlacesBoth => 'If order A is executed, orders B and C are placed.';
+
+  @override
+  String get orderDetailsPlacesOne => 'If order A is executed, order B is placed.';
+
+  @override
+  String get orderDetailsCancelsC => 'If order B is executed, order C is canceled.';
+
+  @override
+  String get orderDetailsCancelsB => 'If order C is executed, order B is canceled.';
+
+  @override
+  String get orderDetailsClosed => 'This strategy is no longer open.';
+
+  @override
+  String get orderDetailsSide => 'Side';
+
+  @override
+  String get orderDetailsAmount => 'Amount';
+
+  @override
+  String get orderDetailsStop => 'Stop';
+
+  @override
+  String get orderDetailsTpMarket => 'TP Market';
+
+  @override
+  String get orderDetailsSlMarket => 'SL Market';
+
+  @override
+  String get orderDetailsTpLimit => 'TP Limit';
+
+  @override
+  String get orderDetailsSlLimit => 'SL Limit';
+
+  @override
+  String get tradeHedgeOpen => 'Open';
+
+  @override
+  String get tradeHedgeClose => 'Close';
+
+  @override
+  String get tradeOpenLong => 'Open Long';
+
+  @override
+  String get tradeOpenShort => 'Open Short';
+
+  @override
+  String get tradeCloseLong => 'Close Long';
+
+  @override
+  String get tradeCloseShort => 'Close Short';
+
+  @override
   String get tradeHiddenOrder => 'Hidden Order';
 
   @override
@@ -6502,15 +6518,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String liveOrderMinimumPlaceholder(String amount) {
     return 'Min $amount';
   }
-
-  @override
-  String get notificationFilterAll => 'All';
-
-  @override
-  String get notificationFilterTransfers => 'Transfers';
-
-  @override
-  String get notificationFilterOrders => 'Orders';
 
   @override
   String get notificationUnreadOnly => 'Unread only';
@@ -6854,14 +6861,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Aster returned an order reference, symbol or side that does not match this order.';
 
   @override
-  String get orderResponseLinkageMismatch =>
-      'Aster returned TP/SL links that do not match this order.';
-
-  @override
-  String get orderResponseTermsMismatch =>
-      'Aster returned a price, quantity or execution setting that does not match this order.';
-
-  @override
   String get orderResponseStatusInvalid => 'Aster returned a missing or unrecognized order status.';
 
   @override
@@ -6950,13 +6949,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get positionTpslMarkPrice => 'Mark price';
 
   @override
-  String get positionTpslSwitchBasis => 'Switch take-profit trigger price type';
-
-  @override
   String get positionTpslPnl => 'Pnl';
 
   @override
   String get positionTpslRoi => 'ROI';
+
+  @override
+  String get positionTpslGain => 'Gain';
+
+  @override
+  String get positionTpslLoss => 'Loss';
 
   @override
   String get positionTpslAmount => 'Amount';
@@ -7382,10 +7384,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get incomeArchiveReferenceConflict =>
-      'Income records of different types share a transaction reference. The archive cannot safely deduplicate them; reporting has stopped.';
-
-  @override
   String notificationApiField(String field) {
     String _temp0 = intl.Intl.selectLogic(field, {
       'price': 'Price',
@@ -7416,11 +7414,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get pushVisibilityTitle => 'Background notifications unavailable';
+  String get pushVisibilityTitle => 'System notifications unavailable';
 
   @override
-  String get pushNoServerVisibility =>
-      'The notification server cannot observe this account. You will not receive account notifications while the app is closed.';
+  String get portfolioRealizedPnl => 'Realized PnL';
 
   @override
   String assistantRemainingToday(String remaining, String limit) {
@@ -7611,9 +7608,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pushFundingFees => 'Funding Fees';
-
-  @override
-  String get pushTransfers => 'Deposits & Withdrawals';
 
   @override
   String get pushAnnouncements => 'Announcements';

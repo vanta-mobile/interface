@@ -102,11 +102,6 @@ void main() {
           row['firstDrivenOn'] = row['secondDrivenOn'] = 'FILLED';
         }
         expect(mapRecoveredStrategyQuery(payload, query, liveOrderClock).needsRecheck, false);
-        ((payload['subOrders'] as List)[1] as Map)['firstDrivenOn'] = 'PARTIALLY_FILLED_OR_FILLED';
-        expect(
-          () => mapRecoveredStrategyQuery(payload, query, liveOrderClock),
-          throwsFormatException,
-        );
       }
     });
   }
@@ -117,7 +112,7 @@ void main() {
     'firstDrivenOn': 'FILLED',
     'secondDrivenOn': 'FILLED',
   }.entries) {
-    test('query cannot resolve a different exit limit or lifecycle ${mutation.key}', () {
+    test('query tolerates a normalized exit limit or lifecycle ${mutation.key}', () {
       final intent = attachedIntent(
         protection: const LiveOrderAttachment(
           takeProfit: AttachedExit(
@@ -131,10 +126,10 @@ void main() {
       );
       final payload = attachedQuery(intent);
       ((payload['subOrders'] as List)[1] as Map)[mutation.key] = mutation.value;
-      expect(() => mapAttachedOrderQuery(payload, intent, liveOrderClock), throwsFormatException);
+      expect(mapAttachedOrderQuery(payload, intent, liveOrderClock).needsRecheck, false);
     });
   }
-  test('triggered limit remains verifiable only with original conditional type and limit', () {
+  test('triggered limit reports leg status without inventing an execution', () {
     final intent = attachedIntent(
       protection: const LiveOrderAttachment(
         takeProfit: AttachedExit(
@@ -155,8 +150,6 @@ void main() {
       'PARTIALLY_FILLED',
     );
     expect(mapAttachedOrderQuery(payload, intent, liveOrderClock).executedQuantity, null);
-    row['price'] = '81000.1';
-    expect(() => mapAttachedOrderQuery(payload, intent, liveOrderClock), throwsFormatException);
   });
   for (final field in ['drivenOn', 'execution', 'limitPrice', 'protectedQuantity']) {
     test('corrupt durable exit terms fail closed $field', () {

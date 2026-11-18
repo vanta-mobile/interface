@@ -141,7 +141,7 @@ void main() {
     final l10n = _l10n(tester);
     await tester.tap(find.byKey(const Key('live-order-confirm')));
     await tester.pumpAndSettle();
-    expect(find.text(l10n.orderConfirmExpired), findsOneWidget);
+    expect(find.text(l10n.liveAllocationChanged), findsOneWidget);
     expect(find.byType(OrderConfirmationDialog), findsOneWidget);
     AppToast.dismiss();
   });
@@ -172,7 +172,9 @@ void main() {
     expect(_inDialog(find.text('${l10n.openOrdersMarkPrice} ≤ 79000 USDT')), findsOneWidget);
   });
 
-  testWidgets('selected advanced settings appear as extra rows', (tester) async {
+  testWidgets('trigger leads the design rows; type and time in force stay on the form', (
+    tester,
+  ) async {
     await _open(
       tester,
       _intent(
@@ -193,11 +195,17 @@ void main() {
     );
     final l10n = _l10n(tester);
     expect(_inDialog(find.text(l10n.attachedEntryCounterparty(1))), findsOneWidget);
-    expect(_inDialog(find.text(l10n.liveOrderPolicyIoc)), findsOneWidget);
+    expect(_inDialog(find.text(l10n.liveOrderPolicy)), findsNothing);
+    expect(_inDialog(find.text('IOC')), findsNothing);
     expect(_inDialog(find.text(l10n.reduceOnly)), findsOneWidget);
-    expect(_inDialog(find.text('${l10n.openOrdersMarkPrice} ≥ 81000 USDT')), findsOneWidget);
+    final trigger = find.text('${l10n.openOrdersMarkPrice} ≥ 81000 USDT');
+    expect(_inDialog(trigger), findsOneWidget);
     expect(_inDialog(find.text(l10n.liveOrderTriggerProtect)), findsOneWidget);
-    expect(_inDialog(find.text(l10n.openOrdersStopLimit)), findsOneWidget);
+    expect(_inDialog(find.text(l10n.openOrdersStopLimit)), findsNothing);
+    expect(
+      tester.getTopLeft(trigger).dy,
+      lessThan(tester.getTopLeft(find.text(l10n.orderConfirmPrice)).dy),
+    );
     // Reducing orders label the close direction.
     expect(_inDialog(find.text(l10n.liveCloseLong)), findsNothing);
     expect(_inDialog(find.text(l10n.liveCloseShort)), findsNWidgets(2));

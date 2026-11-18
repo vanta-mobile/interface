@@ -117,7 +117,6 @@ void main() {
         l.pushConditionalTriggers,
         l.pushOrderUpdates,
         l.pushFundingFees,
-        l.pushTransfers,
         l.pushAnnouncements,
       ]) {
         expect(find.text(label), findsOneWidget);

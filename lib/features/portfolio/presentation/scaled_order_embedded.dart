@@ -89,13 +89,23 @@ class _ScaledOrderEmbeddedFormState extends ConsumerState<ScaledOrderEmbeddedFor
     );
   }
 
-  /// The plan, or the reason it cannot be built, named per child order.
-  (ScaledOrderPlan?, String?) _plan(AppLocalizations l10n) {
+  /// The plan, or the reason it cannot be built, named per child order. A
+  /// price-range failure at the lowest or highest price is reported under
+  /// that field instead (keyed by the field).
+  (ScaledOrderPlan?, String?, String?) _plan(AppLocalizations l10n) {
     final draft = _draft(true);
-    if (draft == null) return (null, null);
+    if (draft == null) return (null, null, null);
     try {
-      return (planScaledOrder(data, draft), null);
+      return (planScaledOrder(data, draft), null, null);
     } on ScaledChildFailure catch (error) {
+      if (const {'liveOrderPercentFilter', 'liveOrderPriceFilter'}.contains(error.key)) {
+        final price = parseOrderDecimal(error.order.price);
+        for (final (field, text) in [('scaled-high', high.text), ('scaled-low', low.text)]) {
+          if (price != null && price == parseOrderDecimal(text.trim())) {
+            return (null, null, field);
+          }
+        }
+      }
       return (
         null,
         l10n.scaledChildInvalid(
@@ -104,9 +114,10 @@ class _ScaledOrderEmbeddedFormState extends ConsumerState<ScaledOrderEmbeddedFor
           error.order.quantity,
           tr(context, error.key),
         ),
+        null,
       );
     } on AccountReadFailure catch (error) {
-      return (null, tr(context, error.key));
+      return (null, tr(context, error.key), null);
     }
   }
 
@@ -258,7 +269,7 @@ class _ScaledOrderEmbeddedFormState extends ConsumerState<ScaledOrderEmbeddedFor
     final l10n = AppLocalizations.of(context);
     final busy = ref.watch(scaledOrderProvider.select((s) => s.busy));
     final enabled = widget.enabled && !busy && _pendingSide == null;
-    final (plan, invalid) = _plan(l10n);
+    final (plan, invalid, priceField) = _plan(l10n);
     final capacity = _capacity(plan);
     final over = (
       buy: plan != null && _over(plan, capacity?.buy),
@@ -283,7 +294,7 @@ class _ScaledOrderEmbeddedFormState extends ConsumerState<ScaledOrderEmbeddedFor
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        ..._fields(l10n, enabled, sizeError: maximum != null),
+        ..._fields(l10n, enabled, sizeError: maximum != null, priceField: priceField),
         if (error != null)
           Padding(
             padding: const EdgeInsets.only(top: 4),
@@ -338,7 +349,12 @@ class _ScaledOrderEmbeddedFormState extends ConsumerState<ScaledOrderEmbeddedFor
   }
 
   /// Price range, order count and size, as designed (10.01–10.03).
-  List<Widget> _fields(AppLocalizations l10n, bool enabled, {required bool sizeError}) {
+  List<Widget> _fields(
+    AppLocalizations l10n,
+    bool enabled, {
+    required bool sizeError,
+    String? priceField,
+  }) {
     final quote = data.rules.quoteAsset;
     return [
       for (final (key, label, controller, hint, decimal) in [
@@ -348,6 +364,7 @@ class _ScaledOrderEmbeddedFormState extends ConsumerState<ScaledOrderEmbeddedFor
       ]) ...[
         EmbeddedInputBox(
           label: label,
+          error: priceField == key,
           child: Row(
             children: [
               Expanded(
@@ -363,6 +380,15 @@ class _ScaledOrderEmbeddedFormState extends ConsumerState<ScaledOrderEmbeddedFor
             ],
           ),
         ),
+        if (priceField == key)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              l10n.scaledPriceOutOfRange,
+              key: Key('$key-error'),
+              style: TradeTypography.small.copyWith(color: TradeColors.negative),
+            ),
+          ),
         const SizedBox(height: 8),
       ],
       EmbeddedInputBox(

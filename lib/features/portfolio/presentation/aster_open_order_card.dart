@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -11,7 +12,9 @@ import '../../trade/presentation/widgets/trade_icon.dart';
 import '../application/order_explorer_provider.dart';
 import '../domain/aster_open_orders.dart';
 import 'open_order_labels.dart';
+import 'open_order_strategy_sheet.dart';
 import 'portfolio_components.dart';
+import '../../../core/theme.dart' show PressFeedback;
 
 class AsterOpenOrderCard extends StatelessWidget {
   const AsterOpenOrderCard({
@@ -92,12 +95,15 @@ class AsterOpenOrderCard extends StatelessWidget {
                 ),
               if (strategy case final linked? when linked.entry && linked.hasExits)
                 _TpSlRow(label: l10n.openOrdersTpSl, strategy: linked),
+              // Design 331:76644 → 331:77732: tapping the strategy ID opens
+              // the order details; a long press copies it.
               if (strategy case final linked? when !linked.entry)
                 _Row(
                   l10n.openOrdersLinkedOrder,
                   linked.strategyId,
                   color: TradeColors.warning,
                   copyable: true,
+                  onTap: () => showOpenOrderStrategySheet(context, order, linked),
                 ),
               const SizedBox(height: 20),
               Row(
@@ -284,10 +290,13 @@ class _AmountBlock extends StatelessWidget {
 }
 
 class _Row extends StatelessWidget {
-  const _Row(this.label, this.value, {this.color, this.copyable = false});
+  const _Row(this.label, this.value, {this.color, this.copyable = false, this.onTap});
   final String label, value;
   final Color? color;
   final bool copyable;
+
+  /// Makes the value a link; a copyable value is then copied on long press.
+  final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
     final style = TradeTypography.body.copyWith(color: color);
@@ -304,7 +313,16 @@ class _Row extends StatelessWidget {
           Flexible(
             child: Align(
               alignment: AlignmentDirectional.centerEnd,
-              child: copyable
+              child: onTap != null
+                  ? InkWell(
+                      key: ValueKey('open-order-link-$value'),
+                      onTap: onTap,
+                      onLongPress: copyable
+                          ? () => Clipboard.setData(ClipboardData(text: value))
+                          : null,
+                      child: Text(value, style: style, textAlign: TextAlign.end),
+                    )
+                  : copyable
                   ? SelectableText(value, style: style, textAlign: TextAlign.end)
                   : Text(value, style: style, textAlign: TextAlign.end),
             ),
@@ -374,7 +392,7 @@ class OpenOrderChipButton extends StatelessWidget {
     onPressed: pending ? null : onPressed,
     style: OutlinedButton.styleFrom(
       minimumSize: const Size.fromHeight(32),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       tapTargetSize: MaterialTapTargetSize.padded,
       backgroundColor: TradeColors.control,
       foregroundColor: TradeColors.text,
@@ -388,12 +406,14 @@ class OpenOrderChipButton extends StatelessWidget {
         height: 18 / 13,
         fontWeight: FontWeight.w500,
       ),
-    ),
+    ).copyWith(overlayColor: PressFeedback.overlay),
     child: pending
         ? const SizedBox.square(
             dimension: 16,
             child: CircularProgressIndicator(strokeWidth: 2, color: TradeColors.text),
           )
-        : Text(label),
+        // One line, as designed: long labels (e.g. View Explorer) in three
+        // equal buttons shrink rather than wrap.
+        : FittedBox(fit: BoxFit.scaleDown, child: Text(label, maxLines: 1)),
   );
 }

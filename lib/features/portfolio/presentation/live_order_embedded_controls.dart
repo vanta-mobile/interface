@@ -9,6 +9,7 @@ import '../../trade/presentation/trade_theme.dart';
 import '../../trade/presentation/widgets/trade_icon.dart';
 import '../../trade/presentation/widgets/trade_option_sheet.dart';
 import '../domain/live_order.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 /// Collapsed by default so optional order settings stay out of the main flow.
 class EmbeddedAdvancedSection extends StatelessWidget {
@@ -24,7 +25,7 @@ class EmbeddedAdvancedSection extends StatelessWidget {
         childrenPadding: EdgeInsets.zero,
         dense: true,
         visualDensity: VisualDensity.compact,
-        minTileHeight: 32,
+        minTileHeight: embeddedCheckRowHeight,
         iconColor: TradeColors.muted,
         collapsedIconColor: TradeColors.muted,
         title: Text(
@@ -37,6 +38,10 @@ class EmbeddedAdvancedSection extends StatelessWidget {
     );
   }
 }
+
+/// Row pitch of the design's Available / Advanced block (13px rows, 8px
+/// gaps), shared by the Advanced rows with or without a trailing selector.
+const embeddedCheckRowHeight = 21.0;
 
 /// Design checkbox row: 11px box, white fill when selected, full-row target.
 /// [help] adds the design question mark that opens an explanation sheet.
@@ -57,66 +62,71 @@ class EmbeddedCheckRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onChanged != null;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Flexible(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Semantics(
-                  checked: value,
-                  enabled: enabled,
-                  child: InkWell(
-                    onTap: enabled ? () => onChanged!(!value) : null,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 11,
-                            height: 11,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: value ? TradeColors.text : TradeColors.card,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: embeddedCheckRowHeight),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Semantics(
+                    checked: value,
+                    enabled: enabled,
+                    child: NoPressFeedback(
+                      child: InkWell(
+                        onTap: enabled ? () => onChanged!(!value) : null,
+                        child: Padding(
+                          padding: EdgeInsets.zero,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 11,
+                                height: 11,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: value ? TradeColors.text : TradeColors.card,
+                                  ),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                                child: value
+                                    ? Container(
+                                        width: 7,
+                                        height: 7,
+                                        decoration: BoxDecoration(
+                                          color: TradeColors.text,
+                                          borderRadius: BorderRadius.circular(1),
+                                        ),
+                                      )
+                                    : null,
                               ),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                            child: value
-                                ? Container(
-                                    width: 7,
-                                    height: 7,
-                                    decoration: BoxDecoration(
-                                      color: TradeColors.text,
-                                      borderRadius: BorderRadius.circular(1),
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              label,
-                              style: TradeTypography.caption.copyWith(
-                                color: enabled ? TradeColors.text : TradeColors.muted,
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  label,
+                                  style: TradeTypography.caption.copyWith(
+                                    color: enabled ? TradeColors.text : TradeColors.muted,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              if (help case final help?) _HelpButton(title: label, message: help),
-            ],
+                if (help case final help?) _HelpButton(title: label, message: help),
+              ],
+            ),
           ),
-        ),
-        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
-      ],
+          if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+        ],
+      ),
     );
   }
 }
@@ -136,7 +146,7 @@ class _HelpButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(4),
       onTap: () => showTradeInfoSheet(context, title: title, message: message),
       child: const Padding(
-        padding: EdgeInsets.fromLTRB(2, 6, 6, 6),
+        padding: EdgeInsets.fromLTRB(2, 4, 6, 4),
         child: TradeIcon('question-mark', size: 12, color: TradeColors.muted),
       ),
     ),
@@ -190,33 +200,37 @@ class EmbeddedAvailableRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final available = data.funds?.account.availableBalance;
-    return Row(
+    // Value and deposit icon sit flush right with the design's 4px gap.
+    return SizedBox(
       key: const Key('live-order-available'),
-      children: [
-        Expanded(
-          child: Text(
-            l10n.available,
-            style: TradeTypography.body.copyWith(color: TradeColors.secondary),
+      height: embeddedCheckRowHeight,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              l10n.available,
+              style: TradeTypography.body.copyWith(color: TradeColors.secondary),
+            ),
           ),
-        ),
-        Text(
-          available == null
-              ? '—'
-              : '${TokenAmountFormatter.formatCompact(DecimalValue(available.toString()))} '
-                    '${data.rules.quoteAsset}',
-          style: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
-        ),
-        IconButton(
-          key: const Key('live-order-deposit'),
-          tooltip: l10n.fundingDeposit,
-          onPressed: () => openFunding(context, FundingOperation.deposit),
-          icon: const Icon(Icons.add_circle_outline, size: 14),
-          color: TradeColors.accent,
-          visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints.tightFor(width: 28, height: 32),
-          padding: EdgeInsets.zero,
-        ),
-      ],
+          Text(
+            available == null
+                ? '—'
+                : '${TokenAmountFormatter.formatCompact(DecimalValue(available.toString()))} '
+                      '${data.rules.quoteAsset}',
+            style: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(width: 4),
+          Tooltip(
+            message: l10n.fundingDeposit,
+            child: InkResponse(
+              key: const Key('live-order-deposit'),
+              radius: 16,
+              onTap: () => openFunding(context, FundingOperation.deposit),
+              child: const Icon(Icons.add_circle_outline, size: 12, color: TradeColors.accent),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

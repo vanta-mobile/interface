@@ -5,16 +5,14 @@ import '../../trade/presentation/trade_theme.dart';
 import '../domain/live_order.dart';
 import '../domain/live_order_attachment.dart';
 import '../domain/live_order_size.dart';
-import '../domain/live_order_time_in_force.dart';
 import '../domain/live_order_trigger.dart';
 import 'attached_entry_pricing.dart';
 import 'attached_exit_preview.dart';
-import 'live_order_policy.dart';
 import 'live_order_pricing.dart';
-import 'live_order_trigger_controls.dart';
 
-/// Key/value terms of the order being confirmed. Rows beyond the design's
-/// price and quantity appear only for options the order actually uses.
+/// Key/value terms of the order being confirmed, in the design's order:
+/// trigger, price, quantity, then exits. The selected order type, time in
+/// force and converted base quantity stay on the form, as designed.
 class OrderConfirmationTerms extends StatelessWidget {
   const OrderConfirmationTerms({
     super.key,
@@ -37,8 +35,6 @@ class OrderConfirmationTerms extends StatelessWidget {
         direction: direction,
         buy: draft.buy,
       ),
-      if (draft.trigger != null)
-        OrderConfirmationTermRow(l10n.liveOrderType, liveOrderTypeLabel(l10n, draft)),
       // Trailing design order: callback rate before price and quantity.
       if (draft.trailing case final trailing?) ...[
         OrderConfirmationTermRow(l10n.openOrdersCallbackRate, '${trailing.callbackRate}%'),
@@ -48,6 +44,7 @@ class OrderConfirmationTerms extends StatelessWidget {
             '${_basis(l10n, trailing.basis)} $price $quote',
           ),
       ],
+      ..._triggerRows(l10n, draft, quote),
       OrderConfirmationTermRow(l10n.orderConfirmPrice, _price(l10n, draft, quote)),
       OrderConfirmationTermRow(
         l10n.orderConfirmQuantity,
@@ -58,14 +55,6 @@ class OrderConfirmationTerms extends StatelessWidget {
             : '${draft.quantity} $base',
         key: const Key('order-confirm-quantity'),
       ),
-      if (converted)
-        OrderConfirmationTermRow(l10n.liveAmountResolvedQuantity, '${draft.quantity} $base'),
-      ..._triggerRows(l10n, draft, quote),
-      if (!draft.market && draft.timeInForce != LiveOrderTimeInForce.gtc)
-        OrderConfirmationTermRow(
-          l10n.liveOrderPolicy,
-          liveOrderPolicyLabel(l10n, draft.timeInForce),
-        ),
       if (draft.reduceOnly) OrderConfirmationTermRow(l10n.reduceOnly, l10n.liveOrderProtectOn),
       for (final exit in [...?draft.attachment?.exits])
         OrderConfirmationTermRow(

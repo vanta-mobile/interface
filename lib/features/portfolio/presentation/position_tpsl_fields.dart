@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
-import '../../trade/presentation/widgets/trade_icon.dart';
 import '../../trade/presentation/widgets/trade_option_sheet.dart';
 import 'position_order_inputs.dart';
 import '../domain/live_order_trigger.dart';
@@ -87,27 +86,6 @@ class PositionTpSlSectionHeader extends StatelessWidget {
   );
 }
 
-/// The take-profit "trans" control that opens the trigger type sheet.
-class PositionTriggerSwitch extends StatelessWidget {
-  const PositionTriggerSwitch({super.key, required this.onTap});
-  final VoidCallback? onTap;
-  @override
-  Widget build(BuildContext context) => SizedBox.square(
-    dimension: 16,
-    child: OverflowBox(
-      maxWidth: 44,
-      maxHeight: 44,
-      child: IconButton(
-        tooltip: AppLocalizations.of(context).positionTpslSwitchBasis,
-        onPressed: onTap,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints.tightFor(width: 44, height: 44),
-        icon: const TradeIcon('position-trans', size: 16, color: TradeColors.text),
-      ),
-    ),
-  );
-}
-
 /// Trigger price field joined to its 120 px estimated PnL/ROI field.
 class PositionTriggerRow extends StatelessWidget {
   const PositionTriggerRow({
@@ -123,7 +101,11 @@ class PositionTriggerRow extends StatelessWidget {
     required this.onPrice,
     required this.onEstimate,
     this.gap = 2,
+    this.estimateSign,
   });
+
+  /// Fixed sign of the unsigned PnL/ROI value: `+` for TP, `-` for SL.
+  final String? estimateSign;
   final String name, priceLabel, estimateLabel;
   final TextEditingController price, estimate;
   final Widget priceSuffix, estimateSuffix;
@@ -154,16 +136,12 @@ class PositionTriggerRow extends StatelessWidget {
           child: PositionField(
             label: estimateLabel,
             borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
-            border: const Border(
-              top: BorderSide(color: TradeColors.line),
-              right: BorderSide(color: TradeColors.line),
-              bottom: BorderSide(color: TradeColors.line),
-            ),
             child: PositionValueInput(
               fieldKey: Key('position-tpsl-$name-estimate'),
               controller: estimate,
               enabled: enabled,
               signed: true,
+              sign: estimateSign,
               onChanged: onEstimate,
               suffix: estimateSuffix,
             ),

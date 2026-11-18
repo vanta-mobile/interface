@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/application/wallet_operation_provider.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../auth/domain/auth_session.dart';
+import '../../auth/domain/wallet_signing_preparation.dart';
+import '../../authorization/application/trading_agent_provider.dart';
 import '../../portfolio/application/account_read_provider.dart';
 import '../../portfolio/data/aster_account_service.dart';
 import '../../portfolio/data/aster_spot_service.dart';
@@ -35,14 +37,19 @@ final withdrawalRepositoryProvider = Provider<WithdrawalRepository>((ref) {
     catalog.close();
     fees.close();
   });
+  final identity = ref.watch(identityRepositoryProvider);
   return AsterWithdrawalRepository(
     futures,
     spot,
     AsterFundingCatalogRepository(catalog),
     AsterFundingFeeRepository(fees),
-    ref.watch(identityRepositoryProvider).signWalletRequest,
+    identity.signWalletRequest,
     ref.watch(walletOperationJournalProvider),
     nonces: ref.watch(asterReadNoncesProvider),
+    authorization: ref.watch(asterRequestAuthorizationProvider),
+    signingPreparation: identity is WalletSigningPreparation
+        ? identity as WalletSigningPreparation
+        : null,
     now: ref.watch(withdrawalClockProvider),
     infoService: info,
   );

@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/presentation/status_view.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../portfolio/presentation/portfolio_components.dart';
+import '../application/transfer_confirmation_provider.dart';
 import '../domain/transfer_history.dart';
 import 'transfer_history_components.dart';
 
-class TransferRecordProgress extends StatelessWidget {
+class TransferRecordProgress extends ConsumerWidget {
   const TransferRecordProgress(this.record, {super.key});
   final TransferRecord record;
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
+    final key = transferConfirmationKey(record);
+    final confirmation = key == null ? null : ref.watch(transferConfirmationProvider(key));
     final success = record.status == TransferStatus.success;
     final failed = record.status == TransferStatus.failed;
     return PortfolioCard(
@@ -21,9 +26,22 @@ class TransferRecordProgress extends StatelessWidget {
         children: [
           Text(l.assetHistoryProgress, style: AccountTypography.body),
           const SizedBox(height: 12),
-          // History reports only the overall exchange status. A hash or a
-          // PROCESSING state cannot prove that a transaction was mined.
-          _Stage(l.assetHistoryConfirmationUnavailable, 'history-clock.svg', size: 20),
+          // A completed record implies the chain step. While the exchange is
+          // still processing, only a successful canonical receipt confirms it.
+          if (success || confirmation?.value == true)
+            _Stage(l.assetHistoryConfirmed, 'history-check-circle.svg', size: 16)
+          else if (confirmation != null && confirmation.isLoading && !confirmation.hasValue)
+            const Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: SkeletonBox(
+                key: Key('transfer-confirmation-loading'),
+                width: 180,
+                height: 22,
+                color: StatusColors.skeletonOnCard,
+              ),
+            )
+          else
+            _Stage(l.assetHistoryConfirmationUnavailable, 'history-clock.svg', size: 20),
           const SizedBox(height: 12),
           _Stage(
             failed

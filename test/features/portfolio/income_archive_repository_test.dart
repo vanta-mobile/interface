@@ -156,15 +156,18 @@ void main() {
     expect(backend.requests, hasLength(1));
   });
 
-  test('reference collisions and conflicting immutable rows stop before any report', () async {
+  test('different types sharing a transaction ID are each reported', () async {
     source.records = [income(type: 'COMMISSION'), income(type: 'REALIZED_PNL')];
-    await expectLater(
-      reports.synchronize(vantaTestAddress),
-      throwsA(
-        isA<AccountReadFailure>().having((e) => e.key, 'key', 'incomeArchiveReferenceConflict'),
-      ),
-    );
-    expect(backend.requests, isEmpty);
+    await reports.synchronize(vantaTestAddress);
+    final bodies = backend.requests
+        .where((r) => r.url.path == IncomeReportRepository.path)
+        .map((r) => jsonDecode(r.body) as Map<String, dynamic>)
+        .toList();
+    expect(bodies.map((b) => b['incomeType']), ['COMMISSION', 'REALIZED_PNL']);
+    expect(bodies.map((b) => b['tranId']).toSet(), hasLength(1));
+  });
+
+  test('conflicting immutable rows stop before any report', () async {
     source.records = [income(), income(amount: '100')];
     await expectLater(reports.synchronize(vantaTestAddress), throwsA(isA<VantaApiFailure>()));
     expect(backend.requests, isEmpty);

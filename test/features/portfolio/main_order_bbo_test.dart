@@ -175,6 +175,36 @@ void main() {
       expect(preview.sell.liquidation, d(sellNumerator) / d('1.005'));
     });
   }
+  for (final (entryPeg, peg) in [
+    (AttachedEntryPeg.counterparty1, LiveOrderPeg.counterparty),
+    (AttachedEntryPeg.queue1, LiveOrderPeg.queue),
+  ]) {
+    test('level-one compound BBO $entryPeg estimates like the ordinary book peg', () {
+      final snapshot = assembledCapacity();
+      final compound = MainOrderCapacityPreview(
+        snapshot: snapshot,
+        draft: liveDraft(
+          price: '',
+          attachment: LiveOrderAttachment(
+            entryPeg: entryPeg,
+            takeProfit: const AttachedExit(kind: LiveOrderTriggerKind.takeProfit, price: '120'),
+          ),
+        ),
+        unit: OrderSizeUnit.base,
+        input: '2',
+      );
+      final ordinary = MainOrderCapacityPreview(
+        snapshot: snapshot,
+        draft: liveDraft(price: '', peg: peg),
+        unit: OrderSizeUnit.base,
+        input: '2',
+      );
+      expect(compound.buy.failure, null);
+      expect(compound.buy.notional, ordinary.buy.notional);
+      expect(compound.buy.cost!.total, ordinary.buy.cost!.total);
+      expect(compound.buy.capacity!.maximum, ordinary.buy.capacity!.maximum);
+    });
+  }
   test('compound deeper BBO cannot silently acquire one-level capacity', () {
     final draft = liveDraft(
       price: '',
@@ -239,14 +269,19 @@ void main() {
     ('COUNTERPARTY_1', '100', 'TAKE_PROFIT'),
     ('QUEUE_1', '100', 'MARKET'),
   ]) {
-    test('unresolved or unsupported pending BBO $peg $type $price blocks capacity', () {
+    test('pending BBO $peg $type $price is estimated instead of blocking capacity', () {
+      final exposure = assembledCapacity(
+        orders: [
+          {...capacityOrder(), 'pegPriceType': peg, 'price': price, 'type': type},
+        ],
+      ).exposure.currentNotional;
+      // Untriggered conditionals reserve nothing; an unresolved price uses
+      // Mark, which equals the fixture's fixed LIMIT price.
       expect(
-        () => assembledCapacity(
-          orders: [
-            {...capacityOrder(), 'pegPriceType': peg, 'price': price, 'type': type},
-          ],
-        ),
-        failure('liveCapacityPendingUnknown'),
+        exposure,
+        type == 'STOP' || type == 'TAKE_PROFIT'
+            ? assembledCapacity().exposure.currentNotional
+            : assembledCapacity(orders: [capacityOrder()]).exposure.currentNotional,
       );
     });
   }

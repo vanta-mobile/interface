@@ -46,7 +46,12 @@ class AttachedExitInput {
       trigger = parseOrderDecimal(value);
       if (trigger == null || trigger <= Decimal.zero) failure = 'liveOrderInvalidTrigger';
     } else {
-      final target = _signedTarget(value);
+      // The form takes unsigned amounts: an unsigned stop-loss target is a
+      // loss. Explicitly signed text keeps its sign.
+      final signed = _signedTarget(value);
+      final target = kind == LiveOrderTriggerKind.stop && signed != null && !value.startsWith('+')
+          ? -signed.abs()
+          : signed;
       if (target == null ||
           target == Decimal.zero ||
           (kind == LiveOrderTriggerKind.takeProfit

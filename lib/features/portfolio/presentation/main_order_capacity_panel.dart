@@ -16,8 +16,10 @@ import '../application/main_order_refresh_provider.dart';
 import '../application/main_order_capacity_preview_provider.dart';
 import '../application/main_order_pricing_provider.dart';
 import '../domain/main_order_pricing.dart';
+import '../domain/futures_position_mode.dart';
 import '../domain/live_order.dart';
 import '../domain/live_order_size.dart';
+import '../domain/live_order_time_in_force.dart';
 import '../domain/main_order_capacity_preview.dart';
 import 'main_order_direction_card.dart';
 import '../domain/main_order_capacity.dart';
@@ -71,6 +73,13 @@ class MainOrderCapacityPanel extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<MainOrderCapacityPanel> createState() => _MainOrderCapacityPanelState();
+
+  /// Hedge mode names the position each button opens or closes.
+  String? _hedgeLabel(AppLocalizations l, bool buy) {
+    if (data.mode != FuturesPositionMode.hedge) return null;
+    if (draft.closingSide != null) return buy ? l.tradeCloseShort : l.tradeCloseLong;
+    return buy ? l.tradeOpenLong : l.tradeOpenShort;
+  }
 
   Widget _compactPanel(BuildContext context, _PanelFacts facts, {required bool canRequestReview}) {
     final (
@@ -131,7 +140,12 @@ class MainOrderCapacityPanel extends ConsumerStatefulWidget {
               unit: unit,
               buy: buy,
               hasSize: hasSize,
-              showLiquidation: draft.trigger == null && draft.trailing == null,
+              // Post Only cards show only Margin and Max (design 331:49047).
+              showLiquidation:
+                  draft.trigger == null &&
+                  draft.trailing == null &&
+                  draft.timeInForce != LiveOrderTimeInForce.postOnly,
+              label: _hedgeLabel(AppLocalizations.of(context), buy),
               resultsPending: facts.resultsPending,
               retainedCapacity: buy
                   ? facts.retainedMaximum?.buy.capacity

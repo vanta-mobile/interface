@@ -7,6 +7,7 @@ import '../../auth/application/auth_provider.dart';
 import '../../portfolio/presentation/portfolio_components.dart';
 import '../../subaccounts/application/account_entries_provider.dart';
 import '../../subaccounts/presentation/account_components.dart';
+import '../application/transfer_confirmation_provider.dart';
 import '../application/transfer_history_provider.dart';
 import '../domain/transfer_history.dart';
 import 'transfer_history_components.dart';
@@ -44,7 +45,16 @@ class TransferRecordScreen extends ConsumerWidget {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
-                  if (sameOwner) await ref.read(transferHistoryProvider.notifier).refresh();
+                  if (!sameOwner) return;
+                  final key = record == null ? null : transferConfirmationKey(record);
+                  await Future.wait([
+                    ref.read(transferHistoryProvider.notifier).refresh(),
+                    // A failed chain read keeps the record's own status.
+                    if (key != null)
+                      ref
+                          .refresh(transferConfirmationProvider(key).future)
+                          .then((_) {}, onError: (_) {}),
+                  ]);
                 },
                 child: LayoutBuilder(
                   builder: (context, constraints) {

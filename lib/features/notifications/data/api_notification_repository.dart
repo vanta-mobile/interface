@@ -2,26 +2,16 @@ import '../../../core/exact_json.dart';
 import '../../../core/vanta_api/vanta_api_failure.dart';
 import '../../auth/data/vanta_api_session_repository.dart';
 import '../domain/api_notification.dart';
-import '../domain/notification_status.dart' show NotificationFilter;
 import 'api_notification_mapper.dart';
 
 class ApiNotificationRepository {
   ApiNotificationRepository(this.session);
   final VantaApiSessionRepository session;
 
-  Future<ApiNotificationPage> read({
-    required NotificationFilter category,
-    required bool unreadOnly,
-    String? cursor,
-  }) async {
+  Future<ApiNotificationPage> read({required bool unreadOnly, String? cursor}) async {
     final json = await session.get(
       '/v1/notifications',
-      query: {
-        'category': category.name,
-        'unread_only': '$unreadOnly',
-        'limit': '50',
-        'cursor': ?cursor,
-      },
+      query: {'unread_only': '$unreadOnly', 'limit': '50', 'cursor': ?cursor},
       decode: decodeNotificationJson,
     );
     try {

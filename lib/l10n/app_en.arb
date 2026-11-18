@@ -382,14 +382,14 @@
   "orderCancelTitle": "Cancel order",
   "orderCancelKeep": "Keep order",
   "orderCancelConfirm": "Sign cancellation",
-  "orderCancelConfirmHint": "Cancel only the unfilled remainder of this perpetual order. Filled positions remain. Your current wallet will sign the cancellation, then a separate status query. Aster authorization is required.",
+  "orderCancelConfirmHint": "Cancel only the unfilled remainder of this perpetual order. Filled positions remain. Your wallet signs the cancellation and the follow-up status check; Vanta runs the check automatically.",
   "orderCancelSigning": "Confirm the cancellation signature in your wallet.",
   "orderCancelSubmitting": "Submitting cancellation. The outcome is not confirmed yet.",
   "orderCancelChecking": "Checking the final order status.",
   "orderCancelCheckSigning": "Sign the status query in your wallet to verify the cancellation outcome.",
   "orderCancelUnknown": "Cancellation outcome is unconfirmed. The order is retained until its status is verified. Check status before sending another cancellation.",
   "orderCancelRecheck": "Sign and check status",
-  "orderCancelVerified": "Aster confirmed this order is cancelled. Any filled position remains; account balances need refreshing.",
+  "orderCancelVerified": "Order cancelled. Any filled position remains.",
   "orderCancelFilled": "Aster reports this order is fully filled. It was not cancelled. Refresh positions and balances.",
   "orderCancelExpired": "Aster reports this order has expired. Refresh positions and balances.",
   "orderCancelRejected": "Aster reports this order was rejected. Refresh positions and balances.",
@@ -811,7 +811,6 @@
   "liveOrderEntryHint": "The form above uses local demo funds. Live orders have a separate wallet confirmation.",
   "liveOrderScope": "Use this wallet to place real ordinary, conditional or trailing orders. Limit orders use a supported execution policy. In one-way mode, a long or short order can reduce or reverse an existing position. Hedge mode operates on the selected long or short side. Aster checks fees, available margin and final eligibility.",
   "liveOrderSettingsBusy": "Finish the pending futures settings operation before placing an order.",
-  "liveOrderSubmitting": "Submitting the live order…",
   "liveOrderMarkPrice": "Reference mark price",
   "liveOrderContextExpired": "Refresh order settings before reviewing an order. Your input is preserved.",
   "liveOrderQuantity": "Quantity ({asset})",
@@ -832,20 +831,6 @@
   },
   "liveOrderEstimatedNotional": "Reference notional",
   "liveOrderClientId": "Client order reference",
-  "liveOrderVerifiedResult": "Signed query: {status}; executed quantity {executed}; order {orderId}.",
-  "@liveOrderVerifiedResult": {
-    "placeholders": {
-      "status": {
-        "type": "String"
-      },
-      "executed": {
-        "type": "String"
-      },
-      "orderId": {
-        "type": "String"
-      }
-    }
-  },
   "liveOrderQueryScope": "This is the query snapshot. Only FILLED confirms the complete requested quantity; later changes need another account read.",
   "liveOrderOutcomeUnknown": "Order submission was attempted, but the result is not yet confirmed. Check the original order before placing it again to avoid duplicates. Checking never resubmits the order.",
   "liveOrderRecheck": "Sign to query this order",
@@ -866,17 +851,13 @@
   "liveOrderProtectUnavailable": "The trigger-protection threshold is unavailable in the current symbol rules. Refresh or turn protection off before reviewing.",
   "liveOrderTriggerReferenceUnavailable": "The selected trigger reference is unavailable. Refresh or explicitly choose another price basis; no price is substituted.",
   "liveOrderTriggerImmediate": "The trigger price is already reached at this read. Adjust it according to the displayed direction and review again. Aster checks the actual price at submission.",
-  "liveOrderPolicyGtc": "GTC",
-  "liveOrderPolicyIoc": "IOC",
   "liveOrderPolicyPostOnly": "Post Only (GTX)",
-  "liveOrderPolicyHidden": "Hidden (HIDDEN)",
   "liveOrderPolicyGtcHint": "GTC: any unfilled quantity remains open until filled or cancelled.",
   "liveOrderPolicyIocHint": "IOC: fill immediately available quantity and cancel the remainder. A partial fill is possible.",
   "liveOrderPolicyPostOnlyHint": "Post Only: the order must add liquidity. An order that would immediately take liquidity will not execute as an ordinary limit order. Placement and fills require exchange verification.",
   "liveOrderPolicyHiddenHint": "Hidden: the order is not visible in the public order book. This does not guarantee maker execution, a fill or execution priority.",
   "liveOrderTimeInForceUnavailable": "The selected limit policy is unavailable in the latest symbol rules. Choose a supported policy or use a market order, then review again.",
   "liveOrderSide": "Direction",
-  "liveOrderType": "Order type",
   "liveOrderInvalidQuantity": "Enter a positive decimal quantity.",
   "liveOrderInvalidPrice": "Enter a positive decimal limit price.",
   "liveOrderQuantityFilter": "Quantity must satisfy the displayed minimum, maximum and increment for this order type.",
@@ -890,22 +871,7 @@
   "liveCloseEstimatedPnl": "Estimated close PnL",
   "liveCloseConfirmTitle": "Submit this position reduction?",
   "liveCloseConfirmHint": "This submits a real reduction order. Sign to recheck the position first, then sign to place the order and separately to query it. A changed quantity, entry price or configuration stops submission. Market price can move; limit execution follows the policy shown below. The exchange validates concurrent activity.",
-  "liveCloseResultScope": "An order status does not prove that the entire position is closed. Sign separately to read the remaining position. This does not cancel other orders, and later activity can change the position again.",
-  "liveCloseReadRemaining": "Sign to read remaining positions",
-  "liveCloseRemaining": "Remaining quantity at this read",
   "liveOrderReduceHedge": "The reduceOnly parameter is unavailable in hedge mode. Use the position’s close action to reduce its LONG or SHORT side.",
-  "batchCloseAll": "Close all listed live positions",
-  "batchCloseCurrent": "Close all current-symbol live positions",
-  "batchCloseCount": "Confirmed scope: {count} positions",
-  "batchCloseStopped": "Further submissions stopped. Unsubmitted positions require a fresh read and confirmation.",
-  "batchCloseRecheck": "Sign to query unconfirmed orders only",
-  "@batchCloseCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "liveOrderReadFunds": "Read asset mode and account funds before reviewing an opening order. Missing amounts are unknown, not zero.",
   "liveOrderFundsChanged": "Account funds and the selected position or configuration do not agree. Refresh and review again.",
   "liveOrderTradingDisabled": "The signed account response reports trading disabled. Check your Aster account before placing an opening order.",
@@ -1305,7 +1271,7 @@
   "depositRpcFailed": "The public chain provider could not complete the read. Retry.",
   "depositRpcWrongChain": "The provider returned another network. No balance was accepted.",
   "depositTokenDecimalsChanged": "On-chain token decimals differ from the selected configuration. Refresh the asset directory and reopen this page.",
-  "depositRpcReorg": "The chain block changed during the read. Refresh to obtain a consistent snapshot.",
+  "depositRpcReorg": "The balance could not be read while the chain was updating. Pull down to try again.",
   "depositAmountInvalid": "Enter a positive amount within the supported unsigned 256-bit range.",
   "depositAmountPrecision": "The amount has more decimal places than this asset supports.",
   "depositMinimumUnknown": "The minimum deposit is unknown. Refresh the asset configuration before proceeding.",
@@ -2072,7 +2038,7 @@
   "attachedOrderEstimateScope": "Estimates use the main-order quantity and indicative entry price, before fees and slippage. A limit exit may remain unfilled after triggering.",
   "attachedOrderExitIssue": "{exit}: {reason}",
   "attachedOrderCheckExits": "Review the highlighted attached TP/SL fields before continuing.",
-  "attachedOrderTargetSign": "Enter a positive take-profit or negative stop-loss amount / ROI. Zero is not a target.",
+  "attachedOrderTargetSign": "Enter a take-profit / stop-loss amount or ROI greater than zero.",
   "attachedOrderPreviewUnavailable": "Enter a valid main-order quantity and price, and read the entry quote and leverage before converting.",
   "attachedOrderLimitRequired": "Enter a positive exit limit price.",
   "attachedOrderExecutionInvalid": "Review the attached exit execution and limit price.",
@@ -2148,7 +2114,6 @@
   "liveAmountInvalid": "Enter a positive order amount using decimal digits.",
   "liveAmountBelowStep": "This amount converts to less than the minimum order quantity or one quantity step.",
   "liveAmountReferenceUnavailable": "The required conversion price is unavailable. Refresh the order snapshot or enter a base-asset quantity.",
-  "liveAmountResolvedQuantity": "Base quantity to submit",
   "futuresHistoryTitle": "Futures history",
   "futuresHistoryScope": "Read this wallet’s futures orders, individual fills and income ledger separately. Long/Short direction alone does not identify opening or closing. Reading never submits or cancels an order.",
   "futuresHistoryIncome": "Income ledger",
@@ -2183,7 +2148,6 @@
   "orderConfirmBuy": "Long",
   "orderConfirmSell": "Short",
   "orderConfirmSubmitted": "Order submitted",
-  "orderConfirmExpired": "Order details are no longer current. Close this dialog and place the order again.",
   "scaledAmountInvalid": "Enter a positive total order amount.",
   "scaledEqual": "Equal",
   "scaledIncreasing": "Increasing",
@@ -2245,7 +2209,6 @@
   "liveCapacityAboveMaximum": "The quantity exceeds this side’s current capacity reference. Reduce the quantity and refresh before placing an order.",
   "liveCapacityStale": "Capacity is out of date. Refresh order data, then read capacity again.",
   "liveCapacityEstimateHint": "Both sides independently assume a full fill using the same account and current prices. Opening cost includes incremental margin and opening loss. Liquidation estimates use the signed taker fee and risk tiers, holding other prices and collateral rates fixed; actual fills, fees and funding can differ. Missing facts or no positive estimate show —.",
-  "liveCapacityPendingUnknown": "Capacity is unavailable because the reserved notional of a pending order cannot be verified.",
   "liveCapacityRatesUnavailable": "Fresh collateral conversion rates are unavailable. Refresh before calculating capacity.",
   "liveCapacityLiquidation": "Estimated liquidation price after fill",
   "apiRequestTimeout": "The request timed out.",
@@ -2323,11 +2286,10 @@
   "portfolioLoginBalances": "Log in to view your balances",
   "portfolioPerformance": "Performance",
   "portfolioFuturesAssets": "Futures assets",
-  "portfolioPnlDetails": "PnL details",
-  "portfolioTodayPnl": "Today’s PnL",
-  "portfolioPnl7d": "PnL · 7D",
+  "portfolioPnlDetails": "Realized PnL details",
+  "portfolioTodayPnl": "Today’s Realized PnL",
+  "portfolioPnl7d": "Realized PnL · 7D",
   "portfolioVolume7d": "Volume · 7D",
-  "portfolioTransfer": "Transfer between accounts",
   "portfolioMainAccount": "Main account",
   "portfolioPreviewAccount": "Demo · Static preview",
   "portfolioPreviewNotice": "Static design sample. No real funds or orders.",
@@ -2338,12 +2300,12 @@
   "portfolioValueHistory": "Total value history",
   "portfolioCollapseHistory": "Collapse value history",
   "portfolioOpenHistory": "Expand value history",
-  "portfolioMissingPnl": "PnL data unavailable for this account",
-  "portfolioMissingDay": "Daily PnL unavailable",
+  "portfolioMissingPnl": "Realized PnL data unavailable for this account",
+  "portfolioMissingDay": "Daily Realized PnL unavailable",
   "portfolioMissingValue": "Value history unavailable for this account",
   "portfolioPnlNote": "Historical figures may update after settlement. Missing data is shown as unavailable.",
   "portfolioCalendar": "Calendar",
-  "portfolioMonthlyPnl": "Monthly PnL",
+  "portfolioMonthlyPnl": "Monthly Realized PnL",
   "vantaApiSignInAction": "Sign",
   "vantaApiSignInTitle": "Wallet signature required",
   "vantaApiSigningTitle": "Waiting for wallet signature",
@@ -2354,7 +2316,7 @@
   "vantaApiFailed": "Account statistics could not be loaded. Please retry.",
   "vantaApiInvalid": "The statistics service returned invalid data. Please retry.",
   "vantaApiRateLimited": "Statistics requests are temporarily limited. Try again shortly.",
-  "portfolioCalendarNote": "Daily PnL uses UTC · Values in USD",
+  "portfolioCalendarNote": "Daily Realized PnL uses UTC · Values in USD",
   "portfolioPreviousMonth": "Previous month",
   "portfolioNextMonth": "Next month",
   "portfolioHideOtherSymbols": "Hide other symbols",
@@ -2362,8 +2324,8 @@
   "portfolioNoPositions": "No open positions",
   "portfolioNoAssets": "No assets to display",
   "portfolioAssets": "Assets",
-  "portfolioLast7Days": "PnL · Last 7 days",
-  "portfolioPnlPeriod": "PnL · {period}",
+  "portfolioLast7Days": "Realized PnL · Last 7 days",
+  "portfolioPnlPeriod": "Realized PnL · {period}",
   "@portfolioPnlPeriod": {
     "placeholders": {
       "period": {
@@ -2387,7 +2349,7 @@
       }
     }
   },
-  "portfolioDayUnavailable": "{date} · Daily PnL unavailable",
+  "portfolioDayUnavailable": "{date} · Daily Realized PnL unavailable",
   "@portfolioDayUnavailable": {
     "placeholders": {
       "date": {
@@ -2789,6 +2751,33 @@
   "tradePriceDown": "Decrease price",
   "tradePriceUp": "Increase price",
   "tradeTpSl": "TP/SL",
+  "assetModeSingleShort": "S",
+  "assetModeMultiShort": "M",
+  "liveOrderTriggerReached": "Trigger price already reached. Please adjust.",
+  "scaledPriceOutOfRange": "Price exceeds the allowed range",
+  "batchCloseDone": "Closed {count} positions.",
+  "@batchCloseDone": {"placeholders": {"count": {"type": "int"}}},
+  "orderDetailsTitle": "Order details",
+  "orderDetailsLeg": "Order {letter}",
+  "@orderDetailsLeg": {"placeholders": {"letter": {"type": "String"}}},
+  "orderDetailsPlacesBoth": "If order A is executed, orders B and C are placed.",
+  "orderDetailsPlacesOne": "If order A is executed, order B is placed.",
+  "orderDetailsCancelsC": "If order B is executed, order C is canceled.",
+  "orderDetailsCancelsB": "If order C is executed, order B is canceled.",
+  "orderDetailsClosed": "This strategy is no longer open.",
+  "orderDetailsSide": "Side",
+  "orderDetailsAmount": "Amount",
+  "orderDetailsStop": "Stop",
+  "orderDetailsTpMarket": "TP Market",
+  "orderDetailsSlMarket": "SL Market",
+  "orderDetailsTpLimit": "TP Limit",
+  "orderDetailsSlLimit": "SL Limit",
+  "tradeHedgeOpen": "Open",
+  "tradeHedgeClose": "Close",
+  "tradeOpenLong": "Open Long",
+  "tradeOpenShort": "Open Short",
+  "tradeCloseLong": "Close Long",
+  "tradeCloseShort": "Close Short",
   "tradeHiddenOrder": "Hidden Order",
   "tradeTpSlHelp": "Set Take Profit or Stop Loss before opening a position. The orders take effect after the position opens and can use Last price or Mark price as the trigger.",
   "tradeHiddenOrderHelp": "Hidden orders are not displayed in the order book before execution.",
@@ -2848,9 +2837,6 @@
       }
     }
   },
-  "notificationFilterAll": "All",
-  "notificationFilterTransfers": "Transfers",
-  "notificationFilterOrders": "Orders",
   "notificationUnreadOnly": "Unread only",
   "notificationToday": "Today",
   "notificationPerp": "Perp",
@@ -3082,8 +3068,6 @@
   "openOrdersTab": "Open",
   "openOrdersViewExplorer": "View Explorer",
   "orderResponseIdentityMismatch": "Aster returned an order reference, symbol or side that does not match this order.",
-  "orderResponseLinkageMismatch": "Aster returned TP/SL links that do not match this order.",
-  "orderResponseTermsMismatch": "Aster returned a price, quantity or execution setting that does not match this order.",
   "orderResponseStatusInvalid": "Aster returned a missing or unrecognized order status.",
   "orderResponseMalformed": "Aster returned incomplete or invalid order fields; the order could not be verified.",
   "orderAcknowledgementInvalid": "Aster did not return a valid strategy submission result.",
@@ -3150,9 +3134,10 @@
   "positionTpslLimitOrder": "Limit order",
   "positionTpslTriggerPrice": "Trigger price",
   "positionTpslMarkPrice": "Mark price",
-  "positionTpslSwitchBasis": "Switch take-profit trigger price type",
   "positionTpslPnl": "Pnl",
   "positionTpslRoi": "ROI",
+  "positionTpslGain": "Gain",
+  "positionTpslLoss": "Loss",
   "positionTpslAmount": "Amount",
   "positionTpslPositionAmount": "Position Amount",
   "positionTpslEntryPrice": "Entry price",
@@ -3416,7 +3401,6 @@
       }
     }
   },
-  "incomeArchiveReferenceConflict": "Income records of different types share a transaction reference. The archive cannot safely deduplicate them; reporting has stopped.",
   "notificationApiField": "{field, select, price{Price} quantity{Quantity} fee{Fee} markPrice{Mark Price} liquidationPrice{Liquidation Price} distance{Distance} amount{Amount} symbol{Symbol} market{Market} side{Side} orderId{Order ID} transactionHash{Transaction Hash} createdAt{Time} eventKey{Reference} executedQuantity{Executed Quantity} tradeId{Trade ID} clientOrderId{Client Order ID} reference{Transfer Reference} positionSide{Position Side} transferKind{Transfer Type} averagePrice{Average Price} network{Network} other{Details}}",
   "@notificationApiField": {
     "placeholders": {
@@ -3425,8 +3409,8 @@
       }
     }
   },
-  "pushVisibilityTitle": "Background notifications unavailable",
-  "pushNoServerVisibility": "The notification server cannot observe this account. You will not receive account notifications while the app is closed.",
+  "pushVisibilityTitle": "System notifications unavailable",
+  "portfolioRealizedPnl": "Realized PnL",
   "assistantRemainingToday": "Remaining today: {remaining}/{limit}",
   "@assistantRemainingToday": {
     "placeholders": {
@@ -3512,7 +3496,6 @@
   "pushConditionalTriggers": "Conditional Order Triggers",
   "pushOrderUpdates": "Order Updates",
   "pushFundingFees": "Funding Fees",
-  "pushTransfers": "Deposits & Withdrawals",
   "pushAnnouncements": "Announcements",
   "pushStartTime": "Start time",
   "pushEndTime": "End time",

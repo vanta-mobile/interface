@@ -28,7 +28,7 @@ class SignedOrderCancellationRepository implements OrderCancellationRepository {
     var submitted = false;
     AccountReadFailure? cancelFailure;
     try {
-      await _request(service.cancelOrder).read(
+      final payload = await _request(service.cancelOrder).read(
         address: address,
         parameters: _parameters(order),
         isCurrent: isCurrent,
@@ -41,6 +41,13 @@ class SignedOrderCancellationRepository implements OrderCancellationRepository {
           });
         },
       );
+      // The DELETE response is the cancelled order itself. Only a response
+      // that cannot be tied to this order is looked up again.
+      try {
+        return OrderCancellationResult(resolution: _resolution(payload, order, address));
+      } on Object catch (_) {
+        if (!isCurrent()) rethrow;
+      }
     } on AccountReadFailure catch (failure) {
       // A refused signature cannot have cancelled an order. Once a request
       // may have reached Aster, query its state; never repeat the DELETE.
@@ -75,38 +82,7 @@ class SignedOrderCancellationRepository implements OrderCancellationRepository {
           step == AccountReadStep.signing ? OrderCancelStep.checkSigning : OrderCancelStep.checking,
         ),
       );
-      if (payload is! Map<String, dynamic> ||
-          payload['symbol'] != order.symbol ||
-          '${payload['orderId']}' != order.orderId) {
-        throw const AccountReadFailure('accountDataInvalid');
-      }
-      final status = payload['status'];
-      if (status is! String ||
-          !{
-            'NEW',
-            'PARTIALLY_FILLED',
-            'CANCELED',
-            'FILLED',
-            'EXPIRED',
-            'REJECTED',
-          }.contains(status)) {
-        throw const AccountReadFailure('accountDataInvalid');
-      }
-      final units = order.units;
-      final parsed = mapAsterOpenOrders(
-        [payload],
-        address: address,
-        receivedAt: DateTime.now(),
-        units: units == null ? const {} : {order.symbol: units},
-      );
-      return OrderCancellationResult(
-        resolution: OrderResolution(
-          symbol: order.symbol,
-          orderId: order.orderId,
-          status: status,
-          openOrder: parsed.orders.firstOrNull,
-        ),
-      );
+      return OrderCancellationResult(resolution: _resolution(payload, order, address));
     } on AccountReadFailure catch (failure) {
       if (!isCurrent()) rethrow;
       return OrderCancellationResult(failure: failure);
@@ -117,6 +93,39 @@ class SignedOrderCancellationRepository implements OrderCancellationRepository {
       return const OrderCancellationResult(failure: AccountReadFailure('accountReadFailed'));
     }
   });
+
+  static OrderResolution _resolution(Object? payload, AsterOpenOrder order, String address) {
+    if (payload is! Map<String, dynamic> ||
+        payload['symbol'] != order.symbol ||
+        '${payload['orderId']}' != order.orderId) {
+      throw const AccountReadFailure('accountDataInvalid');
+    }
+    final status = payload['status'];
+    if (status is! String ||
+        !{
+          'NEW',
+          'PARTIALLY_FILLED',
+          'CANCELED',
+          'FILLED',
+          'EXPIRED',
+          'REJECTED',
+        }.contains(status)) {
+      throw const AccountReadFailure('accountDataInvalid');
+    }
+    final units = order.units;
+    final parsed = mapAsterOpenOrders(
+      [payload],
+      address: address,
+      receivedAt: DateTime.now(),
+      units: units == null ? const {} : {order.symbol: units},
+    );
+    return OrderResolution(
+      symbol: order.symbol,
+      orderId: order.orderId,
+      status: status,
+      openOrder: parsed.orders.firstOrNull,
+    );
+  }
 
   SignedAccountRequest _request(
     Future<Object?> Function({required String query, required String signature}) send,

@@ -113,75 +113,78 @@ void main() {
       }
     }
   }
-  test('unknown BBO persists on host restart; conflicting query keeps it; correct GET-only recovery clears it', () async {
-    final dir = await Directory.systemTemp.createTemp('vanta-ordinary-bbo-');
-    addTearDown(() => dir.delete(recursive: true));
-    final i = liveIntent(peg: LiveOrderPeg.queue);
-    final requests = <http.Request>[];
-    var available = false, correctPeg = false;
-    final service = AsterAccountService(
-      client: MockClient((r) async {
-        requests.add(r);
-        if (r.url.path.endsWith('/time')) {
+  test(
+    'unknown BBO persists on host restart; failed query keeps it; GET-only recovery clears it',
+    () async {
+      final dir = await Directory.systemTemp.createTemp('vanta-ordinary-bbo-');
+      addTearDown(() => dir.delete(recursive: true));
+      final i = liveIntent(peg: LiveOrderPeg.queue);
+      final requests = <http.Request>[];
+      var available = false;
+      final service = AsterAccountService(
+        client: MockClient((r) async {
+          requests.add(r);
+          if (r.url.path.endsWith('/time')) {
+            return http.Response(
+              jsonEncode({'serverTime': liveOrderClock.millisecondsSinceEpoch}),
+              200,
+            );
+          }
+          if (!available) return http.Response('{}', 503);
           return http.Response(
-            jsonEncode({'serverTime': liveOrderClock.millisecondsSinceEpoch}),
+            jsonEncode({
+              ...liveQueryPayload(i),
+              // A reported peg is a normalized term; the client ID resolves it.
+              'pegPriceType': 'COUNTERPARTY_1',
+            }),
             200,
           );
-        }
-        if (!available) return http.Response('{}', 503);
-        return http.Response(
-          jsonEncode({
-            ...liveQueryPayload(i),
-            'pegPriceType': correctPeg ? 'QUEUE_1' : 'COUNTERPARTY_1',
-          }),
-          200,
-        );
-      }),
-    );
-    addTearDown(service.close);
-    final original = FileOrderRecoveryJournal(() async => dir);
-    await original.reload();
-    final repository = SignedLiveOrderRepository(
-      service,
-      ({required expectedAddress, required typedData}) async => TestWalletConnection.signature,
-      nonces: AsterReadNonces(),
-      journal: original,
-      now: () => liveOrderClock,
-    );
-    final unknown = await repository.submit(
-      intent: i,
-      isCurrent: () => true,
-      canSubmit: () => true,
-      onStep: (_) {},
-    );
-    expect(unknown.needsRecheck, true);
-    await _settled(original, (records) => records.length == 1);
-    expect(original.snapshot.records.single.query.draft.peg, LiveOrderPeg.queue);
-    await original.close();
-    final rebuilt = FileOrderRecoveryJournal(() async => dir);
-    addTearDown(rebuilt.close);
-    await rebuilt.reload();
-    final frozen = rebuilt.snapshot.records.single.query;
-    expect(frozen.draft.peg, LiveOrderPeg.queue);
-    expect(frozen.clientOrderId, i.clientOrderId);
-    final reads = SignedOrderQueryRepository(
-      service,
-      ({required expectedAddress, required typedData}) async => TestWalletConnection.signature,
-      AsterReadNonces(),
-      () => liveOrderClock,
-      journal: rebuilt,
-    );
-    final postCount = requests.where((r) => r.method == 'POST').length;
-    available = true;
-    expect((await reads.query(frozen, isCurrent: () => true, onStep: (_) {})).needsRecheck, true);
-    expect(rebuilt.snapshot.records, isNotEmpty);
-    correctPeg = true;
-    expect((await reads.query(frozen, isCurrent: () => true, onStep: (_) {})).orderId, '12345');
-    await _settled(rebuilt, (records) => records.isEmpty);
-    expect(rebuilt.snapshot.records, isEmpty);
-    expect(requests.where((r) => r.method == 'POST').length, postCount);
-    expect(postCount, 1);
-  });
+        }),
+      );
+      addTearDown(service.close);
+      final original = FileOrderRecoveryJournal(() async => dir);
+      await original.reload();
+      final repository = SignedLiveOrderRepository(
+        service,
+        ({required expectedAddress, required typedData}) async => TestWalletConnection.signature,
+        nonces: AsterReadNonces(),
+        journal: original,
+        now: () => liveOrderClock,
+      );
+      final unknown = await repository.submit(
+        intent: i,
+        isCurrent: () => true,
+        canSubmit: () => true,
+        onStep: (_) {},
+      );
+      expect(unknown.needsRecheck, true);
+      await _settled(original, (records) => records.length == 1);
+      expect(original.snapshot.records.single.query.draft.peg, LiveOrderPeg.queue);
+      await original.close();
+      final rebuilt = FileOrderRecoveryJournal(() async => dir);
+      addTearDown(rebuilt.close);
+      await rebuilt.reload();
+      final frozen = rebuilt.snapshot.records.single.query;
+      expect(frozen.draft.peg, LiveOrderPeg.queue);
+      expect(frozen.clientOrderId, i.clientOrderId);
+      final reads = SignedOrderQueryRepository(
+        service,
+        ({required expectedAddress, required typedData}) async => TestWalletConnection.signature,
+        AsterReadNonces(),
+        () => liveOrderClock,
+        journal: rebuilt,
+      );
+      final postCount = requests.where((r) => r.method == 'POST').length;
+      expect((await reads.query(frozen, isCurrent: () => true, onStep: (_) {})).needsRecheck, true);
+      expect(rebuilt.snapshot.records, isNotEmpty);
+      available = true;
+      expect((await reads.query(frozen, isCurrent: () => true, onStep: (_) {})).orderId, '12345');
+      await _settled(rebuilt, (records) => records.isEmpty);
+      expect(rebuilt.snapshot.records, isEmpty);
+      expect(requests.where((r) => r.method == 'POST').length, postCount);
+      expect(postCount, 1);
+    },
+  );
   for (final issue in ['reject', 'scope', 'position']) {
     test('$issue before BBO dispatch never writes or posts', () async {
       final i = liveCloseIntent(market: false, peg: LiveOrderPeg.queue);

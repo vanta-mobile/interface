@@ -7,6 +7,7 @@ import '../../trade/presentation/trade_theme.dart';
 import '../../trade/presentation/widgets/trade_option_sheet.dart';
 import '../domain/live_order.dart';
 import '../domain/scaled_order.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 /// Initial margin reference of a plan: total limit notional ÷ leverage,
 /// rounded up to cents so the display never understates it.
@@ -256,22 +257,26 @@ class _DistributionCard extends StatelessWidget {
                       child: Semantics(
                         selected: value == selected,
                         button: true,
-                        child: InkWell(
-                          onTap: () => onConstant?.call(value),
-                          borderRadius: BorderRadius.circular(6),
-                          child: Container(
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: value == selected ? TradeColors.card : null,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TradeTypography.body.copyWith(
-                                color: value == selected ? TradeColors.text : TradeColors.secondary,
-                                fontWeight: value == selected ? FontWeight.w700 : FontWeight.w500,
+                        child: NoPressFeedback(
+                          child: InkWell(
+                            onTap: () => onConstant?.call(value),
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: value == selected ? TradeColors.card : null,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TradeTypography.body.copyWith(
+                                  color: value == selected
+                                      ? TradeColors.text
+                                      : TradeColors.secondary,
+                                  fontWeight: value == selected ? FontWeight.w700 : FontWeight.w500,
+                                ),
                               ),
                             ),
                           ),

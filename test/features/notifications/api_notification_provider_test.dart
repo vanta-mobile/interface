@@ -6,7 +6,6 @@ import 'package:vanta/features/notifications/domain/api_notification.dart';
 import 'package:vanta/features/auth/application/vanta_api_session_provider.dart';
 import 'package:vanta/features/notifications/application/api_notification_provider.dart';
 import 'package:vanta/features/notifications/application/notification_provider.dart';
-import 'package:vanta/features/notifications/domain/notification_status.dart';
 
 import '../../support/api_notifications.dart';
 import '../../support/notifications.dart';
@@ -40,7 +39,7 @@ void main() {
     // Local journal state is still available to transfer/recovery consumers.
     expect(journal.snapshot.entries, hasLength(1));
   });
-  test('filters are server parameters and do not narrow the global unread count', () async {
+  test('unread filter is a server parameter and does not narrow the global unread count', () async {
     final f = InboxFixture();
     addTearDown(f.dispose);
     f.items.addAll([
@@ -50,14 +49,10 @@ void main() {
       inboxItem(id: 4, type: 'ANNOUNCE', broadcast: true),
     ]);
     await f.start();
-    await f.controller.filter(NotificationFilter.transfers, true);
-    expect(f.state.items.map((e) => e.key), ['event:2']);
+    await f.controller.setUnreadOnly(true);
+    expect(f.state.items.map((e) => e.key).toSet(), {'event:1', 'event:2', 'broadcast:4'});
     expect(f.state.unread, 3);
-    expect(f.backend.requests.last.url.queryParameters, {
-      'category': 'transfers',
-      'unread_only': 'true',
-      'limit': '50',
-    });
+    expect(f.backend.requests.last.url.queryParameters, {'unread_only': 'true', 'limit': '50'});
   });
   test('pagination sorts and deduplicates, rejects cursor cycles and refresh resets', () async {
     final f = InboxFixture();
@@ -177,13 +172,13 @@ void main() {
       'broadcast_up_to': 3,
     });
   });
-  test('mark all is global even with unread/category filters and unloaded entries', () async {
+  test('mark all is global even with the unread filter and unloaded entries', () async {
     final f = InboxFixture();
     addTearDown(f.dispose);
     f.extraUnread = 100;
     f.items.addAll([inboxItem(), inboxItem(id: 2, type: 'TRANSFER')]);
     await f.start();
-    await f.controller.filter(NotificationFilter.orders, true);
+    await f.controller.setUnreadOnly(true);
     await f.controller.markRead();
     expect(f.state.unread, 0);
     expect(f.state.items, isEmpty);
@@ -243,31 +238,33 @@ void main() {
     expect(f.state.items, isEmpty);
     expect(f.signer.calls, 0);
   });
-  test('switching filters cancels a late old page without changing new results', () async {
-    final f = InboxFixture();
-    addTearDown(f.dispose);
-    await f.start();
-    final gate = Completer<void>();
-    f.backend.routes['GET /v1/notifications'] = (r) async {
-      if (r.url.queryParameters['category'] == 'all') await gate.future;
-      return json({
-        'items': [
-          inboxItem(type: r.url.queryParameters['category'] == 'orders' ? 'ORDER' : 'TRANSFER'),
-        ],
-        'next_cursor': null,
-        'unread': 2,
-      });
-    };
-    final old = f.controller.refresh();
-    await f.settle();
-    await f.controller.filter(NotificationFilter.orders, false);
-    await old;
-    expect(f.state.category, NotificationFilter.orders);
-    expect(f.state.items.single.type.name, 'order');
-    gate.complete();
-    await f.settle();
-    expect(f.state.items.single.type.name, 'order');
-  });
+  test(
+    'switching the unread filter cancels a late old page without changing new results',
+    () async {
+      final f = InboxFixture();
+      addTearDown(f.dispose);
+      await f.start();
+      final gate = Completer<void>();
+      f.backend.routes['GET /v1/notifications'] = (r) async {
+        final unreadOnly = r.url.queryParameters['unread_only'] == 'true';
+        if (!unreadOnly) await gate.future;
+        return json({
+          'items': [inboxItem(type: unreadOnly ? 'ORDER' : 'TRANSFER')],
+          'next_cursor': null,
+          'unread': 2,
+        });
+      };
+      final old = f.controller.refresh();
+      await f.settle();
+      await f.controller.setUnreadOnly(true);
+      await old;
+      expect(f.state.unreadOnly, isTrue);
+      expect(f.state.items.single.type.name, 'order');
+      gate.complete();
+      await f.settle();
+      expect(f.state.items.single.type.name, 'order');
+    },
+  );
   test('logout cancels an in-flight read marker and prevents a late count update', () async {
     final f = InboxFixture();
     addTearDown(f.dispose);

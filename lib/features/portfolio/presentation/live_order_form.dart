@@ -52,9 +52,18 @@ part 'live_order_form_embedded.dart';
 part 'live_order_prefill_binding.dart';
 
 class LiveOrderForm extends ConsumerStatefulWidget {
-  const LiveOrderForm({super.key, required this.data, this.mode, this.onModeChanged});
+  const LiveOrderForm({
+    super.key,
+    required this.data,
+    this.mode,
+    this.onModeChanged,
+    this.closing = false,
+  });
   final LiveOrderContext data;
   final LiveOrderEntryMode? mode;
+
+  /// Hedge Close segment: orders reduce the position the direction closes.
+  final bool closing;
   final ValueChanged<LiveOrderEntryMode>? onModeChanged;
   @override
   ConsumerState<LiveOrderForm> createState() => _LiveOrderFormState();
@@ -73,9 +82,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
     unit: sizeUnit,
     text: _allocationPercent == null ? _manualSizeInput.text : _ratioInput.text,
   );
-  OrderSizeResolution get sizing => _resolveSize(
-    rawDraft(attaching ? LiveOrderAttachment(entryPeg: market ? null : entryPeg) : null),
-  );
+  OrderSizeResolution get sizing => _resolveSize(rawDraft(_entryAttachment));
   final triggerPrice = TextEditingController();
   bool buy = true, market = false, reduceOnly = false;
   bool? _refreshingReviewDirection;
@@ -87,34 +94,54 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
   /// Embedded layout: a failure from the last direction click, shown only
   /// while the form terms it was found for are unchanged.
   ({AccountReadFailure failure, Object terms})? _reviewFailure;
+
+  /// A trigger price found already reached by the last direction click, shown
+  /// under the trigger field until any form term changes.
+  Object? _triggerReachedTerms;
   bool conditional = false, protect = false;
   bool trailing = false;
   final trailingRate = TextEditingController(), trailingActivation = TextEditingController();
   LiveOrderTriggerBasis trailingBasis = LiveOrderTriggerBasis.mark;
-  LiveOrderTriggerKind triggerKind = LiveOrderTriggerKind.stop;
   LiveOrderTriggerBasis triggerBasis = LiveOrderTriggerBasis.mark;
   LiveOrderTimeInForce timeInForce = LiveOrderTimeInForce.gtc;
+
+  /// The GTC/IOC choice restored when Hidden Order is cleared.
+  LiveOrderTimeInForce _policy = LiveOrderTimeInForce.gtc;
   AttachedOrderInput? attachment;
-  AttachedEntryPeg? entryPeg;
   LiveOrderPeg? peg;
+
+  /// TP/SL is checked. As on Aster's site it excludes BBO, Hidden Order and
+  /// Reduce only. Exits left empty are ignored, so a checked but unfilled
+  /// TP/SL places the order without TP/SL.
   bool get attaching => attachment != null && !trailing && !reducing;
-  LiveOrderPeg? get effectivePeg => !market && !trailing && !attaching ? peg : null;
-  LiveOrderDraft get attachmentEntry =>
-      buildDraft(attaching ? LiveOrderAttachment(entryPeg: market ? null : entryPeg) : null);
-  LiveOrderAttachment? get effectiveAttachment => !attaching
-      ? null
-      : LiveOrderAttachment(
-          takeProfit: attachment!.takeProfit
-              ?.resolve(_pricingContext ?? widget.data, attachmentEntry)
-              .exit,
-          stopLoss: attachment!.stopLoss
-              ?.resolve(_pricingContext ?? widget.data, attachmentEntry)
-              .exit,
-          entryPeg: market ? null : entryPeg,
-        );
+  AttachedOrderInput? get _filledAttachment {
+    bool filled(AttachedExitInput? exit) => exit != null && exit.value.trim().isNotEmpty;
+    final input = attachment;
+    if (input == null || !filled(input.takeProfit) && !filled(input.stopLoss)) return null;
+    return AttachedOrderInput(
+      takeProfit: filled(input.takeProfit) ? input.takeProfit : null,
+      stopLoss: filled(input.stopLoss) ? input.stopLoss : null,
+    );
+  }
+
+  /// The order carries filled TP/SL exits.
+  bool get _compound => attaching && _filledAttachment != null;
+  LiveOrderAttachment? get _entryAttachment => _compound ? const LiveOrderAttachment() : null;
+  LiveOrderPeg? get effectivePeg => market || trailing || attaching ? null : peg;
+  LiveOrderDraft get attachmentEntry => buildDraft(_entryAttachment);
+  LiveOrderAttachment? get effectiveAttachment {
+    if (!_compound) return null;
+    final filled = _filledAttachment;
+    return LiveOrderAttachment(
+      takeProfit: filled?.takeProfit?.resolve(_pricingContext ?? widget.data, attachmentEntry).exit,
+      stopLoss: filled?.stopLoss?.resolve(_pricingContext ?? widget.data, attachmentEntry).exit,
+    );
+  }
+
   String? get attachmentFailure {
-    if (!attaching) return null;
-    for (final input in [?attachment!.takeProfit, ?attachment!.stopLoss]) {
+    if (!_compound) return null;
+    final filled = _filledAttachment;
+    for (final input in [?filled?.takeProfit, ?filled?.stopLoss]) {
       if (input.resolve(_pricingContext ?? widget.data, attachmentEntry).failure != null) {
         return 'attachedOrderCheckExits';
       }
@@ -155,15 +182,18 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
     market = mode.marketExecution;
     conditional = mode.conditional;
     trailing = mode == LiveOrderEntryMode.trailing;
-    if (mode == LiveOrderEntryMode.postOnly || previous == LiveOrderEntryMode.postOnly) {
-      timeInForce = mode.defaultPolicy;
-      if (mode == LiveOrderEntryMode.postOnly) _constrainPostOnly();
+    if (mode == LiveOrderEntryMode.postOnly) {
+      timeInForce = LiveOrderTimeInForce.postOnly;
+      _constrainPostOnly();
+    } else if (previous == LiveOrderEntryMode.postOnly ||
+        // Conditional orders offer no Hidden Order.
+        conditional && timeInForce == LiveOrderTimeInForce.hidden) {
+      timeInForce = _policy;
     }
   }
 
   void _constrainPostOnly() {
     if (peg != null) peg = LiveOrderPeg.queue;
-    if (entryPeg != null) entryPeg = AttachedEntryPeg.queue1;
   }
 
   @override
@@ -178,7 +208,11 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
     super.dispose();
   }
 
-  bool get reducing => reduceOnly && widget.data.mode == FuturesPositionMode.oneWay;
+  bool get reducing =>
+      reduceOnly && widget.data.mode == FuturesPositionMode.oneWay || _hedgeClosing;
+
+  /// Close Long sells the LONG position; Close Short buys back the SHORT one.
+  bool get _hedgeClosing => widget.closing && widget.data.mode == FuturesPositionMode.hedge;
 
   LiveOrderDraft get draft => buildDraft(effectiveAttachment);
   LiveOrderDraft buildDraft(LiveOrderAttachment? protection) {
@@ -194,6 +228,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
         ? ''
         : price.text.trim(),
     reduceOnly: reduceOnly && widget.data.mode == FuturesPositionMode.oneWay,
+    closingSide: _hedgeClosing ? (buy ? 'SHORT' : 'LONG') : null,
     timeInForce: timeInForce,
     attachment: protection,
     peg: effectivePeg,
@@ -208,13 +243,26 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
         : null,
     trigger: conditional
         ? LiveOrderTrigger(
-            kind: triggerKind,
+            kind: _triggerKind,
             price: triggerPrice.text.trim(),
             basis: triggerBasis,
             protect: protect,
           )
         : null,
   );
+
+  /// As on Aster's site, the trigger direction follows the entered price: a
+  /// buy above the reference (or a sell below it) is STOP, otherwise
+  /// TAKE_PROFIT. Without a price or reference it stays STOP, and validation
+  /// reports the missing reference.
+  LiveOrderTriggerKind get _triggerKind {
+    final stop = parseOrderDecimal(triggerPrice.text.trim());
+    final data = _pricingContext ?? widget.data;
+    final reference = triggerBasis == LiveOrderTriggerBasis.mark ? data.markPrice : data.lastPrice;
+    if (stop == null || reference == null) return LiveOrderTriggerKind.stop;
+    return (stop > reference) == buy ? LiveOrderTriggerKind.stop : LiveOrderTriggerKind.takeProfit;
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -251,7 +299,6 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
         price.text = value;
         _limitEdited = true;
         peg = null;
-        entryPeg = null;
       });
       widget.onModeChanged?.call(LiveOrderEntryMode.limit);
     });
@@ -283,10 +330,9 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
     trailingBasis = LiveOrderTriggerBasis.mark;
     triggerBasis = LiveOrderTriggerBasis.mark;
     attachment = null;
-    entryPeg = null;
     peg = null;
     attachmentGeneration++;
-    timeInForce = LiveOrderTimeInForce.gtc;
+    timeInForce = _policy = LiveOrderTimeInForce.gtc;
     _prefilled = false;
   }
 

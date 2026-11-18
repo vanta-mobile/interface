@@ -78,11 +78,23 @@ class OrderCancellationController extends Notifier<OrderCancellationState>
         address == null ||
         identity?.signingAvailable != true ||
         snapshot.busy ||
-        snapshot.account?.address.toLowerCase() != address.toLowerCase() ||
-        snapshot.account?.orders.contains(order) != true) {
+        !_listed(order, address)) {
       return null;
     }
-    return OrderCancelIntent(address: address, order: order, revision: _revision);
+    return OrderCancelIntent(
+      address: address,
+      order: order,
+      revision: _revision,
+      events: ref.read(openOrdersReadProvider.notifier).eventRevision,
+    );
+  }
+
+  /// Reads and events replace order instances while the confirmation is open,
+  /// so the order is matched by its exchange identity, not object identity.
+  bool _listed(AsterOpenOrder order, String address) {
+    final account = ref.read(openOrdersReadProvider).account;
+    return account?.address.toLowerCase() == address.toLowerCase() &&
+        account!.orders.any((o) => o.symbol == order.symbol && o.orderId == order.orderId);
   }
 
   Future<void> cancel(OrderCancelIntent intent) async {
@@ -94,7 +106,13 @@ class OrderCancellationController extends Notifier<OrderCancellationState>
         identity?.walletAddress != intent.address) {
       return;
     }
-    if (prepare(intent.order) == null) return;
+    // A read that started while the dialog was open does not block the
+    // confirmed cancellation. An event for this order does: the confirmed
+    // row may no longer be what the user reviewed.
+    if (!_listed(intent.order, intent.address) ||
+        ref.read(openOrdersReadProvider.notifier).hasEventAfter(intent.order, intent.events)) {
+      return;
+    }
     final revision = ++_revision;
     // The updated revision also keeps recheck tied to this operation.
     final active = OrderCancelIntent(

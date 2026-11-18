@@ -20,6 +20,7 @@ import '../domain/asset_metadata.dart';
 import '../../../core/presentation/status_view.dart';
 import '../../funding/domain/funding_catalog.dart';
 import '../../funding/presentation/funding_screen.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 class AsterAccountRows extends ConsumerStatefulWidget {
   const AsterAccountRows({super.key, required this.account, this.accountStale = false});
@@ -69,11 +70,13 @@ class _AsterAccountRowsState extends ConsumerState<AsterAccountRows> {
           ),
           onChanged: (value) => setState(() => query = value.trim().toLowerCase()),
         ),
-        CheckboxListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.accountHideZero),
-          value: hideZero,
-          onChanged: (value) => setState(() => hideZero = value ?? true),
+        NoPressFeedback(
+          child: CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.accountHideZero),
+            value: hideZero,
+            onChanged: (value) => setState(() => hideZero = value ?? true),
+          ),
         ),
         if (assets.isEmpty)
           widget.account.assets.isEmpty

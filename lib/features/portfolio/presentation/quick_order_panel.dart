@@ -19,6 +19,7 @@ import '../../trade/presentation/widgets/account_sheet.dart';
 import '../application/live_order_provider.dart';
 import '../application/quick_order_provider.dart';
 import 'quick_order_review.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 /// Chart-tab quick market entry pinned above the bottom navigation: an
 /// independent quote-asset amount followed by Market Buy and Market Sell.
@@ -139,7 +140,10 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
     // Only this entry's own read, an order being submitted, an auth change and
     // an unknown outcome lock it.
     final busy = state.loading || live.busy && live.intent != null || auth.busy;
-    final text = state.percent == null ? state.quantity : '${state.percent}%';
+    // A chosen percentage shows the amount it stands for once sizing is read.
+    final text = state.percent == null
+        ? state.quantity
+        : ref.read(quickOrderProvider.notifier).percentAmount() ?? '${state.percent}%';
     if (quantity.text != text) quantity.text = text;
     final available = data?.funds?.account.availableBalance;
     final submitting = live.busy && live.intent?.draft.quickEntry == true;
@@ -338,9 +342,12 @@ class _QuantityField extends StatelessWidget {
                   focusedBorder: InputBorder.none,
                   hintText: hint,
                   hintMaxLines: 1,
-                  hintStyle: focused
-                      ? value
-                      : value.copyWith(color: TradeColors.muted, fontWeight: FontWeight.w700),
+                  // Design: the available-balance hint is 12px.
+                  hintStyle: value.copyWith(
+                    fontSize: 12,
+                    color: focused ? null : TradeColors.muted,
+                    fontWeight: focused ? null : FontWeight.w700,
+                  ),
                 ),
                 onChanged: onChanged,
               ),
@@ -426,20 +433,22 @@ class _PercentChip extends StatelessWidget {
           borderRadius: radius,
           side: const BorderSide(color: TradeColors.line),
         ),
-        child: InkWell(
-          borderRadius: radius,
-          onTap: onTap,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 26),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              // Shrinks only when a narrow panel with enlarged text cannot fit it.
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  '$percent%',
-                  maxLines: 1,
-                  style: TradeTypography.caption.copyWith(color: TradeColors.text),
+        child: NoPressFeedback(
+          child: InkWell(
+            borderRadius: radius,
+            onTap: onTap,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 26),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                // Shrinks only when a narrow panel with enlarged text cannot fit it.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '$percent%',
+                    maxLines: 1,
+                    style: TradeTypography.caption.copyWith(color: TradeColors.text),
+                  ),
                 ),
               ),
             ),

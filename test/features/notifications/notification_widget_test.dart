@@ -10,36 +10,36 @@ import '../../support/api_notifications.dart';
 
 void main() {
   for (final language in ['en', 'zh']) {
-    testWidgets('API inbox tabs, unread filter and refresh at narrow enlarged text: $language', (
-      tester,
-    ) async {
-      final f = InboxFixture();
-      addTearDown(f.dispose);
-      f.items.addAll([
-        inboxItem(),
-        inboxItem(id: 2, type: 'TRANSFER'),
-        inboxItem(id: 3, type: 'ANNOUNCE', broadcast: true, read: true),
-      ]);
-      await f.mount(tester, language: language, size: const Size(320, 740), scale: 1.5);
-      final l = AppLocalizations.of(tester.element(find.byType(NotificationScreen)));
-      expect(find.text(l.notificationApiType('fill')), findsOneWidget);
-      expect(find.byKey(const Key('notification-unread-dot')), findsNWidgets(2));
-      await tester.tap(find.byKey(const Key('notification-filter-transfers')));
-      await tester.pumpAndSettle();
-      expect(f.backend.requests.last.url.queryParameters['category'], 'transfers');
-      expect(find.byKey(const Key('notification-event:1')), findsNothing);
-      expect(f.state.unread, 2);
-      await tester.tap(find.byKey(const Key('notification-unread-only')));
-      await tester.pumpAndSettle();
-      expect(f.backend.requests.last.url.queryParameters['unread_only'], 'true');
-      final before = f.backend.requests.length;
-      await tester.drag(find.byKey(const Key('notification-list')), const Offset(0, 360));
-      await tester.pumpAndSettle();
-      expect(f.backend.requests.length, greaterThan(before));
-      expect(f.signer.calls, 0);
-      expect(tester.takeException(), isNull);
-      await tester.pumpWidget(const SizedBox());
-    });
+    testWidgets(
+      'API inbox without tabs, unread filter and refresh at narrow enlarged text: $language',
+      (tester) async {
+        final f = InboxFixture();
+        addTearDown(f.dispose);
+        f.items.addAll([
+          inboxItem(),
+          inboxItem(id: 2, type: 'TRANSFER'),
+          inboxItem(id: 3, type: 'ANNOUNCE', broadcast: true, read: true),
+        ]);
+        await f.mount(tester, language: language, size: const Size(320, 740), scale: 1.5);
+        final l = AppLocalizations.of(tester.element(find.byType(NotificationScreen)));
+        expect(find.text(l.notificationApiType('fill')), findsOneWidget);
+        expect(find.byKey(const Key('notification-unread-dot')), findsNWidgets(2));
+        expect(find.byKey(const Key('notification-filter-transfers')), findsNothing);
+        expect(f.backend.requests.last.url.queryParameters.containsKey('category'), isFalse);
+        await tester.tap(find.byKey(const Key('notification-unread-only')));
+        await tester.pumpAndSettle();
+        expect(f.backend.requests.last.url.queryParameters['unread_only'], 'true');
+        expect(find.byKey(const Key('notification-event:1')), findsOneWidget);
+        expect(f.state.unread, 2);
+        final before = f.backend.requests.length;
+        await tester.drag(find.byKey(const Key('notification-list')), const Offset(0, 360));
+        await tester.pumpAndSettle();
+        expect(f.backend.requests.length, greaterThan(before));
+        expect(f.signer.calls, 0);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
   }
   testWidgets('mark all disables and spins through the write and count reconciliation', (
     tester,

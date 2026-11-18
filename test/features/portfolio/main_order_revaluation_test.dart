@@ -200,11 +200,8 @@ void main() {
       position(symbol: 'ETHUSDT', replace: false);
       markValues['ETHUSDT'] = lastValues['ETHUSDT'] = '100';
       order(symbol: 'ETHUSDT', type: 'STOP_MARKET', reduceOnly: closing);
-      if (closing) {
-        expect(value().availableMargin, d('90').toRational());
-      } else {
-        expect(() => value(), fails('liveCapacityPendingUnknown'));
-      }
+      // An untriggered conditional reserves nothing either way.
+      expect(value().availableMargin, d('90').toRational());
     });
   }
   test('flat configuration with pending order contributes without needing a mark', () {

@@ -96,12 +96,7 @@ class InboxFixture {
       }
       final q = request.url.queryParameters;
       final filtered = items.where((e) {
-        if (q['unread_only'] == 'true' && e['read'] == true) return false;
-        return switch (q['category']) {
-          'orders' => ['FILL', 'TRIGGER', 'ORDER'].contains(e['type']),
-          'transfers' => ['FUNDING', 'TRANSFER'].contains(e['type']),
-          _ => true,
-        };
+        return q['unread_only'] != 'true' || e['read'] != true;
       }).toList();
       return json({
         'items': filtered,

@@ -66,36 +66,51 @@ void main() {
   });
   tearDown(() => service.close());
 
-  test(
-    'DELETE then GET sign exact symbol/id bytes with distinct nonces and the same EOA',
-    () async {
-      final result = await repository.cancel(
-        address: accountAddress,
-        order: order,
-        isCurrent: () => current,
-        onStep: (_) {},
-      );
-      expect(result.resolution?.status, 'CANCELED');
-      expect(result.resolution, isNotNull);
-      expect(requests.map((r) => r.method), ['GET', 'DELETE', 'GET', 'GET']);
-      final signed = requests.where((r) => r.url.path.endsWith('/order')).toList();
-      for (var i = 0; i < signed.length; i++) {
-        final query = signed[i].url.queryParameters;
-        expect(query['symbol'], 'BTCUSDT');
-        expect(query['orderId'], '1917641');
-        expect(query['user'], accountAddress);
-        expect(query['signer'], accountAddress);
-        expect(query['signature'], TestWalletConnection.signature);
-        expect(query.keys.toSet(), {'symbol', 'orderId', 'user', 'signer', 'nonce', 'signature'});
-        expect(signed[i].url.query.split('&signature=').first, messages[i]);
-        expect(signed[i].body, isEmpty);
-      }
-      expect(signed[0].url.queryParameters['nonce'], '1793620800123000');
-      expect(signed[1].url.queryParameters['nonce'], '1793620800123001');
-    },
-  );
+  test('DELETE signs exact symbol/id bytes and its cancelled order is the result', () async {
+    final result = await repository.cancel(
+      address: accountAddress,
+      order: order,
+      isCurrent: () => current,
+      onStep: (_) {},
+    );
+    expect(result.resolution?.status, 'CANCELED');
+    expect(result.resolution, isNotNull);
+    expect(requests.map((r) => r.method), ['GET', 'DELETE']);
+    final signed = requests.where((r) => r.url.path.endsWith('/order')).toList();
+    for (var i = 0; i < signed.length; i++) {
+      final query = signed[i].url.queryParameters;
+      expect(query['symbol'], 'BTCUSDT');
+      expect(query['orderId'], '1917641');
+      expect(query['user'], accountAddress);
+      expect(query['signer'], accountAddress);
+      expect(query['signature'], TestWalletConnection.signature);
+      expect(query.keys.toSet(), {'symbol', 'orderId', 'user', 'signer', 'nonce', 'signature'});
+      expect(signed[i].url.query.split('&signature=').first, messages[i]);
+      expect(signed[i].body, isEmpty);
+    }
+    expect(signed.single.url.queryParameters['nonce'], '1793620800123000');
+  });
 
-  test('final filled order takes precedence over a cancellation acknowledgement', () async {
+  test('unrecognized DELETE response is resolved by a GET with a new nonce', () async {
+    cancelStatus = 200;
+    deleteGate = Completer<http.Response>()
+      ..complete(http.Response(jsonEncode(openOrder(id: 123, status: 'CANCELED')), 200));
+    queryPayload = openOrder(status: 'FILLED', executedQty: '0.40');
+    final result = await repository.cancel(
+      address: accountAddress,
+      order: order,
+      isCurrent: () => current,
+      onStep: (_) {},
+    );
+    expect(result.resolution?.status, 'FILLED');
+    expect(requests.map((r) => r.method), ['GET', 'DELETE', 'GET', 'GET']);
+    final signed = requests.where((r) => r.url.path.endsWith('/order')).toList();
+    expect(signed[0].url.queryParameters['nonce'], '1793620800123000');
+    expect(signed[1].url.queryParameters['nonce'], '1793620800123001');
+  });
+
+  test('final filled order is reported when the DELETE fails', () async {
+    cancelStatus = 400;
     queryPayload = openOrder(status: 'FILLED', executedQty: '0.40');
     final result = await repository.cancel(
       address: accountAddress,
@@ -160,6 +175,7 @@ void main() {
       );
       expect(requests.where((r) => r.url.path.endsWith('/order')), isEmpty);
       messages.clear();
+      cancelStatus = 503;
       refusedSignature = 2;
       final result = await repository.cancel(
         address: accountAddress,
@@ -196,6 +212,7 @@ void main() {
   );
 
   test('still-open query preserves the latest partial fill with exact decimal units', () async {
+    cancelStatus = 503;
     queryPayload = openOrder(status: 'PARTIALLY_FILLED', executedQty: '0.123456789012345678');
     final result = await repository.cancel(
       address: accountAddress,

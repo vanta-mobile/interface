@@ -205,24 +205,22 @@ void main() {
       );
     }
   });
-  test('query verifies reduction flags and retains independent check timestamp', () {
+  test('query verifies reduction identity and retains independent check timestamp', () {
     final intent = liveCloseIntent();
     final payload = liveQueryPayload(intent, status: 'FILLED');
     expect(mapLiveOrderQuery(payload, intent, checkedAt: liveOrderClock).checkedAt, liveOrderClock);
+    expect(() => mapLiveOrderQuery({...payload, 'side': 'BUY'}, intent), throwsFormatException);
     for (final entry in <String, dynamic>{
       'reduceOnly': false,
       'closePosition': true,
-      'side': 'BUY',
       'positionSide': 'LONG',
     }.entries) {
       expect(
-        () => mapLiveOrderQuery({...payload, entry.key: entry.value}, intent),
-        throwsFormatException,
+        mapLiveOrderQuery({...payload, entry.key: entry.value}, intent).status,
+        'FILLED',
         reason: entry.key,
       );
     }
-    payload.remove('reduceOnly');
-    expect(() => mapLiveOrderQuery(payload, intent), throwsFormatException);
     final hedge = liveCloseIntent(hedge: true);
     expect(mapLiveOrderQuery(liveQueryPayload(hedge), hedge).status, 'NEW');
   });

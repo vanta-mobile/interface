@@ -1,3 +1,5 @@
+import 'embedded_order_feedback.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,6 +23,7 @@ import 'order_cancellation_controls.dart';
 import 'trade_check_option.dart';
 import '../domain/aster_open_orders.dart';
 import '../domain/position_risk.dart';
+import '../../../core/theme.dart' show PressFeedback;
 
 /// Open-orders tab beneath the Futures trade workspace.
 class TradeOpenOrdersSection extends ConsumerStatefulWidget {
@@ -71,7 +74,10 @@ class _TradeOpenOrdersSectionState extends ConsumerState<TradeOpenOrdersSection>
         !cancellation.busy &&
         !modifying;
     final symbol = ref.watch<String>(symbolProvider);
-    final all = state.account?.orders;
+    // An account Aster has not opened yet (no deposit) has no open orders.
+    final depositRequired = state.failure?.requiresDeposit == true;
+    final failure = depositRequired ? null : state.failure;
+    final all = state.account?.orders ?? (depositRequired ? const <AsterOpenOrder>[] : null);
     final orders = all?.where((order) => !currentSymbolOnly || order.symbol == symbol).toList();
     int? leverage(String orderSymbol, String side) {
       for (final position in positions ?? const <PositionRisk>[]) {
@@ -108,26 +114,23 @@ class _TradeOpenOrdersSectionState extends ConsumerState<TradeOpenOrdersSection>
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 minimumSize: const Size(44, 44),
                 textStyle: TradeTypography.body,
-              ),
+              ).copyWith(overlayColor: PressFeedback.overlay),
               child: Text(l10n.openOrdersCancelAll),
             ),
           ],
         ),
-        if ((all == null ? state.failure ?? retrying : null) case final failure?)
+        // A missing or revoked device grant (e.g. "No agent found") leads to
+        // Enable trading, as AGENTS.md requires, instead of a bare retry.
+        if (failure case final failure? when failure.requiresAuthorization)
+          EmbeddedOrderFailure(failure: failure, retry: retry, loading: state.busy)
+        else if ((all == null ? failure ?? retrying : null) case final failure?)
           StatusFailureView(
             message: accountErrorText(context, failure),
             retrying: state.busy,
             onRetry: retry,
           )
-        else if (state.failure case final failure?)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              accountErrorText(context, failure),
-              key: const Key('open-orders-read-error'),
-              style: TradeTypography.body.copyWith(color: TradeColors.negative),
-            ),
-          )
+        // A failed refresh keeps the shown data without an error line; the
+        // next read replaces it.
         else if (all == null && state.busy)
           const Padding(
             key: Key('open-orders-skeleton'),

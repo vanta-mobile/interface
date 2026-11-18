@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
+import '../../../core/theme.dart' show PressFeedback;
 
 const _rowHeight = 36.0;
 
@@ -214,7 +215,7 @@ class _Action extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       textStyle: TradeTypography.option.copyWith(fontSize: 14, height: 20 / 14),
-    ),
+    ).copyWith(overlayColor: PressFeedback.overlay),
     child: Text(label, textAlign: TextAlign.center),
   );
 }

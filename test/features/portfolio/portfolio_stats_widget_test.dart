@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reown_appkit/reown_appkit.dart' show ErrorOpeningWallet;
 import 'package:vanta/core/presentation/status_view.dart';
@@ -77,10 +78,39 @@ void main() {
     expect(find.text(r'+$45.00'), findsOneWidget);
     expect(find.textContaining('+4.5%'), findsOneWidget);
     expect(find.text(r'$12,000.25'), findsOneWidget);
-    expect(find.text('PnL data unavailable for this account'), findsNothing);
+    expect(find.text('Realized PnL data unavailable for this account'), findsNothing);
     await t.tap(find.byKey(const ValueKey('portfolio-pnl-view-true')));
     await t.pumpAndSettle();
     expect(find.text(r'+$3.25'), findsOneWidget);
+    expect(find.byKey(const Key('portfolio-month-unavailable')), findsNothing);
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('a month without data keeps the grid and marks every day unavailable', (t) async {
+    final month = DateTime.utc(DateTime.now().toUtc().year, DateTime.now().toUtc().month);
+    await t.pumpWidget(
+      app([
+        portfolioPnlPerformanceProvider(PortfolioStatsPeriod.week)
+            .overrideWithValue(PortfolioStatsView(week)),
+        portfolioCalendarViewProvider(month)
+            .overrideWithValue(PortfolioStatsView(PortfolioPerformance())),
+      ], const PortfolioPnlScreen()),
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const ValueKey('portfolio-pnl-view-true')));
+    await t.pumpAndSettle();
+    final days = DateTime.utc(month.year, month.month + 1, 0).day;
+    expect(
+      find.text('${DateFormat.MMMM('en').format(month)} · Daily Realized PnL unavailable'),
+      findsOneWidget,
+    );
+    // One placeholder per day plus the monthly metric.
+    expect(find.text('—'), findsNWidgets(days + 1));
+    for (final weekday in ['M', 'W', 'F']) {
+      expect(find.text(weekday), findsOneWidget);
+    }
+    expect(find.text('T'), findsNWidgets(2));
+    expect(find.text('Mon'), findsNothing);
     expect(t.takeException(), isNull);
   });
 

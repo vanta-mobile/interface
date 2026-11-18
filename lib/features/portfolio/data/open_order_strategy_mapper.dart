@@ -15,11 +15,20 @@ OpenOrderStrategy mapOpenOrderStrategy(Object? payload, AsterOpenOrder order) {
   }
   int? sequence;
   Decimal? takeProfit, stopLoss;
+  // Leg details are all-or-nothing: an incomplete leg leaves them empty (the
+  // details sheet then reports invalid data) without dropping the TP/SL.
+  List<OpenOrderStrategyLeg>? details = [];
   for (final leg in legs) {
     if (leg is! Map<String, dynamic>) throw const FormatException('Invalid strategy leg');
     final sub = int.tryParse('${leg['strategySubId']}');
     if (sub == null || sub < 1 || sub > 3) throw const FormatException('Invalid strategy leg');
     if (_id(leg['orderId']) == order.orderId && leg['symbol'] == order.symbol) sequence = sub;
+    final detail = _leg(leg, sub);
+    if (detail == null) {
+      details = null;
+    } else {
+      details?.add(detail);
+    }
     if (sub == 1) continue;
     final stop = leg['stopPrice'] is String ? Decimal.tryParse(leg['stopPrice'] as String) : null;
     if (stop == null || stop <= Decimal.zero) continue;
@@ -37,6 +46,35 @@ OpenOrderStrategy mapOpenOrderStrategy(Object? payload, AsterOpenOrder order) {
     sequence: sequence,
     takeProfit: takeProfit,
     stopLoss: stopLoss,
+    legs: details == null
+        ? const []
+        : List.unmodifiable(details..sort((a, b) => a.sequence.compareTo(b.sequence))),
+  );
+}
+
+OpenOrderStrategyLeg? _leg(Map<String, dynamic> leg, int sequence) {
+  final side = leg['side'], status = leg['status'];
+  final type = leg['origType'] ?? leg['type'];
+  final quantity = leg['quantity'] is String ? Decimal.tryParse(leg['quantity'] as String) : null;
+  if (side is! String ||
+      !{'BUY', 'SELL'}.contains(side) ||
+      status is! String ||
+      status.isEmpty ||
+      type is! String ||
+      type.isEmpty ||
+      quantity == null ||
+      quantity < Decimal.zero) {
+    return null;
+  }
+  final stop = leg['stopPrice'] is String ? Decimal.tryParse(leg['stopPrice'] as String) : null;
+  return OpenOrderStrategyLeg(
+    sequence: sequence,
+    type: type,
+    status: status,
+    buy: side == 'BUY',
+    quantity: quantity,
+    stopPrice: stop != null && stop > Decimal.zero ? stop : null,
+    reduceOnly: leg['reduceOnly'] == true,
   );
 }
 

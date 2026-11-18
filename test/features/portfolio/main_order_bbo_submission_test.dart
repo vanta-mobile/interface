@@ -270,11 +270,24 @@ void main() {
       expect(f.container.read(liveOrderProvider).result!.status, 'NEW');
     },
   );
-  for (final reason in ['queryFailed', 'postTimeout', 'wrongPeg']) {
+  test('BBO with a different reported peg resolves by its original client ID', () async {
+    returnedPeg = 'COUNTERPARTY_1';
+    final review = (await f.allocation.prepare(
+      liveDraft(price: '', peg: LiveOrderPeg.queue, quantity: '2'),
+      isFormCurrent: () => true,
+    ))!;
+    final submit = f.allocation.submit(review);
+    await prompting.future;
+    gate.complete();
+    await submit;
+    expect(posts().length, 1);
+    expect(f.container.read(liveOrderProvider).failure, isNull);
+    expect(f.container.read(liveOrderProvider).result!.status, 'NEW');
+  });
+  for (final reason in ['queryFailed', 'postTimeout']) {
     test('BBO $reason keeps the journal; the automatic query GETs only the original ID', () async {
-      queryUnavailable = reason != 'wrongPeg';
+      queryUnavailable = true;
       postTimeout = reason == 'postTimeout';
-      if (reason == 'wrongPeg') returnedPeg = 'COUNTERPARTY_1';
       final review = (await f.allocation.prepare(
         liveDraft(price: '', peg: LiveOrderPeg.queue, quantity: '2'),
         isFormCurrent: () => true,

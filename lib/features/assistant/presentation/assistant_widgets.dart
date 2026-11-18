@@ -40,7 +40,7 @@ class AssistantPrimaryButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       textStyle: AssistantTypography.button,
-    ),
+    ).copyWith(overlayColor: PressFeedback.overlay),
     child: busy
         ? const SizedBox.square(
             dimension: 20,

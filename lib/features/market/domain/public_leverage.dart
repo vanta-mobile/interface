@@ -6,7 +6,9 @@ class PublicLeverage {
   /// Highest leverage any bracket opens, as advertised for the market.
   int get maximumLeverage => ranges.map((range) => range.$2).reduce((a, b) => a > b ? a : b);
 
-  int defaultLeverage({int preferred = 20}) {
+  /// PRD first visit presets 10×; markets that cannot open 10× use the
+  /// nearest supported value below it, or their lowest one.
+  int defaultLeverage({int preferred = 10}) {
     final supported = <int>{
       for (final range in ranges)
         for (var value = range.$1; value <= range.$2; value++) value,

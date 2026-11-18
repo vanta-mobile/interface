@@ -7,7 +7,6 @@ import 'package:vanta/core/vanta_api/vanta_api_failure.dart';
 import 'package:vanta/features/notifications/data/api_notification_mapper.dart';
 import 'package:vanta/features/notifications/data/api_notification_repository.dart';
 import 'package:vanta/features/notifications/domain/api_notification.dart';
-import 'package:vanta/features/notifications/domain/notification_status.dart';
 
 import '../../support/api_notifications.dart';
 import '../../support/vanta_api.dart';
@@ -89,8 +88,7 @@ void main() {
     f.backend.routes['GET /v1/notifications'] = (_) =>
         json({'code': 'internal_error', 'message': 'Inbox offline'});
     await expectLater(
-      ApiNotificationRepository(f.repository)
-          .read(category: NotificationFilter.all, unreadOnly: false),
+      ApiNotificationRepository(f.repository).read(unreadOnly: false),
       throwsA(isA<VantaApiFailure>().having((e) => e.details?.message, 'message', 'Inbox offline')),
     );
   });
@@ -100,12 +98,7 @@ void main() {
     await f.start();
     f.backend.routes['GET /v1/notifications'] = (_) =>
         http.Response('{"items":[],"next_cursor":null,"unread":2}', 200);
-    expect(
-      (await ApiNotificationRepository(
-        f.repository,
-      ).read(category: NotificationFilter.all, unreadOnly: false)).unread,
-      2,
-    );
+    expect((await ApiNotificationRepository(f.repository).read(unreadOnly: false)).unread, 2);
     f.backend.routes['GET /other'] = (_) => http.Response('{"value":1.25}', 200);
     expect((await f.repository.get('/other'))['value'], 1.25);
   });

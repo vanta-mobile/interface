@@ -15,6 +15,7 @@ import 'funding_assets.dart';
 import 'transfer_history_screen.dart';
 import 'withdraw_info_panel.dart';
 import 'deposit_approval_recovery_screen.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 void openFundingInfo(BuildContext context, TransferMarket market) =>
     Navigator.of(context)
@@ -148,13 +149,15 @@ class _Selectors extends StatelessWidget {
           spacing: 8,
           children: [
             for (final value in FundingOperation.values)
-              ChoiceChip(
-                key: Key('funding-operation-${value.name}'),
-                label: Text(
-                  value == FundingOperation.deposit ? l10n.fundingDeposit : l10n.fundingWithdraw,
+              NoPressFeedback(
+                child: ChoiceChip(
+                  key: Key('funding-operation-${value.name}'),
+                  label: Text(
+                    value == FundingOperation.deposit ? l10n.fundingDeposit : l10n.fundingWithdraw,
+                  ),
+                  selected: operation == value,
+                  onSelected: (_) => onOperation(value),
                 ),
-                selected: operation == value,
-                onSelected: (_) => onOperation(value),
               ),
           ],
         ),

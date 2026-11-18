@@ -9,6 +9,7 @@ import 'package:vanta/features/portfolio/domain/futures_position_mode.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/presentation/quick_order_panel.dart';
 import 'package:vanta/features/portfolio/application/live_order_provider.dart';
+import 'package:vanta/features/portfolio/application/order_confirmation_provider.dart';
 import 'package:vanta/features/portfolio/application/quick_order_provider.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
@@ -49,6 +50,16 @@ void main() {
 
   String quantity(WidgetTester tester) =>
       tester.widget<TextField>(find.byKey(const Key('quick-order-quantity'))).controller!.text;
+
+  /// A chosen percentage stays selected; the field shows the quote amount it
+  /// stands for (the percentage itself only until sizing is read).
+  void expectPercent(WidgetTester tester, ProviderContainer container, int percent) {
+    expect(container.read(quickOrderProvider).percent, percent);
+    final amount = container.read(quickOrderProvider.notifier).percentAmount();
+    expect(quantity(tester), amount ?? '$percent%');
+    if (amount != null) expect(amount, isNot(contains('%')));
+  }
+
   AppLocalizations l10n(WidgetTester tester) =>
       AppLocalizations.of(tester.element(find.byType(QuickOrderPanel)));
   Future<void> dispose(WidgetTester tester, ProviderContainer container) async {
@@ -98,16 +109,13 @@ void main() {
             await field(tester, '80.01');
             final key = buy ? 'quick-order-buy' : 'quick-order-sell';
             await tap(tester, key);
-            final dialog = find.byType(AlertDialog), messages = l10n(tester);
+            // The ordinary market order confirmation is reused.
+            final dialog = find.byType(Dialog), messages = l10n(tester);
             expect(dialog, findsOneWidget);
-            expect(find.descendant(of: dialog, matching: find.text('0.001')), findsOneWidget);
+            expect(find.descendant(of: dialog, matching: find.text('0.001 BTC')), findsOneWidget);
             expect(
-              find.descendant(of: dialog, matching: find.text(messages.quickOrderHint)),
+              find.descendant(of: dialog, matching: find.text(messages.orderConfirmMarketPrice)),
               findsOneWidget,
-            );
-            expect(
-              find.descendant(of: dialog, matching: find.text(messages.liveOrderEstimatedNotional)),
-              findsNothing,
             );
             expect(tester.takeException(), null);
             tester.view.physicalSize = const Size(844, 390);
@@ -118,7 +126,7 @@ void main() {
             expect(orders.submits, 0);
             expect(quantity(tester), '80.01');
             await tap(tester, key);
-            await tester.tap(find.byKey(const Key('quick-order-confirm')));
+            await tester.tap(find.byKey(const Key('live-order-confirm')));
             await tester.pumpAndSettle();
             expect(orders.lastIntent!.parameters['type'], 'MARKET');
             expect(orders.lastIntent!.parameters['side'], buy ? 'BUY' : 'SELL');
@@ -161,24 +169,26 @@ void main() {
       await tap(tester, 'quick-order-quantity');
       await tap(tester, 'quick-order-percent-50');
       expect(sizing.reads, 1);
-      expect(quantity(tester), '50%');
+      expectPercent(tester, container, 50);
+      // Once sizing is read the field shows an amount, not "50%".
+      expect(quantity(tester), matches(RegExp(r'^\d+\.\d{2}$')));
       await field(tester, '80.01');
       expect(quantity(tester), '80.01');
       await tap(tester, 'quick-order-buy');
-      await tap(tester, 'quick-order-skip-confirmation');
       await tester.tap(find.text(l10n(tester).cancel));
       await tester.pumpAndSettle();
-      expect(preference.required, true);
+      expect(orders.submits, 0);
       await tap(tester, 'quick-order-buy');
-      await tap(tester, 'quick-order-skip-confirmation');
-      await tester.tap(find.byKey(const Key('quick-order-confirm')));
+      await tester.tap(find.byKey(const Key('live-order-confirm')));
       await tester.pumpAndSettle();
-      expect(preference.required, false);
       expect(orders.submits, 1);
       expect(quantity(tester), '');
+      // The shared market confirmation setting (Settings) also covers quick orders.
+      await container.read(marketOrderConfirmationProvider.notifier).select(false);
+      expect(preference.required, false);
       await field(tester, '80.01');
       await tap(tester, 'quick-order-sell');
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(Dialog), findsNothing);
       expect(orders.submits, 2);
       expect(tester.takeException(), null);
       await dispose(tester, container);
@@ -206,16 +216,16 @@ void main() {
     expect(quantity(tester), '80.01');
     expect(find.byKey(const Key('quick-order-error')), findsOneWidget);
     await tap(tester, 'quick-order-buy');
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(Dialog), findsOneWidget);
     await tester.tap(find.text(l10n(tester).cancel));
     await tester.pumpAndSettle();
     expect(orders.submits, 0);
     sizing.failure = null;
     await tap(tester, 'quick-order-quantity');
     await tap(tester, 'quick-order-percent-25');
-    expect(quantity(tester), '25%');
+    expectPercent(tester, container, 25);
     await tap(tester, 'quick-order-buy');
-    await tester.tap(find.byKey(const Key('quick-order-confirm')));
+    await tester.tap(find.byKey(const Key('live-order-confirm')));
     await tester.pumpAndSettle();
     expect(orders.lastIntent!.draft.quantity, '0.002');
     expect(tester.takeException(), null);
@@ -240,7 +250,7 @@ void main() {
     // 1600.02 USDT / 10x exceeds the 89 USDT available balance.
     await field(tester, '1600.02');
     await tap(tester, 'quick-order-buy');
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(Dialog), findsNothing);
     expect(find.text(l10n(tester).quickOrderInsufficientBalance), findsOneWidget);
     expect(orders.submits, 0);
     await field(tester, '80.01');
@@ -273,7 +283,7 @@ void main() {
     final reads = orders.reads;
     await tap(tester, 'quick-order-quantity');
     await tap(tester, 'quick-order-percent-50');
-    expect(quantity(tester), '50%');
+    expectPercent(tester, container, 50);
     expect(sizing.reads, 1);
     expect(orders.reads, reads);
     expect(identity.wallets, 0);
@@ -315,11 +325,11 @@ void main() {
     await tester.tap(find.byKey(const Key('quick-order-percent-50')));
     await tester.pump();
     // Sizing already read for this account applies the choice immediately.
-    expect(quantity(tester), '50%');
+    expectPercent(tester, container, 50);
     orders.readGate!.complete();
     await renewal;
     await tester.pumpAndSettle();
-    expect(quantity(tester), '50%');
+    expectPercent(tester, container, 50);
     expect(tester.testTextInput.isVisible, true);
     expect(container.read(quickOrderProvider).sizing?.context.ask, Decimal.parse('80002'));
     expect(identity.wallets, 0);
@@ -356,7 +366,7 @@ void main() {
     expect(quantity(tester), '');
     sizing.gate!.complete();
     await tester.pumpAndSettle();
-    expect(quantity(tester), '100%');
+    expectPercent(tester, container, 100);
     expect(sizing.reads, 1);
     expect(tester.takeException(), null);
     await dispose(tester, container);
@@ -404,7 +414,7 @@ void main() {
     await tester.tap(find.byKey(const Key('quick-order-percent-50')));
     await tester.pump();
     await tester.pump();
-    expect(quantity(tester), '50%');
+    expectPercent(tester, container, 50);
     expect(identity.wallets, 0);
     expect(tester.takeException(), null);
     await dispose(tester, container);

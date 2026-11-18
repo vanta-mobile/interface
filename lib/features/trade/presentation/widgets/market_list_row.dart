@@ -54,6 +54,8 @@ class MarketListRow extends ConsumerWidget {
                               '${tr(context, favorite ? 'removeFavorite' : 'addFavorite')} ${quote.symbol}',
                           isSelected: favorite,
                           padding: EdgeInsets.zero,
+                          // Flush with the Symbols header and tabs above.
+                          alignment: AlignmentDirectional.centerStart,
                           onPressed: () => toggleFavorite(context, ref, quote.symbol),
                           icon: const Icon(
                             Icons.star_border_rounded,

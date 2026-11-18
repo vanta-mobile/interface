@@ -148,7 +148,7 @@ void main() {
     await tapNavigationControl(tester, 'portfolio-pnl-entry');
     expect(find.byType(PortfolioPnlScreen), findsOneWidget);
     await tapNavigationControl(tester, 'portfolio-period-30D');
-    expect(find.text('PnL data unavailable for this account'), findsOneWidget);
+    expect(find.text('Realized PnL data unavailable for this account'), findsOneWidget);
     await tester.tap(find.text('Calendar'));
     await tester.pumpAndSettle();
     expect(find.text('November 2026'), findsOneWidget);

@@ -127,28 +127,36 @@ class TradePositionCard extends ConsumerWidget {
                     ),
             ),
           ),
-          const SizedBox(height: 8),
-          _Row(
-            label: l10n.positionsEntireTpsl,
-            child: _ExitPrices(exits.entireTakeProfit, exits.entireStopLoss, hidden: hidden),
-          ),
-          const SizedBox(height: 8),
-          _Row(
-            label: l10n.positionsPartialTpsl(exits.partialCount),
-            child: _ActionValue(
-              value: _ExitPrices(exits.partialTakeProfit, exits.partialStopLoss, hidden: hidden),
-              action: onEditPartial == null
-                  ? null
-                  : _InlineIcon(
-                      key: Key('trade-position-partial-$id'),
-                      asset: 'position-edit',
-                      size: 14,
-                      color: TradeColors.secondary,
-                      tooltip: l10n.positionsEditPartialTpsl,
-                      onTap: onEditPartial!,
-                    ),
+          // TP/SL rows appear only for exits the position actually has; the
+          // TP/SL button below adds them.
+          if (exits.entireTakeProfit != null || exits.entireStopLoss != null) ...[
+            const SizedBox(height: 8),
+            _Row(
+              label: l10n.positionsEntireTpsl,
+              child: _ExitPrices(exits.entireTakeProfit, exits.entireStopLoss, hidden: hidden),
             ),
-          ),
+          ],
+          if (exits.partialCount > 0 ||
+              exits.partialTakeProfit != null ||
+              exits.partialStopLoss != null) ...[
+            const SizedBox(height: 8),
+            _Row(
+              label: l10n.positionsPartialTpsl(exits.partialCount),
+              child: _ActionValue(
+                value: _ExitPrices(exits.partialTakeProfit, exits.partialStopLoss, hidden: hidden),
+                action: onEditPartial == null
+                    ? null
+                    : _InlineIcon(
+                        key: Key('trade-position-partial-$id'),
+                        asset: 'position-edit',
+                        size: 14,
+                        color: TradeColors.secondary,
+                        tooltip: l10n.positionsEditPartialTpsl,
+                        onTap: onEditPartial!,
+                      ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           Row(
             children: [

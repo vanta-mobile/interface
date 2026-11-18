@@ -22,6 +22,9 @@ abstract final class AppColors {
   static const bitcoin = Color(0xFFF7931A);
   static const onAccent = Color(0xFF042B24);
   static const transparent = Color(0x00000000);
+
+  /// Press feedback layer from the design: #FFFFFF at 6%.
+  static const pressOverlay = Color(0x0FFFFFFF);
   static const authBackground = Color(0xFF121215);
   static const authText = Color(0xFFFFFFFF);
   static const authSecondary = Color(0xFFE6E8E8);
@@ -63,9 +66,20 @@ abstract final class AuthTypography {
   static const button = TextStyle(fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w700);
 }
 
+/// Button overlays for the design's press feedback. Pressable controls show a
+/// flat [AppColors.pressOverlay] with no ripple; state-switching controls
+/// (tabs, segments, filters, checks) show none.
+abstract final class PressFeedback {
+  static const overlay = WidgetStatePropertyAll<Color>(AppColors.pressOverlay);
+  static const none = WidgetStatePropertyAll<Color>(AppColors.transparent);
+}
+
 ThemeData vantaTheme() => ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
+  splashFactory: NoSplash.splashFactory,
+  splashColor: AppColors.transparent,
+  highlightColor: AppColors.pressOverlay,
   fontFamily: 'Inter',
   fontFamilyFallback: const ['NotoSansSC'],
   scaffoldBackgroundColor: AppColors.background,
@@ -91,7 +105,7 @@ ThemeData vantaTheme() => ThemeData(
       minimumSize: const Size(0, 46),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-    ),
+    ).copyWith(overlayColor: PressFeedback.overlay),
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
@@ -99,7 +113,20 @@ ThemeData vantaTheme() => ThemeData(
       side: const BorderSide(color: AppColors.line),
       minimumSize: const Size(0, 44),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    ),
+    ).copyWith(overlayColor: PressFeedback.overlay),
+  ),
+  textButtonTheme: const TextButtonThemeData(
+    style: ButtonStyle(overlayColor: PressFeedback.overlay),
+  ),
+  iconButtonTheme: const IconButtonThemeData(
+    style: ButtonStyle(overlayColor: PressFeedback.overlay),
+  ),
+  checkboxTheme: const CheckboxThemeData(overlayColor: PressFeedback.none),
+  switchTheme: const SwitchThemeData(overlayColor: PressFeedback.none),
+  radioTheme: const RadioThemeData(overlayColor: PressFeedback.none),
+  tabBarTheme: const TabBarThemeData(
+    overlayColor: PressFeedback.none,
+    splashFactory: NoSplash.splashFactory,
   ),
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
@@ -385,7 +412,6 @@ abstract final class NotificationTypography {
     fontWeight: FontWeight.w500,
     color: NotificationColors.accent,
   );
-  static const tab = TextStyle(fontSize: 12, height: 18 / 12, fontWeight: FontWeight.w700);
   static const filter = TextStyle(
     fontSize: 12,
     height: 18 / 12,

@@ -10,7 +10,6 @@ import '../../auth/application/auth_provider.dart';
 import '../../auth/application/vanta_api_session_provider.dart';
 import '../data/api_notification_repository.dart';
 import '../domain/api_notification.dart';
-import '../domain/notification_status.dart';
 
 final apiNotificationRepositoryProvider = Provider<ApiNotificationRepository?>((ref) {
   final session = ref.watch(vantaApiSessionRepositoryProvider);
@@ -21,7 +20,6 @@ class ApiInboxState {
   ApiInboxState({
     Iterable<ApiNotification> items = const [],
     Map<String, ApiNotification> cache = const {},
-    this.category = NotificationFilter.all,
     this.unreadOnly = false,
     this.nextCursor,
     this.unread = 0,
@@ -36,7 +34,6 @@ class ApiInboxState {
 
   /// Detail snapshots survive removal by the unread filter and pagination.
   final Map<String, ApiNotification> cache;
-  final NotificationFilter category;
   final bool unreadOnly, loaded, loading, marking;
   final String? nextCursor;
   final int unread;
@@ -58,7 +55,6 @@ class ApiInboxState {
   }) => ApiInboxState(
     items: items ?? this.items,
     cache: cache ?? this.cache,
-    category: category,
     unreadOnly: unreadOnly,
     nextCursor: replaceCursor ? nextCursor : this.nextCursor,
     unread: unread ?? this.unread,
@@ -122,13 +118,12 @@ class ApiNotificationInboxController extends Notifier<ApiInboxState> {
       ref.read(vantaApiSessionProvider).address ==
           ref.read(authProvider).identity?.walletAddress?.toLowerCase();
 
-  Future<void> filter(NotificationFilter category, bool unreadOnly) {
-    if (category == state.category && unreadOnly == state.unreadOnly) return Future.value();
+  Future<void> setUnreadOnly(bool unreadOnly) {
+    if (unreadOnly == state.unreadOnly) return Future.value();
     _readRevision++;
     _reading = null;
     _cursors.clear();
     state = ApiInboxState(
-      category: category,
       unreadOnly: unreadOnly,
       cache: state.cache,
       unread: state.unread,
@@ -167,11 +162,7 @@ class ApiNotificationInboxController extends Notifier<ApiInboxState> {
     try {
       final page = await RequestScope.runOwned(
         current,
-        () => repository.read(
-          category: old.category,
-          unreadOnly: old.unreadOnly,
-          cursor: more ? old.nextCursor : null,
-        ),
+        () => repository.read(unreadOnly: old.unreadOnly, cursor: more ? old.nextCursor : null),
       );
       if (!current()) return;
       if (page.nextCursor != null &&

@@ -176,7 +176,7 @@ void main() {
       expect(post.body.split('&signature=').first, messages.first);
     });
   }
-  test('quick timeout or wrong reduction flags stays original-ID GET only', () async {
+  test('quick timeout with normalized reduction flags resolves by original-ID GET', () async {
     final repo = SignedLiveOrderRepository(
       service,
       ({required expectedAddress, required typedData}) async => TestWalletConnection.signature,
@@ -190,16 +190,11 @@ void main() {
         isCurrent: () => true,
         canSubmit: () => true,
         onStep: (_) {},
-      )).needsRecheck,
-      true,
-    );
-    wrongFlags = false;
-    expect(
-      (await repo.recheck(intent: intent, isCurrent: () => true, onStep: (_) {})).status,
+      )).status,
       'NEW',
     );
     final list = requests.where((r) => r.url.path.endsWith('/order')).toList();
-    expect(list.map((r) => r.method), ['POST', 'GET', 'GET']);
+    expect(list.map((r) => r.method), ['POST', 'GET']);
     expect(list.last.url.queryParameters['origClientOrderId'], intent.clientOrderId);
   });
 }

@@ -244,10 +244,10 @@ void main() {
       intent.clientOrderId,
     ]);
   });
-  test('mismatched or missing original query does not delete a durable pending record', () async {
+  test('another order or a missing query does not delete a durable pending record', () async {
     await submit();
     validQuery = true;
-    queryOverride = {...liveQueryPayload(intent), 'origQty': '0.002'};
+    queryOverride = {...liveQueryPayload(intent), 'clientOrderId': 'vanta-other-order'};
     final reader = SignedOrderQueryRepository(
       service,
       sign,

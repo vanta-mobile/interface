@@ -9,6 +9,7 @@ import '../domain/account_snapshot.dart';
 import '../domain/live_order.dart';
 import '../domain/live_order_size.dart';
 import 'order_confirmation_terms.dart';
+import '../../../core/theme.dart' show PressFeedback;
 
 enum OrderSubmissionKind { success, failed, notSubmitted }
 
@@ -34,9 +35,10 @@ void showOrderSubmissionOutcome(BuildContext context, OrderSubmissionOutcome out
     case OrderSubmissionKind.notSubmitted:
       AppToast.showFailure(
         context,
-        outcome.failure == null
-            ? l10n.orderConfirmExpired
-            : accountErrorText(context, outcome.failure!),
+        accountErrorText(
+          context,
+          outcome.failure ?? const AccountReadFailure('liveAllocationChanged'),
+        ),
       );
   }
 }
@@ -227,7 +229,7 @@ class OrderConfirmationActionButton extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       textStyle: TradeTypography.action,
-    ),
+    ).copyWith(overlayColor: PressFeedback.overlay),
     child: pending
         ? SizedBox.square(
             dimension: 20,

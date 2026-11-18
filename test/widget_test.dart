@@ -7,6 +7,24 @@ import 'package:vanta/features/trade/application/providers.dart';
 import 'support/trade_fixture.dart';
 import 'support/workspace_navigation.dart';
 
+/// Brings a chart indicator shortcut fully above the pinned quick-order bar
+/// before tapping it; `ensureVisible` can leave it half under the bar.
+Future<void> _tapChartQuick(WidgetTester tester, String value) async {
+  final item = find.byKey(Key('chart-quick-$value'));
+  await tester.ensureVisible(item);
+  await tester.pumpAndSettle();
+  final page = find.byKey(const Key('futures-workspace'));
+  final overflow = tester.getRect(item).bottom - tester.getRect(page).bottom;
+  if (overflow > 0) {
+    final position = tester
+        .state<ScrollableState>(find.descendant(of: page, matching: find.byType(Scrollable)).first)
+        .position;
+    position.jumpTo(position.pixels + overflow + 24);
+    await tester.pumpAndSettle();
+  }
+  await tester.tap(item);
+}
+
 void main() {
   for (final spec in [(360.0, 1.0), (390.0, 1.5), (768.0, 1.0), (1440.0, 1.0)]) {
     testWidgets('responsive layout ${spec.$1} at text scale ${spec.$2}', (tester) async {
@@ -161,8 +179,7 @@ void main() {
       expect(find.byKey(Key(key)), findsOneWidget);
     }
     for (final value in ['CCI', 'BOLL', 'VOL']) {
-      await tester.ensureVisible(find.byKey(Key('chart-quick-$value')));
-      await tester.tap(find.byKey(Key('chart-quick-$value')));
+      await _tapChartQuick(tester, value);
       await tester.pumpAndSettle();
     }
     var chart = tester.widget<KChartWidget>(find.byType(KChartWidget));
@@ -269,7 +286,7 @@ void main() {
     final container = setup(tester);
     await launch(tester, container);
     await selectWorkspace(tester, chart: true);
-    await tester.tap(find.byKey(const Key('chart-quick-MACD')));
+    await _tapChartQuick(tester, 'MACD');
     await tester.pumpAndSettle();
     expect(find.byType(DepthChart), findsNothing);
     expect(

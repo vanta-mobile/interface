@@ -96,24 +96,32 @@ class SignedPositionMarginModeRepository implements PositionMarginModeRepository
     var submitted = false;
     AccountReadFailure? submitFailure;
     try {
-      await _request(({required query, required signature}) {
-        if (!canSubmit()) throw const AccountReadFailure('marginModeContextExpired');
-        submitted = true;
-        onStep(MarginModeStep.submitting);
-        return service.changeMarginMode(query: query, signature: signature);
-      }).read(
-        address: intent.context.address,
-        parameters: {'symbol': intent.context.symbol, 'marginType': intent.target.parameter},
-        isCurrent: isCurrent,
-        onStep: (step) {
-          if (!canSubmit()) throw const AccountReadFailure('marginModeContextExpired');
-          if (step != AccountReadStep.loading) {
-            onStep(
-              step == AccountReadStep.signing ? MarginModeStep.signing : MarginModeStep.preparing,
-            );
-          }
-        },
-      );
+      final payload =
+          await _request(({required query, required signature}) {
+            if (!canSubmit()) throw const AccountReadFailure('marginModeContextExpired');
+            submitted = true;
+            onStep(MarginModeStep.submitting);
+            return service.changeMarginMode(query: query, signature: signature);
+          }).read(
+            address: intent.context.address,
+            parameters: {'symbol': intent.context.symbol, 'marginType': intent.target.parameter},
+            isCurrent: isCurrent,
+            onStep: (step) {
+              if (!canSubmit()) throw const AccountReadFailure('marginModeContextExpired');
+              if (step != AccountReadStep.loading) {
+                onStep(
+                  step == AccountReadStep.signing
+                      ? MarginModeStep.signing
+                      : MarginModeStep.preparing,
+                );
+              }
+            },
+          );
+      // An explicit success response is the result; only an unconfirmed
+      // outcome is read back.
+      if (payload is Map<String, dynamic> && '${payload['code']}' == '200') {
+        return MarginModeResult(observed: intent.target, checkedAt: now());
+      }
     } on AccountReadFailure catch (failure) {
       if (!submitted || !isCurrent()) rethrow;
       submitFailure = AccountReadFailure(

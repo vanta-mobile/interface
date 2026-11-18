@@ -69,6 +69,29 @@ void main() {
     expect(f.identity.wallets, 0);
     await f.close(t);
   });
+  testWidgets('an account Aster has not opened yet (-5050) lists no sub-accounts, not a failure', (
+    t,
+  ) async {
+    final agents = MemoryTradingAgentStorage().store(DateTime.now);
+    final agent = await agents.prepare(
+      signingIdentity.id,
+      accountAddress,
+      DateTime.now().add(const Duration(days: 30)),
+    );
+    await agents.setStatus(agent, TradingAgentStatus.unknown);
+    await agents.setStatus(agent, TradingAgentStatus.active);
+    final f = GeneratedAccountsFixture(t, agents: agents);
+    f.directory.failure = const AccountReadFailure('accountDepositRequired', code: -5050);
+    await f.mount(t, const AccountManagementScreen());
+    expect(f.directory.calls, 1);
+    final l = AppLocalizations.of(t.element(find.byType(AccountManagementScreen)));
+    expect(find.byKey(const Key('account-read-error')), findsNothing);
+    expect(find.textContaining('-5050'), findsNothing);
+    expect(find.byKey(const Key('subaccount-list-refresh')), findsNothing);
+    expect(find.text(l.subaccountNoChildren), findsOneWidget);
+    expect(t.takeException(), null);
+    await f.close(t);
+  });
   testWidgets('public entry opens the designed screen without signing automatically', (t) async {
     final f = GeneratedAccountsFixture(t);
     await f.mount(

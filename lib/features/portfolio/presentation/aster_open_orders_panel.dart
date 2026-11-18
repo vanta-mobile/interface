@@ -16,6 +16,7 @@ import 'account_snapshot_status.dart';
 import 'aster_open_order_card.dart';
 import 'open_orders_event_status.dart';
 import '../../../core/presentation/status_view.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 class AsterOpenOrdersPanel extends ConsumerStatefulWidget {
   const AsterOpenOrdersPanel({super.key, this.symbol});
@@ -90,12 +91,14 @@ class _AsterOpenOrdersPanelState extends ConsumerState<AsterOpenOrdersPanel> {
             const SizedBox(height: 12),
             Material(
               type: MaterialType.transparency,
-              child: SwitchListTile(
-                key: const Key('open-orders-current-symbol'),
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.openOrdersCurrentSymbol),
-                value: currentSymbolOnly,
-                onChanged: (value) => setState(() => currentSymbolOnly = value),
+              child: NoPressFeedback(
+                child: SwitchListTile(
+                  key: const Key('open-orders-current-symbol'),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.openOrdersCurrentSymbol),
+                  value: currentSymbolOnly,
+                  onChanged: (value) => setState(() => currentSymbolOnly = value),
+                ),
               ),
             ),
             Text(

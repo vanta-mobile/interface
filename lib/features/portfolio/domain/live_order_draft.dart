@@ -85,6 +85,16 @@ class LiveOrderDraft {
   final LiveOrderPeg? peg;
   bool get pegged => peg != null || attachment?.entryPeg != null;
 
+  /// The level-one book side this entry resolves against, for an ordinary peg
+  /// or an equivalent level-one compound peg. Deeper compound pegs need their
+  /// own depth quote and have none.
+  LiveOrderPeg? get bookPeg => switch (attachment?.entryPeg) {
+    _ when peg != null => peg,
+    AttachedEntryPeg(depth: 1, counterparty: true) => LiveOrderPeg.counterparty,
+    AttachedEntryPeg(depth: 1, counterparty: false) => LiveOrderPeg.queue,
+    _ => null,
+  };
+
   /// Zero is a transport sentinel, never a user-entered price. Ordinary pegs
   /// also support reducing orders; compound pegs retain their own constraints.
   bool get validPegShape =>

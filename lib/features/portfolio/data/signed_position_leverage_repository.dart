@@ -91,24 +91,34 @@ class SignedPositionLeverageRepository implements PositionLeverageRepository {
     var submitted = false;
     AccountReadFailure? submitFailure;
     try {
-      await _request(({required query, required signature}) {
-        // Repeat the lease check at the actual send boundary. An expired
-        // confirmation or a late wallet approval must not submit a write.
-        if (!canSubmit()) throw const AccountReadFailure('leverageContextExpired');
-        submitted = true;
-        onStep(LeverageStep.submitting);
-        return service.changeLeverage(query: query, signature: signature);
-      }).read(
-        address: context.address,
-        parameters: {'symbol': context.symbol, 'leverage': '${intent.target}'},
-        isCurrent: isCurrent,
-        onStep: (step) {
-          if (!canSubmit()) throw const AccountReadFailure('leverageContextExpired');
-          if (step != AccountReadStep.loading) {
-            onStep(step == AccountReadStep.signing ? LeverageStep.signing : LeverageStep.preparing);
-          }
-        },
-      );
+      final payload =
+          await _request(({required query, required signature}) {
+            // Repeat the lease check at the actual send boundary. An expired
+            // confirmation or a late wallet approval must not submit a write.
+            if (!canSubmit()) throw const AccountReadFailure('leverageContextExpired');
+            submitted = true;
+            onStep(LeverageStep.submitting);
+            return service.changeLeverage(query: query, signature: signature);
+          }).read(
+            address: context.address,
+            parameters: {'symbol': context.symbol, 'leverage': '${intent.target}'},
+            isCurrent: isCurrent,
+            onStep: (step) {
+              if (!canSubmit()) throw const AccountReadFailure('leverageContextExpired');
+              if (step != AccountReadStep.loading) {
+                onStep(
+                  step == AccountReadStep.signing ? LeverageStep.signing : LeverageStep.preparing,
+                );
+              }
+            },
+          );
+      // An explicit success response is the result; only an unconfirmed
+      // outcome is read back.
+      if (payload is Map<String, dynamic> &&
+          payload['symbol'] == context.symbol &&
+          '${payload['leverage']}' == '${intent.target}') {
+        return LeverageResult(observed: intent.target, checkedAt: now());
+      }
     } on AccountReadFailure catch (failure) {
       if (!submitted || !isCurrent()) rethrow;
       submitFailure = AccountReadFailure(

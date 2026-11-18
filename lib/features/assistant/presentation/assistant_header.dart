@@ -73,7 +73,7 @@ class AssistantHeader extends ConsumerWidget {
                 minimumSize: const Size(44, 44),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 textStyle: AssistantTypography.clear,
-              ),
+              ).copyWith(overlayColor: PressFeedback.overlay),
               child: Text(l10n.assistantClearAction),
             )
           else

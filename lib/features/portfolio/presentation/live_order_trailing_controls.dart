@@ -7,6 +7,7 @@ import '../domain/live_order_draft.dart';
 import '../domain/live_order_trigger.dart';
 import 'live_order_embedded_inputs.dart';
 import 'live_order_embedded_triggers.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 /// Trailing stop inputs from the design: callback rate with its quick
 /// presets, then the optional activation price with its price type.
@@ -103,19 +104,21 @@ class _RatePreset extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     button: true,
     selected: selected,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 32),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Center(
-            widthFactor: 1,
-            child: Text(
-              label,
-              style: TradeTypography.body.copyWith(
-                color: selected ? TradeColors.text : TradeColors.muted,
+    child: NoPressFeedback(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 32),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                label,
+                style: TradeTypography.body.copyWith(
+                  color: selected ? TradeColors.text : TradeColors.muted,
+                ),
               ),
             ),
           ),

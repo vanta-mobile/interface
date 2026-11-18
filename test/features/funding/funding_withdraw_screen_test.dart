@@ -20,6 +20,7 @@ import '../../support/aster_account.dart';
 import '../../support/funding_fee.dart';
 import '../../support/funding_screen.dart';
 import '../../support/rebalance.dart';
+import '../../support/wallet_connection.dart';
 
 AppLocalizations _l(WidgetTester tester) =>
     AppLocalizations.of(tester.element(find.byKey(const Key('funding-tab-withdraw'))));
@@ -281,6 +282,38 @@ void main() {
     await h.close(tester);
   });
 
+  for (final operation in [FundingOperation.withdraw, FundingOperation.deposit]) {
+    testWidgets('$operation action reconnects a wallet that no longer signs', (tester) async {
+      final connector = TestWalletConnector(TestWalletConnection(address: accountAddress));
+      final h = FundingHarness(connector: connector);
+      h.identity.restored = const AuthIdentity(
+        id: 'aster-test',
+        walletAddress: accountAddress,
+        walletKind: WalletKind.external,
+      );
+      await h.open(tester, operation: operation);
+      final key = Key(
+        operation == FundingOperation.withdraw
+            ? 'funding-withdraw-submit'
+            : 'funding-deposit-submit',
+      );
+      final action = find.descendant(of: find.byKey(key), matching: find.byType(FilledButton));
+      expect(
+        find.descendant(of: action, matching: find.text(_l(tester).reconnectExternalWallet)),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(action);
+      await tester.tap(action);
+      await tester.pumpAndSettle();
+      expect(connector.connects, 1);
+      expect(h.withdrawals.prepared, isEmpty);
+      expect(
+        find.descendant(of: action, matching: find.text(_l(tester).reconnectExternalWallet)),
+        findsNothing,
+      );
+      await h.close(tester);
+    });
+  }
   testWidgets('external wallet has no receiving address input', (tester) async {
     final h = FundingHarness();
     await h.open(tester, operation: FundingOperation.withdraw);

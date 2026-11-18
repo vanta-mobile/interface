@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_provider.dart';
 import '../../auth/domain/auth_session.dart';
+import '../../auth/domain/wallet_signing_preparation.dart';
+import '../../authorization/application/trading_agent_provider.dart';
 import '../../portfolio/application/account_change_provider.dart';
 import '../../portfolio/application/account_read_provider.dart';
 import '../../portfolio/application/spot_account_provider.dart';
@@ -33,12 +35,17 @@ final internalTransferRepositoryProvider = Provider<InternalTransferRepository>(
     spot.close();
     catalog.close();
   });
+  final identity = ref.watch(identityRepositoryProvider);
   return SignedInternalTransferRepository(
     futures,
     spot,
     catalog,
-    ref.watch(identityRepositoryProvider).signWalletRequest,
+    identity.signWalletRequest,
     nonces: ref.watch(asterReadNoncesProvider),
+    authorization: ref.watch(asterRequestAuthorizationProvider),
+    signingPreparation: identity is WalletSigningPreparation
+        ? identity as WalletSigningPreparation
+        : null,
     now: ref.watch(internalTransferClockProvider),
   );
 });
@@ -342,14 +349,22 @@ class InternalTransferController extends Notifier<InternalTransferState> {
       final reported = record!.reported(reply);
       _publish(context: review.context, record: reported, step: InternalTransferStep.checking);
       final checkedEpoch = _epoch;
-      final checked = await repository.read(
-        address: review.context.address,
-        asset: review.context.assetName,
-        direction: review.context.direction,
-        isCurrent: current,
-      );
-      if (!current()) return;
-      _validate(checked, review.context.address);
+      final InternalTransferContext checked;
+      try {
+        checked = await repository.read(
+          address: review.context.address,
+          asset: review.context.assetName,
+          direction: review.context.direction,
+          isCurrent: current,
+        );
+        if (!current()) return;
+        _validate(checked, review.context.address);
+      } catch (_) {
+        // The transfer reply is the result. A failed balance refresh does not
+        // undo it; the reported record completes on the next successful read.
+        if (current()) _publish(context: review.context, record: reported, amount: '');
+        return;
+      }
       await journal.complete(record!.key);
       if (current()) {
         _invalidate();
@@ -359,7 +374,11 @@ class InternalTransferController extends Notifier<InternalTransferState> {
       }
     } catch (error) {
       var failure = _failure(error);
-      if (prepared && !dispatched && record != null) {
+      // An explicit refusal moved nothing: clear its record so it neither
+      // blocks the next transfer nor awaits recovery.
+      if (prepared &&
+          record != null &&
+          (!dispatched || error is AccountReadFailure && error.refusedWrite)) {
         try {
           await journal.complete(record!.key);
         } catch (_) {

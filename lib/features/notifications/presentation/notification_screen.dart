@@ -13,11 +13,11 @@ import '../application/api_notification_provider.dart';
 import '../application/notification_refresh_provider.dart';
 import 'push_visibility_notice.dart';
 import '../domain/api_notification.dart';
-import '../domain/notification_status.dart';
 import 'notification_labels.dart';
 import 'api_notification_tile.dart';
 import 'notification_api_error.dart';
 import 'notification_inbox_header.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 void openNotifications(BuildContext context) =>
     Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => const NotificationScreen()));
@@ -42,7 +42,6 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
     final inbox = ref.watch(apiNotificationInboxProvider);
     final entries = inbox.items;
     final unread = inbox.unread;
-    final filter = inbox.category;
     final unreadOnly = inbox.unreadOnly;
     return Scaffold(
       backgroundColor: NotificationColors.background,
@@ -54,14 +53,6 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 NotificationInboxHeader(unread: unread),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _NotificationTabs(
-                    selected: filter,
-                    onChanged: (value) =>
-                        ref.read(apiNotificationInboxProvider.notifier).filter(value, unreadOnly),
-                  ),
-                ),
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: ref.read(notificationPageRefreshProvider),
@@ -69,79 +60,12 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
                       entries: entries,
                       unreadOnly: unreadOnly,
                       onUnreadOnly: (value) =>
-                          ref.read(apiNotificationInboxProvider.notifier).filter(filter, value),
+                          ref.read(apiNotificationInboxProvider.notifier).setUnreadOnly(value),
                     ),
                   ),
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NotificationTabs extends StatelessWidget {
-  const _NotificationTabs({required this.selected, required this.onChanged});
-  final NotificationFilter selected;
-  final ValueChanged<NotificationFilter> onChanged;
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: NotificationColors.neutralSurface)),
-      ),
-      child: Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final filter in NotificationFilter.values)
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(end: 20),
-                  child: Semantics(
-                    button: true,
-                    selected: filter == selected,
-                    child: InkWell(
-                      key: Key('notification-filter-${filter.name}'),
-                      onTap: () => onChanged(filter),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(minWidth: 44),
-                        child: IntrinsicWidth(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const SizedBox(height: 17),
-                              Text(
-                                switch (filter) {
-                                  NotificationFilter.all => l10n.notificationFilterAll,
-                                  NotificationFilter.transfers => l10n.notificationFilterTransfers,
-                                  NotificationFilter.orders => l10n.notificationFilterOrders,
-                                },
-                                style: NotificationTypography.tab.copyWith(
-                                  color: filter == selected
-                                      ? PortfolioColors.text
-                                      : NotificationColors.muted,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                height: 1,
-                                color: filter == selected
-                                    ? NotificationColors.accent
-                                    : PortfolioColors.transparent,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
           ),
         ),
       ),
@@ -235,36 +159,38 @@ class _UnreadOnlyToggle extends StatelessWidget {
     alignment: AlignmentDirectional.centerStart,
     child: Semantics(
       checked: value,
-      child: InkWell(
-        key: const Key('notification-unread-only'),
-        onTap: () => onChanged(!value),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 36),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: value ? NotificationColors.accent : NotificationColors.title,
-                    width: .7,
+      child: NoPressFeedback(
+        child: InkWell(
+          key: const Key('notification-unread-only'),
+          onTap: () => onChanged(!value),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 36),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: value ? NotificationColors.accent : NotificationColors.title,
+                      width: .7,
+                    ),
+                    borderRadius: BorderRadius.circular(5.6),
                   ),
-                  borderRadius: BorderRadius.circular(5.6),
+                  child: value
+                      ? const Icon(Icons.check_rounded, size: 10, color: NotificationColors.accent)
+                      : null,
                 ),
-                child: value
-                    ? const Icon(Icons.check_rounded, size: 10, color: NotificationColors.accent)
-                    : null,
-              ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  AppLocalizations.of(context).notificationUnreadOnly,
-                  style: NotificationTypography.filter,
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    AppLocalizations.of(context).notificationUnreadOnly,
+                    style: NotificationTypography.filter,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

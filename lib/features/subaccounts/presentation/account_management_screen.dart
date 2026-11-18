@@ -27,6 +27,9 @@ class AccountManagementScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context), directory = ref.watch(subaccountListProvider);
+    // An account Aster has not opened yet (no deposit) has no sub-accounts to list.
+    final depositRequired = directory.account == null && directory.failure?.requiresDeposit == true;
+    final failure = depositRequired ? null : directory.failure;
     final entries = ref.watch(accountEntriesProvider).where((a) => a.roleKnown && !a.main).toList();
     final owner = ref.watch(authProvider.select((s) => s.identity?.walletAddress));
     final wallets = ref.watch(generatedWalletsProvider);
@@ -76,16 +79,16 @@ class AccountManagementScreen extends ConsumerWidget {
         const SizedBox(height: 16),
         if (directory.account == null && directory.busy && autoLoad)
           const _AccountCardSkeleton()
-        else if (directory.account == null && directory.failure != null)
+        else if (directory.account == null && failure != null)
           KeyedSubtree(
             key: const Key('account-read-error'),
             child: StatusFailureView(
-              message: accountErrorText(context, directory.failure!),
+              message: accountErrorText(context, failure),
               retrying: directory.busy,
               onRetry: ref.watch(canInspectAccountsProvider) ? refresh : null,
             ),
           )
-        else if (directory.account == null && !autoLoad)
+        else if (directory.account == null && !autoLoad && !depositRequired)
           AccountAction(
             key: const Key('subaccount-list-refresh'),
             label: l.subaccountRead,
@@ -97,11 +100,11 @@ class AccountManagementScreen extends ConsumerWidget {
                 : null,
           ),
         // A failed refresh keeps the previous directory visible.
-        if (directory.account != null && directory.failure != null)
+        if (directory.account != null && failure != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Text(
-              accountErrorText(context, directory.failure!),
+              accountErrorText(context, failure),
               style: PortfolioTypography.caption.copyWith(color: PortfolioColors.negative),
             ),
           ),
@@ -120,7 +123,8 @@ class AccountManagementScreen extends ConsumerWidget {
                 !entries.any((e) => e.address.toLowerCase() == a.address?.toLowerCase()),
           ))
             Padding(padding: const EdgeInsets.only(bottom: 12), child: _DirectoryCard(account)),
-        if (count == 0 && entries.isEmpty) StatusEmptyView(message: l.subaccountNoChildren),
+        if ((count == 0 || depositRequired) && entries.isEmpty)
+          StatusEmptyView(message: l.subaccountNoChildren),
         for (final wallet in wallets.value ?? const <GeneratedSubaccount>[])
           if (wallet.owner.toLowerCase() == owner?.toLowerCase() && !wallet.backedUp)
             Padding(

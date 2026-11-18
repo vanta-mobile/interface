@@ -61,7 +61,7 @@ class _SelectionOption extends StatelessWidget {
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       textStyle: Theme.of(context).textTheme.labelLarge?.merge(AccountTypography.section),
-    ),
+    ).copyWith(overlayColor: PressFeedback.overlay),
     child: Text(label, textAlign: TextAlign.center),
   );
 }

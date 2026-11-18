@@ -290,20 +290,25 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
         history,
       ];
     }
+    final connect = walletConnectionAction(context, ref, identity);
     return [
       AccountAction(
         fadeDisabled: true,
         key: const Key('funding-withdraw-submit'),
-        label: child ? l.accountsWithdrawMainOnly : l.fundingWithdraw,
-        onPressed: identity?.walletAddress == null
-            ? () => showAccountSheet(context)
-            : child || !ready
-            ? null
-            : () => _withdraw(
-                DepositWalletQuery(market: TransferMarket.perp, asset: asset),
-                fee.assetFee,
-                receiver,
-              ),
+        label: identity?.needsWalletConnection == true
+            ? l.reconnectExternalWallet
+            : child
+            ? l.accountsWithdrawMainOnly
+            : l.fundingWithdraw,
+        onPressed:
+            connect ??
+            (child || !ready
+                ? null
+                : () => _withdraw(
+                    DepositWalletQuery(market: TransferMarket.perp, asset: asset),
+                    fee.assetFee,
+                    receiver,
+                  )),
       ),
       const SizedBox(height: 12),
       history,

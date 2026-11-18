@@ -21,6 +21,7 @@ class SignedAttachedOrderRepository {
     this.authorization,
     this.journal,
     this.builder,
+    this.notFoundRetryDelays = SignedOrderQueryRepository.defaultNotFoundRetryDelays,
   });
   final AsterAccountService service;
   final AccountRequestSigner sign;
@@ -28,6 +29,7 @@ class SignedAttachedOrderRepository {
   final DateTime Function() now;
   final OrderRecoveryJournal? journal;
   final BuilderOrderPreflight? builder;
+  final List<Duration> notFoundRetryDelays;
 
   SignedAccountRequest _request(
     Future<Object?> Function({required String query, required String signature}) send,
@@ -80,6 +82,12 @@ class SignedAttachedOrderRepository {
             },
           );
       checkAttachedOrderAcknowledgement(payload);
+      // failureCode 0 for this client strategy ID is the placement result.
+      final query = OrderQuery.capture(intent);
+      if (mapStrategyAcknowledgement(payload, query, now()) case final placed?) {
+        completeOrderRecord(journal, query.key);
+        return placed;
+      }
     } on AccountReadFailure catch (failure) {
       if (!submitted || !isCurrent()) rethrow;
       // -1102 is a concrete gateway parameter-validation rejection. It is
@@ -93,8 +101,9 @@ class SignedAttachedOrderRepository {
       }
       postFailure = failure;
     }
-    // A failed acknowledgement can still follow an accepted request. Only
-    // matching strategy/leg/linkage queries resolve the unknown; never re-POST.
+    // A failed or unrecognized acknowledgement can still follow an accepted
+    // request. Only a query for this client strategy ID resolves it; never
+    // re-POST.
     final result = await recheck(intent: intent, isCurrent: isCurrent, onStep: onStep);
     return result.needsRecheck && postFailure != null
         ? LiveOrderResult(failure: postFailure)
@@ -113,6 +122,7 @@ class SignedAttachedOrderRepository {
       now,
       journal: journal,
       authorization: authorization,
+      notFoundRetryDelays: notFoundRetryDelays,
     ).query(OrderQuery.capture(intent), isCurrent: isCurrent, onStep: onStep);
   });
 }

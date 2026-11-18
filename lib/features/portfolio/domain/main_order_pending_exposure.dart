@@ -4,7 +4,6 @@ import 'account_snapshot.dart';
 import 'aster_open_orders.dart';
 import 'futures_position_mode.dart';
 import 'live_order.dart';
-import 'live_order_peg.dart';
 import 'live_order_opening_cost.dart';
 import 'main_order_capacity.dart';
 
@@ -60,18 +59,17 @@ LiveOrderOpeningExposure capacitySymbolExposure({
         o.closePosition ||
         hedge && (o.positionSide == 'LONG' ? o.side == 'SELL' : o.side == 'BUY');
     if (closing || o.remainingQty == Decimal.zero) continue;
-    // Ordinary LIMIT pegs resolve once at placement. A signed positive resolved
-    // price is a fixed pending limit; unknown/deeper pegs and untriggered orders
-    // cannot be inferred from a current quote or rounded aggregate margin.
-    final knownPeg =
-        o.pegPriceType == null || LiveOrderPeg.values.any((p) => p.wire == o.pegPriceType);
-    if (o.type != 'LIMIT' || !knownPeg || o.price <= Decimal.zero) {
-      throw const AccountReadFailure('liveCapacityPendingUnknown');
-    }
+    // Untriggered conditional and trailing orders reserve no margin until they
+    // trigger; a triggered one is reported as LIMIT or MARKET.
+    if (_untriggered.contains(o.type)) continue;
+    // A fixed or resolved limit reserves at its price. A BBO limit reports
+    // price 0, and Aster values open-order margin at the current mark, so an
+    // unresolved price uses the mark rather than blocking every estimate.
+    final price = o.type == 'LIMIT' && o.price > Decimal.zero ? o.price : markPrice;
     if (o.side == 'BUY') {
-      bids += o.remainingQty * o.price;
+      bids += o.remainingQty * price;
     } else {
-      asks += o.remainingQty * o.price;
+      asks += o.remainingQty * price;
     }
   }
   return hedge
@@ -89,3 +87,11 @@ LiveOrderOpeningExposure capacitySymbolExposure({
           sellOrderNotional: asks,
         );
 }
+
+const _untriggered = {
+  'STOP',
+  'STOP_MARKET',
+  'TAKE_PROFIT',
+  'TAKE_PROFIT_MARKET',
+  'TRAILING_STOP_MARKET',
+};

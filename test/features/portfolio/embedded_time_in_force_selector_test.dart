@@ -61,7 +61,10 @@ void main() {
           tester.getRect(caret).right,
           tester.getRect(find.byKey(const Key('reduce-row'))).right,
         );
-        expect(tester.getSize(entry).height, greaterThanOrEqualTo(44));
+        // Same height as the Advanced check rows, so rows keep one spacing;
+        // enlarged text may grow it.
+        expect(tester.getSize(entry).height, greaterThanOrEqualTo(embeddedCheckRowHeight));
+        if (size.width == 393) expect(tester.getSize(entry).height, embeddedCheckRowHeight);
         await tester.tap(entry);
         await tester.pumpAndSettle();
         final sheet = find.byKey(const Key('time-in-force-sheet'));

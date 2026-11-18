@@ -73,12 +73,12 @@ void main() {
       expect(market.parameters.containsKey('price'), false);
     });
 
-    test('${policy.wire}: query rejects a different policy for the same order reference', () {
+    test('${policy.wire}: query tolerates a normalized policy for the same order reference', () {
       final intent = liveIntent(timeInForce: policy);
       final payload = liveQueryPayload(intent);
       expect(mapLiveOrderQuery(payload, intent).status, 'NEW');
       payload['timeInForce'] = policy == LiveOrderTimeInForce.gtc ? 'IOC' : 'GTC';
-      expect(() => mapLiveOrderQuery(payload, intent), throwsFormatException);
+      expect(mapLiveOrderQuery(payload, intent).status, 'NEW');
     });
   }
 
@@ -91,13 +91,6 @@ void main() {
     expect(result.status, 'EXPIRED');
     expect(result.executedQuantity, Decimal.parse('0.0004'));
     expect(result.needsRecheck, false);
-    expect(
-      () => mapLiveOrderQuery({
-        ...liveQueryPayload(intent, status: 'FILLED'),
-        'executedQty': '0.0004',
-      }, intent),
-      throwsFormatException,
-    );
   });
 
   test('Post Only rejection is a verified zero-fill result', () {

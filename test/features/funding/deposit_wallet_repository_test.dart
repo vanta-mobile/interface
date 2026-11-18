@@ -50,7 +50,7 @@ void main() {
     response = normal;
     service = DepositRpcService(
       client: MockClient((request) async {
-        expect(request.url.toString(), depositRpcOrigins[chain]);
+        expect(request.url.toString(), depositRpcOrigins[chain]!.first);
         expect(request.method, 'POST');
         expect(request.followRedirects, false);
         expect(request.headers['Content-Type'], 'application/json');
@@ -117,7 +117,8 @@ void main() {
         if (request['method'] == 'eth_getBlockByNumber') {
           blocks++;
           if (scenario == 'block') return null;
-          if (scenario == 'reorg' && blocks == 2) return {...block, 'hash': '0x${'b' * 64}'};
+          // Every attempt's final check sees another head, so retries run out.
+          if (scenario == 'reorg' && blocks.isEven) return {...block, 'hash': '0x${'b' * 64}'};
           if (scenario == 'future') {
             return {
               ...block,
@@ -138,8 +139,49 @@ void main() {
         throwsA(isA<AccountReadFailure>()),
       );
       if (scenario == 'chain') expect(calls.length, 1);
+      if (scenario == 'reorg') {
+        expect(
+          calls.where((r) => r['method'] == 'eth_getBlockByNumber').length,
+          RpcDepositWalletRepository.maxAttempts * 2,
+        );
+      }
     });
   }
+  test('a head that moves once is read again on a fresh block', () async {
+    var blocks = 0;
+    response = (request) {
+      if (request['method'] == 'eth_getBlockByNumber' && ++blocks == 2) {
+        return {...block, 'hash': '0x${'b' * 64}'};
+      }
+      return normal(request);
+    };
+    final snapshot = await repository.read(
+      address: accountAddress,
+      query: depositQuery(native: true),
+      isCurrent: () => true,
+    );
+    expect(snapshot.blockHash, '0x${'a' * 64}');
+    expect(blocks, 4);
+  });
+  test('scope lost after a moved head stops before retrying', () async {
+    var blocks = 0;
+    response = (request) {
+      if (request['method'] == 'eth_getBlockByNumber' && ++blocks == 2) {
+        current = false;
+        return {...block, 'hash': '0x${'b' * 64}'};
+      }
+      return normal(request);
+    };
+    await expectLater(
+      repository.read(
+        address: accountAddress,
+        query: depositQuery(native: true),
+        isCurrent: () => current,
+      ),
+      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'authWalletChanged')),
+    );
+    expect(blocks, 2);
+  });
   test('invalid address/native decimals rejected before RPC', () async {
     await expectLater(
       repository.read(address: 'invalid', query: depositQuery(), isCurrent: () => true),

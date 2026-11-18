@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/authorization/presentation/enable_trading_screen.dart';
 import 'package:vanta/features/funding/application/internal_transfer_provider.dart';
 import 'package:vanta/features/funding/data/internal_transfer_journal.dart';
 import 'package:vanta/features/funding/presentation/internal_transfer_confirmation.dart';
@@ -14,6 +15,7 @@ import '../../support/aster_account.dart';
 import '../../support/identity_repository.dart';
 import '../../support/internal_transfer.dart';
 import '../../support/trade_fixture.dart';
+import 'asset_history_design_test.dart' show activeStore;
 import 'deposit_wallet_widget_test.dart' show reveal;
 
 Future<void> tapTransfer(WidgetTester tester, String key) async {
@@ -45,6 +47,7 @@ void main() {
           scale: 1.5,
           language: Locale(spec.$3),
           identityRepository: identity,
+          tradingAgentStore: await activeStore(),
           internalTransferRepository: repository,
           internalTransferJournal: journal,
           internalTransferClock: () => now,
@@ -111,6 +114,7 @@ void main() {
         width: 320,
         scale: 1.5,
         identityRepository: identity,
+        tradingAgentStore: await activeStore(),
         internalTransferRepository: repository,
         internalTransferJournal: journal,
         internalTransferClock: () => now,
@@ -150,6 +154,7 @@ void main() {
         width: 320,
         scale: 1.5,
         identityRepository: identity,
+        tradingAgentStore: await activeStore(),
         internalTransferRepository: repository,
         internalTransferClock: () => now,
       );
@@ -184,6 +189,28 @@ void main() {
       c.dispose();
     },
   );
+  testWidgets('without a device grant the read button opens Enable trading', (tester) async {
+    final identity = TestIdentityRepository()..restored = signingIdentity;
+    final repository = TestInternalTransferRepository();
+    addTearDown(identity.dispose);
+    final c = setup(tester, identityRepository: identity, internalTransferRepository: repository);
+    await launch(tester, c);
+    openInternalTransfer(tester.element(find.byType(Navigator).first));
+    await tester.pumpAndSettle();
+    final l10n = AppLocalizations.of(tester.element(find.byType(InternalTransferScreen)));
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('internal-transfer-read')),
+        matching: find.text(l10n.enableTradingTitle),
+      ),
+      findsOneWidget,
+    );
+    await tapTransfer(tester, 'internal-transfer-read');
+    expect(find.byType(EnableTradingScreen), findsOneWidget);
+    expect(repository.reads, 0);
+    await tester.pumpWidget(const SizedBox());
+    c.dispose();
+  });
   testWidgets('expiry invalidates an open confirmation without another read', (tester) async {
     var now = DateTime.now().toUtc();
     final identity = TestIdentityRepository()..restored = signingIdentity;
@@ -192,6 +219,7 @@ void main() {
     final c = setup(
       tester,
       identityRepository: identity,
+      tradingAgentStore: await activeStore(),
       internalTransferRepository: repository,
       internalTransferClock: () => now,
     );
@@ -224,6 +252,7 @@ void main() {
     final c = setup(
       tester,
       identityRepository: identity,
+      tradingAgentStore: await activeStore(),
       internalTransferRepository: repository,
       internalTransferJournal: journal,
       internalTransferClock: () => now,

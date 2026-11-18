@@ -150,7 +150,7 @@ void main() {
   testWidgets('a failed silent read stops automatic reads until Retry', (tester) async {
     final identity = TestIdentityRepository()..restored = signingIdentity;
     final orders = TestOpenOrdersRepository()
-      ..failure = const AccountReadFailure('accountPermissionRequired', code: -2015);
+      ..failure = const AccountReadFailure('accountReadFailed', code: -1001);
     addTearDown(identity.dispose);
     final container = setup(
       tester,
@@ -167,7 +167,7 @@ void main() {
     await revealFuturesAccountTabs(tester);
     await tester.pumpAndSettle();
     expect(orders.calls, 1);
-    expect(_inOrders(find.textContaining('Aster error code: -2015')), findsOneWidget);
+    expect(_inOrders(find.textContaining('Aster error code: -1001')), findsOneWidget);
     await tester.pump(const Duration(seconds: 10));
     await tester.pumpAndSettle();
     expect(orders.calls, 1);

@@ -46,7 +46,7 @@ MainOrderSidePreview _manualSide(
   String input,
 ) {
   if (input.trim().isEmpty) return const MainOrderSidePreview();
-  if (draft.attachment?.entryPeg != null) {
+  if (draft.attachment?.entryPeg != null && draft.bookPeg == null) {
     return const MainOrderSidePreview(
       failure: AccountReadFailure(
         'liveCapacityPriceUnavailable',
@@ -73,7 +73,7 @@ MainOrderSidePreview _manualSide(
     );
   }
   final reference = context.referenceExecutionPrice(draft);
-  if (draft.peg != null && (reference == null || reference <= Decimal.zero)) {
+  if (draft.bookPeg != null && (reference == null || reference <= Decimal.zero)) {
     return const MainOrderSidePreview(
       failure: AccountReadFailure(
         'liveCapacityPriceUnavailable',

@@ -16,6 +16,7 @@ import '../application/providers.dart';
 import 'widgets/candle_chart.dart';
 import 'widgets/market_header.dart';
 import 'widgets/compact_order_book.dart';
+import 'widgets/measured_height.dart';
 import 'widgets/trade_kline_panel.dart';
 import '../../portfolio/presentation/trade_assets_section.dart';
 import '../../portfolio/presentation/trade_positions_section.dart';
@@ -25,6 +26,7 @@ import '../../portfolio/application/position_risk_provider.dart';
 import '../../portfolio/application/positions_auto_read_provider.dart';
 import 'trade_theme.dart';
 import '../../portfolio/application/automatic_order_refresh_provider.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 class FuturesWorkspace extends ConsumerWidget {
   const FuturesWorkspace({super.key});
@@ -98,10 +100,24 @@ class FuturesWorkspace extends ConsumerWidget {
   }
 }
 
-class TradeOrderWorkspace extends ConsumerWidget {
+class TradeOrderWorkspace extends ConsumerStatefulWidget {
   const TradeOrderWorkspace({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TradeOrderWorkspace> createState() => _TradeOrderWorkspaceState();
+}
+
+class _TradeOrderWorkspaceState extends ConsumerState<TradeOrderWorkspace> {
+  /// The order form's height, which the book beside it fills with levels.
+  final _formHeight = ValueNotifier<double?>(null);
+
+  @override
+  void dispose() {
+    _formHeight.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final form = Theme(
       data: theme.copyWith(
@@ -131,9 +147,18 @@ class TradeOrderWorkspace extends ConsumerWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Expanded(flex: 147, child: CompactOrderBook()),
+            // With the compact K-line above, the book keeps its fixed six levels.
+            Expanded(
+              flex: 147,
+              child: CompactOrderBook(
+                targetHeight: ref.watch(tradeKlineVisibleProvider) ? null : _formHeight,
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(flex: 202, child: form),
+            Expanded(
+              flex: 202,
+              child: MeasuredHeight(onHeight: (height) => _formHeight.value = height, child: form),
+            ),
           ],
         );
       },
@@ -249,32 +274,34 @@ class _AccountTabs extends StatelessWidget {
                     child: Semantics(
                       selected: i == selected,
                       button: true,
-                      child: InkWell(
-                        key: ValueKey('futures-account-tab-$i'),
-                        onTap: () => onSelect(i),
-                        child: IntrinsicWidth(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(minHeight: 44),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  items[i],
-                                  style: TradeTypography.body.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: i == selected ? TradeColors.text : TradeColors.muted,
+                      child: NoPressFeedback(
+                        child: InkWell(
+                          key: ValueKey('futures-account-tab-$i'),
+                          onTap: () => onSelect(i),
+                          child: IntrinsicWidth(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(minHeight: 44),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    items[i],
+                                    style: TradeTypography.body.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: i == selected ? TradeColors.text : TradeColors.muted,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  height: 1,
-                                  color: i == selected
-                                      ? TradeColors.accent
-                                      : TradeColors.transparent,
-                                ),
-                              ],
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    height: 1,
+                                    color: i == selected
+                                        ? TradeColors.accent
+                                        : TradeColors.transparent,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

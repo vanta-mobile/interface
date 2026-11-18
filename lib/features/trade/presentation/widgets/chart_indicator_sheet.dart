@@ -10,6 +10,7 @@ import '../../application/chart_preferences.dart';
 import '../trade_theme.dart';
 import 'chart_parameter_sheet.dart';
 import 'trade_icon.dart';
+import '../../../../core/presentation/no_press_feedback.dart';
 
 Future<void> showChartIndicatorSheet(BuildContext context) =>
     showModeSettingsSheet<void>(context, const ChartIndicatorSheet());
@@ -170,24 +171,26 @@ class _IndicatorChip extends StatelessWidget {
           side: BorderSide(color: selected ? TradeColors.chipSelectedText : TradeColors.line),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 40, minWidth: 57),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (selected) ...[
-                  ExcludeSemantics(
-                    child: Text('✓', style: style.copyWith(fontWeight: FontWeight.w600)),
-                  ),
-                  const SizedBox(width: 8),
+        child: NoPressFeedback(
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 40, minWidth: 57),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (selected) ...[
+                    ExcludeSemantics(
+                      child: Text('✓', style: style.copyWith(fontWeight: FontWeight.w600)),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(label, style: style),
                 ],
-                Text(label, style: style),
-              ],
+              ),
             ),
           ),
         ),

@@ -138,7 +138,7 @@ class _PortfolioPnlScreenState extends ConsumerState<PortfolioPnlScreen> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                ),
+                                ).copyWith(overlayColor: PressFeedback.none),
                                 child: Text(label),
                               ),
                             ),
@@ -204,6 +204,15 @@ class _PortfolioPnlScreenState extends ConsumerState<PortfolioPnlScreen> {
                           child: Text(
                             '${DateFormat.MMMd(Localizations.localeOf(context).toLanguageTag()).format(DateTime.utc(_month.year, _month.month, _day!))} · ${portfolioUsd(activeDay, signed: true)}',
                             style: PortfolioTypography.body,
+                          ),
+                        )
+                      else if (monthPnl == null && !calendar.loading)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            l.portfolioDayUnavailable(DateFormat.MMMM(locale).format(_month)),
+                            key: const Key('portfolio-month-unavailable'),
+                            style: PortfolioTypography.caption,
                           ),
                         ),
                       const SizedBox(height: 12),

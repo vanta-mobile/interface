@@ -5,6 +5,7 @@ import '../../trade/presentation/trade_theme.dart';
 import '../domain/trading_history.dart';
 import 'portfolio_components.dart';
 import 'trading_history_results.dart';
+import '../../../core/theme.dart' show PressFeedback;
 
 void openFuturesHistory(BuildContext context) =>
     Navigator.of(context)
@@ -84,7 +85,7 @@ class _FuturesHistoryScreenState extends State<FuturesHistoryScreen> {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   textStyle: TradeTypography.body,
-                                ),
+                                ).copyWith(overlayColor: PressFeedback.none),
                                 child: Text(l.tradingHistoryTab(item.name)),
                               ),
                             ),

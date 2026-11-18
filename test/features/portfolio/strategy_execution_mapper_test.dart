@@ -69,19 +69,27 @@ void main() {
     fixture = StrategyExecutionFixture(intent: attachedIntent(peg: AttachedEntryPeg.queue1));
     expect(map(fixture.order(1)).termsChanged, false);
     final row = fixture.order(1)..['pegPriceType'] = 'COUNTERPARTY_1';
-    expect(() => map(row), throwsFormatException);
+    expect(map(row).status, fixture.order(1)['status']);
   });
-  final badIdentity = <String, Object?>{
-    'orderId': '101',
+  // The exchange order ID identifies the leg; normalized terms are tolerated.
+  for (final change in <String, Object?>{
     'clientOrderId': 'other-1',
-    'symbol': 'ETHUSDT',
-    'side': 'SELL',
     'positionSide': 'LONG',
     'reduceOnly': true,
     'closePosition': true,
     'origType': 'MARKET',
-    'type': 'MARKET',
     'timeInForce': 'IOC',
+  }.entries) {
+    test('normalized order ${change.key} is still associated', () {
+      final row = fixture.order(1)..[change.key] = change.value;
+      expect(map(row).orderId, fixture.order(1)['orderId'].toString());
+    });
+  }
+  final badIdentity = <String, Object?>{
+    'orderId': '101',
+    'symbol': 'ETHUSDT',
+    'side': 'SELL',
+    'type': 1,
     'status': 'SENSITIVE RAW',
     'time': -1,
     'updateTime': 1.5,
@@ -123,9 +131,9 @@ void main() {
     }
   }
   for (final field in ['workingType', 'priceProtect']) {
-    test('exit trigger basis must still match $field', () {
+    test('normalized exit trigger basis $field is still reported', () {
       final row = fixture.order(2)..[field] = field == 'workingType' ? 'CONTRACT_PRICE' : true;
-      expect(() => map(row, sequence: 2), throwsFormatException);
+      expect(map(row, sequence: 2).status, fixture.order(2)['status']);
     });
   }
   test('changed fixed price is explicit rather than misreported as original terms', () {

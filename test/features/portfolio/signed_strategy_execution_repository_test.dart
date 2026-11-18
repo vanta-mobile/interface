@@ -164,8 +164,8 @@ void main() {
       expect(signatures.length, 1);
     });
   }
-  test('changed strategy linkage is rejected before querying ordinary orders', () async {
-    ((strategy['subOrders'] as List)[1] as Map)['firstDrivenId'] = 3;
+  test('another strategy leg is rejected before querying ordinary orders', () async {
+    ((strategy['subOrders'] as List)[1] as Map)['symbol'] = 'ETHUSDT';
     await expectLater(read(), failure('accountDataInvalid'));
     expect(signatures.length, 1);
   });
@@ -188,7 +188,7 @@ void main() {
     expect(result.legs[2].failure!.key, 'strategyExecutionSkipped');
   });
   test('malformed child cannot contaminate actual values or cause more prompts', () async {
-    order = (sequence) => fixture.order(sequence)..['clientOrderId'] = 'different-order';
+    order = (sequence) => fixture.order(sequence)..['symbol'] = 'ETHUSDT';
     final result = await read();
     expect(signatures.length, 2);
     expect(result.legs[0].failure!.key, 'accountDataInvalid');

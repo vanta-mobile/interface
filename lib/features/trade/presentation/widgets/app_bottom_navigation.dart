@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/theme.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../application/navigation_provider.dart';
+import '../../../../core/presentation/no_press_feedback.dart';
 
 class AppBottomNavigation extends ConsumerWidget {
   const AppBottomNavigation({super.key});
@@ -74,17 +75,19 @@ class _Destination extends StatelessWidget {
     return Semantics(
       selected: selected,
       button: true,
-      child: InkWell(
-        key: ValueKey('navigation-${destination.name}'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: _DestinationBody(
-          icon: SvgPicture.asset(
-            'assets/navigation/$asset.svg',
-            colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      child: NoPressFeedback(
+        child: InkWell(
+          key: ValueKey('navigation-${destination.name}'),
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: _DestinationBody(
+            icon: SvgPicture.asset(
+              'assets/navigation/$asset.svg',
+              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+            ),
+            label: label,
+            style: PortfolioTypography.navigation.copyWith(color: color),
           ),
-          label: label,
-          style: PortfolioTypography.navigation.copyWith(color: color),
         ),
       ),
     );
@@ -146,33 +149,35 @@ class _PointsDestination extends StatelessWidget {
     return Semantics(
       selected: selected,
       button: true,
-      child: InkWell(
-        key: const ValueKey('navigation-points'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: _DestinationBody(
-          iconSize: 46,
-          icon: Stack(
-            alignment: Alignment.center,
-            children: [
-              Transform.rotate(
-                angle: math.pi / 4,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.authAccent,
-                    borderRadius: BorderRadius.circular(10),
+      child: NoPressFeedback(
+        child: InkWell(
+          key: const ValueKey('navigation-points'),
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: _DestinationBody(
+            iconSize: 46,
+            icon: Stack(
+              alignment: Alignment.center,
+              children: [
+                Transform.rotate(
+                  angle: math.pi / 4,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.authAccent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
-              ),
-              SvgPicture.asset('assets/navigation/points.svg'),
-            ],
+                SvgPicture.asset('assets/navigation/points.svg'),
+              ],
+            ),
+            label: label,
+            style: selected
+                ? NavigationTypography.selectedPoints
+                : PortfolioTypography.navigation.copyWith(color: AppColors.authSecondary),
           ),
-          label: label,
-          style: selected
-              ? NavigationTypography.selectedPoints
-              : PortfolioTypography.navigation.copyWith(color: AppColors.authSecondary),
         ),
       ),
     );

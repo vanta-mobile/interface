@@ -7,7 +7,6 @@ import '../../auth/application/auth_provider.dart';
 import '../../funding/domain/funding_catalog.dart';
 import '../../funding/presentation/funding_screen.dart';
 import '../../funding/presentation/portfolio_funding_activity.dart';
-import '../../subaccounts/presentation/account_transfer_screen.dart';
 import '../../subaccounts/application/account_entries_provider.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
 import '../application/portfolio_overview_provider.dart';
@@ -121,7 +120,7 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
                                           ),
                                         ),
                                         child: Text(
-                                          l.portfolioPnlDetails,
+                                          l.portfolioRealizedPnl,
                                           style: PortfolioTypography.caption.copyWith(
                                             color: PortfolioColors.accent,
                                           ),
@@ -191,18 +190,6 @@ class _MoneyActions extends ConsumerWidget {
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 4),
-        TextButton(
-          key: const Key('portfolio-transfer'),
-          onPressed: preview
-              ? () => portfolioPreviewNotice(context)
-              : () => Navigator.of(context)
-                    .push<void>(MaterialPageRoute(builder: (_) => const AccountTransferScreen())),
-          child: Text(
-            l.portfolioTransfer,
-            style: PortfolioTypography.caption.copyWith(color: PortfolioColors.accent),
-          ),
         ),
       ],
     );

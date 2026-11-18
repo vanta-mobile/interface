@@ -10,6 +10,7 @@ import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
+import '../../trade/presentation/widgets/account_sheet.dart';
 import '../application/transfer_history_provider.dart';
 import '../application/withdrawal_provider.dart';
 import '../domain/deposit_wallet.dart';
@@ -87,8 +88,13 @@ class _WithdrawalScreenState extends ConsumerState<WithdrawalScreen> {
               onPressed:
                   s.busy || s.review != null || auth.busy || auth.identity?.walletAddress == null
                   ? null
-                  : () => controller.prepare(q, amount.text.trim()),
-              child: Text(l.withdrawalPrepare),
+                  : walletConnectionAction(context, ref, auth.identity) ??
+                        () => controller.prepare(q, amount.text.trim()),
+              child: Text(
+                auth.identity?.needsWalletConnection == true
+                    ? l.reconnectExternalWallet
+                    : l.withdrawalPrepare,
+              ),
             ),
             if (relevant case final review?) ...[
               const Divider(),

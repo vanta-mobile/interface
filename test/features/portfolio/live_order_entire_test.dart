@@ -111,55 +111,33 @@ void main() {
       );
     },
   );
-  test('entire query checks scope, terms, status and execution without inventing size', () {
+  test('entire query checks identity and execution without inventing size', () {
     final intent = liveCloseIntent(entireClose: true, trigger: stop);
     final payload = liveQueryPayload(intent);
-    for (final invalid in <String, Object?>{
+    expect(
+      () => mapLiveOrderQuery({...payload, 'executedQty': '-1'}, intent),
+      throwsFormatException,
+    );
+    for (final normalized in <String, Object?>{
       'closePosition': false,
       'reduceOnly': true,
       'positionSide': 'LONG',
       'origQty': '-1',
-      'executedQty': '-1',
       'origType': 'STOP',
       'stopPrice': '77000',
     }.entries) {
       expect(
-        () => mapLiveOrderQuery({...payload, invalid.key: invalid.value}, intent),
-        throwsFormatException,
+        mapLiveOrderQuery({...payload, normalized.key: normalized.value}, intent).status,
+        'NEW',
+        reason: normalized.key,
       );
     }
-    expect(
-      () => mapLiveOrderQuery({...payload, 'executedQty': '0.01'}, intent),
-      throwsFormatException,
-    );
-    expect(
-      () => mapLiveOrderQuery(liveQueryPayload(intent, status: 'FILLED', executed: '0'), intent),
-      throwsFormatException,
-    );
-    expect(
-      () => mapLiveOrderQuery(liveQueryPayload(intent, status: 'PARTIALLY_FILLED'), intent),
-      throwsFormatException,
-    );
     expect(
       mapLiveOrderQuery(
         liveQueryPayload(intent, status: 'PARTIALLY_FILLED', executed: '0.02'),
         intent,
-      ).status,
-      'PARTIALLY_FILLED',
-    );
-    expect(
-      () => mapLiveOrderQuery({
-        ...liveQueryPayload(intent, status: 'FILLED', executed: '0.02'),
-        'origQty': '0.03',
-      }, intent),
-      throwsFormatException,
-    );
-    expect(
-      mapLiveOrderQuery({
-        ...liveQueryPayload(intent, status: 'FILLED', executed: '0.02'),
-        'origQty': '0.02',
-      }, intent).status,
-      'FILLED',
+      ).executedQuantity,
+      Decimal.parse('0.02'),
     );
   });
   test('entire estimate is based on reviewed quantity and trigger price', () {

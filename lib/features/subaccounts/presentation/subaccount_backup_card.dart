@@ -5,6 +5,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../portfolio/presentation/portfolio_components.dart';
 import '../domain/generated_subaccount.dart';
 import 'account_components.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 /// Rendering only: key retrieval and visibility lifetime stay in the screen.
 class SubaccountBackupCard extends StatelessWidget {
@@ -106,44 +107,46 @@ class BackupAcknowledgement extends StatelessWidget {
   final ValueChanged<bool>? onChanged;
   @override
   Widget build(BuildContext context) => MergeSemantics(
-    child: InkWell(
-      onTap: onChanged == null ? null : () => onChanged!(!saved),
-      borderRadius: BorderRadius.circular(6),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 48),
-        child: Row(
-          children: [
-            SizedBox.square(
-              dimension: saved ? 16 : 22,
-              child: Semantics(
-                checked: saved,
-                enabled: onChanged != null,
-                child: Center(
-                  child: saved
-                      ? const PortfolioIcon(
-                          'check-circle.svg',
-                          size: 16,
-                          color: PortfolioColors.accent,
-                        )
-                      : Container(
-                          width: 22,
-                          height: 22,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: PortfolioColors.muted, width: 1.5),
+    child: NoPressFeedback(
+      child: InkWell(
+        onTap: onChanged == null ? null : () => onChanged!(!saved),
+        borderRadius: BorderRadius.circular(6),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Row(
+            children: [
+              SizedBox.square(
+                dimension: saved ? 16 : 22,
+                child: Semantics(
+                  checked: saved,
+                  enabled: onChanged != null,
+                  child: Center(
+                    child: saved
+                        ? const PortfolioIcon(
+                            'check-circle.svg',
+                            size: 16,
+                            color: PortfolioColors.accent,
+                          )
+                        : Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: PortfolioColors.muted, width: 1.5),
+                            ),
                           ),
-                        ),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                AppLocalizations.of(context).accountsSavedKey,
-                style: AccountTypography.body,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context).accountsSavedKey,
+                  style: AccountTypography.body,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ),

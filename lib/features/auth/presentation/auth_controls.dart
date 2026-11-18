@@ -41,7 +41,7 @@ class AuthActionButton extends StatelessWidget {
       textStyle: AuthTypography.button,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       side: outlined ? const BorderSide(color: AppColors.authLine) : null,
-    ),
+    ).copyWith(overlayColor: PressFeedback.overlay),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [

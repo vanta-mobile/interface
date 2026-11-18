@@ -270,7 +270,7 @@ class _StorageNotice extends ConsumerWidget {
               minimumSize: const Size(44, 44),
               padding: EdgeInsets.zero,
               textStyle: AssistantTypography.button,
-            ),
+            ).copyWith(overlayColor: PressFeedback.overlay),
             child: Text(label!),
           ),
         ],

@@ -63,16 +63,10 @@ class IncomeReportRepository {
         pending.addAll(split);
       }
     }
-    final references = <String, String>{};
     final reports = <Map<String, Object?>>[];
     for (final row in rows.cast<FuturesIncomeRecord>()) {
-      // Aster documents tranId as unique within incomeType; the new archive
-      // contract deduplicates globally. Never silently drop a colliding type.
-      final previous = references[row.transactionId];
-      if (previous != null && previous != row.type) {
-        throw const AccountReadFailure('incomeArchiveReferenceConflict');
-      }
-      references[row.transactionId] = row.type;
+      // tranId is unique only within an incomeType; the archive deduplicates
+      // by (incomeType, tranId), so colliding types are reported separately.
       final tradeId = row.tradeId == null ? null : int.tryParse(row.tradeId!);
       if (row.tradeId != null && (tradeId == null || tradeId < 0)) {
         throw const VantaApiFailure(vantaApiDataInvalid);

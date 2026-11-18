@@ -26,7 +26,11 @@ class PortfolioCalendar extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final firstWeekday = (month.weekday + 6) % 7;
     final days = DateTime.utc(month.year, month.month + 1, 0).day;
-    final cells = ((firstWeekday + days + 6) ~/ 7) * 7;
+    // Six rows for every month keep the card height stable while paging.
+    const cells = 42;
+    final weekdays = DateFormat.E(Localizations.localeOf(context).toLanguageTag())
+        .dateSymbols
+        .STANDALONENARROWWEEKDAYS;
     return PortfolioCard(
       radius: 20,
       border: false,
@@ -37,7 +41,9 @@ class PortfolioCalendar extends StatelessWidget {
               for (var weekday = 0; weekday < 7; weekday++)
                 Expanded(
                   child: Text(
-                    DateFormat.E(Localizations.localeOf(context).toLanguageTag())
+                    // Symbols start on Sunday; the grid starts on Monday.
+                    weekdays[(weekday + 1) % 7],
+                    semanticsLabel: DateFormat.EEEE(Localizations.localeOf(context).toLanguageTag())
                         .format(DateTime.utc(2026, 11, 2 + weekday)),
                     textAlign: TextAlign.center,
                     style: PortfolioTypography.caption,
@@ -121,7 +127,7 @@ class _DayCell extends StatelessWidget {
               style: PortfolioTypography.caption.copyWith(color: PortfolioColors.text),
             ),
             Text(
-              pnl == null ? '' : portfolioAmount(pnl),
+              pnl == null ? '—' : portfolioAmount(pnl),
               maxLines: 1,
               overflow: TextOverflow.clip,
               style: PortfolioTypography.navigation.copyWith(color: color),

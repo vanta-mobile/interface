@@ -26,6 +26,7 @@ void main() {
   late SignedLiveOrderRepository repository;
   late LiveOrderIntent intent;
   late Map<String, dynamic> queryPayload;
+  Map<String, dynamic>? postAck;
   late bool current, canSend, postTimeout, hedge;
   late int refusedSignature;
   List<Map<String, dynamic>>? closePositions;
@@ -40,6 +41,7 @@ void main() {
     queryPayload = liveQueryPayload(intent);
     current = canSend = true;
     postTimeout = hedge = false;
+    postAck = null;
     refusedSignature = 0;
     afterSign = null;
     publicReadGate = null;
@@ -132,7 +134,7 @@ void main() {
           expect(path, '/fapi/v3/order');
           if (request.method == 'POST') {
             if (postTimeout) throw TimeoutException('simulated');
-            data = {'orderId': 999, 'status': 'FILLED'};
+            data = postAck ?? {'orderId': 999, 'status': 'FILLED'};
           } else {
             expect(request.method, 'GET');
             data = queryPayload;
@@ -211,19 +213,14 @@ void main() {
         clientOrderId: 'vanta-quote-timeout-123',
         revision: 0,
       );
-      queryPayload = liveQueryPayload(intent);
       postTimeout = true;
-      queryPayload = {...queryPayload, 'origQty': '0.002'};
-      final result = await submit();
-      expect(result.needsRecheck, true);
-      queryPayload = liveQueryPayload(intent);
-      final before = requests.length;
-      expect((await recheck()).status, 'NEW');
-      final recovery = requests.skip(before).toList();
-      expect(recovery.where((r) => r.method == 'POST'), isEmpty);
-      expect(recovery.last.url.queryParameters['origClientOrderId'], intent.clientOrderId);
+      // Aster's reported quantity is a normalized term; the client ID resolves it.
+      queryPayload = {...liveQueryPayload(intent), 'origQty': '0.002'};
+      expect((await submit()).status, 'NEW');
+      final orders = requests.where((r) => r.url.path.endsWith('/order')).toList();
+      expect(orders.map((r) => r.method), ['POST', 'GET']);
+      expect(orders.last.url.queryParameters['origClientOrderId'], intent.clientOrderId);
       expect(intent.draft.quantity, '0.001');
-      expect(requests.where((r) => r.method == 'POST'), hasLength(1));
     },
   );
   test('POST exact form bytes then signed GET; ACK cannot prove a fill', () async {
@@ -246,6 +243,20 @@ void main() {
     expect(get['newClientOrderId'], null);
     expect(post['nonce'], isNot(get['nonce']));
     expect(orders.last.url.query.split('&signature=').first, messages.last);
+  });
+  test('an accepted POST for this client ID is the result without another GET', () async {
+    postAck = {...liveQueryPayload(intent), 'type': 'MARKET', 'price': '0'};
+    final result = await submit();
+    expect(result.status, 'NEW');
+    expect(result.orderId, '12345');
+    expect(requests.where((r) => r.url.path.endsWith('/order')).map((r) => r.method), ['POST']);
+    postAck = {...liveQueryPayload(intent), 'clientOrderId': 'someone-else'};
+    expect((await submit()).status, 'NEW');
+    expect(requests.where((r) => r.url.path.endsWith('/order')).map((r) => r.method), [
+      'POST',
+      'POST',
+      'GET',
+    ]);
   });
   test('market hedge entry has correct side and excludes forbidden fields', () async {
     intent = liveIntent(market: true, buy: false, hedge: true);
@@ -284,15 +295,13 @@ void main() {
     );
 
     test(
-      '${policy.wire}: mismatched query keeps original ID and policy for GET-only recovery',
+      '${policy.wire}: normalized query policy still resolves the original ID with one GET',
       () async {
         intent = liveIntent(timeInForce: policy);
-        queryPayload = {...liveQueryPayload(intent), 'timeInForce': 'GTC'};
-        expect((await submit()).needsRecheck, true);
-        queryPayload = liveQueryPayload(intent, status: 'FILLED');
-        expect((await recheck()).status, 'FILLED');
+        queryPayload = {...liveQueryPayload(intent, status: 'FILLED'), 'timeInForce': 'GTC'};
+        expect((await submit()).status, 'FILLED');
         final orders = requests.where((r) => r.url.path.endsWith('/order')).toList();
-        expect(orders.map((r) => r.method), ['POST', 'GET', 'GET']);
+        expect(orders.map((r) => r.method), ['POST', 'GET']);
         expect(orders.last.url.queryParameters['origClientOrderId'], intent.clientOrderId);
         expect(Uri.splitQueryString(orders.first.body)['timeInForce'], policy.wire);
       },
@@ -450,7 +459,7 @@ void main() {
     },
   );
   test(
-    'entire close timeout and scope mismatch retain original ID and recover with GET only',
+    'entire close timeout with normalized scope recovers the original ID with GET only',
     () async {
       intent = liveCloseIntent(
         entireClose: true,
@@ -458,22 +467,22 @@ void main() {
       );
       closePositions = livePositionPayload(intent.context);
       postTimeout = true;
-      queryPayload = {...liveQueryPayload(intent), 'closePosition': false};
-      expect((await submit()).needsRecheck, true);
-      queryPayload = liveQueryPayload(intent, status: 'FILLED', executed: '0.02');
-      expect((await recheck()).status, 'FILLED');
+      queryPayload = {
+        ...liveQueryPayload(intent, status: 'FILLED', executed: '0.02'),
+        'closePosition': false,
+      };
+      expect((await submit()).status, 'FILLED');
       expect(requests.where((r) => r.url.path.endsWith('/order')).map((r) => r.method), [
         'POST',
         'GET',
-        'GET',
       ]);
       expect(requests.where((r) => r.url.path.endsWith('/positionRisk')).length, 1);
-      expect(messages.length, 4);
+      expect(messages.length, 3);
     },
   );
 
   test(
-    'conditional timeout plus wrong trigger stays query-only until original terms match',
+    'conditional timeout with a normalized trigger recovers the original ID with GET only',
     () async {
       intent = liveIntent(
         market: true,
@@ -481,11 +490,9 @@ void main() {
       );
       postTimeout = true;
       queryPayload = {...liveQueryPayload(intent), 'stopPrice': '81001'};
-      expect((await submit()).needsRecheck, true);
-      queryPayload = liveQueryPayload(intent);
-      expect((await recheck()).status, 'NEW');
+      expect((await submit()).status, 'NEW');
       final orders = requests.where((r) => r.url.path.endsWith('/order')).toList();
-      expect(orders.map((r) => r.method), ['POST', 'GET', 'GET']);
+      expect(orders.map((r) => r.method), ['POST', 'GET']);
       expect(orders.last.url.queryParameters['origClientOrderId'], intent.clientOrderId);
       expect(Uri.splitQueryString(orders.first.body)['stopPrice'], '81000');
     },

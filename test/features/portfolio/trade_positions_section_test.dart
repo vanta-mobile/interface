@@ -5,6 +5,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
 import 'package:vanta/features/authorization/domain/trading_agent.dart';
 import 'package:vanta/features/portfolio/data/aster_account_mapper.dart';
@@ -227,6 +228,21 @@ void main() {
     await _logout(tester, identity);
   });
 
+  testWidgets('a failed refresh keeps the shown positions without an error line', (tester) async {
+    final risk = TestPositionRiskRepository();
+    final identity = await _launch(tester, positions: risk);
+    expect(find.byKey(_card), findsOneWidget);
+    final calls = risk.calls;
+    risk.failure = const AccountReadFailure('accountNetwork');
+    await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: 5)));
+    await tester.pump(const Duration(seconds: 16));
+    await tester.pumpAndSettle();
+    expect(risk.calls, greaterThan(calls));
+    expect(find.byKey(_card), findsOneWidget);
+    expect(find.textContaining('Account data could not be read'), findsNothing);
+    await _logout(tester, identity);
+  });
+
   testWidgets('the Positions tab reads silently and shows the designed card', (tester) async {
     final identity = await _launch(tester);
     expect(find.text('Positions (1)'), findsOneWidget);
@@ -257,6 +273,55 @@ void main() {
     await _logout(tester, identity);
   });
 
+  testWidgets('TP/SL PnL is unsigned, survives a later amount and never leaves a stale price', (
+    tester,
+  ) async {
+    final live = TestLiveOrderRepository()..context = liveCloseContext();
+    final identity = await _launch(tester, live: live);
+    await _openTpSlForm(tester);
+    String text(String key) => tester.widget<TextField>(find.byKey(Key(key))).controller!.text;
+    Future<void> type(String key, String value) async {
+      await tester.ensureVisible(find.byKey(Key(key)));
+      await tester.enterText(find.byKey(Key(key)), value);
+      await tester.pumpAndSettle();
+    }
+
+    // No take-profit mode switch this release; TP picks Mark/Last like SL.
+    expect(find.byKey(const Key('position-tpsl-tp-basis')), findsOneWidget);
+    expect(find.byTooltip('Switch take-profit trigger price type'), findsNothing);
+
+    // Fixed signs: TP gains, SL loses; a typed sign is dropped.
+    expect(
+      tester
+          .widget<Text>(find.byKey(const ValueKey((Key('position-tpsl-tp-estimate'), 'sign'))))
+          .data,
+      '+',
+    );
+    expect(
+      tester
+          .widget<Text>(find.byKey(const ValueKey((Key('position-tpsl-sl-estimate'), 'sign'))))
+          .data,
+      '-',
+    );
+    await type('position-tpsl-sl-estimate', '-5');
+    expect(text('position-tpsl-sl-estimate'), '5');
+
+    // PnL typed before the amount is kept; the amount then sets the price.
+    await type('position-tpsl-tp-estimate', '10');
+    expect(text('position-tpsl-tp-price'), '');
+    await type('position-tpsl-amount', '790');
+    expect(text('position-tpsl-tp-estimate'), '10');
+    expect(Decimal.parse(text('position-tpsl-tp-price')) > Decimal.parse('79000'), isTrue);
+    final stopLoss = Decimal.parse(text('position-tpsl-sl-price'));
+    expect(stopLoss < Decimal.parse('79000'), isTrue);
+
+    // A loss the position cannot reach clears the price instead of keeping it.
+    await type('position-tpsl-sl-estimate', '5000');
+    expect(text('position-tpsl-sl-price'), '');
+    expect(tester.takeException(), null);
+    await _logout(tester, identity);
+  });
+
   testWidgets('TP/SL places an entire-close take profit and returns', (tester) async {
     final live = TestLiveOrderRepository()..context = liveCloseContext();
     final identity = await _launch(tester, live: live);
@@ -266,10 +331,27 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('position-tpsl-amount')), findsNothing);
     expect(find.byKey(const Key('position-tpsl-tp-limit')), findsNothing);
+    // Entire close: Mark/Last dropdown on both legs, Gain/Loss estimates.
+    expect(find.byKey(const Key('position-tpsl-tp-basis')), findsOneWidget);
+    expect(find.byKey(const Key('position-tpsl-sl-basis')), findsOneWidget);
+    expect(find.text('Gain'), findsOneWidget);
+    expect(find.text('Loss'), findsOneWidget);
+    expect(find.text('Pnl'), findsNothing);
+    await tester.tap(find.byKey(const Key('position-tpsl-tp-basis')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('trade-option-LiveOrderTriggerBasis.mark')));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('position-tpsl-tp-basis')),
+        matching: find.text('Mark'),
+      ),
+      findsOneWidget,
+    );
     await tester.enterText(find.byKey(const Key('position-tpsl-tp-price')), '82000');
     await tester.pumpAndSettle();
-    // 0.01 BTC from 79,000 to 82,000.
-    expect(find.widgetWithText(TextField, '+30.00'), findsOneWidget);
+    // 0.01 BTC from 79,000 to 82,000; the box is unsigned after its fixed "+".
+    expect(find.widgetWithText(TextField, '30.00'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('position-tpsl-confirm')));
     await tester.pumpAndSettle();
@@ -279,6 +361,7 @@ void main() {
     expect(draft.buy, isFalse);
     expect(draft.trigger?.kind, LiveOrderTriggerKind.takeProfit);
     expect(draft.trigger?.price, '82000');
+    expect(draft.trigger?.basis, LiveOrderTriggerBasis.mark);
     expect(find.byType(PositionTpSlScreen), findsNothing);
     // The form returns to the existing-orders list.
     expect(find.byType(PositionTpSlListScreen), findsOneWidget);

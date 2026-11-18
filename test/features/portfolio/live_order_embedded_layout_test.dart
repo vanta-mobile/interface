@@ -93,6 +93,35 @@ void main() {
     expect(find.text('note'), findsOneWidget);
   });
 
+  testWidgets('selecting BBO keeps the price box height', (tester) async {
+    final price = TextEditingController(text: '64302.7');
+    addTearDown(price.dispose);
+    Future<double> height(String? level) async {
+      await tester.pumpWidget(
+        _app(
+          EmbeddedPriceField(
+            controller: price,
+            asset: 'USDT',
+            tick: Decimal.parse('0.1'),
+            enabled: true,
+            onChanged: () {},
+            bboSelected: level != null,
+            onBbo: () {},
+            bboLevel: level,
+            onBboLevel: () {},
+          ),
+        ),
+      );
+      return tester.getSize(find.byType(EmbeddedPriceField)).height;
+    }
+
+    final manual = await height(null);
+    expect(await height('Counterparty 1'), manual);
+    // The value line is 32 high, not the text field's 48 intrinsic height.
+    final box = tester.getSize(find.byType(EmbeddedInputBox)).height;
+    expect(box, lessThan(64));
+  });
+
   testWidgets('direction card rounds margin up and maximum down without throwing', (tester) async {
     final data = capacityContext();
     final rule = OrderQuantityRule(
@@ -137,6 +166,38 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('main-order-review-buy')));
     expect(reviewed, true);
+  });
+
+  testWidgets('a terminating liquidation price is rounded instead of breaking the card', (
+    tester,
+  ) async {
+    // QA-020: hedge positions often yield a terminating root such as 236.6875,
+    // which `toDecimal` left unrounded and the fixed formatter rejected.
+    final data = capacityContext();
+    expect(data.rules.pricePrecision, 2);
+    const value = MainOrderSidePreview(liquidation: null);
+    expect(mainOrderLiquidationText(value, data), null);
+    final preview = MainOrderSidePreview(liquidation: Rational.parse('236.6875'));
+    expect(mainOrderLiquidationText(preview, data), '236.69');
+    expect(
+      mainOrderLiquidationText(MainOrderSidePreview(liquidation: Rational.parse('236.6849')), data),
+      '236.68',
+    );
+    await tester.pumpWidget(
+      _app(
+        MainOrderDirectionCard(
+          data: data,
+          unit: OrderSizeUnit.base,
+          buy: false,
+          hasSize: true,
+          onReview: () {},
+          value: preview,
+        ),
+      ),
+    );
+    expect(tester.takeException(), null);
+    expect(find.byType(ErrorWidget), findsNothing);
+    expect(find.textContaining('236.69'), findsOneWidget);
   });
 
   testWidgets('option sheet resolves the chosen value and dismisses to null', (tester) async {

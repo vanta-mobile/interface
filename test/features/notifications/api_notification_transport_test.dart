@@ -10,7 +10,6 @@ import 'package:vanta/core/vanta_api/vanta_api_failure.dart';
 import 'package:vanta/features/auth/data/vanta_api_session_repository.dart';
 import 'package:vanta/features/auth/data/vanta_api_session_store.dart';
 import 'package:vanta/features/notifications/data/api_notification_repository.dart';
-import 'package:vanta/features/notifications/domain/notification_status.dart';
 
 import '../../support/vanta_api.dart';
 import '../../support/push_device.dart';
@@ -80,7 +79,7 @@ void main() {
           Future<void> operation() async {
             switch (operationName) {
               case 'inbox read':
-                await repository.read(category: NotificationFilter.all, unreadOnly: false);
+                await repository.read(unreadOnly: false);
               case 'read marker':
                 await repository.markRead(idempotencyKey: 'one-operation');
               case 'push register':

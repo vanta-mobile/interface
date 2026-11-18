@@ -247,7 +247,7 @@ class _AffectedMarket extends StatelessWidget {
                   minimumSize: const Size(0, 44),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                ),
+                ).copyWith(overlayColor: PressFeedback.overlay),
                 child: Text(
                   blocked ? l.modeManage : l.modeSwitchCross,
                   textAlign: TextAlign.center,

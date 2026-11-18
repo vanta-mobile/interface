@@ -33,7 +33,7 @@ void main() {
       );
     });
     addTearDown(client.close);
-    expect((await PublicLeverageRepository(client).read())['BTCUSDT']!.defaultLeverage(), 20);
+    expect((await PublicLeverageRepository(client).read())['BTCUSDT']!.defaultLeverage(), 10);
   });
   test('retry rate limits twice without inventing a default capability', () async {
     var calls = 0;

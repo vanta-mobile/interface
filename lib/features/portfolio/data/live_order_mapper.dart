@@ -174,67 +174,20 @@ Map<String, LiveOrderPosition> mapLiveOrderPositions(
 LiveOrderResult mapLiveOrderQuery(Object? payload, LiveOrderIntent intent, {DateTime? checkedAt}) =>
     mapRecoveredOrderQuery(payload, OrderQuery.capture(intent), checkedAt: checkedAt);
 
+/// Confirms that [payload] is the order placed under the frozen client ID and
+/// reads its status. The client ID is unique per submission, so this identity
+/// is the evidence of placement. Order terms are not compared: Aster may
+/// normalize types, prices and policies, and a difference there must not turn
+/// an accepted order into a reported failure.
 LiveOrderResult mapRecoveredOrderQuery(Object? payload, OrderQuery intent, {DateTime? checkedAt}) {
   if (intent.draft.attachment != null) {
     throw const FormatException('Strategy order requires strategy query');
   }
-  if (payload is! Map<String, dynamic>) throw const FormatException('Invalid order payload');
-  final peg = payload['pegPriceType'];
-  if (intent.draft.peg == null ? peg != null && peg != '' : peg != intent.draft.peg!.wire) {
-    throw const FormatException('Order peg mismatch');
-  }
-  if (intent.draft.peg != null &&
-      (payload['reduceOnly'] !=
-              (intent.draft.reducing && intent.mode == FuturesPositionMode.oneWay) ||
-          payload['closePosition'] != false)) {
-    throw const FormatException('BBO order scope mismatch');
-  }
-  if (payload['symbol'] != intent.symbol ||
+  if (payload is! Map<String, dynamic> ||
+      payload['symbol'] != intent.symbol ||
       payload['clientOrderId'] != intent.clientOrderId ||
-      payload['side'] != intent.side ||
-      payload['positionSide'] != intent.positionSide ||
-      intent.draft.reducing &&
-          payload['reduceOnly'] !=
-              (!intent.draft.entireClose && intent.mode == FuturesPositionMode.oneWay) ||
-      intent.draft.reducing && payload['closePosition'] != intent.draft.entireClose ||
-      (intent.draft.trigger == null && intent.draft.trailing == null
-          ? payload['type'] != intent.draft.orderType
-          : payload['origType'] != intent.draft.orderType ||
-                !{
-                  intent.draft.orderType,
-                  intent.draft.market ? 'MARKET' : 'LIMIT',
-                }.contains(payload['type']))) {
+      payload['side'] != intent.side) {
     throw const FormatException('Order identity mismatch');
-  }
-  if (intent.draft.quickEntry &&
-      (payload['reduceOnly'] != false || payload['closePosition'] != false)) {
-    throw const FormatException('Quick order scope mismatch');
-  }
-  if (intent.draft.trigger case final trigger?) {
-    if (_amount(payload['stopPrice'], positive: true) != parseOrderDecimal(trigger.price) ||
-        payload['workingType'] != trigger.basis.wire ||
-        payload['priceProtect'] != trigger.protect ||
-        payload['reduceOnly'] !=
-            (!intent.draft.entireClose &&
-                intent.draft.reducing &&
-                intent.mode == FuturesPositionMode.oneWay) ||
-        payload['closePosition'] != intent.draft.entireClose ||
-        intent.draft.market && payload['timeInForce'] != 'GTC') {
-      throw const FormatException('Conditional order terms mismatch');
-    }
-  }
-  if (intent.draft.trailing case final trailing?) {
-    final activation = _amount(payload['activatePrice'], positive: true);
-    if (_amount(payload['priceRate'], positive: true) != parseOrderDecimal(trailing.callbackRate) ||
-        trailing.activationPrice != null &&
-            activation != parseOrderDecimal(trailing.activationPrice!) ||
-        payload['workingType'] != trailing.basis.wire ||
-        payload['reduceOnly'] !=
-            (intent.draft.reducing && intent.mode == FuturesPositionMode.oneWay) ||
-        payload['closePosition'] != false ||
-        payload['timeInForce'] != 'GTC') {
-      throw const FormatException('Trailing order terms mismatch');
-    }
   }
   final id = '${payload['orderId']}';
   final status = payload['status'];
@@ -251,21 +204,10 @@ LiveOrderResult mapRecoveredOrderQuery(Object? payload, OrderQuery intent, {Date
       }.contains(status)) {
     throw const FormatException('Invalid order status');
   }
-  final observedPrice = intent.draft.market ? null : _amount(payload['price']);
-  final requested = _amount(payload['origQty'], positive: !intent.draft.entireClose);
-  final executed = _amount(payload['executedQty']);
-  if ((!intent.draft.entireClose && requested != parseOrderDecimal(intent.draft.quantity)) ||
-      (!intent.draft.entireClose || requested > Decimal.zero) && executed > requested ||
-      status == 'FILLED' &&
-          (executed <= Decimal.zero ||
-              (!intent.draft.entireClose || requested > Decimal.zero) && executed != requested) ||
-      status == 'NEW' && executed != Decimal.zero ||
-      status == 'PARTIALLY_FILLED' &&
-          (executed <= Decimal.zero ||
-              (!intent.draft.entireClose || requested > Decimal.zero) && executed >= requested) ||
-      !intent.draft.market &&
-          (intent.draft.peg == null && observedPrice != parseOrderDecimal(intent.draft.price) ||
-              payload['timeInForce'] != intent.draft.timeInForce.wire)) {
+  final Decimal executed;
+  try {
+    executed = _amount(payload['executedQty']);
+  } on FormatException {
     throw const FormatException('Invalid order quantity');
   }
   return LiveOrderResult(

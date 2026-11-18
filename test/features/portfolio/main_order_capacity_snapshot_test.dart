@@ -172,18 +172,20 @@ void main() {
     expect(result.exposure.signedNotional, Decimal.fromInt(202));
     expect(result.exposure.currentNotional, Decimal.fromInt(202));
   });
-  for (final type in [
-    'MARKET',
-    'STOP',
-    'STOP_MARKET',
-    'TAKE_PROFIT',
-    'TRAILING_STOP_MARKET',
-    'UNKNOWN',
-  ]) {
-    test('unverifiable pending $type cannot silently contribute zero exposure', () {
+  for (final type in ['STOP', 'STOP_MARKET', 'TAKE_PROFIT', 'TRAILING_STOP_MARKET']) {
+    test('untriggered pending $type reserves no notional and keeps capacity available', () {
       expect(
-        () => assembledCapacity(orders: [capacityOrder(type: type)]),
-        failure('liveCapacityPendingUnknown'),
+        assembledCapacity(orders: [capacityOrder(type: type)]).exposure.currentNotional,
+        assembledCapacity().exposure.currentNotional,
+      );
+    });
+  }
+  for (final type in ['MARKET', 'UNKNOWN']) {
+    test('pending $type without a limit price is valued at Mark', () {
+      // The fixture Mark equals the fixed LIMIT price of the same order.
+      expect(
+        assembledCapacity(orders: [capacityOrder(type: type)]).exposure.currentNotional,
+        assembledCapacity(orders: [capacityOrder()]).exposure.currentNotional,
       );
     });
   }

@@ -24,6 +24,7 @@ Adapted from `/data/dodo/rwa-interface/.specify/memory/constitution.md` v1.1.1 a
 
 ## Design and accessibility
 - Follow the supplied design and explicit user requirements. Do not invent extra UI, status indicators, state displays, or interactions beyond that scope.
+- Press feedback: no ripples; pressable controls use the theme's flat `AppColors.pressOverlay` (#FFFFFF 6%), so a local `styleFrom(foregroundColor:)` needs `.copyWith(overlayColor: PressFeedback.overlay)`. Wrap state-switching controls (tabs, segments, filters, checks) in `NoPressFeedback`.
 - Use centralized semantic theme tokens for colors and typography. No literal colors in feature widgets; third-party chart adaptation is an allowed boundary.
 - Base responsive layouts on available constraints; support narrow windows, landscape, safe areas, keyboard, and enlarged text. Never lock orientation. The single exception is the fullscreen K-line chart, which requests landscape only while it is open and restores the system default when it closes.
 - Keep user-visible strings in the localization catalog. Provide clear semantic labels and usable touch targets. Financial identifiers and order references must be copyable.

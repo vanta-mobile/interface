@@ -103,7 +103,7 @@ void main() {
       'min_notional': '0.000000000000000001',
     });
     expect(prefs.minNotional, Decimal.parse('0.000000000000000001'));
-    expect(prefs.categories.containsKey(PushCategory.transfers), isFalse);
+    expect(PushCategory.values.map((e) => e.name), isNot(contains('transfers')));
     expect(PushCategory.values.map((e) => e.name), isNot(contains('liquidation')));
   });
   test('switching quiet hours off sends explicit null bounds only', () async {

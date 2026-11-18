@@ -13,9 +13,11 @@ import '../../../portfolio/domain/live_order_time_in_force.dart';
 import '../../../portfolio/presentation/embedded_time_in_force_selector.dart';
 import '../../../portfolio/presentation/live_order_embedded_controls.dart';
 import '../../../portfolio/presentation/live_order_embedded_inputs.dart';
+import '../../../portfolio/presentation/main_order_amount_slider.dart';
 import 'account_sheet.dart';
 import '../trade_theme.dart';
 import 'primitives.dart';
+import '../../../../core/theme.dart' show PressFeedback;
 
 /// Unknown account facts remain unavailable until the explicit signed read.
 class TradeOrderPending extends ConsumerWidget {
@@ -47,18 +49,21 @@ class TradeOrderPending extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        EmbeddedPriceField(
-          key: ValueKey(('trade-pending-price', symbol, market)),
-          controller: null,
-          asset: 'USDT',
-          tick: Decimal.zero,
-          enabled: connect != null,
-          onChanged: () {},
-          fixedLabel: market ? l.market : (referencePrice.isEmpty ? '—' : referencePrice),
-          bboVisible: !market,
-          onBbo: market ? null : connect,
-        ),
-        const SizedBox(height: 8),
+        // Market orders have no price box, as designed.
+        if (!market) ...[
+          EmbeddedPriceField(
+            key: ValueKey(('trade-pending-price', symbol)),
+            controller: null,
+            asset: 'USDT',
+            tick: Decimal.zero,
+            enabled: connect != null,
+            onChanged: () {},
+            fixedLabel: referencePrice.isEmpty ? '—' : referencePrice,
+            bboVisible: true,
+            onBbo: connect,
+          ),
+          const SizedBox(height: 8),
+        ],
         EmbeddedInputBox(
           label: l.tradeOrderSize,
           child: Row(
@@ -82,27 +87,25 @@ class TradeOrderPending extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            trackHeight: 4,
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6, disabledThumbRadius: 6),
-            overlayShape: SliderComponentShape.noOverlay,
-          ),
-          child: const SizedBox(height: 20, child: Slider(value: 0, divisions: 4, onChanged: null)),
+        // Same slider and row pitch as the signed-in form.
+        const SizedBox(height: 2),
+        MainOrderAmountSlider(
+          position: 0,
+          continuous: false,
+          onCommit: null,
+          semanticLabel: (value) => l.liveAllocationPercent((value * 100).round()),
         ),
-        if (loading)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5),
-            child: Row(
-              children: [
-                Expanded(child: Text(l.available, style: TradeTypography.caption)),
-                const SkeletonBox(key: Key('trade-available-pending'), width: 72, height: 14),
-              ],
-            ),
-          )
-        else
-          ValueRow(l.available, '—', key: const Key('trade-available')),
+        SizedBox(
+          height: embeddedCheckRowHeight,
+          child: loading
+              ? Row(
+                  children: [
+                    Expanded(child: Text(l.available, style: TradeTypography.caption)),
+                    const SkeletonBox(key: Key('trade-available-pending'), width: 72, height: 14),
+                  ],
+                )
+              : ValueRow(l.available, '—', key: const Key('trade-available')),
+        ),
         _PendingAdvanced(market: market, onConnect: connect),
         for (final buy in [true, if (gate == OrderEntryGate.ready) false])
           Padding(
@@ -226,7 +229,7 @@ class _PendingDirection extends StatelessWidget {
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
             ),
             textStyle: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
-          ),
+          ).copyWith(overlayColor: PressFeedback.overlay),
           child: Text(switch (gate) {
             OrderEntryGate.connect => l.connect,
             OrderEntryGate.deposit => l.fundingDeposit,

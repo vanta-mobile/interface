@@ -1,6 +1,5 @@
 import 'futures_history_screen.dart';
 import 'position_margin_history.dart';
-import '../../funding/presentation/internal_transfer_entry.dart';
 import '../../funding/presentation/funding_info_screen.dart';
 import '../../funding/domain/transfer_history.dart';
 
@@ -43,7 +42,6 @@ class AsterAccountPanel extends ConsumerWidget {
         const FuturesHistoryEntry(),
         const PositionMarginHistoryEntry(),
         const FundingInfoEntry(market: TransferMarket.perp),
-        const InternalTransferEntry(),
         const TransferHistoryEntry(),
         const SizedBox(height: 16),
         if (address != null)

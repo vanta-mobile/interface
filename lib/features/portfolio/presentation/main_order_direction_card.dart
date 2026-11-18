@@ -12,12 +12,16 @@ import '../domain/live_order.dart';
 import '../domain/live_order_capacity.dart';
 import '../domain/live_order_size.dart';
 import '../domain/main_order_capacity_preview.dart';
+import '../../../core/theme.dart' show PressFeedback;
 
 /// Liquidation estimate rounded to the symbol's price precision, or null.
 String? mainOrderLiquidationText(MainOrderSidePreview? value, LiveOrderContext data) {
   final price = value?.liquidation, precision = data.rules.pricePrecision;
   if (price == null || precision == null || precision < 0 || precision > 80) return null;
-  final rounded = price.toDecimal(scaleOnInfinitePrecision: precision, toBigInt: (r) => r.round());
+  // `toDecimal` keeps a terminating value unrounded (e.g. 236.6875), which the
+  // fixed-decimals formatter rejects; round to the price precision first.
+  final rounded = Decimal.fromBigInt((price * Rational(BigInt.from(10).pow(precision))).round())
+      .shift(-precision);
   if (rounded <= Decimal.zero) return null;
   return TokenAmountFormatter.formatFixed(DecimalValue(rounded.toString()), decimals: precision);
 }
@@ -36,6 +40,7 @@ class MainOrderDirectionCard extends StatelessWidget {
     this.resultsPending = false,
     this.retainedCapacity,
     this.showLiquidation = true,
+    this.label,
   });
   final MainOrderSidePreview? value;
   final LiveOrderContext data;
@@ -49,6 +54,9 @@ class MainOrderDirectionCard extends StatelessWidget {
 
   /// Conditional entries fill later at an unknown price; the design omits it.
   final bool showLiquidation;
+
+  /// Replaces Long/Short, e.g. with hedge Open/Close actions.
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +155,7 @@ class MainOrderDirectionCard extends StatelessWidget {
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
             ),
             textStyle: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
-          ),
+          ).copyWith(overlayColor: PressFeedback.overlay),
           child: pending
               ? const SizedBox.square(
                   dimension: 16,
@@ -156,7 +164,7 @@ class MainOrderDirectionCard extends StatelessWidget {
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(buy ? l.long : l.short),
+                    Text(label ?? (buy ? l.long : l.short)),
                     if (value?.quantity case final quantity?
                         when hasSize && quantity > Decimal.zero)
                       Text(

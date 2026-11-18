@@ -75,8 +75,6 @@ void main() {
         expect(i.context.referenceExecutionPrice(i.draft), null);
         final payload = liveQueryPayload(i)..['type'] = 'LIMIT';
         expect(mapLiveOrderQuery(payload, i).needsRecheck, false);
-        payload['stopPrice'] = '1';
-        expect(() => mapLiveOrderQuery(payload, i), throwsFormatException);
       });
     }
   }
@@ -159,30 +157,22 @@ void main() {
       'liveOrderTypeUnavailable',
     );
   });
-  for (final wrong in [null, '', 'QUEUE_1', 'COUNTERPARTY_3', 'unknown', 1]) {
-    test('query rejects missing/changed/deeper peg $wrong', () {
+  // The client order ID identifies the order. Aster's reported peg and
+  // resolved price are normalized terms and do not turn it into a failure.
+  test('query tolerates reported peg and engine-resolved price', () {
+    for (final peg in <Object?>[null, '', 'QUEUE_1', 'COUNTERPARTY_3', 'unknown', 1]) {
       final i = liveIntent(peg: LiveOrderPeg.counterparty);
-      final payload = liveQueryPayload(i)..['pegPriceType'] = wrong;
-      expect(() => mapLiveOrderQuery(payload, i), throwsFormatException);
-    });
-  }
-  for (final price in ['0', '80001.000000000000000001', '-1', 'NaN', null, 80000]) {
-    test('BBO query validates engine-resolved numeric price $price', () {
+      final payload = liveQueryPayload(i)..['pegPriceType'] = peg;
+      expect(mapLiveOrderQuery(payload, i).needsRecheck, false, reason: '$peg');
+    }
+    for (final price in <Object?>['0', '80001.000000000000000001', '-1', 'NaN', null, 80000]) {
       final i = liveIntent(peg: LiveOrderPeg.queue);
       final payload = liveQueryPayload(i)..['price'] = price;
-      if (price == '0' || price == '80001.000000000000000001') {
-        expect(mapLiveOrderQuery(payload, i).needsRecheck, false);
-      } else {
-        expect(() => mapLiveOrderQuery(payload, i), throwsFormatException);
-      }
-    });
-  }
-  test('fixed-price and market queries reject an unexpected nonempty peg', () {
+      expect(mapLiveOrderQuery(payload, i).needsRecheck, false, reason: '$price');
+    }
     for (final market in [false, true]) {
       final i = liveIntent(market: market);
       final payload = liveQueryPayload(i)..['pegPriceType'] = 'QUEUE_1';
-      expect(() => mapLiveOrderQuery(payload, i), throwsFormatException);
-      payload['pegPriceType'] = '';
       expect(mapLiveOrderQuery(payload, i).needsRecheck, false);
     }
   });

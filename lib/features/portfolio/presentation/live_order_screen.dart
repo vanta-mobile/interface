@@ -9,12 +9,14 @@ import '../application/order_entry_gate_provider.dart';
 import '../../auth/application/auth_provider.dart';
 import '../application/live_order_provider.dart';
 import '../domain/live_order_entry_mode.dart';
+import 'hedge_intent_switch.dart';
 import 'live_order_form.dart';
 import 'live_order_mode_selector.dart';
 import 'scaled_order_embedded.dart';
 import '../../trade/presentation/widgets/trade_order_pending.dart';
 import '../../trade/presentation/widgets/trade_account_settings.dart';
 import '../../trade/application/providers.dart' show orderPriceProvider, symbolProvider;
+import '../domain/futures_position_mode.dart';
 import '../domain/live_order.dart';
 
 class LiveOrderScreen extends ConsumerStatefulWidget {
@@ -29,12 +31,18 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
 
   /// The ordinary form keeps its last inline type while Scaled Order shows.
   LiveOrderEntryMode inlineMode = LiveOrderEntryMode.limit;
+
+  /// Hedge mode only: the Close segment reduces the LONG/SHORT position.
+  bool closing = false;
   String get symbol => widget.symbol;
 
   @override
   void didUpdateWidget(covariant LiveOrderScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.symbol != symbol) mode = inlineMode = LiveOrderEntryMode.limit;
+    if (oldWidget.symbol != symbol) {
+      mode = inlineMode = LiveOrderEntryMode.limit;
+      closing = false;
+    }
   }
 
   void _selectMode(LiveOrderEntryMode next) {
@@ -70,6 +78,7 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
             key: ValueKey((data.address, data.symbol)),
             data: data,
             mode: inlineMode,
+            closing: closing,
             onModeChanged: (next) => setState(() => mode = inlineMode = next),
           ),
         ),
@@ -101,7 +110,12 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
         ),
       ),
       (previous, next) {
-        if (previous != next) setState(() => mode = inlineMode = LiveOrderEntryMode.limit);
+        if (previous != next) {
+          setState(() {
+            mode = inlineMode = LiveOrderEntryMode.limit;
+            closing = false;
+          });
+        }
       },
     );
   }
@@ -122,10 +136,21 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
         ? refresh.failure ?? state.failure ?? data?.fundsFailure ?? capacity.failure
         : null;
     final failed = readFailure != null && (data == null || readFailure.requiresAuthorization);
+    final settingsEnabled =
+        (!refresh.loading || refresh.background) &&
+        (!state.busy || refresh.background && state.intent == null) &&
+        !auth.busy;
     return Column(
       key: const Key('trade-live-order'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (data?.mode == FuturesPositionMode.hedge) ...[
+          HedgeIntentSwitch(
+            closing: closing,
+            onChanged: settingsEnabled ? (value) => setState(() => closing = value) : null,
+          ),
+          const SizedBox(height: 8),
+        ],
         TradeAccountSettings(
           symbol: symbol,
           data: data,
@@ -145,10 +170,10 @@ class _LiveOrderScreenState extends ConsumerState<LiveOrderScreen> {
               !auth.busy,
           onSelected: _selectMode,
         ),
-        if (data != null) ...[
-          const SizedBox(height: 16),
-          _orderForm(data, visible: !failed),
-        ] else if (!failed)
+        // The form and the pending form each start with the design's 8px gap.
+        if (data != null)
+          _orderForm(data, visible: !failed)
+        else if (!failed)
           TradeOrderPending(
             symbol: symbol,
             market: mode.marketExecution,

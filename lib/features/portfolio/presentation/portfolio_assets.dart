@@ -21,10 +21,10 @@ import '../domain/position_risk.dart';
 import '../../../core/errors/error_text.dart';
 import 'portfolio_asset_row.dart';
 import 'batch_close_controls.dart';
-import 'batch_close_status.dart';
 import '../../../core/presentation/status_view.dart';
 import '../../funding/domain/funding_catalog.dart';
 import '../../funding/presentation/funding_screen.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 class PortfolioAssetTabs extends StatelessWidget {
   const PortfolioAssetTabs({
@@ -129,6 +129,7 @@ class PortfolioPositionList extends ConsumerWidget {
             preview: preview,
             hasPositions: all?.isNotEmpty == true,
             onCloseAll: canCloseAll ? () => confirmBatchClose(context, ref, symbol: symbol) : null,
+            closing: ref.watch(batchCloseProvider).busy,
             hideOther: hideOther,
             onHideOther: onHideOther,
           ),
@@ -171,7 +172,6 @@ class PortfolioPositionList extends ConsumerWidget {
             },
           ),
         // Progress and per-position results of a confirmed close-all.
-        if (!preview) const SliverToBoxAdapter(child: BatchCloseStatus()),
       ],
     );
   }
@@ -205,8 +205,12 @@ class _PositionControls extends StatelessWidget {
     required this.hideOther,
     required this.onHideOther,
     required this.onCloseAll,
+    this.closing = false,
   });
   final bool preview, hasPositions, hideOther;
+
+  /// A confirmed close is running; its outcome is shown as a toast.
+  final bool closing;
   final ValueChanged<bool> onHideOther;
   final VoidCallback? onCloseAll;
 
@@ -216,27 +220,29 @@ class _PositionControls extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: InkWell(
-            key: const Key('portfolio-hide-other-symbols'),
-            onTap: () => onHideOther(!hideOther),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 30,
-                  height: 44,
-                  child: Checkbox(
-                    value: hideOther,
-                    onChanged: (v) => onHideOther(v ?? false),
-                    side: const BorderSide(color: PortfolioColors.secondary, width: .7),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.6)),
-                    visualDensity: VisualDensity.compact,
+          child: NoPressFeedback(
+            child: InkWell(
+              key: const Key('portfolio-hide-other-symbols'),
+              onTap: () => onHideOther(!hideOther),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 30,
+                    height: 44,
+                    child: Checkbox(
+                      value: hideOther,
+                      onChanged: (v) => onHideOther(v ?? false),
+                      side: const BorderSide(color: PortfolioColors.secondary, width: .7),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.6)),
+                      visualDensity: VisualDensity.compact,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(l.portfolioHideOtherSymbols, style: PortfolioTypography.caption),
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(l.portfolioHideOtherSymbols, style: PortfolioTypography.caption),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -244,14 +250,20 @@ class _PositionControls extends StatelessWidget {
           TextButton(
             key: const Key('portfolio-close-all'),
             onPressed: preview ? () => portfolioPreviewNotice(context) : onCloseAll,
-            child: Text(
-              l.portfolioCloseAll,
-              style: PortfolioTypography.caption.copyWith(
-                color: preview || onCloseAll != null
-                    ? PortfolioColors.negative
-                    : PortfolioColors.muted,
-              ),
-            ),
+            child: closing
+                ? const SizedBox.square(
+                    key: Key('portfolio-close-all-loading'),
+                    dimension: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(
+                    l.portfolioCloseAll,
+                    style: PortfolioTypography.caption.copyWith(
+                      color: preview || onCloseAll != null
+                          ? PortfolioColors.negative
+                          : PortfolioColors.muted,
+                    ),
+                  ),
           ),
       ],
     );
@@ -348,35 +360,37 @@ class _LowBalanceFilter extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     checked: value,
-    child: InkWell(
-      key: const Key('portfolio-hide-small-assets'),
-      onTap: () => onChanged(!value),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 44),
-        child: Row(
-          children: [
-            SizedBox.square(
-              dimension: 14,
-              child: Transform.scale(
-                scale: 14 / 18,
-                child: Checkbox(
-                  value: value,
-                  onChanged: (v) => onChanged(v ?? false),
-                  side: const BorderSide(color: PortfolioColors.secondary, width: .7),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.6)),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
+    child: NoPressFeedback(
+      child: InkWell(
+        key: const Key('portfolio-hide-small-assets'),
+        onTap: () => onChanged(!value),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: Row(
+            children: [
+              SizedBox.square(
+                dimension: 14,
+                child: Transform.scale(
+                  scale: 14 / 18,
+                  child: Checkbox(
+                    value: value,
+                    onChanged: (v) => onChanged(v ?? false),
+                    side: const BorderSide(color: PortfolioColors.secondary, width: .7),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.6)),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                AppLocalizations.of(context).portfolioHideLowBalances,
-                style: PortfolioTypography.caption,
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context).portfolioHideLowBalances,
+                  style: PortfolioTypography.caption,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ),

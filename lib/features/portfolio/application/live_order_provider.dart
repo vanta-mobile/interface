@@ -168,6 +168,7 @@ class LiveOrderController extends Notifier<LiveOrderState> {
           staleRevision != _staleRevision ||
           age < Duration.zero ||
           age >= const Duration(seconds: 30);
+      _contextEpochs[context] = ref.read(symbolSettingsActivityProvider).epoch;
       state = LiveOrderState(context: context, stale: stale);
       if (!stale) _expiry = Timer(const Duration(seconds: 30) - age, markStale);
     } catch (error) {
@@ -178,6 +179,75 @@ class LiveOrderController extends Notifier<LiveOrderState> {
       activity.finish(lease);
       if (_readLease == lease) _readLease = null;
     }
+  }
+
+  bool _usable(LiveOrderIntent intent) =>
+      !state.busy && intent.revision == _revision && state.context == intent.context;
+
+  /// Settings epoch each context was read in. A settings write after the
+  /// review changes the confirmed terms, so that review is not renewed.
+  final _contextEpochs = Expando<int>();
+
+  void _refuse(String key) {
+    state = LiveOrderState(
+      context: state.context,
+      stale: state.stale,
+      failure: AccountReadFailure(key),
+    );
+  }
+
+  Future<LiveOrderIntent?> _renew(LiveOrderIntent intent) async {
+    final reviewedEpoch = _contextEpochs[intent.context];
+    if (reviewedEpoch != null && reviewedEpoch != ref.read(symbolSettingsActivityProvider).epoch) {
+      _refuse('liveAllocationChanged');
+      return null;
+    }
+    // A read already running for this form settles first.
+    for (var i = 0; i < 300 && ref.mounted && state.busy && state.intent == null; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    if (!ref.mounted || state.busy) return null;
+    final context = state.context;
+    if (context == null || !_fresh(context) || context.symbol != intent.context.symbol) {
+      await load(intent.context.symbol, allowDuringReview: true);
+      if (!ref.mounted) return null;
+    }
+    final next = state.context;
+    // A changed account configuration, or a changed position for a close,
+    // changes what the confirmed terms would do.
+    if (next != null &&
+        (next.leverage != intent.context.leverage ||
+            next.marginMode != intent.context.marginMode ||
+            next.mode != intent.context.mode ||
+            intent.draft.reducing &&
+                intent.context.positions.keys
+                    .followedBy(next.positions.keys)
+                    .any(
+                      (side) =>
+                          next.positions[side]?.quantity !=
+                              intent.context.positions[side]?.quantity ||
+                          next.positions[side]?.entryPrice !=
+                              intent.context.positions[side]?.entryPrice,
+                    ))) {
+      _refuse(intent.draft.reducing ? 'liveClosePositionChanged' : 'liveAllocationChanged');
+      return null;
+    }
+    final renewed = prepare(
+      intent.context.symbol,
+      intent.draft,
+      clientOrderId: intent.clientOrderId,
+    );
+    if (renewed == null && ref.mounted && !state.busy) {
+      final current = state.context;
+      state = LiveOrderState(
+        context: current,
+        stale: state.stale,
+        failure:
+            state.failure ??
+            AccountReadFailure(current?.validate(intent.draft) ?? 'liveAllocationChanged'),
+      );
+    }
+    return renewed;
   }
 
   /// Cancels only a context read; an attempted order must use its own recovery.
@@ -222,6 +292,15 @@ class LiveOrderController extends Notifier<LiveOrderState> {
   }
 
   Future<void> submit(LiveOrderIntent intent, {bool Function()? submitGuard}) async {
+    // A fixed confirmation keeps its terms, not its facts: facts that expired
+    // or were replaced while it was open are read again for the same draft and
+    // client ID instead of rejecting the click; the renewed account facts price
+    // it. Guarded (allocation) callers renew their own.
+    if (submitGuard == null && !(_usable(intent) && _fresh(intent.context))) {
+      final renewed = await _renew(intent);
+      if (renewed == null) return;
+      intent = renewed;
+    }
     bool allowed() {
       try {
         return submitGuard?.call() ?? true;

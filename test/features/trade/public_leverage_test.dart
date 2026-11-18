@@ -10,16 +10,17 @@ void main() {
     final values = mapPublicLeverage(
       jsonDecode(File('docs/reference/public-market-leverage-sample.json').readAsStringSync()),
     );
-    expect(values['BTCUSDT']!.defaultLeverage(), 20);
-    expect(values['ETHUSDT']!.defaultLeverage(), 20);
+    expect(values['BTCUSDT']!.defaultLeverage(), 10);
+    expect(values['ETHUSDT']!.defaultLeverage(), 10);
     expect(values['SUSHIUSDT']!.defaultLeverage(), 5);
     expect(values['SBETUSDT']!.defaultLeverage(), 10);
   });
-  test('prefer 20x, fall back only to supported leverage including gaps', () {
-    expect(PublicLeverage([(1, 200)]).defaultLeverage(), 20);
+  test('prefer 10x, fall back only to supported leverage including gaps', () {
+    expect(PublicLeverage([(1, 200)]).defaultLeverage(), 10);
     expect(PublicLeverage([(1, 5)]).defaultLeverage(), 5);
     expect(PublicLeverage([(1, 10)]).defaultLeverage(), 10);
     expect(PublicLeverage([(1, 5), (25, 50)]).defaultLeverage(), 5);
+    expect(PublicLeverage([(1, 5), (8, 50)]).defaultLeverage(), 10);
     expect(PublicLeverage([(25, 50)]).defaultLeverage(), 25);
   });
   Map<String, Object?> payload(Object? rows) => {
@@ -35,7 +36,7 @@ void main() {
   };
   test('map public catalog independently per market', () {
     final values = mapPublicLeverage(payload([row('BTCUSDT', 1, 200), row('SUSHIUSDT', 1, 5)]));
-    expect(values['BTCUSDT']!.defaultLeverage(), 20);
+    expect(values['BTCUSDT']!.defaultLeverage(), 10);
     expect(values['SUSHIUSDT']!.defaultLeverage(), 5);
     expect(() => values.clear(), throwsUnsupportedError);
   });

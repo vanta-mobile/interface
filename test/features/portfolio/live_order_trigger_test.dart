@@ -196,12 +196,12 @@ void main() {
     expect(() => mapLiveOrderRules(payload, 'BTCUSDT'), throwsFormatException);
   });
 
-  test('query verifies original conditional identity, trigger, basis, protection and quantity', () {
+  test('query tolerates normalized conditional terms for the same client ID', () {
     final intent = liveIntent(
       trigger: const LiveOrderTrigger(kind: LiveOrderTriggerKind.stop, price: '81000'),
     );
     final payload = liveQueryPayload(intent);
-    for (final bad in <String, Object?>{
+    for (final normalized in <String, Object?>{
       'origType': 'TAKE_PROFIT',
       'type': 'STOP_MARKET',
       'stopPrice': '81000.1',
@@ -213,15 +213,15 @@ void main() {
       'timeInForce': 'IOC',
     }.entries) {
       expect(
-        () => mapLiveOrderQuery({...payload, bad.key: bad.value}, intent),
-        throwsFormatException,
-        reason: bad.key,
+        mapLiveOrderQuery({...payload, normalized.key: normalized.value}, intent).status,
+        'NEW',
+        reason: normalized.key,
       );
     }
     final market = liveIntent(market: true, trigger: intent.draft.trigger);
     expect(
-      () => mapLiveOrderQuery({...liveQueryPayload(market), 'timeInForce': 'IOC'}, market),
-      throwsFormatException,
+      mapLiveOrderQuery({...liveQueryPayload(market), 'timeInForce': 'IOC'}, market).status,
+      'NEW',
     );
   });
 

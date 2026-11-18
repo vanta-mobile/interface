@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../trade/presentation/trade_theme.dart';
 import '../../trade/presentation/widgets/trade_icon.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 /// Labeled 14 px checkbox from the Futures design, e.g. "Hide other symbols"
 /// above the order and position lists or a TP/SL leg's "Limit order".
@@ -31,30 +32,32 @@ class TradeCheckOption extends StatelessWidget {
     final text = Text(label, style: TradeTypography.body.copyWith(color: TradeColors.secondary));
     final option = Semantics(
       checked: value,
-      child: InkWell(
-        key: tapKey,
-        onTap: () => onChanged(!value),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: minHeight),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 14,
-                height: 14,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: value ? TradeColors.accent : null,
-                  border: value ? null : Border.all(color: TradeColors.secondary, width: .7),
-                  borderRadius: BorderRadius.circular(5.6),
+      child: NoPressFeedback(
+        child: InkWell(
+          key: tapKey,
+          onTap: () => onChanged(!value),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: minHeight),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 14,
+                  height: 14,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: value ? TradeColors.accent : null,
+                    border: value ? null : Border.all(color: TradeColors.secondary, width: .7),
+                    borderRadius: BorderRadius.circular(5.6),
+                  ),
+                  child: value
+                      ? const TradeIcon('check', size: 9, color: TradeColors.background)
+                      : null,
                 ),
-                child: value
-                    ? const TradeIcon('check', size: 9, color: TradeColors.background)
-                    : null,
-              ),
-              const SizedBox(width: 6),
-              if (inline) text else Flexible(child: text),
-            ],
+                const SizedBox(width: 6),
+                if (inline) text else Flexible(child: text),
+              ],
+            ),
           ),
         ),
       ),

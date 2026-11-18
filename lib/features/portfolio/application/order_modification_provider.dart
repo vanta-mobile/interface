@@ -75,7 +75,15 @@ class OrderModificationController extends Notifier<OrderModificationState> {
         !cancellation.busy &&
         !snapshot.busy &&
         snapshot.account?.address.toLowerCase() == address.toLowerCase() &&
-        snapshot.account?.orders.contains(order) == true;
+        snapshot.account!.orders.any(
+          // Reads replace instances; match identity and the terms being edited.
+          (o) =>
+              o.symbol == order.symbol &&
+              o.orderId == order.orderId &&
+              o.price == order.price &&
+              o.origQty == order.origQty &&
+              o.executedQty == order.executedQty,
+        );
   }
 
   /// Submits once. Returns null when the operation was superseded (logout,

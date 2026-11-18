@@ -5,6 +5,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
 import '../../trade/presentation/widgets/trade_option_sheet.dart';
 import '../domain/live_order_time_in_force.dart';
+import 'live_order_embedded_controls.dart';
 import 'mode_settings_sheet.dart';
 import 'order_choice_sheet.dart';
 
@@ -17,8 +18,12 @@ class EmbeddedTimeInForceSelector extends StatelessWidget {
     required this.available,
     required this.onChanged,
     this.onTap,
+    this.inactive = false,
   });
   final LiveOrderTimeInForce selected;
+
+  /// Muted while Hidden Order overrides the choice; picking one clears it.
+  final bool inactive;
   final Set<LiveOrderTimeInForce> available;
   final ValueChanged<LiveOrderTimeInForce>? onChanged;
 
@@ -44,12 +49,16 @@ class EmbeddedTimeInForceSelector extends StatelessWidget {
       child: InkWell(
         onTap: onTap ?? (onChanged == null ? null : () => _select(context)),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+          // Matches the Advanced check rows so every row has one height.
+          constraints: const BoxConstraints(minWidth: 44, minHeight: embeddedCheckRowHeight),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(selected.wire, style: TradeTypography.caption),
+              Text(
+                selected.wire,
+                style: TradeTypography.caption.copyWith(color: inactive ? TradeColors.muted : null),
+              ),
               const SizedBox(width: 4),
               SvgPicture.asset('assets/trade/policy-caret.svg'),
             ],

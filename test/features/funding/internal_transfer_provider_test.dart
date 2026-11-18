@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/core/errors/api_error_details.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/portfolio/application/account_change_provider.dart';
@@ -266,6 +267,21 @@ void main() {
     expect(controller().prepare(), isNotNull); // the user may explicitly try again
     expect(repository.posts, 1);
   });
+  transferTest('an explicit Aster refusal clears the record and keeps its error', (tester) async {
+    repository.submitFailure = const AccountReadFailure(
+      'accountPermissionRequired',
+      code: -2015,
+      details: ApiErrorDetails(
+        status: 401,
+        message: 'Invalid API-key, IP, or permissions for action.',
+      ),
+    );
+    await controller().confirm(await review());
+    expect(repository.posts, 1);
+    expect(journal.snapshot.records, isEmpty);
+    expect(state().failure, 'accountPermissionRequired');
+    expect(state().errorDetails?.message, 'Invalid API-key, IP, or permissions for action.');
+  });
   transferTest('known response with failed account check can only recheck then releases lock', (
     tester,
   ) async {
@@ -398,13 +414,16 @@ void main() {
       expect(c.read(spotAccountReadProvider).account, same(state().context!.spot));
     },
   );
-  transferTest('unknown and final read failure preserve amount until known success recovery', (
+  transferTest('failed balance refresh after an accepted transfer still reports success', (
     tester,
   ) async {
     final r = await review();
     repository.readFailure = const AccountReadFailure('accountNetwork');
     await controller().confirm(r);
-    expect(state().amount, '1.01');
+    expect(state().failure, null);
+    expect(state().record?.reply, isNotNull);
+    expect(state().amount, '');
+    expect(state().stale, true);
     expect(journal.snapshot.records.single.reply, isNotNull);
     repository.readFailure = null;
     await controller().load();

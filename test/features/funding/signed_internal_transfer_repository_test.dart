@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
+import 'package:vanta/features/auth/domain/wallet_signing_preparation.dart';
 import 'package:vanta/features/funding/data/signed_internal_transfer_repository.dart';
 import 'package:vanta/features/funding/domain/internal_transfer.dart';
 import 'package:vanta/features/portfolio/data/aster_account_service.dart';
@@ -15,6 +16,17 @@ import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import '../../support/aster_account.dart';
 import '../../support/internal_transfer.dart';
 import '../../support/wallet_connection.dart';
+
+class _Network implements WalletSigningPreparation {
+  _Network(this.chains);
+  final List<int> chains;
+  @override
+  Future<void> prepareSigning({
+    required String expectedAddress,
+    required int chainId,
+    required bool Function() isCurrent,
+  }) async => chains.add(chainId);
+}
 
 void main() {
   final time = DateTime.utc(2026, 11, 4, 8);
@@ -140,6 +152,45 @@ void main() {
       expect(params['signer'], accountAddress);
     }
   });
+  test('agent signs the account reads; the owner signs the transfer on BNB Chain', () async {
+    const agent = '0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF';
+    final agentSigned = <Map<String, Object?>>[], network = <int>[];
+    repository = SignedInternalTransferRepository(
+      futures,
+      spot,
+      catalog,
+      ({required expectedAddress, required typedData}) async {
+        expect(expectedAddress, accountAddress);
+        expect(network, [56]);
+        signatures.add(typedData);
+        return signature;
+      },
+      nonces: AsterReadNonces(),
+      authorization: (owner) async {
+        expect(owner, accountAddress);
+        return AccountRequestIdentity(
+          address: agent,
+          sign: ({required expectedAddress, required typedData}) async {
+            expect(expectedAddress, agent);
+            agentSigned.add(typedData);
+            return signature;
+          },
+        );
+      },
+      signingPreparation: _Network(network),
+      now: () => now,
+    );
+    await submit(await read());
+    // Three reads for the review and three repeated before the transfer.
+    expect(agentSigned, hasLength(6));
+    expect(agentSigned.every((d) => (d['domain'] as Map)['chainId'] == 1666), true);
+    expect(signatures, hasLength(1));
+    expect((signatures.single['domain'] as Map)['chainId'], 56);
+    final params = Uri.splitQueryString(requests.singleWhere((r) => r.method == 'POST').body);
+    expect(params['user'], accountAddress);
+    expect(params['signer'], accountAddress);
+    expect(params['signatureChainId'], '56');
+  });
   for (final d in InternalTransferDirection.values) {
     test(
       'exact one form POST for $d and ten signatures including final two-account read',
@@ -160,6 +211,7 @@ void main() {
           'nonce',
           'user',
           'signer',
+          'signatureChainId',
           'signature',
         });
         expect(params['amount'], '1.01');
@@ -168,6 +220,8 @@ void main() {
         expect(params['kindType'], d.wire);
         expect(params['user'], accountAddress);
         expect(params['signer'], accountAddress);
+        expect(params['signatureChainId'], '56');
+        expect((signatures[6]['domain'] as Map)['chainId'], 56);
         expect(post.url.query, isEmpty);
         expect(post.headers['content-type'], contains('application/x-www-form-urlencoded'));
         expect(post.body.split('&signature=').first, (signatures[6]['message'] as Map)['msg']);

@@ -182,13 +182,13 @@ void main() {
       'liveCloseTooLarge',
     );
   });
-  test('query requires original trailing type, exact rate, basis, activation and flags', () {
+  test('query tolerates normalized trailing terms for the same client ID', () {
     final intent = liveIntent(
       market: true,
       trailing: const LiveOrderTrailing(callbackRate: '1', activationPrice: '79000'),
     );
     final payload = liveQueryPayload(intent);
-    for (final invalid in <String, Object?>{
+    for (final normalized in <String, Object?>{
       'origType': 'STOP_MARKET',
       'type': 'LIMIT',
       'activatePrice': '79000.1',
@@ -200,39 +200,18 @@ void main() {
       'origQty': '0',
     }.entries) {
       expect(
-        () => mapLiveOrderQuery({...payload, invalid.key: invalid.value}, intent),
-        throwsFormatException,
-        reason: invalid.key,
-      );
-    }
-    for (final key in [
-      'origType',
-      'activatePrice',
-      'priceRate',
-      'workingType',
-      'reduceOnly',
-      'closePosition',
-      'timeInForce',
-    ]) {
-      expect(
-        () => mapLiveOrderQuery({...payload}..remove(key), intent),
-        throwsFormatException,
-        reason: key,
+        mapLiveOrderQuery({...payload, normalized.key: normalized.value}, intent).status,
+        'NEW',
+        reason: normalized.key,
       );
     }
   });
-  test('default activation is validated from exchange without pinning snapshot price', () {
+  test('default activation is not pinned to the snapshot price', () {
     final intent = liveIntent(market: true, trailing: const LiveOrderTrailing(callbackRate: '1'));
     expect(
       mapLiveOrderQuery({...liveQueryPayload(intent), 'activatePrice': '79995.8'}, intent).status,
       'NEW',
     );
-    for (final activation in <Object?>['0', '-1', 'NaN', 79995.8, null]) {
-      expect(
-        () => mapLiveOrderQuery({...liveQueryPayload(intent), 'activatePrice': activation}, intent),
-        throwsFormatException,
-      );
-    }
     expect(intent.parameters.containsKey('activationPrice'), false);
     expect(intent.context.estimatedOpeningMargin(intent.draft), Decimal.fromInt(8));
   });

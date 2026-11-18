@@ -7,8 +7,10 @@ import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
+import '../../trade/presentation/widgets/account_sheet.dart';
 import '../application/trading_authorization_provider.dart';
 import '../domain/trading_authorization.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 void openTradingAuthorization(BuildContext context) =>
     Navigator.of(context)
@@ -66,14 +68,16 @@ class _TradingAuthorizationScreenState extends ConsumerState<TradingAuthorizatio
             const SizedBox(height: 12),
             if (auth.identity?.walletAddress case final address?) SelectableText(address),
             const SizedBox(height: 12),
-            CheckboxListTile(
-              key: const Key('authorization-withdraw-toggle'),
-              contentPadding: EdgeInsets.zero,
-              value: canWithdraw,
-              onChanged: s.busy || s.review != null
-                  ? null
-                  : (v) => setState(() => canWithdraw = v ?? false),
-              title: Text(l.authorizationWithdrawOption),
+            NoPressFeedback(
+              child: CheckboxListTile(
+                key: const Key('authorization-withdraw-toggle'),
+                contentPadding: EdgeInsets.zero,
+                value: canWithdraw,
+                onChanged: s.busy || s.review != null
+                    ? null
+                    : (v) => setState(() => canWithdraw = v ?? false),
+                title: Text(l.authorizationWithdrawOption),
+              ),
             ),
             if (canWithdraw) ...[
               Text(l.authorizationWithdrawScope),
@@ -90,8 +94,13 @@ class _TradingAuthorizationScreenState extends ConsumerState<TradingAuthorizatio
               key: const Key('authorization-prepare'),
               onPressed: s.busy || auth.busy || auth.identity?.walletAddress == null
                   ? null
-                  : () => controller.prepare(canWithdraw: canWithdraw, ipWhitelist: ip.text),
-              child: Text(l.authorizationEnable),
+                  : walletConnectionAction(context, ref, auth.identity) ??
+                        () => controller.prepare(canWithdraw: canWithdraw, ipWhitelist: ip.text),
+              child: Text(
+                auth.identity?.needsWalletConnection == true
+                    ? l.reconnectExternalWallet
+                    : l.authorizationEnable,
+              ),
             ),
             OutlinedButton(
               key: const Key('authorization-check'),

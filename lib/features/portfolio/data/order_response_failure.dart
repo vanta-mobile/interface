@@ -8,17 +8,6 @@ AccountReadFailure orderResponseFailure(FormatException failure, String endpoint
     'Strategy identity mismatch' ||
     'Strategy leg identity mismatch' ||
     'Order identity mismatch' => 'orderResponseIdentityMismatch',
-    'Strategy linkage mismatch' => 'orderResponseLinkageMismatch',
-    'Strategy peg mismatch' ||
-    'Strategy leg type mismatch' ||
-    'Strategy decimal mismatch' ||
-    'Strategy leg policy mismatch' ||
-    'Order peg mismatch' ||
-    'BBO order scope mismatch' ||
-    'Quick order scope mismatch' ||
-    'Conditional order terms mismatch' ||
-    'Trailing order terms mismatch' ||
-    'Invalid order quantity' => 'orderResponseTermsMismatch',
     'Invalid strategy status' || 'Invalid order status' => 'orderResponseStatusInvalid',
     _ => 'orderResponseMalformed',
   };

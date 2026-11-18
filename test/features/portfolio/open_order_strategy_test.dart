@@ -33,6 +33,10 @@ Map<String, Object?> _leg(int sub, Object orderId, String type, String stop) => 
   'symbol': 'BTCUSDT',
   'type': type,
   'stopPrice': stop,
+  'side': sub == 1 ? 'BUY' : 'SELL',
+  'status': sub == 1 ? 'FILLED' : 'NEW',
+  'quantity': '0.02',
+  'reduceOnly': sub != 1,
 };
 
 Map<String, Object?> _strategy({String type = 'OTOCO', Object entryId = 1917641}) => {
@@ -94,6 +98,29 @@ void main() {
       }, _order({}));
       expect(exit.sequence, 2);
       expect(exit.entry, isFalse);
+    });
+
+    test('every leg is kept, in sequence, for the order-details sheet', () {
+      final legs = mapOpenOrderStrategy(_strategy(), _order({})).legs;
+      expect(legs.map((leg) => leg.sequence), [1, 2, 3]);
+      expect(legs.map((leg) => leg.type), ['LIMIT', 'TAKE_PROFIT_MARKET', 'STOP_MARKET']);
+      expect(legs.map((leg) => leg.status), ['FILLED', 'NEW', 'NEW']);
+      expect(legs.map((leg) => leg.buy), [true, false, false]);
+      expect(legs.first.quantity, Decimal.parse('0.02'));
+      expect(legs.first.stopPrice, isNull);
+      expect(legs[1].stopPrice, Decimal.parse('372.86'));
+      expect(legs.map((leg) => leg.reduceOnly), [false, true, true]);
+    });
+
+    test('an incomplete leg drops only the leg details, not the TP/SL', () {
+      for (final field in ['side', 'status', 'quantity']) {
+        final payload = _strategy();
+        ((payload['subOrders'] as List)[2] as Map).remove(field);
+        final strategy = mapOpenOrderStrategy(payload, _order({}));
+        expect(strategy.legs, isEmpty, reason: field);
+        expect(strategy.takeProfit, Decimal.parse('372.86'));
+        expect(strategy.stopLoss, Decimal.parse('41.43'));
+      }
     });
 
     test('a strategy that does not contain the order is rejected', () {

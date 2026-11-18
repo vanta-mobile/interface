@@ -22,6 +22,7 @@ void main() {
   late Object? queryPayload;
   late int queryStatus;
   late bool deleteTimeout, current;
+  late Object? deletePayload;
   late int refusedSignature;
   Completer<http.Response>? deleteGate;
 
@@ -31,6 +32,7 @@ void main() {
     queryPayload = [];
     queryStatus = 200;
     deleteTimeout = false;
+    deletePayload = {'code': '200', 'msg': 'done'};
     current = true;
     refusedSignature = 0;
     deleteGate = null;
@@ -46,7 +48,7 @@ void main() {
         if (request.method == 'DELETE') {
           expect(request.url.path, '/fapi/v3/allOpenOrders');
           if (deleteTimeout) throw TimeoutException('raw error');
-          return deleteGate?.future ?? http.Response('{"code":"200","msg":"done"}', 200);
+          return deleteGate?.future ?? http.Response(jsonEncode(deletePayload), 200);
         }
         expect(request.method, 'GET');
         expect(request.url.path, '/fapi/v3/openOrders');
@@ -66,7 +68,7 @@ void main() {
   });
   tearDown(() => service.close());
 
-  test('symbol-bound DELETE and GET sign exact query bytes with distinct nonces', () async {
+  test('symbol-bound DELETE signs exact query bytes; explicit success clears the scope', () async {
     final result = await repository.cancelSymbol(
       address: accountAddress,
       symbol: 'BTCUSDT',
@@ -77,7 +79,8 @@ void main() {
     expect(result.submitted, true);
     expect(result.snapshot!.orders, isEmpty);
     expect(result.snapshot, isNotNull);
-    expect(requests.map((r) => r.method), ['GET', 'DELETE', 'GET', 'GET']);
+    expect(requests.map((r) => r.method), ['GET', 'DELETE']);
+    expect(result.snapshot!.units['BTCUSDT']?.base, 'BTC');
     final signed = requests.where((r) => !r.url.path.endsWith('/time')).toList();
     for (var i = 0; i < signed.length; i++) {
       final query = signed[i].url.queryParameters;
@@ -89,10 +92,11 @@ void main() {
       expect(signed[i].url.query.split('&signature=').first, messages[i]);
       expect(signed[i].body, isEmpty);
     }
-    expect(signed.map((r) => r.url.queryParameters['nonce']).toSet().length, 2);
+    expect(signed.single.url.queryParameters['nonce'], isNotNull);
   });
 
-  test('success acknowledgement does not hide remaining or newly created orders', () async {
+  test('an unconfirmed DELETE response reads back remaining orders', () async {
+    deletePayload = {'msg': 'no code'};
     queryPayload = [
       openOrder(status: 'PARTIALLY_FILLED', executedQty: '0.123456789012345678'),
       openOrder(id: 123),
@@ -155,6 +159,7 @@ void main() {
       expect(refused.failure?.key, 'authWalletRejected');
       expect(requests.where((r) => !r.url.path.endsWith('/time')), isEmpty);
       messages.clear();
+      deletePayload = {'code': 503};
       refusedSignature = 2;
       final uncertain = await repository.cancelSymbol(
         address: accountAddress,
@@ -209,6 +214,7 @@ void main() {
   });
 
   test('separate symbols share a monotonic nonce allocator and never use a Spot path', () async {
+    deletePayload = null;
     for (final symbol in ['BTCUSDT', 'ETHUSDT']) {
       await repository.cancelSymbol(
         address: accountAddress,

@@ -1,4 +1,3 @@
-import '../../funding/presentation/internal_transfer_entry.dart';
 import '../../funding/presentation/funding_info_screen.dart';
 import '../../funding/domain/transfer_history.dart';
 
@@ -88,7 +87,6 @@ class SpotAccountPanel extends ConsumerWidget {
           ],
         ),
         const FundingInfoEntry(market: TransferMarket.spot),
-        const InternalTransferEntry(),
         const TransferHistoryEntry(),
         if (state.account case final account?) ...[
           const SizedBox(height: 24),

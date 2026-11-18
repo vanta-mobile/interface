@@ -70,7 +70,9 @@ class _AccountReadControlsState extends ConsumerState<AccountReadControls> {
     final blocked = !widget.enabled || state.busy || session.busy || streamSigning;
     final needsAccount = identity == null || address == null || !canSign;
     final read = needsAccount ? () => showAccountSheet(context) : widget.onRead;
-    final failure = state.failure;
+    // An account Aster has not opened yet (no deposit) has nothing to read;
+    // its sections show no data rather than a read failure.
+    final failure = state.failure?.requiresDeposit == true ? null : state.failure;
     final showFailureView =
         widget.failureView &&
         state.account == null &&

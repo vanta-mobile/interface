@@ -156,12 +156,15 @@ void main() {
     await pending;
     expect(container.read(liveOrderProvider).result?.orderId, '12345');
   });
-  test('backgrounding an idle review invalidates its confirmation', () async {
+  test('backgrounding an idle review renews its facts on confirm instead of rejecting', () async {
     await controller().load('BTCUSDT');
     final old = intent();
     controller().onLifecycleChanged();
+    final reads = repository.reads;
     await controller().submit(old);
-    expect(repository.submits, 0);
+    expect(repository.reads, reads + 1);
+    expect(repository.submits, 1);
+    expect(container.read(liveOrderProvider).intent?.clientOrderId, old.clientOrderId);
   });
   test('duplicate confirm submits once; settings stay available during the write', () async {
     await controller().load('BTCUSDT');
@@ -248,6 +251,7 @@ void main() {
     activity.finish(lease);
     await controller().submit(old);
     expect(repository.submits, 0);
+    expect(container.read(liveOrderProvider).failure?.key, 'liveAllocationChanged');
   });
 
   test('controller validates closing direction and amount against reviewed position', () async {
@@ -265,8 +269,9 @@ void main() {
     );
     final prepared = controller().prepare('BTCUSDT', close)!;
     controller().markStale();
+    // Stale facts with an unchanged position are renewed, not rejected.
     await controller().submit(prepared);
-    expect(repository.submits, 0);
+    expect(repository.submits, 1);
   });
 
   test('refreshed position invalidates earlier close confirmation', () async {
@@ -277,6 +282,7 @@ void main() {
     await controller().load('BTCUSDT');
     await controller().submit(prepared);
     expect(repository.submits, 0);
+    expect(container.read(liveOrderProvider).failure?.key, 'liveClosePositionChanged');
     expect(
       controller().prepare(
         'BTCUSDT',

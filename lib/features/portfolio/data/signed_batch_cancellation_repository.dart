@@ -30,7 +30,7 @@ class SignedBatchCancellationRepository implements BatchOrderCancellationReposit
     var submitted = false;
     AccountReadFailure? cancelFailure;
     try {
-      await _request(service.cancelAllOrders).read(
+      final payload = await _request(service.cancelAllOrders).read(
         address: address,
         parameters: _parameters(symbol),
         isCurrent: isCurrent,
@@ -43,6 +43,20 @@ class SignedBatchCancellationRepository implements BatchOrderCancellationReposit
           });
         },
       );
+      // An explicit success leaves no open order for the symbol. Only a
+      // response that does not confirm it is looked up again.
+      if (payload is Map<String, dynamic> && '${payload['code']}' == '200') {
+        return BatchSymbolCancellation(
+          symbol: symbol,
+          submitted: true,
+          snapshot: AsterOpenOrders(
+            address: address,
+            receivedAt: DateTime.now(),
+            orders: const [],
+            units: _units(symbol, originalOrders),
+          ),
+        );
+      }
     } on AccountReadFailure catch (failure) {
       if (!isCurrent()) rethrow;
       if (!submitted) {
@@ -88,16 +102,11 @@ class SignedBatchCancellationRepository implements BatchOrderCancellationReposit
           payload.any((row) => row is! Map<String, dynamic> || row['symbol'] != symbol)) {
         throw const AccountReadFailure('accountDataInvalid');
       }
-      final units = <String, AsterContractUnits>{};
-      for (final order in originalOrders) {
-        final unit = order.units;
-        if (order.symbol == symbol && unit != null) units[symbol] = unit;
-      }
       final snapshot = mapAsterOpenOrders(
         payload,
         address: address,
         receivedAt: DateTime.now(),
-        units: units,
+        units: _units(symbol, originalOrders),
       );
       return BatchSymbolCancellation(symbol: symbol, submitted: true, snapshot: snapshot);
     } on AccountReadFailure catch (failure) {
@@ -118,6 +127,15 @@ class SignedBatchCancellationRepository implements BatchOrderCancellationReposit
       );
     }
   });
+
+  static Map<String, AsterContractUnits> _units(String symbol, Iterable<AsterOpenOrder> orders) {
+    final units = <String, AsterContractUnits>{};
+    for (final order in orders) {
+      final unit = order.units;
+      if (order.symbol == symbol && unit != null) units[symbol] = unit;
+    }
+    return units;
+  }
 
   SignedAccountRequest _request(
     Future<Object?> Function({required String query, required String signature}) send,

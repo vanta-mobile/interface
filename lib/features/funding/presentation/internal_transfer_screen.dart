@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
+import '../../authorization/application/trading_agent_provider.dart';
+import '../../authorization/domain/trading_agent.dart';
+import '../../authorization/presentation/enable_trading_screen.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
 import '../application/internal_transfer_provider.dart';
 import '../application/internal_transfer_storage_provider.dart';
@@ -56,18 +59,28 @@ class _ReadControls extends ConsumerWidget {
     final l10n = AppLocalizations.of(context),
         state = ref.watch(internalTransferProvider),
         auth = ref.watch(authProvider),
+        agent = ref.watch(tradingAgentProvider),
         controller = ref.read(internalTransferProvider.notifier);
+    // Account reads and the transfer are signed by the device grant only.
+    final needsGrant =
+        auth.identity?.signingAvailable == true &&
+        !agent.isLoading &&
+        agent.asData?.value?.status != TradingAgentStatus.active;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         FilledButton(
           key: const Key('internal-transfer-read'),
-          onPressed: state.busy || auth.busy
+          onPressed: state.busy || auth.busy || agent.isLoading
               ? null
-              : auth.identity?.signingAvailable == true
-              ? controller.load
-              : () => showAccountSheet(context),
-          child: Text(l10n.internalTransferRead),
+              : auth.identity?.signingAvailable != true
+              ? () => showAccountSheet(context)
+              : needsGrant
+              ? () =>
+                    Navigator.of(context)
+                        .push<void>(MaterialPageRoute(builder: (_) => const EnableTradingScreen()))
+              : controller.load,
+          child: Text(needsGrant ? l10n.enableTradingTitle : l10n.internalTransferRead),
         ),
         if (state.busy) ...[
           const LinearProgressIndicator(),

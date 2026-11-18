@@ -8,6 +8,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../portfolio/presentation/portfolio_components.dart';
 import '../domain/transfer_history.dart';
 import 'transfer_record_details.dart';
+import '../../../core/presentation/no_press_feedback.dart';
 
 String historyTypeLabel(AppLocalizations l, TransferType type) =>
     type == TransferType.deposit ? l.fundingDeposit : l.fundingWithdraw;
@@ -117,35 +118,37 @@ class HistoryFilters extends StatelessWidget {
               child: Semantics(
                 selected: selected == type,
                 button: true,
-                child: InkWell(
-                  key: ValueKey('transfer-filter-${type?.name ?? 'all'}'),
-                  onTap: () => onChanged(type),
-                  child: Container(
-                    constraints: BoxConstraints(
-                      minWidth: type == TransferType.withdraw ? 100 : 86,
-                      minHeight: 44,
-                    ),
-                    alignment: Alignment.topLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          type == null ? l.portfolioAll : historyTypeLabel(l, type),
-                          style: AccountTypography.body.copyWith(
-                            color: selected == type
-                                ? PortfolioColors.text
-                                : PortfolioColors.secondary,
+                child: NoPressFeedback(
+                  child: InkWell(
+                    key: ValueKey('transfer-filter-${type?.name ?? 'all'}'),
+                    onTap: () => onChanged(type),
+                    child: Container(
+                      constraints: BoxConstraints(
+                        minWidth: type == TransferType.withdraw ? 100 : 86,
+                        minHeight: 44,
+                      ),
+                      alignment: Alignment.topLeft,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            type == null ? l.portfolioAll : historyTypeLabel(l, type),
+                            style: AccountTypography.body.copyWith(
+                              color: selected == type
+                                  ? PortfolioColors.text
+                                  : PortfolioColors.secondary,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          width: type == TransferType.withdraw ? 72 : 50,
-                          height: 2,
-                          color: selected == type
-                              ? PortfolioColors.accent
-                              : PortfolioColors.transparent,
-                        ),
-                      ],
+                          const SizedBox(height: 12),
+                          Container(
+                            width: type == TransferType.withdraw ? 72 : 50,
+                            height: 2,
+                            color: selected == type
+                                ? PortfolioColors.accent
+                                : PortfolioColors.transparent,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

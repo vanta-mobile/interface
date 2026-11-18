@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme.dart';
+import '../../../../core/presentation/no_press_feedback.dart';
 export 'coin_icon.dart';
 
 class Panel extends StatelessWidget {
@@ -50,26 +51,28 @@ class TabChoices extends StatelessWidget {
     child: Row(
       children: List.generate(
         items.length,
-        (i) => InkWell(
-          onTap: () => onSelect(i),
-          borderRadius: BorderRadius.circular(6),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 44),
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: 13),
-            decoration: BoxDecoration(
-              color: !underlined && selected == i ? AppColors.raised : null,
-              borderRadius: underlined ? null : BorderRadius.circular(6),
-              border: underlined && selected == i
-                  ? const Border(bottom: BorderSide(color: AppColors.accent, width: 2))
-                  : null,
-            ),
-            child: Text(
-              items[i],
-              style: TextStyle(
-                color: selected == i ? AppColors.text : AppColors.secondary,
-                fontSize: 12,
-                fontWeight: selected == i ? FontWeight.w600 : FontWeight.w400,
+        (i) => NoPressFeedback(
+          child: InkWell(
+            onTap: () => onSelect(i),
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 44),
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 13),
+              decoration: BoxDecoration(
+                color: !underlined && selected == i ? AppColors.raised : null,
+                borderRadius: underlined ? null : BorderRadius.circular(6),
+                border: underlined && selected == i
+                    ? const Border(bottom: BorderSide(color: AppColors.accent, width: 2))
+                    : null,
+              ),
+              child: Text(
+                items[i],
+                style: TextStyle(
+                  color: selected == i ? AppColors.text : AppColors.secondary,
+                  fontSize: 12,
+                  fontWeight: selected == i ? FontWeight.w600 : FontWeight.w400,
+                ),
               ),
             ),
           ),

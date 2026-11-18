@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/domain/wallet_operation.dart';
 import 'package:vanta/core/theme.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
+import 'package:vanta/features/auth/data/reown_wallet_connector.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
 import 'package:vanta/features/funding/application/deposit_approval_provider.dart';
@@ -128,7 +129,8 @@ const fundingCaptureKey = Key('funding-design-render');
 
 /// Funding screen with every repository replaced; nothing reaches a network.
 class FundingHarness {
-  FundingHarness({FundingIdentity? identity}) : identity = identity ?? FundingIdentity() {
+  FundingHarness({FundingIdentity? identity, this.connector})
+    : identity = identity ?? FundingIdentity() {
     catalog.rows = [
       fundingAssetRow()..['minDeposit'] = '0.01',
       fundingAssetRow(asset: 'BNB', native: true)..['minDeposit'] = '0.01',
@@ -137,6 +139,7 @@ class FundingHarness {
     this.identity.restored = signingIdentity;
   }
   final FundingIdentity identity;
+  final WalletConnector? connector;
   final catalog = TestFundingCatalogRepository();
   final icons = FundingIconFixture();
   final wallet = TestDepositWalletRepository();
@@ -193,6 +196,7 @@ class FundingHarness {
         rebalanceRepositoryProvider.overrideWithValue(rebalance),
         transferHistoryRepositoryProvider.overrideWithValue(history),
         notificationRepositoryProvider.overrideWithValue(inbox),
+        if (connector case final c?) walletConnectorProvider.overrideWithValue(c),
         if (deviceGrant) fundingSilentReadsProvider.overrideWith((_) => true),
       ],
     );

@@ -20,12 +20,18 @@ class SignedOrderQueryRepository implements OrderRecoveryRepository {
     this.now, {
     this.authorization,
     this.journal,
+    this.notFoundRetryDelays = defaultNotFoundRetryDelays,
   });
+
+  /// A just-dispatched order may not be readable yet. -2013 is retried after
+  /// these delays before it is reported; it never leads to a re-POST.
+  static const defaultNotFoundRetryDelays = [Duration(seconds: 1), Duration(seconds: 2)];
   final AsterAccountService service;
   final AccountRequestSigner sign;
   final AsterReadNonces nonces;
   final DateTime Function() now;
   final OrderRecoveryJournal? journal;
+  final List<Duration> notFoundRetryDelays;
   @override
   Future<LiveOrderResult> query(
     OrderQuery query, {
@@ -53,14 +59,29 @@ class SignedOrderQueryRepository implements OrderRecoveryRepository {
           ),
         );
     var endpoint = strategy == null ? '/fapi/v3/order' : '/fapi/v3/strategyOpenOrder';
-    try {
-      Object? payload;
+    Future<Object?> lookup() async {
+      endpoint = strategy == null ? '/fapi/v3/order' : '/fapi/v3/strategyOpenOrder';
       try {
-        payload = await read(strategy == null ? service.queryOrder : service.strategyOpenOrder);
+        return await read(strategy == null ? service.queryOrder : service.strategyOpenOrder);
       } on AccountReadFailure catch (failure) {
         if (strategy == null || failure.code != -2013 || !isCurrent()) rethrow;
         endpoint = '/fapi/v3/strategyHistoryOrder';
-        payload = await read(service.strategyHistoryOrder);
+        return read(service.strategyHistoryOrder);
+      }
+    }
+
+    try {
+      Object? payload;
+      for (var attempt = 0; ; attempt++) {
+        try {
+          payload = await lookup();
+          break;
+        } on AccountReadFailure catch (failure) {
+          if (failure.code != -2013 || attempt >= notFoundRetryDelays.length || !isCurrent()) {
+            rethrow;
+          }
+          await _wait(notFoundRetryDelays[attempt], isCurrent);
+        }
       }
       final result = strategy == null
           ? mapRecoveredOrderQuery(payload, query, checkedAt: now())
@@ -76,4 +97,17 @@ class SignedOrderQueryRepository implements OrderRecoveryRepository {
       return LiveOrderResult(failure: failure);
     }
   });
+}
+
+/// Waits in short slices so that leaving the operation stops the backoff.
+Future<void> _wait(Duration delay, bool Function() isCurrent) async {
+  const slice = Duration(milliseconds: 100);
+  var left = delay;
+  while (left > Duration.zero) {
+    if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
+    final step = left < slice ? left : slice;
+    await Future<void>.delayed(step);
+    left -= step;
+  }
+  if (!isCurrent()) throw const AccountReadFailure('authWalletChanged');
 }

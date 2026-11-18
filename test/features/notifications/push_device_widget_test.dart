@@ -22,10 +22,12 @@ void main() {
         f.backend.routes['GET /v1/push/status'] = (_) => json({
           ...pushStatusJson(status: 'no_server_visibility', devices: 0),
           'reason': '-5052',
+          'note': '隐私模式/未绑定 builder/平台查询未开通（-5052/-5053/-5049）',
         });
         await f.mount(tester, language: language, size: const Size(320, 740), scale: 1.5);
         final l = AppLocalizations.of(tester.element(find.byType(NotificationScreen)));
-        expect(find.text(l.pushNoServerVisibility), findsOneWidget);
+        expect(find.text(l.pushVisibilityTitle), findsOneWidget);
+        expect(find.textContaining('-5052'), findsNothing);
         expect(find.byKey(const Key('notification-event:1')), findsOneWidget);
         expect(tester.takeException(), isNull);
         expect(f.signer.calls, 0);
@@ -33,6 +35,20 @@ void main() {
       },
     );
   }
+  testWidgets('an invisible account keeps the inbox empty state beside the push notice', (
+    tester,
+  ) async {
+    final f = InboxFixture();
+    addTearDown(f.dispose);
+    f.backend.routes['GET /v1/push/status'] = (_) =>
+        json({...pushStatusJson(status: 'no_server_visibility', devices: 0), 'reason': '-5053'});
+    await f.mount(tester);
+    final l = AppLocalizations.of(tester.element(find.byType(NotificationScreen)));
+    expect(find.text(l.pushVisibilityTitle), findsOneWidget);
+    // The notice is about background delivery; the inbox is its own result.
+    expect(find.byKey(const Key('notification-empty')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
   testWidgets('inbox refresh stays active until push status has also settled', (tester) async {
     final f = InboxFixture();
     addTearDown(f.dispose);

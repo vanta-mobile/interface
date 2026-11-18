@@ -30,6 +30,7 @@ void main() {
   late int refusedAt, failureCode;
   Object? postRejection;
   late Object? query, positions;
+  Map<String, dynamic>? ack;
   void Function(int)? afterSign;
   setUp(() {
     intent = attachedIntent();
@@ -43,6 +44,7 @@ void main() {
     query = attachedQuery(intent);
     positions = livePositionPayload(intent.context);
     afterSign = null;
+    ack = null;
     service = AsterAccountService(
       client: MockClient((request) async {
         requests.add(request);
@@ -62,6 +64,7 @@ void main() {
             expect(request.url.query, '');
             if (postTimeout) throw TimeoutException('fixture');
             if (postRejection != null) return http.Response(jsonEncode(postRejection), 400);
+            if (ack != null) return http.Response(jsonEncode(ack), 200);
             return http.Response(
               jsonEncode({
                 'failureCode': failureCode,
@@ -95,6 +98,7 @@ void main() {
       },
       nonces: AsterReadNonces(),
       now: () => liveOrderClock,
+      notFoundRetryDelays: const [Duration.zero, Duration.zero],
     );
   });
   tearDown(() => service.close());
@@ -155,9 +159,68 @@ void main() {
     expect(result.rejected, isFalse);
     expect(result.needsRecheck, isTrue);
     expect(result.failure, isNotNull);
-    expect(requests.where((r) => r.url.path.contains('strategyOpenOrder')), hasLength(1));
-    expect(requests.where((r) => r.url.path.contains('strategyHistoryOrder')), hasLength(1));
+    // -2013 right after dispatch is retried after the configured delays.
+    expect(requests.where((r) => r.url.path.contains('strategyOpenOrder')), hasLength(3));
+    expect(requests.where((r) => r.url.path.contains('strategyHistoryOrder')), hasLength(3));
     expect(requests.where((r) => r.method == 'POST'), hasLength(1));
+  });
+  test('a late-readable strategy resolves after a -2013 retry', () async {
+    postTimeout = openMissing = historyMissing = true;
+    // Readable once the first open/history lookup pair has missed.
+    afterSign = (_) {
+      if (requests.any((r) => r.url.path.contains('strategyHistoryOrder'))) {
+        openMissing = historyMissing = false;
+      }
+    };
+    final result = await submit();
+    expect(result.needsRecheck, false);
+    expect(result.strategy!.strategyId, '9876');
+    expect(requests.where((r) => r.url.path.contains('strategyOpenOrder')), hasLength(2));
+    expect(requests.where((r) => r.method == 'POST'), hasLength(1));
+  });
+  test('leaving during the -2013 backoff stops before another signed lookup', () async {
+    postTimeout = openMissing = historyMissing = true;
+    final waiting = SignedLiveOrderRepository(
+      service,
+      ({required expectedAddress, required typedData}) async {
+        signatures.add((typedData['message'] as Map)['msg'] as String);
+        return TestWalletConnection.signature;
+      },
+      nonces: AsterReadNonces(),
+      now: () => liveOrderClock,
+      notFoundRetryDelays: const [Duration(seconds: 30)],
+    );
+    final started = DateTime.now();
+    final pending = waiting.submit(
+      intent: intent,
+      isCurrent: () => current,
+      canSubmit: () => canSend,
+      onStep: steps.add,
+    );
+    Future<void>.delayed(const Duration(milliseconds: 300), () => current = false);
+    await expectLater(pending, throwsA(isA<AccountReadFailure>()));
+    expect(DateTime.now().difference(started), lessThan(const Duration(seconds: 5)));
+    expect(requests.where((r) => r.url.path.contains('strategyOpenOrder')), hasLength(1));
+    // Position check, POST, then one open/history lookup pair before the backoff.
+    expect(signatures, hasLength(4));
+  });
+  test('an accepted ACK for this client strategy ID is the result without a query', () async {
+    ack = {
+      'strategyId': 4321,
+      'clientStrategyId': intent.clientOrderId,
+      'strategyType': intent.draft.attachment!.strategyType,
+      'strategyStatus': 'WORKING',
+      'failureCode': 0,
+      'failureReason': '',
+    };
+    final result = await submit();
+    expect(result.failure, null);
+    expect(result.strategy!.strategyId, '4321');
+    expect(result.strategy!.status, 'WORKING');
+    expect(requests.where((r) => r.url.path.contains('strategyOpenOrder')), isEmpty);
+    ack = {...ack!, 'clientStrategyId': 'someone-else'};
+    expect((await submit()).strategy!.strategyId, '9876');
+    expect(requests.where((r) => r.url.path.contains('strategyOpenOrder')), hasLength(1));
   });
 
   for (final execution in AttachedExitExecution.values) {
@@ -224,16 +287,13 @@ void main() {
     expect(getSigned().any((r) => r.url.path == '/fapi/v3/order'), false);
     expect(getSigned()[1].body, '${signatures[1]}&signature=${TestWalletConnection.signature}');
   });
-  test('wrong BBO in query keeps original strategy unresolved until GET-only repair', () async {
+  test('a reported BBO difference still resolves the strategy by its client ID', () async {
     intent = attachedIntent(peg: AttachedEntryPeg.queue1);
     query = attachedQuery(intent);
     (((query as Map)['subOrders'] as List).first as Map)['pegPriceType'] = 'COUNTERPARTY_1';
     final result = await submit();
-    expect(result.needsRecheck, true);
-    expect(result.failure?.reasonKey, 'orderResponseTermsMismatch');
-    expect(result.failure?.details?.endpoint, '/fapi/v3/strategyOpenOrder');
-    query = attachedQuery(intent);
-    expect((await check()).needsRecheck, false);
+    expect(result.needsRecheck, false);
+    expect(result.failure, null);
     expect(requests.where((r) => r.method == 'POST').length, 1);
     expect(Uri.splitQueryString(signatures.last)['clientStrategyId'], intent.clientOrderId);
   });
@@ -408,11 +468,9 @@ void main() {
     );
     expect(requests.where((r) => r.method == 'POST'), isEmpty);
   });
-  test('wrong linkage keeps unknown frozen, query-only recovery can resolve it', () async {
+  test('reported linkage differences still resolve the strategy by its client ID', () async {
     (((query as Map)['subOrders'] as List)[1] as Map)['secondDrivenOn'] = 'NEW';
-    expect((await submit()).needsRecheck, true);
-    query = attachedQuery(intent);
-    expect((await check()).needsRecheck, false);
+    expect((await submit()).needsRecheck, false);
     expect(requests.where((r) => r.method == 'POST').length, 1);
   });
   test('history signature refusal is unresolved and does not create a new strategy', () async {

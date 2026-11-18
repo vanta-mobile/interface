@@ -70,8 +70,14 @@ Future<bool> _reviewLiveOrder(
   final container = ProviderScope.containerOf(context, listen: false);
   var placed = false;
   Future<OrderSubmissionOutcome> attempt() async {
-    if (!identical(identity, container.read(authProvider).identity)) {
-      return const OrderSubmissionOutcome(OrderSubmissionKind.notSubmitted);
+    // Auth re-emits equal identities; only a different account blocks.
+    final now = container.read(authProvider).identity;
+    if (now?.id != identity?.id ||
+        now?.walletAddress?.toLowerCase() != identity?.walletAddress?.toLowerCase()) {
+      return const OrderSubmissionOutcome(
+        OrderSubmissionKind.notSubmitted,
+        AccountReadFailure('authWalletChanged'),
+      );
     }
     if (allocationReview case final original?) {
       return _observe(
@@ -155,7 +161,8 @@ Future<OrderSubmissionOutcome> _observe(
     final current = ref.read(mainOrderAllocationProvider);
     return OrderSubmissionOutcome(
       OrderSubmissionKind.notSubmitted,
-      identical(allocation, current) ? null : current.failure,
+      (identical(allocation, current) ? null : current.failure) ??
+          const AccountReadFailure('liveAllocationChanged'),
     );
   }
   final result = after.intent?.clientOrderId == intent.clientOrderId ? after.result : null;

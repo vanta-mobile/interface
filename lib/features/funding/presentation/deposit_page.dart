@@ -288,18 +288,19 @@ class _DepositPageState extends ConsumerState<DepositPage> {
     return AccountAction(
       fadeDisabled: true,
       key: const Key('funding-deposit-submit'),
-      label: approval ? l.fundingApproveAsset(query!.asset.asset) : l.fundingDeposit,
+      label: identity?.needsWalletConnection == true
+          ? l.reconnectExternalWallet
+          : approval
+          ? l.fundingApproveAsset(query!.asset.asset)
+          : l.fundingDeposit,
       busy:
           (model?.initialLoading ?? false) ||
           (model?.waitingApproval ?? false) ||
           approving ||
           (model?.preparing ?? false) ||
           preparingEntry,
-      onPressed: identity?.walletAddress == null
-          ? () => showAccountSheet(context)
-          : !ready
-          ? null
-          : () => _submit(query),
+      onPressed:
+          walletConnectionAction(context, ref, identity) ?? (!ready ? null : () => _submit(query)),
     );
   }
 

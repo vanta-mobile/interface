@@ -232,7 +232,6 @@ String _categoryLabel(AppLocalizations l, PushCategory category) => switch (cate
   PushCategory.triggers => l.pushConditionalTriggers,
   PushCategory.orders => l.pushOrderUpdates,
   PushCategory.funding => l.pushFundingFees,
-  PushCategory.transfers => l.pushTransfers,
   PushCategory.announcements => l.pushAnnouncements,
 };
 

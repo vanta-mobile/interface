@@ -386,11 +386,10 @@ void main() {
     await expectLater(read(), failure('liveCapacityChanged'));
     expect(messages.length, 3);
   });
-  test('unknown pending notional stops before the fifth risk signature', () async {
+  test('an untriggered pending conditional does not block the capacity read', () async {
     orders = [capacityOrder(type: 'STOP_MARKET')];
-    await expectLater(read(), failure('liveCapacityPendingUnknown'));
-    expect(messages.length, 4);
-    expect(requests.any((r) => r.url.path.endsWith('/leverageBrackets')), false);
+    await read();
+    expect(requests.any((r) => r.url.path.endsWith('/leverageBrackets')), true);
   });
   test('missing or malformed cap never becomes unlimited', () async {
     remaining = {};

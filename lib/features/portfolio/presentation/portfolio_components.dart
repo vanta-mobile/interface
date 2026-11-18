@@ -149,7 +149,7 @@ class PortfolioAction extends StatelessWidget {
       foregroundColor: primary ? PortfolioColors.onAccent : PortfolioColors.text,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       textStyle: PortfolioTypography.section,
-    ),
+    ).copyWith(overlayColor: PressFeedback.overlay),
     child: Text(label, textAlign: TextAlign.center),
   );
 }

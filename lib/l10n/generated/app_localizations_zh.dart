@@ -1029,7 +1029,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get orderCancelConfirmHint =>
-      '仅撤销该合约订单尚未成交的部分，已成交仓位保留。当前钱包将先签名撤单，再单独签名查询最终状态。此操作需要 Aster 认可的钱包权限。';
+      '仅撤销该合约订单尚未成交的部分，已成交仓位保留。钱包需签名撤单请求和随后的状态查询，状态查询由 Vanta 自动发起。';
 
   @override
   String get orderCancelSigning => '请在钱包中确认撤单签名。';
@@ -1050,7 +1050,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get orderCancelRecheck => '签名核对状态';
 
   @override
-  String get orderCancelVerified => 'Aster 已确认该订单已撤销。已成交仓位保留，账户余额需另行刷新。';
+  String get orderCancelVerified => '订单已撤销，已成交仓位保留。';
 
   @override
   String get orderCancelFilled => 'Aster 显示该订单已全部成交，并未撤销。请刷新仓位和余额。';
@@ -1729,9 +1729,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get liveOrderSettingsBusy => '请先完成待处理的合约配置操作，再提交订单。';
 
   @override
-  String get liveOrderSubmitting => '正在提交实盘订单…';
-
-  @override
   String get liveOrderMarkPrice => '参考标记价';
 
   @override
@@ -1752,11 +1749,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get liveOrderClientId => '客户端订单编号';
-
-  @override
-  String liveOrderVerifiedResult(String status, String executed, String orderId) {
-    return '签名查询状态：$status；已成交数量 $executed；订单 $orderId。';
-  }
 
   @override
   String get liveOrderQueryScope => '以上为查询时的快照。只有 FILLED 代表所请求数量全部成交；后续变更需再次读取账户核对。';
@@ -1821,16 +1813,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get liveOrderTriggerImmediate => '按本次读取的参考价，触发条件已达到。请按显示的方向调整触发价后重新确认；提交时实际价格由 Aster 校验。';
 
   @override
-  String get liveOrderPolicyGtc => 'GTC';
-
-  @override
-  String get liveOrderPolicyIoc => 'IOC';
-
-  @override
   String get liveOrderPolicyPostOnly => '只做 Maker（GTX）';
-
-  @override
-  String get liveOrderPolicyHidden => '隐藏单（HIDDEN）';
 
   @override
   String get liveOrderPolicyGtcHint => 'GTC：未成交数量持续挂单，直到成交或取消。';
@@ -1850,9 +1833,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get liveOrderSide => '方向';
-
-  @override
-  String get liveOrderType => '订单类型';
 
   @override
   String get liveOrderInvalidQuantity => '请输入正数十进制数量。';
@@ -1895,33 +1875,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '此操作将提交真实减仓订单。先签名复核仓位，再签名下单，并另行签名查询。数量、开仓均价或配置变化时停止提交。市价可能变化；限价按下方所示策略执行。并发变化由交易所最终校验。';
 
   @override
-  String get liveCloseResultScope => '订单状态不能证明整个仓位已平掉。请另行签名读取剩余仓位；此操作不撤销其他挂单，后续交易仍可能改变仓位。';
-
-  @override
-  String get liveCloseReadRemaining => '签名读取剩余仓位';
-
-  @override
-  String get liveCloseRemaining => '本次读取的剩余数量';
-
-  @override
   String get liveOrderReduceHedge => '双向模式不支持 reduceOnly 参数。请使用仓位的平仓入口减少对应多仓或空仓。';
-
-  @override
-  String get batchCloseAll => '平掉全部已列实盘仓位';
-
-  @override
-  String get batchCloseCurrent => '平掉当前交易对全部实盘仓位';
-
-  @override
-  String batchCloseCount(int count) {
-    return '已确认范围：$count 个仓位';
-  }
-
-  @override
-  String get batchCloseStopped => '已停止后续提交。未提交的仓位需要重新读取并确认。';
-
-  @override
-  String get batchCloseRecheck => '签名查询未确认的订单，不重新下单';
 
   @override
   String get liveOrderReadFunds => '开仓确认前请读取资产模式和账户资金。缺失金额表示未知，不是零。';
@@ -2818,7 +2772,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get depositTokenDecimalsChanged => '链上代币精度与所选配置不一致，请刷新币种目录后重新打开本页。';
 
   @override
-  String get depositRpcReorg => '读取期间区块发生变化，请刷新以获取一致快照。';
+  String get depositRpcReorg => '链上数据更新中，余额读取失败，请下拉刷新重试。';
 
   @override
   String get depositAmountInvalid => '请输入正数，且最小单位数量应处于无符号 256 位范围内。';
@@ -4622,7 +4576,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get attachedOrderCheckExits => '请先复核附加止盈／止损中提示的字段。';
 
   @override
-  String get attachedOrderTargetSign => '止盈金额／收益率请输入正数，止损请输入负数；目标不能为零。';
+  String get attachedOrderTargetSign => '止盈／止损的金额或收益率需大于零。';
 
   @override
   String get attachedOrderPreviewUnavailable => '请填写有效主单数量和价格，并读取开仓参考行情及杠杆后再换算。';
@@ -4720,9 +4674,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get liveAmountReferenceUnavailable => '换算所需的价格不可用，请刷新下单快照或改填基础币数量。';
-
-  @override
-  String get liveAmountResolvedQuantity => '拟提交的基础币数量';
 
   @override
   String get futuresHistoryTitle => '合约历史';
@@ -4828,9 +4779,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get orderConfirmSubmitted => '下单成功';
-
-  @override
-  String get orderConfirmExpired => '订单信息已失效，请关闭弹窗后重新下单。';
 
   @override
   String get scaledAmountInvalid => '请输入正数总委托金额。';
@@ -4959,9 +4907,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get liveCapacityEstimateHint =>
       '两侧使用同一账户与当前行情，分别假设本单全部成交。开仓成本含增量保证金和开仓损失；强平预估使用签名读取的吃单费率及风险档位，其他价格和抵押汇率保持当前值，实际成交、费用及资金费可能不同。缺少依据或没有有效正数预估时显示 —。';
-
-  @override
-  String get liveCapacityPendingUnknown => '存在无法核实预留名义金额的挂单，暂时无法计算可开额度。';
 
   @override
   String get liveCapacityRatesUnavailable => '抵押资产换算价格缺失或已过期，请刷新后重新计算额度。';
@@ -5126,19 +5071,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioFuturesAssets => '合约资产';
 
   @override
-  String get portfolioPnlDetails => '盈亏详情';
+  String get portfolioPnlDetails => '已实现盈亏详情';
 
   @override
-  String get portfolioTodayPnl => '今日盈亏';
+  String get portfolioTodayPnl => '今日已实现盈亏';
 
   @override
-  String get portfolioPnl7d => '盈亏 · 7日';
+  String get portfolioPnl7d => '已实现盈亏 · 7日';
 
   @override
   String get portfolioVolume7d => '成交量 · 7日';
-
-  @override
-  String get portfolioTransfer => '账户间划转';
 
   @override
   String get portfolioMainAccount => '主账户';
@@ -5171,10 +5113,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioOpenHistory => '展开资产历史';
 
   @override
-  String get portfolioMissingPnl => '该账户暂无盈亏数据';
+  String get portfolioMissingPnl => '该账户暂无已实现盈亏数据';
 
   @override
-  String get portfolioMissingDay => '暂无当日盈亏数据';
+  String get portfolioMissingDay => '暂无当日已实现盈亏数据';
 
   @override
   String get portfolioMissingValue => '该账户暂无资产历史数据';
@@ -5186,7 +5128,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioCalendar => '日历';
 
   @override
-  String get portfolioMonthlyPnl => '月度盈亏';
+  String get portfolioMonthlyPnl => '月度已实现盈亏';
 
   @override
   String get vantaApiSignInAction => '签名';
@@ -5219,7 +5161,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get vantaApiRateLimited => '统计请求暂时受限，请稍后重试。';
 
   @override
-  String get portfolioCalendarNote => '每日盈亏采用 UTC · 金额单位为 USD';
+  String get portfolioCalendarNote => '每日已实现盈亏采用 UTC · 金额单位为 USD';
 
   @override
   String get portfolioPreviousMonth => '上个月';
@@ -5243,11 +5185,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioAssets => '资产';
 
   @override
-  String get portfolioLast7Days => '盈亏 · 最近7天';
+  String get portfolioLast7Days => '已实现盈亏 · 最近7天';
 
   @override
   String portfolioPnlPeriod(String period) {
-    return '盈亏 · $period';
+    return '已实现盈亏 · $period';
   }
 
   @override
@@ -5262,7 +5204,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String portfolioDayUnavailable(String date) {
-    return '$date · 暂无当日盈亏数据';
+    return '$date · 暂无每日已实现盈亏数据';
   }
 
   @override
@@ -5948,6 +5890,85 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tradeTpSl => '止盈止损';
 
   @override
+  String get assetModeSingleShort => 'S';
+
+  @override
+  String get assetModeMultiShort => 'M';
+
+  @override
+  String get liveOrderTriggerReached => '触发价格已触达，请调整。';
+
+  @override
+  String get scaledPriceOutOfRange => '价格超出允许范围';
+
+  @override
+  String batchCloseDone(int count) {
+    return '已平仓 $count 个仓位。';
+  }
+
+  @override
+  String get orderDetailsTitle => '订单详情';
+
+  @override
+  String orderDetailsLeg(String letter) {
+    return '订单 $letter';
+  }
+
+  @override
+  String get orderDetailsPlacesBoth => '订单 A 成交后，挂出订单 B 和 C。';
+
+  @override
+  String get orderDetailsPlacesOne => '订单 A 成交后，挂出订单 B。';
+
+  @override
+  String get orderDetailsCancelsC => '订单 B 成交后，订单 C 将被撤销。';
+
+  @override
+  String get orderDetailsCancelsB => '订单 C 成交后，订单 B 将被撤销。';
+
+  @override
+  String get orderDetailsClosed => '该策略已不在当前委托中。';
+
+  @override
+  String get orderDetailsSide => '方向';
+
+  @override
+  String get orderDetailsAmount => '数量';
+
+  @override
+  String get orderDetailsStop => '触发价';
+
+  @override
+  String get orderDetailsTpMarket => '市价止盈';
+
+  @override
+  String get orderDetailsSlMarket => '市价止损';
+
+  @override
+  String get orderDetailsTpLimit => '限价止盈';
+
+  @override
+  String get orderDetailsSlLimit => '限价止损';
+
+  @override
+  String get tradeHedgeOpen => '开仓';
+
+  @override
+  String get tradeHedgeClose => '平仓';
+
+  @override
+  String get tradeOpenLong => '开多';
+
+  @override
+  String get tradeOpenShort => '开空';
+
+  @override
+  String get tradeCloseLong => '平多';
+
+  @override
+  String get tradeCloseShort => '平空';
+
+  @override
   String get tradeHiddenOrder => '隐藏委托';
 
   @override
@@ -6047,15 +6068,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String liveOrderMinimumPlaceholder(String amount) {
     return 'Min $amount';
   }
-
-  @override
-  String get notificationFilterAll => '全部';
-
-  @override
-  String get notificationFilterTransfers => '充提';
-
-  @override
-  String get notificationFilterOrders => '订单';
 
   @override
   String get notificationUnreadOnly => '仅看未读';
@@ -6373,12 +6385,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get orderResponseIdentityMismatch => 'Aster 返回的订单编号、交易对或方向与本次委托不一致。';
 
   @override
-  String get orderResponseLinkageMismatch => 'Aster 返回的止盈止损关联关系与本次委托不一致。';
-
-  @override
-  String get orderResponseTermsMismatch => 'Aster 返回的价格、数量或执行设置与本次委托不一致。';
-
-  @override
   String get orderResponseStatusInvalid => 'Aster 返回的订单状态缺失或无法识别。';
 
   @override
@@ -6464,13 +6470,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get positionTpslMarkPrice => '标记价格';
 
   @override
-  String get positionTpslSwitchBasis => '切换止盈触发价格类型';
-
-  @override
   String get positionTpslPnl => '盈亏';
 
   @override
   String get positionTpslRoi => '回报率';
+
+  @override
+  String get positionTpslGain => '盈利';
+
+  @override
+  String get positionTpslLoss => '亏损';
 
   @override
   String get positionTpslAmount => '数量';
@@ -6884,9 +6893,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get incomeArchiveReferenceConflict => '不同类型的资金流水共用了同一流水号，归档接口无法安全去重，已停止上报。';
-
-  @override
   String notificationApiField(String field) {
     String _temp0 = intl.Intl.selectLogic(field, {
       'price': '价格',
@@ -6917,10 +6923,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get pushVisibilityTitle => '后台通知暂不可用';
+  String get pushVisibilityTitle => '系统通知暂不可用';
 
   @override
-  String get pushNoServerVisibility => '通知服务目前无法获取此账户的动态，关闭 App 后将无法接收账户通知。';
+  String get portfolioRealizedPnl => '已实现盈亏';
 
   @override
   String assistantRemainingToday(String remaining, String limit) {
@@ -7104,9 +7110,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pushFundingFees => '资金费';
-
-  @override
-  String get pushTransfers => '充值与提现';
 
   @override
   String get pushAnnouncements => '公告';
