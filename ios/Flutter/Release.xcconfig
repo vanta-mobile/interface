@@ -1,1 +1,7 @@
 #include "Generated.xcconfig"
+#include "RiveLinking.xcconfig"
+
+// Keep global FFI exports when Xcode strips the archived Runner executable.
+// The default "all" style prunes Rive's dlsym entry points even with
+// -export_dynamic; local symbols are still removed. Profile uses this file too.
+STRIP_STYLE = non-global

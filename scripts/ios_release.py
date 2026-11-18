@@ -21,6 +21,8 @@ import zipfile
 
 
 BUNDLE_ID = "exchange.vanta.app"
+# Font initialization, callback registration, and file loading in rive_native.
+RIVE_REQUIRED_SYMBOLS = ("_init", "_initBindingCallbacks", "_loadRiveFile")
 TESTFLIGHT_SECRETS = (
     "APP_STORE_CONNECT_KEY_ID",
     "APP_STORE_CONNECT_ISSUER_ID",
@@ -236,6 +238,28 @@ def configure_testflight(directory):
     print("App Store Connect API Key configured; TestFlight upload is enabled.")
 
 
+def verify_rive_symbols(app, info):
+    executable_name = info.get("CFBundleExecutable")
+    if not executable_name or Path(executable_name).name != executable_name:
+        raise ReleaseError("The exported IPA has an invalid application executable.")
+    # Check the dynamic exports, which dlsym uses, even when the release binary
+    # has had its normal symbol table stripped. Rive is statically linked by SPM.
+    exports = run(["xcrun", "dyld_info", "-exports", str(app / executable_name)])
+    # dyld_info may append annotations such as [weak-def] after the name.
+    symbols = set(re.findall(
+        r"^\s*0x[0-9a-fA-F]+\s+(_\S+)(?=\s|$)",
+        exports.decode(errors="replace"),
+        re.MULTILINE,
+    ))
+    missing = [symbol for symbol in RIVE_REQUIRED_SYMBOLS if symbol not in symbols]
+    if missing:
+        raise ReleaseError(
+            "The exported IPA is missing required Rive dynamic exports: "
+            + ", ".join(missing)
+            + "; the startup animation could not load."
+        )
+
+
 def verify_ipa(ipa_path, directory):
     require_environment(["APPLE_TEAM_ID"])
     with tempfile.TemporaryDirectory(prefix="verify-", dir=directory) as temporary:
@@ -254,6 +278,7 @@ def verify_ipa(ipa_path, directory):
         info = plistlib.loads((app / "Info.plist").read_bytes())
         if info.get("CFBundleIdentifier") != BUNDLE_ID:
             raise ReleaseError("The exported IPA has the wrong Bundle ID.")
+        verify_rive_symbols(app, info)
         run(["codesign", "--verify", "--deep", "--strict", str(app)])
         signed = plistlib.loads(run(["codesign", "--display", "--entitlements", ":-", str(app)]))
         team_id = os.environ["APPLE_TEAM_ID"].strip()
@@ -264,7 +289,7 @@ def verify_ipa(ipa_path, directory):
         validate_profile(profile, team_id, {identity})
         if signed.get("application-identifier") != profile["Entitlements"]["application-identifier"]:
             raise ReleaseError("The signed App ID does not match its embedded provisioning profile.")
-    print("Verified Vanta IPA signature, Bundle ID, distribution profile, and signing identity.")
+    print("Verified Vanta IPA signature, Bundle ID, Rive exports, distribution profile, and signing identity.")
 
 
 def cleanup(directory):

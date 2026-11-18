@@ -1,0 +1,5 @@
+// Rive resolves its FFI entry points (_init, _initBindingCallbacks,
+// _loadRiveFile) with dlsym from the Swift Package Manager static library.
+// Force-link the font initializer and keep global exports through LTO and dead
+// stripping; otherwise the startup animation cannot load.
+OTHER_LDFLAGS = $(inherited) -Wl,-u,_init -Wl,-export_dynamic
