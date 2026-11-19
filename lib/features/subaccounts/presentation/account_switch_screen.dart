@@ -6,7 +6,6 @@ import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
-import '../../portfolio/application/portfolio_overview_provider.dart';
 import '../../portfolio/presentation/portfolio_components.dart';
 import '../application/account_entries_provider.dart';
 import '../application/generated_subaccount_provider.dart';
@@ -120,7 +119,6 @@ class _AccountSwitchScreenState extends ConsumerState<AccountSwitchScreen> {
       if (!mounted) return;
       final actual = ref.read(authProvider).identity?.walletAddress;
       if (actual?.toLowerCase() == widget.target.address.toLowerCase()) {
-        ref.read(portfolioPreviewProvider.notifier).select(false);
         Navigator.popUntil(context, (route) => route.isFirst);
       }
     } catch (e) {

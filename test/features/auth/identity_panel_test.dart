@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
-import 'package:vanta/features/trade/application/providers.dart';
 
 import '../../support/identity_repository.dart';
 import '../../support/trade_fixture.dart';
@@ -38,8 +37,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('enable-trading-page')), findsOneWidget);
     expect(find.textContaining('0x1111…1111'), findsOneWidget);
-    expect(container.read(accountProvider).connected, false);
-    expect(container.read(accountProvider).balance.toString(), '10000');
     await tester.tap(find.byKey(const Key('enable-trading-switch')));
     await tester.pumpAndSettle();
     expect(container.read(authProvider).identity, null);

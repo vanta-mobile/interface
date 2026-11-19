@@ -9,9 +9,7 @@ import 'portfolio_overview_provider.dart';
 /// Initial loading only. Retained account/price data stays visible on refresh.
 final portfolioLoadingProvider = Provider<({bool account, bool value, bool valuation})>((ref) {
   const idle = (account: false, value: false, valuation: false);
-  if (ref.watch(portfolioPreviewProvider) || ref.watch(authProvider).needsWalletConnection) {
-    return idle;
-  }
+  if (ref.watch(authProvider).needsWalletConnection) return idle;
   final account = ref.watch(accountReadProvider);
   final accountLoading =
       account.account == null && (account.busy || ref.watch(tradingAgentProvider).isLoading);

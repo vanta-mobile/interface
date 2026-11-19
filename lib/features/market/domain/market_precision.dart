@@ -64,19 +64,3 @@ int marketDrawingDecimals(Iterable<double> values, {int minimum = 0}) {
   }
   return result.clamp(0, 20);
 }
-
-Decimal marketAllocation({
-  required Decimal available,
-  required Decimal fraction,
-  required Decimal price,
-  required int leverage,
-  required Decimal feeRate,
-  required MarketPrecision precision,
-}) {
-  if (price <= Decimal.zero || leverage < 1) return Decimal.zero;
-  final step = Decimal.parse(precision.quantityStep ?? '0.00001');
-  final perUnit =
-      price.toRational() / Decimal.fromInt(leverage).toRational() + (price * feeRate).toRational();
-  final count = ((available * fraction).toRational() / perUnit / step.toRational()).floor();
-  return Decimal.fromBigInt(count) * step;
-}

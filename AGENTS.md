@@ -49,7 +49,7 @@ Adapted from `/data/dodo/rwa-interface/.specify/memory/constitution.md` v1.1.1 a
 ## Financial integrity
 - Use decimal arithmetic for order quantities, notionals, margin, and validation. Chart drawing coordinates may use doubles.
 - Preserve units and precision. A UI action is never evidence of an on-chain execution.
-- This implementation supports a clearly labeled local demo account. Never represent demo funds, orders, or positions as real wallet activity. Real wallet signing and authenticated order execution require a separately integrated authenticated API.
+- There is no local demo account or static sample portfolio. Never show sample funds, orders, or positions as real wallet activity. Real wallet signing and authenticated order execution go through the integrated authenticated API.
 - Secrets, credentials, raw sensitive payloads, and stack traces must not be shown in UI or committed.
 
 ## Verification and dependencies

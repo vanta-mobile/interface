@@ -1,3 +1,15 @@
+## 2026-11-19 删除本地演示账户与资产页静态预览
+
+两套演示均已没有界面入口，按产品确认删除。
+
+- 本地演示账户：删除 `accountProvider`／`AccountController`、`demo_order.dart`（`OrderDraft`、`DemoOrder`、`DemoAccount`、`demoFeeRate`）、`showDemoAccountSheet` 与 `AccountSheet.demoOnly`、`PositionsPanel`、`TradingHeader` 及交易页的 `_LanguageSheet`、只被演示下单用的 `marketAllocation`，以及 `demo*`／`enterDemo` 文案。`main.dart` 不再在身份变化时重置演示账户。交易页只有合约页使用顶部栏，其余一级页面自带标题栏。
+- 资产页静态预览：删除 `portfolioPreviewProvider`、`portfolio_preview.dart` 样例数据，以及资产首页、合约资产列表、仓位列表、资产详情、收益页、交易页资产区、账户切换、刷新与加载中的全部预览分支和 `portfolioPreview*`／`portfolioAccountSelector` 文案。资产页账户名直接打开子账户选择。
+- 预览弹窗是「账户」详情页 `PortfolioAccountDetails` 的唯一入口，该页一并删除。其中的 `AsterAccountPanel`、`SpotAccountPanel` 代码保留，App 内暂无入口；组件测试改由 `test/support/portfolio_account_tools.dart` 自行组装两个面板。
+- 合约页右上角的历史入口不变，仍推出带返回的 `FuturesHistoryScreen`。
+- `AGENTS.md` 中「支持本地演示账户」的说明同步改为不提供演示账户。
+- 测试：删除 `demo_order_test` 及只验证演示/预览的用例（静态预览交互、预览资产不可提交、`OrderDraft` 精度校验、`marketAllocation` 分配）；其余测试去掉对演示状态的断言。保证金率说明气泡用例改为直接挂载 `TradePositionCard`。
+- 验证：`dart format`；`dart analyze lib test integration_test` 无问题；全量 `flutter test` 6065 项通过、3 项跳过。未启动 App。
+
 ## 2026-11-19 History 改为底部一级入口
 
 - 依据 Figma「06. history」（`1727:42129`），底栏为 合约 / 现货（即将上线）/ 积分 / 历史 / 资产。`AppDestination` 新增 `history`，图标 `assets/navigation/history.svg` 取自设计稿原 SVG；文案 `navigationHistory`（History / 历史）。
@@ -5,20 +17,17 @@
 - 合约页和账户面板里原有的「历史记录」入口仍推出原 `FuturesHistoryScreen`，未改动；深链没有新增 `history` 目标。
 - 验证：`dart format`、`dart analyze lib test` 无问题；新增 `history_destination_page_test`（中英文四个页签切换并标记选中、非返回式页面、320 宽 2 倍字号无溢出）；导航测试加入 History，底栏断言改为 合约 / 积分 / 历史 / 资产 四个可点项。`test/features/{trade,assistant,portfolio,deep_link,points}` 与 `test/core` 共 4041 项中，`quick_order_widget_test` 有 2 项在运行时因其他会话正改该文件而失败，改动完成后单独重跑全部通过。未启动 App，未做真机目视比对。
 
-
-## 2026-11-19 隐藏 Vanta AI 入口
-
-- 依据 Figma「06. history」，底部导航不再有 AI。`assistantEntryEnabledProvider`（默认 `false`）控制入口：底栏不显示 AI；`vantaapp://assistant`、`open?feature=assistant` 打开首页（合约），不预填问题。AI 页面与相关代码保留，测试通过覆盖该 provider 继续验证。
-- 系统入口同步下线：Android 去掉 Google Assistant 的 `assistant` 快捷方式及其中英文同义词、Gemini AppFunction `askVantaAi`（上文 AppFunctions 记录中的第 6 个函数）；iOS 去掉 `AskVantaAIIntent`、其 Siri 短语、`VantaPage.assistant` 及对应中文文案。Kotlin `VantaLinks.assistant` 与 Dart 解析保留，链接格式不变。
-- 验证：`dart format`、`dart analyze lib test` 无问题；`test/features/{trade,assistant,portfolio,deep_link}` 与 `test/core` 共 3760 项通过（含新增：默认不显示 AI 入口、隐藏时 AI 链接回首页且不预填）。未运行 Gradle/Kotlin 单测和 Xcode 构建，原生改动未经编译验证；未启动 App。
-
-
 ## 2026-11-19 资金流水：无交易对的流水不再导致整页格式错误（走查 V6-02）
 
 - 问题：0.0.6（2006）进入资金流水两次提示「`/v1/history/income` 数据格式无效」。Aster 对划转、保险基金清算等不属于交易对的流水返回 `symbol: ""`，App 按原样上报 `/v1/report/income`，归档读回仍是 `""`；读取 mapper 要求 `symbol` 非空，任意一行即令整页解析失败。接口合约 `IncomeItem.symbol` 为 `string | null`，空串合法。
 - 修改：`trading_history_mapper.dart` 读取时把 `""` 视为无交易对（与 `null` 相同）；订单、成交、仓位仍要求非空交易对。上报端不改：`ReportPayload.symbol` 为字符串，且参与上报幂等键，改成 `null` 会改变已上报记录的去重键。
 - 验证：`trading_history_test` 新增空交易对流水可解析、空交易对订单仍拒绝；该文件全部通过。
 
+## 2026-11-19 隐藏 Vanta AI 入口
+
+- 依据 Figma「06. history」，底部导航不再有 AI。`assistantEntryEnabledProvider`（默认 `false`）控制入口：底栏不显示 AI；`vantaapp://assistant`、`open?feature=assistant` 打开首页（合约），不预填问题。AI 页面与相关代码保留，测试通过覆盖该 provider 继续验证。
+- 系统入口同步下线：Android 去掉 Google Assistant 的 `assistant` 快捷方式及其中英文同义词、Gemini AppFunction `askVantaAi`（上文 AppFunctions 记录中的第 6 个函数）；iOS 去掉 `AskVantaAIIntent`、其 Siri 短语、`VantaPage.assistant` 及对应中文文案。Kotlin `VantaLinks.assistant` 与 Dart 解析保留，链接格式不变。
+- 验证：`dart format`、`dart analyze lib test` 无问题；`test/features/{trade,assistant,portfolio,deep_link}` 与 `test/core` 共 3760 项通过（含新增：默认不显示 AI 入口、隐藏时 AI 链接回首页且不预填）。未运行 Gradle/Kotlin 单测和 Xcode 构建，原生改动未经编译验证；未启动 App。
 
 ## 2026-11-19 iOS 构建改用 Xcode 27（iOS 27 SDK）
 
@@ -814,3 +823,9 @@
 - ACC-03：账户菜单标题统一为「账户 / Account」，只列当前账户与退出登录（首版不提供主／子账户切换）；子账户页面与数据层不变。`accounts-selector` 金图已按新界面更新。
 - SET-02：设置行右侧按内容宽度布局、最多占一半，标签使用剩余空间。
 - 验证：新增/更新测试——负数格式化单元测试；资金流水上报失败/读取失败/空状态 widget 测试；通知刷新失败测试；360dp 键盘下止损校验文案可见（去掉留白后失败）；长交易对单行；快捷下单余额提示；MA 周期 4 聚焦时在键盘上方（旧弹层失败）；账户菜单标题与列表；360dp 英文设置标签分配宽度（测试字体为方块字形，校验布局分配而非实际折行）。未启动 App、未在真机或模拟器验证。
+
+## 2026-11-19 KLINE-01 横屏全屏 K 线按 12.15 加底部工具栏
+
+- 依据：AI视觉走查 KLINE-01，设计确认按新版画板 12.15（Figma 1222:48536）修改。
+- 修改：全屏页从上到下为周期行（与 K 线页同一 `ChartTimeframeRow`）→ OHLC 行 → 主图与副图 → 32px 工具栏。工具栏复用 `ChartActionBar(fullscreen: true)`：价格坐标、图表样式、指标，最后一个操作改为退出全屏（复用 `chart-exit-fullscreen` 图标）；全屏时按钮点击区为 36×32，以符合 32px 设计高度。去掉右上角退出按钮；主图高度扣除周期行、OHLC 行与工具栏；放大字号时工具栏随文字增高，页面滚动而不裁切。旧的 02.17 周期行组件 `chart_toolbar.dart` 及其专用文案 `moreTimeframes` 已删除。
+- 验证：`widget_test` 全屏用例新增断言（OHLC 行、工具栏四个操作都在全屏页内，工具栏高 32px、紧贴主图下方且在 390px 高视口内；退出键仍可返回并恢复方向）。`flutter test test/features/trade test/widget_test.dart test/core/localization_test.dart` 138 项通过，`flutter analyze` 无问题。未启动 App，未在真机或模拟器验证。

@@ -13,37 +13,31 @@ import '../domain/portfolio_overview.dart';
 import 'asset_token_logo.dart';
 import 'mode_settings_sheet.dart';
 import 'portfolio_components.dart';
-import 'portfolio_header.dart';
 
 void showPortfolioAssetDetails(
   BuildContext context, {
   required PortfolioAsset asset,
   required bool hidden,
-  required bool preview,
 }) => showModeSettingsSheet<void>(
   context,
   SafeArea(
     top: false,
     child: SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-      child: _AssetDetails(asset: asset, hidden: hidden, preview: preview),
+      child: _AssetDetails(asset: asset, hidden: hidden),
     ),
   ),
 );
 
 class _AssetDetails extends StatelessWidget {
-  const _AssetDetails({required this.asset, required this.hidden, required this.preview});
+  const _AssetDetails({required this.asset, required this.hidden});
   final PortfolioAsset asset;
-  final bool hidden, preview;
+  final bool hidden;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     void open(FundingOperation operation) {
-      if (preview) {
-        portfolioPreviewNotice(context);
-        return;
-      }
       Navigator.pop(context);
       openFunding(context, operation);
     }

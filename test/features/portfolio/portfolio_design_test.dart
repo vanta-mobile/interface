@@ -8,25 +8,15 @@ import '../../support/asset_indices.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/portfolio/application/account_read_provider.dart';
 import 'package:vanta/features/portfolio/application/portfolio_overview_provider.dart';
 import 'package:vanta/features/portfolio/application/position_risk_provider.dart';
-import 'package:vanta/features/portfolio/presentation/portfolio_pnl_screen.dart';
 import 'package:vanta/features/portfolio/presentation/portfolio_history_chart.dart';
 import 'package:vanta/features/trade/presentation/widgets/app_bottom_navigation.dart';
 
 import '../../support/navigation_fixture.dart';
 import '../../support/trade_fixture.dart';
-
-/// The static preview no longer has a UI entry for signed-in users, so the
-/// design checks switch it on directly.
-Future<void> preview(WidgetTester tester, ProviderContainer container) async {
-  await tapNavigationControl(tester, 'navigation-portfolio');
-  container.read(portfolioPreviewProvider.notifier).select(true);
-  await tester.pumpAndSettle();
-}
 
 Future<void> scrollPortfolioTop(WidgetTester tester) async {
   final scroll = tester.state<ScrollableState>(
@@ -94,78 +84,6 @@ void main() {
     await fixture.close(tester);
   });
 
-  testWidgets('static preview exposes design interactions and never signs or writes', (
-    tester,
-  ) async {
-    final fixture = NavigationFixture(tester);
-    await launch(tester, fixture.container);
-    await preview(tester, fixture.container);
-    expect(find.text('Static design sample. No real funds or orders.'), findsOneWidget);
-    expect(find.text(r'$3,840.00'), findsOneWidget);
-    await tapNavigationControl(tester, 'portfolio-deposit');
-    expect(
-      find.text('This is a static preview. Switch to your account to continue.'),
-      findsOneWidget,
-    );
-    ScaffoldMessenger.of(tester.element(find.byKey(const Key('portfolio-deposit'))))
-        .clearSnackBars();
-    await tester.pumpAndSettle();
-    await scrollPortfolioTop(tester);
-    await tapNavigationControl(tester, 'portfolio-value-history-toggle');
-    expect(find.byKey(const Key('portfolio-value-history-collapse')), findsOneWidget);
-    await tapNavigationControl(tester, 'portfolio-value-history-collapse');
-    expect(find.byKey(const Key('portfolio-value-history-collapse')), findsNothing);
-    await scrollPortfolioTop(tester);
-    await tapNavigationControl(tester, 'portfolio-balance-visibility');
-    expect(find.text(r'$3,840.00'), findsNothing);
-    await scrollPortfolioTop(tester);
-    await tapNavigationControl(tester, 'portfolio-balance-visibility');
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('portfolio-assets-tab-assets')),
-      200,
-      scrollable: find
-          .descendant(
-            of: find.byKey(const Key('portfolio-page')),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    await tapNavigationControl(tester, 'portfolio-assets-tab-assets');
-    await tapNavigationControl(tester, 'portfolio-asset-USDT');
-    expect(find.text('Margin balance'), findsOneWidget);
-    await tester.tap(find.byTooltip('Close'));
-    await tester.pumpAndSettle();
-    await scrollPortfolioTop(tester);
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('portfolio-pnl-entry')),
-      100,
-      scrollable: find
-          .descendant(
-            of: find.byKey(const Key('portfolio-page')),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    await tapNavigationControl(tester, 'portfolio-pnl-entry');
-    expect(find.byType(PortfolioPnlScreen), findsOneWidget);
-    await tapNavigationControl(tester, 'portfolio-period-30D');
-    expect(find.text('Realized PnL data unavailable for this account'), findsOneWidget);
-    await tester.tap(find.text('Calendar'));
-    await tester.pumpAndSettle();
-    expect(find.text('November 2026'), findsOneWidget);
-    expect(
-      tester.widget<IconButton>(find.byKey(const Key('portfolio-month-next'))).onPressed,
-      isNull,
-    );
-    expect(find.text(r'+$21.83'), findsOneWidget);
-    await tapNavigationControl(tester, 'portfolio-month-previous');
-    expect(find.text('October 2026'), findsOneWidget);
-    expect(find.text(r'+$21.83'), findsNothing);
-    fixture.expectNoAccountMutation();
-    expect(tester.takeException(), null);
-    await fixture.close(tester);
-  });
-
   for (final language in ['en', 'zh']) {
     for (final size in [const Size(320, 700), const Size(844, 390), const Size(768, 1024)]) {
       testWidgets('portfolio, assets and PnL fit $size $language at 1.5 text', (tester) async {
@@ -177,7 +95,7 @@ void main() {
         );
         tester.view.physicalSize = size;
         await launch(tester, fixture.container);
-        await preview(tester, fixture.container);
+        await tapNavigationControl(tester, 'navigation-portfolio');
         await tester.drag(find.byKey(const Key('portfolio-page')), const Offset(0, -500));
         await tester.pumpAndSettle();
         expect(tester.takeException(), null);
@@ -215,7 +133,7 @@ void main() {
     }
   }
 
-  testWidgets('live account refresh awaits repository and does not inject preview performance', (
+  testWidgets('live account refresh awaits repository and does not inject sample performance', (
     tester,
   ) async {
     final fixture = NavigationFixture(tester);

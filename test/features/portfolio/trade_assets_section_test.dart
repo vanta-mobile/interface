@@ -106,27 +106,6 @@ void main() {
     await f.close(t);
   });
 
-  testWidgets('preview assets stay labeled and funding actions cannot submit real operations', (
-    t,
-  ) async {
-    final f = NavigationFixture(t, signedIn: false);
-    await launch(t, f.container);
-    f.container.read(portfolioPreviewProvider.notifier).select(true);
-    await selectAssets(t);
-    final list = t.widget<PortfolioAssetList>(find.byType(PortfolioAssetList));
-    expect(list.preview, true);
-    expectTotalRightAligned(t, 390);
-    final deposit = find.byKey(const Key('trade-assets-deposit'));
-    await t.ensureVisible(deposit);
-    await t.pumpAndSettle();
-    await t.tapAt(t.getTopLeft(deposit) + const Offset(2, 22));
-    await t.pump();
-    expect(find.byType(SnackBar), findsOneWidget);
-    f.expectNoAccountMutation();
-    expect(t.takeException(), isNull);
-    await f.close(t);
-  });
-
   testWidgets('trade uses portfolio valuations, sorting, filtering and asset detail units', (
     t,
   ) async {

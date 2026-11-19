@@ -87,7 +87,6 @@ void main() {
                         PortfolioAsset(symbol: symbol, balance: Decimal.one),
                     ],
                   ),
-                  preview: true,
                   hidden: false,
                   hideSmall: false,
                   onHideSmall: (_) {},

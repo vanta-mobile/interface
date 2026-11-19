@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/application/auth_provider.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/auth/presentation/auth_controls.dart';
-import 'package:vanta/features/trade/application/providers.dart';
 
 import '../../support/identity_repository.dart';
 import '../../support/trade_fixture.dart';
@@ -50,7 +49,6 @@ void main() {
     expect(connection.typedSigns, 0);
     expect(connector.connects, 1);
     expect(container.read(authProvider).identity?.signingAvailable, true);
-    expect(container.read(accountProvider).connected, false);
     repository.events.add(null);
     await tester.pumpAndSettle();
     expect(container.read(authProvider).identity, null);
@@ -111,7 +109,6 @@ void main() {
     expect(find.byKey(const Key('create-wallet')), findsNothing);
     expect(find.text('欢迎使用 Vanta'), findsOneWidget);
     expect(find.byKey(const Key('logout-identity')), findsNothing);
-    expect(find.byKey(const Key('enter-demo')), findsNothing);
     final reconnect = find.byKey(const Key('connect-external-wallet'));
     await tester.ensureVisible(reconnect);
     await tester.tap(reconnect);

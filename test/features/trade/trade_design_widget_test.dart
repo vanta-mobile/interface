@@ -103,7 +103,6 @@ void main() {
         await selectWorkspace(t, chart: false);
         expect(find.byType(KChartWidget), findsNothing);
         expect(find.byType(LiveOrderScreen), findsOneWidget);
-        expect(f.container.read(accountProvider).connected, false);
         expect(t.widget<TextField>(find.byKey(const Key('trade-pending-quantity'))).enabled, false);
         expect(
           t.widget<TextField>(find.byKey(const Key('trade-pending-quantity'))).controller?.text ??
@@ -125,7 +124,6 @@ void main() {
         await t.tap(find.byKey(const Key('close-market-selector')));
         await t.pumpAndSettle();
         expect(f.container.read(symbolProvider), 'BTCUSDT');
-        expect(find.byKey(const Key('enter-demo')), findsNothing);
         expect(t.takeException(), null);
         f.expectNoAccountMutation();
         await f.close(t);

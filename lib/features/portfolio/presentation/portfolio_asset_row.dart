@@ -18,11 +18,10 @@ class PortfolioAssetRow extends StatelessWidget {
     super.key,
     required this.asset,
     required this.hidden,
-    required this.preview,
     this.valuationLoading = false,
   });
   final PortfolioAsset asset;
-  final bool hidden, preview, valuationLoading;
+  final bool hidden, valuationLoading;
   bool get _estimatePending => !hidden && valuationLoading && asset.usd == null;
   bool get _pnlPending => !hidden && valuationLoading && asset.pnl != null && asset.pnlUsd == null;
 
@@ -45,8 +44,7 @@ class PortfolioAssetRow extends StatelessWidget {
               ? '+'
               : ''}${TokenAmountFormatter.formatUsd(DecimalValue(pnl.abs().toString()))}';
     return InkWell(
-      onTap: () =>
-          showPortfolioAssetDetails(context, asset: asset, hidden: hidden, preview: preview),
+      onTap: () => showPortfolioAssetDetails(context, asset: asset, hidden: hidden),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: LayoutBuilder(

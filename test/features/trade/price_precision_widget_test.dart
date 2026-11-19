@@ -88,7 +88,6 @@ void main() {
       expect(tester.widget<FilledButton>(buy).onPressed, isNotNull);
       final connect = AppLocalizations.of(tester.element(buy)).connect;
       expect(find.descendant(of: buy, matching: find.text(connect)), findsOneWidget);
-      expect(container.read(accountProvider).connected, false);
       await selectWorkspace(tester, chart: true);
       final trades = find.byKey(const ValueKey('chart-trade/BTC/0'));
       await tester.ensureVisible(trades);

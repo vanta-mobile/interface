@@ -42,7 +42,6 @@ void main() {
     final container = setup(tester, identityRepository: identity, openOrdersRepository: orders);
     await launch(tester, container);
     await revealFuturesAccountTabs(tester);
-    container.read(accountProvider.notifier).connect();
     await tester.pumpAndSettle();
     expect(find.byType(TradeOpenOrdersSection), findsOneWidget);
     expect(find.byKey(const Key('read-open-orders')), findsNothing);

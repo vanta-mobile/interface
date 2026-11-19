@@ -12,7 +12,6 @@ import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
 import 'package:vanta/features/portfolio/presentation/position_leverage_sheet.dart';
 import 'package:vanta/features/portfolio/presentation/position_margin_mode_sheet.dart';
 import 'package:vanta/features/portfolio/presentation/position_tpsl_screen.dart';
-import 'package:vanta/features/trade/presentation/widgets/trading_header.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
@@ -64,7 +63,6 @@ void main() {
           const Scaffold(
             body: SingleChildScrollView(child: LiveOrderScreen(symbol: 'BTCUSDT')),
           ),
-          Scaffold(body: TradingHeader(onLanguage: () {})),
         ];
         for (final page in pages) {
           await tester.pumpWidget(

@@ -10,9 +10,6 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get demoOrdersTitle => 'Local demo positions and orders';
-
-  @override
   String get connectExternalWallet => 'Connect EOA wallet';
 
   @override
@@ -119,9 +116,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get more => 'More';
-
-  @override
-  String get moreTimeframes => 'All intervals';
 
   @override
   String get typeCandles => 'Candles';
@@ -322,10 +316,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walletInProgress => 'Processing wallet session…';
 
   @override
-  String get demoAccountHint =>
-      'Try trading with separate local demo funds. Your Privy wallet is unaffected.';
-
-  @override
   String get authConfiguration =>
       'Privy sign-in is not configured in this build. Contact the app provider.';
 
@@ -346,9 +336,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authUnavailable => 'Sign-in is unavailable. Please retry.';
-
-  @override
-  String get demo => 'Demo account';
 
   @override
   String get perpetual => 'Perpetual';
@@ -494,15 +481,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walletHint =>
       'Explore local demo trading or use the separate live-order entry with your wallet. Fund transfers are not enabled.';
-
-  @override
-  String get enterDemo => 'Try demo account';
-
-  @override
-  String get demoBalance => '10,000 USDT demo funds · No real execution';
-
-  @override
-  String get demoActive => 'Local demo · No real execution';
 
   @override
   String get review => 'Review order';
@@ -683,12 +661,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get network => 'Market connection';
-
-  @override
-  String get demoReset => 'Leave demo account';
-
-  @override
-  String get demoExitHint => 'Leaving clears this session’s local demo positions and orders.';
 
   @override
   String get minOrder => 'Minimum size';
@@ -5492,19 +5464,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portfolioMainAccount => 'Main account';
-
-  @override
-  String get portfolioPreviewAccount => 'Demo · Static preview';
-
-  @override
-  String get portfolioPreviewNotice => 'Static design sample. No real funds or orders.';
-
-  @override
-  String get portfolioPreviewAction =>
-      'This is a static preview. Switch to your account to continue.';
-
-  @override
-  String get portfolioAccountSelector => 'Select account';
 
   @override
   String get portfolioHideBalance => 'Hide balances';

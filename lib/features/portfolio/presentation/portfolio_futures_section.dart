@@ -24,11 +24,10 @@ class _PortfolioFuturesSectionState extends ConsumerState<PortfolioFuturesSectio
   @override
   Widget build(BuildContext context) {
     final overview = ref.watch(portfolioOverviewProvider);
-    final preview = ref.watch(portfolioPreviewProvider);
     final loading = ref.watch(portfolioLoadingProvider);
     // Position cards share the Futures tab's reads: positions, account totals
     // and open orders. Never prompts a wallet.
-    if (!preview) ref.watch(positionsAutoReadProvider);
+    ref.watch(positionsAutoReadProvider);
     final positions = ref.watch(portfolioPositionsProvider.select((p) => p?.length ?? 0));
     return SliverMainAxisGroup(
       slivers: [
@@ -50,7 +49,6 @@ class _PortfolioFuturesSectionState extends ConsumerState<PortfolioFuturesSectio
           PortfolioAssetList(
             sliver: true,
             overview: overview,
-            preview: preview,
             hidden: widget.hidden,
             hideSmall: hideSmall,
             valuationLoading: loading.valuation,
@@ -59,12 +57,11 @@ class _PortfolioFuturesSectionState extends ConsumerState<PortfolioFuturesSectio
         else
           PortfolioPositionList(
             overview: overview,
-            preview: preview,
             hidden: widget.hidden,
             hideOther: hideOther,
             onHideOther: (value) => setState(() => hideOther = value),
           ),
-        if (!preview) const SliverToBoxAdapter(child: PortfolioAccountFeedback()),
+        const SliverToBoxAdapter(child: PortfolioAccountFeedback()),
       ],
     );
   }

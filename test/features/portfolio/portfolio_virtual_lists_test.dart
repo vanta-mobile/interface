@@ -11,6 +11,7 @@ import 'package:vanta/features/portfolio/domain/portfolio_overview.dart';
 import 'package:vanta/features/portfolio/presentation/portfolio_asset_row.dart';
 import 'package:vanta/features/portfolio/presentation/portfolio_futures_section.dart';
 import 'package:vanta/features/portfolio/domain/aster_account.dart';
+import 'package:vanta/features/portfolio/domain/position_card_metrics.dart';
 import 'package:vanta/features/portfolio/domain/position_risk.dart';
 import 'package:vanta/features/portfolio/presentation/trade_position_card.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
@@ -29,11 +30,6 @@ class _Positions extends Notifier<List<PositionRisk>> {
   @override
   List<PositionRisk> build() => const [];
   void replace(List<PositionRisk> value) => state = value;
-}
-
-class _Preview extends PortfolioPreviewController {
-  @override
-  bool build() => true;
 }
 
 void main() {
@@ -57,6 +53,7 @@ void main() {
     Size size = const Size(393, 844),
     double scale = 1,
     bool hidden = false,
+    Widget? content,
   }) async {
     t.view.physicalSize = size;
     t.view.devicePixelRatio = 1;
@@ -66,7 +63,6 @@ void main() {
       overrides: [
         portfolioOverviewProvider.overrideWith((ref) => ref.watch(_snapshot)),
         portfolioPositionsProvider.overrideWith((ref) => ref.watch(_positions)),
-        portfolioPreviewProvider.overrideWith(_Preview.new),
         portfolioLoadingProvider.overrideWithValue((
           account: false,
           value: false,
@@ -94,7 +90,7 @@ void main() {
               slivers: [
                 SliverPadding(
                   padding: const EdgeInsets.all(16),
-                  sliver: PortfolioFuturesSection(hidden: hidden),
+                  sliver: content ?? PortfolioFuturesSection(hidden: hidden),
                 ),
               ],
             ),
@@ -172,7 +168,21 @@ void main() {
   });
 
   testWidgets('tapping the margin ratio gauge toggles its explanation', (t) async {
-    await mount(t, overview(), positions: [position('BTCUSDT', 'LONG')]);
+    await mount(
+      t,
+      overview(),
+      // Below the fold of the tabs, as on the page, so the tip opens upward.
+      content: SliverPadding(
+        padding: const EdgeInsets.only(top: 120),
+        sliver: SliverToBoxAdapter(
+          child: TradePositionCard(
+            position: position('BTCUSDT', 'LONG'),
+            marginRatio: Decimal.fromInt(12),
+            exits: const PositionExitOrders(),
+          ),
+        ),
+      ),
+    );
     final tip = find.byKey(const Key('trade-position-margin-tip'));
     final l = AppLocalizations.of(t.element(find.byType(TradePositionCard)));
     expect(tip, findsNothing);

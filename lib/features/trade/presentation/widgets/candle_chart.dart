@@ -14,8 +14,6 @@ import '../../application/providers.dart';
 import '../trade_theme.dart';
 import 'chart_price_viewport.dart';
 import 'chart_controls.dart';
-import 'chart_toolbar.dart';
-import 'trade_icon.dart';
 import 'primitives.dart';
 import '../../../../core/presentation/status_view.dart';
 
@@ -76,15 +74,23 @@ class _CandleChartState extends ConsumerState<CandleChart> {
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 600;
         // The K-line tab follows the Figma `chart` component (12.08): 104px
-        // lower panes. Fullscreen keeps its own compact panes (02.17).
+        // lower panes. Fullscreen keeps its own compact panes (12.15).
         final secondaryHeight = widget.expanded ? (wide ? 78.0 : 62.0) : 104.0;
         final extraHeight =
             (preferences.volume ? secondaryHeight : 0) +
             (preferences.secondary != 'none' ? secondaryHeight : 0) +
             (preferences.main == 'none' ? 0 : 12);
-        // Fullscreen keeps only the timeframe row above the canvas (02.17).
+        // Fullscreen (12.15): timeframes and OHLC above the canvas, the
+        // 32px action bar below it.
         final mainHeight = widget.expanded
-            ? math.max(150.0, (widget.viewportHeight ?? 640) - 45 - extraHeight)
+            ? math.max(
+                150.0,
+                (widget.viewportHeight ?? 640) -
+                    _fullscreenTimeframeHeight -
+                    _fullscreenOhlcHeight -
+                    _fullscreenActionHeight -
+                    extraHeight,
+              )
             : wide
             ? 360.0
             : 285.0;
@@ -154,10 +160,19 @@ class _CandleChartState extends ConsumerState<CandleChart> {
             flat: widget.flat,
             child: Column(
               children: [
-                ChartTimeframes(trailing: _FullscreenButton(expanded: widget.expanded)),
-                const Divider(),
+                const SizedBox(height: _fullscreenTimeframeHeight - 1, child: ChartTimeframeRow()),
+                const Divider(height: 1, thickness: 1, color: TradeColors.line),
+                SizedBox(
+                  height: _fullscreenOhlcHeight,
+                  child: ChartOhlcRow(market: quote),
+                ),
                 ?noticeRow,
                 canvas,
+                // Grows with enlarged text; the page scrolls instead of clipping.
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: _fullscreenActionHeight),
+                  child: const ChartActionBar(fullscreen: true),
+                ),
               ],
             ),
           );
@@ -223,20 +238,8 @@ class _CandleChartState extends ConsumerState<CandleChart> {
 
   static const _timeframeHeight = 36.0, _ohlcHeight = 28.0, _noticeHeight = 20.0;
   static const _historyHeight = 36.0, _indicatorHeight = 36.0, _actionHeight = 48.0;
-}
-
-class _FullscreenButton extends StatelessWidget {
-  const _FullscreenButton({required this.expanded});
-  final bool expanded;
-  @override
-  Widget build(BuildContext context) => IconButton(
-    key: const Key('chart-expand'),
-    tooltip: tr(context, expanded ? 'exitFullscreen' : 'fullscreen'),
-    onPressed: expanded ? () => Navigator.maybePop(context) : () => openChartFullscreen(context),
-    icon: expanded
-        ? const TradeIcon('chart-exit-fullscreen', size: 16, color: TradeColors.text)
-        : const Icon(Icons.fullscreen_rounded, size: 18, color: TradeColors.text),
-  );
+  static const _fullscreenTimeframeHeight = 32.0, _fullscreenOhlcHeight = 24.0;
+  static const _fullscreenActionHeight = 32.0;
 }
 
 Future<void> openChartFullscreen(BuildContext context) => Navigator.push(
@@ -244,8 +247,8 @@ Future<void> openChartFullscreen(BuildContext context) => Navigator.push(
   MaterialPageRoute<void>(builder: (context) => const ChartFullscreenPage()),
 );
 
-/// Landscape fullscreen chart (Figma 02.17): only timeframes, chart and the
-/// exit control. This page is the one documented exception to never locking
+/// Landscape fullscreen chart (Figma 12.15): timeframes, OHLC, chart and the
+/// action bar, whose last action exits. This page is the one documented exception to never locking
 /// orientation: it requests landscape while open and restores the system
 /// default when it closes.
 class ChartFullscreenPage extends StatefulWidget {
@@ -262,7 +265,7 @@ class _ChartFullscreenPageState extends State<ChartFullscreenPage> {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
-    // The 02.17 frame has no status or navigation bar.
+    // The 12.15 frame has no status or navigation bar.
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 

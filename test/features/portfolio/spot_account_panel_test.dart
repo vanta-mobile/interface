@@ -25,7 +25,6 @@ void main() {
     addTearDown(identity.dispose);
     final container = setup(tester, identityRepository: identity, asterSpotRepository: spots);
     await launch(tester, container);
-    container.read(accountProvider.notifier).connect();
     await openPortfolioAccountTools(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('现货'));

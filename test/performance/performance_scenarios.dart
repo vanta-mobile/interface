@@ -230,7 +230,6 @@ Future<void> runPerformanceScenarios(
             expect(find.byKey(const Key('trade-pending-sell')), findsNothing);
             expect(find.byKey(const Key('live-order-read')), findsNothing);
             expect(tester.widget<TextField>(quantity).enabled, false);
-            expect(fixture.container.read(accountProvider).connected, false);
           });
           await measure('${prefix}_connect', '$label account connection entry', () async {
             await tester.ensureVisible(connect);
@@ -238,7 +237,6 @@ Future<void> runPerformanceScenarios(
             await tester.tap(connect);
             await tester.pumpAndSettle();
             expect(find.byType(LoginScreen), findsOneWidget);
-            expect(find.byKey(const Key('enter-demo')), findsNothing);
           });
           expect(tester.takeException(), isNull);
         } finally {

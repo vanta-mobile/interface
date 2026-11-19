@@ -75,7 +75,6 @@ void main() {
                       PortfolioAssetTabs(assets: true, count: 1, onChanged: (_) {}),
                       PortfolioAssetList(
                         overview: overview,
-                        preview: true,
                         hidden: hidden,
                         hideSmall: hideSmall,
                         onHideSmall: (v) => setState(() => hideSmall = v),

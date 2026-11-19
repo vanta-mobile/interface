@@ -10,9 +10,6 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get demoOrdersTitle => '本地演示持仓与订单';
-
-  @override
   String get connectExternalWallet => '连接 EOA 钱包';
 
   @override
@@ -109,9 +106,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get more => '更多';
-
-  @override
-  String get moreTimeframes => '全部周期';
 
   @override
   String get typeCandles => '蜡烛图';
@@ -309,9 +303,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get walletInProgress => '正在处理钱包会话…';
 
   @override
-  String get demoAccountHint => '使用独立的本地模拟资金体验交易，不影响你的 Privy 钱包。';
-
-  @override
   String get authConfiguration => '当前安装包尚未配置可用的 Privy 登录，请联系应用提供方。';
 
   @override
@@ -331,9 +322,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authUnavailable => '登录服务暂不可用，请重试。';
-
-  @override
-  String get demo => '演示账户';
 
   @override
   String get perpetual => '永续';
@@ -478,15 +466,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get walletHint => '可使用本地演示账户体验交易，或通过独立实盘入口使用钱包下单。资金划转尚未启用。';
-
-  @override
-  String get enterDemo => '体验演示账户';
-
-  @override
-  String get demoBalance => '10,000 USDT 模拟资金 · 无真实交易';
-
-  @override
-  String get demoActive => '本地演示 · 非真实交易';
 
   @override
   String get review => '确认订单';
@@ -664,12 +643,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get network => '行情连接';
-
-  @override
-  String get demoReset => '退出演示账户';
-
-  @override
-  String get demoExitHint => '退出会清除本次本地演示的持仓和挂单。';
 
   @override
   String get minOrder => '最小数量';
@@ -5084,18 +5057,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get portfolioMainAccount => '主账户';
-
-  @override
-  String get portfolioPreviewAccount => '演示账户 · 静态示例';
-
-  @override
-  String get portfolioPreviewNotice => '静态设计示例，不代表真实资金或订单。';
-
-  @override
-  String get portfolioPreviewAction => '当前为静态示例，请切换至真实账户后操作。';
-
-  @override
-  String get portfolioAccountSelector => '选择账户';
 
   @override
   String get portfolioHideBalance => '隐藏余额';

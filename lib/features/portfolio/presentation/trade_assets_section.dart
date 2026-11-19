@@ -16,7 +16,6 @@ import '../domain/portfolio_overview.dart';
 import 'portfolio_account_feedback.dart';
 import 'portfolio_assets.dart';
 import 'portfolio_components.dart';
-import 'portfolio_header.dart';
 import 'portfolio_loading.dart';
 
 /// Shares account reads, valuation, sorting and lazy rows with the asset page.
@@ -32,7 +31,6 @@ class _TradeAssetsSectionState extends ConsumerState<TradeAssetsSection> {
 
   @override
   Widget build(BuildContext context) {
-    final preview = ref.watch(portfolioPreviewProvider);
     final active = !ref.watch(authProvider.select((s) => s.needsWalletConnection));
     final overview = ref.watch(portfolioOverviewProvider);
     final loading = ref.watch(portfolioLoadingProvider);
@@ -40,11 +38,7 @@ class _TradeAssetsSectionState extends ConsumerState<TradeAssetsSection> {
     final l = AppLocalizations.of(context);
     return SliverMainAxisGroup(
       slivers: [
-        if (preview)
-          SliverToBoxAdapter(
-            child: Text(l.portfolioPreviewNotice, style: PortfolioTypography.caption),
-          ),
-        if (!active && !preview)
+        if (!active)
           SliverToBoxAdapter(
             child: TextButton(
               key: const Key('trade-assets-login'),
@@ -60,23 +54,22 @@ class _TradeAssetsSectionState extends ConsumerState<TradeAssetsSection> {
           PortfolioAssetList(
             sliver: true,
             overview: overview,
-            preview: preview,
             hidden: false,
             hideSmall: hideSmall,
             valuationLoading: loading.valuation,
             onHideSmall: (value) => setState(() => hideSmall = value),
-            header: _TotalBalance(overview: overview, preview: preview, loading: loading.value),
+            header: _TotalBalance(overview: overview, loading: loading.value),
           ),
-        if (active && !preview) const SliverToBoxAdapter(child: PortfolioAccountFeedback()),
+        if (active) const SliverToBoxAdapter(child: PortfolioAccountFeedback()),
       ],
     );
   }
 }
 
 class _TotalBalance extends StatelessWidget {
-  const _TotalBalance({required this.overview, required this.preview, required this.loading});
+  const _TotalBalance({required this.overview, required this.loading});
   final PortfolioOverview overview;
-  final bool preview, loading;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) => Stack(
@@ -128,9 +121,7 @@ class _TotalBalance extends StatelessWidget {
             alignment: Alignment.centerRight,
             iconSize: 16,
             tooltip: AppLocalizations.of(context).fundingDeposit,
-            onPressed: () => preview
-                ? portfolioPreviewNotice(context)
-                : openFunding(context, FundingOperation.deposit),
+            onPressed: () => openFunding(context, FundingOperation.deposit),
             icon: const PortfolioIcon('asset-deposit.svg', size: 16),
           ),
         ),

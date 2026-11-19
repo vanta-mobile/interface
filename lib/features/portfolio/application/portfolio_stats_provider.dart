@@ -5,7 +5,6 @@ import '../../auth/application/vanta_api_session_provider.dart';
 import '../data/portfolio_stats_repository.dart';
 import '../domain/portfolio_overview.dart';
 import '../domain/portfolio_stats.dart';
-import 'portfolio_overview_provider.dart';
 
 final portfolioStatsRepositoryProvider = Provider<PortfolioStatsRepository?>((ref) {
   final session = ref.watch(vantaApiSessionRepositoryProvider);
@@ -104,8 +103,6 @@ PortfolioStatsPeriod portfolioStatsPeriod(String label) => switch (label) {
 /// Main page: today's PnL, the 7D card and the total-value history of [period].
 final portfolioPerformanceProvider = Provider.autoDispose
     .family<PortfolioStatsView, PortfolioStatsPeriod>((ref, period) {
-      final preview = _previewView(ref, history: period, metrics: PortfolioStatsPeriod.week);
-      if (preview != null) return preview;
       final today = ref.watch(portfolioSummaryProvider(PortfolioStatsPeriod.day));
       final week = ref.watch(portfolioSummaryProvider(PortfolioStatsPeriod.week));
       final curve = ref.watch(portfolioValueCurveProvider(period));
@@ -120,8 +117,6 @@ final portfolioPerformanceProvider = Provider.autoDispose
 /// PnL details: [period] summary, cumulative PnL history and today's PnL.
 final portfolioPnlPerformanceProvider = Provider.autoDispose
     .family<PortfolioStatsView, PortfolioStatsPeriod>((ref, period) {
-      final preview = _previewView(ref, history: period, metrics: period);
-      if (preview != null) return preview;
       final today = ref.watch(portfolioSummaryProvider(PortfolioStatsPeriod.day));
       final summary = ref.watch(portfolioSummaryProvider(period));
       final curve = ref.watch(portfolioPnlCurveProvider(period));
@@ -133,14 +128,11 @@ final portfolioPnlPerformanceProvider = Provider.autoDispose
       );
     });
 
-/// The month's daily net PnL; preview keeps its labelled static sample.
+/// The month's daily net PnL.
 final portfolioCalendarViewProvider = Provider.autoDispose.family<PortfolioStatsView, DateTime>((
   ref,
   month,
 ) {
-  if (ref.watch(portfolioPreviewProvider)) {
-    return PortfolioStatsView(ref.watch(portfolioOverviewProvider).performance);
-  }
   final calendar = ref.watch(portfolioCalendarProvider(month));
   return PortfolioStatsView(
     PortfolioPerformance(dailyPnl: calendar.value?.days ?? const {}),
@@ -149,29 +141,6 @@ final portfolioCalendarViewProvider = Provider.autoDispose.family<PortfolioStats
     block: _block(ref, [calendar]),
   );
 });
-
-/// The static sample only covers 7D; other ranges show unavailable.
-PortfolioStatsView? _previewView(
-  Ref ref, {
-  required PortfolioStatsPeriod history,
-  required PortfolioStatsPeriod metrics,
-}) {
-  if (!ref.watch(portfolioPreviewProvider)) return null;
-  final p = ref.watch(portfolioOverviewProvider).performance;
-  const week = PortfolioStatsPeriod.week;
-  return PortfolioStatsView(
-    PortfolioPerformance(
-      pnl: metrics == week ? p.pnl : null,
-      returnPercent: metrics == week ? p.returnPercent : null,
-      volume: metrics == week ? p.volume : null,
-      todayPnl: p.todayPnl,
-      todayPercent: p.todayPercent,
-      history: history == week ? p.history : const [],
-      start: metrics == week || history == week ? p.start : null,
-      end: metrics == week || history == week ? p.end : null,
-    ),
-  );
-}
 
 PortfolioStatsView _view(
   Ref ref,
@@ -231,7 +200,6 @@ Object? _failure(Ref ref, List<AsyncValue<Object?>> sources) {
 /// Refresh every visible statistics read, including failures. Missing sessions
 /// use the explicit sign-in action; navigation and refresh never prompt a wallet.
 Future<void> refreshPortfolioStats(Ref ref, {DateTime? calendarMonth}) async {
-  if (ref.read(portfolioPreviewProvider)) return;
   if (!ref.mounted || !ref.read(vantaApiSessionProvider).ready) return;
   final reads = <Future<Object?>>[
     for (final period in PortfolioStatsPeriod.values) ...[

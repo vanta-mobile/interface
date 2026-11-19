@@ -177,8 +177,10 @@ class ChartIndicatorRow extends ConsumerWidget {
 }
 
 /// Price scale (12.04), chart type (12.02), indicators (12.05), fullscreen.
+/// In [fullscreen] (12.15) the bar is 32px and its last action exits.
 class ChartActionBar extends ConsumerWidget {
-  const ChartActionBar({super.key});
+  const ChartActionBar({super.key, this.fullscreen = false});
+  final bool fullscreen;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scale = ref.watch(chartPreferencesProvider.select((p) => p.priceScale));
@@ -187,7 +189,9 @@ class ChartActionBar extends ConsumerWidget {
       tooltip: tooltip,
       onPressed: onPressed,
       padding: EdgeInsets.zero,
-      constraints: const BoxConstraints.tightFor(width: 36, height: 36),
+      constraints: BoxConstraints.tightFor(width: 36, height: fullscreen ? 32 : 36),
+      // The 32px fullscreen bar (12.15) keeps 36x32 targets.
+      style: fullscreen ? const ButtonStyle(tapTargetSize: MaterialTapTargetSize.shrinkWrap) : null,
       icon: icon,
     );
     return ColoredBox(
@@ -201,7 +205,7 @@ class ChartActionBar extends ConsumerWidget {
                 key: const Key('chart-price-scale'),
                 onTap: () => showChartPriceScaleSheet(context, ref),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 9, 8, 9),
+                  padding: EdgeInsets.fromLTRB(16, fullscreen ? 7 : 9, 8, fullscreen ? 7 : 9),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -233,12 +237,19 @@ class ChartActionBar extends ConsumerWidget {
             const TradeIcon('chart-indicators', size: 24, color: TradeColors.muted),
             () => showChartIndicatorSheet(context),
           ),
-          action(
-            'chart-expand',
-            tr(context, 'fullscreen'),
-            const TradeIcon('chart-fullscreen', size: 20, color: TradeColors.muted),
-            () => openChartFullscreen(context),
-          ),
+          fullscreen
+              ? action(
+                  'chart-expand',
+                  tr(context, 'exitFullscreen'),
+                  const TradeIcon('chart-exit-fullscreen', size: 20, color: TradeColors.muted),
+                  () => Navigator.maybePop(context),
+                )
+              : action(
+                  'chart-expand',
+                  tr(context, 'fullscreen'),
+                  const TradeIcon('chart-fullscreen', size: 20, color: TradeColors.muted),
+                  () => openChartFullscreen(context),
+                ),
           const SizedBox(width: 10),
         ],
       ),

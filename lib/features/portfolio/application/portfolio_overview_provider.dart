@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/refresh_batch.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../funding/application/funding_activity_poll_provider.dart';
-import '../data/portfolio_preview.dart';
 import '../domain/portfolio_overview.dart';
 import '../domain/asset_valuation.dart';
 import 'account_read_provider.dart';
@@ -14,22 +13,7 @@ import 'position_risk_provider.dart';
 import '../domain/position_risk.dart';
 import 'portfolio_stats_provider.dart';
 
-final portfolioPreviewProvider = NotifierProvider<PortfolioPreviewController, bool>(
-  PortfolioPreviewController.new,
-);
-
-class PortfolioPreviewController extends Notifier<bool> {
-  @override
-  bool build() {
-    ref.listen(authProvider.select((s) => s.identity?.id), (_, _) => state = false);
-    return false;
-  }
-
-  void select(bool preview) => state = preview;
-}
-
 final portfolioOverviewProvider = Provider<PortfolioOverview>((ref) {
-  if (ref.watch(portfolioPreviewProvider)) return portfolioPreview();
   final accountState = ref.watch(accountReadProvider);
   final account = accountState.account;
   if (ref.watch(authProvider.select((s) => s.identity)) == null) {
@@ -68,7 +52,6 @@ final portfolioOverviewProvider = Provider<PortfolioOverview>((ref) {
 /// as the Futures Positions tab, so both pages render one card. Null while the
 /// first read is pending or failed.
 final portfolioPositionsProvider = Provider<List<PositionRisk>?>((ref) {
-  if (ref.watch(portfolioPreviewProvider)) return portfolioPreviewPositions();
   if (ref.watch(authProvider.select((s) => s.identity)) == null) return const [];
   final (positions, depositRequired) = ref.watch(
     positionRiskProvider.select((s) => (s.account?.positions, s.failure?.requiresDeposit == true)),
@@ -82,7 +65,6 @@ final portfolioPositionsProvider = Provider<List<PositionRisk>?>((ref) {
 final portfolioRefreshProvider = Provider<Future<void> Function({DateTime? calendarMonth})>((ref) {
   final batch = RefreshBatch();
   return ({calendarMonth}) async {
-    if (ref.read(portfolioPreviewProvider)) return;
     await batch.run([
       () => refreshPortfolioStats(ref, calendarMonth: calendarMonth),
       if (!ref.read(authProvider).needsWalletConnection)

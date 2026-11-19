@@ -8,8 +8,6 @@ import '../../funding/presentation/transfer_history_screen.dart';
 import '../../subaccounts/presentation/account_selector_sheet.dart';
 import '../../subaccounts/presentation/account_components.dart';
 import '../../subaccounts/application/account_entries_provider.dart';
-import '../application/portfolio_overview_provider.dart';
-import 'portfolio_account_details.dart';
 import 'portfolio_components.dart';
 
 class PortfolioHeader extends ConsumerWidget {
@@ -17,8 +15,7 @@ class PortfolioHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context), session = ref.watch(authProvider);
-    final preview = ref.watch(portfolioPreviewProvider);
-    final active = preview || !session.needsWalletConnection;
+    final active = !session.needsWalletConnection;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 7, 4, 12),
       child: Row(
@@ -27,9 +24,7 @@ class PortfolioHeader extends ConsumerWidget {
             child: active
                 ? InkWell(
                     key: const Key('portfolio-account-selector'),
-                    onTap: () => preview
-                        ? _selectAccount(context, ref, preview)
-                        : showAccountSelector(context),
+                    onTap: () => showAccountSelector(context),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(minHeight: 44),
                       child: Row(
@@ -38,9 +33,7 @@ class PortfolioHeader extends ConsumerWidget {
                           const SizedBox(width: 8),
                           Flexible(
                             child: Text(
-                              preview
-                                  ? l.portfolioPreviewAccount
-                                  : ref.watch(activeAccountEntryProvider) == null
+                              ref.watch(activeAccountEntryProvider) == null
                                   ? l.account
                                   : accountLabel(l, ref.watch(activeAccountEntryProvider)!),
                               style: PortfolioTypography.heading,
@@ -68,68 +61,11 @@ class PortfolioHeader extends ConsumerWidget {
             IconButton(
               key: const Key('portfolio-history-entry'),
               tooltip: l.assetHistoryTitle,
-              onPressed: preview
-                  ? () => portfolioPreviewNotice(context)
-                  : () => openTransferHistory(context),
+              onPressed: () => openTransferHistory(context),
               icon: const PortfolioIcon('history.svg', size: 24, color: PortfolioColors.secondary),
             ),
         ],
       ),
     );
   }
-
-  Future<void> _selectAccount(BuildContext context, WidgetRef ref, bool preview) async {
-    final l = AppLocalizations.of(context);
-    final result = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: PortfolioColors.card,
-      builder: (context) => SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(l.portfolioAccountSelector, style: PortfolioTypography.heading),
-                const SizedBox(height: 12),
-                ListTile(
-                  key: const Key('portfolio-select-main'),
-                  title: Text(l.portfolioMainAccount),
-                  trailing: !preview
-                      ? const Icon(Icons.check, color: PortfolioColors.accent)
-                      : null,
-                  onTap: () => Navigator.pop(context, 'main'),
-                ),
-                ListTile(
-                  key: const Key('portfolio-select-preview'),
-                  title: Text(l.portfolioPreviewAccount),
-                  trailing: preview ? const Icon(Icons.check, color: PortfolioColors.accent) : null,
-                  onTap: () => Navigator.pop(context, 'preview'),
-                ),
-                ListTile(
-                  key: const Key('portfolio-account-details'),
-                  title: Text(l.account),
-                  onTap: () => Navigator.pop(context, 'details'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-    if (!context.mounted) return;
-    switch (result) {
-      case 'preview':
-        ref.read(portfolioPreviewProvider.notifier).select(true);
-      case 'main':
-        ref.read(portfolioPreviewProvider.notifier).select(false);
-      case 'details':
-        Navigator.of(context)
-            .push<void>(MaterialPageRoute(builder: (_) => const PortfolioAccountDetails()));
-    }
-  }
 }
-
-void portfolioPreviewNotice(BuildContext context) =>
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).portfolioPreviewAction)));

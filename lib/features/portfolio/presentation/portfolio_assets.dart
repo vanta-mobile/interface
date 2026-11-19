@@ -7,16 +7,13 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/application/providers.dart';
 import '../domain/portfolio_overview.dart';
 import 'portfolio_components.dart';
-import 'portfolio_header.dart';
 import 'account_position_card.dart';
 import 'portfolio_loading.dart';
-import 'trade_position_card.dart';
 import '../application/portfolio_overview_provider.dart';
 import '../application/position_risk_provider.dart';
 import '../application/batch_close_provider.dart';
 import '../application/symbol_settings_activity.dart';
 import '../../auth/application/auth_provider.dart';
-import '../domain/position_card_metrics.dart';
 import '../domain/position_risk.dart';
 import '../../../core/errors/error_text.dart';
 import 'portfolio_asset_row.dart';
@@ -95,13 +92,12 @@ class PortfolioPositionList extends ConsumerWidget {
   const PortfolioPositionList({
     super.key,
     required this.overview,
-    required this.preview,
     required this.hidden,
     required this.hideOther,
     required this.onHideOther,
   });
   final PortfolioOverview overview;
-  final bool preview, hidden, hideOther;
+  final bool hidden, hideOther;
   final ValueChanged<bool> onHideOther;
 
   @override
@@ -117,7 +113,6 @@ class PortfolioPositionList extends ConsumerWidget {
     ref.watch(positionRiskProvider);
     ref.watch(symbolSettingsActivityProvider);
     final canCloseAll =
-        !preview &&
         positions?.isNotEmpty == true &&
         ref.read(batchCloseProvider.notifier).prepare(symbol: symbol) != null;
     String rowKey(PositionRisk p) => 'portfolio-position-${p.symbol}-${p.side}';
@@ -126,7 +121,6 @@ class PortfolioPositionList extends ConsumerWidget {
       slivers: [
         SliverToBoxAdapter(
           child: _PositionControls(
-            preview: preview,
             hasPositions: all?.isNotEmpty == true,
             onCloseAll: canCloseAll ? () => confirmBatchClose(context, ref, symbol: symbol) : null,
             closing: ref.watch(batchCloseProvider).busy,
@@ -165,9 +159,7 @@ class PortfolioPositionList extends ConsumerWidget {
               return Padding(
                 key: ValueKey(rowKey(position)),
                 padding: const EdgeInsets.only(bottom: 12),
-                child: preview
-                    ? _PreviewPositionCard(position: position, hidden: hidden)
-                    : AccountPositionCard(position: position, hidden: hidden),
+                child: AccountPositionCard(position: position, hidden: hidden),
               );
             },
           ),
@@ -177,37 +169,15 @@ class PortfolioPositionList extends ConsumerWidget {
   }
 }
 
-/// Labeled preview: the shared card with sample risk and preview-only actions.
-class _PreviewPositionCard extends StatelessWidget {
-  const _PreviewPositionCard({required this.position, required this.hidden});
-  final PositionRisk position;
-  final bool hidden;
-  @override
-  Widget build(BuildContext context) {
-    void notice() => portfolioPreviewNotice(context);
-    return TradePositionCard(
-      position: position,
-      hidden: hidden,
-      marginRatio: Decimal.fromInt(12),
-      exits: const PositionExitOrders(),
-      onTpSl: notice,
-      onEditPartial: notice,
-      onMarket: notice,
-      onLimit: notice,
-    );
-  }
-}
-
 class _PositionControls extends StatelessWidget {
   const _PositionControls({
-    required this.preview,
     required this.hasPositions,
     required this.hideOther,
     required this.onHideOther,
     required this.onCloseAll,
     this.closing = false,
   });
-  final bool preview, hasPositions, hideOther;
+  final bool hasPositions, hideOther;
 
   /// A confirmed close is running; its outcome is shown as a toast.
   final bool closing;
@@ -249,7 +219,7 @@ class _PositionControls extends StatelessWidget {
         if (hasPositions)
           TextButton(
             key: const Key('portfolio-close-all'),
-            onPressed: preview ? () => portfolioPreviewNotice(context) : onCloseAll,
+            onPressed: onCloseAll,
             child: closing
                 ? const SizedBox.square(
                     key: Key('portfolio-close-all-loading'),
@@ -259,9 +229,7 @@ class _PositionControls extends StatelessWidget {
                 : Text(
                     l.portfolioCloseAll,
                     style: PortfolioTypography.caption.copyWith(
-                      color: preview || onCloseAll != null
-                          ? PortfolioColors.negative
-                          : PortfolioColors.muted,
+                      color: onCloseAll != null ? PortfolioColors.negative : PortfolioColors.muted,
                     ),
                   ),
           ),
@@ -274,7 +242,6 @@ class PortfolioAssetList extends StatelessWidget {
   const PortfolioAssetList({
     super.key,
     required this.overview,
-    required this.preview,
     required this.hidden,
     required this.hideSmall,
     required this.onHideSmall,
@@ -284,7 +251,7 @@ class PortfolioAssetList extends StatelessWidget {
   });
   final Widget? header;
   final PortfolioOverview overview;
-  final bool preview, hidden, hideSmall, sliver, valuationLoading;
+  final bool hidden, hideSmall, sliver, valuationLoading;
   final ValueChanged<bool> onHideSmall;
 
   @override
@@ -298,7 +265,6 @@ class PortfolioAssetList extends StatelessWidget {
       key: ValueKey(rowKey(assets[index])),
       asset: assets[index],
       hidden: hidden,
-      preview: preview,
       valuationLoading: valuationLoading,
     );
     const divider = Divider(height: 1, thickness: 1, color: PortfolioColors.assetDivider);
@@ -346,9 +312,7 @@ class PortfolioAssetList extends StatelessWidget {
       title: l.statusNoAssetsTitle,
       message: l.statusNoAssetsMessage,
       actionLabel: l.fundingDeposit,
-      onAction: () => preview
-          ? portfolioPreviewNotice(context)
-          : openFunding(context, FundingOperation.deposit),
+      onAction: () => openFunding(context, FundingOperation.deposit),
     );
   }
 }

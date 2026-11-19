@@ -33,7 +33,6 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final active = ref.watch(authProvider.select((s) => !s.needsWalletConnection));
-    final preview = ref.watch(portfolioPreviewProvider);
     final overview = ref.watch(portfolioOverviewProvider);
     final stats = ref.watch(portfolioPerformanceProvider(portfolioStatsPeriod(period)));
     ref.watch(portfolioAccountLoadProvider);
@@ -61,20 +60,12 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
                           slivers: [
                             SliverList.list(
                               children: [
-                                if (preview)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: Text(
-                                      l.portfolioPreviewNotice,
-                                      style: PortfolioTypography.caption,
-                                    ),
-                                  ),
                                 PortfolioAccountValue(
                                   overview: overview,
                                   stats: stats,
                                   loading: valueLoading,
                                   visible: !hidden,
-                                  active: active || preview,
+                                  active: active,
                                   historyExpanded: expanded,
                                   onToggleVisibility: () => setState(() => hidden = !hidden),
                                   onToggleHistory: () => setState(() => expanded = !expanded),
@@ -89,8 +80,8 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
                                   ),
                                 ],
                                 const SizedBox(height: 16),
-                                if (active || preview)
-                                  _MoneyActions(preview: preview)
+                                if (active)
+                                  const _MoneyActions()
                                 else ...[
                                   Text(l.portfolioLoginHint, style: PortfolioTypography.body),
                                   const SizedBox(height: 16),
@@ -101,7 +92,7 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
                                     onPressed: () => showAccountSheet(context),
                                   ),
                                 ],
-                                if (active && !preview) PortfolioFundingActivity(hidden: hidden),
+                                if (active) PortfolioFundingActivity(hidden: hidden),
                                 const SizedBox(height: 16),
                                 Row(
                                   children: [
@@ -111,7 +102,7 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
                                         style: PortfolioTypography.section,
                                       ),
                                     ),
-                                    if (active || preview)
+                                    if (active)
                                       TextButton(
                                         key: const Key('portfolio-pnl-entry'),
                                         onPressed: () => Navigator.of(context).push<void>(
@@ -132,13 +123,13 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
                                 PortfolioPerformanceCard(
                                   stats: stats,
                                   hidden: hidden,
-                                  active: active || preview,
+                                  active: active,
                                 ),
                                 const SizedBox(height: 16),
                                 Text(l.portfolioFuturesAssets, style: PortfolioTypography.section),
                               ],
                             ),
-                            if (active || preview)
+                            if (active)
                               PortfolioFuturesSection(hidden: hidden)
                             else
                               SliverToBoxAdapter(child: PortfolioEmpty(l.portfolioLoginBalances)),
@@ -159,15 +150,13 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
 }
 
 class _MoneyActions extends ConsumerWidget {
-  const _MoneyActions({required this.preview});
-  final bool preview;
+  const _MoneyActions();
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final entry = ref.watch(activeAccountEntryProvider);
     final child = entry != null && entry.roleKnown && !entry.main;
-    void open(FundingOperation operation) =>
-        preview ? portfolioPreviewNotice(context) : openFunding(context, operation);
+    void open(FundingOperation operation) => openFunding(context, operation);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -185,8 +174,8 @@ class _MoneyActions extends ConsumerWidget {
             Expanded(
               child: PortfolioAction(
                 key: const Key('portfolio-withdraw'),
-                label: preview || !child ? l.fundingWithdraw : l.accountsWithdrawMainOnly,
-                onPressed: preview || !child ? () => open(FundingOperation.withdraw) : null,
+                label: !child ? l.fundingWithdraw : l.accountsWithdrawMainOnly,
+                onPressed: !child ? () => open(FundingOperation.withdraw) : null,
               ),
             ),
           ],

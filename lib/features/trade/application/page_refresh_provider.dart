@@ -5,7 +5,6 @@ import '../../market/application/market_providers.dart';
 import '../../market/application/public_leverage_provider.dart';
 import '../../portfolio/application/account_read_provider.dart';
 import '../../portfolio/application/portfolio_account_load_provider.dart';
-import '../../portfolio/application/portfolio_overview_provider.dart';
 import '../../portfolio/application/asset_index_provider.dart';
 import '../../portfolio/application/asset_metadata_provider.dart';
 import '../../portfolio/application/asset_metadata_refresh_provider.dart';
@@ -71,7 +70,7 @@ class PageRefreshController {
       }
       if (!ref.mounted) return;
       if (ref.read(accountReadProvider).account != null ||
-          ref.exists(portfolioAccountLoadProvider) && !ref.read(portfolioPreviewProvider)) {
+          ref.exists(portfolioAccountLoadProvider)) {
         await ref.read(accountReadProvider.notifier).refresh();
       }
       if (ref.mounted && ref.read(openOrdersReadProvider).account != null) {

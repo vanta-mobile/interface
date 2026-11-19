@@ -70,7 +70,6 @@ void main() {
       language: const Locale('en'),
     );
     await launch(tester, container);
-    container.read(accountProvider.notifier).connect();
     await enterHistory(tester);
     expect(repository.queries, isEmpty);
     expect(find.byKey(const Key('history-empty')), findsNothing);

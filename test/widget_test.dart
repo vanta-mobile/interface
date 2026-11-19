@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';
 import 'package:vanta/features/trade/application/chart_preferences.dart';
 import 'package:vanta/features/trade/application/providers.dart';
+import 'package:vanta/features/trade/presentation/widgets/chart_controls.dart';
 
 import 'support/trade_fixture.dart';
 import 'support/workspace_navigation.dart';
@@ -76,9 +77,7 @@ void main() {
     expect(tester.widget<KChartWidget>(find.byType(KChartWidget)).isLine, true);
     await selectWorkspace(tester, chart: false);
     expect(find.byKey(const Key('submit-order')), findsNothing);
-    expect(find.byKey(const Key('enter-demo')), findsNothing);
     expect(find.byKey(const Key('trade-live-order')), findsOneWidget);
-    expect(container.read(accountProvider).connected, false);
     expect(tester.takeException(), null);
     await tester.pumpWidget(const SizedBox());
   });
@@ -200,6 +199,21 @@ void main() {
     final canvas = tester.getSize(find.byKey(const Key('chart-canvas-area')).last);
     expect(canvas.width, greaterThan(canvas.height));
     expect(find.byKey(const Key('trade-settings')), findsNothing);
+    // 12.15: OHLC above the canvas; the 32px action bar below the volume pane
+    // holds price scale, chart type, indicators and the only exit control.
+    final page = find.byKey(const Key('chart-fullscreen'));
+    Finder inPage(String key) => find.descendant(of: page, matching: find.byKey(Key(key)));
+    expect(inPage('chart-ohlc'), findsOneWidget);
+    for (final key in ['chart-price-scale', 'chart-type', 'chart-indicators', 'chart-expand']) {
+      expect(inPage(key), findsOneWidget, reason: key);
+    }
+    final bar = find.ancestor(of: inPage('chart-expand'), matching: find.byType(ChartActionBar));
+    expect(tester.getSize(bar).height, 32);
+    expect(
+      tester.getTopLeft(bar).dy,
+      tester.getBottomLeft(find.byKey(const Key('chart-canvas-area')).last).dy,
+    );
+    expect(tester.getBottomLeft(bar).dy, lessThanOrEqualTo(390));
     chart = tester.widget<KChartWidget>(find.byType(KChartWidget).last);
     expect(chart.secondaryIndicators.single.shortName, 'CCI');
     expect(tester.takeException(), null);

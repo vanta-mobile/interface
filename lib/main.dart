@@ -10,7 +10,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme.dart';
 import 'l10n/generated/app_localizations.dart';
-import 'features/auth/application/auth_provider.dart';
 import 'features/auth/presentation/startup_screen.dart';
 import 'features/deep_link/application/deep_link_provider.dart';
 import 'features/deep_link/presentation/deep_link_host.dart';
@@ -89,7 +88,7 @@ Future<void> _runApp() async {
     await recovery.reload();
   } catch (error, stackTrace) {
     reportHandledFailure(error, stackTrace, operation: 'journal.order_recovery.reload');
-    // The journal retains a safe blocking error; public/demo use remains available.
+    // The journal retains a safe blocking error; public market use remains available.
   }
   String? saved;
   try {
@@ -128,12 +127,6 @@ class VantaApp extends ConsumerWidget {
     // Start listening at launch so a link that opens the app is kept for the shell.
     ref.listen(deepLinkInboxProvider, (_, _) {});
     ref.listen(pushOpenRouterProvider, (_, _) {});
-    ref.listen(authProvider.select((s) => (s.identity?.id, s.identity?.walletAddress)), (
-      previous,
-      next,
-    ) {
-      if (previous != next) ref.read(accountProvider.notifier).disconnect();
-    });
     return MaterialApp(
       title: 'Vanta',
       debugShowCheckedModeBanner: false,

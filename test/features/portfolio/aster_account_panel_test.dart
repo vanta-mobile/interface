@@ -8,7 +8,6 @@ import 'package:vanta/features/portfolio/application/account_read_provider.dart'
 import 'package:vanta/features/portfolio/data/aster_account_mapper.dart';
 import 'package:vanta/features/portfolio/domain/aster_account.dart';
 import 'package:vanta/features/portfolio/presentation/aster_account_panel.dart';
-import 'package:vanta/features/trade/application/providers.dart';
 
 import '../../support/aster_account.dart';
 import '../../support/identity_repository.dart';
@@ -21,7 +20,6 @@ void main() {
     addTearDown(identity.dispose);
     final container = setup(tester, identityRepository: identity, asterAccountRepository: accounts);
     await launch(tester, container);
-    container.read(accountProvider.notifier).connect();
     await openPortfolioAccountTools(tester);
     await tester.pumpAndSettle();
     expect(find.byType(AsterAccountPanel), findsOneWidget);

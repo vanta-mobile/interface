@@ -23,7 +23,6 @@ void main() {
     await openWalletLogin(tester);
     await tester.pumpAndSettle();
     expect(find.text('Welcome to Vanta'), findsOneWidget);
-    expect(find.byKey(const Key('enter-demo')), findsNothing);
     await tester.enterText(find.byKey(const Key('login-email')), 'alex@example.com');
     await tester.tap(find.byKey(const Key('send-email-code')));
     await tester.pumpAndSettle();

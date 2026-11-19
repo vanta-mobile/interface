@@ -93,12 +93,6 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[Locale('en'), Locale('zh')];
 
-  /// No description provided for @demoOrdersTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Local demo positions and orders'**
-  String get demoOrdersTitle;
-
   /// No description provided for @connectExternalWallet.
   ///
   /// In en, this message translates to:
@@ -290,12 +284,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'More'**
   String get more;
-
-  /// No description provided for @moreTimeframes.
-  ///
-  /// In en, this message translates to:
-  /// **'All intervals'**
-  String get moreTimeframes;
 
   /// No description provided for @typeCandles.
   ///
@@ -687,12 +675,6 @@ abstract class AppLocalizations {
   /// **'Processing wallet session…'**
   String get walletInProgress;
 
-  /// No description provided for @demoAccountHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Try trading with separate local demo funds. Your Privy wallet is unaffected.'**
-  String get demoAccountHint;
-
   /// No description provided for @authConfiguration.
   ///
   /// In en, this message translates to:
@@ -734,12 +716,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign-in is unavailable. Please retry.'**
   String get authUnavailable;
-
-  /// No description provided for @demo.
-  ///
-  /// In en, this message translates to:
-  /// **'Demo account'**
-  String get demo;
 
   /// No description provided for @perpetual.
   ///
@@ -1028,24 +1004,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Explore local demo trading or use the separate live-order entry with your wallet. Fund transfers are not enabled.'**
   String get walletHint;
-
-  /// No description provided for @enterDemo.
-  ///
-  /// In en, this message translates to:
-  /// **'Try demo account'**
-  String get enterDemo;
-
-  /// No description provided for @demoBalance.
-  ///
-  /// In en, this message translates to:
-  /// **'10,000 USDT demo funds · No real execution'**
-  String get demoBalance;
-
-  /// No description provided for @demoActive.
-  ///
-  /// In en, this message translates to:
-  /// **'Local demo · No real execution'**
-  String get demoActive;
 
   /// No description provided for @review.
   ///
@@ -1400,18 +1358,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Market connection'**
   String get network;
-
-  /// No description provided for @demoReset.
-  ///
-  /// In en, this message translates to:
-  /// **'Leave demo account'**
-  String get demoReset;
-
-  /// No description provided for @demoExitHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Leaving clears this session’s local demo positions and orders.'**
-  String get demoExitHint;
 
   /// No description provided for @minOrder.
   ///
@@ -9620,30 +9566,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Main account'**
   String get portfolioMainAccount;
-
-  /// No description provided for @portfolioPreviewAccount.
-  ///
-  /// In en, this message translates to:
-  /// **'Demo · Static preview'**
-  String get portfolioPreviewAccount;
-
-  /// No description provided for @portfolioPreviewNotice.
-  ///
-  /// In en, this message translates to:
-  /// **'Static design sample. No real funds or orders.'**
-  String get portfolioPreviewNotice;
-
-  /// No description provided for @portfolioPreviewAction.
-  ///
-  /// In en, this message translates to:
-  /// **'This is a static preview. Switch to your account to continue.'**
-  String get portfolioPreviewAction;
-
-  /// No description provided for @portfolioAccountSelector.
-  ///
-  /// In en, this message translates to:
-  /// **'Select account'**
-  String get portfolioAccountSelector;
 
   /// No description provided for @portfolioHideBalance.
   ///

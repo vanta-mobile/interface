@@ -11,14 +11,13 @@ import 'portfolio_overview_provider.dart';
 /// Only an active device grant may trigger a read on page entry. No wallet
 /// prompt, grant creation or financial write is performed by navigation.
 final portfolioAccountLoadProvider = Provider.autoDispose<void>((ref) {
-  if (ref.watch(portfolioPreviewProvider)) return;
   final auth = ref.watch(authProvider);
   if (auth.busy || auth.needsWalletConnection) return;
   final agent = ref.watch(tradingAgentProvider).asData?.value;
   if (agent?.status != TradingAgentStatus.active) return;
   final identity = auth.identity!;
   scheduleMicrotask(() {
-    if (!ref.mounted || ref.read(portfolioPreviewProvider)) return;
+    if (!ref.mounted) return;
     final current = ref.read(authProvider);
     if (current.busy ||
         current.needsWalletConnection ||

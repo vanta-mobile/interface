@@ -28,17 +28,13 @@ class _PortfolioPnlScreenState extends ConsumerState<PortfolioPnlScreen> {
   void initState() {
     super.initState();
     final now = DateTime.now().toUtc();
-    _month = ref.read(portfolioPreviewProvider)
-        ? DateTime.utc(2026, 11)
-        : DateTime.utc(now.year, now.month);
+    _month = DateTime.utc(now.year, now.month);
   }
 
   int? _day;
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    // Statistics providers supply a preview only after explicit account selection.
-    final preview = ref.watch(portfolioPreviewProvider);
     final identity = ref.watch(authProvider).identity;
     final stats = ref.watch(portfolioPnlPerformanceProvider(portfolioStatsPeriod(_period)));
     final calendar = _calendar ? ref.watch(portfolioCalendarViewProvider(_month)) : null;
@@ -52,7 +48,7 @@ class _PortfolioPnlScreenState extends ConsumerState<PortfolioPnlScreen> {
     );
     final monthPnl = daily.isEmpty ? null : daily.fold(Decimal.zero, (sum, e) => sum + e.value);
     final now = DateTime.now().toUtc();
-    final latestMonth = preview ? DateTime.utc(2026, 11) : DateTime.utc(now.year, now.month);
+    final latestMonth = DateTime.utc(now.year, now.month);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final activeDay = _day == null
         ? null
@@ -63,9 +59,7 @@ class _PortfolioPnlScreenState extends ConsumerState<PortfolioPnlScreen> {
               '${DateFormat.MMMd(locale).format(performance.end!)}';
     final monthLabel = DateFormat.yMMMM(Localizations.localeOf(context).toLanguageTag())
         .format(_month);
-    final identityLabel = preview
-        ? l.portfolioPreviewAccount
-        : identity?.walletAddress == null
+    final identityLabel = identity?.walletAddress == null
         ? l.portfolioMainAccount
         : '${l.portfolioMainAccount} · ${_shortAddress(identity!.walletAddress!)}';
     return Scaffold(
