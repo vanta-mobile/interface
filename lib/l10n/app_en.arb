@@ -2742,6 +2742,8 @@
   "assetModeMultiShort": "M",
   "liveOrderTriggerReached": "Trigger price already reached. Please adjust.",
   "scaledPriceOutOfRange": "Price exceeds the allowed range",
+  "batchCancelDone": "Cancelled {count, plural, =1{1 order} other{{count} orders}}.",
+  "@batchCancelDone": {"placeholders": {"count": {"type": "int"}}},
   "batchCloseDone": "Closed {count} positions.",
   "@batchCloseDone": {"placeholders": {"count": {"type": "int"}}},
   "orderDetailsTitle": "Order details",

@@ -12,6 +12,7 @@ import '../domain/live_order.dart';
 import '../domain/live_order_capacity.dart';
 import '../domain/live_order_size.dart';
 import '../domain/main_order_capacity_preview.dart';
+import 'direction_action_card.dart';
 import '../../../core/theme.dart' show PressFeedback;
 
 /// Liquidation estimate rounded to the symbol's price precision, or null.
@@ -86,95 +87,74 @@ class MainOrderDirectionCard extends StatelessWidget {
       else
         (l.accountsMax, capacity?.maximum.toString(), data.rules.baseAsset, 'maximum'),
     ];
-    return Column(
+    return DirectionActionCard(
       key: Key('main-order-capacity-$side'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
-          decoration: BoxDecoration(
-            border: Border.all(color: TradeColors.card),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final (label, amount, asset, name) in rows)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(child: Text(label, style: TradeTypography.caption)),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child:
-                            resultsPending &&
-                                (name == 'maximum' ? retainedCapacity == null : hasSize)
-                            ? Align(
-                                key: Key('main-order-$name-pending-$side'),
-                                alignment: Alignment.centerRight,
-                                child: const SkeletonBox(width: 72, height: 14),
-                              )
-                            : Text.rich(
-                                key: Key('main-order-$name-$side'),
-                                TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: amount ?? '—',
-                                      style: TextStyle(
-                                        color: amount == null ? TradeColors.text : color,
-                                      ),
-                                    ),
-                                    if (amount != null) TextSpan(text: ' $asset'),
-                                  ],
-                                ),
-                                textAlign: TextAlign.end,
-                                style: TradeTypography.caption.copyWith(color: TradeColors.text),
+      rows: [
+        for (final (label, amount, asset, name) in rows)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: Text(label, style: TradeTypography.caption)),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: resultsPending && (name == 'maximum' ? retainedCapacity == null : hasSize)
+                      ? Align(
+                          key: Key('main-order-$name-pending-$side'),
+                          alignment: Alignment.centerRight,
+                          child: const SkeletonBox(width: 72, height: 14),
+                        )
+                      : Text.rich(
+                          key: Key('main-order-$name-$side'),
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: amount ?? '—',
+                                style: TextStyle(color: amount == null ? TradeColors.text : color),
                               ),
-                      ),
-                    ],
-                  ),
+                              if (amount != null) TextSpan(text: ' $asset'),
+                            ],
+                          ),
+                          textAlign: TextAlign.end,
+                          style: TradeTypography.caption.copyWith(color: TradeColors.text),
+                        ),
                 ),
-            ],
-          ),
-        ),
-        FilledButton(
-          key: Key('main-order-review-$side'),
-          onPressed: pending ? null : onReview,
-          style: FilledButton.styleFrom(
-            minimumSize: const Size(44, 36),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            backgroundColor: color,
-            foregroundColor: TradeColors.text,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            disabledBackgroundColor: color.withValues(alpha: .35),
-            disabledForegroundColor: TradeColors.text,
-            // Closes the summary box above: its border has only top corners.
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
+              ],
             ),
-            textStyle: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
-          ).copyWith(overlayColor: PressFeedback.overlay),
-          child: pending
-              ? const SizedBox.square(
-                  dimension: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: TradeColors.text),
-                )
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(label ?? (buy ? l.long : l.short)),
-                    if (value?.quantity case final quantity?
-                        when hasSize && quantity > Decimal.zero)
-                      Text(
-                        '≈$quantity ${data.rules.baseAsset}',
-                        key: Key('main-order-estimate-$side'),
-                      ),
-                  ],
-                ),
-        ),
+          ),
       ],
+      button: FilledButton(
+        key: Key('main-order-review-$side'),
+        onPressed: pending ? null : onReview,
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(44, 36),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          backgroundColor: color,
+          foregroundColor: TradeColors.text,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          disabledBackgroundColor: color.withValues(alpha: .35),
+          disabledForegroundColor: TradeColors.muted,
+          shape: DirectionActionCard.buttonShape,
+          textStyle: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
+        ).copyWith(overlayColor: PressFeedback.overlay),
+        child: pending
+            ? const SizedBox.square(
+                dimension: 16,
+                child: CircularProgressIndicator(strokeWidth: 2, color: TradeColors.text),
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label ?? (buy ? l.long : l.short)),
+                  if (value?.quantity case final quantity? when hasSize && quantity > Decimal.zero)
+                    Text(
+                      '≈$quantity ${data.rules.baseAsset}',
+                      key: Key('main-order-estimate-$side'),
+                    ),
+                ],
+              ),
+      ),
     );
   }
 }

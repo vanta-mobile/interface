@@ -73,8 +73,16 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
           amount: _allocationPercent == null ? parseOrderDecimal(_manualSizeInput.text) : null,
           onAmount: _onSliderAmount,
         ),
+        // 12px from the slider stops to the Available text, as designed.
+        const SizedBox(height: 2),
         EmbeddedAvailableRow(data: contextData),
-        EmbeddedAdvancedSection(children: _advancedControls(contextData, entry, enabled)),
+        // Without any option (e.g. closing a hedge Post Only position) the
+        // Advanced row is hidden; its state is kept for when options return.
+        Visibility(
+          visible: _advancedRows(contextData).any,
+          maintainState: true,
+          child: EmbeddedAdvancedSection(children: _advancedControls(contextData, entry, enabled)),
+        ),
         MainOrderCapacityPanel(
           data: widget.data,
           draft: entry,
@@ -109,12 +117,9 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
   /// Hidden Order and Reduce only may be combined.
   List<Widget> _advancedControls(LiveOrderContext data, LiveOrderDraft entry, bool enabled) {
     final l10n = AppLocalizations.of(context);
-    final fixed = widget.mode == LiveOrderEntryMode.postOnly;
+    final rows = _advancedRows(data);
     final hidden = timeInForce == LiveOrderTimeInForce.hidden;
-    final policies = {
-      for (final policy in [LiveOrderTimeInForce.gtc, LiveOrderTimeInForce.ioc])
-        if (data.rules.timeInForce.contains(policy)) policy,
-    };
+    final policies = rows.policies;
     void policy(LiveOrderTimeInForce value) {
       _render(() {
         timeInForce = value;
@@ -125,9 +130,7 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
       widget.onModeChanged?.call(liveOrderEntryMode(draft));
     }
 
-    final oneWay = data.mode == FuturesPositionMode.oneWay;
-    final showPolicy = !market && !fixed && policies.isNotEmpty;
-    final selector = showPolicy
+    final selector = rows.policy
         ? EmbeddedTimeInForceSelector(
             key: const Key('live-order-policy'),
             selected: hidden ? _policy : timeInForce,
@@ -139,8 +142,7 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
     return [
       LiveOrderAttachmentControls(
         key: ValueKey((data.address, attachmentGeneration, 'attachment')),
-        // Closing a hedge position takes no entry TP/SL.
-        allowed: !trailing && !_hedgeClosing,
+        allowed: rows.attachment,
         enabled: enabled,
         data: data,
         entry: attachmentEntry,
@@ -155,11 +157,7 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
           }
         }),
       ),
-      if (!market &&
-          !fixed &&
-          !trailing &&
-          !conditional &&
-          data.rules.timeInForce.contains(LiveOrderTimeInForce.hidden))
+      if (rows.hidden)
         EmbeddedCheckRow(
           key: const Key('live-order-hidden'),
           label: l10n.tradeHiddenOrder,
@@ -169,7 +167,7 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
               ? (value) => policy(value ? LiveOrderTimeInForce.hidden : _policy)
               : null,
         ),
-      if (oneWay)
+      if (rows.reduceOnly)
         EmbeddedCheckRow(
           key: const Key('live-order-reduce-only'),
           label: l10n.reduceOnly,
@@ -178,9 +176,45 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
           onChanged: enabled ? _setReduceOnly : null,
           trailing: selector,
         )
+      // Without Reduce only (hedge mode) the selector starts the row, as designed.
       else if (selector != null)
-        Align(alignment: AlignmentDirectional.centerEnd, child: selector),
+        Align(alignment: AlignmentDirectional.centerStart, child: selector),
     ];
+  }
+
+  /// Which Advanced rows the current order offers; [_advancedControls] builds them.
+  ({
+    bool attachment,
+    bool hidden,
+    bool reduceOnly,
+    bool policy,
+    Set<LiveOrderTimeInForce> policies,
+    bool any,
+  })
+  _advancedRows(LiveOrderContext data) {
+    final fixed = widget.mode == LiveOrderEntryMode.postOnly;
+    final policies = {
+      for (final policy in [LiveOrderTimeInForce.gtc, LiveOrderTimeInForce.ioc])
+        if (data.rules.timeInForce.contains(policy)) policy,
+    };
+    // Closing a hedge position takes no entry TP/SL.
+    final attachment = !trailing && !_hedgeClosing;
+    final hidden =
+        !market &&
+        !fixed &&
+        !trailing &&
+        !conditional &&
+        data.rules.timeInForce.contains(LiveOrderTimeInForce.hidden);
+    final reduceOnly = data.mode == FuturesPositionMode.oneWay;
+    final policy = !market && !fixed && policies.isNotEmpty;
+    return (
+      attachment: attachment,
+      hidden: hidden,
+      reduceOnly: reduceOnly,
+      policy: policy,
+      policies: policies,
+      any: attachment || hidden || reduceOnly || policy,
+    );
   }
 
   void _setReduceOnly(bool value) => _render(() {

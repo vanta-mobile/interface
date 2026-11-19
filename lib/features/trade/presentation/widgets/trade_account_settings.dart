@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../market/application/public_leverage_provider.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../portfolio/application/futures_asset_mode_provider.dart';
 import '../../../portfolio/application/main_order_refresh_provider.dart';
+import '../../../portfolio/application/position_leverage_provider.dart';
 import '../../../portfolio/domain/futures_asset_mode.dart';
 import '../../../portfolio/domain/live_order.dart';
 import '../../../portfolio/domain/position_margin_mode.dart';
@@ -33,6 +35,21 @@ class TradeAccountSettings extends ConsumerWidget {
     final publicLeverage = data == null
         ? (ref.watch(publicLeverageProvider).value ?? const {})[symbol]?.defaultLeverage()
         : null;
+    // A change verified after the order context was read shows at once,
+    // instead of waiting for the next account read to catch up.
+    bool newer(DateTime? checkedAt, DateTime? receivedAt) =>
+        checkedAt != null && receivedAt != null && checkedAt.isAfter(receivedAt);
+    final leverageChange = ref.watch(positionLeverageProvider);
+    final leverage = data == null
+        ? null
+        : leverageChange.intent?.context.symbol == symbol &&
+              newer(leverageChange.result?.checkedAt, data!.receivedAt)
+        ? leverageChange.result!.observed ?? data!.leverage
+        : data!.leverage;
+    final assetChange = ref.watch(futuresAssetModeProvider).result;
+    final assetMode = newer(assetChange?.checkedAt, funds?.account.receivedAt)
+        ? assetChange!.observed ?? funds?.assetMode
+        : funds?.assetMode;
     return Row(
       children: [
         for (final entry in [
@@ -50,8 +67,8 @@ class TradeAccountSettings extends ConsumerWidget {
           (
             l.leverageSettings,
             _same(
-              data != null
-                  ? '${data!.leverage}×'
+              leverage != null
+                  ? '$leverage×'
                   : publicLeverage == null
                   ? '—'
                   : '$publicLeverage×',
@@ -62,7 +79,7 @@ class TradeAccountSettings extends ConsumerWidget {
             l.assetModeSettings,
             // Guests see the PRD first-visit preset: single-asset mode. The
             // button shows the design's S/M; the tooltip keeps the full name.
-            switch (funds?.assetMode ?? (data == null ? FuturesAssetMode.single : null)) {
+            switch (assetMode ?? (data == null ? FuturesAssetMode.single : null)) {
               FuturesAssetMode.multi => (l.assetModeMultiShort, l.assetModeMulti),
               FuturesAssetMode.single => (l.assetModeSingleShort, l.assetModeSingle),
               null => ('—', '—'),

@@ -78,6 +78,8 @@ void main() {
       repository.changeGate!.complete();
       await pending;
       expect(container.read(futuresAssetModeProvider).result?.observed, FuturesAssetMode.multi);
+      // A reopened sheet starts from the verified mode, not the pre-change read.
+      expect(container.read(futuresAssetModeProvider).context?.current, FuturesAssetMode.multi);
       expect(container.read(positionRiskProvider).stale, true);
       expect(getController().prepare(FuturesAssetMode.multi), null);
       expect(repository.reads, 1);

@@ -2532,6 +2532,8 @@
   "assetModeMultiShort": "M",
   "liveOrderTriggerReached": "触发价格已触达，请调整。",
   "scaledPriceOutOfRange": "价格超出允许范围",
+  "batchCancelDone": "已撤销 {count} 个订单。",
+  "@batchCancelDone": {"placeholders": {"count": {"type": "int"}}},
   "batchCloseDone": "已平仓 {count} 个仓位。",
   "orderDetailsTitle": "订单详情",
   "orderDetailsLeg": "订单 {letter}",

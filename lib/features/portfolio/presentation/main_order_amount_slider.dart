@@ -151,8 +151,10 @@ class _StopTrackShape extends RoundedRectSliderTrackShape {
         ..color = passed
             ? (isEnabled ? sliderTheme.activeTrackColor! : sliderTheme.disabledActiveTrackColor!)
             : sliderTheme.inactiveTrackColor!;
-      // The first stop is the design's smaller 6px dot.
-      if (i == 0) {
+      // At zero the first stop is the design's smaller 6px dot under the
+      // thumb; once the thumb moves it is a ringed stop like the others
+      // (Figma 331:47686).
+      if (i == 0 && (center.dx - thumbCenter.dx).abs() < 1) {
         context.canvas.drawCircle(center, 3, fill);
         continue;
       }

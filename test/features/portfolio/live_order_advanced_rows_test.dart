@@ -18,6 +18,7 @@ void main() {
   Future<MainOrderLiveFixture> mount(
     WidgetTester tester, {
     bool hedge = false,
+    bool expand = true,
     Widget Function(MainOrderLiveFixture f)? body,
   }) async {
     final f = MainOrderLiveFixture(
@@ -45,8 +46,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('live-order-advanced')));
-    await tester.pumpAndSettle();
+    if (expand) {
+      await tester.tap(find.byKey(const Key('live-order-advanced')));
+      await tester.pumpAndSettle();
+    }
     return f;
   }
 
@@ -166,6 +169,33 @@ void main() {
       expect(tester.takeException(), isNull);
     } finally {
       await close(tester, f);
+    }
+  });
+
+  testWidgets('hedge Close starts GTC on the left and hides an empty Advanced row', (tester) async {
+    for (final mode in [LiveOrderEntryMode.limit, LiveOrderEntryMode.postOnly]) {
+      final f = await mount(
+        tester,
+        hedge: true,
+        expand: mode != LiveOrderEntryMode.postOnly,
+        body: (f) => LiveOrderForm(data: f.orders.context, mode: mode, closing: true),
+      );
+      try {
+        final advanced = find.byKey(const Key('live-order-advanced'));
+        if (mode == LiveOrderEntryMode.postOnly) {
+          // No TP/SL, Hidden Order, Reduce only or time-in-force remains.
+          expect(advanced.hitTestable(), findsNothing);
+        } else {
+          expect(advanced.hitTestable(), findsOneWidget);
+          expect(
+            tester.getTopLeft(find.byKey(const Key('live-order-policy'))).dx,
+            tester.getTopLeft(advanced).dx,
+          );
+        }
+        expect(tester.takeException(), isNull);
+      } finally {
+        await close(tester, f);
+      }
     }
   });
 

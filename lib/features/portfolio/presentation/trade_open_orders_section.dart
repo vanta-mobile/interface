@@ -115,7 +115,14 @@ class _TradeOpenOrdersSectionState extends ConsumerState<TradeOpenOrdersSection>
                 minimumSize: const Size(44, 44),
                 textStyle: TradeTypography.body,
               ).copyWith(overlayColor: PressFeedback.overlay),
-              child: Text(l10n.openOrdersCancelAll),
+              // The confirmed cancellation shows progress here; its outcome is a toast.
+              child: cancellation.batch?.busy == true
+                  ? const SizedBox.square(
+                      key: Key('cancel-all-open-orders-loading'),
+                      dimension: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(l10n.openOrdersCancelAll),
             ),
           ],
         ),
@@ -138,7 +145,6 @@ class _TradeOpenOrdersSectionState extends ConsumerState<TradeOpenOrdersSection>
             child: SkeletonBox(height: 220, radius: 20),
           ),
         const OrderCancellationStatus(),
-        const BatchOrderCancellationStatus(),
         if (orders != null && orders.isEmpty)
           StatusEmptyView(
             key: const Key('open-orders-empty'),

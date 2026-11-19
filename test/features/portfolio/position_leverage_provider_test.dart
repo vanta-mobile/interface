@@ -82,6 +82,8 @@ void main() {
       repository.changeGate!.complete();
       await pending;
       expect(container.read(positionLeverageProvider).result?.observed, 20);
+      // A reopened sheet starts from the verified leverage, not the pre-change read.
+      expect(container.read(positionLeverageProvider).context?.current, 20);
       expect(container.read(positionRiskProvider).stale, true);
       expect(getController().prepare('BTCUSDT', '30'), null);
       expect(repository.reads, 1);

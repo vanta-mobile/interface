@@ -3,12 +3,17 @@ import '../../../core/errors/error_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/presentation/app_toast.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../application/order_cancellation_provider.dart';
+import '../domain/order_cancellation.dart';
 import 'open_order_cancel_prompts.dart';
 import 'order_cancel_progress.dart';
 
+/// The confirmed cancellation shows progress on the trigger button; its
+/// outcome is a toast: success once every symbol was verified empty, otherwise
+/// the first failure's cause or the count of orders still open.
 Future<void> confirmBatchCancellation(BuildContext context, WidgetRef ref, {String? symbol}) async {
   final controller = ref.read(orderCancellationProvider.notifier);
   final intent = await controller.prepareCurrentBatch(symbol: symbol);
@@ -24,7 +29,31 @@ Future<void> confirmBatchCancellation(BuildContext context, WidgetRef ref, {Stri
   );
   if (!confirmed || !context.mounted) return;
   final current = await controller.renewBatch(intent, symbol: symbol);
-  if (current != null) await controller.cancelBatch(current);
+  if (current == null) return;
+  await controller.cancelBatch(current);
+  if (!context.mounted) return;
+  _showBatchOutcome(context, ref.read(orderCancellationProvider).batch, current);
+}
+
+void _showBatchOutcome(
+  BuildContext context,
+  BatchCancellationState? batch,
+  BatchCancelIntent intent,
+) {
+  if (batch == null || batch.busy || batch.intent.address != intent.address) return;
+  final l10n = AppLocalizations.of(context);
+  final results = batch.results.values;
+  final failure = results
+      .map((result) => result.failure)
+      .firstWhere((failure) => failure != null, orElse: () => null);
+  final remaining = results.fold(0, (sum, result) => sum + (result.snapshot?.orders.length ?? 0));
+  if (failure != null) {
+    AppToast.showFailure(context, accountErrorText(context, failure));
+  } else if (remaining > 0) {
+    AppToast.showFailure(context, l10n.batchCancelRemaining(remaining));
+  } else if (results.isNotEmpty && results.every((result) => result.snapshot != null)) {
+    AppToast.showSuccess(context, l10n.batchCancelDone(intent.orderCount));
+  }
 }
 
 class BatchOrderCancellationStatus extends ConsumerWidget {

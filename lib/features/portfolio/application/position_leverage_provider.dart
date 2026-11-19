@@ -240,7 +240,11 @@ class PositionLeverageController extends Notifier<PositionLeverageState> {
       }
       _invalidate();
       state = PositionLeverageState(
-        context: context,
+        // A reopened sheet starts from the verified value, not the pre-change read.
+        context: switch (result.observed) {
+          final observed? => context?.withCurrent(observed),
+          null => context,
+        },
         intent: active,
         result: result.observed == null ? null : result,
         failure: result.observed == null

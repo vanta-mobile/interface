@@ -48,6 +48,13 @@ Future<void> confirm(WidgetTester tester) async {
   await tester.tap(find.byKey(confirmKey));
 }
 
+/// Settles within the outcome toast's display time, unlike pumpAndSettle.
+Future<void> settleOutcome(WidgetTester tester) async {
+  for (var i = 0; i < 40; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
 void main() {
   for (final signedIn in [false, true]) {
     testWidgets('bulk action disabled before live read; signed in: $signedIn', (tester) async {
@@ -136,9 +143,11 @@ void main() {
     expect(find.descendant(of: sheet(), matching: find.textContaining('ETHUSDT')), findsNothing);
 
     await confirm(tester);
-    await tester.pumpAndSettle();
+    await settleOutcome(tester);
     expect(batch.cancelled, ['BTCUSDT']);
-    expect(find.text('No open orders at last check'), findsOneWidget);
+    // The outcome is a toast; no internal batch state is listed in the tab.
+    expect(find.text('Cancelled 1 order.'), findsOneWidget);
+    expect(find.text('No open orders at last check'), findsNothing);
     expect(container.read(openOrdersReadProvider).account!.orders.single.symbol, 'ETHUSDT');
     expect(tester.takeException(), null);
     await tester.pumpWidget(const SizedBox());
@@ -200,7 +209,11 @@ void main() {
     expect(batch.checked, ['BTCUSDT']); // the automatic follow-up query
     expect(find.text('Outcome unconfirmed. Check status before retrying.'), findsNothing);
     expect(find.byKey(const Key('recheck-batch-cancel')), findsNothing);
-    expect(find.text('Not submitted'), findsOneWidget);
+    expect(
+      find.text('Account data could not be read. Check your connection and retry.'),
+      findsOneWidget,
+    );
+    expect(find.text('Not submitted'), findsNothing);
     // Nothing is locked after the error.
     expect(bulkAction(tester), isNotNull);
     expect(container.read(openOrdersReadProvider).account!.orders.length, 2);
@@ -209,7 +222,7 @@ void main() {
     container.dispose();
   });
 
-  testWidgets('stop lets current request settle and prevents the next submission', (tester) async {
+  testWidgets('the confirmed batch shows progress on Cancel all until it settles', (tester) async {
     final identity = TestIdentityRepository()..restored = signingIdentity;
     final batch = TestBatchCancellationRepository()..gates['BTCUSDT'] = Completer<void>();
     addTearDown(identity.dispose);
@@ -225,22 +238,14 @@ void main() {
     await confirm(tester);
     await tester.pump(const Duration(milliseconds: 400));
     expect(batch.cancelled, ['BTCUSDT']);
-    expect(find.text('Processing; outcome not yet verified'), findsOneWidget);
+    expect(find.byKey(const Key('cancel-all-open-orders-loading')), findsOneWidget);
+    expect(find.text('Processing; outcome not yet verified'), findsNothing);
     expect(bulkAction(tester), null);
-    await tester.ensureVisible(find.byKey(const Key('stop-batch-cancel')));
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.tap(find.byKey(const Key('stop-batch-cancel')));
-    await tester.pump();
-    expect(
-      tester.widget<OutlinedButton>(find.byKey(const Key('stop-batch-cancel'))).onPressed,
-      null,
-    );
     batch.gates['BTCUSDT']!.complete();
-    await tester.pumpAndSettle();
-    expect(batch.cancelled, ['BTCUSDT']);
-    expect(find.text('Further submissions stopped. Check each symbol’s result.'), findsOneWidget);
-    expect(find.text('Not submitted'), findsOneWidget);
-    expect(container.read(openOrdersReadProvider).account!.orders.single.symbol, 'ETHUSDT');
+    await settleOutcome(tester);
+    expect(batch.cancelled, ['BTCUSDT', 'ETHUSDT']);
+    expect(find.byKey(const Key('cancel-all-open-orders-loading')), findsNothing);
+    expect(find.text('Cancelled 2 orders.'), findsOneWidget);
     expect(tester.takeException(), null);
     await tester.pumpWidget(const SizedBox());
     container.dispose();

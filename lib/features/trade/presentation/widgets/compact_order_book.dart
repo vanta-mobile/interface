@@ -37,12 +37,10 @@ class _CompactOrderBookState extends ConsumerState<CompactOrderBook> {
   bool quoteSize = true;
   static const _minDepth = 3, _maxDepth = 20;
   int? _depth;
-  int _shown = 0;
-  double? _height, _rowHeight, _fitTarget, _pairHeight;
-  int _fitSteps = 0;
 
-  /// The last laid-out (levels per side, height), to measure a pair's height.
-  (int, double)? _sample;
+  /// Level rows in the last build, and the last laid-out book and row heights.
+  int _rows = 0;
+  double? _height, _rowHeight;
 
   @override
   void initState() {
@@ -65,29 +63,18 @@ class _CompactOrderBookState extends ConsumerState<CompactOrderBook> {
     super.dispose();
   }
 
-  /// Each side gains or loses whole level pairs until the book is no taller
-  /// than the target and less than one pair short of it. A pair's height is
-  /// measured from two laid-out depths (first estimated from one row), so the
-  /// depth settles instead of oscillating; adjustments per target are capped.
+  /// Levels per side that keep the book no taller than the target and less
+  /// than one level pair short of it, computed in one step from the measured
+  /// row height and the height of everything else, so the depth never steps
+  /// through intermediate values or overshoots while the target moves.
   void _fit() {
     final target = widget.targetHeight?.value, height = _height, row = _rowHeight;
-    if (!mounted || target == null || height == null || row == null || row <= 0 || _shown == 0) {
+    if (!mounted || target == null || height == null || row == null || row <= 0 || _rows == 0) {
       return;
     }
-    if (_sample case (final shown, final measured) when shown != _shown) {
-      final pair = (height - measured) / (_shown - shown);
-      if (pair > 0) _pairHeight = pair;
-    }
-    _sample = (_shown, height);
-    if (target != _fitTarget) {
-      _fitTarget = target;
-      _fitSteps = 0;
-    }
-    final change = ((target - height) / (_pairHeight ?? 2 * row)).floor();
-    if (change == 0 || _fitSteps >= 6) return;
-    final next = (_shown + change).clamp(_minDepth, _maxDepth);
+    final fixed = height - _rows * row;
+    final next = ((target - fixed) / (2 * row)).floor().clamp(_minDepth, _maxDepth);
     if (next == _depth) return;
-    _fitSteps++;
     setState(() => _depth = next);
   }
 
@@ -115,7 +102,7 @@ class _CompactOrderBookState extends ConsumerState<CompactOrderBook> {
     }
 
     final askDepth = running(asks), bidDepth = running(bids);
-    _shown = math.max(asks.length, bids.length);
+    _rows = asks.length + bids.length;
     // Rows are keyed by slot, not price, so depth bars ease between levels
     // as the book moves instead of popping in with each new price.
     OrderBookRow row(int slot, BookLevel level, bool buy, double share) => OrderBookRow(

@@ -28,6 +28,16 @@ class PositionLeverageContext {
   /// signed positionRisk read; null when the response omits it.
   final Decimal? positionNotional;
 
+  /// The same read with the leverage a signed query verified after a change.
+  PositionLeverageContext withCurrent(int leverage) => PositionLeverageContext(
+    address: address,
+    symbol: symbol,
+    current: leverage,
+    receivedAt: receivedAt,
+    brackets: brackets,
+    positionNotional: positionNotional,
+  );
+
   /// Notional still openable at [leverage]: the largest bracket cap that
   /// allows it, less the existing position notional, never below zero.
   Decimal? remainingNotional(int leverage) {

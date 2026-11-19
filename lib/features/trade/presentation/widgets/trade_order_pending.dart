@@ -13,6 +13,7 @@ import '../../../portfolio/domain/live_order_time_in_force.dart';
 import '../../../portfolio/presentation/embedded_time_in_force_selector.dart';
 import '../../../portfolio/presentation/live_order_embedded_controls.dart';
 import '../../../portfolio/presentation/live_order_embedded_inputs.dart';
+import '../../../portfolio/presentation/direction_action_card.dart';
 import '../../../portfolio/presentation/main_order_amount_slider.dart';
 import 'account_sheet.dart';
 import '../trade_theme.dart';
@@ -95,6 +96,7 @@ class TradeOrderPending extends ConsumerWidget {
           onCommit: null,
           semanticLabel: (value) => l.liveAllocationPercent((value * 100).round()),
         ),
+        const SizedBox(height: 2),
         SizedBox(
           height: embeddedCheckRowHeight,
           child: loading
@@ -174,69 +176,54 @@ class _PendingDirection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
-          decoration: BoxDecoration(
-            border: Border.all(color: TradeColors.card),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-          ),
-          child: Column(
-            children: [
-              for (final (label, name) in [
-                (l.tradeEstimatedLiquidation, 'liquidation'),
-                (l.tradeMargin, 'cost'),
-                (l.accountsMax, 'maximum'),
-              ])
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    key: Key('trade-pending-$name-${buy ? 'buy' : 'sell'}'),
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(child: Text(label, style: TradeTypography.caption)),
-                      const SizedBox(width: 4),
-                      if (loading && name == 'maximum')
-                        const SkeletonBox(width: 72, height: 14)
-                      else
-                        Text('—', style: TradeTypography.caption.copyWith(color: TradeColors.text)),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-        FilledButton(
-          key: ValueKey('trade-pending-${buy ? 'buy' : 'sell'}'),
-          onPressed: gate == OrderEntryGate.connect
-              ? () => showAccountSheet(context)
-              : gate == OrderEntryGate.deposit
-              ? () => openFunding(context, FundingOperation.deposit)
-              : null,
-          style: FilledButton.styleFrom(
-            minimumSize: const Size(44, 36),
-            backgroundColor: TradeColors.positive,
-            foregroundColor: TradeColors.text,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            disabledBackgroundColor: (buy ? TradeColors.positive : TradeColors.negative).withValues(
-              alpha: .35,
+    return DirectionActionCard(
+      rows: [
+        for (final (label, name) in [
+          (l.tradeEstimatedLiquidation, 'liquidation'),
+          (l.tradeMargin, 'cost'),
+          (l.accountsMax, 'maximum'),
+        ])
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              key: Key('trade-pending-$name-${buy ? 'buy' : 'sell'}'),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: Text(label, style: TradeTypography.caption)),
+                const SizedBox(width: 4),
+                if (loading && name == 'maximum')
+                  const SkeletonBox(width: 72, height: 14)
+                else
+                  Text('—', style: TradeTypography.caption.copyWith(color: TradeColors.text)),
+              ],
             ),
-            disabledForegroundColor: TradeColors.text,
-            // Closes the summary box above: its border has only top corners.
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
-            ),
-            textStyle: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
-          ).copyWith(overlayColor: PressFeedback.overlay),
-          child: Text(switch (gate) {
-            OrderEntryGate.connect => l.connect,
-            OrderEntryGate.deposit => l.fundingDeposit,
-            OrderEntryGate.ready => buy ? l.long : l.short,
-          }),
-        ),
+          ),
       ],
+      button: FilledButton(
+        key: ValueKey('trade-pending-${buy ? 'buy' : 'sell'}'),
+        onPressed: gate == OrderEntryGate.connect
+            ? () => showAccountSheet(context)
+            : gate == OrderEntryGate.deposit
+            ? () => openFunding(context, FundingOperation.deposit)
+            : null,
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(44, 36),
+          backgroundColor: TradeColors.positive,
+          foregroundColor: TradeColors.text,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          disabledBackgroundColor: (buy ? TradeColors.positive : TradeColors.negative).withValues(
+            alpha: .35,
+          ),
+          disabledForegroundColor: TradeColors.muted,
+          shape: DirectionActionCard.buttonShape,
+          textStyle: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
+        ).copyWith(overlayColor: PressFeedback.overlay),
+        child: Text(switch (gate) {
+          OrderEntryGate.connect => l.connect,
+          OrderEntryGate.deposit => l.fundingDeposit,
+          OrderEntryGate.ready => buy ? l.long : l.short,
+        }),
+      ),
     );
   }
 }

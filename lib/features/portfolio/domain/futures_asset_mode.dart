@@ -43,6 +43,17 @@ class FuturesAssetModeContext {
   final DateTime receivedAt;
   final Decimal? usdtWalletBalance;
   final List<AssetModeMarket> markets;
+
+  /// The same read with the mode a signed query verified after a change.
+  FuturesAssetModeContext withCurrent(FuturesAssetMode mode) => FuturesAssetModeContext(
+    address: address,
+    current: mode,
+    isolatedSymbols: isolatedSymbols,
+    receivedAt: receivedAt,
+    usdtWalletBalance: usdtWalletBalance,
+    markets: markets,
+  );
+
   bool blocks(FuturesAssetMode target) =>
       target == FuturesAssetMode.multi &&
           (isolatedSymbols.isNotEmpty || markets.any((m) => m.requiresCross)) ||

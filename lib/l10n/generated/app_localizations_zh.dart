@@ -5863,6 +5863,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scaledPriceOutOfRange => '价格超出允许范围';
 
   @override
+  String batchCancelDone(int count) {
+    return '已撤销 $count 个订单。';
+  }
+
+  @override
   String batchCloseDone(int count) {
     return '已平仓 $count 个仓位。';
   }

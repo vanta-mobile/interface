@@ -6299,6 +6299,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scaledPriceOutOfRange => 'Price exceeds the allowed range';
 
   @override
+  String batchCancelDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count orders',
+      one: '1 order',
+    );
+    return 'Cancelled $_temp0.';
+  }
+
+  @override
   String batchCloseDone(int count) {
     return 'Closed $count positions.';
   }

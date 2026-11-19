@@ -11037,6 +11037,12 @@ abstract class AppLocalizations {
   /// **'Price exceeds the allowed range'**
   String get scaledPriceOutOfRange;
 
+  /// No description provided for @batchCancelDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled {count, plural, =1{1 order} other{{count} orders}}.'**
+  String batchCancelDone(int count);
+
   /// No description provided for @batchCloseDone.
   ///
   /// In en, this message translates to:

@@ -829,3 +829,14 @@
 - 依据：AI视觉走查 KLINE-01，设计确认按新版画板 12.15（Figma 1222:48536）修改。
 - 修改：全屏页从上到下为周期行（与 K 线页同一 `ChartTimeframeRow`）→ OHLC 行 → 主图与副图 → 32px 工具栏。工具栏复用 `ChartActionBar(fullscreen: true)`：价格坐标、图表样式、指标，最后一个操作改为退出全屏（复用 `chart-exit-fullscreen` 图标）；全屏时按钮点击区为 36×32，以符合 32px 设计高度。去掉右上角退出按钮；主图高度扣除周期行、OHLC 行与工具栏；放大字号时工具栏随文字增高，页面滚动而不裁切。旧的 02.17 周期行组件 `chart_toolbar.dart` 及其专用文案 `moreTimeframes` 已删除。
 - 验证：`widget_test` 全屏用例新增断言（OHLC 行、工具栏四个操作都在全屏页内，工具栏高 32px、紧贴主图下方且在 390px 高视口内；退出键仍可返回并恢复方向）。`flutter test test/features/trade test/widget_test.dart test/core/localization_test.dart` 138 项通过，`flutter analyze` 无问题。未启动 App，未在真机或模拟器验证。
+
+## 2026-11-19 TAS-5043 样式问题合集（11-19 新增项）
+
+- 依据：Notion「样式问题合集」11-19 新增与未验收项。
+- Cancel all（Open 标签页）：去掉列表上方的批量撤单内部状态（快照数量、钱包地址、各交易对进度/结果、停止按钮）。确认后「Cancel all」按钮显示加载，结束后用提示告知结果：全部核实已撤显示「已撤销 N 个订单」，失败显示第一个具体原因，仍有残留订单显示「N 个订单仍未撤销」。撤单、自动复查和失败停止的逻辑不变。
+- Advanced：当前订单没有任何可选项时（如 Hedge 模式平仓的 Post Only）不显示 Advanced 行；状态保留，切回有选项的订单时恢复。Hedge 模式下只有有效方式选择时（无 Reduce only 行），GTC 下拉靠左。行是否显示统一由 `_advancedRows` 判定。
+- 滑杆与可用余额：滑杆圆点到「可用」文字间距由 10 改为 12（已登录表单与未登录占位表单）。滑杆离开 0 后第一个圆点也画成带底色圈的 12px 圆点（Figma 331:47686）；在 0 时仍是 6px 小点。
+- Long / Short 卡片：新增 `DirectionActionCard`，主下单表单、Scaled、未登录占位三处共用。信息卡片 1px 内描边只画顶边和左右边，左右边延伸到按钮后 8px；内边距上 8、下 16（其中 8 被按钮覆盖）；按钮四角均为 12px 圆角，绘制在卡片之上，不被裁切。按钮置灰时文字改为 `TradeColors.muted`（#959B9E）。
+- 订单簿档位：原来逐帧迭代（先按单行估算、再用两次布局差值推算每对高度，每个目标最多调 6 次），面板高度变化时会多帧来回增减；差值在内容变化时可能算出极小的每对高度，一次加到 20 档。改为一步计算：档位 = ⌊(目标高度 − 非档位部分高度) ÷ (2 × 行高)⌋，限制在 3～20。
+- S/M、杠杆切换：变更核实后，同时把已验证值写回 `FuturesAssetModeContext` / `PositionLeverageContext`（`withCurrent`），重新打开弹窗时不再先显示变更前的值。交易页三个设置按钮中，若最近一次核实时间晚于下单上下文的读取时间，S/M 与杠杆直接显示核实值，不必等下一次账户重读。签名写入与核实本身的耗时未改。
+- 验证：`batch_order_cancellation_controls_test` 改为断言提示文案与按钮加载（不再断言状态块），`live_order_advanced_rows_test` 新增 Hedge 平仓用例（Limit 时 GTC 与 Advanced 左对齐；Post Only 时无 Advanced 行），资产模式与杠杆 provider 测试新增“核实后 context 为新值”断言。其他会话的改动同时在工作区中，因此在基于 HEAD 的临时 worktree 中只放入本次改动：`dart format`、`flutter analyze` 无问题，`flutter test test/features/portfolio test/features/trade test/order_book_test.dart` 3283 项通过。交易页按钮显示核实值未补 widget 测试。未启动 App，未在真机或模拟器验证。
