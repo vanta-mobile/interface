@@ -858,6 +858,12 @@
 - 已登录表单的 `EmbeddedAvailableRow`（`live_order_embedded_controls.dart`）同样由固定 21px 改为最小 21px。
 - 验证：`trade_design_widget_test` 在 320/844/768 宽、1.5 倍字号下断言占位行每段文字的布局高度不小于其所需高度且在行内。新增 `embedded_available_row_test`（中英文、2 倍字号），旧代码下失败（文字需要 36px，只得到 21px），修改后通过。另一会话的 portfolio 改动未完成，当前工作区编译失败；因此在基于 HEAD 的临时 worktree 中只放入本次改动，`flutter analyze` 无问题，`flutter test test/features/trade test/features/portfolio` 3281 项通过。未启动 App，未在真机或模拟器验证。
 
+## 2026-11-19 FUT-03 追踪止损回调比例越界显示字段错误
+
+- 依据：AI视觉走查 FUT-03 及评论确认的提示时机：输完离开输入框时校验，点击做多／做空时再校验一次。
+- 修改：回调比例范围（0.1%～5%）抽成 `LiveOrderTrailing.acceptsCallbackRate`，下单校验与字段共用。回调比例离开输入框时，非空且越界则输入框红框、下方显示 `liveTrailingRateInvalid`（与触发价字段错误同样式）；离开空输入框不提示。点击做多／做空时先检查回调比例，越界则同样标红并停止，不读取、不复核、不弹 toast。编辑回调比例或点快捷比例即清除提示；切换钱包时随输入一起清除。输入框底部滚动留白包含提示文案高度。
+- 验证：`live_order_advanced_rows_test` 新增 1 项（空输入离开不提示；输入时不提示，离开后提示；编辑清除；合法值离开不提示；点击做多时越界标红且不提交）。trailing、entry mode、embedded layout、allocation submission 等相关测试 104 项通过，`flutter analyze` 无问题。未启动 App，未在真机或模拟器验证。
+
 ## 2026-11-19 KLINE-01 横屏全屏 K 线按 12.15 加底部工具栏
 
 - 依据：AI视觉走查 KLINE-01，设计确认按新版画板 12.15（Figma 1222:48536）修改。

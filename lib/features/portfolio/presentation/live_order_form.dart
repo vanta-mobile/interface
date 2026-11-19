@@ -98,6 +98,10 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
   /// A trigger price found already reached by the last direction click, shown
   /// under the trigger field until any form term changes.
   Object? _triggerReachedTerms;
+
+  /// An out-of-range callback rate found on leaving its field or on a
+  /// direction click, shown under the field until the rate is edited.
+  bool _trailingRateFlagged = false;
   bool conditional = false, protect = false;
   bool trailing = false;
   final trailingRate = TextEditingController(), trailingActivation = TextEditingController();
@@ -312,8 +316,23 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
     activation: trailingActivation,
     basis: trailingBasis,
     onBasis: (value) => setState(() => trailingBasis = value),
-    onInput: () => setState(() {}),
+    rateError: _trailingRateFlagged ? AppLocalizations.of(context).liveTrailingRateInvalid : null,
+    onRateBlur: () {
+      final text = trailingRate.text.trim();
+      if (text.isNotEmpty && !LiveOrderTrailing.acceptsCallbackRate(text)) {
+        setState(() => _trailingRateFlagged = true);
+      }
+    },
+    onInput: () => setState(() => _trailingRateFlagged = false),
   );
+
+  /// A direction click re-checks the callback rate before any read or review.
+  bool _flagTrailingRate() {
+    if (!trailing || LiveOrderTrailing.acceptsCallbackRate(trailingRate.text)) return false;
+    FocusScope.of(context).unfocus();
+    setState(() => _trailingRateFlagged = true);
+    return true;
+  }
 
   /// A different wallet or signer never inherits the previous order intent.
   void _resetForIdentity() {
@@ -326,6 +345,7 @@ class _LiveOrderFormState extends ConsumerState<LiveOrderForm> with AutomaticKee
     triggerPrice.clear();
     trailing = false;
     trailingRate.clear();
+    _trailingRateFlagged = false;
     trailingActivation.clear();
     trailingBasis = LiveOrderTriggerBasis.mark;
     triggerBasis = LiveOrderTriggerBasis.mark;

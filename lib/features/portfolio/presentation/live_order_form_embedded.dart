@@ -282,6 +282,7 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
   /// direction's button shows progress; background renewal stays silent.
   Future<bool> _refreshForReview(bool direction) async {
     if (_refreshingReviewDirection != null) return false;
+    if (_flagTrailingRate()) return false;
     // A focused size field would reopen the keyboard when it is re-enabled.
     FocusScope.of(context).unfocus();
     _render(() {
@@ -321,6 +322,7 @@ extension _LiveOrderEmbeddedLayout on _LiveOrderFormState {
   /// review, which re-checks capacity before any signing.
   Future<void> _reviewDirection(bool direction) async {
     if (_reviewingDirection != null) return;
+    if (_flagTrailingRate()) return;
     FocusScope.of(context).unfocus();
     _render(() {
       buy = direction;

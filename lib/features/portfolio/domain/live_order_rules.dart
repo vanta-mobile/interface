@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 
 import 'live_order_draft.dart';
 import 'live_order_time_in_force.dart';
+import 'live_order_trailing.dart';
 
 class OrderQuantityRule {
   const OrderQuantityRule({required this.minimum, required this.maximum, required this.step});
@@ -108,8 +109,7 @@ class LiveOrderRules {
       return 'liveOrderNotionalFilter';
     }
     if (draft.trailing case final trailing?) {
-      final rate = parseOrderDecimal(trailing.callbackRate);
-      if (rate == null || rate < Decimal.parse('0.1') || rate > Decimal.fromInt(5)) {
+      if (!LiveOrderTrailing.acceptsCallbackRate(trailing.callbackRate)) {
         return 'liveTrailingRateInvalid';
       }
       if (trailing.activationPrice case final text?) {

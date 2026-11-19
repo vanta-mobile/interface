@@ -20,6 +20,8 @@ class LiveOrderTrailingControls extends StatelessWidget {
     required this.basis,
     required this.onBasis,
     required this.onInput,
+    this.rateError,
+    this.onRateBlur,
   });
   final bool enabled;
   final TextEditingController rate, activation;
@@ -27,7 +29,16 @@ class LiveOrderTrailingControls extends StatelessWidget {
   final ValueChanged<LiveOrderTriggerBasis> onBasis;
   final VoidCallback onInput;
 
+  /// Design 1649:27293: red outline with the cause below the rate field.
+  final String? rateError;
+
+  /// Leaving the rate field, when an out-of-range rate is reported.
+  final VoidCallback? onRateBlur;
+
   static final _presets = [Decimal.one, Decimal.fromInt(2)];
+
+  /// Error line below the rate field kept above the keyboard, at 1x text.
+  static const _errorHeight = 20.0;
 
   @override
   Widget build(BuildContext context) {
@@ -38,14 +49,28 @@ class LiveOrderTrailingControls extends StatelessWidget {
       children: [
         EmbeddedInputBox(
           label: l10n.openOrdersCallbackRate,
+          error: rateError != null,
           child: Row(
             children: [
               Expanded(
-                child: EmbeddedTextInput(
-                  fieldKey: const Key('live-trailing-rate'),
-                  controller: rate,
-                  enabled: enabled,
-                  onChanged: onInput,
+                child: Focus(
+                  canRequestFocus: false,
+                  skipTraversal: true,
+                  onFocusChange: (focused) {
+                    if (!focused) onRateBlur?.call();
+                  },
+                  child: EmbeddedTextInput(
+                    fieldKey: const Key('live-trailing-rate'),
+                    controller: rate,
+                    enabled: enabled,
+                    scrollPadding: EdgeInsets.fromLTRB(
+                      20,
+                      20,
+                      20,
+                      20 + MediaQuery.textScalerOf(context).scale(_errorHeight),
+                    ),
+                    onChanged: onInput,
+                  ),
                 ),
               ),
               Text('%', style: TradeTypography.body),
@@ -67,6 +92,12 @@ class LiveOrderTrailingControls extends StatelessWidget {
             ],
           ),
         ),
+        if (rateError case final text?)
+          Padding(
+            key: const Key('live-trailing-rate-error'),
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(text, style: TradeTypography.small.copyWith(color: TradeColors.negative)),
+          ),
         const SizedBox(height: 8),
         EmbeddedInputBox(
           label: l10n.openOrdersActivationPrice,

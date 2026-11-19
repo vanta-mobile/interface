@@ -242,6 +242,54 @@ void main() {
     }
   });
 
+  testWidgets('an out-of-range callback rate is reported on leaving the field and on review', (
+    tester,
+  ) async {
+    final f = await mount(
+      tester,
+      body: (f) => LiveOrderForm(data: f.orders.context, mode: LiveOrderEntryMode.trailing),
+    );
+    try {
+      final rate = find.byKey(const Key('live-trailing-rate'));
+      final activation = find.byKey(const Key('live-trailing-activation'));
+      final error = find.byKey(const Key('live-trailing-rate-error'));
+      final l = AppLocalizations.of(tester.element(find.byType(LiveOrderForm)));
+      // Leaving an empty field reports nothing.
+      await tester.tap(rate);
+      await tester.tap(activation);
+      await tester.pumpAndSettle();
+      expect(error, findsNothing);
+      // Typing never interrupts; leaving the field reports the range.
+      await tester.enterText(rate, '6');
+      await tester.pumpAndSettle();
+      expect(error, findsNothing);
+      await tester.tap(activation);
+      await tester.pumpAndSettle();
+      expect(find.text(l.liveTrailingRateInvalid), findsOneWidget);
+      // Editing clears it; a valid rate is not reported.
+      await tester.enterText(rate, '5');
+      await tester.pumpAndSettle();
+      expect(error, findsNothing);
+      await tester.tap(activation);
+      await tester.pumpAndSettle();
+      expect(error, findsNothing);
+
+      // A direction click checks again, before any read or review.
+      await tester.enterText(rate, '0.05');
+      await tester.enterText(find.byKey(const Key('live-order-quantity')), '10');
+      await tester.pumpAndSettle();
+      final buy = find.byKey(const Key('main-order-review-buy'));
+      await tester.ensureVisible(buy);
+      await tester.tap(buy);
+      await tester.pumpAndSettle();
+      expect(error, findsOneWidget);
+      expect(f.orders.submits, 0);
+      expect(tester.takeException(), isNull);
+    } finally {
+      await close(tester, f);
+    }
+  });
+
   testWidgets('checked TP/SL left empty orders without TP/SL', (tester) async {
     final f = await mount(tester);
     try {
