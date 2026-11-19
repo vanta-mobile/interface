@@ -1,6 +1,6 @@
 /* App Intents titles, options and messages (VantaAppIntents.swift). */
 "Open in Vanta" = "在 Vanta 中打开";
-"Opens a Vanta screen: futures, chart, open orders, positions, portfolio, points, Vanta AI or notifications." = "打开 Vanta 的页面：合约、K 线、当前委托、持仓、资产、积分、Vanta AI 或通知。";
+"Opens a Vanta screen: futures, chart, open orders, positions, portfolio, points or notifications." = "打开 Vanta 的页面：合约、K 线、当前委托、持仓、资产、积分或通知。";
 "Page" = "页面";
 "Vanta Page" = "Vanta 页面";
 "Futures" = "合约";
@@ -23,9 +23,6 @@
 "Points" = "积分";
 "Rewards" = "奖励";
 "My Points" = "我的积分";
-"Vanta AI" = "Vanta AI";
-"AI Assistant" = "AI 助手";
-"Ask AI" = "问 AI";
 "Notifications" = "通知";
 "Inbox" = "消息";
 "Messages" = "消息中心";
@@ -52,13 +49,8 @@
 "USDT" = "USDT";
 "Coin" = "币";
 
-"Ask Vanta AI" = "问 Vanta AI";
-"Opens Vanta AI with your question typed in. It is not sent until you send it." = "打开 Vanta AI 并填好你的问题，你确认后才会发送。";
-"Question" = "问题";
-
 "Open Market" = "打开市场";
 "Prepare Order" = "准备下单";
 
 "Say which market, for example BTC or ETHUSDT." = "请说出市场，例如 BTC 或 ETHUSDT。";
 "Prices and quantities must be plain numbers such as 3200.5." = "价格和数量需要是普通数字，例如 3200.5。";
-"The question must be at most 2000 characters." = "问题最多 2000 个字符。";

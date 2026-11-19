@@ -1,3 +1,18 @@
+## 2026-11-19 History 改为底部一级入口
+
+- 依据 Figma「06. history」（`1727:42129`），底栏为 合约 / 现货（即将上线）/ 积分 / 历史 / 资产。`AppDestination` 新增 `history`，图标 `assets/navigation/history.svg` 取自设计稿原 SVG；文案 `navigationHistory`（History / 历史）。
+- 新页面 `HistoryDestinationPage`：标题栏与积分页一致（品牌标识 + 「历史记录」），下方为 订单 / 仓位 / 成交 / 资金流水 下划线页签（12/18 粗体，选中白字 + 1px 主色下划线，间距 20，底部分隔线），内容直接复用 `TradingHistoryResults`，登录/授权提示、骨架、下拉刷新、隐藏已取消、加载更多与原历史页相同。
+- 合约页和账户面板里原有的「历史记录」入口仍推出原 `FuturesHistoryScreen`，未改动；深链没有新增 `history` 目标。
+- 验证：`dart format`、`dart analyze lib test` 无问题；新增 `history_destination_page_test`（中英文四个页签切换并标记选中、非返回式页面、320 宽 2 倍字号无溢出）；导航测试加入 History，底栏断言改为 合约 / 积分 / 历史 / 资产 四个可点项。`test/features/{trade,assistant,portfolio,deep_link,points}` 与 `test/core` 共 4041 项中，`quick_order_widget_test` 有 2 项在运行时因其他会话正改该文件而失败，改动完成后单独重跑全部通过。未启动 App，未做真机目视比对。
+
+
+## 2026-11-19 隐藏 Vanta AI 入口
+
+- 依据 Figma「06. history」，底部导航不再有 AI。`assistantEntryEnabledProvider`（默认 `false`）控制入口：底栏不显示 AI；`vantaapp://assistant`、`open?feature=assistant` 打开首页（合约），不预填问题。AI 页面与相关代码保留，测试通过覆盖该 provider 继续验证。
+- 系统入口同步下线：Android 去掉 Google Assistant 的 `assistant` 快捷方式及其中英文同义词、Gemini AppFunction `askVantaAi`（上文 AppFunctions 记录中的第 6 个函数）；iOS 去掉 `AskVantaAIIntent`、其 Siri 短语、`VantaPage.assistant` 及对应中文文案。Kotlin `VantaLinks.assistant` 与 Dart 解析保留，链接格式不变。
+- 验证：`dart format`、`dart analyze lib test` 无问题；`test/features/{trade,assistant,portfolio,deep_link}` 与 `test/core` 共 3760 项通过（含新增：默认不显示 AI 入口、隐藏时 AI 链接回首页且不预填）。未运行 Gradle/Kotlin 单测和 Xcode 构建，原生改动未经编译验证；未启动 App。
+
+
 ## 2026-11-19 资金流水：无交易对的流水不再导致整页格式错误（走查 V6-02）
 
 - 问题：0.0.6（2006）进入资金流水两次提示「`/v1/history/income` 数据格式无效」。Aster 对划转、保险基金清算等不属于交易对的流水返回 `symbol: ""`，App 按原样上报 `/v1/report/income`，归档读回仍是 `""`；读取 mapper 要求 `symbol` 非空，任意一行即令整页解析失败。接口合约 `IncomeItem.symbol` 为 `string | null`，空串合法。

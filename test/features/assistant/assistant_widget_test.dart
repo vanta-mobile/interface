@@ -337,8 +337,17 @@ void main() {
       await ui.close(tester, h);
     });
   }
-  testWidgets('Ask AI is a primary destination that keeps the app navigation', (tester) async {
+  testWidgets('Vanta AI entry is hidden by default', (tester) async {
     final container = app.setup(tester);
+    await app.launch(tester, container);
+    expect(find.byKey(const ValueKey('navigation-assistant')), findsNothing);
+    expect(find.byKey(const ValueKey('navigation-portfolio')), findsOneWidget);
+    expect(container.exists(assistantProvider), false);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Ask AI is a primary destination that keeps the app navigation', (tester) async {
+    final container = app.setup(tester, assistantEntry: true);
     await app.launch(tester, container);
     await tapNavigationControl(tester, 'navigation-assistant');
     expect(find.byKey(const Key('assistant-page')), findsOneWidget);

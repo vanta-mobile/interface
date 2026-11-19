@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Gemini (AppFunctions) and Google Assistant (App Actions) entry points. -->
 <resources>
-    <string name="app_functions_display_description">Open Vanta futures, orders, positions, portfolio, points, notifications and Vanta AI</string>
+    <string name="app_functions_display_description">Open Vanta futures, orders, positions, portfolio, points and notifications</string>
     <!-- Synonyms Assistant matches to each OPEN_APP_FEATURE shortcut (max 20 each). -->
     <string-array name="app_action_feature_futures">
         <item>futures</item>
@@ -37,11 +37,6 @@
         <item>points</item>
         <item>rewards</item>
         <item>my points</item>
-    </string-array>
-    <string-array name="app_action_feature_assistant">
-        <item>Vanta AI</item>
-        <item>Ask AI</item>
-        <item>AI assistant</item>
     </string-array>
     <string-array name="app_action_feature_notifications">
         <item>notifications</item>

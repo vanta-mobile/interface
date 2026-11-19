@@ -78,12 +78,13 @@ void main() {
       of: find.byType(AppBottomNavigation),
       matching: find.byType(InkWell),
     );
+    // Vanta AI is hidden and History is a primary destination (06. history design).
     expect(destinations, findsNWidgets(4));
     final keys = tester.widgetList<InkWell>(destinations).map((w) => w.key).toList();
     expect(keys, [
       const ValueKey('navigation-futures'),
       const ValueKey('navigation-points'),
-      const ValueKey('navigation-assistant'),
+      const ValueKey('navigation-history'),
       const ValueKey('navigation-portfolio'),
     ]);
     // Spots is announced but not tappable.

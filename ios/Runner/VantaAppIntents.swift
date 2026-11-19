@@ -9,7 +9,6 @@ import UIKit
 /// Builds `vantaapp://` links. Same rules and output as Android's VantaLinks:
 /// RFC 3986 percent-encoding of UTF-8 so `&`, `=` and `+` never alter the query.
 enum VantaLinks {
-  static let promptMaxLength = 2000
   private static let unreserved = CharacterSet(
     charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
 
@@ -44,20 +43,18 @@ enum VantaLinks {
 enum VantaIntentError: Error, CustomLocalizedStringResourceConvertible {
   case missingMarket
   case invalidAmount
-  case questionTooLong
 
   var localizedStringResource: LocalizedStringResource {
     switch self {
     case .missingMarket: "Say which market, for example BTC or ETHUSDT."
     case .invalidAmount: "Prices and quantities must be plain numbers such as 3200.5."
-    case .questionTooLong: "The question must be at most 2000 characters."
     }
   }
 }
 
 /// Feature IDs match `vantaapp://open?feature=` and Android's shortcuts.xml.
 enum VantaPage: String, AppEnum {
-  case futures, chart, orders, positions, portfolio, points, assistant, notifications
+  case futures, chart, orders, positions, portfolio, points, notifications
 
   static let typeDisplayRepresentation: TypeDisplayRepresentation = "Vanta Page"
   static let caseDisplayRepresentations: [VantaPage: DisplayRepresentation] = [
@@ -67,7 +64,6 @@ enum VantaPage: String, AppEnum {
     .positions: DisplayRepresentation(title: "Positions", synonyms: ["My Positions", "Open Positions"]),
     .portfolio: DisplayRepresentation(title: "Portfolio", synonyms: ["Assets", "Balance", "My Assets"]),
     .points: DisplayRepresentation(title: "Points", synonyms: ["Rewards", "My Points"]),
-    .assistant: DisplayRepresentation(title: "Vanta AI", synonyms: ["AI Assistant", "Ask AI"]),
     .notifications: DisplayRepresentation(title: "Notifications", synonyms: ["Inbox", "Messages", "Alerts"]),
   ]
 }
@@ -117,7 +113,7 @@ enum VantaSizeUnit: String, AppEnum {
 struct OpenVantaPageIntent: AppIntent {
   static let title: LocalizedStringResource = "Open in Vanta"
   static let description = IntentDescription(
-    "Opens a Vanta screen: futures, chart, open orders, positions, portfolio, points, Vanta AI or notifications.")
+    "Opens a Vanta screen: futures, chart, open orders, positions, portfolio, points or notifications.")
   static let openAppWhenRun = true
 
   @Parameter(title: "Page")
@@ -205,26 +201,6 @@ struct PrepareVantaOrderIntent: AppIntent {
   }
 }
 
-struct AskVantaAIIntent: AppIntent {
-  static let title: LocalizedStringResource = "Ask Vanta AI"
-  static let description = IntentDescription(
-    "Opens Vanta AI with your question typed in. It is not sent until you send it.")
-  static let openAppWhenRun = true
-
-  @Parameter(title: "Question")
-  var question: String?
-
-  @MainActor
-  func perform() async throws -> some IntentResult {
-    let text = question?.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard (text?.count ?? 0) <= VantaLinks.promptMaxLength else {
-      throw VantaIntentError.questionTooLong
-    }
-    await VantaLinks.open(VantaLinks.link("assistant", [("prompt", text)]))
-    return .result()
-  }
-}
-
 /// Siri phrases. Chinese phrases live in zh-Hans.lproj/AppShortcuts.strings.
 struct VantaShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
@@ -255,15 +231,6 @@ struct VantaShortcuts: AppShortcutsProvider {
       ],
       shortTitle: "Prepare Order",
       systemImageName: "square.and.pencil"
-    )
-    AppShortcut(
-      intent: AskVantaAIIntent(),
-      phrases: [
-        "Ask \(.applicationName) AI",
-        "Open \(.applicationName) AI",
-      ],
-      shortTitle: "Ask Vanta AI",
-      systemImageName: "sparkles"
     )
   }
 }

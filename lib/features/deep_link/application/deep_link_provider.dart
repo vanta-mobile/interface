@@ -63,7 +63,11 @@ class DeepLinkNavigator {
       DeepLinkTarget.futures => AppDestination.futures,
       DeepLinkTarget.portfolio => AppDestination.portfolio,
       DeepLinkTarget.points => AppDestination.points,
-      DeepLinkTarget.assistant => AppDestination.assistant,
+      // While Vanta AI is hidden its links open the app home without a draft.
+      DeepLinkTarget.assistant =>
+        _ref.read(assistantEntryEnabledProvider)
+            ? AppDestination.assistant
+            : AppDestination.futures,
       DeepLinkTarget.notifications => null,
     };
     if (destination != null) _ref.read(appDestinationProvider.notifier).select(destination);
@@ -82,7 +86,9 @@ class DeepLinkNavigator {
       });
     }
     if (link.symbol case final symbol?) unawaited(_selectSymbol(symbol, link.order, revision));
-    if (link.prompt case final prompt?) _prefillAssistant(prompt);
+    if (link.prompt case final prompt? when _ref.read(assistantEntryEnabledProvider)) {
+      _prefillAssistant(prompt);
+    }
   }
 
   Future<void> _selectSymbol(String symbol, DeepLinkOrder? order, int revision) async {

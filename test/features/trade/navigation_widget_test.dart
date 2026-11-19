@@ -27,7 +27,7 @@ void main() {
         await selectWorkspace(tester, chart: chart);
         fixture.container.read(symbolProvider.notifier).select('ETHUSDT');
         await tester.pumpAndSettle();
-        for (final destination in ['points', 'portfolio', 'assistant']) {
+        for (final destination in ['points', 'history', 'portfolio']) {
           await tapNavigationControl(tester, 'navigation-$destination');
           final navigation = find.byKey(Key('navigation-$destination'));
           expect(tester.getSize(navigation).height, greaterThanOrEqualTo(48));
@@ -70,11 +70,11 @@ void main() {
     await tester.enterText(quantity, '0.001');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
-    await tapNavigationControl(tester, 'navigation-assistant');
+    await tapNavigationControl(tester, 'navigation-points');
     await tapNavigationControl(tester, 'navigation-futures');
     expect(quickQuantity(tester), '0.001');
     await selectWorkspace(tester, chart: false);
-    await tapNavigationControl(tester, 'navigation-assistant');
+    await tapNavigationControl(tester, 'navigation-points');
     fixture.container.read(symbolProvider.notifier).select('ETHUSDT');
     fixture.expectNoAccountMutation();
     await fixture.close(tester);

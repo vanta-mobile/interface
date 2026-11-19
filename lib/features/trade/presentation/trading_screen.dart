@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../points/presentation/points_page.dart';
+import '../../portfolio/presentation/history_destination_page.dart';
 import '../../assistant/presentation/assistant_page.dart';
 import '../application/providers.dart';
 import '../application/navigation_provider.dart';
@@ -46,10 +47,11 @@ class _TradingScreenState extends ConsumerState<TradingScreen> with WidgetsBindi
   Widget build(BuildContext context) {
     ref.watch(tradingLifecycleProvider);
     final destination = ref.watch(appDestinationProvider);
-    // Portfolio, Points and Vanta AI draw their own design headers.
+    // Portfolio, Points, History and Vanta AI draw their own design headers.
     final ownHeader =
         destination == AppDestination.portfolio ||
         destination == AppDestination.points ||
+        destination == AppDestination.history ||
         destination == AppDestination.assistant;
     final futures = destination == AppDestination.futures;
     return Scaffold(
@@ -91,6 +93,7 @@ class _TradingScreenState extends ConsumerState<TradingScreen> with WidgetsBindi
           AppDestination.portfolio => const PortfolioPage(),
           AppDestination.assistant => const AssistantPage(),
           AppDestination.points => const PointsPage(),
+          AppDestination.history => const HistoryDestinationPage(),
         },
       ),
       bottomNavigationBar: const AppBottomNavigation(),

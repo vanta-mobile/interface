@@ -6790,6 +6790,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navigationAskAi => '问 AI';
 
   @override
+  String get navigationHistory => '历史';
+
+  @override
   String get pointsRules => '积分规则';
 
   @override

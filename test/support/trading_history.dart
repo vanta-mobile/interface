@@ -15,6 +15,7 @@ import 'package:vanta/features/portfolio/data/trading_history_mapper.dart';
 import 'package:vanta/features/portfolio/domain/aster_account.dart';
 import 'package:vanta/features/portfolio/domain/trading_history.dart';
 import 'package:vanta/features/portfolio/presentation/futures_history_screen.dart';
+import 'package:vanta/features/portfolio/presentation/history_destination_page.dart';
 import 'package:vanta/features/trade/application/providers.dart' show symbolProvider;
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
@@ -219,6 +220,9 @@ Future<ProviderContainer> launchTradingHistory(
   String locale = 'en',
   Future<Map<String, AsterContractUnits>> Function()? loadUnits,
   Future<TradingAgent?> Function()? loadGrant,
+
+  /// Mounts the primary History destination instead of the pushed screen.
+  bool primary = false,
 }) async {
   tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
@@ -253,18 +257,20 @@ Future<ProviderContainer> launchTradingHistory(
           data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
           child: child!,
         ),
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: TextButton(
-              onPressed: () => openFuturesHistory(context),
-              child: const Text('History entry'),
-            ),
-          ),
-        ),
+        home: primary
+            ? const Scaffold(body: SafeArea(child: HistoryDestinationPage()))
+            : Builder(
+                builder: (context) => Scaffold(
+                  body: TextButton(
+                    onPressed: () => openFuturesHistory(context),
+                    child: const Text('History entry'),
+                  ),
+                ),
+              ),
       ),
     ),
   );
-  await tester.tap(find.text('History entry'));
+  if (!primary) await tester.tap(find.text('History entry'));
   await tester.pumpAndSettle();
   return container;
 }

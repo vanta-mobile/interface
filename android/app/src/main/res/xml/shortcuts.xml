@@ -63,11 +63,6 @@
             <parameter-binding android:key="feature" android:value="@array/app_action_feature_points" />
         </capability-binding>
     </shortcut>
-    <shortcut android:shortcutId="assistant">
-        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
-            <parameter-binding android:key="feature" android:value="@array/app_action_feature_assistant" />
-        </capability-binding>
-    </shortcut>
     <shortcut android:shortcutId="notifications">
         <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
             <parameter-binding android:key="feature" android:value="@array/app_action_feature_notifications" />

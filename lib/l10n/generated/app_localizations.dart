@@ -12628,6 +12628,12 @@ abstract class AppLocalizations {
   /// **'Ask AI'**
   String get navigationAskAi;
 
+  /// No description provided for @navigationHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get navigationHistory;
+
   /// No description provided for @pointsRules.
   ///
   /// In en, this message translates to:

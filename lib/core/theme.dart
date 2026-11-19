@@ -186,6 +186,12 @@ abstract final class PortfolioTypography {
     fontWeight: FontWeight.w500,
     color: PortfolioColors.text,
   );
+  static const historyTab = TextStyle(
+    fontSize: 12,
+    height: 18 / 12,
+    fontWeight: FontWeight.w700,
+    color: PortfolioColors.text,
+  );
   static const heading = TextStyle(
     fontSize: 18,
     height: 26 / 18,

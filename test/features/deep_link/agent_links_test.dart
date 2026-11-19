@@ -60,6 +60,7 @@ void main() {
           .allMatches(File(_shortcuts).readAsStringSync())
           .map((m) => m.group(1)!)
           .toList();
+      // Vanta AI is hidden, so assistants are not offered a shortcut to it.
       expect(ids, [
         'futures',
         'chart',
@@ -67,7 +68,6 @@ void main() {
         'positions',
         'portfolio',
         'points',
-        'assistant',
         'notifications',
       ]);
       final expected = {
@@ -77,7 +77,6 @@ void main() {
         'positions': (DeepLinkTarget.futures, null, DeepLinkFuturesPanel.positions),
         'portfolio': (DeepLinkTarget.portfolio, null, null),
         'points': (DeepLinkTarget.points, null, null),
-        'assistant': (DeepLinkTarget.assistant, null, null),
         'notifications': (DeepLinkTarget.notifications, null, null),
       };
       for (final id in ids) {
@@ -123,7 +122,7 @@ void main() {
       expect(cases('VantaMarketView'), DeepLinkFuturesTab.values.reversed.map((t) => t.name));
       expect(cases('VantaOrderType'), DeepLinkOrderType.values.map((t) => t.name));
       expect(cases('VantaSizeUnit'), DeepLinkSizeUnit.values.reversed.map((u) => u.name));
-      for (final key in ['symbol', 'tab', 'panel', 'type', 'price', 'qty', 'unit', 'prompt']) {
+      for (final key in ['symbol', 'tab', 'panel', 'type', 'price', 'qty', 'unit']) {
         expect(swift, contains('("$key", '), reason: 'query key $key');
       }
       final phrases = File('ios/Runner/zh-Hans.lproj/AppShortcuts.strings').readAsStringSync();
@@ -146,7 +145,7 @@ void main() {
           .allMatches(File(_shortcuts).readAsStringSync())
           .map((m) => m.group(1)!)
           .toSet();
-      expect(arrays, hasLength(8));
+      expect(arrays, hasLength(7));
       for (final locale in ['values', 'values-zh']) {
         final resources = File('android/app/src/main/res/$locale/assistant_actions.xml')
             .readAsStringSync();

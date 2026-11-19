@@ -15,6 +15,7 @@ class AppBottomNavigation extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = ref.watch(appDestinationProvider);
+    final assistant = ref.watch(assistantEntryEnabledProvider);
     final l10n = AppLocalizations.of(context);
     void select(AppDestination value) => ref.read(appDestinationProvider.notifier).select(value);
     Widget destination(AppDestination value, String asset, String label) => _Destination(
@@ -45,8 +46,12 @@ class AppBottomNavigation extends ConsumerWidget {
                 ),
               ),
               Expanded(
-                child: destination(AppDestination.assistant, 'ask-ai', l10n.navigationAskAi),
+                child: destination(AppDestination.history, 'history', l10n.navigationHistory),
               ),
+              if (assistant)
+                Expanded(
+                  child: destination(AppDestination.assistant, 'ask-ai', l10n.navigationAskAi),
+                ),
               Expanded(child: destination(AppDestination.portfolio, 'portfolio', l10n.portfolio)),
             ],
           ),

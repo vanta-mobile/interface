@@ -89,18 +89,6 @@ abstract class BaseVantaAppFunctionService : AppFunctionService() {
     @AppFunctionDeclaration(isDescribedByKDoc = true)
     suspend fun openNotifications(): PendingIntent = open(VantaLinks.page("notifications"))
 
-    /**
-     * Opens Vanta AI, the in-app trading assistant, optionally with a question typed into its input.
-     * The question is not sent until the user sends it.
-     *
-     * @param question Question to place in the input, at most 2000 characters.
-     * @return A [PendingIntent] that opens Vanta AI when the user taps it.
-     * @throws AppFunctionInvalidArgumentException If the question is longer than 2000 characters. Ask the user to shorten it.
-     */
-    @AppFunctionDeclaration(isDescribedByKDoc = true)
-    suspend fun askVantaAi(question: String? = null): PendingIntent =
-        open(checked { VantaLinks.assistant(question) })
-
     private inline fun checked(build: () -> String): String =
         try {
             build()

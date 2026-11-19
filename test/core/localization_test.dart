@@ -62,7 +62,7 @@ void main() {
     tester,
   ) async {
     final store = MemoryLocalePreferences();
-    final container = setup(tester, localePreferences: store);
+    final container = setup(tester, localePreferences: store, assistantEntry: true);
     await launch(tester, container);
     container.read(symbolProvider.notifier).select('ETHUSDT');
     await tester.pumpAndSettle();

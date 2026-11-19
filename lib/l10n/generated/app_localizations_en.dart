@@ -7281,6 +7281,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationAskAi => 'Ask AI';
 
   @override
+  String get navigationHistory => 'History';
+
+  @override
   String get pointsRules => 'Points rules';
 
   @override

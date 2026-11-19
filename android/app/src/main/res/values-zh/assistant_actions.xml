@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_functions_display_description">打开 Vanta 合约、委托、持仓、资产、积分、通知和 Vanta AI</string>
+    <string name="app_functions_display_description">打开 Vanta 合约、委托、持仓、资产、积分和通知</string>
     <string-array name="app_action_feature_futures">
         <item>合约</item>
         <item>交易</item>
@@ -32,11 +32,6 @@
         <item>积分</item>
         <item>奖励</item>
         <item>我的积分</item>
-    </string-array>
-    <string-array name="app_action_feature_assistant">
-        <item>Vanta AI</item>
-        <item>AI助手</item>
-        <item>问AI</item>
     </string-array>
     <string-array name="app_action_feature_notifications">
         <item>通知</item>

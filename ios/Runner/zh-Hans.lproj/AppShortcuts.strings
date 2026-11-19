@@ -6,5 +6,3 @@
 "Check a market in ${applicationName}" = "在${applicationName}看行情";
 "Prepare an order in ${applicationName}" = "在${applicationName}准备下单";
 "Set up an order in ${applicationName}" = "用${applicationName}挂单";
-"Ask ${applicationName} AI" = "问${applicationName} AI";
-"Open ${applicationName} AI" = "打开${applicationName} AI";

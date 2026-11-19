@@ -35,9 +35,10 @@ AsterInstrument _instrument(String symbol) => AsterInstrument(
 );
 
 class _Harness {
-  _Harness({Future<List<AsterInstrument>>? instruments, Uri? launch}) {
+  _Harness({Future<List<AsterInstrument>>? instruments, Uri? launch, bool assistant = false}) {
     container = ProviderContainer(
       overrides: [
+        assistantEntryEnabledProvider.overrideWithValue(assistant),
         appLinkSourceProvider.overrideWithValue(
           AppLinkSource(links: links.stream, initialLink: () async => launch),
         ),
@@ -141,8 +142,17 @@ void main() {
     expect(h.read(orderFormPrefillProvider), isNull, reason: 'unknown markets get no terms');
   });
 
-  test('fills an empty AI composer once the conversation is ready, never sends', () async {
+  test('hidden Vanta AI links open the app home without a draft', () async {
     final h = _Harness();
+    h.read(appDestinationProvider.notifier).select(AppDestination.points);
+    h.navigator.open(const AppDeepLink(DeepLinkTarget.assistant, prompt: 'Analyze BTC'));
+    expect(h.read(appDestinationProvider), AppDestination.futures);
+    (h.container.read(assistantProvider.notifier) as _Assistant).ready();
+    expect(h.read(assistantProvider).draft, '');
+  });
+
+  test('fills an empty AI composer once the conversation is ready, never sends', () async {
+    final h = _Harness(assistant: true);
     h.navigator.open(const AppDeepLink(DeepLinkTarget.assistant, prompt: 'Analyze BTC'));
     expect(h.read(appDestinationProvider), AppDestination.assistant);
     expect(h.read(assistantProvider).draft, '');
@@ -150,12 +160,12 @@ void main() {
     expect(h.read(assistantProvider).draft, 'Analyze BTC');
     expect(h.read(assistantProvider).messages, isEmpty);
 
-    final kept = _Harness();
+    final kept = _Harness(assistant: true);
     (kept.container.read(assistantProvider.notifier) as _Assistant).ready(draft: 'mine');
     kept.navigator.open(const AppDeepLink(DeepLinkTarget.assistant, prompt: 'Analyze BTC'));
     expect(kept.read(assistantProvider).draft, 'mine');
 
-    final left = _Harness();
+    final left = _Harness(assistant: true);
     left.navigator.open(const AppDeepLink(DeepLinkTarget.assistant, prompt: 'Analyze BTC'));
     left.read(appDestinationProvider.notifier).select(AppDestination.futures);
     left.read(appDestinationProvider.notifier).select(AppDestination.assistant);

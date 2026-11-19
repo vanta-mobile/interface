@@ -127,6 +127,7 @@ import 'package:vanta/features/portfolio/domain/order_cancellation.dart';
 import 'package:vanta/features/portfolio/application/order_cancellation_provider.dart';
 import 'package:vanta/features/portfolio/application/spot_history_provider.dart';
 import 'package:vanta/features/portfolio/domain/spot_history.dart';
+import 'package:vanta/features/trade/application/navigation_provider.dart';
 import 'package:vanta/features/trade/application/providers.dart';
 import 'package:vanta/features/market/domain/market.dart';
 import 'package:vanta/main.dart';
@@ -273,6 +274,9 @@ ProviderContainer setup(
   bool verifiedApiSession = false,
   Map<String, PublicLeverage> publicLeverage = const {},
   Map<String, Decimal> openInterest = const {},
+
+  /// Shows the hidden Vanta AI entry for tests that cover the AI page.
+  bool assistantEntry = false,
 }) {
   tester.view.physicalSize = Size(width, 844);
   tester.view.devicePixelRatio = 1;
@@ -285,6 +289,7 @@ ProviderContainer setup(
   if (notificationRepository == null) addTearDown(inboxRepository.dispose);
   final container = ProviderContainer(
     overrides: [
+      assistantEntryEnabledProvider.overrideWithValue(assistantEntry),
       publicLeverageProvider.overrideWith((ref) async => publicLeverage),
       // Public open interest is a per-row network read; unlisted rows stay unknown.
       openInterestProvider.overrideWith((ref, symbol) async {

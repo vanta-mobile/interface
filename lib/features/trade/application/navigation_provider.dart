@@ -1,8 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum AppDestination { futures, points, assistant, portfolio }
+enum AppDestination { futures, points, history, assistant, portfolio }
 
 enum FuturesWorkspaceTab { chart, trade }
+
+/// Vanta AI is hidden from navigation and app links for now (design 06. history).
+/// The feature stays in the codebase; tests override this to keep it covered.
+final assistantEntryEnabledProvider = Provider<bool>((ref) => false);
 
 /// Session navigation only: no wallet settings, order terms or durable drafts.
 /// A new application container opens BTCUSDT (symbolProvider) on the order form.

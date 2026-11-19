@@ -60,7 +60,7 @@ void main() {
         );
         // The original structured server failure remains available to diagnostics.
         expect(container.read(accountReadProvider).failure?.details?.message, serverMessage);
-        await tapNavigationControl(tester, 'navigation-assistant');
+        await tapNavigationControl(tester, 'navigation-points');
         await tapNavigationControl(tester, 'navigation-portfolio');
         container.invalidate(portfolioAccountLoadProvider);
         await tester.pumpAndSettle();
