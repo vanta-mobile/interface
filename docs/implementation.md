@@ -1,3 +1,10 @@
+## 2026-11-19 发布流水线：Sentry 变量缺失与 Maven Central 限流（Release Mobile #44323765037）
+
+- iOS 在 “Upload iOS Sentry symbols” 失败：`Missing SENTRY_ORG for Sentry symbol upload.`。仓库 Variables 只配了 `SENTRY_DSN`／`SENTRY_ENVIRONMENT`，没有 `SENTRY_ORG`／`SENTRY_PROJECT`（Android 走到同一步也会失败）。已用 `gh variable set` 补上 `SENTRY_ORG=dodo-k4`、`SENTRY_PROJECT=vanta`；用本地 sentry-cli 确认 `dodo-k4` 下 `vanta` 项目 ID 4512450739961936 与 DSN 一致。
+- Android 在 “Build Android split APKs” 配置 `:sentry_flutter` 时失败：Maven Central 对 runner 返回 HTTP 429。新增 `scripts/retry_transient_build.py`，包住 APK 与 AAB 两个 Gradle 构建步骤：仅当输出含 `Received status code 429/5xx from server`、连接/读取超时或连接重置时重跑，最多 3 次，间隔 60s、180s；编译错误等其它失败直接返回原退出码，不重试。构建是确定性的本地产物，重跑不涉及任何签名写操作或上传。
+- 构建子进程使用上下文管理器，确保每次退出后关闭输出管道，避免重试时泄漏文件描述符。
+- 验证：`python3 -m unittest discover -s scripts -p '*_test.py'` 共 68 项，1 项跳过（新增 4 项：识别 429/5xx、限流后重试成功、非网络失败不重试、达到上限停止）；`dart analyze`、`dart format --output=none --set-exit-if-changed lib test`、`git diff --check` 通过。未在本地跑 Android/iOS 构建；需重新触发 Release Mobile 确认 Sentry 上传（`SENTRY_AUTH_TOKEN` 的 debug-file 上传权限此前未验证）。
+
 ## 2026-11-18 确认下单不再提示「订单信息已失效」；撤单／改单不因列表刷新失效（TAS-5048）
 
 真机发现：确认框打开稍久（超过 30 秒）或期间后台刷新过下单数据，点确认会不发请求、不报错，界面只显示兜底文案「订单信息已失效，请关闭弹窗后重新下单」。只减仓、快捷下单、平仓等固定确认冻结了打开时的下单数据，`LiveOrderController.submit` 在数据过期、被替换或版本号不符时直接返回；主表单确认在数据仍可计算但已超出 30 秒时也不刷新，提交环节再拒绝。撤单、改单则用 `orders.contains(order)`（对象实例相等）判断订单仍在列表中，列表一刷新就悄悄不执行。

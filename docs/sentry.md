@@ -113,10 +113,10 @@ shared native SDK. Do not assume coverage for background/custom isolates.
 
 ## Release integration
 
-For a future release, set GitHub repository variables `SENTRY_DSN` to the verified
-public DSN, `SENTRY_ENVIRONMENT` to the intended release environment,
-`SENTRY_ORG=dodo-k4`, and `SENTRY_PROJECT=vanta`. No remote settings were changed;
-local `.env` configuration does not configure Actions.
+GitHub repository variables `SENTRY_DSN` (verified public DSN), `SENTRY_ENVIRONMENT`,
+`SENTRY_ORG=dodo-k4`, and `SENTRY_PROJECT=vanta` are set (org/project added
+2026-11-19 after the first release failed without them); local `.env`
+configuration does not configure Actions.
 The release workflow uses `vanta@<pubspec version>` (for example `vanta@1.4.0+52`)
 as release and the source SHA as dist.
 Set `SENTRY_AUTH_TOKEN` as an Actions **Secret** with debug-file upload permissions;

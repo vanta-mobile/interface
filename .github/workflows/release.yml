@@ -207,6 +207,7 @@ jobs:
       - name: Build Android split APKs
         shell: bash
         run: >-
+          python3 scripts/retry_transient_build.py
           flutter build apk --release --split-per-abi --obfuscate
           --target-platform android-arm64,android-x64
           --dart-define-from-file=config/ci.local.json
@@ -224,6 +225,7 @@ jobs:
       - name: Build Android App Bundle for Google Play
         shell: bash
         run: >-
+          python3 scripts/retry_transient_build.py
           flutter build appbundle --release --obfuscate
           --target-platform android-arm64,android-x64
           --dart-define-from-file=config/ci.local.json
