@@ -117,8 +117,12 @@ GitHub repository variables `SENTRY_DSN` (verified public DSN), `SENTRY_ENVIRONM
 `SENTRY_ORG=dodo-k4`, and `SENTRY_PROJECT=vanta` are set (org/project added
 2026-11-19 after the first release failed without them); local `.env`
 configuration does not configure Actions.
-The release workflow uses `vanta@<pubspec version>` (for example `vanta@1.4.0+52`)
-as release and the source SHA as dist.
+The release workflow uses `exchange.vanta.app@<pubspec version>` (for example
+`exchange.vanta.app@1.4.0+52`) as release and the source SHA as dist. This
+matches the SDK default (Android application ID / iOS bundle ID `@` version)
+used by builds without `SENTRY_RELEASE`, so release and development builds of
+one version share a Sentry release. Releases up to `vanta@0.0.6+6` used the
+older `vanta@` prefix.
 Set `SENTRY_AUTH_TOKEN` as an Actions **Secret** with debug-file upload permissions;
 it is injected only into the upload step, never the generated Flutter JSON.
 The existing token's debug-upload permissions have not been tested.

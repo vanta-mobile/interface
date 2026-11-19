@@ -1,3 +1,12 @@
+## 2026-11-19 Sentry VANTA-5／VANTA-2 修复
+
+- VANTA-5（生产 `vanta@0.0.6+6`，iOS，未捕获 `StateError: Future already completed`，位于 `Pairing._processEvent`）：vendored `reown_core` 的配对请求在收到响应后从不移出 `pendingRequests`，App 从后台恢复后 relay 重发同一 ID 的响应时会再次 `complete`。现在收到响应即移出该请求，已完成的不再处理；上游 1.5.1 代码相同，改动记录在 `third_party/reown_core/PATCHES.md`。
+- VANTA-2（development 包，`AssertionError: Cannot use Ref or modify other providers inside life-cycles`）：合约页被 TickerMode 暂停时，`automaticOrderRefreshProvider` 在 `onCancel` 里 `ref.read(...).stop()`。现在记下发起本次后台刷新的 controller，在 `onCancel` 后的微任务里对仍在进行的同一次刷新调用 `stop()`，不再在生命周期回调中使用 Ref 或修改其他 provider。
+- Sentry release 命名统一：发版流水线的 `SENTRY_RELEASE` 由 `vanta@<版本>` 改为 `exchange.vanta.app@<版本>`（`.github/workflows/release.yml` Android／iOS 两处，`docs/sentry.md` 同步），与未传 `SENTRY_RELEASE` 的开发包所用 SDK 默认值（Android `applicationId`／iOS bundle ID 均为 `exchange.vanta.app`）一致，同一版本在 Sentry 只有一个 release。已有的 `vanta@0.0.6+6` 保留为历史数据。
+- Sentry 中预先创建 release `exchange.vanta.app@0.0.7+7`，VANTA-5、VANTA-2 标记为在该版本解决；需在打 `v0.0.7` 前提交本次修复。
+- VANTA-4（Android 原生 SIGSEGV，无可符号化堆栈，加载的是 x86_64 系统镜像）未处理。
+- 测试：新增 `test/features/auth/reown_pairing_response_test.dart`（重复的成功／错误响应各一例），在原始代码上复现 `Bad state: Future already completed`；`automatic_order_refresh_test` 新增「刷新中暂停订阅」用例，在原始代码上复现同一断言。
+
 ## 2026-11-19 删除本地演示账户与资产页静态预览
 
 两套演示均已没有界面入口，按产品确认删除。

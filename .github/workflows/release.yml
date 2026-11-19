@@ -147,8 +147,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
-      # Readable app version in Sentry; SENTRY_DIST keeps the exact source commit.
-      SENTRY_RELEASE: vanta@${{ needs.detect-release.outputs.version }}
+      # Matches the SDK default (app ID@version) used by builds without it;
+      # SENTRY_DIST keeps the exact source commit.
+      SENTRY_RELEASE: exchange.vanta.app@${{ needs.detect-release.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -349,7 +350,7 @@ jobs:
     env:
       DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
       APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
-      SENTRY_RELEASE: vanta@${{ needs.detect-release.outputs.version }}
+      SENTRY_RELEASE: exchange.vanta.app@${{ needs.detect-release.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
