@@ -1,3 +1,11 @@
+## 2026-11-19 iOS 构建改用 Xcode 27（iOS 27 SDK）
+
+- 背景：0.0.6 (6) 上传 App Store Connect 时警告 `90725: SDK version issue`，包由 iOS 26.5 SDK 构建；2027 年 4 月起必须用 iOS 27 SDK（Xcode 27）构建才能上传。
+- GitHub `macos-26` 镜像最高只有 Xcode 26.6，没有 iOS 27 SDK；Xcode 27 只在 `xcode-27` runner（公开预览）上提供，默认 27.1，另有 27.0／27.2。
+- `ci.yml` 的 iOS 未签名归档与 `release.yml` 的 `ios-release` 改为 `runs-on: xcode-27`，并用 `DEVELOPER_DIR` 固定 `/Applications/Xcode_27.1.app`，不随镜像默认值漂移。两个 job 开头都检查 `xcrun --sdk iphoneos --show-sdk-version` 主版本不低于 27，否则直接失败；发布 job 原有的 Swift ≥ 6.3 检查保留。
+- 部署目标 `IPHONEOS_DEPLOYMENT_TARGET = 17.0` 不变。签名步骤仍显式安装并使用 `openssl@3`，不受该镜像默认 OpenSSL 升级到 4 的影响。
+- 验证：本机为 Linux，未运行 Xcode 构建；`git diff --check` 通过。需在 CI 上确认 Flutter 3.47.4、PrivySDK、Rive 等原生依赖能在 Xcode 27.1 下归档，并在下一次 TestFlight 上传后确认 90725 警告消失。若预览 runner 不稳定，可把 `runs-on` 改回 `macos-26` 并去掉 `DEVELOPER_DIR` 回退。
+
 ## 2026-11-19 发布流水线：Sentry 变量缺失与 Maven Central 限流（Release Mobile #44323765037）
 
 - iOS 在 “Upload iOS Sentry symbols” 失败：`Missing SENTRY_ORG for Sentry symbol upload.`。仓库 Variables 只配了 `SENTRY_DSN`／`SENTRY_ENVIRONMENT`，没有 `SENTRY_ORG`／`SENTRY_PROJECT`（Android 走到同一步也会失败）。已用 `gh variable set` 补上 `SENTRY_ORG=dodo-k4`、`SENTRY_PROJECT=vanta`；用本地 sentry-cli 确认 `dodo-k4` 下 `vanta` 项目 ID 4512450739961936 与 DSN 一致。

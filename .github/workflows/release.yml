@@ -344,9 +344,10 @@ jobs:
       - detect-release
       - ios-configuration
     if: needs.detect-release.outputs.should_build == 'true' && needs.ios-configuration.outputs.enabled == 'true'
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 60
     env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
       APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
       SENTRY_RELEASE: vanta@${{ needs.detect-release.outputs.version }}
     steps:
@@ -361,6 +362,12 @@ jobs:
           set -euo pipefail
           xcodebuild -version
           swift --version
+
+          ios_sdk="$(xcrun --sdk iphoneos --show-sdk-version)"
+          if (( ${ios_sdk%%.*} < 27 )); then
+            echo "App Store Connect requires the iOS 27 SDK or newer; found ${ios_sdk}." >&2
+            exit 1
+          fi
 
           swift_version="$(swift --version | sed -nE 's/.*Apple Swift version ([0-9]+\.[0-9]+).*/\1/p')"
           if [[ -z "$swift_version" ]]; then
