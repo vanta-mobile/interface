@@ -65,6 +65,28 @@ void main() {
     expect(rows.map((r) => r.key).toSet(), hasLength(2));
   });
 
+  test('archive income without a market keeps its empty Aster symbol', () {
+    final row =
+        mapTradingHistory([
+              {
+                ...historyIncome(),
+                'id': 'income:7:TRANSFER',
+                'kind': 'TRANSFER',
+                'symbol': '',
+                'tran_id': '7',
+              },
+            ], TradingHistoryTab.transactions).single
+            as HistoryTransaction;
+    expect(row.symbol, '');
+    expect(row.type, 'TRANSFER');
+    expect(
+      () => mapTradingHistory([
+        {...historyOrder(), 'symbol': ''},
+      ], TradingHistoryTab.orders),
+      throwsFormatException,
+    );
+  });
+
   test('position preserves inferred and liquidated flags; open has no fabricated close', () {
     final r =
         mapTradingHistory([

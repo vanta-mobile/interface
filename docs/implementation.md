@@ -1,3 +1,10 @@
+## 2026-11-19 资金流水：无交易对的流水不再导致整页格式错误（走查 V6-02）
+
+- 问题：0.0.6（2006）进入资金流水两次提示「`/v1/history/income` 数据格式无效」。Aster 对划转、保险基金清算等不属于交易对的流水返回 `symbol: ""`，App 按原样上报 `/v1/report/income`，归档读回仍是 `""`；读取 mapper 要求 `symbol` 非空，任意一行即令整页解析失败。接口合约 `IncomeItem.symbol` 为 `string | null`，空串合法。
+- 修改：`trading_history_mapper.dart` 读取时把 `""` 视为无交易对（与 `null` 相同）；订单、成交、仓位仍要求非空交易对。上报端不改：`ReportPayload.symbol` 为字符串，且参与上报幂等键，改成 `null` 会改变已上报记录的去重键。
+- 验证：`trading_history_test` 新增空交易对流水可解析、空交易对订单仍拒绝；该文件全部通过。
+
+
 ## 2026-11-19 iOS 构建改用 Xcode 27（iOS 27 SDK）
 
 - 背景：0.0.6 (6) 上传 App Store Connect 时警告 `90725: SDK version issue`，包由 iOS 26.5 SDK 构建；2027 年 4 月起必须用 iOS 27 SDK（Xcode 27）构建才能上传。

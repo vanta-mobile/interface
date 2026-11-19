@@ -13,7 +13,9 @@ List<TradingHistoryRecord> mapTradingHistory(
   if (value is! List || value.length > 200) throw const FormatException();
   return value.map((item) {
     if (item is! HistoryJson) throw const FormatException();
-    final symbol = _optionalText(item['symbol']) ?? '';
+    // Aster reports ledger rows without a market (transfers, insurance clear …)
+    // with an empty symbol, and the archive returns it unchanged.
+    final symbol = item['symbol'] == '' ? '' : _optionalText(item['symbol']) ?? '';
     return switch (tab) {
       TradingHistoryTab.orders => HistoryOrder(
         symbol: _text(symbol),
