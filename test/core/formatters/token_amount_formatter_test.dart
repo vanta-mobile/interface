@@ -4,6 +4,23 @@ import 'package:vanta/core/formatters/token_amount_formatter.dart';
 
 void main() {
   group('TokenAmountFormatter', () {
+    test('truncated display keeps adaptive precision but never rounds up', () {
+      String cut(String value) => TokenAmountFormatter.format(
+        DecimalValue(value),
+        symbol: 'BNB',
+        display: TokenAmountDisplay.truncated,
+      );
+      expect(cut('0.521659999999999999'), '0.521659 BNB');
+      expect(cut('0.9999996'), '0.999999 BNB');
+      expect(cut('1234.56789999'), '1,234.567899 BNB');
+      expect(cut('0.000123456789'), '0.000123456 BNB');
+      expect(cut('0.0303556'), '0.0303556 BNB');
+      expect(cut('2.50000'), '2.5 BNB');
+      expect(cut('10'), '10 BNB');
+      expect(cut('0'), '0 BNB');
+      expect(cut('0.000000'), '0 BNB');
+    });
+
     group('formatDecimal', () {
       final cases = <String, String>{
         '0': '0',

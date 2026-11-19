@@ -2906,7 +2906,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get depositApprovalPending => '当前钱包存在未核对的授权，请先核对原交易再发送下一笔。';
 
   @override
-  String get depositApprovalNotNeeded => '本次数量无需授权步骤。充值提交仍需平台额度与到账恢复能力。';
+  String get depositApprovalNotNeeded => '授权额度已足够，请直接充值。';
 
   @override
   String get depositApprovalChanged => '链状态或费用已变化，请重新准备并确认本步骤；尚未发送交易。';
@@ -3882,7 +3882,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get depositSubmissionChanged => '余额、授权、交易内容或 Gas 已变化，请重新准备及确认。';
 
   @override
-  String get depositSubmissionApprovalNeeded => 'ERC-20 授权额度不足，请先完成独立授权并核对额度。';
+  String get depositSubmissionApprovalNeeded => '授权额度不足，请先授权。';
 
   @override
   String get depositSubmissionHashNeeded => '请先读取并绑定匹配的交易哈希，再核对平台入账。';
@@ -5607,11 +5607,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String fundingGasInsufficient(String asset) {
-    return '$asset 不足以支付网络手续费，请输入更小的金额。';
-  }
-
-  @override
   String get fundingConfirmDepositTitle => '在钱包中确认充值';
 
   @override
@@ -5816,14 +5811,70 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get fundingWithdrawDepositRequired => '可提现数量为 0，请先充值。';
+
+  @override
   String fundingBalanceInsufficient(String asset) {
     return '$asset 余额不足，请输入更小的金额。';
   }
 
   @override
-  String fundingGasTopUp(String asset) {
-    return '$asset 不足以支付网络手续费，请向钱包补充 $asset。';
+  String get fundingFrom => '从';
+
+  @override
+  String get fundingPrivyWallet => 'Privy 钱包';
+
+  @override
+  String get fundingEoaWallet => 'EOA 钱包';
+
+  @override
+  String get fundingAdd => '转入';
+
+  @override
+  String get fundingAddFund => '转入资金';
+
+  @override
+  String get fundingAddGas => '转入 Gas';
+
+  @override
+  String get fundingAddFunds => '转入资金';
+
+  @override
+  String get fundingAddFundsTo => '转入到';
+
+  @override
+  String get fundingGasToken => 'Gas 代币';
+
+  @override
+  String get fundingAddFundsHint => '请在同一网络转入相同代币，然后返回合约账户充值。';
+
+  @override
+  String get fundingDepositAddress => '充值地址';
+
+  @override
+  String get fundingDepositAddressQr => '充值地址二维码';
+
+  @override
+  String get fundingGasBalance => 'Gas 余额';
+
+  @override
+  String get fundingRefreshBalance => '刷新余额';
+
+  @override
+  String fundingGasReserveHint(String amount) {
+    return '请在此钱包保留至少约 $amount，用于签署跨链充值。';
   }
+
+  @override
+  String get fundingTransferred => '我已转入';
+
+  @override
+  String fundingAssetShort(String asset) {
+    return '$asset 余额不足。';
+  }
+
+  @override
+  String get fundingGasShort => 'Gas 不足。';
 
   @override
   String fundingWithdrawalFeeInsufficient(String asset) {

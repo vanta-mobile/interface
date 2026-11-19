@@ -169,6 +169,9 @@ abstract final class PortfolioColors {
   static const accountScrim = Color(0x66000000);
   static const menuShadow = Color(0x40000000);
   static const negativeSurface = Color(0xFF4E210F);
+
+  /// Texts/T12-Yellow, the gas top-up hint in the funding frames.
+  static const warning = Color(0xFFE9A83C);
   static const assetEstimate = Color(0xFFA1A9B4);
   static const assetDivider = Color(0xFF232526);
 }

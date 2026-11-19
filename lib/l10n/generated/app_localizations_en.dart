@@ -3110,8 +3110,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'This wallet has an unresolved approval. Check that transaction before sending another one.';
 
   @override
-  String get depositApprovalNotNeeded =>
-      'This amount needs no approval step. Deposit submission still requires verified platform limits and credit recovery.';
+  String get depositApprovalNotNeeded => 'Allowance is already sufficient. Deposit directly.';
 
   @override
   String get depositApprovalChanged =>
@@ -4185,8 +4184,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Balance, allowance, transaction or Gas changed. Prepare and review again.';
 
   @override
-  String get depositSubmissionApprovalNeeded =>
-      'ERC-20 allowance is insufficient. Complete and verify the separate approval step first.';
+  String get depositSubmissionApprovalNeeded => 'Allowance is insufficient. Approve first.';
 
   @override
   String get depositSubmissionHashNeeded =>
@@ -6040,11 +6038,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String fundingGasInsufficient(String asset) {
-    return 'Insufficient $asset for network fees. Enter a smaller amount.';
-  }
-
-  @override
   String get fundingConfirmDepositTitle => 'Confirm deposit in wallet';
 
   @override
@@ -6252,14 +6245,71 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get fundingWithdrawDepositRequired => 'Withdrawable amount is 0. Please deposit first.';
+
+  @override
   String fundingBalanceInsufficient(String asset) {
     return 'Insufficient $asset balance. Enter a smaller amount.';
   }
 
   @override
-  String fundingGasTopUp(String asset) {
-    return 'Insufficient $asset for network fees. Add $asset to your wallet.';
+  String get fundingFrom => 'From';
+
+  @override
+  String get fundingPrivyWallet => 'Privy Wallet';
+
+  @override
+  String get fundingEoaWallet => 'EOA Wallet';
+
+  @override
+  String get fundingAdd => 'Add';
+
+  @override
+  String get fundingAddFund => 'Add Fund';
+
+  @override
+  String get fundingAddGas => 'Add Gas';
+
+  @override
+  String get fundingAddFunds => 'Add funds';
+
+  @override
+  String get fundingAddFundsTo => 'Add funds to';
+
+  @override
+  String get fundingGasToken => 'Gas Token';
+
+  @override
+  String get fundingAddFundsHint =>
+      'Send the same token on the same network, then return to Futures account to deposit.';
+
+  @override
+  String get fundingDepositAddress => 'Deposit Address';
+
+  @override
+  String get fundingDepositAddressQr => 'Deposit address QR code';
+
+  @override
+  String get fundingGasBalance => 'Gas Balance';
+
+  @override
+  String get fundingRefreshBalance => 'Refresh balance';
+
+  @override
+  String fundingGasReserveHint(String amount) {
+    return 'Keep at least ~$amount in this wallet to sign the cross-chain deposit.';
   }
+
+  @override
+  String get fundingTransferred => 'I\'ve transferred';
+
+  @override
+  String fundingAssetShort(String asset) {
+    return 'Insufficient $asset balance.';
+  }
+
+  @override
+  String get fundingGasShort => 'Insufficient gas.';
 
   @override
   String fundingWithdrawalFeeInsufficient(String asset) {

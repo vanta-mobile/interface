@@ -1,6 +1,13 @@
 import '../domain/decimal_value.dart';
 
-enum TokenAmountDisplay { exact, normalized }
+enum TokenAmountDisplay {
+  exact,
+  normalized,
+
+  /// [normalized] precision cut toward zero, so an available balance is never
+  /// shown above what can be used.
+  truncated,
+}
 
 /// Formats token amounts without converting them to binary floating point.
 abstract final class TokenAmountFormatter {
@@ -238,6 +245,7 @@ abstract final class TokenAmountFormatter {
     final displayedValue = switch (display) {
       TokenAmountDisplay.exact => effectiveValue,
       TokenAmountDisplay.normalized => _formatAdaptiveDecimal(effectiveValue),
+      TokenAmountDisplay.truncated => _formatAdaptiveDecimal(effectiveValue, truncate: true),
     };
     return '${_groupIntegerDigits(displayedValue)} $normalizedSymbol';
   }
@@ -304,7 +312,7 @@ abstract final class TokenAmountFormatter {
   static bool _isZeroDecimal(String value) =>
       BigInt.parse(value.replaceFirst('-', '').replaceAll('.', '')) == BigInt.zero;
 
-  static String _formatAdaptiveDecimal(String value) {
+  static String _formatAdaptiveDecimal(String value, {bool truncate = false}) {
     final unsigned = value.startsWith('-') ? value.substring(1) : value;
     final parts = unsigned.split('.');
     var fractionDigits = 6;
@@ -313,7 +321,11 @@ abstract final class TokenAmountFormatter {
       if (firstNonZero == -1) return '0';
       fractionDigits += firstNonZero;
     }
-    final rounded = _trimInsignificantZeros(_roundToFractionDigits(value, fractionDigits));
+    final rounded = _trimInsignificantZeros(
+      truncate
+          ? _truncateToFractionDigits(value, fractionDigits)
+          : _roundToFractionDigits(value, fractionDigits),
+    );
     return rounded == '-0' ? '0' : rounded;
   }
 
@@ -348,6 +360,14 @@ abstract final class TokenAmountFormatter {
               '${digits.substring(digits.length - maxFractionDigits)}';
     if (scaled == BigInt.zero) return rounded;
     return '${negative ? '-' : ''}$rounded';
+  }
+
+  static String _truncateToFractionDigits(String value, int maxFractionDigits) {
+    final separator = value.indexOf('.');
+    if (separator == -1 || value.length - separator - 1 <= maxFractionDigits) return value;
+    return maxFractionDigits == 0
+        ? value.substring(0, separator)
+        : value.substring(0, separator + 1 + maxFractionDigits);
   }
 
   static String _divideDecimalByPower(String value, int power) {

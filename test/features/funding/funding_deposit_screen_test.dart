@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/auth/domain/wallet_transaction.dart';
 import 'package:vanta/features/funding/application/deposit_approval_provider.dart';
 import 'package:vanta/features/funding/application/deposit_submission_provider.dart';
@@ -12,6 +13,7 @@ import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/subaccounts/presentation/account_components.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
+import '../../support/aster_account.dart';
 import '../../support/deposit_wallet.dart';
 import '../../support/funding_info.dart';
 import '../../support/funding_screen.dart';
@@ -25,7 +27,90 @@ FilledButton _submit(WidgetTester tester) => tester.widget<FilledButton>(
   ),
 );
 
+const _embedded = AuthIdentity(
+  id: 'aster-test',
+  walletAddress: accountAddress,
+  signingAvailable: true,
+);
+
 void main() {
+  testWidgets('a Privy wallet deposits from the form without the wallet page', (tester) async {
+    final h = FundingHarness();
+    h.identity.restored = _embedded;
+    await h.open(tester);
+    await tester.enterText(find.byKey(const Key('funding-amount')), '0.1');
+    await h.settleGas(tester);
+    await tester.tap(find.byKey(const Key('funding-deposit-submit')));
+    await tester.pumpAndSettle();
+    expect(find.byType(DepositConfirmScreen), findsNothing);
+    expect(find.byKey(const Key('funding-open-wallet')), findsNothing);
+    expect(h.identity.transactions, hasLength(1));
+    expect(find.byType(DepositProcessingScreen), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await h.close(tester);
+  });
+
+  testWidgets('a Privy wallet approves from the form; a rejection is explained', (tester) async {
+    final h = FundingHarness();
+    h.identity.restored = _embedded;
+    await h.open(tester);
+    await tester.tap(find.byKey(const Key('funding-asset-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('funding-option-USDT')).last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('funding-amount')), '5');
+    await h.settleGas(tester);
+
+    h.identity.transactionResult = const WalletTransactionResult.rejected();
+    await tester.tap(find.byKey(const Key('funding-deposit-submit')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ApprovalConfirmScreen), findsNothing);
+    expect(h.identity.transactions, hasLength(1));
+    expect(find.text('Wallet request rejected. You can retry.'), findsOneWidget);
+
+    h.identity.transactionResult = WalletTransactionResult.fromResponse('0x${'b' * 64}');
+    await tester.tap(find.byKey(const Key('funding-deposit-submit')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(ApprovalConfirmScreen), findsNothing);
+    expect(h.identity.transactions, hasLength(2));
+    expect(find.byKey(const Key('funding-error')), findsNothing);
+    expect(
+      tester.widget<AccountAction>(find.byKey(const Key('funding-deposit-submit'))).busy,
+      isTrue,
+      reason: 'waiting for the approval receipt',
+    );
+    await h.close(tester);
+  });
+
+  testWidgets('USDT approval still sends after lingering on the wallet page past its quote', (
+    tester,
+  ) async {
+    final h = FundingHarness();
+    await h.open(tester);
+    await tester.tap(find.byKey(const Key('funding-asset-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('funding-option-USDT')).last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('funding-amount')), '5');
+    await h.settleGas(tester);
+    await tester.tap(find.byKey(const Key('funding-deposit-submit')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ApprovalConfirmScreen), findsOneWidget);
+    h.clockOffset = const Duration(seconds: 40);
+    await tester.tap(find.byKey(const Key('funding-open-wallet')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(h.identity.transactions, hasLength(1));
+    expect(find.byType(ApprovalConfirmScreen), findsNothing);
+    expect(find.byKey(const Key('funding-error')), findsNothing);
+    expect(
+      tester.widget<AccountAction>(find.byKey(const Key('funding-deposit-submit'))).busy,
+      isTrue,
+    );
+    await h.close(tester);
+  });
+
   testWidgets('no network is preselected; deposit waits for the user to choose one', (
     tester,
   ) async {
@@ -39,6 +124,30 @@ void main() {
     await h.selectNetwork(tester, 56);
     expect(find.text(l.fundingNetworkBnb), findsOneWidget);
     expect(find.text(l.fundingSelectNetwork), findsNothing);
+    await h.close(tester);
+  });
+
+  testWidgets('balance rounds down to six digits on one line; Max fills the exact amount', (
+    tester,
+  ) async {
+    final units = BigInt.parse('521659999999999999');
+    final h = FundingHarness();
+    h.wallet.resultFor = (query) =>
+        depositSnapshot(query: query, assetUnits: units, nativeUnits: units);
+    await h.open(tester, size: const Size(360, 800));
+    // Rounding half up would show 0.52166, above what can be deposited.
+    expect(find.text('0.521659 BNB'), findsOneWidget);
+    final value = find.byKey(const Key('funding-balance-value'));
+    final label = find.text(_l(tester).fundingBalance);
+    expect(tester.getCenter(value).dy, moreOrLessEquals(tester.getCenter(label).dy, epsilon: 1));
+    expect(tester.getSize(value).height, lessThan(24));
+    await tester.tap(find.byKey(const Key('funding-max')));
+    await h.settleGas(tester);
+    expect(
+      tester.widget<TextField>(find.byKey(const Key('funding-amount'))).controller!.text,
+      '0.521659999999999999',
+    );
+    expect(tester.takeException(), isNull);
     await h.close(tester);
   });
 
@@ -60,7 +169,7 @@ void main() {
     await tester.tap(find.byKey(const Key('funding-max')));
     await h.settleGas(tester);
     expect(find.text('10'), findsOneWidget);
-    expect(find.text(l.fundingGasInsufficient('BNB')), findsOneWidget);
+    expect(find.text(l.fundingGasShort), findsOneWidget);
     expect(_submit(tester).onPressed, isNull);
 
     h.gas.failure = null;
@@ -102,9 +211,7 @@ void main() {
     await h.close(tester);
   });
 
-  testWidgets('wallet rejection and Cancel return to the kept form without sending again', (
-    tester,
-  ) async {
+  testWidgets('wallet rejection explains itself; Cancel returns to the kept form', (tester) async {
     final h = FundingHarness();
     await h.open(tester);
     await tester.enterText(find.byKey(const Key('funding-amount')), '0.5');
@@ -125,7 +232,7 @@ void main() {
     expect(h.identity.transactions.length, 1);
     expect(find.byType(DepositConfirmScreen), findsNothing);
     expect(find.text('0.5'), findsOneWidget);
-    expect(find.byKey(const Key('funding-error')), findsNothing);
+    expect(find.text('Wallet request rejected. You can retry.'), findsOneWidget);
     expect(h.container.read(pendingDepositSubmissionsProvider), isEmpty);
     expect(tester.takeException(), isNull);
     await h.close(tester);
@@ -141,7 +248,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('funding-option-USDT')).last);
     await tester.pumpAndSettle();
-    expect(find.text('123.456789012345678901 USDT'), findsOneWidget);
+    expect(find.text('123.456789 USDT'), findsOneWidget);
     await tester.enterText(find.byKey(const Key('funding-amount')), '5');
     await h.settleGas(tester);
     expect(find.text(l.fundingApproveAsset('USDT')), findsOneWidget);

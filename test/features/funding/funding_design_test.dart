@@ -43,6 +43,9 @@ void main() {
     'deposit-approve-wallet',
     'deposit-empty',
     'deposit-gas',
+    'deposit-insufficient',
+    'deposit-add-funds',
+    'deposit-add-gas',
     'withdraw-bnb',
     'withdraw-wallet',
     'withdraw-processing',
@@ -65,6 +68,13 @@ void main() {
           assetUnits: BigInt.parse('1620000000000000000000'),
           allowance: BigInt.zero,
           nativeUnits: BigInt.parse(_bnb),
+        );
+      }
+      if (name == 'deposit-insufficient' || name == 'deposit-add-funds') {
+        h.wallet.result = depositSnapshot(
+          query: depositQuery(minimum: '0.01'),
+          assetUnits: BigInt.zero,
+          nativeUnits: BigInt.zero,
         );
       }
       final payload = withdrawInfoPayload();
@@ -113,7 +123,10 @@ void main() {
         await _tap(tester, 'funding-max');
         await h.settleGas(tester);
       } else if (name != 'deposit-empty') {
-        if (name.contains('usdt') || name.contains('approve')) {
+        if (name.contains('usdt') ||
+            name.contains('approve') ||
+            name == 'deposit-insufficient' ||
+            name.startsWith('deposit-add')) {
           await _tap(tester, 'funding-asset-selector');
           await _tap(tester, 'funding-option-USDT');
         }
@@ -124,6 +137,11 @@ void main() {
           await _tap(tester, 'funding-network');
         case 'deposit-asset-open':
           await _tap(tester, 'funding-asset-selector');
+        case 'deposit-add-funds':
+          await _tap(tester, 'funding-deposit-alert-action');
+        case 'deposit-add-gas':
+          await _tap(tester, 'funding-add');
+          await _tap(tester, 'funding-add-gas');
         case 'deposit-wallet' || 'deposit-approve-wallet':
           await _tap(tester, 'funding-deposit-submit');
         case 'deposit-processing':

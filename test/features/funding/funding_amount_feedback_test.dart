@@ -33,14 +33,14 @@ void main() {
       final text = l(tester);
       await tester.enterText(find.byKey(const Key('funding-amount')), '11');
       await h.settleGas(tester);
-      expect(find.text(text.fundingBalanceInsufficient('BNB')), findsOneWidget);
+      expect(find.text(text.fundingAssetShort('BNB')), findsOneWidget);
       expect(invalid(tester), true);
       expect(submit(tester, 'deposit').onPressed, isNull);
       expect(h.gas.calls, isEmpty);
       h.gas.failure = const AccountReadFailure('depositGasBalanceInsufficient');
       await tester.enterText(find.byKey(const Key('funding-amount')), '10');
       await h.settleGas(tester);
-      expect(find.text(text.fundingGasInsufficient('BNB')), findsOneWidget);
+      expect(find.text(text.fundingGasShort), findsOneWidget);
       expect(invalid(tester), true);
       expect(submit(tester, 'deposit').onPressed, isNull);
       h.gas.failure = null;
@@ -91,7 +91,7 @@ void main() {
     h.gas.failure = const AccountReadFailure('depositGasBalanceInsufficient');
     await tester.enterText(find.byKey(const Key('funding-amount')), '5');
     await h.settleGas(tester);
-    expect(find.text(l(tester).fundingGasTopUp('BNB')), findsOneWidget);
+    expect(find.text(l(tester).fundingGasShort), findsOneWidget);
     expect(submit(tester, 'deposit').onPressed, isNull);
     expect(invalid(tester), true);
     h.gas.failure = null;
@@ -111,7 +111,7 @@ void main() {
     expect(submit(tester, 'deposit').onPressed, isNull);
     old.complete();
     await tester.pumpAndSettle();
-    expect(find.text(l(tester).fundingGasTopUp('BNB')), findsOneWidget);
+    expect(find.text(l(tester).fundingGasShort), findsOneWidget);
     expect(submit(tester, 'deposit').onPressed, isNull);
     h.gas.failure = null;
     await tester.enterText(find.byKey(const Key('funding-amount')), '8');

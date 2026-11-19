@@ -27,6 +27,14 @@ String fundingAmountText(String amount, String asset) => TokenAmountFormatter.fo
   display: TokenAmountDisplay.exact,
 );
 
+/// An available balance at the shared adaptive precision, cut toward zero so
+/// it never reads above what can be used; Max still fills the exact amount.
+String fundingBalanceText(String amount, String asset) => TokenAmountFormatter.format(
+  DecimalValue(amount),
+  symbol: asset,
+  display: TokenAmountDisplay.truncated,
+);
+
 /// Deposit / Withdraw switch from the funding frames.
 class FundingTabs extends StatelessWidget {
   const FundingTabs({super.key, required this.operation, required this.onChanged});
@@ -107,25 +115,29 @@ class FundingField extends StatelessWidget {
     this.icon,
     this.onTap,
     this.open = false,
+    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    this.radius = const BorderRadius.all(Radius.circular(12)),
   });
   final String label, value;
   final Widget? icon;
   final VoidCallback? onTap;
   final bool open;
+  final EdgeInsets padding;
+  final BorderRadius radius;
   @override
   Widget build(BuildContext context) => Material(
     color: PortfolioColors.card,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: radius,
       side: const BorderSide(color: PortfolioColors.line),
     ),
     child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: radius,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 52),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: padding,
           child: Row(
             children: [
               if (icon case final image?) ...[image, const SizedBox(width: 8)],
@@ -313,7 +325,8 @@ class FundingAssetSelector extends StatelessWidget {
   );
 }
 
-/// Balance or withdrawable amount with the Max shortcut.
+/// Balance or withdrawable amount with the Max shortcut and, for deposits,
+/// the Add entry that tops up the wallet.
 class FundingBalanceRow extends StatelessWidget {
   const FundingBalanceRow({
     super.key,
@@ -321,53 +334,86 @@ class FundingBalanceRow extends StatelessWidget {
     required this.value,
     this.loading = false,
     this.onMax,
+    this.showMax = true,
+    this.onAdd,
   });
   final String label;
   final String? value;
-  final bool loading;
-  final VoidCallback? onMax;
+  final bool loading, showMax;
+  final VoidCallback? onMax, onAdd;
   @override
   Widget build(BuildContext context) => ConstrainedBox(
     constraints: const BoxConstraints(minHeight: 28),
     child: Row(
       children: [
-        Expanded(child: Text(label, style: PortfolioTypography.caption)),
+        // The label keeps its own width (at most half the row); the amount
+        // stays on one line and shrinks rather than breaking between digits.
+        LayoutBuilder(
+          builder: (context, constraints) => ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: constraints.maxWidth / 2),
+            child: Text(label, style: PortfolioTypography.caption),
+          ),
+        ),
         const SizedBox(width: 6),
         Expanded(
           child: value == null && loading
               ? const Align(alignment: Alignment.centerRight, child: FundingSkeleton(width: 96))
-              : Align(
+              : FittedBox(
+                  fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
                   child: AnimatedNumberText(
                     value ?? '—',
                     key: const Key('funding-balance-value'),
                     textAlign: TextAlign.right,
-                    softWrap: true,
                     style: FundingTypography.value,
                   ),
                 ),
         ),
-        const SizedBox(width: 6),
-        Semantics(
-          button: true,
-          enabled: onMax != null,
-          child: InkWell(
-            key: const Key('funding-max'),
+        if (showMax) ...[
+          const SizedBox(width: 6),
+          FundingTextAction(
+            tapKey: const Key('funding-max'),
+            label: AppLocalizations.of(context).fundingMax,
             onTap: onMax,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 44),
-              child: Align(
-                alignment: Alignment.centerRight,
-                widthFactor: 1,
-                child: Text(
-                  AppLocalizations.of(context).fundingMax,
-                  style: FundingTypography.value.copyWith(color: PortfolioColors.accent),
-                ),
-              ),
-            ),
+          ),
+        ],
+        if (onAdd != null) ...[
+          const SizedBox(width: 6),
+          FundingTextAction(
+            tapKey: const Key('funding-add'),
+            label: AppLocalizations.of(context).fundingAdd,
+            onTap: onAdd,
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+/// Accent text shortcut with a 44px touch target inside a 28px row.
+class FundingTextAction extends StatelessWidget {
+  const FundingTextAction({super.key, required this.label, this.onTap, this.tapKey});
+  final String label;
+  final VoidCallback? onTap;
+  final Key? tapKey;
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    enabled: onTap != null,
+    child: InkWell(
+      key: tapKey,
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 32, minHeight: 44),
+        child: Align(
+          alignment: Alignment.centerRight,
+          widthFactor: 1,
+          child: Text(
+            label,
+            style: FundingTypography.value.copyWith(color: PortfolioColors.accent),
           ),
         ),
-      ],
+      ),
     ),
   );
 }

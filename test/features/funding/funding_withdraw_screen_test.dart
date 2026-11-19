@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/core/errors/api_error_details.dart';
 import 'package:vanta/features/funding/application/withdraw_info_provider.dart';
 import 'package:vanta/features/funding/domain/funding_catalog.dart';
 import 'package:vanta/features/funding/domain/transfer_history.dart';
@@ -15,6 +16,7 @@ import 'package:vanta/features/funding/presentation/funding_components.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import 'package:vanta/features/auth/domain/auth_session.dart';
+import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 
 import '../../support/aster_account.dart';
 import '../../support/funding_fee.dart';
@@ -54,7 +56,7 @@ void main() {
     await _selectUsdt(tester);
     await h.container.read(withdrawInfoProvider.notifier).refresh();
     await tester.pumpAndSettle();
-    expect(find.text('2.340000000000000002 USDT'), findsOneWidget);
+    expect(find.text('2.34 USDT'), findsOneWidget);
 
     await tester.enterText(find.byKey(const Key('funding-amount')), '3');
     await tester.pumpAndSettle();
@@ -108,6 +110,7 @@ void main() {
     await h.open(tester, operation: FundingOperation.withdraw);
     final l = _l(tester);
     await _selectUsdt(tester);
+    await h.container.read(withdrawInfoProvider.notifier).refresh();
     await tester.enterText(find.byKey(const Key('funding-amount')), '1');
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('funding-withdraw-submit')));
@@ -118,6 +121,44 @@ void main() {
     expect(find.byType(WithdrawConfirmScreen), findsNothing);
     expect(find.text(l.withdrawalFeeChanged), findsOneWidget);
     expect(find.text('1'), findsOneWidget);
+    await h.close(tester);
+  });
+
+  testWidgets('an unknown withdrawable amount keeps withdraw disabled', (tester) async {
+    final h = FundingHarness();
+    await h.open(tester, operation: FundingOperation.withdraw);
+    await _selectUsdt(tester);
+    await tester.enterText(find.byKey(const Key('funding-amount')), '1');
+    await tester.pumpAndSettle();
+    expect(_withdraw(tester).onPressed, isNull);
+    await h.container.read(withdrawInfoProvider.notifier).refresh();
+    await tester.pumpAndSettle();
+    expect(_withdraw(tester).onPressed, isNotNull);
+    await h.close(tester);
+  });
+
+  testWidgets('an account without a deposit shows zero withdrawable and asks to deposit', (
+    tester,
+  ) async {
+    final h = FundingHarness();
+    h.withdrawInfo.failure = const AccountReadFailure(
+      'accountDepositRequired',
+      code: -5050,
+      details: ApiErrorDetails(message: 'This function can only be used after deposit'),
+    );
+    await h.open(tester, operation: FundingOperation.withdraw);
+    final l = _l(tester);
+    await _selectUsdt(tester);
+    await h.container.read(withdrawInfoProvider.notifier).refresh();
+    await tester.pumpAndSettle();
+    expect(find.text(l.fundingWithdrawDepositRequired), findsOneWidget);
+    expect(find.text('This function can only be used after deposit'), findsNothing);
+    expect(find.text('0 USDT'), findsOneWidget);
+    expect(tester.widget<InkWell>(find.byKey(const Key('funding-max'))).onTap, isNull);
+    await tester.enterText(find.byKey(const Key('funding-amount')), '1');
+    await tester.pumpAndSettle();
+    expect(find.text(l.fundingWithdrawDepositRequired), findsOneWidget);
+    expect(_withdraw(tester).onPressed, isNull);
     await h.close(tester);
   });
 
@@ -274,11 +315,10 @@ void main() {
     expect(find.text(l.withdrawalReceiverInvalid), findsNothing);
     await tester.tap(find.byKey(const Key('funding-withdraw-submit')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('funding-confirm-receiver')), findsOneWidget);
-    expect(find.text(receiver), findsOneWidget);
-    await tester.tap(find.byKey(const Key('funding-open-wallet')));
-    await tester.pumpAndSettle();
+    // Privy signs in the app, so the wallet page is skipped.
+    expect(find.byKey(const Key('funding-open-wallet')), findsNothing);
     expect(h.withdrawals.receivers.single, receiver);
+    expect(find.byType(WithdrawalStatusScreen), findsOneWidget);
     await h.close(tester);
   });
 

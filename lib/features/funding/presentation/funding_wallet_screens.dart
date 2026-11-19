@@ -8,6 +8,8 @@ import '../../../core/errors/api_error_details.dart';
 import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../auth/application/auth_provider.dart';
+import '../../auth/domain/auth_session.dart';
 import '../../portfolio/presentation/portfolio_components.dart';
 import '../../subaccounts/application/account_entries_provider.dart';
 import '../../subaccounts/presentation/account_components.dart';
@@ -264,6 +266,73 @@ class _WithdrawConfirmScreenState extends ConsumerState<WithdrawConfirmScreen> {
   }
 }
 
-/// A wallet rejection is the user's own cancel and returns without a message.
 FundingActionError? _walletError(String? key, ApiErrorDetails? details) =>
-    key == null || key == 'authWalletRejected' ? null : FundingActionError(key, details);
+    key == null ? null : FundingActionError(key, details);
+
+/// A step that ended with neither a sent request nor a failure still explains
+/// why nothing happened: another wallet request held it.
+FundingActionError _outcome(String? key, ApiErrorDetails? details, String fallback) =>
+    _walletError(key, details) ?? FundingActionError(fallback);
+
+/// Privy embedded wallets sign inside the app without a wallet prompt, so the
+/// "Confirm in wallet" page is skipped and the form's button sends directly.
+bool fundingSignsInApp(WidgetRef ref) =>
+    ref.read(authProvider).identity?.walletKind == WalletKind.embedded;
+
+/// [ApprovalConfirmScreen]'s step without the page. Null once the approval is
+/// sent; the form then waits for its receipt.
+Future<FundingActionError?> confirmApprovalInApp(
+  BuildContext context,
+  WidgetRef ref,
+  DepositApprovalReview review,
+) async {
+  await ref.read(depositApprovalProvider.notifier).confirm(review);
+  if (!context.mounted) return null;
+  final after = ref.read(depositApprovalProvider);
+  if (after.record != null && after.failure == null) return null;
+  return _outcome(after.failure, after.errorDetails, 'depositTransactionBusy');
+}
+
+/// [DepositConfirmScreen]'s step without the page; a sent deposit opens its
+/// processing page.
+Future<FundingActionError?> confirmDepositInApp(
+  BuildContext context,
+  WidgetRef ref,
+  DepositSubmissionReview review,
+) async {
+  await ref.read(depositSubmissionProvider.notifier).confirm(review);
+  if (!context.mounted) return null;
+  final after = ref.read(depositSubmissionProvider);
+  if (after.record case final record? when after.failure == null) {
+    unawaited(
+      Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => DepositProcessingScreen(record: record))),
+    );
+    return null;
+  }
+  return _outcome(after.failure, after.errorDetails, 'depositTransactionBusy');
+}
+
+/// [WithdrawConfirmScreen]'s step without the page; a sent withdrawal opens
+/// its status page.
+Future<FundingActionError?> submitWithdrawalInApp(
+  BuildContext context,
+  WidgetRef ref, {
+  required DepositWalletQuery query,
+  required String amount,
+  required Decimal shownFee,
+  String? receiver,
+}) async {
+  final controller = ref.read(withdrawalProvider.notifier)..cancel();
+  await controller.submit(query, amount, shownFee: shownFee, receiver: receiver);
+  if (!context.mounted) return null;
+  final after = ref.read(withdrawalProvider);
+  if (after.result case final record?) {
+    unawaited(
+      Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => WithdrawalStatusScreen(record: record))),
+    );
+    return null;
+  }
+  return _outcome(after.failure, after.errorDetails, 'authWalletBusy');
+}

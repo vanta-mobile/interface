@@ -21,6 +21,8 @@ import '../application/funding_flow_provider.dart';
 import '../domain/deposit_wallet.dart';
 import '../domain/funding_catalog.dart';
 import '../domain/transfer_history.dart';
+import 'add_funds_sheet.dart';
+import 'deposit_components.dart';
 import 'deposit_messages.dart';
 import 'funding_components.dart';
 import 'funding_dropdown.dart';
@@ -50,6 +52,9 @@ class _DepositPageState extends ConsumerState<DepositPage> {
   DepositWalletQuery? estimatingQuery;
   int estimateRevision = 0;
   int inputRevision = 0;
+
+  /// An in-app signature is running from this form.
+  bool confirming = false;
   final approvalWaitScope = Object();
   void _selectionChanged() => setState(() {});
   @override
@@ -114,31 +119,45 @@ class _DepositPageState extends ConsumerState<DepositPage> {
     final review = await ref.read(depositEntryProvider.notifier).prepare(query, amount);
     if (!mounted) return;
     if (revision != inputRevision || selection.amount.text.trim() != amount) {
-      if (review?.approval case final approval?) {
+      if (review.approval case final approval?) {
         ref.read(depositApprovalProvider.notifier).cancel(approval);
       }
-      if (review?.deposit case final deposit?) {
+      if (review.deposit case final deposit?) {
         ref.read(depositSubmissionProvider.notifier).cancel(deposit);
       }
+      setState(() => actionError = const FundingActionError('depositSubmissionChanged'));
       return;
     }
-    if (review?.failure case final failure?) {
+    if (review.failure case final failure?) {
       setState(() => actionError = FundingActionError(failure.key, failure.details));
       return;
     }
-    final Widget screen;
-    if (review?.approval case final approval?) {
-      screen = ApprovalConfirmScreen(review: approval);
-    } else if (review?.deposit case final deposit?) {
-      screen = DepositConfirmScreen(review: deposit);
-    } else {
-      return;
+    // Privy embedded wallets sign in the app; external wallets confirm first.
+    final inApp = fundingSignsInApp(ref);
+    FundingActionError? error;
+    setState(() => confirming = inApp);
+    try {
+      if (review.approval case final approval?) {
+        error = inApp
+            ? await confirmApprovalInApp(context, ref, approval)
+            : await Navigator.of(context).push<FundingActionError>(
+                MaterialPageRoute(builder: (_) => ApprovalConfirmScreen(review: approval)),
+              );
+      } else if (review.deposit case final deposit?) {
+        error = inApp
+            ? await confirmDepositInApp(context, ref, deposit)
+            : await Navigator.of(context).push<FundingActionError>(
+                MaterialPageRoute(builder: (_) => DepositConfirmScreen(review: deposit)),
+              );
+      } else {
+        error = const FundingActionError('depositRpcFailed');
+      }
+    } finally {
+      if (mounted) setState(() => confirming = false);
     }
-    final error = await Navigator.of(context)
-        .push<FundingActionError>(MaterialPageRoute(builder: (_) => screen));
     if (!mounted) return;
     // Returning from a wallet prompt never proves approval; reread allowance.
-    if (review?.approval != null && error == null) {
+    if (review.approval != null && error == null) {
       final approval = ref.read(depositApprovalProvider);
       final record = ref
           .read(pendingDepositApprovalsProvider)
@@ -150,16 +169,43 @@ class _DepositPageState extends ConsumerState<DepositPage> {
             .start(approval.record!.withHash(record.hash!));
       }
     }
-    if (error != null &&
-        !{
-          'depositApprovalChanged',
-          'depositApprovalNotNeeded',
-          'depositSubmissionChanged',
-          'depositSubmissionApprovalNeeded',
-        }.contains(error.key)) {
-      setState(() => actionError = error);
-    }
+    if (error != null) setState(() => actionError = error);
     await ref.read(depositWalletProvider(query).notifier).refresh();
+  }
+
+  /// Step 1: top up the wallet, then continue on the network and token the
+  /// user sent, with a fresh balance read.
+  Future<void> _addFunds(
+    FundingChoice choice,
+    DepositWalletQuery? query, {
+    bool gas = false,
+  }) async {
+    final chain = choice.chainId;
+    if (chain == null) return;
+    final result = await showAddFundsSheet(
+      context,
+      assets: [
+        for (final a
+            in ref.read(fundingCatalogProvider(_depositCatalog)).catalog?.assets ??
+                const <FundingAsset>[])
+          if (_depositRoute(a)) a,
+      ],
+      chainId: chain,
+      asset: choice.asset?.asset,
+      gas: gas,
+    );
+    if (!mounted || result == null) return;
+    if (result.chainId != chain || result.asset != null && result.asset != choice.asset?.asset) {
+      selection.select(
+        chainId: result.chainId,
+        asset: result.asset,
+        shownChain: chain,
+        shownAsset: choice.asset?.asset,
+      );
+      _edited(null);
+      return;
+    }
+    if (query != null) await _refresh(query);
   }
 
   Future<void> _refresh(DepositWalletQuery? query) async {
@@ -198,13 +244,25 @@ class _DepositPageState extends ConsumerState<DepositPage> {
       showBack: false,
       actions: fundingHeaderActions(context),
       onRefresh: () => _refresh(query),
-      footer: [_footer(l, query, model)],
+      footer: [
+        if (model?.shortfall case final shortfall?) ...[
+          DepositAlert(
+            text: shortfall == _Shortfall.asset
+                ? l.fundingAssetShort(query!.asset.asset)
+                : l.fundingGasShort,
+            action: shortfall == _Shortfall.asset ? l.fundingAddFund : l.fundingAddGas,
+            onAction: () => _addFunds(choice, query, gas: shortfall == _Shortfall.gas),
+          ),
+          const SizedBox(height: 12),
+        ],
+        _footer(l, query, model),
+      ],
       children: [
         FundingTabs(operation: FundingOperation.deposit, onChanged: widget.onOperation),
         const SizedBox(height: 12),
-        FundingField(
-          label: l.fundingDepositTo,
-          value: fundingAccountText(l, ref.watch(activeAccountEntryProvider)),
+        DepositRoute(
+          from: fundingWalletName(l, ref.watch(authProvider.select((s) => s.identity?.walletKind))),
+          to: fundingAccountText(l, ref.watch(activeAccountEntryProvider)),
         ),
         const SizedBox(height: 12),
         _network(l, choice, query),
@@ -220,6 +278,8 @@ class _DepositPageState extends ConsumerState<DepositPage> {
           label: l.fundingBalance,
           value: model?.balance,
           loading: catalog.loading || (model?.loading ?? false),
+          showMax: !(model?.empty ?? false),
+          onAdd: choice.chainId == null ? null : () => _addFunds(choice, query),
           onMax: model?.max == null
               ? null
               : () {
@@ -294,6 +354,7 @@ class _DepositPageState extends ConsumerState<DepositPage> {
           ? l.fundingApproveAsset(query!.asset.asset)
           : l.fundingDeposit,
       busy:
+          confirming ||
           (model?.initialLoading ?? false) ||
           (model?.waitingApproval ?? false) ||
           approving ||
@@ -333,14 +394,15 @@ class _DepositPageState extends ConsumerState<DepositPage> {
         check.errorKey != null && !transient ||
         gasFailure != null ||
         {'depositBalanceInsufficient', 'depositGasBalanceInsufficient'}.contains(actionError?.key);
+    // A balance or gas shortfall is shown in the footer with its top-up entry.
     String? error;
+    _Shortfall? shortfall;
     if (check.errorKey == 'depositBalanceInsufficient' ||
         actionError?.key == 'depositBalanceInsufficient') {
-      error = AppLocalizations.of(context).fundingBalanceInsufficient(query.asset.asset);
+      shortfall = _Shortfall.asset;
     } else if (gasFailure?.key == 'depositGasBalanceInsufficient' ||
         actionError?.key == 'depositGasBalanceInsufficient') {
-      final l = AppLocalizations.of(context), native = fundingNativeSymbol(query.asset.chainId);
-      error = query.asset.isNative ? l.fundingGasInsufficient(native) : l.fundingGasTopUp(native);
+      shortfall = _Shortfall.gas;
     } else if (actionError?.key == 'walletTransactionWrongChain') {
       final l = AppLocalizations.of(context);
       error = l.fundingSwitchNetwork(fundingNetworkName(l, query.asset.chainId));
@@ -355,8 +417,10 @@ class _DepositPageState extends ConsumerState<DepositPage> {
     return _DepositModel(
       balance: snapshot == null
           ? null
-          : fundingAmountText(snapshot.assetBalance.toString(), query.asset.asset),
+          : fundingBalanceText(snapshot.assetBalance.toString(), query.asset.asset),
       max: snapshot == null || wallet.stale ? null : snapshot.assetBalance.toString(),
+      empty: snapshot?.assetUnits == BigInt.zero,
+      shortfall: shortfall,
       loading: wallet.busy && wallet.account == null,
       initialLoading:
           wallet.busy && wallet.account == null || gas.busy && check.units != null && !hasEstimate,
@@ -371,10 +435,14 @@ class _DepositPageState extends ConsumerState<DepositPage> {
   }
 }
 
+enum _Shortfall { asset, gas }
+
 class _DepositModel {
   const _DepositModel({
     required this.balance,
     required this.max,
+    required this.empty,
+    required this.shortfall,
     required this.loading,
     required this.initialLoading,
     required this.error,
@@ -386,7 +454,9 @@ class _DepositModel {
     required this.ready,
   });
   final String? balance, max, error;
-  final bool loading,
+  final _Shortfall? shortfall;
+  final bool empty,
+      loading,
       initialLoading,
       amountError,
       approving,

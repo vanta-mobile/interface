@@ -824,11 +824,33 @@
 - SET-02：设置行右侧按内容宽度布局、最多占一半，标签使用剩余空间。
 - 验证：新增/更新测试——负数格式化单元测试；资金流水上报失败/读取失败/空状态 widget 测试；通知刷新失败测试；360dp 键盘下止损校验文案可见（去掉留白后失败）；长交易对单行；快捷下单余额提示；MA 周期 4 聚焦时在键盘上方（旧弹层失败）；账户菜单标题与列表；360dp 英文设置标签分配宽度（测试字体为方块字形，校验布局分配而非实际折行）。未启动 App、未在真机或模拟器验证。
 
+## 2026-11-19 提现页：未充值账户显示可提现 0，可提现数量未知时禁用提现
+
+- 问题：未充值账户打开提现页，`/fapi/v3/aster/user-withdraw-info` 返回 Aster -5050（“This function can only be used after deposit”），页面原样显示英文报错，可提现数量为 “—”。
+- 修改：withdraw-info 读取失败且 `requiresDeposit`（code -5050，不依据文案判断）时，提现页把可提现数量视为 0，显示「可提现数量为 0，请先充值。」（`fundingWithdrawDepositRequired`），不再显示接口原文；「最大」按钮不可点。
+- 漏洞修复：可提现数量未知（未读取、读取中或读取失败）时，金额无法校验余额，此前仍可提交；现在提现按钮在可提现数量已知之前保持禁用。
+- 验证：`funding_withdraw_screen_test` 新增 2 项（-5050 显示可提现 0 和请先充值、输入金额后仍提示且按钮禁用；可提现数量未知时按钮禁用，读取后可用）。「平台手续费变更」用例改为先读取可提现数量再提交。`flutter test test/features/funding` 807 项通过，`flutter analyze` 无问题。未启动 App，未在真机或模拟器验证。
+
 ## 2026-11-19 KLINE-01 横屏全屏 K 线按 12.15 加底部工具栏
 
 - 依据：AI视觉走查 KLINE-01，设计确认按新版画板 12.15（Figma 1222:48536）修改。
 - 修改：全屏页从上到下为周期行（与 K 线页同一 `ChartTimeframeRow`）→ OHLC 行 → 主图与副图 → 32px 工具栏。工具栏复用 `ChartActionBar(fullscreen: true)`：价格坐标、图表样式、指标，最后一个操作改为退出全屏（复用 `chart-exit-fullscreen` 图标）；全屏时按钮点击区为 36×32，以符合 32px 设计高度。去掉右上角退出按钮；主图高度扣除周期行、OHLC 行与工具栏；放大字号时工具栏随文字增高，页面滚动而不裁切。旧的 02.17 周期行组件 `chart_toolbar.dart` 及其专用文案 `moreTimeframes` 已删除。
 - 验证：`widget_test` 全屏用例新增断言（OHLC 行、工具栏四个操作都在全屏页内，工具栏高 32px、紧贴主图下方且在 390px 高视口内；退出键仍可返回并恢复方向）。`flutter test test/features/trade test/widget_test.dart test/core/localization_test.dart` 138 项通过，`flutter analyze` 无问题。未启动 App，未在真机或模拟器验证。
+
+## 2026-11-19 充值流程拆为「转入钱包 → 充值到合约账户」两步
+
+- 依据：Figma「13｜Privy钱包充值流程」（1747:27706）及其需求说明：第一步扫码从外部钱包同链转入本 App 钱包（EOA），第二步签名把钱包里的资产充值到 Aster 合约账户；两步都提示当前链上的 Gas 余额。
+- 充值页：顶部改为「从 Privy 钱包 / EOA 钱包 → 充值到 账户 · 合约」（`DepositRoute`，「充值到」沿用原账户文案以区分子账户）。余额行增加「转入」，余额为 0 时隐藏「最大」。余额不足或 Gas 不足不再显示表单下方的红字，改为底部按钮上方的提示条「USDT 余额不足。[转入资金]」／「Gas 不足。[转入 Gas]」（`DepositAlert`），金额框仍标红、充值按钮仍禁用。Gas 不足仍以原有精确 Gas 预估返回的 `depositGasBalanceInsufficient` 为准。原文案 `fundingGasInsufficient`、`fundingGasTopUp` 已无引用，删除。
+- 转入资金面板（`add_funds_sheet.dart`）：转入到（钱包类型）、网络 + 代币下拉（网络原生币排在首位并标为「Gas 代币」；目录未列原生币时也提供，仅用于读余额）、同链同币提示、钱包地址二维码（依赖新增 `qr`，原为 reown 的传递依赖；按设计为深底浅色码点）、地址可复制、余额（代币模式：代币余额 + 刷新、Gas 余额 + 转入；Gas 模式：只有 Gas 余额 + 刷新）。余额沿用 `depositWalletProvider` 与 6 秒自动轮询，面板支持下拉刷新（等钱包余额与 Gas 门槛都读完）。点刷新图标或下拉刷新时图标持续旋转，读完后转完当前一圈停下，期间图标不可再点；后台 6 秒轮询不转动图标。读取失败显示具体原因。
+- Gas 门槛：Gas 余额低于门槛时显示黄色提示「请在此钱包保留至少约 X，用于签署跨链充值」。X 为该链 `eth_gasPrice` × 25 万 gas（授权 + 充值并留余量，`depositGasBudget`），向上取两位有效数字；只用于提示，充值前仍跑原有精确预估。读取失败不显示提示，不自动重试。
+- 「我已转入」：始终可点（按产品确认，不按设计标注在钱包余额为 0 时置灰；转账可能还在路上，余额由表单继续轮询）。点击关闭面板：所选网络或代币与表单不同则切换过去（换网络会按原规则清空金额，Gas 模式保留表单原资产）；相同则刷新表单余额与 Gas 预估。
+- 验证：新增 `add_funds_sheet_test` 6 项（刷新图标在余额读取未完成时持续旋转、读完停止；空钱包提示条 → 面板显示二维码、地址、Gas 门槛提示，「我已转入」可点；轮询到账后余额更新，返回表单金额保留、提示条消失；Gas 不足打开 Gas 模式；切换网络后带回表单并清空金额；门槛取整、按 gas price 计算、0 或格式错误报 `depositRpcInvalid`）。更新 3 个测试的文案断言，`funding_design_test` 新增 3 张截图（余额不足、转入资金、Gas 模式）并更新 6 张受影响的充值截图。`dart format`、`dart analyze --fatal-infos` 无问题，全量 `flutter test` 6074 项通过（3 项既有跳过）。未启动 App，未在真机或模拟器验证二维码扫码。
+
+## 2026-11-19 PF-03 充值/提现余额按 6 位有效小数向下截断、单行显示
+
+- 依据：AI视觉走查 PF-03，产品确认「在小数点后 6 位有效数字基础上，向下截断」。
+- 修改：`TokenAmountFormatter` 新增 `TokenAmountDisplay.truncated`，精度规则与 `normalized` 相同（最多 6 位小数；小于 1 时从第一位非零小数起 6 位），但向零截断而非四舍五入，可用余额不会显示得比实际多（如 0.521659999… 显示 0.521659，旧规则会显示 0.52166）。充值页「余额」和提现页「可提现数量」改用 `fundingBalanceText`；「最大」仍填入精确值。`FundingBalanceRow` 标签按内容宽度（最多半行），数值右对齐单行显示，空间不足时整体缩小，不在数字中间换行。
+- 验证：formatter 单元测试新增截断用例；`funding_deposit_screen_test` 新增 360dp、18 位小数 BNB 余额用例（显示 0.521659 BNB、与标签同一行、Max 填入 0.521659999999999999）；充值/提现余额断言改为截断后的文本；funding 金图按新余额文本更新。`flutter test test/features/funding test/core` 通过，`flutter analyze` 无问题。未启动 App。
 
 ## 2026-11-19 TAS-5043 样式问题合集（11-19 新增项）
 
@@ -840,3 +862,19 @@
 - 订单簿档位：原来逐帧迭代（先按单行估算、再用两次布局差值推算每对高度，每个目标最多调 6 次），面板高度变化时会多帧来回增减；差值在内容变化时可能算出极小的每对高度，一次加到 20 档。改为一步计算：档位 = ⌊(目标高度 − 非档位部分高度) ÷ (2 × 行高)⌋，限制在 3～20。
 - S/M、杠杆切换：变更核实后，同时把已验证值写回 `FuturesAssetModeContext` / `PositionLeverageContext`（`withCurrent`），重新打开弹窗时不再先显示变更前的值。交易页三个设置按钮中，若最近一次核实时间晚于下单上下文的读取时间，S/M 与杠杆直接显示核实值，不必等下一次账户重读。签名写入与核实本身的耗时未改。
 - 验证：`batch_order_cancellation_controls_test` 改为断言提示文案与按钮加载（不再断言状态块），`live_order_advanced_rows_test` 新增 Hedge 平仓用例（Limit 时 GTC 与 Advanced 左对齐；Post Only 时无 Advanced 行），资产模式与杠杆 provider 测试新增“核实后 context 为新值”断言。其他会话的改动同时在工作区中，因此在基于 HEAD 的临时 worktree 中只放入本次改动：`dart format`、`flutter analyze` 无问题，`flutter test test/features/portfolio test/features/trade test/order_book_test.dart` 3283 项通过。交易页按钮显示核实值未补 widget 测试。未启动 App，未在真机或模拟器验证。
+
+## 2026-11-19 充值授权／充值：费用变化与停留超时不再中断发送
+
+- 问题：点「授权 USDT」后转圈，又回到「授权 USDT」。链上核对该钱包 nonce 为 0、授权额度为 0，确认交易未发出。排查到两处会在发送前终止：
+  1. 确认时重新估算的 Gas 上限或 Gas 价格与准备时不同，就报 `depositApprovalChanged`／`depositSubmissionChanged` 不发送；充值页又把这两个 key 列为静默处理，用户看不到任何提示。
+  2. 确认页停留超过 30 秒，准备时的报价过期，`confirm()` 开头对它做时效校验，报 `depositReadStale` 不发送（提示在金额下方，容易漏看）。
+- 修改：`confirm()` 不再校验准备时报价的时效，以随后重新读取并完整校验的新报价为准（新报价仍须在 30 秒内、余额与 Gas 足够）。新增 `sameDepositCall`：只比较调用本身（链、from、to、data、value、nonce），Gas 上限与 Gas 价格变化时直接按新估算发送，因为它们不在用户确认的内容里。调用类型、授权额度、nonce 变化仍不发送；这时充值页显示 `depositApprovalChanged`／`depositSubmissionChanged`（「链状态或费用已变化，请重新准备…尚未发送交易」），不再静默。`depositApprovalNotNeeded`、`depositSubmissionApprovalNeeded` 仍静默，按钮已切换到需要的步骤。
+- 未改：钱包返回 4001（用户拒绝）仍不提示。
+- 验证：provider 测试改为「Gas 价格／上限变化按新值发送」「超过报价时效仍按新估算发送」，保留 nonce、授权额度变化不发送。`funding_deposit_screen_test` 新增「确认页停留 40 秒后打开钱包仍发出授权，返回表单等待回执」，旧代码下失败（未发送交易）。测试工具新增可偏移的报价时钟（`FundingHarness.clockOffset`）。`dart format`、`dart analyze --fatal-infos` 无问题；全量 `flutter test` 6080 项通过（3 项既有跳过）。未启动 App，未在真机复现。
+
+## 2026-11-19 Privy 钱包免「在钱包中确认」页；充值／提现点击后不再静默中断
+
+- Privy 社交登录（`WalletKind.embedded`）在应用内签名、没有钱包弹窗，因此授权、充值、提现不再进入「在钱包中确认…／打开钱包」页（`FundingWalletPage`）：点击表单按钮即发送，按钮全程转圈；成功后进入充值处理中／提现状态页，失败在表单显示原因。外部钱包仍先进入确认页。实现为 `funding_wallet_screens.dart` 的 `confirmApprovalInApp`、`confirmDepositInApp`、`submitWithdrawalInApp`，与确认页走同一 provider 流程。
+- 排查其他「打开钱包」页：开启交易页已按 embedded 区分（文案「签名」、一次完成全部签名）；子账户创建／冻结仅外部钱包可用；其余为订单内容确认页，不属此类，未改。
+- 不再静默：钱包返回拒绝（4001）现在显示「你已拒绝钱包请求，可以重新尝试。」（授权、充值、提现共用）；`depositApprovalNotNeeded`／`depositSubmissionApprovalNeeded` 改为显示，文案改为「授权额度已足够，请直接充值。」／「授权额度不足，请先授权。」；`depositEntryProvider.prepare` 不再返回 null，每个提前结束的分支都带原因（另一笔请求进行中、会话失效、钱包忙、钱包已变更、数量无效）；准备期间数量被修改时显示 `depositSubmissionChanged`；应用内签名既未发出也无错误时显示「另一笔请求进行中」。points、助手授权对拒绝已有提示，未改。
+- 验证：新增 Privy 钱包充值（无确认页、直接进入处理中）、授权（拒绝显示原因；再次点击直接发送并等待回执）2 项；拒绝用例改为断言提示文案；embedded 提现用例改为不经确认页直接提交并进入状态页。`dart format`、`dart analyze --fatal-infos` 无问题；全量 `flutter test` 6085 项通过（3 项既有跳过）。未启动 App，未在真机验证 Privy 签名。

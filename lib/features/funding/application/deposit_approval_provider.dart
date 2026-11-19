@@ -5,7 +5,6 @@ import 'deposit_submission_provider.dart';
 
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_provider.dart';
@@ -237,13 +236,7 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
     state = DepositApprovalState(step: DepositApprovalStep.preparing, review: review);
     try {
       if (!current()) throw const WalletTransactionNotSent('authWalletChanged');
-      validatedDepositQuote(
-        quote: review.quote,
-        address: review.transaction.from,
-        query: review.query,
-        amount: review.amount,
-        now: clock().toUtc(),
-      );
+      // The review is not re-validated for age: the fresh estimate below is.
       _storageReady(journal);
       final quote = await repository.estimate(
         address: review.transaction.from,
@@ -260,7 +253,7 @@ class DepositApprovalController extends Notifier<DepositApprovalState> {
         now: clock().toUtc(),
       );
       if (quote.transaction.kind != review.quote.transaction.kind ||
-          !mapEquals(tx.parameters, review.transaction.parameters)) {
+          !sameDepositCall(tx, review.transaction)) {
         state = const DepositApprovalState(failure: 'depositApprovalChanged');
         return;
       }

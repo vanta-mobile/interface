@@ -24,15 +24,18 @@ class DepositEntryController extends Notifier<bool> {
   @override
   bool build() => false;
 
-  Future<DepositEntryReview?> prepare(DepositWalletQuery query, String amount) async {
-    if (state) return null;
+  /// Always explains a step that cannot continue, so a press is never dropped.
+  Future<DepositEntryReview> prepare(DepositWalletQuery query, String amount) async {
+    DepositEntryReview fail(String key) => DepositEntryReview(failure: AccountReadFailure(key));
+    if (state) return fail('depositTransactionBusy');
     final identity = ref.read(authProvider).identity;
-    if (identity?.walletAddress == null || ref.read(authProvider).busy) return null;
+    if (identity?.walletAddress == null) return fail('authSessionUnavailable');
+    if (ref.read(authProvider).busy) return fail('authWalletBusy');
     state = true;
     bool current() => ref.mounted && ref.read(authProvider).identity == identity;
     try {
       await ref.read(depositWalletProvider(query).notifier).refresh();
-      if (!current()) return null;
+      if (!current()) return fail('authWalletChanged');
       final wallet = ref.read(depositWalletProvider(query));
       if (wallet.failure case final failure?) return DepositEntryReview(failure: failure);
       final check = checkDepositAmount(
@@ -44,10 +47,10 @@ class DepositEntryController extends Notifier<bool> {
       if (check.errorKey case final key?) {
         return DepositEntryReview(failure: AccountReadFailure(key));
       }
-      if (check.units == null) return null;
+      if (check.units == null) return fail('depositAmountInvalid');
       if (check.allowanceSufficient == false) {
         final approval = await ref.read(depositApprovalProvider.notifier).prepare(query, amount);
-        if (!current()) return null;
+        if (!current()) return fail('authWalletChanged');
         final result = ref.read(depositApprovalProvider);
         return DepositEntryReview(
           approval: approval,
@@ -61,7 +64,7 @@ class DepositEntryController extends Notifier<bool> {
       final deposit = await ref
           .read(depositSubmissionProvider.notifier)
           .prepare(query, amount, acknowledgeUnknownLimits: true);
-      if (!current()) return null;
+      if (!current()) return fail('authWalletChanged');
       final result = ref.read(depositSubmissionProvider);
       return DepositEntryReview(
         deposit: deposit,

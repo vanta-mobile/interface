@@ -1228,7 +1228,7 @@
   "depositApprovalCancel": "取消",
   "depositApprovalStorage": "授权恢复记录无法读取或保存，已阻止新授权。请先重试恢复存储。",
   "depositApprovalPending": "当前钱包存在未核对的授权，请先核对原交易再发送下一笔。",
-  "depositApprovalNotNeeded": "本次数量无需授权步骤。充值提交仍需平台额度与到账恢复能力。",
+  "depositApprovalNotNeeded": "授权额度已足够，请直接充值。",
   "depositApprovalChanged": "链状态或费用已变化，请重新准备并确认本步骤；尚未发送交易。",
   "depositApprovalUnknown": "网络异常，请稍后在记录中确认",
   "depositApprovalMismatch": "此交易与保存的钱包、网络或交易序号不匹配，已保留原记录。",
@@ -1647,7 +1647,7 @@
   "depositSubmissionNoPending": "该钱包暂无待确认充值。",
   "depositSubmissionUnknown": "网络异常，请稍后在记录中确认",
   "depositSubmissionChanged": "余额、授权、交易内容或 Gas 已变化，请重新准备及确认。",
-  "depositSubmissionApprovalNeeded": "ERC-20 授权额度不足，请先完成独立授权并核对额度。",
+  "depositSubmissionApprovalNeeded": "授权额度不足，请先授权。",
   "depositSubmissionHashNeeded": "请先读取并绑定匹配的交易哈希，再核对平台入账。",
   "depositSubmissionChainPending": "需要匹配且成功的链上回执，并至少观察到 2 次区块确认。",
   "depositSubmissionCreditPending": "尚无精确匹配的 SUCCESS 平台入账记录，继续保留充值恢复记录。",
@@ -2428,7 +2428,6 @@
   "fundingSelectAsset": "选择币种",
   "fundingDepositTime": "{network} 预计充值到账时间为 1–3 分钟。",
   "fundingApproveAsset": "授权 {asset}",
-  "fundingGasInsufficient": "{asset} 不足以支付网络手续费，请输入更小的金额。",
   "fundingConfirmDepositTitle": "在钱包中确认充值",
   "fundingConfirmDepositHint": "请在钱包中确认交易以继续。",
   "fundingApproveTitle": "在钱包中授权 {asset}",
@@ -2498,17 +2497,42 @@
       }
     }
   },
+  "fundingWithdrawDepositRequired": "可提现数量为 0，请先充值。",
   "fundingBalanceInsufficient": "{asset} 余额不足，请输入更小的金额。",
-  "fundingGasTopUp": "{asset} 不足以支付网络手续费，请向钱包补充 {asset}。",
-  "fundingWithdrawalFeeInsufficient": "{asset} 不足以支付提现金额及手续费，请输入更小的金额。",
-  "@fundingBalanceInsufficient": {
+  "fundingFrom": "从",
+  "fundingPrivyWallet": "Privy 钱包",
+  "fundingEoaWallet": "EOA 钱包",
+  "fundingAdd": "转入",
+  "fundingAddFund": "转入资金",
+  "fundingAddGas": "转入 Gas",
+  "fundingAddFunds": "转入资金",
+  "fundingAddFundsTo": "转入到",
+  "fundingGasToken": "Gas 代币",
+  "fundingAddFundsHint": "请在同一网络转入相同代币，然后返回合约账户充值。",
+  "fundingDepositAddress": "充值地址",
+  "fundingDepositAddressQr": "充值地址二维码",
+  "fundingGasBalance": "Gas 余额",
+  "fundingRefreshBalance": "刷新余额",
+  "fundingGasReserveHint": "请在此钱包保留至少约 {amount}，用于签署跨链充值。",
+  "fundingTransferred": "我已转入",
+  "fundingAssetShort": "{asset} 余额不足。",
+  "fundingGasShort": "Gas 不足。",
+  "@fundingGasReserveHint": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "@fundingAssetShort": {
     "placeholders": {
       "asset": {
         "type": "String"
       }
     }
   },
-  "@fundingGasTopUp": {
+  "fundingWithdrawalFeeInsufficient": "{asset} 不足以支付提现金额及手续费，请输入更小的金额。",
+  "@fundingBalanceInsufficient": {
     "placeholders": {
       "asset": {
         "type": "String"

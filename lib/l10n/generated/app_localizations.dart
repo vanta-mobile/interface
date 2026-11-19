@@ -5484,7 +5484,7 @@ abstract class AppLocalizations {
   /// No description provided for @depositApprovalNotNeeded.
   ///
   /// In en, this message translates to:
-  /// **'This amount needs no approval step. Deposit submission still requires verified platform limits and credit recovery.'**
+  /// **'Allowance is already sufficient. Deposit directly.'**
   String get depositApprovalNotNeeded;
 
   /// No description provided for @depositApprovalChanged.
@@ -7344,7 +7344,7 @@ abstract class AppLocalizations {
   /// No description provided for @depositSubmissionApprovalNeeded.
   ///
   /// In en, this message translates to:
-  /// **'ERC-20 allowance is insufficient. Complete and verify the separate approval step first.'**
+  /// **'Allowance is insufficient. Approve first.'**
   String get depositSubmissionApprovalNeeded;
 
   /// No description provided for @depositSubmissionHashNeeded.
@@ -10599,12 +10599,6 @@ abstract class AppLocalizations {
   /// **'Approve {asset}'**
   String fundingApproveAsset(String asset);
 
-  /// No description provided for @fundingGasInsufficient.
-  ///
-  /// In en, this message translates to:
-  /// **'Insufficient {asset} for network fees. Enter a smaller amount.'**
-  String fundingGasInsufficient(String asset);
-
   /// No description provided for @fundingConfirmDepositTitle.
   ///
   /// In en, this message translates to:
@@ -10959,17 +10953,125 @@ abstract class AppLocalizations {
   /// **'{amount} · {type, select, deposit{Waiting to be credited} withdraw{Waiting for completion} other{Processing}}'**
   String portfolioFundingPending(String amount, String type);
 
+  /// No description provided for @fundingWithdrawDepositRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawable amount is 0. Please deposit first.'**
+  String get fundingWithdrawDepositRequired;
+
   /// No description provided for @fundingBalanceInsufficient.
   ///
   /// In en, this message translates to:
   /// **'Insufficient {asset} balance. Enter a smaller amount.'**
   String fundingBalanceInsufficient(String asset);
 
-  /// No description provided for @fundingGasTopUp.
+  /// No description provided for @fundingFrom.
   ///
   /// In en, this message translates to:
-  /// **'Insufficient {asset} for network fees. Add {asset} to your wallet.'**
-  String fundingGasTopUp(String asset);
+  /// **'From'**
+  String get fundingFrom;
+
+  /// No description provided for @fundingPrivyWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Privy Wallet'**
+  String get fundingPrivyWallet;
+
+  /// No description provided for @fundingEoaWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'EOA Wallet'**
+  String get fundingEoaWallet;
+
+  /// No description provided for @fundingAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get fundingAdd;
+
+  /// No description provided for @fundingAddFund.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Fund'**
+  String get fundingAddFund;
+
+  /// No description provided for @fundingAddGas.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Gas'**
+  String get fundingAddGas;
+
+  /// No description provided for @fundingAddFunds.
+  ///
+  /// In en, this message translates to:
+  /// **'Add funds'**
+  String get fundingAddFunds;
+
+  /// No description provided for @fundingAddFundsTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Add funds to'**
+  String get fundingAddFundsTo;
+
+  /// No description provided for @fundingGasToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Gas Token'**
+  String get fundingGasToken;
+
+  /// No description provided for @fundingAddFundsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Send the same token on the same network, then return to Futures account to deposit.'**
+  String get fundingAddFundsHint;
+
+  /// No description provided for @fundingDepositAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit Address'**
+  String get fundingDepositAddress;
+
+  /// No description provided for @fundingDepositAddressQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit address QR code'**
+  String get fundingDepositAddressQr;
+
+  /// No description provided for @fundingGasBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Gas Balance'**
+  String get fundingGasBalance;
+
+  /// No description provided for @fundingRefreshBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh balance'**
+  String get fundingRefreshBalance;
+
+  /// No description provided for @fundingGasReserveHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep at least ~{amount} in this wallet to sign the cross-chain deposit.'**
+  String fundingGasReserveHint(String amount);
+
+  /// No description provided for @fundingTransferred.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ve transferred'**
+  String get fundingTransferred;
+
+  /// No description provided for @fundingAssetShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient {asset} balance.'**
+  String fundingAssetShort(String asset);
+
+  /// No description provided for @fundingGasShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient gas.'**
+  String get fundingGasShort;
 
   /// No description provided for @fundingWithdrawalFeeInsufficient.
   ///

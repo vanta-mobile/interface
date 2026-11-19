@@ -65,18 +65,40 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
 
   void _edited() => setState(() => actionError = null);
 
+  /// An in-app signature is running from this form.
+  bool submitting = false;
+
   Future<void> _withdraw(DepositWalletQuery query, Decimal fee, String? receiver) async {
     _edited();
-    final error = await Navigator.of(context).push<FundingActionError>(
-      MaterialPageRoute(
-        builder: (_) => WithdrawConfirmScreen(
+    final amount = selection.amount.text.trim();
+    // Privy embedded wallets sign in the app; external wallets confirm first.
+    final FundingActionError? error;
+    if (fundingSignsInApp(ref)) {
+      setState(() => submitting = true);
+      try {
+        error = await submitWithdrawalInApp(
+          context,
+          ref,
           query: query,
-          amount: selection.amount.text.trim(),
+          amount: amount,
           shownFee: fee,
           receiver: receiver,
+        );
+      } finally {
+        if (mounted) setState(() => submitting = false);
+      }
+    } else {
+      error = await Navigator.of(context).push<FundingActionError>(
+        MaterialPageRoute(
+          builder: (_) => WithdrawConfirmScreen(
+            query: query,
+            amount: amount,
+            shownFee: fee,
+            receiver: receiver,
+          ),
         ),
-      ),
-    );
+      );
+    }
     if (!mounted || error == null) return;
     setState(() => actionError = error);
     if (error.key == 'withdrawalFeeChanged') {
@@ -110,8 +132,12 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
     );
     final asset = choice.asset;
     final info = ref.watch(withdrawInfoProvider);
+    // Aster's -5050 confirms the account has never deposited, so nothing is withdrawable.
+    final depositRequired = info.account == null && info.failure?.requiresDeposit == true;
     final withdrawable = asset == null
         ? null
+        : depositRequired
+        ? Decimal.zero
         : info.account?.assets[asset.asset]?.chains[asset.chainId]?.maximum(TransferMarket.perp);
     final fee = asset == null ? null : ref.watch(fundingFeeProvider(_feeQuery(asset))).quote;
     final amountKey = asset == null
@@ -124,6 +150,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
           );
     final receiverKey = _receiverKey();
     final error = switch ((actionError, amountKey ?? receiverKey)) {
+      _ when depositRequired => l.fundingWithdrawDepositRequired,
       (_, 'fundingBalanceInsufficient') => l.fundingBalanceInsufficient(asset!.asset),
       (_, 'fundingWithdrawalFeeInsufficient') => l.fundingWithdrawalFeeInsufficient(asset!.asset),
       (final FundingActionError e, _) => apiErrorText(context, e.key, e.details),
@@ -145,7 +172,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
       showBack: false,
       actions: fundingHeaderActions(context),
       onRefresh: () => _refresh(asset),
-      footer: _footer(l, asset, amountKey ?? receiverKey),
+      footer: _footer(l, asset, withdrawable, amountKey ?? receiverKey),
       children: [
         FundingTabs(operation: FundingOperation.withdraw, onChanged: widget.onOperation),
         const SizedBox(height: 12),
@@ -178,7 +205,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
           label: l.fundingWithdrawable,
           value: asset == null || withdrawable == null
               ? null
-              : fundingAmountText(withdrawable.toString(), asset.asset),
+              : fundingBalanceText(withdrawable.toString(), asset.asset),
           loading: info.busy,
           onMax:
               asset == null || withdrawable == null || fee == null || withdrawable <= fee.assetFee
@@ -255,16 +282,23 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
     );
   }
 
-  List<Widget> _footer(AppLocalizations l, FundingAsset? asset, String? inputKey) {
+  List<Widget> _footer(
+    AppLocalizations l,
+    FundingAsset? asset,
+    Decimal? withdrawable,
+    String? inputKey,
+  ) {
     final identity = ref.watch(authProvider.select((s) => s.identity));
     final entry = ref.watch(activeAccountEntryProvider);
     final child = entry != null && entry.roleKnown && !entry.main;
     final rebalance = ref.watch(rebalanceProvider).context;
     final fee = asset == null ? null : ref.watch(fundingFeeProvider(_feeQuery(asset))).quote;
     final receiver = _receiver;
+    // An unknown withdrawable amount cannot be validated, so it never submits.
     final ready =
         asset != null &&
         fee != null &&
+        withdrawable != null &&
         selection.amount.text.trim().isNotEmpty &&
         receiver?.isEmpty != true &&
         inputKey == null &&
@@ -300,6 +334,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
             : child
             ? l.accountsWithdrawMainOnly
             : l.fundingWithdraw,
+        busy: submitting,
         onPressed:
             connect ??
             (child || !ready

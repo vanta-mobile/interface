@@ -192,7 +192,24 @@ void main() {
       },
     );
   }
-  for (final change in ['nonce', 'gasPrice', 'allowance']) {
+  approvalTest('a fresh fee is sent without a new review', (tester) async {
+    final prepared = await review();
+    gas.result = gasQuote(
+      query: query,
+      wallet: depositSnapshot(query: query, allowance: BigInt.zero, receivedAt: now),
+      receivedAt: now,
+      estimatedGas: BigInt.from(30000),
+      gasLimit: BigInt.from(36000),
+      gasPrice: BigInt.from(2000000000),
+    );
+    await controller().confirm(prepared);
+    expect(state().failure, isNull);
+    final sent = identity.transactions.single;
+    expect(sent.gasPrice, BigInt.from(2000000000));
+    expect(sent.gasLimit, BigInt.from(36000));
+    expect(sent.data, prepared.transaction.data);
+  });
+  for (final change in ['nonce', 'allowance']) {
     approvalTest('fresh $change change invalidates old review without send', (tester) async {
       final prepared = await review();
       gas.result = change == 'nonce'
@@ -211,12 +228,14 @@ void main() {
       expect(identity.transactions, isEmpty);
     });
   }
-  approvalTest('expired review cannot cause even a new estimate', (tester) async {
+  approvalTest('a review older than its quote is sent from a fresh estimate', (tester) async {
     final prepared = await review();
-    now = now.add(const Duration(seconds: 30));
+    now = now.add(const Duration(seconds: 45));
+    gas.result = approvalQuote(now: now);
     await controller().confirm(prepared);
-    expect(gas.calls.length, 1);
-    expect(identity.transactions, isEmpty);
+    expect(gas.calls.length, 2);
+    expect(state().failure, isNull);
+    expect(identity.transactions, hasLength(1));
   });
   approvalTest('expiry while saving journal removes known-not-sent record', (tester) async {
     final prepared = await review();

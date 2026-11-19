@@ -63,3 +63,16 @@ DateTime depositQuoteDeadline(DepositGasQuote quote) => ([
   quote.wallet.receivedAt.add(const Duration(seconds: 30)),
   quote.wallet.blockTime.add(const Duration(minutes: 2)),
 ]..sort()).first;
+
+/// The fresh transaction makes the same call as the reviewed one. Gas limit
+/// and price are not part of the review the user confirmed, so a fee change
+/// is sent at the fresh estimate instead of stopping the step.
+bool sameDepositCall(EvmWalletTransaction fresh, EvmWalletTransaction reviewed) {
+  final a = {...fresh.parameters}
+    ..remove('gas')
+    ..remove('gasPrice');
+  final b = {...reviewed.parameters}
+    ..remove('gas')
+    ..remove('gasPrice');
+  return a.length == b.length && a.entries.every((e) => b[e.key] == e.value);
+}

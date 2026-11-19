@@ -123,7 +123,7 @@ void main() {
     expect(_action(tester).busy, isFalse);
     expect(_button(tester).onPressed, isNull);
     expect(find.text('5'), findsOneWidget);
-    expect(find.text(l.fundingBalanceInsufficient('USDT')), findsOneWidget);
+    expect(find.text(l.fundingAssetShort('USDT')), findsOneWidget);
     await h.close(tester);
   });
 

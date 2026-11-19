@@ -232,12 +232,19 @@ void main() {
     expect(identity.transactions, isEmpty);
     expect(journal.snapshot.records, isEmpty);
   });
-  flow('Gas or nonce change during review requires a new review', (t) async {
+  flow('nonce change during review requires a new review', (t) async {
     final r = await review();
     gas.result = gasQuote(query: query, receivedAt: now, nonce: BigInt.from(8));
     await controller().confirm(r);
     expect(identity.transactions, isEmpty);
     expect(state().failure, 'depositSubmissionChanged');
+  });
+  flow('a Gas price change is sent at the fresh price', (t) async {
+    final r = await review();
+    gas.result = gasQuote(query: query, receivedAt: now, gasPrice: BigInt.from(3000000000));
+    await controller().confirm(r);
+    expect(state().failure, isNull);
+    expect(identity.transactions.single.gasPrice, BigInt.from(3000000000));
   });
   flow('failed durable prepare prevents opening wallet', (t) async {
     final r = await review();

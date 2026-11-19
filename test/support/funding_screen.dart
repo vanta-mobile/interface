@@ -16,6 +16,7 @@ import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
 import 'package:vanta/features/funding/application/deposit_approval_provider.dart';
 import 'package:vanta/features/funding/application/deposit_gas_provider.dart';
+import 'package:vanta/features/funding/application/deposit_gas_reserve_provider.dart';
 import 'package:vanta/features/funding/application/deposit_submission_provider.dart';
 import 'package:vanta/features/funding/application/deposit_wallet_provider.dart';
 import 'package:vanta/features/funding/application/funding_catalog_provider.dart';
@@ -151,6 +152,14 @@ class FundingHarness {
   final withdrawals = TestWithdrawalRepository();
   final rebalance = TestRebalanceRepository();
   final history = TestTransferHistoryRepository()..records = [];
+
+  /// Native gas the Add funds sheet asks to keep, per chain read.
+  Decimal gasReserve = Decimal.parse('0.003');
+  final gasReserveReads = <int>[];
+
+  /// Added to the wall clock used to age Gas quotes.
+  Duration clockOffset = Duration.zero;
+  DateTime clock() => DateTime.now().add(clockOffset);
   final inbox = LocalNotificationRepository(MemoryNotificationStorage());
   late final ProviderContainer container;
 
@@ -171,6 +180,7 @@ class FundingHarness {
     tester.platformDispatcher.textScaleFactorTestValue = textScale;
     addTearDown(tester.view.reset);
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    gas.now = clock;
     container = ProviderContainer(
       overrides: [
         identityRepositoryProvider.overrideWithValue(identity),
@@ -188,6 +198,11 @@ class FundingHarness {
         }),
         depositWalletRepositoryProvider.overrideWithValue(wallet),
         depositGasRepositoryProvider.overrideWithValue(gas),
+        depositGasClockProvider.overrideWithValue(clock),
+        depositGasReserveProvider.overrideWith((ref, chain) async {
+          gasReserveReads.add(chain);
+          return gasReserve;
+        }),
         depositApprovalReceiptRepositoryProvider.overrideWithValue(approvalReceipts),
         depositSubmissionReceiptRepositoryProvider.overrideWithValue(depositReceipts),
         fundingFeeRepositoryProvider.overrideWithValue(fees),

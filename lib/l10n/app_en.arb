@@ -1327,7 +1327,7 @@
   "depositApprovalCancel": "Cancel",
   "depositApprovalStorage": "The approval recovery record cannot be read or saved. New approvals are blocked. Retry storage recovery before continuing.",
   "depositApprovalPending": "This wallet has an unresolved approval. Check that transaction before sending another one.",
-  "depositApprovalNotNeeded": "This amount needs no approval step. Deposit submission still requires verified platform limits and credit recovery.",
+  "depositApprovalNotNeeded": "Allowance is already sufficient. Deposit directly.",
   "depositApprovalChanged": "Chain state or fees changed. Prepare and review the step again; nothing was sent.",
   "depositApprovalUnknown": "Network error. Check the records later to confirm.",
   "depositApprovalMismatch": "This transaction does not match the saved wallet, chain or nonce. The saved record was kept.",
@@ -1767,7 +1767,7 @@
   "depositSubmissionNoPending": "No pending deposit for this wallet.",
   "depositSubmissionUnknown": "Network error. Check the records later to confirm.",
   "depositSubmissionChanged": "Balance, allowance, transaction or Gas changed. Prepare and review again.",
-  "depositSubmissionApprovalNeeded": "ERC-20 allowance is insufficient. Complete and verify the separate approval step first.",
+  "depositSubmissionApprovalNeeded": "Allowance is insufficient. Approve first.",
   "depositSubmissionHashNeeded": "Read and bind a matching transaction hash before checking platform credit.",
   "depositSubmissionChainPending": "A matching successful chain receipt with at least two observed confirmations is required.",
   "depositSubmissionCreditPending": "Platform credit has not been confirmed by an exact SUCCESS record. The deposit remains saved.",
@@ -2569,14 +2569,6 @@
       }
     }
   },
-  "fundingGasInsufficient": "Insufficient {asset} for network fees. Enter a smaller amount.",
-  "@fundingGasInsufficient": {
-    "placeholders": {
-      "asset": {
-        "type": "String"
-      }
-    }
-  },
   "fundingConfirmDepositTitle": "Confirm deposit in wallet",
   "fundingConfirmDepositHint": "Confirm the transaction in your wallet to continue.",
   "fundingApproveTitle": "Approve {asset} in wallet",
@@ -2701,17 +2693,42 @@
       }
     }
   },
+  "fundingWithdrawDepositRequired": "Withdrawable amount is 0. Please deposit first.",
   "fundingBalanceInsufficient": "Insufficient {asset} balance. Enter a smaller amount.",
-  "fundingGasTopUp": "Insufficient {asset} for network fees. Add {asset} to your wallet.",
-  "fundingWithdrawalFeeInsufficient": "Insufficient {asset} for the withdrawal amount and fee. Enter a smaller amount.",
-  "@fundingBalanceInsufficient": {
+  "fundingFrom": "From",
+  "fundingPrivyWallet": "Privy Wallet",
+  "fundingEoaWallet": "EOA Wallet",
+  "fundingAdd": "Add",
+  "fundingAddFund": "Add Fund",
+  "fundingAddGas": "Add Gas",
+  "fundingAddFunds": "Add funds",
+  "fundingAddFundsTo": "Add funds to",
+  "fundingGasToken": "Gas Token",
+  "fundingAddFundsHint": "Send the same token on the same network, then return to Futures account to deposit.",
+  "fundingDepositAddress": "Deposit Address",
+  "fundingDepositAddressQr": "Deposit address QR code",
+  "fundingGasBalance": "Gas Balance",
+  "fundingRefreshBalance": "Refresh balance",
+  "fundingGasReserveHint": "Keep at least ~{amount} in this wallet to sign the cross-chain deposit.",
+  "fundingTransferred": "I've transferred",
+  "fundingAssetShort": "Insufficient {asset} balance.",
+  "fundingGasShort": "Insufficient gas.",
+  "@fundingGasReserveHint": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "@fundingAssetShort": {
     "placeholders": {
       "asset": {
         "type": "String"
       }
     }
   },
-  "@fundingGasTopUp": {
+  "fundingWithdrawalFeeInsufficient": "Insufficient {asset} for the withdrawal amount and fee. Enter a smaller amount.",
+  "@fundingBalanceInsufficient": {
     "placeholders": {
       "asset": {
         "type": "String"

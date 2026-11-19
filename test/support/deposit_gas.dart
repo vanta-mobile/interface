@@ -40,6 +40,9 @@ class TestDepositGasRepository implements DepositGasRepository {
   Object? failure;
   DepositGasQuote? result;
   bool Function()? isCurrent;
+
+  /// Clock for default quotes; tests that age quotes share it with providers.
+  DateTime Function()? now;
   @override
   Future<DepositGasQuote> estimate({
     required String address,
@@ -51,6 +54,6 @@ class TestDepositGasRepository implements DepositGasRepository {
     this.isCurrent = isCurrent;
     await gate?.future;
     if (failure case final error?) throw error;
-    return result ?? gasQuote(query: query, amount: amount);
+    return result ?? gasQuote(query: query, amount: amount, receivedAt: now?.call().toUtc());
   }
 }

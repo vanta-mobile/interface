@@ -65,6 +65,9 @@ class TestDepositWalletRepository implements DepositWalletRepository {
   Completer<void>? gate;
   Object? failure;
   DepositWalletSnapshot? result;
+
+  /// Per-asset balances, taking precedence over [result].
+  DepositWalletSnapshot Function(DepositWalletQuery query)? resultFor;
   @override
   Future<DepositWalletSnapshot> read({
     required String address,
@@ -74,6 +77,6 @@ class TestDepositWalletRepository implements DepositWalletRepository {
     calls.add((address, query));
     await gate?.future;
     if (failure case final error?) throw error;
-    return result ?? depositSnapshot(query: query, address: address);
+    return resultFor?.call(query) ?? result ?? depositSnapshot(query: query, address: address);
   }
 }
