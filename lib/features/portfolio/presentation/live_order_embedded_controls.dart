@@ -201,9 +201,10 @@ class EmbeddedAvailableRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final available = data.funds?.account.availableBalance;
     // Value and deposit icon sit flush right with the design's 4px gap.
-    return SizedBox(
+    // At least the check-row pitch; it grows with enlarged text instead of clipping.
+    return ConstrainedBox(
       key: const Key('live-order-available'),
-      height: embeddedCheckRowHeight,
+      constraints: const BoxConstraints(minHeight: embeddedCheckRowHeight),
       child: Row(
         children: [
           Expanded(

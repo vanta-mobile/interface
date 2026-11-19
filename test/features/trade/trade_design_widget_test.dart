@@ -10,7 +10,6 @@ import 'package:vanta/features/trade/application/page_refresh_provider.dart';
 import 'package:vanta/features/trade/application/providers.dart';
 import 'package:vanta/features/trade/presentation/widgets/market_sheet.dart';
 import 'package:vanta/features/trade/presentation/widgets/trade_icon.dart';
-import 'package:vanta/features/trade/presentation/widgets/primitives.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
 import 'package:vanta/features/trade/presentation/trade_theme.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
@@ -51,7 +50,7 @@ void main() {
     );
     expect(find.byKey(const Key('live-order-bbo')), findsOneWidget);
     expect(find.byKey(const Key('live-order-advanced')), findsOneWidget);
-    expect(t.widget<ValueRow>(find.byKey(const Key('trade-available'))).value, '—');
+    expect(t.widget<Text>(find.byKey(const Key('trade-available'))).data, '—');
     expect(t.widget<TextField>(find.byKey(const Key('trade-pending-quantity'))).enabled, false);
     await selectWorkspace(t, chart: true);
     expect(find.byType(KChartWidget), findsOneWidget);
@@ -109,7 +108,23 @@ void main() {
               '',
           isEmpty,
         );
-        expect(t.widget<ValueRow>(find.byKey(const Key('trade-available'))).value, '—');
+        expect(t.widget<Text>(find.byKey(const Key('trade-available'))).data, '—');
+        // The enlarged label fits its row instead of being clipped.
+        final label = find.ancestor(
+          of: find.byKey(const Key('trade-available')),
+          matching: find.byType(Row),
+        );
+        final row = t.getRect(label.first);
+        for (final element
+            in find.descendant(of: label.first, matching: find.byType(Text)).evaluate()) {
+          final paragraph = element.renderObject! as RenderBox;
+          expect(
+            paragraph.size.height,
+            greaterThanOrEqualTo(paragraph.getMaxIntrinsicHeight(paragraph.size.width)),
+          );
+          final text = t.getRect(find.byWidget(element.widget));
+          expect(row.top <= text.top && text.bottom <= row.bottom, isTrue);
+        }
         expect(find.text('12.5K USDT'), findsNothing);
         expect(find.text('3.03'), findsNothing);
         await t.ensureVisible(find.byKey(const Key('trade-market-selector')));

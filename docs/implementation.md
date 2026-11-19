@@ -851,6 +851,13 @@
 - 修改：`orderEntryGateProvider` 为 deposit，或快捷栏自己的数量读取失败为 `requiresDeposit`（code -5050）时，做多、做空两个按钮合并为一个「充值」按钮（`quick-order-deposit`），点击打开充值页；这时不显示错误横幅。其他读取失败仍按原样显示横幅。
 - 验证：`quick_order_widget_test` 新增 2 项（-5050 分别来自账户读取和数量读取：无错误横幅、不出现 -5050、做多做空按钮被「充值」替代、不弹确认框不提交、点击打开充值页）。`flutter test test/features/portfolio test/features/trade test/features/funding` 4092 项通过，`flutter analyze` 无问题。未启动 App，未在真机或模拟器验证。
 
+## 2026-11-19 下单表单占位态「可用余额」被裁切
+
+- 问题：未连接或需要充值时，占位下单表单的「可用余额 —」行外层固定高 21px（`embeddedCheckRowHeight`），内部 `ValueRow` 自带上下 5px 内边距，文字顶部被裁切。
+- 修改：`trade_order_pending.dart` 改为与已登录表单 `EmbeddedAvailableRow` 相同的写法（标签 body/secondary，值 body 加粗），不再使用 `ValueRow`；高度改为最小 21px，放大字号时随文字增高。
+- 已登录表单的 `EmbeddedAvailableRow`（`live_order_embedded_controls.dart`）同样由固定 21px 改为最小 21px。
+- 验证：`trade_design_widget_test` 在 320/844/768 宽、1.5 倍字号下断言占位行每段文字的布局高度不小于其所需高度且在行内。新增 `embedded_available_row_test`（中英文、2 倍字号），旧代码下失败（文字需要 36px，只得到 21px），修改后通过。另一会话的 portfolio 改动未完成，当前工作区编译失败；因此在基于 HEAD 的临时 worktree 中只放入本次改动，`flutter analyze` 无问题，`flutter test test/features/trade test/features/portfolio` 3281 项通过。未启动 App，未在真机或模拟器验证。
+
 ## 2026-11-19 KLINE-01 横屏全屏 K 线按 12.15 加底部工具栏
 
 - 依据：AI视觉走查 KLINE-01，设计确认按新版画板 12.15（Figma 1222:48536）修改。

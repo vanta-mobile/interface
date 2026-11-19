@@ -17,7 +17,6 @@ import '../../../portfolio/presentation/direction_action_card.dart';
 import '../../../portfolio/presentation/main_order_amount_slider.dart';
 import 'account_sheet.dart';
 import '../trade_theme.dart';
-import 'primitives.dart';
 import '../../../../core/theme.dart' show PressFeedback;
 
 /// Unknown account facts remain unavailable until the explicit signed read.
@@ -97,16 +96,27 @@ class TradeOrderPending extends ConsumerWidget {
           semanticLabel: (value) => l.liveAllocationPercent((value * 100).round()),
         ),
         const SizedBox(height: 2),
-        SizedBox(
-          height: embeddedCheckRowHeight,
-          child: loading
-              ? Row(
-                  children: [
-                    Expanded(child: Text(l.available, style: TradeTypography.caption)),
-                    const SkeletonBox(key: Key('trade-available-pending'), width: 72, height: 14),
-                  ],
-                )
-              : ValueRow(l.available, '—', key: const Key('trade-available')),
+        // Same row as the signed-in form's available balance; it grows with enlarged text.
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: embeddedCheckRowHeight),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l.available,
+                  style: TradeTypography.body.copyWith(color: TradeColors.secondary),
+                ),
+              ),
+              if (loading)
+                const SkeletonBox(key: Key('trade-available-pending'), width: 72, height: 14)
+              else
+                Text(
+                  '—',
+                  key: const Key('trade-available'),
+                  style: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
+                ),
+            ],
+          ),
         ),
         _PendingAdvanced(market: market, onConnect: connect),
         for (final buy in [true, if (gate == OrderEntryGate.ready) false])
