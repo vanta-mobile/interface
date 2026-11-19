@@ -172,17 +172,22 @@ Future<void> _logout(WidgetTester tester, TestIdentityRepository identity) async
 
 const _card = Key('trade-position-BTCUSDT-BOTH');
 
-/// TP/SL opens the existing-orders list; Add TP/SL opens the form.
-Future<void> _openTpSlForm(WidgetTester tester) async {
+/// Opens the position's TP/SL page from its card.
+Future<void> _openTpSl(WidgetTester tester) async {
   final action = find.byKey(const Key('trade-position-action-0-BTCUSDT-BOTH'));
   await tester.ensureVisible(action);
   await tester.pumpAndSettle();
   await tester.tap(action);
   await tester.pumpAndSettle();
-  expect(find.byType(PositionTpSlListScreen), findsOneWidget);
+}
+
+/// Partial close lists the existing partial TP/SL; Add TP/SL opens the form.
+Future<void> _openTpSlForm(WidgetTester tester) async {
+  await _openTpSl(tester);
+  expect(find.byKey(const Key('position-tpsl-list')), findsOneWidget);
   await tester.tap(find.byKey(const Key('position-tpsl-add')));
   await tester.pumpAndSettle();
-  expect(find.byType(PositionTpSlScreen), findsOneWidget);
+  expect(find.byKey(const Key('position-tpsl-page')), findsOneWidget);
 }
 
 void main() {
@@ -325,7 +330,7 @@ void main() {
   testWidgets('TP/SL places an entire-close take profit and returns', (tester) async {
     final live = TestLiveOrderRepository()..context = liveCloseContext();
     final identity = await _launch(tester, live: live);
-    await _openTpSlForm(tester);
+    await _openTpSl(tester);
 
     await tester.tap(find.byKey(const ValueKey('position-tab-PositionTpSlScope.entire')));
     await tester.pumpAndSettle();
@@ -362,11 +367,8 @@ void main() {
     expect(draft.trigger?.kind, LiveOrderTriggerKind.takeProfit);
     expect(draft.trigger?.price, '82000');
     expect(draft.trigger?.basis, LiveOrderTriggerBasis.mark);
+    // Entire close is the page itself: placing returns to the positions.
     expect(find.byType(PositionTpSlScreen), findsNothing);
-    // The form returns to the existing-orders list.
-    expect(find.byType(PositionTpSlListScreen), findsOneWidget);
-    await tester.tap(find.byKey(const Key('position-tpsl-back')));
-    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byType(TradePositionCard),
       250,
@@ -446,14 +448,10 @@ void main() {
     await _logout(tester, identity);
   });
 
-  testWidgets('TP/SL lists the existing orders of each close scope', (tester) async {
+  testWidgets('TP/SL lists existing partial orders and shows the entire form', (tester) async {
     final identity = await _launch(tester);
-    final action = find.byKey(const Key('trade-position-action-0-BTCUSDT-BOTH'));
-    await tester.ensureVisible(action);
-    await tester.pumpAndSettle();
-    await tester.tap(action);
-    await tester.pumpAndSettle();
-    final list = find.byType(PositionTpSlListScreen);
+    await _openTpSl(tester);
+    final list = find.byKey(const Key('position-tpsl-list'));
     Finder inList(Finder finder) => find.descendant(of: list, matching: finder);
     // Partial close: the reduce-only stop loss of 0.005 BTC.
     expect(find.byKey(const Key('position-tpsl-group-2')), findsOneWidget);
@@ -464,13 +462,17 @@ void main() {
     // 0.005 × (75,000 − 79,000).
     expect(inList(find.textContaining('-20', findRichText: true)), findsOneWidget);
     expect(inList(find.text('Market')), findsOneWidget);
-    // Entire close: the closePosition take profit.
+    // Entire close shows the form, not the closePosition take profit.
     await tester.tap(find.byKey(const ValueKey('position-tab-PositionTpSlScope.entire')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('position-tpsl-group-1')), findsOneWidget);
-    expect(find.byKey(const Key('position-tpsl-group-2')), findsNothing);
-    expect(inList(find.text('TP')), findsOneWidget);
-    expect(inList(find.textContaining('90,000')), findsOneWidget);
+    expect(list, findsNothing);
+    expect(find.byKey(const Key('position-tpsl-group-1')), findsNothing);
+    expect(find.byKey(const Key('position-tpsl-page')), findsOneWidget);
+    expect(find.byKey(const Key('position-tpsl-confirm')), findsOneWidget);
+    // Back on Partial close the list returns.
+    await tester.tap(find.byKey(const ValueKey('position-tab-PositionTpSlScope.partial')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('position-tpsl-group-2')), findsOneWidget);
     expect(tester.takeException(), null);
     await _logout(tester, identity);
   });
@@ -504,8 +506,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(action);
     await tester.pumpAndSettle();
-    expect(find.byType(PositionTpSlListScreen), findsNothing);
-    expect(find.byType(PositionTpSlScreen), findsOneWidget);
+    expect(find.byKey(const Key('position-tpsl-list')), findsNothing);
+    expect(find.byKey(const Key('position-tpsl-page')), findsOneWidget);
     expect(tester.takeException(), null);
     await _logout(tester, identity);
   });

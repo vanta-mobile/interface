@@ -43,9 +43,12 @@ part 'position_tpsl_list.dart';
 
 /// Set TP/SL for one position: a take-profit and/or stop-loss conditional
 /// order closing part of it (reduce quantity) or all of it (closePosition).
+/// With [listPartial], Partial close lists the existing partial TP/SL instead
+/// of the form while there are any; Add TP/SL then opens the form.
 class PositionTpSlScreen extends ConsumerStatefulWidget {
-  const PositionTpSlScreen({super.key, required this.position});
+  const PositionTpSlScreen({super.key, required this.position, this.listPartial = true});
   final PositionRisk position;
+  final bool listPartial;
   @override
   ConsumerState<PositionTpSlScreen> createState() => _PositionTpSlScreenState();
 }
@@ -171,6 +174,23 @@ class _PositionTpSlScreenState extends ConsumerState<PositionTpSlScreen> {
     final enabled = !submitting;
     final quoteAsset = p.units?.quote ?? data?.rules.quoteAsset ?? '';
     final loadFailure = live.intent == null && data == null ? live.failure : null;
+    final partialGroups = widget.listPartial
+        ? _partialExitGroups(ref, p)
+        : const <PositionExitGroup>[];
+    final listed = scope == PositionTpSlScope.partial && partialGroups.isNotEmpty;
+    final tabs = PositionTabs<PositionTpSlScope>(
+      tabs: [
+        (PositionTpSlScope.partial, l10n.positionTpslPartial),
+        (PositionTpSlScope.entire, l10n.positionTpslEntire),
+      ],
+      selected: scope,
+      onSelect: enabled
+          ? (value) => _render(() {
+              scope = value;
+              _resync();
+            })
+          : null,
+    );
     return Scaffold(
       backgroundColor: TradeColors.background,
       body: SafeArea(
@@ -181,134 +201,138 @@ class _PositionTpSlScreenState extends ConsumerState<PositionTpSlScreen> {
               child: _Header(title: l10n.positionTpslTitle),
             ),
             Expanded(
-              child: SingleChildScrollView(
-                key: const Key('position-tpsl-page'),
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    PositionTabs<PositionTpSlScope>(
-                      tabs: [
-                        (PositionTpSlScope.partial, l10n.positionTpslPartial),
-                        (PositionTpSlScope.entire, l10n.positionTpslEntire),
-                      ],
-                      selected: scope,
-                      onSelect: enabled
-                          ? (value) => _render(() {
-                              scope = value;
-                              _resync();
-                            })
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                    _LegSection(
-                      leg: takeProfit,
-                      title: l10n.positionTpslTakeProfit,
-                      scope: scope,
-                      data: data,
-                      estimate: estimate,
-                      quoteAsset: quoteAsset,
-                      enabled: enabled,
-                      onChanged: _render,
-                      onMode: _chooseMode,
-                    ),
-                    const SizedBox(height: 16),
-                    _LegSection(
-                      leg: stopLoss,
-                      title: l10n.positionTpslStopLoss,
-                      scope: scope,
-                      data: data,
-                      estimate: estimate,
-                      quoteAsset: quoteAsset,
-                      enabled: enabled,
-                      onChanged: _render,
-                      onMode: _chooseMode,
-                    ),
-                    if (scope == PositionTpSlScope.partial) ...[
-                      const SizedBox(height: 16),
-                      _AmountSection(
-                        controller: amount,
-                        unit: quoteAsset,
-                        position: sliderPosition(
-                          percent: percent,
-                          amount: Decimal.tryParse(amount.text.trim()),
-                          maximum: _positionValue(p, mark),
-                        ),
-                        positionValue: _positionValue(p, mark),
-                        enabled: enabled,
-                        onTyped: () => _render(() {
-                          percent = null;
-                          _resync();
-                        }),
-                        onPosition: (value) => _selectPosition(value, p, mark),
+              child: listed
+                  ? _ExitGroupList(position: p, groups: partialGroups, mark: mark, tabs: tabs)
+                  : SingleChildScrollView(
+                      key: const Key('position-tpsl-page'),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          tabs,
+                          ..._form(context, p, mark, data, estimate, quoteAsset, loadFailure),
+                        ],
                       ),
-                    ],
-                    const SizedBox(height: 16),
-                    PositionOrderSummary(
-                      position: p,
-                      limit:
-                          scope == PositionTpSlScope.partial &&
-                          (takeProfit.active && takeProfit.limit ||
-                              stopLoss.active && stopLoss.limit),
-                      rows: [
-                        (l10n.positionTpslEntryPrice, Text(summaryPrice(context, p, p.entryPrice))),
-                        (l10n.positionTpslMarkPrice, Text(summaryPrice(context, p, mark))),
-                        (
-                          l10n.positionTpslLiqPrice,
-                          Text(summaryPrice(context, p, p.liquidationPrice)),
-                        ),
-                        (
-                          l10n.positionTpslEstimatedPnl,
-                          Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: summaryPnl(
-                                    context,
-                                    p,
-                                    estimate.pnl(takeProfit.triggerPrice),
-                                  ),
-                                  style: summaryEstimateStyle.copyWith(color: TradeColors.positive),
-                                ),
-                                const TextSpan(text: ' / ', style: summaryEstimateStyle),
-                                TextSpan(
-                                  text: summaryPnl(context, p, estimate.pnl(stopLoss.triggerPrice)),
-                                  style: summaryEstimateStyle.copyWith(color: TradeColors.negative),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
-                    if (issue ??
-                            (loadFailure == null ? null : accountErrorText(context, loadFailure))
-                        case final text?)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Text(
-                          text,
-                          key: const Key('position-tpsl-issue'),
-                          style: TradeTypography.body.copyWith(color: TradeColors.negative),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: PositionActionButton(
-                key: const Key('position-tpsl-confirm'),
-                label: l10n.positionTpslConfirm,
-                pending: submitting,
-                onPressed: enabled ? () => _confirm(p) : null,
-              ),
+              child: listed
+                  ? PositionActionButton(
+                      key: const Key('position-tpsl-add'),
+                      label: l10n.positionTpslAdd,
+                      onPressed: () => _openPositionTpSlForm(context, p),
+                    )
+                  : PositionActionButton(
+                      key: const Key('position-tpsl-confirm'),
+                      label: l10n.positionTpslConfirm,
+                      pending: submitting,
+                      onPressed: enabled ? () => _confirm(p) : null,
+                    ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// Legs, partial amount, summary and issue of the form below the tabs.
+  List<Widget> _form(
+    BuildContext context,
+    PositionRisk p,
+    Decimal? mark,
+    LiveOrderContext? data,
+    _LegEstimate estimate,
+    String quoteAsset,
+    AccountReadFailure? loadFailure,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final enabled = !ref.watch(positionTpSlProvider.select((s) => s.busy));
+    return [
+      const SizedBox(height: 16),
+      _LegSection(
+        leg: takeProfit,
+        title: l10n.positionTpslTakeProfit,
+        scope: scope,
+        data: data,
+        estimate: estimate,
+        quoteAsset: quoteAsset,
+        enabled: enabled,
+        onChanged: _render,
+        onMode: _chooseMode,
+      ),
+      const SizedBox(height: 16),
+      _LegSection(
+        leg: stopLoss,
+        title: l10n.positionTpslStopLoss,
+        scope: scope,
+        data: data,
+        estimate: estimate,
+        quoteAsset: quoteAsset,
+        enabled: enabled,
+        onChanged: _render,
+        onMode: _chooseMode,
+      ),
+      if (scope == PositionTpSlScope.partial) ...[
+        const SizedBox(height: 16),
+        _AmountSection(
+          controller: amount,
+          unit: quoteAsset,
+          position: sliderPosition(
+            percent: percent,
+            amount: Decimal.tryParse(amount.text.trim()),
+            maximum: _positionValue(p, mark),
+          ),
+          positionValue: _positionValue(p, mark),
+          enabled: enabled,
+          onTyped: () => _render(() {
+            percent = null;
+            _resync();
+          }),
+          onPosition: (value) => _selectPosition(value, p, mark),
+        ),
+      ],
+      const SizedBox(height: 16),
+      PositionOrderSummary(
+        position: p,
+        limit:
+            scope == PositionTpSlScope.partial &&
+            (takeProfit.active && takeProfit.limit || stopLoss.active && stopLoss.limit),
+        rows: [
+          (l10n.positionTpslEntryPrice, Text(summaryPrice(context, p, p.entryPrice))),
+          (l10n.positionTpslMarkPrice, Text(summaryPrice(context, p, mark))),
+          (l10n.positionTpslLiqPrice, Text(summaryPrice(context, p, p.liquidationPrice))),
+          (
+            l10n.positionTpslEstimatedPnl,
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: summaryPnl(context, p, estimate.pnl(takeProfit.triggerPrice)),
+                    style: summaryEstimateStyle.copyWith(color: TradeColors.positive),
+                  ),
+                  const TextSpan(text: ' / ', style: summaryEstimateStyle),
+                  TextSpan(
+                    text: summaryPnl(context, p, estimate.pnl(stopLoss.triggerPrice)),
+                    style: summaryEstimateStyle.copyWith(color: TradeColors.negative),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      if (issue ?? (loadFailure == null ? null : accountErrorText(context, loadFailure))
+          case final text?)
+        Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Text(
+            text,
+            key: const Key('position-tpsl-issue'),
+            style: TradeTypography.body.copyWith(color: TradeColors.negative),
+          ),
+        ),
+    ];
   }
 
   Future<void> _chooseMode() async {

@@ -6,6 +6,17 @@
 - 部署目标 `IPHONEOS_DEPLOYMENT_TARGET = 17.0` 不变。签名步骤仍显式安装并使用 `openssl@3`，不受该镜像默认 OpenSSL 升级到 4 的影响。
 - 验证：本机为 Linux，未运行 Xcode 构建；`git diff --check` 通过。需在 CI 上确认 Flutter 3.47.4、PrivySDK、Rive 等原生依赖能在 Xcode 27.1 下归档，并在下一次 TestFlight 上传后确认 90725 警告消失。若预览 runner 不稳定，可把 `runs-on` 改回 `macos-26` 并去掉 `DEVELOPER_DIR` 回退。
 
+## 2026-11-19 持仓止盈止损：只有部分平仓显示已有委托列表
+
+问题：持仓已有止盈止损时，点击止盈止损打开的是独立的已有委托列表页，切到「全部平仓」只显示整仓委托；没有整仓委托时页面空白，也无法在该 tab 设置全部平仓。
+
+- 取消独立列表页 `PositionTpSlListScreen`，点击止盈止损统一打开 `PositionTpSlScreen`。
+- 部分平仓 tab：已有部分平仓止盈止损时显示其列表（撤销、下拉刷新不变），底部「添加止盈止损」打开表单；没有时直接显示表单。
+- 全部平仓 tab：不判断已有委托，始终显示设置表单，提交成功后返回持仓。已有的整仓委托不再在此页列出。
+- 从列表添加打开的表单不再显示列表，提交成功后回到列表。
+
+验证：`trade_positions_section_test` 改为断言部分平仓列表、全部平仓直接显示表单并可提交、切回部分平仓恢复列表；该文件与 `order_recovery_widget_test` 共 30 项通过，`flutter analyze` 无问题。按要求未启动 App。
+
 ## 2026-11-19 发布流水线：Sentry 变量缺失与 Maven Central 限流（Release Mobile #44323765037）
 
 - iOS 在 “Upload iOS Sentry symbols” 失败：`Missing SENTRY_ORG for Sentry symbol upload.`。仓库 Variables 只配了 `SENTRY_DSN`／`SENTRY_ENVIRONMENT`，没有 `SENTRY_ORG`／`SENTRY_PROJECT`（Android 走到同一步也会失败）。已用 `gh variable set` 补上 `SENTRY_ORG=dodo-k4`、`SENTRY_PROJECT=vanta`；用本地 sentry-cli 确认 `dodo-k4` 下 `vanta` 项目 ID 4512450739961936 与 DSN 一致。

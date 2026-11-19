@@ -1,20 +1,16 @@
 part of 'position_tpsl_screen.dart';
 
-/// Opens the position's existing TP/SL when it has any, otherwise the form.
-void openPositionTpSl(BuildContext context, WidgetRef ref, PositionRisk position) {
-  final existing = walletPositionExitGroups(
-    position,
-    ref.read(openOrdersReadProvider).account,
-    ref.read(positionRiskProvider).account?.address,
-  );
-  if (existing.isEmpty) return _openPositionTpSlForm(context, position);
-  Navigator.of(context)
-      .push<void>(MaterialPageRoute(builder: (_) => PositionTpSlListScreen(position: position)));
-}
-
-void _openPositionTpSlForm(BuildContext context, PositionRisk position) =>
+/// Opens the TP/SL page: Partial close lists the position's existing partial
+/// TP/SL when it has any, Entire close always shows the form.
+void openPositionTpSl(BuildContext context, WidgetRef ref, PositionRisk position) =>
     Navigator.of(context)
         .push<void>(MaterialPageRoute(builder: (_) => PositionTpSlScreen(position: position)));
+
+/// The form alone, opened by Add TP/SL from the partial list.
+void _openPositionTpSlForm(BuildContext context, PositionRisk position) => Navigator.of(context)
+    .push<void>(
+      MaterialPageRoute(builder: (_) => PositionTpSlScreen(position: position, listPartial: false)),
+    );
 
 /// The newest snapshot of [position], or [position] itself.
 PositionRisk _latestPosition(WidgetRef ref, PositionRisk position) {
@@ -26,28 +22,38 @@ PositionRisk _latestPosition(WidgetRef ref, PositionRisk position) {
   return position;
 }
 
-/// Existing TP/SL of one position, grouped by the order that set them, with
-/// Add TP/SL opening the form. A group's Cancel cancels each of its orders.
-class PositionTpSlListScreen extends ConsumerStatefulWidget {
-  const PositionTpSlListScreen({super.key, required this.position});
-  final PositionRisk position;
-  @override
-  ConsumerState<PositionTpSlListScreen> createState() => _PositionTpSlListScreenState();
+/// The position's partial TP/SL that a list shows, empty when it has none.
+List<PositionExitGroup> _partialExitGroups(WidgetRef ref, PositionRisk position) {
+  ref.watch(openOrdersAutoReadProvider);
+  return walletPositionExitGroups(
+    position,
+    ref.watch(openOrdersReadProvider.select((s) => s.account)),
+    ref.watch(positionRiskProvider.select((s) => s.account?.address)),
+  ).where((g) => !g.entire).toList();
 }
 
-class _PositionTpSlListScreenState extends ConsumerState<PositionTpSlListScreen> {
-  PositionTpSlScope scope = PositionTpSlScope.partial;
+/// Existing partial TP/SL of one position, grouped by the order that set them,
+/// below [tabs]. A group's Cancel cancels each of its orders.
+class _ExitGroupList extends ConsumerStatefulWidget {
+  const _ExitGroupList({
+    required this.position,
+    required this.groups,
+    required this.mark,
+    required this.tabs,
+  });
+  final PositionRisk position;
+  final List<PositionExitGroup> groups;
+  final Decimal? mark;
+  final Widget tabs;
+  @override
+  ConsumerState<_ExitGroupList> createState() => _ExitGroupListState();
+}
+
+class _ExitGroupListState extends ConsumerState<_ExitGroupList> {
   PositionExitGroup? cancelling;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    ref.watch(openOrdersAutoReadProvider);
-    final p = _latestPosition(ref, widget.position);
-    final (quote, _) = watchPositionMark(ref, p);
-    final mark = PositionValuation(position: p, quote: quote).mark;
-    final address = ref.watch(positionRiskProvider.select((s) => s.account?.address));
-    final orders = ref.watch(openOrdersReadProvider.select((s) => s.account));
     final busy = ref.watch(openOrdersReadProvider.select((s) => s.busy));
     final cancellation = ref.watch(orderCancellationProvider);
     final session = ref.watch(authProvider);
@@ -57,65 +63,30 @@ class _PositionTpSlListScreenState extends ConsumerState<PositionTpSlListScreen>
         !session.busy &&
         !busy &&
         !cancellation.busy;
-    final groups = walletPositionExitGroups(
-      p,
-      orders,
-      address,
-    ).where((g) => g.entire == (scope == PositionTpSlScope.entire)).toList();
-    return Scaffold(
-      backgroundColor: TradeColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _Header(title: l10n.positionTpslTitle),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () => Future.wait([
-                  ref.read(openOrdersReadProvider.notifier).refresh(),
-                  ref.read(positionRiskProvider.notifier).refresh(),
-                ]),
-                child: ListView(
-                  key: const Key('position-tpsl-list'),
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-                  children: [
-                    PositionTabs<PositionTpSlScope>(
-                      tabs: [
-                        (PositionTpSlScope.partial, l10n.positionTpslPartial),
-                        (PositionTpSlScope.entire, l10n.positionTpslEntire),
-                      ],
-                      selected: scope,
-                      onSelect: (value) => setState(() => scope = value),
-                    ),
-                    const OrderCancellationStatus(),
-                    for (final group in groups) ...[
-                      const SizedBox(height: 16),
-                      _ExitGroupCard(
-                        key: Key('position-tpsl-group-${group.orders.first.orderId}'),
-                        position: p,
-                        group: group,
-                        mark: mark,
-                        pending: identical(cancelling, group),
-                        onCancel: canCancel ? () => _cancel(group) : null,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: PositionActionButton(
-                key: const Key('position-tpsl-add'),
-                label: l10n.positionTpslAdd,
-                onPressed: () => _openPositionTpSlForm(context, p),
-              ),
+    return RefreshIndicator(
+      onRefresh: () => Future.wait([
+        ref.read(openOrdersReadProvider.notifier).refresh(),
+        ref.read(positionRiskProvider.notifier).refresh(),
+      ]),
+      child: ListView(
+        key: const Key('position-tpsl-list'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+        children: [
+          widget.tabs,
+          const OrderCancellationStatus(),
+          for (final group in widget.groups) ...[
+            const SizedBox(height: 16),
+            _ExitGroupCard(
+              key: Key('position-tpsl-group-${group.orders.first.orderId}'),
+              position: widget.position,
+              group: group,
+              mark: widget.mark,
+              pending: identical(cancelling, group),
+              onCancel: canCancel ? () => _cancel(group) : null,
             ),
           ],
-        ),
+        ],
       ),
     );
   }
