@@ -14,6 +14,7 @@ import 'package:vanta/features/subaccounts/presentation/account_transfer_selecti
 import 'package:vanta/features/subaccounts/presentation/create_subaccount_screen.dart';
 import 'package:vanta/features/subaccounts/presentation/subaccount_backup_screen.dart';
 import 'package:vanta/features/subaccounts/presentation/subaccount_details_screen.dart';
+import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
 import '../../support/generated_accounts.dart';
@@ -69,9 +70,7 @@ void main() {
     );
     await f.close(t);
   });
-  testWidgets('current account sheet only manages the master; selection does not silently switch', (
-    t,
-  ) async {
+  testWidgets('account sheet is titled Account and lists only the current account', (t) async {
     final f = GeneratedAccountsFixture(t, records: [createdSubaccountRecord()]);
     await f.mount(
       t,
@@ -87,8 +86,12 @@ void main() {
     await t.tap(find.text('open'));
     await t.pumpAndSettle();
     expect(find.byKey(const Key('portfolio-subaccounts')), findsNothing);
-    await tapAccountControl(t, 'account-choice-$generatedChildAddress');
-    expect(find.byType(AccountSwitchScreen), findsOneWidget);
+    final l = AppLocalizations.of(t.element(find.byKey(const Key('accounts-logout'))));
+    // Design 950:23058: the first release offers no account switching.
+    expect(find.text(l.account), findsOneWidget);
+    expect(find.text(l.accountsSwitchTitle), findsNothing);
+    expect(find.byKey(const Key('account-choice-$generatedChildAddress')), findsNothing);
+    expect(find.byKey(const Key('accounts-logout')), findsOneWidget);
     expect(f.identity.externalLogins, 0);
     await f.close(t);
   });

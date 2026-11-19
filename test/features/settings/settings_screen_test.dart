@@ -103,6 +103,36 @@ void main() {
     }
   });
 
+  testWidgets('English labels use the space short trailing content leaves at 360dp', (t) async {
+    final c = setup(
+      t,
+      width: 360,
+      language: const Locale('en'),
+      appCacheRepository: _MemoryCache(0),
+    );
+    await launch(t, c);
+    await _openSettings(t);
+    for (final (key, label) in [
+      ('push', 'Push Notifications'),
+      ('check-update', 'Check for Updates'),
+    ]) {
+      final row = find.byKey(Key('settings-$key'));
+      final text = find.descendant(of: row, matching: find.text(label));
+      await t.ensureVisible(text);
+      // Test glyphs are full squares, so measure the space given to the
+      // label: everything except the trailing content and the 8px gap.
+      final trailing = find.descendant(of: row, matching: find.byType(ConstrainedBox)).last;
+      final available = (t.renderObject(text) as RenderBox).constraints.maxWidth;
+      expect(
+        available,
+        closeTo(t.getSize(row).width - 8 - t.getSize(trailing).width, .5),
+        reason: key,
+      );
+      // Previously capped at half the row.
+      expect(available, greaterThan(t.getSize(row).width * .6), reason: key);
+    }
+  });
+
   testWidgets('language sheet offers only English and Chinese and switches the app', (t) async {
     final c = setup(t, language: const Locale('en'), appCacheRepository: _MemoryCache(0));
     await launch(t, c);

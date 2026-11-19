@@ -129,6 +129,10 @@ String exitModeLabel(AppLocalizations l, AttachedExitInputMode mode, String asse
     };
 
 /// One TP or SL box: caption with price type, value input with input type.
+/// The box's bottom padding plus up to three 16px lines of an exit's
+/// validation message below it.
+const _issueHeight = 60.0;
+
 class EmbeddedExitField extends StatelessWidget {
   const EmbeddedExitField({
     super.key,
@@ -186,6 +190,14 @@ class EmbeddedExitField extends StatelessWidget {
                   enabled: enabled,
                   hint: takeProfit ? l.tradeTp : l.tradeSl,
                   inputFormatters: [FilteringTextInputFormatter.deny(RegExp('[-+]'))],
+                  // Keeps a validation message of up to three lines above
+                  // the keyboard together with the field.
+                  scrollPadding: EdgeInsets.fromLTRB(
+                    20,
+                    20,
+                    20,
+                    20 + MediaQuery.textScalerOf(context).scale(_issueHeight),
+                  ),
                   onChanged: onValue,
                 ),
               ),

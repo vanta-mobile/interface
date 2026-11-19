@@ -129,7 +129,7 @@ class _NotificationList extends ConsumerWidget {
             const NotificationApiAccess()
           else if (!inbox.loaded && inbox.loading && entries.isEmpty)
             const _NotificationSkeleton()
-          else if (inbox.loaded && entries.isEmpty)
+          else if (inbox.loaded && entries.isEmpty && inbox.error == null)
             StatusEmptyView(key: const Key('notification-empty'), message: l10n.notificationEmpty)
           else
             for (final group in groups.entries) ...[

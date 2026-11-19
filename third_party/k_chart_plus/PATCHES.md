@@ -45,3 +45,9 @@ NumberUtil.format now returns just the grouped integer when decimal flooring
 leaves no fractional part. Depth price tooltips previously repeated the integer
 after a decimal point whenever precision was nonzero. Regression coverage is in
 `test/features/market/market_precision_test.dart`.
+
+NumberUtil.format and formatFixed truncate toward zero and format the sign
+separately. Upstream parsed the integer part "-0" as 0, so values between -1
+and 0 lost their sign on MACD/WR/CCI axes and indicator legends, and format
+floored negatives away from zero. Regression coverage is in
+`test/features/market/market_precision_test.dart`.

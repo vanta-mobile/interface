@@ -68,19 +68,20 @@ class SettingsRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 40),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: TradeTypography.option.copyWith(color: TradeColors.secondary),
+        child: LayoutBuilder(
+          builder: (context, constraints) => Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: TradeTypography.option.copyWith(color: TradeColors.secondary),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            // Align fills the loose half so short values stay flush right.
-            Flexible(
-              child: Align(
-                alignment: AlignmentDirectional.centerEnd,
+              const SizedBox(width: 8),
+              // The right side takes only its content, at most half the row,
+              // so the label keeps the remaining space.
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: (constraints.maxWidth - 8) / 2),
                 child: busy
                     ? const SettingsSpinner()
                     : Row(
@@ -99,8 +100,8 @@ class SettingsRow extends StatelessWidget {
                         ],
                       ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ),

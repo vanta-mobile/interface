@@ -50,16 +50,17 @@ class NumberUtil {
 
   static String? formatFixed(dynamic value, int precision, [String pattern = '#,##0']) {
     try {
-      String number =
-          Decimal.parse(value.toString()).toString(); // avoid scientific notation format e-10
+      // Truncates toward zero; the sign is kept apart so -0.06 keeps it.
+      final decimal = Decimal.parse(value.toString()).truncate(scale: precision);
+      final sign = decimal < Decimal.zero ? '-' : '';
+      String number = decimal.abs().toString(); // avoid scientific notation format e-10
       List<String> parts = number.split('.');
       String integerPart = NumberFormat(pattern, 'en_US').format(num.parse(parts.first));
       if (precision == 0) {
-        return integerPart;
+        return '$sign$integerPart';
       }
       String fractionalPart = (parts.length <= 1 ? '' : parts.last).padRight(precision, '0');
-      fractionalPart = fractionalPart.substring(0, precision);
-      return '$integerPart.$fractionalPart';
+      return '$sign$integerPart.$fractionalPart';
     } catch (e) {
       return null;
     }
@@ -68,15 +69,15 @@ class NumberUtil {
   static String? format(dynamic value, int precision, [String pattern = '#,##0']) {
     try {
       // avoid scientific notation format e-10
-      String number = Decimal.parse(value.toString()).floor(scale: precision).toString();
+      // Truncates toward zero; the sign is kept apart so -0.06 keeps it.
+      final decimal = Decimal.parse(value.toString()).truncate(scale: precision);
+      final sign = decimal < Decimal.zero ? '-' : '';
+      String number = decimal.abs().toString();
       List<String> parts = number.split('.');
       String integerPart = NumberFormat(pattern, 'en_US').format(num.parse(parts.first));
-      if (precision == 0 && parts.length == 1) {
-        return integerPart;
-      }
       String fractionalPart = parts.length > 1 ? parts.last : '';
-      if (fractionalPart.isEmpty) return integerPart;
-      return '$integerPart.$fractionalPart';
+      if (fractionalPart.isEmpty) return '$sign$integerPart';
+      return '$sign$integerPart.$fractionalPart';
     } catch (e) {
       return null;
     }

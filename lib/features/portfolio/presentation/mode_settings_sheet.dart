@@ -26,27 +26,41 @@ Future<T?> showModeSettingsSheet<T>(BuildContext context, Widget child) => showG
           ),
         ),
       ),
-      Align(
-        alignment: Alignment.bottomCenter,
-        child: SafeArea(
-          top: true,
-          bottom: false,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 520,
-              maxHeight: MediaQuery.sizeOf(context).height * .92,
-            ),
-            child: Material(
-              color: TradeColors.sheet,
-              shape: const RoundedRectangleBorder(
-                side: BorderSide(color: TradeColors.card),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      // The sheet rises above the keyboard and fits the height left, so a
+      // focused field scrolls into the visible part of its content.
+      Builder(
+        builder: (context) {
+          final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+          return Padding(
+            padding: EdgeInsets.only(bottom: keyboard),
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: SafeArea(
+                top: true,
+                bottom: false,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: 520,
+                    maxHeight: (MediaQuery.sizeOf(context).height - keyboard) * .92,
+                  ),
+                  child: MediaQuery.removeViewInsets(
+                    context: context,
+                    removeBottom: true,
+                    child: Material(
+                      color: TradeColors.sheet,
+                      shape: const RoundedRectangleBorder(
+                        side: BorderSide(color: TradeColors.card),
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: child,
+                    ),
+                  ),
+                ),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: child,
             ),
-          ),
-        ),
+          );
+        },
       ),
     ],
   ),
@@ -68,12 +82,7 @@ class ModeSheetBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final content = SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(
-        16,
-        16,
-        16,
-        28 + MediaQuery.paddingOf(context).bottom + MediaQuery.viewInsetsOf(context).bottom,
-      ),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 28 + MediaQuery.paddingOf(context).bottom),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -184,6 +184,9 @@ class HistoryRepository
   };
   Completer<void>? gate;
   Object? failure;
+
+  /// An income-report failure on a readable archive page.
+  Object? refreshFailure;
   TradingHistoryCursor? next;
   bool partial = false;
   @override
@@ -197,7 +200,13 @@ class HistoryRepository
     scopes.add(() => scope?.active ?? false);
     await gate?.future;
     if (failure case final error?) throw error;
-    return TradingHistoryPage(address: address, records: rows[tab]!, next: next, partial: partial);
+    return TradingHistoryPage(
+      address: address,
+      records: rows[tab]!,
+      next: next,
+      partial: partial || refreshFailure != null,
+      refreshFailure: refreshFailure,
+    );
   }
 }
 

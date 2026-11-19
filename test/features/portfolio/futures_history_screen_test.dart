@@ -144,6 +144,43 @@ void main() {
     expect(t.takeException(), isNull);
   });
 
+  testWidgets('funding history shows one state for report and read failures', (t) async {
+    final repository = HistoryRepository()
+      ..refreshFailure = const AccountReadFailure('historyTruncated');
+    await launchTradingHistory(t, repository);
+    await historyTap(t, 'history-tab-transactions');
+    const partial = 'History is incomplete. Some records may be unavailable.';
+    // Records stay readable; the report detail is only the incomplete note.
+    expect(find.byType(TradingHistoryTransactionRow), findsOneWidget);
+    expect(find.text(partial), findsOneWidget);
+    expect(find.textContaining('millisecond'), findsNothing);
+
+    // Without records a failed report is a failure with retry, never empty.
+    repository.rows[TradingHistoryTab.transactions] = [];
+    await t.fling(find.byKey(const Key('futures-history-page')), const Offset(0, 400), 1000);
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('history-failure')), findsOneWidget);
+    expect(find.text(partial), findsOneWidget);
+    expect(find.byKey(const Key('futures-history-empty')), findsNothing);
+
+    // An empty successful read is the only empty state; a later read failure
+    // replaces it with the API message.
+    repository.refreshFailure = null;
+    await t.tap(find.byKey(const Key('status-retry')));
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('futures-history-empty')), findsOneWidget);
+    expect(find.byKey(const Key('history-failure')), findsNothing);
+    repository.failure = const VantaApiFailure(
+      vantaApiRequestFailed,
+      details: ApiErrorDetails(message: 'Archive offline', status: 503),
+    );
+    await t.fling(find.byKey(const Key('futures-history-page')), const Offset(0, 400), 1000);
+    await t.pumpAndSettle();
+    expect(find.text('Archive offline'), findsOneWidget);
+    expect(find.byKey(const Key('futures-history-empty')), findsNothing);
+    expect(t.takeException(), isNull);
+  });
+
   testWidgets('refresh waits for contract units as well as history', (t) async {
     final unitsGate = Completer<void>();
     var waitForUnits = false;

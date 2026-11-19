@@ -777,3 +777,18 @@
 - `flutter test --no-pub` 全量通过 6,053 项，跳过 3 项；`python3 -m unittest discover -s scripts -p '*_test.py'` 运行 64 项，成功，跳过 1 项。暂存区与工作区 `git diff --check` 均通过。
 - 日志：`/tmp/vanta-push-format.log`、`/tmp/vanta-push-analysis.log`、`/tmp/vanta-push-tests.log`、`/tmp/vanta-push-python.log`。Flutter 测试使用已安装 SDK 的 SDK-links 入口，日志仍有既有 Linux Rive 原生库提示。
 - 本轮验证未启动、热重载或重启 App，未执行 Android/iOS 打包构建、设备/模拟器验证、签名金融操作或 Sentry 符号上传；移动端与发布验收边界保持上文记录。
+
+## 2026-11-19 AI 视觉走查（Android 0.0.4/2004）前端修复
+
+来源：Notion「2026-11-18 前端分析 · AI视觉走查」中无需等待确认的 8 项。
+
+- KLINE-03：`k_chart_plus` 的 `NumberUtil.format`／`formatFixed` 把整数部分 “-0” 解析成 0，-1～0 之间的 MACD/WR/CCI 坐标和指标图例丢失负号；`format` 对负数向下取整。两者改为向零截断、符号单独拼接，截断为 0 时不带负号。记录于 `third_party/k_chart_plus/PATCHES.md`。
+- HIST-01：资金流水同一时间只显示一种状态。收入上报失败（`refreshFailure`）只表现为「数据不完整」提示，其客户端说明不上屏；读取失败或上报失败且没有记录时显示带重试的失败视图（接口文案优先，客户端上报说明回退为「数据不完整」文案），不再同时显示空状态；只有读取成功且 0 条才显示空状态。
+- 通知中心：刷新失败时不再同时显示错误和空状态。
+- FUT-04：`EmbeddedTextInput` 新增 `scrollPadding`；附加止盈止损输入框的底部留白包含三行校验文案高度（随字号缩放），键盘弹起或文案出现时一起滚到键盘上方。
+- MKT-01：合约列表交易对名称单行，空间不足时整体等比缩小，不截断、不在 USDT 中间断行。
+- KLINE-02：快捷下单栏可用余额去掉单位，单位已在标题「金额 · USDT」中（设计稿 1222:48713）。
+- KLINE-05：共用的 `showModeSettingsSheet` 按键盘高度上移并按剩余高度计算最大高度，内容区不再重复加键盘留白（`portfolio_asset_details` 同步去掉）。
+- ACC-03：账户菜单标题统一为「账户 / Account」，只列当前账户与退出登录（首版不提供主／子账户切换）；子账户页面与数据层不变。`accounts-selector` 金图已按新界面更新。
+- SET-02：设置行右侧按内容宽度布局、最多占一半，标签使用剩余空间。
+- 验证：新增/更新测试——负数格式化单元测试；资金流水上报失败/读取失败/空状态 widget 测试；通知刷新失败测试；360dp 键盘下止损校验文案可见（去掉留白后失败）；长交易对单行；快捷下单余额提示；MA 周期 4 聚焦时在键盘上方（旧弹层失败）；账户菜单标题与列表；360dp 英文设置标签分配宽度（测试字体为方块字形，校验布局分配而非实际折行）。未启动 App、未在真机或模拟器验证。

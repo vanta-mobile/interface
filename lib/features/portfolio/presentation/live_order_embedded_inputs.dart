@@ -350,6 +350,7 @@ class EmbeddedTextInput extends StatelessWidget {
     this.hint = '0',
     this.signed = false,
     this.inputFormatters,
+    this.scrollPadding = const EdgeInsets.all(20),
   });
   final Key fieldKey;
   final TextEditingController controller;
@@ -358,10 +359,15 @@ class EmbeddedTextInput extends StatelessWidget {
   final String hint;
   final bool signed;
   final List<TextInputFormatter>? inputFormatters;
+
+  /// Space kept clear around the field when the keyboard scrolls it into
+  /// view; a field with a message below it includes that message.
+  final EdgeInsets scrollPadding;
   @override
   Widget build(BuildContext context) {
     return TextField(
       key: fieldKey,
+      scrollPadding: scrollPadding,
       controller: controller,
       readOnly: !enabled,
       style: TradeTypography.body,

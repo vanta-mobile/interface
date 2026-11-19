@@ -75,9 +75,18 @@ class MarketListRow extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              quote.symbol,
-                              style: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
+                            // The symbol identifies the contract: one line,
+                            // scaled down rather than split or truncated.
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                quote.symbol,
+                                key: ValueKey('market-symbol-${quote.symbol}'),
+                                maxLines: 1,
+                                softWrap: false,
+                                style: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
+                              ),
                             ),
                             if (quote.descriptor.name.isNotEmpty &&
                                 quote.descriptor.name != quote.base)

@@ -10,6 +10,55 @@ import '../../support/live_order.dart';
 import '../../support/main_order_capacity.dart';
 
 void main() {
+  testWidgets('a validation message stays above the keyboard with its field at 360dp', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: vantaTheme(),
+        locale: const Locale('zh'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 600),
+                SizedBox(
+                  width: 202,
+                  child: AttachedExitInputControls(
+                    kind: LiveOrderTriggerKind.stop,
+                    compact: true,
+                    enabled: true,
+                    advanced: false,
+                    data: capacityContext(),
+                    entry: liveDraft(market: true, price: '', quantity: '2'),
+                    onChanged: (_) {},
+                  ),
+                ),
+                const SizedBox(height: 600),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    final field = find.byKey(const Key('attached-sl-price'));
+    final l = AppLocalizations.of(tester.element(field));
+    await tester.enterText(field, '0');
+    await tester.pumpAndSettle();
+    final issue = find.text(
+      l.attachedOrderExitIssue(l.attachedOrderStopLoss, l.attachedOrderTargetSign),
+    );
+    expect(issue, findsOneWidget);
+    expect(tester.getRect(issue).bottom, lessThanOrEqualTo(640 - 280));
+    expect(tester.getRect(field).top, greaterThanOrEqualTo(0));
+  });
+
   for (final language in ['en', 'zh']) {
     testWidgets(
       'filled TP waits quietly for entry quantity but keeps actual input errors: $language',

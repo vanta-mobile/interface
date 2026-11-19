@@ -121,6 +121,33 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('the keyboard never covers the MA period being edited', (tester) async {
+    final container = setup(tester, width: 360);
+    await launch(tester, container);
+    container.read(tradeKlineVisibleProvider.notifier).toggle();
+    await tester.pumpAndSettle();
+    await tapVisible(tester, find.byKey(const Key('chart-indicators')));
+    await tapVisible(tester, find.byKey(const Key('chart-parameters')));
+    final view = tester.view.physicalSize / tester.view.devicePixelRatio;
+    const keyboard = 300.0;
+    tester.view.viewInsets = FakeViewPadding(bottom: keyboard * tester.view.devicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+    final period = find.byKey(const ValueKey('parameter-MA-3'));
+    await tester.showKeyboard(period);
+    await tester.pumpAndSettle();
+    final visible = view.height - keyboard;
+    expect(tester.getRect(period).bottom, lessThanOrEqualTo(visible));
+    expect(
+      tester.getRect(find.byKey(const Key('chart-parameter-sheet'))).bottom,
+      lessThanOrEqualTo(visible + 0.01),
+    );
+    await tester.enterText(period, '201');
+    await tester.pumpAndSettle();
+    expect(tester.getRect(period).bottom, lessThanOrEqualTo(visible));
+    expect(tester.takeException(), null);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('K-line tab matches the 551px chart component of 12.08', (tester) async {
     final container = setup(tester);
     container.read(futuresWorkspaceTabProvider.notifier).select(FuturesWorkspaceTab.chart);

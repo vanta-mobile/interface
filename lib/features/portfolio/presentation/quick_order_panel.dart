@@ -168,11 +168,11 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
                   controller: quantity,
                   focus: focus,
                   label: l10n.quickOrderAmount(quoteAsset ?? '—'),
+                  // Design 1222:48713: the unit is in the label above.
                   hint: l10n.quickOrderAvailable(
                     available == null
                         ? '—'
-                        : '${TokenAmountFormatter.formatCompact(DecimalValue(available.toString()))} '
-                              '${data!.rules.quoteAsset}',
+                        : TokenAmountFormatter.formatCompact(DecimalValue(available.toString())),
                   ),
                   enabled: !busy && pending == null,
                   onChanged: (value) {

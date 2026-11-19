@@ -137,7 +137,8 @@ void main() {
           fixture.expectNoAccountMutation();
           await readPercent(tester);
           final available = messages(tester).quickOrderAvailable(
-            '${TokenAmountFormatter.formatCompact(DecimalValue('7.123456789012345678'))} USDT',
+            // The unit is in the field label, as in design 1222:48713.
+            TokenAmountFormatter.formatCompact(DecimalValue('7.123456789012345678')),
           );
           expect(availableHint(tester), available);
           expect(quickQuantity(tester), '25%');

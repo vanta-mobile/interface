@@ -25,7 +25,7 @@ void showPortfolioAssetDetails(
   SafeArea(
     top: false,
     child: SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 28 + MediaQuery.viewInsetsOf(context).bottom),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
       child: _AssetDetails(asset: asset, hidden: hidden, preview: preview),
     ),
   ),

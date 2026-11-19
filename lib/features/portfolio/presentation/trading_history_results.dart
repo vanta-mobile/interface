@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/presentation/status_view.dart';
+import '../../../core/vanta_api/vanta_api_failure.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
 import '../../auth/application/vanta_api_session_provider.dart';
@@ -71,6 +72,11 @@ class _TradingHistoryResultsState extends ConsumerState<TradingHistoryResults> {
         .toList();
     final blocked = !session.ready && !session.pending;
     final failure = state.error ?? session.failure;
+    // A failed income report leaves a readable archive: it only marks the
+    // page partial, and its client-side detail never reaches the screen.
+    final reportFailure = page != null && identical(state.error, page.refreshFailure);
+    // An empty result is only trusted when the read succeeded.
+    final failedEmpty = page != null && all.isEmpty && failure != null;
     return RefreshIndicator(
       onRefresh: refresh,
       child: ListView(
@@ -93,7 +99,7 @@ class _TradingHistoryResultsState extends ConsumerState<TradingHistoryResults> {
                 padding: EdgeInsets.only(top: 12),
                 child: SkeletonBox(height: 150, radius: 20),
               ),
-          ] else if (page == null && (blocked || failure != null))
+          ] else if ((page == null || failedEmpty) && (blocked || failure != null))
             StatusFailureView(
               key: const Key('history-failure'),
               title: blocked
@@ -102,14 +108,16 @@ class _TradingHistoryResultsState extends ConsumerState<TradingHistoryResults> {
                         : l.vantaApiSignInTitle
                   : null,
               message: failure != null
-                  ? portfolioStatsErrorText(context, failure)
+                  ? reportFailure && failure is! VantaApiFailure
+                        ? l.tradingHistoryPartial
+                        : portfolioStatsErrorText(context, failure)
                   : session.unavailable
                   ? l.vantaApiUnavailable
                   : l.vantaApiSignIn,
               retryLabel: blocked ? l.vantaApiSignInAction : null,
               onRetry: session.unavailable ? null : retry,
             ),
-          if (page != null) ...[
+          if (page != null && !failedEmpty) ...[
             if (page.recentDays case final days?)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -118,7 +126,7 @@ class _TradingHistoryResultsState extends ConsumerState<TradingHistoryResults> {
                   style: TradeTypography.body.copyWith(color: TradeColors.muted),
                 ),
               ),
-            if (state.hasError)
+            if (state.hasError && !reportFailure)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Text(

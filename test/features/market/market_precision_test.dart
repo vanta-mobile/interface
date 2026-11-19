@@ -9,6 +9,20 @@ void main() {
     expect(NumberUtil.format(80000, 5), '80,000');
     expect(NumberUtil.format(0.0000010203, 10), '0.0000010203');
   });
+  test('indicator axes and legends keep the sign between -1 and 0', () {
+    for (final (value, fixed, legend) in [
+      (-0.0612, '-0.06', '-0.06'),
+      (-0.5, '-0.50', '-0.5'),
+      (-1.25, '-1.25', '-1.25'),
+      (-1234.567, '-1,234.56', '-1,234.56'),
+      (-0.001, '0.00', '0'),
+      (0.0612, '0.06', '0.06'),
+    ]) {
+      expect(NumberUtil.formatFixed(value, 2), fixed, reason: '$value');
+      expect(NumberUtil.format(value, 2), legend, reason: '$value');
+    }
+    expect(NumberUtil.formatFixed(-3.9, 0), '-3');
+  });
   test('fractions retain the second nonzero digit and all supplied precision', () {
     for (final entry in {
       '0': '0',

@@ -7,14 +7,12 @@ import '../../../core/strings.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
-import '../../auth/domain/auth_session.dart';
 import '../../portfolio/application/portfolio_overview_provider.dart';
 import '../../portfolio/presentation/portfolio_components.dart';
 import '../application/account_entries_provider.dart';
 import '../domain/account_entry.dart';
 import 'account_components.dart';
 import 'account_balance_text.dart';
-import 'account_switch_screen.dart';
 
 Future<void> showAccountSelector(BuildContext context) => showGeneralDialog<void>(
   context: context,
@@ -56,7 +54,6 @@ class _AccountSelectorSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context), auth = ref.watch(authProvider);
-    final external = auth.identity?.walletKind == WalletKind.external;
     final entries = ref.watch(accountEntriesProvider);
     final active = auth.identity?.walletAddress?.toLowerCase();
     final total = ref.watch(portfolioOverviewProvider).totalUsd;
@@ -76,7 +73,9 @@ class _AccountSelectorSheet extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        external ? l.accountsSwitchTitle : l.account,
+                        // Design 950:23058; the first release has no
+                        // main/sub account switching.
+                        l.account,
                         style: PortfolioTypography.section,
                       ),
                     ),
@@ -94,26 +93,12 @@ class _AccountSelectorSheet extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              for (final entry in entries.where(
-                (e) => external || e.address.toLowerCase() == active,
-              ))
+              for (final entry in entries.where((e) => e.address.toLowerCase() == active))
                 _AccountChoice(
                   entry: entry,
-                  selected: entry.address.toLowerCase() == active,
-                  total: entry.address.toLowerCase() == active ? portfolioUsd(total) : '—',
-                  onPressed: auth.busy
-                      ? null
-                      : () {
-                          if (entry.address.toLowerCase() == active) {
-                            Navigator.pop(context);
-                            return;
-                          }
-                          final navigator = Navigator.of(context);
-                          navigator.pop();
-                          navigator.push<void>(
-                            MaterialPageRoute(builder: (_) => AccountSwitchScreen(target: entry)),
-                          );
-                        },
+                  selected: true,
+                  total: portfolioUsd(total),
+                  onPressed: auth.busy ? null : () => Navigator.pop(context),
                 ),
               AccountAction(
                 key: const Key('accounts-logout'),

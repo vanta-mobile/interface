@@ -92,6 +92,22 @@ void main() {
     expect(find.text('Read marker unavailable'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
+  testWidgets('a failed refresh after an empty read shows only the failure', (tester) async {
+    final f = InboxFixture();
+    addTearDown(f.dispose);
+    await f.mount(tester);
+    expect(find.byKey(const Key('notification-empty')), findsOneWidget);
+    f.listFailure = true;
+    await tester.drag(find.byKey(const Key('notification-list')), const Offset(0, 360));
+    await tester.pumpAndSettle();
+    expect(find.text('Inbox temporarily unavailable'), findsOneWidget);
+    expect(find.byKey(const Key('notification-empty')), findsNothing);
+    f.listFailure = false;
+    await tester.tap(find.byKey(const Key('notification-retry')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('notification-empty')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
   testWidgets('entry and pull refresh never request a wallet signature implicitly', (tester) async {
     final f = InboxFixture(storedSession: false);
     addTearDown(f.dispose);

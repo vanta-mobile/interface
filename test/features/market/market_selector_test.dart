@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/market/domain/market_quote.dart';
 import 'package:vanta/features/market/domain/market_quotes.dart';
@@ -220,6 +221,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.state<EditableTextState>(find.byType(EditableText)), same(field));
     expect(field.widget.focusNode.hasFocus, isTrue);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    unawaited(events.close());
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('long symbols stay on one line inside the 360dp symbol column', (tester) async {
+    final events = StreamController<MarketQuotes>.broadcast();
+    MarketQuote row(String symbol) => MarketQuote(
+      symbol: symbol,
+      base: symbol.replaceFirst('USDT', ''),
+      precision: const MarketPrecision(),
+      price: Decimal.one,
+      quoteVolume: Decimal.parse('64470000'),
+      markPrice: Decimal.one,
+    );
+    final container = setup(tester, width: 360, scale: 1.3, quoteStream: events.stream);
+    await launch(tester, container);
+    await tester.tap(find.byKey(const Key('trade-market-selector')));
+    await tester.pump(const Duration(milliseconds: 400));
+    events.add(
+      MarketQuotes(
+        quotes: [row('BTCUSDT'), row('ASTERUSDT'), row('1000PEPEUSDT')],
+        connection: QuoteConnection.live,
+      ),
+    );
+    await tester.pumpAndSettle();
+    final line = tester.getSize(find.byKey(const ValueKey('market-symbol-BTCUSDT'))).height;
+    for (final symbol in ['ASTERUSDT', '1000PEPEUSDT']) {
+      final text = find.byKey(ValueKey('market-symbol-$symbol'));
+      expect(tester.renderObject<RenderParagraph>(text).didExceedMaxLines, isFalse);
+      expect(tester.getSize(text).height, line, reason: symbol);
+      // Scaled within the symbol column instead of wrapping past it.
+      final fitted = find.ancestor(of: text, matching: find.byType(FittedBox)).first;
+      expect(tester.getRect(text).right, lessThanOrEqualTo(tester.getRect(fitted).right + 0.01));
+    }
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     unawaited(events.close());
