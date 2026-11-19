@@ -7,6 +7,11 @@
 - VANTA-4（Android 原生 SIGSEGV，无可符号化堆栈，加载的是 x86_64 系统镜像）未处理。
 - 测试：新增 `test/features/auth/reown_pairing_response_test.dart`（重复的成功／错误响应各一例），在原始代码上复现 `Bad state: Future already completed`；`automatic_order_refresh_test` 新增「刷新中暂停订阅」用例，在原始代码上复现同一断言。
 
+## 2026-11-19 版本号更新为 0.0.7+7
+
+- `pubspec.yaml` 的版本号由 `0.0.6+6` 更新为 `0.0.7+7`；Android 与 iOS 沿用现有 Flutter 版本变量，发布版本为 `0.0.7`，构建号为 `7`。
+- 验证：`dart format --output=none --set-exit-if-changed lib/features/settings test/features/settings`（16 个文件，无格式变化）；`dart analyze` 无问题；`flutter test --no-pub test/features/settings/settings_data_test.dart test/features/settings/app_update_integration_test.dart` 共 17 项通过。未启动 App，未运行 Android/iOS 构建。
+
 ## 2026-11-19 删除本地演示账户与资产页静态预览
 
 两套演示均已没有界面入口，按产品确认删除。
