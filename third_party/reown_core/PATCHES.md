@@ -5,7 +5,7 @@ Upstream: https://github.com/reown-com/reown_flutter/tree/master/packages/reown_
 The original source license is retained in LICENSE. The library and package
 metadata are copied from the published 1.5.1 release.
 
-Runtime changes are limited to `lib/relay_client/relay_client.dart`,
+Relay runtime changes are limited to `lib/relay_client/relay_client.dart`,
 `lib/relay_client/i_relay_client.dart`, `lib/relay_client/relay_client_models.dart`
 and the bundled JSON-RPC `src/client.dart` / `src/peer.dart`:
 
@@ -39,6 +39,13 @@ and the bundled JSON-RPC `src/client.dart` / `src/peer.dart`:
   AppKit to wait for the matching request before opening a wallet. A relay
   acknowledgement does not prove wallet receipt, approval or execution.
 
+`lib/pairing/pairing.dart` settles each pending pairing request once: a
+response removes its entry from `pendingRequests`, and a redelivered response
+for the same ID (seen after app resume, Sentry VANTA-5) is ignored instead of
+throwing `Bad state: Future already completed`. Upstream 1.5.1 has the same
+code. `test/features/auth/reown_pairing_response_test.dart` reproduces the
+crash with the original source for result and error responses.
+
 Regression coverage lives in
 `test/features/auth/reown_relay_connection_test.dart` and
 `test/features/auth/reown_signature_request_test.dart`,
@@ -58,5 +65,6 @@ owns that lifecycle callback. Its signing watchdog still observes resume.
 
 This local override ships the fix without changing the machine's pub cache.
 Remove it when an upstream release provides equivalent connection/disconnect
-guards and passes these regression tests. The other vendored sources remain
-unchanged; the upstream relay file retains its existing responsibilities.
+guards, settles pairing responses once and passes these regression tests. The
+other vendored sources remain unchanged; the upstream relay file retains its
+existing responsibilities.

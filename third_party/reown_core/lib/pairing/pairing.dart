@@ -953,8 +953,10 @@ class Pairing implements IPairing {
     } else {
       final response = JsonRpcResponse.fromJson(data);
 
-      if (pendingRequests.containsKey(response.id)) {
-        final pendingRequest = pendingRequests[response.id]!;
+      // A relay may redeliver a response after resume. Settle each request
+      // once and forget it, so a duplicate cannot complete it again.
+      final pendingRequest = pendingRequests.remove(response.id);
+      if (pendingRequest != null && !pendingRequest.completer.isCompleted) {
         if (response.error != null) {
           pendingRequest.error = response.error;
           pendingRequest.completer.completeError(response.error!);
