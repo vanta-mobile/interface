@@ -95,6 +95,7 @@ class Refresh extends MainOrderRefreshController {
 }
 
 void main() {
+  late ProviderSubscription<void> subscription;
   void scenario(void Function(FakeAsync, ProviderContainer, Refresh, void Function(bool)) check) {
     fakeAsync((clock) {
       TradingAgent? agent;
@@ -127,7 +128,7 @@ void main() {
         clock.flushMicrotasks();
       }
 
-      container.listen(automaticOrderRefreshProvider, (_, _) {});
+      subscription = container.listen(automaticOrderRefreshProvider, (_, _) {});
       clock.flushMicrotasks();
       final refresh = container.read(mainOrderRefreshProvider.notifier) as Refresh;
       try {
@@ -298,6 +299,22 @@ void main() {
       c.read(symbolProvider.notifier).select('ETHUSDT');
       clock.flushMicrotasks();
       expect(refresh.calls, ['BTCUSDT', 'ETHUSDT']);
+    });
+  });
+
+  test('pausing the workspace during a refresh stops it without reading in onCancel', () {
+    scenario((clock, c, refresh, grant) {
+      refresh.gate = Completer<void>();
+      (c.read(authProvider.notifier) as Auth).set(identity);
+      grant(true);
+      expect(c.read(mainOrderRefreshProvider).loading, true);
+      // TickerMode pauses the only subscriber when the workspace leaves view.
+      subscription.pause();
+      clock.flushMicrotasks();
+      expect(c.read(mainOrderRefreshProvider).loading, false);
+      refresh.gate!.complete();
+      subscription.resume();
+      clock.flushMicrotasks();
     });
   });
 

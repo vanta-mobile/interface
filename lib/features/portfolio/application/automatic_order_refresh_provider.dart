@@ -24,6 +24,7 @@ final automaticOrderRefreshProvider = Provider.autoDispose<void>((ref) {
   Timer? timer;
   Object? scope;
   DateTime? nextAttempt;
+  MainOrderRefreshController? active;
   var scheduled = false, refreshing = false, failures = 0;
   bool visible() =>
       ref.read(quoteUpdatesActiveProvider) &&
@@ -84,6 +85,8 @@ final automaticOrderRefreshProvider = Provider.autoDispose<void>((ref) {
         return;
       }
       refreshing = true;
+      final refresher = ref.read(mainOrderRefreshProvider.notifier);
+      active = refresher;
       // Set the next slot before dispatch, so synchronous failures cannot spin.
       nextAttempt = now.add(const Duration(seconds: 5));
       // Provider notifications may arrive inside a completed read's zone.
@@ -91,11 +94,10 @@ final automaticOrderRefreshProvider = Provider.autoDispose<void>((ref) {
       // inherit it and stop when its market/visibility/owner changes.
       final succeeded = await RequestScope.runOwned(
         () => ref.mounted && scope == key && visible() && refreshing,
-        () => ref
-            .read(mainOrderRefreshProvider.notifier)
-            .refresh(symbol, reconnectPrices: false, background: true),
+        () => refresher.refresh(symbol, reconnectPrices: false, background: true),
       );
       refreshing = false;
+      active = null;
       if (!ref.mounted || scope != key) return;
       if (succeeded) {
         failures = 0;
@@ -118,7 +120,12 @@ final automaticOrderRefreshProvider = Provider.autoDispose<void>((ref) {
   ref.listen(orderReviewActivityProvider, (_, _) => inspect());
   ref.listen(mainOrderReviewSubmissionProvider, (_, _) => inspect());
   ref.onCancel(() {
-    if (refreshing) ref.read(mainOrderRefreshProvider.notifier).stop();
+    // Life-cycle callbacks cannot use Ref or modify other providers.
+    if (active case final refresher?) {
+      scheduleMicrotask(() {
+        if (identical(active, refresher)) refresher.stop();
+      });
+    }
     timer?.cancel();
     timer = null;
   });
