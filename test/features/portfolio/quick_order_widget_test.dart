@@ -4,6 +4,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vanta/core/errors/api_error_details.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/futures_position_mode.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
@@ -231,6 +232,47 @@ void main() {
     expect(tester.takeException(), null);
     await dispose(tester, container);
   });
+  for (final sizingRead in [false, true]) {
+    testWidgets('an account without a deposit merges both directions into Deposit $sizingRead', (
+      tester,
+    ) async {
+      const missing = AccountReadFailure(
+        'accountDepositRequired',
+        code: -5050,
+        details: ApiErrorDetails(message: 'This function can only be used after deposit'),
+      );
+      final identity = TestIdentityRepository()..restored = signingIdentity;
+      final orders = TestLiveOrderRepository()..context = liveContext(bid: '79999', ask: '80001');
+      final sizing = TestQuickOrderRepository();
+      if (sizingRead) {
+        sizing.failure = missing;
+      } else {
+        orders.readFailure = missing;
+      }
+      addTearDown(identity.dispose);
+      final container = setup(
+        tester,
+        identityRepository: identity,
+        liveOrderRepository: orders,
+        quickOrderRepository: sizing,
+        orderConfirmationPreferences: MemoryOrderConfirmationPreferences(),
+        liveClock: () => liveOrderClock,
+      );
+      await open(tester, container);
+      await field(tester, '80.01');
+      await tap(tester, 'quick-order-buy');
+      expect(find.byKey(const Key('quick-order-error')), findsNothing);
+      expect(find.textContaining('-5050'), findsNothing);
+      expect(find.byKey(const Key('quick-order-buy')), findsNothing);
+      expect(find.byKey(const Key('quick-order-sell')), findsNothing);
+      expect(find.byType(Dialog), findsNothing);
+      expect(orders.submits, 0);
+      await tap(tester, 'quick-order-deposit');
+      expect(find.byKey(const Key('funding-tab-deposit')), findsOneWidget);
+      expect(tester.takeException(), null);
+      await dispose(tester, container);
+    });
+  }
   testWidgets('insufficient balance shows the banner and clears on edit without submitting', (
     tester,
   ) async {

@@ -845,6 +845,12 @@
 - 漏洞修复：可提现数量未知（未读取、读取中或读取失败）时，金额无法校验余额，此前仍可提交；现在提现按钮在可提现数量已知之前保持禁用。
 - 验证：`funding_withdraw_screen_test` 新增 2 项（-5050 显示可提现 0 和请先充值、输入金额后仍提示且按钮禁用；可提现数量未知时按钮禁用，读取后可用）。「平台手续费变更」用例改为先读取可提现数量再提交。`flutter test test/features/funding` 807 项通过，`flutter analyze` 无问题。未启动 App，未在真机或模拟器验证。
 
+## 2026-11-19 K 线快捷下单栏：未充值账户显示「充值」按钮
+
+- 问题：未充值账户在 K 线页点快捷下单的做多／做空或百分比时，账户读取返回 Aster -5050，快捷栏横幅显示英文原文和「Aster 错误代码：-5050」。主下单表单已经通过 `orderEntryGateProvider` 把按钮换成「充值」，快捷栏没有接入。
+- 修改：`orderEntryGateProvider` 为 deposit，或快捷栏自己的数量读取失败为 `requiresDeposit`（code -5050）时，做多、做空两个按钮合并为一个「充值」按钮（`quick-order-deposit`），点击打开充值页；这时不显示错误横幅。其他读取失败仍按原样显示横幅。
+- 验证：`quick_order_widget_test` 新增 2 项（-5050 分别来自账户读取和数量读取：无错误横幅、不出现 -5050、做多做空按钮被「充值」替代、不弹确认框不提交、点击打开充值页）。`flutter test test/features/portfolio test/features/trade test/features/funding` 4092 项通过，`flutter analyze` 无问题。未启动 App，未在真机或模拟器验证。
+
 ## 2026-11-19 KLINE-01 横屏全屏 K 线按 12.15 加底部工具栏
 
 - 依据：AI视觉走查 KLINE-01，设计确认按新版画板 12.15（Figma 1222:48536）修改。

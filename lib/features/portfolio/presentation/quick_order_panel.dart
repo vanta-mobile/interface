@@ -16,7 +16,10 @@ import '../../market/domain/market_precision.dart';
 import '../../trade/application/providers.dart';
 import '../../trade/presentation/trade_theme.dart';
 import '../../trade/presentation/widgets/account_sheet.dart';
+import '../../funding/domain/funding_catalog.dart';
+import '../../funding/presentation/funding_screen.dart';
 import '../application/live_order_provider.dart';
+import '../application/order_entry_gate_provider.dart';
 import '../application/quick_order_provider.dart';
 import 'quick_order_review.dart';
 import '../../../core/presentation/no_press_feedback.dart';
@@ -71,7 +74,10 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
     await controller.load();
     if (!mounted) return false;
     final failure = ref.read(quickOrderProvider).failure;
-    if (failure != null) setState(() => error = accountErrorText(this.context, failure));
+    // A missing deposit turns the directions into the Deposit action instead.
+    if (failure != null && !failure.requiresDeposit) {
+      setState(() => error = accountErrorText(this.context, failure));
+    }
     return failure == null && controller.context != null;
   }
 
@@ -147,6 +153,10 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
     if (quantity.text != text) quantity.text = text;
     final available = data?.funds?.account.availableBalance;
     final submitting = live.busy && live.intent?.draft.quickEntry == true;
+    // Same prerequisite as the main order form: one Deposit action replaces both directions.
+    final deposit =
+        ref.watch(orderEntryGateProvider) == OrderEntryGate.deposit ||
+        state.failure?.requiresDeposit == true;
     bool loading(bool buy) => pending == buy || submitting && live.intent?.draft.buy == buy;
     return TextFieldTapRegion(
       child: Column(
@@ -185,23 +195,25 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
               // Both directions share the remaining half and grow together when
               // a long quote wraps.
               Expanded(
-                child: IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final buy in [true, false]) ...[
-                        if (!buy) const SizedBox(width: 6),
-                        Expanded(
-                          child: _DirectionButton(
-                            buy: buy,
-                            loading: loading(buy),
-                            onTap: busy || pending != null ? null : () => _submit(buy),
-                          ),
+                child: deposit
+                    ? _DepositButton(onTap: () => openFunding(context, FundingOperation.deposit))
+                    : IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            for (final buy in [true, false]) ...[
+                              if (!buy) const SizedBox(width: 6),
+                              Expanded(
+                                child: _DirectionButton(
+                                  buy: buy,
+                                  loading: loading(buy),
+                                  onTap: busy || pending != null ? null : () => _submit(buy),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                      ],
-                    ],
-                  ),
-                ),
+                      ),
               ),
             ],
           ),
@@ -209,6 +221,39 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
       ),
     );
   }
+}
+
+class _DepositButton extends StatelessWidget {
+  const _DepositButton({required this.onTap});
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    child: Material(
+      color: TradeColors.positive,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: const Key('quick-order-deposit'),
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 56),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Center(
+              child: _Line(
+                AppLocalizations.of(context).fundingDeposit,
+                TradeTypography.body.copyWith(
+                  color: TradeColors.onDirection,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _DirectionButton extends ConsumerWidget {
