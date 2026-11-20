@@ -141,7 +141,10 @@ class VantaApp extends ConsumerWidget {
       theme: vantaTheme(),
       locale: ref.watch(localeProvider),
       supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: [
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
       home: const StartupScreen(home: DeepLinkHost(child: TradingScreen())),
     );
   }
