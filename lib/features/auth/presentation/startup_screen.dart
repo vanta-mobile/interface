@@ -92,8 +92,9 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
           if (restriction.blocked && !_geoChecked) {
             _geoChecked = true;
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted)
+              if (mounted) {
                 unawaited(showGeoRestrictionDialog(context, restriction.restrictedAreas));
+              }
             });
           } else if (!restriction.blocked) {
             _geoChecked = true;

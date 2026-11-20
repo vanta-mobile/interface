@@ -14,23 +14,26 @@ Future<void> showGeoRestrictionDialog(BuildContext context, List<String> restric
       barrierLabel: '',
       barrierColor: PortfolioColors.transparent,
       transitionDuration: const Duration(milliseconds: 200),
-      pageBuilder: (context, animation, secondaryAnimation) => Stack(
-        children: [
-          Positioned.fill(
-            child: IgnorePointer(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                child: const ColoredBox(color: AppColors.authOverlay),
+      pageBuilder: (context, animation, secondaryAnimation) => PopScope(
+        canPop: false,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: IgnorePointer(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                  child: const ColoredBox(color: AppColors.authOverlay),
+                ),
               ),
             ),
-          ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _GeoRestrictionDialog(restrictedAreas: restrictedAreas),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _GeoRestrictionDialog(restrictedAreas: restrictedAreas),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
 
