@@ -72,7 +72,11 @@ class _AssistantPageState extends ConsumerState<AssistantPage> {
       child: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final inset = constraints.maxWidth > 820 ? (constraints.maxWidth - 788) / 2 : 0.0;
+            final inset = constraints.maxWidth > 820
+                ? (constraints.maxWidth - 788) / 2
+                : constraints.maxWidth > 592
+                ? (constraints.maxWidth - 560) / 2
+                : 0.0;
             return Padding(
               padding: EdgeInsets.symmetric(horizontal: inset),
               child: Column(

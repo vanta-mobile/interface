@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/presentation/responsive_insets.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
@@ -66,9 +67,7 @@ class _TransferHistoryScreenState extends ConsumerState<TransferHistoryScreen> {
                 onRefresh: ref.read(transferHistoryProvider.notifier).refresh,
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final horizontal = constraints.maxWidth > 820
-                        ? (constraints.maxWidth - 788) / 2
-                        : 16.0;
+                    final horizontal = responsiveHorizontalInset(constraints.maxWidth);
                     return ListView(
                       key: const Key('transfer-history-list'),
                       physics: const AlwaysScrollableScrollPhysics(),
