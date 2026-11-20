@@ -218,8 +218,31 @@ class _AnimatedNumberTextState extends State<AnimatedNumberText>
     if (outgoing == null || !_controller.isAnimating) {
       return Text(_shown, style: style, textAlign: widget.textAlign, softWrap: widget.softWrap);
     }
-    final previous = _alignRight(outgoing, _shown.length);
     final rise = _trend == NumberTrend.up ? 1.0 : -1.0;
+
+    // When the string length changes, centered/end alignment shifts every
+    // character's visual position even if only one digit was added or removed.
+    // Rolling individual slots in that case looks broken, so flip the whole
+    // number as a single unit instead.
+    if (outgoing.length != _shown.length) {
+      return RepaintBoundary(
+        child: Semantics(
+          label: _shown,
+          excludeSemantics: true,
+          child: _WholeFlip(
+            from: outgoing,
+            to: _shown,
+            progress: _controller,
+            rise: rise,
+            style: style,
+            textAlign: widget.textAlign,
+            softWrap: widget.softWrap,
+          ),
+        ),
+      );
+    }
+
+    final previous = _alignRight(outgoing, _shown.length);
     final characters = <Widget>[
       for (var index = 0; index < _shown.length; index++)
         if (previous[index] == _shown[index])
@@ -250,6 +273,55 @@ class _AnimatedNumberTextState extends State<AnimatedNumberText>
       ),
     );
   }
+}
+
+/// The entire number slides out and is replaced when the digit count changes.
+///
+/// The incoming value determines the layout width immediately so the row
+/// does not jitter; the outgoing value fills the same bounds via
+/// [Positioned.fill] and slides away in the opposite direction.
+class _WholeFlip extends StatelessWidget {
+  const _WholeFlip({
+    required this.from,
+    required this.to,
+    required this.progress,
+    required this.rise,
+    required this.style,
+    required this.textAlign,
+    required this.softWrap,
+  });
+
+  final String from;
+  final String to;
+  final Animation<double> progress;
+  final double rise;
+  final TextStyle style;
+  final TextAlign? textAlign;
+  final bool softWrap;
+
+  @override
+  Widget build(BuildContext context) => ClipRect(
+    child: AnimatedBuilder(
+      animation: progress,
+      builder: (context, _) {
+        final t = AnimatedNumberText.defaultCurve.transform(progress.value);
+        return Stack(
+          children: [
+            FractionalTranslation(
+              translation: Offset(0, rise * (1 - t)),
+              child: Text(to, style: style, textAlign: textAlign, softWrap: softWrap),
+            ),
+            Positioned.fill(
+              child: FractionalTranslation(
+                translation: Offset(0, -rise * t),
+                child: Text(from, style: style, textAlign: textAlign, softWrap: softWrap),
+              ),
+            ),
+          ],
+        );
+      },
+    ),
+  );
 }
 
 /// One character turning from [from] to [to] behind a clip.
