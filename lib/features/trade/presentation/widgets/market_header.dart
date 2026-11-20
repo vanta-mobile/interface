@@ -16,9 +16,8 @@ import 'futures_workspace_tabs.dart';
 export 'futures_workspace_tabs.dart';
 
 /// The market selector row: coin icon, symbol, leverage badge / change, and
-/// workspace tab switcher.  Shown in the trading page header whenever the
-/// futures workspace is active (sticky in chart mode via the [Scaffold.appBar],
-/// scrollable in trade/order-entry mode).
+/// workspace tab switcher.  Pinned in the [Scaffold.appBar] whenever the
+/// futures workspace is active, so it stays visible while the user scrolls.
 class MarketHeaderRow extends ConsumerWidget {
   const MarketHeaderRow({super.key});
 

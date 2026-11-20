@@ -53,14 +53,18 @@ class _TradingScreenState extends ConsumerState<TradingScreen> with WidgetsBindi
               ),
               child: SafeArea(
                 bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(height: 44, child: TradePageHeader()),
-                      const MarketHeaderRow(),
-                    ],
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 44, child: TradePageHeader()),
+                        const MarketHeaderRow(),
+                      ],
+                    ),
                   ),
                 ),
               ),

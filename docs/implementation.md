@@ -1,3 +1,18 @@
+## 2026-11-20 持久化上次选择的交易对
+
+- `selection_providers.dart` 新增 `readSavedSymbol()`（从 `SharedPreferencesAsync` 读取 `vanta.lastSymbol`，校验须以 `USDT` 结尾且长度 > 4）和 `initialSymbolProvider`（默认 `BTCUSDT`）；`SymbolController.build()` 改为读 `initialSymbolProvider`，`select()` 在更新 state 的同时调用 `SharedPreferencesAsync().setString()` 写入。
+- `main.dart` 在 `runApp` 前调用 `readSavedSymbol()`，以 `initialSymbolProvider.overrideWithValue(savedSymbol ?? 'BTCUSDT')` 注入 `ProviderScope`，与 locale 持久化模式一致。
+- `SharedPreferencesAsync` 在 `SymbolController` 中按需构造（非字段初始化），避免测试环境中平台未注册时抛出 `Bad state`。
+- 验证：`flutter test test/features/trade/trade_page_tap_test.dart` 通过（1 项）；`dart format` 无格式变化；`flutter analyze` 无新问题。未启动 App，未在真机测试。
+
+## 2026-11-20 TAS-5061 市场选择行在交易和 K 线模式下均固定于顶部
+
+- `MarketHeaderRow`（币种图标、交易对、杠杆徽标、工作区 Tab）移入 `Scaffold.appBar`，在期货目的地下始终置顶，不随页面内容滚动；此前只在 K 线模式生效。
+- `appBar` 的 `preferredSize` 高度改为 `44 + textScaler.scale(40).clamp(48, ∞)`，消除大字号时的 RenderFlex 溢出（原 48px 硬限）。
+- `MarketHeader` 在非 K 线模式下返回 `SizedBox.shrink()` 避免行重复；K 线模式仍在滚动区渲染 `_ChartSummary`。
+- `appBar` 内空白区域的点击事件通过外层 `GestureDetector(HitTestBehavior.translucent)` 传递至 `primaryFocus.unfocus()`，键盘收起行为与 body 一致，`trade_page_tap_test` 恢复通过。
+- 验证：`flutter test test/features/trade/navigation_widget_test.dart trade_page_tap_test.dart trade_design_widget_test.dart` 共 20 项通过；`dart format` 无格式变化；`flutter analyze` 无新问题。未启动 App，未在真机目视比对。
+
 ## 2026-11-19 Sentry VANTA-5／VANTA-2 修复
 
 - VANTA-5（生产 `vanta@0.0.6+6`，iOS，未捕获 `StateError: Future already completed`，位于 `Pairing._processEvent`）：vendored `reown_core` 的配对请求在收到响应后从不移出 `pendingRequests`，App 从后台恢复后 relay 重发同一 ID 的响应时会再次 `complete`。现在收到响应即移出该请求，已完成的不再处理；上游 1.5.1 代码相同，改动记录在 `third_party/reown_core/PATCHES.md`。
@@ -930,3 +945,24 @@
 - `flutter test test/features/trade/trade_page_tap_test.dart`：通过
 - `flutter test test/features/trade/`（121 项）：全部通过
 - `dart format` 无变更；`flutter analyze` 无新警告
+
+## 2026-11-20 地区限制弹窗（TAS-5059）
+
+应用启动片头播完后，调用 `GET /v1/config/geo`（`geoRestrictionProvider`）检查当前 IP 所在地区，若 `decision.blocked == true` 则弹出不可关闭的全屏遮罩弹窗。
+
+**实现：**
+- `lib/features/auth/application/geo_restriction_provider.dart`：`AsyncNotifierProvider`，请求 `/v1/config/geo`，解析 `decision.blocked`，返回 `GeoRestriction(blocked: bool)`。HTTP 客户端通过 `backendHttpPoolProvider.lease()` + `VantaApiHttp` 管理，`ref.onDispose` 释放。
+- `lib/features/auth/presentation/geo_restriction_dialog.dart`：`showGeoRestrictionDialog`，`barrierDismissible: false`，`BackdropFilter` 高斯模糊 6px + `AppColors.authOverlay` 半透明遮罩。对话框卡片：`PortfolioColors.inset` 背景、`AppColors.authLine` 1px 描边、24px 圆角、水平 20px / 垂直 28px 内边距。图标 `assets/auth/geo_lock.webp` 100×100 逻辑像素居中；标题 `PortfolioTypography.heading`（白色）；描述文字 `AuthTypography.body` + `AppColors.authSecondary`，折叠时固定 100px 高度裁切，可通过「查看全部」/ 「收起」切换，使用 `assets/auth/geo_fold.svg` 旋转 ±90°；按钮文字 `PortfolioColors.muted`，包裹 `NoPressFeedback`。
+- `lib/features/auth/presentation/startup_screen.dart`：片头完成后 `watch(geoRestrictionProvider)`，仅在 `blocked == true` 时通过 `addPostFrameCallback` 触发一次弹窗，以 `_geoChecked` 防重复。
+- 新增 l10n 键：`geoRestrictionTitle`、`geoRestrictionDescription`、`geoRestrictionViewAll`、`geoRestrictionFold`（中英双语）。
+- 资产：`assets/auth/geo_lock.webp`（Figma 1810-27629，3× PNG → WebP）；`assets/auth/geo_fold.svg`（Figma 折叠图标，`#959B9E` 描边）。
+
+**边界：**
+- 弹窗无关闭按钮，不可通过点击遮罩或返回键关闭。
+- baseUri 为 null（无编译时 API origin）时 provider 直接返回 `blocked: false`，不发请求。
+- 加载中/错误不阻塞 UI；仅 `blocked: true` 时触发弹窗。
+
+**验收：**
+- `flutter gen-l10n` 成功，新 key 已出现在 `app_localizations.dart`。
+- `flutter analyze lib/features/auth/` 仅含项目级既有的 `deprecated_member_use` info，无新 error/warning。
+- 未启动 App，未在真机或模拟器验证。
