@@ -84,7 +84,7 @@ class _FuturesHistoryScreenState extends State<FuturesHistoryScreen> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  textStyle: TradeTypography.body,
+                                  textStyle: TradeTypography.body.copyWith(fontSize: 14),
                                 ).copyWith(overlayColor: PressFeedback.none),
                                 child: Text(l.tradingHistoryTab(item.name)),
                               ),

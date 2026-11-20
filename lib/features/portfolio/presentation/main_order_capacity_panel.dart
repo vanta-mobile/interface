@@ -125,12 +125,6 @@ class MainOrderCapacityPanel extends ConsumerStatefulWidget {
       key: const Key('main-order-capacity'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (reviewFailure case final failure? when !refreshing)
-          Text(
-            accountErrorText(context, failure),
-            key: const Key('main-order-review-failure'),
-            style: const TextStyle(color: AppColors.negative),
-          ),
         for (final buy in [true, false])
           Padding(
             padding: const EdgeInsets.only(top: 8),

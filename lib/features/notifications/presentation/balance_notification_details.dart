@@ -14,7 +14,7 @@ class BalanceNotificationDetails extends StatelessWidget {
     final l = AppLocalizations.of(context), e = event;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 20,
+      spacing: 4,
       children: [
         NotificationDetailSummary(
           title: l.notificationBalanceTitle,
@@ -24,7 +24,7 @@ class BalanceNotificationDetails extends StatelessWidget {
         NotificationDetailSection(l.notificationBalanceChanges),
         for (final balance in e.balances)
           NotificationDetailCard(
-            spacing: 12,
+            spacing: 4,
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

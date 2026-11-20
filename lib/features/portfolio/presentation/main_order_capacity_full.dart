@@ -182,13 +182,6 @@ class _Side extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     Text(buy ? l10n.liveAllocationReviewBuy : l10n.liveAllocationReviewSell),
-                    Text(
-                      value?.quantity == null
-                          ? '—'
-                          : unit == OrderSizeUnit.quote
-                          ? '≈ ${value!.size?.estimatedNotional ?? value!.notional} ${data.rules.quoteAsset}'
-                          : '${value!.quantity} ${data.rules.baseAsset}',
-                    ),
                   ],
                 ),
               ),

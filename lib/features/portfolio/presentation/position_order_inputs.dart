@@ -381,13 +381,31 @@ class _SliderPainter extends CustomPainter {
     final y = size.height / 2, travel = size.width - 12;
     final track = RRect.fromLTRBR(0, y - 2, size.width, y + 2, const Radius.circular(999));
     canvas.drawRRect(track, Paint()..color = TradeColors.control);
+    if (share > 0) {
+      final activeTrack = RRect.fromLTRBR(
+        0,
+        y - 2,
+        6 + travel * share,
+        y + 2,
+        const Radius.circular(999),
+      );
+      canvas.drawRRect(activeTrack, Paint()..color = TradeColors.text);
+    }
     for (var i = 0; i < 5; i++) {
       final center = Offset(6 + travel * i / 4, y);
-      if (i == 0) {
-        canvas.drawCircle(center, 3, Paint()..color = TradeColors.muted);
+      // At zero the first stop is the design's smaller 3px dot under the
+      // thumb; once the thumb moves it is a ringed stop like the others
+      // (Figma 331:47686).
+      if (i == 0 && share <= 0) {
+        canvas.drawCircle(center, 3, Paint()..color = TradeColors.text);
         continue;
       }
-      canvas.drawCircle(center, 5, Paint()..color = TradeColors.control);
+      final passed = i / 4 <= share;
+      canvas.drawCircle(
+        center,
+        5,
+        Paint()..color = passed ? TradeColors.text : TradeColors.control,
+      );
       canvas.drawCircle(
         center,
         5,

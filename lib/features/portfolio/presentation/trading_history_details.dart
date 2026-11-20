@@ -126,7 +126,7 @@ class _OrderDetails extends ConsumerWidget {
               HistorySheetHeader(l.tradingHistoryOrderDetails),
               const SizedBox(height: 8),
               const Divider(height: 1, color: TradeColors.line),
-              const SizedBox(height: 16),
+              const SizedBox(height: 4),
               Wrap(
                 spacing: 8,
                 runSpacing: 4,
@@ -136,7 +136,7 @@ class _OrderDetails extends ConsumerWidget {
                   HistoryStatus(r.status),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 4),
               HistoryRow(
                 l.tradingHistoryFilledTotal,
                 '${historyAmount(r.filledValue, fixed: 2)} / ${historyUnit(r.orderValue, currentUnits?.quote, fixed: 2)}',
@@ -149,11 +149,11 @@ class _OrderDetails extends ConsumerWidget {
               HistoryRow(l.tradingHistoryUpdatedAt, historyTime(r.updatedAt)),
               HistoryRow(l.orderId, r.id, copyable: true),
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: 4),
                 child: Divider(height: 1, color: TradeColors.line),
               ),
               Text(l.tradingHistoryTradeDetails, style: TradeTypography.symbol),
-              const SizedBox(height: 16),
+              const SizedBox(height: 4),
               if (data == null && state.isLoading)
                 const SkeletonBox(height: 174, radius: 12)
               else if (state.hasError)
@@ -185,7 +185,7 @@ class _OrderDetails extends ConsumerWidget {
                   ),
                 for (final fill in data.fills)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: 4),
                     child: PortfolioCard(
                       radius: 12,
                       padding: const EdgeInsets.all(12),

@@ -20,7 +20,7 @@ class SpotNotificationDetails extends ConsumerWidget {
     String quote(Decimal v) => notificationAmount(v, units?.quote, l);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 20,
+      spacing: 4,
       children: [
         NotificationDetailSummary(
           title: e.side == 'BUY' ? l.spotSideBuy : l.spotSideSell,

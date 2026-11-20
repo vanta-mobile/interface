@@ -52,7 +52,7 @@ class NotificationDetailHeader extends StatelessWidget {
 }
 
 class NotificationDetailCard extends StatelessWidget {
-  const NotificationDetailCard({super.key, required this.children, this.spacing = 16});
+  const NotificationDetailCard({super.key, required this.children, this.spacing = 4});
   final List<Widget> children;
   final double spacing;
   @override
@@ -80,7 +80,7 @@ class NotificationDetailSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) => NotificationDetailCard(
     key: const Key('notification-detail-summary'),
-    spacing: 8,
+    spacing: 4,
     children: [
       Text(title, style: NotificationTypography.detailSummaryLabel),
       SelectableText(value, style: NotificationTypography.detailSummaryValue),
@@ -150,7 +150,7 @@ class NotificationDetailRow extends StatelessWidget {
       if (constraints.maxWidth < 250 || MediaQuery.textScalerOf(context).scale(12) > 18) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 6,
+          spacing: 4,
           children: [
             Text(label, style: NotificationTypography.detailLabel),
             valueWidget,

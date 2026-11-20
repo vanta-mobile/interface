@@ -24,7 +24,7 @@ class OrderNotificationDetails extends ConsumerWidget {
     final risk = e.risk != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 20,
+      spacing: 4,
       children: [
         NotificationDetailSummary(
           title: notificationTitle(l, e),

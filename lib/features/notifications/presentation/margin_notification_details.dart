@@ -19,7 +19,7 @@ class MarginNotificationDetails extends ConsumerWidget {
     final l = AppLocalizations.of(context), e = event;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 20,
+      spacing: 4,
       children: [
         NotificationDetailSummary(
           title: l.notificationMarginTitle,
@@ -54,7 +54,7 @@ class _Position extends ConsumerWidget {
     final units = ref.watch(notificationUnitsProvider).asData?.value[p.symbol];
     String amount(Decimal v, String? unit) => notificationAmount(v, unit, l);
     return NotificationDetailCard(
-      spacing: 14,
+      spacing: 4,
       children: [
         SelectableText(p.symbol, style: NotificationTypography.detailSection),
         NotificationDetailRow(l.notificationPositionSide, notificationSide(l, p.side)),

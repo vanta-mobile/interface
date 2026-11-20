@@ -92,7 +92,11 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
     // Sizing already read for this account (a renewal may have replaced its
     // snapshot) lets the choice apply at once; the order is still sized against
     // the current snapshot when it is submitted.
-    final ok = ref.read(quickOrderProvider).sizing != null || await _ensureSizing(percent: true);
+    final notifier = ref.read(quickOrderProvider.notifier);
+    final sizing = ref.read(quickOrderProvider).sizing;
+    final ok =
+        (sizing != null && sizing.context == notifier.context) ||
+        await _ensureSizing(percent: true);
     if (ok && mounted && tap == _percentTap) {
       ref.read(quickOrderProvider.notifier).selectPercent(value);
     }
@@ -146,10 +150,7 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
     // Only this entry's own read, an order being submitted, an auth change and
     // an unknown outcome lock it.
     final busy = state.loading || live.busy && live.intent != null || auth.busy;
-    // A chosen percentage shows the amount it stands for once sizing is read.
-    final text = state.percent == null
-        ? state.quantity
-        : ref.read(quickOrderProvider.notifier).percentAmount() ?? '${state.percent}%';
+    final text = state.percent == null ? state.quantity : '${state.percent}%';
     if (quantity.text != text) quantity.text = text;
     final available = data?.funds?.account.availableBalance;
     final submitting = live.busy && live.intent?.draft.quickEntry == true;

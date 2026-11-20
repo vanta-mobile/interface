@@ -79,7 +79,7 @@ class HistoryRow extends StatelessWidget {
   final bool copyable;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 3),
+    padding: const EdgeInsets.symmetric(vertical: 2),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

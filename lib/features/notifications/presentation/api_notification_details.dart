@@ -93,7 +93,7 @@ class _ApiNotificationDetailsState extends ConsumerState<ApiNotificationDetails>
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: 16,
+                        spacing: 4,
                         children: [
                           if (entry == null)
                             StatusEmptyView(message: l.notificationEmpty)
@@ -151,7 +151,7 @@ class ApiNotificationFacts extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 16,
+      spacing: 4,
       children: [
         NotificationDetailSummary(
           title: apiNotificationTitle(l, entry),

@@ -43,7 +43,7 @@ class EmbeddedAdvancedSection extends StatelessWidget {
 /// gaps), shared by the Advanced rows with or without a trailing selector.
 const embeddedCheckRowHeight = 21.0;
 
-/// Design checkbox row: 11px box, white fill when selected, full-row target.
+/// Design checkbox row: 14px box, white fill when selected, full-row target.
 /// [help] adds the design question mark that opens an explanation sheet.
 class EmbeddedCheckRow extends StatelessWidget {
   const EmbeddedCheckRow({
@@ -84,19 +84,19 @@ class EmbeddedCheckRow extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Container(
-                                width: 11,
-                                height: 11,
+                                width: 14,
+                                height: 14,
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
                                   border: Border.all(
                                     color: value ? TradeColors.text : TradeColors.card,
                                   ),
-                                  borderRadius: BorderRadius.circular(2),
+                                  borderRadius: BorderRadius.circular(3),
                                 ),
                                 child: value
                                     ? Container(
-                                        width: 7,
-                                        height: 7,
+                                        width: 9,
+                                        height: 9,
                                         decoration: BoxDecoration(
                                           color: TradeColors.text,
                                           borderRadius: BorderRadius.circular(1),
@@ -108,7 +108,7 @@ class EmbeddedCheckRow extends StatelessWidget {
                               Flexible(
                                 child: Text(
                                   label,
-                                  style: TradeTypography.caption.copyWith(
+                                  style: TradeTypography.body.copyWith(
                                     color: enabled ? TradeColors.text : TradeColors.muted,
                                   ),
                                 ),

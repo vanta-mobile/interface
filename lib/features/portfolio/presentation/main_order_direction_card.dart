@@ -96,7 +96,12 @@ class MainOrderDirectionCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: Text(label, style: TradeTypography.caption)),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TradeTypography.caption.copyWith(fontSize: 14, height: 20 / 14),
+                  ),
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: resultsPending && (name == 'maximum' ? retainedCapacity == null : hasSize)
@@ -117,7 +122,11 @@ class MainOrderDirectionCard extends StatelessWidget {
                             ],
                           ),
                           textAlign: TextAlign.end,
-                          style: TradeTypography.caption.copyWith(color: TradeColors.text),
+                          style: TradeTypography.caption.copyWith(
+                            fontSize: 14,
+                            height: 20 / 14,
+                            color: TradeColors.text,
+                          ),
                         ),
                 ),
               ],
@@ -136,24 +145,14 @@ class MainOrderDirectionCard extends StatelessWidget {
           disabledBackgroundColor: color.withValues(alpha: .35),
           disabledForegroundColor: TradeColors.muted,
           shape: DirectionActionCard.buttonShape,
-          textStyle: TradeTypography.body.copyWith(fontWeight: FontWeight.w700),
+          textStyle: TradeTypography.body.copyWith(fontSize: 14, fontWeight: FontWeight.w700),
         ).copyWith(overlayColor: PressFeedback.overlay),
         child: pending
             ? const SizedBox.square(
                 dimension: 16,
                 child: CircularProgressIndicator(strokeWidth: 2, color: TradeColors.text),
               )
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(label ?? (buy ? l.long : l.short)),
-                  if (value?.quantity case final quantity? when hasSize && quantity > Decimal.zero)
-                    Text(
-                      '≈$quantity ${data.rules.baseAsset}',
-                      key: Key('main-order-estimate-$side'),
-                    ),
-                ],
-              ),
+            : Text(label ?? (buy ? l.long : l.short)),
       ),
     );
   }
