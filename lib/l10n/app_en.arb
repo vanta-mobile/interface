@@ -931,6 +931,17 @@
       }
     }
   },
+  "quickOrderValue": "≈ {value} {asset}",
+  "@quickOrderValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
   "quickOrderChartTab": "Chart view",
   "attachedOrderTitle": "Attach take profit / stop loss",
   "attachedOrderTakeProfit": "Attached take profit",

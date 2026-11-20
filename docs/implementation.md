@@ -911,3 +911,22 @@
 - 排查其他「打开钱包」页：开启交易页已按 embedded 区分（文案「签名」、一次完成全部签名）；子账户创建／冻结仅外部钱包可用；其余为订单内容确认页，不属此类，未改。
 - 不再静默：钱包返回拒绝（4001）现在显示「你已拒绝钱包请求，可以重新尝试。」（授权、充值、提现共用）；`depositApprovalNotNeeded`／`depositSubmissionApprovalNeeded` 改为显示，文案改为「授权额度已足够，请直接充值。」／「授权额度不足，请先授权。」；`depositEntryProvider.prepare` 不再返回 null，每个提前结束的分支都带原因（另一笔请求进行中、会话失效、钱包忙、钱包已变更、数量无效）；准备期间数量被修改时显示 `depositSubmissionChanged`；应用内签名既未发出也无错误时显示「另一笔请求进行中」。points、助手授权对拒绝已有提示，未改。
 - 验证：新增 Privy 钱包充值（无确认页、直接进入处理中）、授权（拒绝显示原因；再次点击直接发送并等待回执）2 项；拒绝用例改为断言提示文案；embedded 提现用例改为不经确认页直接提交并进入状态页。`dart format`、`dart analyze --fatal-infos` 无问题；全量 `flutter test` 6085 项通过（3 项既有跳过）。未启动 App，未在真机验证 Privy 签名。
+
+## 2026-11-20 K线模式顶部区域固定（TAS-5061）
+
+在合约页图表（K线）模式下，市场选择行（币种图标、交易对名称、最大杠杆角标、工作区标签切换）现在钉在 `Scaffold.appBar` 中，始终可见，不随页面滚动消失。
+
+**实现：**
+- `market_header.dart`：将原 `MarketHeader` 中的选择行提取为独立 `ConsumerWidget` `MarketHeaderRow`；`MarketHeader` 在图表模式只返回 `_ChartSummary`，在下单模式返回 `MarketHeaderRow`（保持无图表时的行为不变）。导出 `FuturesWorkspaceTab`（来自 `futures_workspace_tabs.dart`）供 `trading_screen.dart` 使用。
+- `trading_screen.dart`：图表模式时在 `Scaffold.appBar` 的 `PreferredSize` 内把 `MarketHeaderRow` 叠在 `TradePageHeader` 下方；`preferredSize` 高度根据 `MediaQuery.textScalerOf(context).scale(40.0).clamp(48.0, ∞)` 动态计算（40px = symbol行24px + caption行16px 基准高度），确保大字体缩放时不溢出。`Column` 改为 `MainAxisSize.min` 避免撑满剩余空间。
+
+**边界：**
+- 下单模式行为不变，`MarketHeader` 仍在可滚动内容中渲染 `MarketHeaderRow`。
+- 横屏全屏图表通过现有 `FuturesWorkspaceTab.chart` 路径触发，本次修改不影响其全屏逻辑。
+- `appBar` 高度 = 44（`TradePageHeader`）+ max(48, `textScale` × 40)；非图表模式仍为 44。
+
+**验收：**
+- `flutter test test/features/trade/navigation_widget_test.dart`（6 项，含 1.5 倍字体缩放）：通过
+- `flutter test test/features/trade/trade_page_tap_test.dart`：通过
+- `flutter test test/features/trade/`（121 项）：全部通过
+- `dart format` 无变更；`flutter analyze` 无新警告

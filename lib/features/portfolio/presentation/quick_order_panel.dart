@@ -145,6 +145,12 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
     ref.listen(tradingAgentProvider, (_, _) => _prefetch());
     final data = live.context?.symbol == ref.watch(symbolProvider) ? live.context : null;
     final quoteAsset = data?.rules.quoteAsset ?? ref.watch(selectedInstrumentProvider)?.quote;
+    final percentAmt = state.percent == null
+        ? null
+        : ref.read(quickOrderProvider.notifier).percentAmount();
+    final orderValue = percentAmt == null
+        ? null
+        : l10n.quickOrderValue(percentAmt, quoteAsset ?? '—');
     // Background reads and setting leases never lock the bar (that would close
     // the keyboard and drop taps); a tap during them waits for them instead.
     // Only this entry's own read, an order being submitted, an auth change and
@@ -190,6 +196,7 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
                     if (error != null) setState(() => error = null);
                     ref.read(quickOrderProvider.notifier).setQuantity(value.replaceAll('%', ''));
                   },
+                  orderValue: orderValue,
                 ),
               ),
               const SizedBox(width: 6),
@@ -334,12 +341,14 @@ class _QuantityField extends StatelessWidget {
     required this.hint,
     required this.enabled,
     required this.onChanged,
+    this.orderValue,
   });
   final TextEditingController controller;
   final FocusNode focus;
   final String label, hint;
   final bool enabled;
   final ValueChanged<String> onChanged;
+  final String? orderValue;
   @override
   Widget build(BuildContext context) {
     final focused = focus.hasFocus;
@@ -398,6 +407,15 @@ class _QuantityField extends StatelessWidget {
                 onChanged: onChanged,
               ),
             ),
+            if (orderValue case final v?) ...[
+              const SizedBox(height: 2),
+              Text(
+                v,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TradeTypography.tag.copyWith(color: TradeColors.secondary),
+              ),
+            ],
           ],
         ),
       ),
