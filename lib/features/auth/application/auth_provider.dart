@@ -196,11 +196,13 @@ class AuthController extends Notifier<AuthSession> {
       (identity) {
         if (!ref.mounted || state.identity == null) return;
         if (identity == null) {
-          _generation++;
-          state = AuthSession(
-            phase: AuthPhase.signedOut,
-            failure: _loggingOut ? null : const AuthFailure('authSessionUnavailable'),
-          );
+          if (!state.busy) {
+            _generation++;
+            state = AuthSession(
+              phase: AuthPhase.signedOut,
+              failure: _loggingOut ? null : const AuthFailure('authSessionUnavailable'),
+            );
+          }
         } else if (!state.busy &&
             (identity.id != state.identity?.id ||
                 identity.walletAddress != state.identity?.walletAddress ||
@@ -380,8 +382,10 @@ class AuthController extends Notifier<AuthSession> {
   }
 
   Future<void> connectWallet(BuildContext context, {String? expectedAddress}) async {
+    debugPrint('[AUTH] connectWallet: busy=${state.busy} identity=${state.identity?.walletKind} walletKind=${state.identity?.walletKind}');
     if (state.busy ||
         (state.identity != null && state.identity?.walletKind != WalletKind.external)) {
+      debugPrint('[AUTH] connectWallet: early return (busy=${state.busy} identity=${state.identity})');
       return;
     }
     final generation = _generation;
@@ -399,6 +403,7 @@ class AuthController extends Notifier<AuthSession> {
       _observe(repository);
       if (!_isCurrent(generation) || !context.mounted) return;
       connection = await ref.read(walletConnectorProvider).connect(context);
+      debugPrint('[AUTH] connectWallet: connect() returned, isConnected=${connection.address}');
       if (!_isCurrent(generation) || !context.mounted) {
         await connection.disconnect();
         return;

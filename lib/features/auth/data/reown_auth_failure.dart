@@ -44,7 +44,7 @@ AuthFailure failureFromReown(Object error) {
   return AuthFailure(
     rejected
         ? 'authWalletRejected'
-        : error is TimeoutException
+        : error is TimeoutException || error is SocketException || error is WebSocketException
         ? 'authWalletConnectionTimeout'
         : 'authWalletUnavailable',
     reason: reason,

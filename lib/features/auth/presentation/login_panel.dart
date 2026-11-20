@@ -32,6 +32,7 @@ class _LoginPanelState extends ConsumerState<LoginPanel> {
   }
 
   Future<void> _run(String action, Future<void> Function() operation) async {
+    debugPrint('[LOGIN] _run($action) start, busy=${ref.read(authProvider).busy}');
     setState(() => _pending = action);
     if (action != 'wallet' && ref.read(authProvider).identity?.needsWalletConnection == true) {
       await ref.read(authProvider.notifier).logout();

@@ -125,13 +125,27 @@ class ReownWalletConnector
     if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
     if (!configuration.isConfigured) throw const AuthFailure('authWalletConfiguration');
     final previous = _modal;
-    if (previous != null && previous.modalContext == null) {
+    if (previous != null &&
+        (previous.modalContext == null ||
+            previous.status == ReownAppKitModalStatus.error)) {
       if (_preparation case final preparation?) {
-        await _waitForPreparation(previous, preparation);
+        // A detached context must wait for preparation to settle before disposal.
+        // A broken modal (bad status but context alive) swallows the error so
+        // the connect can clear it and retry with a fresh modal.
+        try {
+          await _waitForPreparation(previous, preparation);
+        } catch (_) {
+          if (previous.modalContext == null) rethrow;
+          // Modal init failed; fall through to dispose it and retry.
+        }
       }
-      _redirects.detach();
-      await previous.dispose();
-      _modal = null;
+      if (_modal == previous &&
+          (previous.modalContext == null ||
+              previous.status == ReownAppKitModalStatus.error)) {
+        _redirects.detach();
+        await previous.dispose();
+        _modal = null;
+      }
     }
     if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
     // Keep the host alive after the account sheet closes, so subsequent
@@ -151,10 +165,13 @@ class ReownWalletConnector
     final preparation = _preparation ??= _sdkCall(() => _prepare(modal))
         .whenComplete(() => _preparation = null);
     await _waitForPreparation(modal, preparation);
+    debugPrint('[REOWN] after waitForPreparation: status=${modal.status} isConnected=${modal.isConnected} isOpen=${modal.isOpen}');
     if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
     if (modal.status != ReownAppKitModalStatus.initialized || modal.isConnected || modal.isOpen) {
+      debugPrint('[REOWN] status check failed: status=${modal.status} isConnected=${modal.isConnected} isOpen=${modal.isOpen}');
       throw const AuthFailure('authWalletUnavailable');
     }
+    debugPrint('[REOWN] calling openModalView...');
     await modal.openModalView();
     if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
     final sessionAddress = modal.session?.getAddress('eip155');
@@ -179,7 +196,15 @@ class ReownWalletConnector
     void onError(ErrorEvent? event) {
       if (!failed.isCompleted) {
         final Object? error = event?.error;
-        failed.completeError(failureFromReown(error ?? const AuthFailure('authNetwork')));
+        // Relay errors during preparation are network/connectivity failures.
+        // Map them to a network error rather than the wallet-unavailable message.
+        final failure = error == null
+            ? const AuthFailure('authNetwork')
+            : failureFromReown(error);
+        final remapped = failure.key == 'authWalletUnavailable'
+            ? AuthFailure('authWalletConnectionTimeout', reason: failure.reason)
+            : failure;
+        failed.completeError(remapped);
       }
     }
 
@@ -205,7 +230,9 @@ class ReownWalletConnector
   Future<void> _prepare(ReownAppKitModal modal) async {
     // Restoration deliberately skips the remote wallet catalog. Explicit
     // connection prepares it, even when local session initialization finished.
+    debugPrint('[REOWN] _prepare: calling modal.init()...');
     await modal.init();
+    debugPrint('[REOWN] _prepare: modal.init() done, status=${modal.status} isConnected=${modal.isConnected}');
     _acceptRedirects(modal);
     if (_disposed || !modal.isConnected) return;
     final disconnected = Completer<void>();
