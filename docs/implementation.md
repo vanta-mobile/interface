@@ -946,6 +946,29 @@
 - `flutter test test/features/trade/`（121 项）：全部通过
 - `dart format` 无变更；`flutter analyze` 无新警告
 
+## 2026-11-20 响应式布局断点整合与折叠屏适配
+
+**背景：** 原有布局仅在 > 820dp 时收窄内容列（788dp），手机与平板之间的折叠屏（600–820dp）无任何适配，宽屏手机的内容会一直拉伸到屏幕边缘。
+
+**实现：**
+- 新增 `lib/core/presentation/responsive_insets.dart`：集中三挡断点逻辑，替代原分散在 5 处的内联计算。
+  - ≤ 592dp（手机/窄屏）：左右 16dp 边距
+  - 593–820dp（折叠屏/中型平板）：内容列固定 560dp，居中
+  - > 820dp（大平板/超宽）：内容列固定 788dp，居中
+  - 592dp 下边界平滑：`(592 − 560) / 2 = 16dp`，与手机边距完全一致，无视觉跳变；820dp 处内容宽度从 560dp 跳到 788dp，属常规响应式设计，用户在单一设备上不会跨越该阈值。
+- 更新以下页面使用 `responsiveHorizontalInset`：
+  - `lib/features/portfolio/presentation/portfolio_screen.dart`
+  - `lib/features/portfolio/presentation/portfolio_pnl_screen.dart`
+  - `lib/features/funding/presentation/transfer_history_screen.dart`
+  - `lib/features/funding/presentation/transfer_record_screen.dart`
+- `lib/features/assistant/presentation/assistant_page.dart`：内联三挡逻辑（手机基准 0.0，不使用共享工具函数）。
+- `lib/features/trade/presentation/futures_workspace.dart`：保持现有 1512dp 阈值不变，交易工作区布局复杂，折叠屏适配需专项设计评审。
+
+**验收：**
+- `dart format` 格式化 6 个文件零问题。
+- `dart analyze` 对以上全部文件无 error/warning。
+- 未启动 App，未在真机或模拟器验证。
+
 ## 2026-11-20 地区限制弹窗（TAS-5059）
 
 应用启动片头播完后，调用 `GET /v1/config/geo`（`geoRestrictionProvider`）检查当前 IP 所在地区，若 `decision.blocked == true` 则弹出不可关闭的全屏遮罩弹窗。
@@ -966,3 +989,30 @@
 - `flutter gen-l10n` 成功，新 key 已出现在 `app_localizations.dart`。
 - `flutter analyze lib/features/auth/` 仅含项目级既有的 `deprecated_member_use` info，无新 error/warning。
 - 未启动 App，未在真机或模拟器验证。
+
+## 2026-11-20 钱包连接失败后重试修复
+
+**问题：** SDK init 返回 `status == error`（relay 连接失败等）后，第二次点击"连接钱包"无任何反应。`_pending` future 已完成并清空，但损坏的 `_modal`（`status == error`）被保留复用，`_prepare` 在已损坏的 modal 上运行，立即抛出相同错误。
+
+**修复：** `ReownWalletConnector.connect()`（`reown_wallet_connector.dart`）在进入新连接流程前，检测到 `previous.status == ReownAppKitModalStatus.error` 时清理旧 modal 并创建新实例。条件使用精确的 `== error` 而非 `!= initialized`，以免在 init 进行中（`status == idle` 或 `initializing`）时错误销毁仍在工作的 modal。
+
+**验收：** `flutter test test/features/auth/reown_wallet_connector_test.dart test/features/auth/reown_relay_connection_test.dart test/features/auth/reown_initialization_test.dart` 全部 33 项通过。未在真机验证。
+
+## 2026-11-20 Enable trading 页"重新连接外部钱包"第二次点击无响应修复
+
+**问题：** 在 `EnableTradingScreen` 上，外部钱包连接失败后，第二次点击"重新连接外部钱包"按钮无任何反应——无 loading、无错误清除、无重试。
+
+**根因：** 触发路径为：
+1. 用户点击"重新连接"→ `connectWallet` 设 `state.busy=true`，`_generation++`
+2. `_prepare(modal)` 调用 `modal.init()`，SDK 在初始化期间处理 pending 的协议级断连事件
+3. 现有 `ReownWalletConnection._check()`（`_invalid=false`，session `!isCurrent`）→ `_invalidate()` → `connection.invalidations` 发射事件
+4. `ExternalWalletSession` 收到事件，`needsReconnect=false` → `_identity=null` → `onInvalidated()` → `_events.add(null)`
+5. `auth_provider.dart` `_observe` 收到 null identity，**无** `!state.busy` 守卫 → `_generation++`，`state=signedOut`（`identity=null`）
+6. `connectWallet` 的 catch/finally：`_isCurrent(generation)=false` → 均跳过，不恢复 state
+7. 最终 state：`identity=null, busy=false`；UI `onPressed: identity == null ? null` → 按钮 disabled
+
+**修复：** `auth_provider.dart` `_observe` 方法中 `identity == null` 路径添加 `!state.busy` 守卫（与 `identity != null` 路径对称），防止 `connectWallet` 执行期间因 pending 断连事件意外将 `_generation++` 并重置为登出态。操作完成后 catch/finally 能正常恢复 state，第二次点击可正常触发 loading 和重试。
+
+**边界：** 若 `state.busy=true` 期间收到的 null identity 是真实退登，`connectWallet` 的 catch 路径会将 state 设为连接失败错误，UI 显示错误提示；不会静默忽略真实退登。
+
+**验收：** `flutter analyze lib/features/auth/` 无新 error/warning。未在真机验证。
