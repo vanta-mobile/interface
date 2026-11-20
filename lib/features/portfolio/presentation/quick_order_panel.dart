@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/domain/decimal_value.dart';
 import '../../../core/errors/error_text.dart';
 import '../../../core/formatters/token_amount_formatter.dart';
+import '../../../core/motion/animated_number_text.dart';
 import '../../../core/strings.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
@@ -40,6 +41,10 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
   bool? pending;
   String? error;
   int _percentTap = 0;
+  // Last successfully computed order value; persists through background sizing
+  // refreshes so the display does not flash when loading clears the sizing.
+  String? _cachedOrderValue;
+  String? _cachedPercentAmt;
 
   @override
   void initState() {
@@ -148,9 +153,15 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
     final percentAmt = state.percent == null
         ? null
         : ref.read(quickOrderProvider.notifier).percentAmount();
-    final orderValue = percentAmt == null
-        ? null
-        : l10n.quickOrderValue(percentAmt, quoteAsset ?? '—');
+    // Keep the last computed value so it doesn't vanish while sizing refreshes;
+    // only clear it when the user removes the percentage selection entirely.
+    if (percentAmt != null) {
+      _cachedPercentAmt = percentAmt;
+      _cachedOrderValue = l10n.quickOrderValue(percentAmt, quoteAsset ?? '—');
+    } else if (state.percent == null) {
+      _cachedPercentAmt = null;
+      _cachedOrderValue = null;
+    }
     // Background reads and setting leases never lock the bar (that would close
     // the keyboard and drop taps); a tap during them waits for them instead.
     // Only this entry's own read, an order being submitted, an auth change and
@@ -196,7 +207,8 @@ class _QuickOrderPanelState extends ConsumerState<QuickOrderPanel> {
                     if (error != null) setState(() => error = null);
                     ref.read(quickOrderProvider.notifier).setQuantity(value.replaceAll('%', ''));
                   },
-                  orderValue: orderValue,
+                  orderValue: _cachedOrderValue,
+                  orderValueNum: _cachedPercentAmt,
                 ),
               ),
               const SizedBox(width: 6),
@@ -342,6 +354,7 @@ class _QuantityField extends StatelessWidget {
     required this.enabled,
     required this.onChanged,
     this.orderValue,
+    this.orderValueNum,
   });
   final TextEditingController controller;
   final FocusNode focus;
@@ -349,6 +362,7 @@ class _QuantityField extends StatelessWidget {
   final bool enabled;
   final ValueChanged<String> onChanged;
   final String? orderValue;
+  final String? orderValueNum;
   @override
   Widget build(BuildContext context) {
     final focused = focus.hasFocus;
@@ -409,10 +423,10 @@ class _QuantityField extends StatelessWidget {
             ),
             if (orderValue case final v?) ...[
               const SizedBox(height: 2),
-              Text(
+              AnimatedNumberText(
                 v,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                comparisonValue: orderValueNum,
+                animateFirstChange: false,
                 style: TradeTypography.tag.copyWith(color: TradeColors.secondary),
               ),
             ],
