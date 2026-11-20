@@ -70,7 +70,7 @@ class OrderConfirmationDialog extends StatefulWidget {
 class _OrderConfirmationDialogState extends State<OrderConfirmationDialog> {
   bool _pending = false;
   late LiveOrderIntent _displayedIntent = widget.intent;
-  OrderSizeResolution? _displayedSizing;
+  late OrderSizeResolution? _displayedSizing = widget.sizing;
 
   Future<void> _confirm() async {
     if (_pending || !widget.ready && !widget.submitWhileUpdating) return;

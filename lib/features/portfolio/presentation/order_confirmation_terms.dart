@@ -1,5 +1,8 @@
+import 'package:decimal/decimal.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/domain/decimal_value.dart';
+import '../../../core/formatters/token_amount_formatter.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../trade/presentation/trade_theme.dart';
 import '../domain/live_order.dart';
@@ -55,6 +58,8 @@ class OrderConfirmationTerms extends StatelessWidget {
             : '${draft.quantity} $base',
         key: const Key('order-confirm-quantity'),
       ),
+      if (_orderValue(draft) case final value?)
+        OrderConfirmationTermRow(l10n.orderValue, '$value $quote'),
       if (draft.reduceOnly) OrderConfirmationTermRow(l10n.reduceOnly, l10n.liveOrderProtectOn),
       for (final exit in [...?draft.attachment?.exits])
         OrderConfirmationTermRow(
@@ -73,6 +78,22 @@ class OrderConfirmationTerms extends StatelessWidget {
         for (var i = 0; i < rows.length; i++) ...[if (i > 0) const SizedBox(height: 8), rows[i]],
       ],
     );
+  }
+
+  String? _orderValue(LiveOrderDraft draft) {
+    if (draft.entireClose) return null;
+    Decimal? notional;
+    if (sizing?.converted == true) {
+      notional = sizing!.estimatedNotional;
+    } else {
+      final qty = parseOrderDecimal(draft.quantity);
+      if (qty == null || qty <= Decimal.zero) return null;
+      final price = intent.context.referenceExecutionPrice(draft);
+      if (price == null || price <= Decimal.zero) return null;
+      notional = qty * price;
+    }
+    if (notional == null || notional <= Decimal.zero) return null;
+    return TokenAmountFormatter.formatRounded(DecimalValue('$notional'), maxFractionDigits: 2);
   }
 
   String _price(AppLocalizations l10n, LiveOrderDraft draft, String quote) {
