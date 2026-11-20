@@ -79,6 +79,20 @@ void main() {
     await connection.release();
   });
 
+  testWidgets('returns the wallet picker error when it closes without approval', (tester) async {
+    await mount(tester);
+    modal.openGate = Completer<void>();
+    modal.cancel = true;
+    final pending = expectLater(
+      connector.connect(host),
+      throwsA(isA<AuthFailure>().having((e) => e.reason, 'reason', 'Wallet app not installed')),
+    );
+    await tester.pump();
+    modal.onModalError.broadcast(WalletNotInstalled());
+    modal.approve();
+    await pending;
+  });
+
   testWidgets('restores an approved session without disconnecting or opening wallet UI', (
     tester,
   ) async {

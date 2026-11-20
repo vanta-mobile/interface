@@ -57,6 +57,11 @@ class ErrorEvent extends EventArgs {
   ErrorEvent(this.error);
 }
 
+/// Connection setup failed independently of any published wallet request.
+class RelayConnectionErrorEvent extends ErrorEvent {
+  RelayConnectionErrorEvent(super.error);
+}
+
 /// A relay acknowledgement, not proof that the peer received or approved it.
 /// Contains only routing identifiers, never the encrypted request payload.
 class RelayPublishEvent extends EventArgs {

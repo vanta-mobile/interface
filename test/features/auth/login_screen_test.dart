@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart' as flutter_material;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/theme.dart';
@@ -12,6 +13,28 @@ import '../../support/trade_fixture.dart';
 import '../../support/wallet_login_route.dart';
 
 void main() {
+  testWidgets('wallet login can open a native Material sheet in Chinese', (tester) async {
+    final container = setup(tester);
+    await launch(tester, container);
+    await openWalletLogin(tester);
+    await tester.pumpAndSettle();
+
+    final context = tester.element(find.byKey(const Key('connect-external-wallet')));
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final sheet = flutter_material.showModalBottomSheet<void>(
+      context: navigator.context,
+      useRootNavigator: true,
+      builder: (_) => const Text('Wallet picker'),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Wallet picker'), findsOneWidget);
+
+    navigator.pop();
+    await tester.pumpAndSettle();
+    await sheet;
+    await closeWalletLogin(tester, container);
+  });
+
   testWidgets('expired code preserves digits and failed resend, then accepts a new code', (
     tester,
   ) async {

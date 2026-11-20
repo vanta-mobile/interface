@@ -271,11 +271,13 @@ class RelayClient implements IRelayClient {
       if (generation == _connectionGeneration) _subscribeToHeartbeat();
     } on TimeoutException catch (e, s) {
       core.logger.e('[$runtimeType], _connect timeout: $e', stackTrace: s);
-      onRelayClientError.broadcast(ErrorEvent('Connection to relay timeout'));
+      onRelayClientError.broadcast(
+        RelayConnectionErrorEvent('Connection to relay timeout'),
+      );
       retry = true;
     } catch (e, s) {
       core.logger.e('[$runtimeType], _connect error: $e', stackTrace: s);
-      onRelayClientError.broadcast(ErrorEvent(e));
+      onRelayClientError.broadcast(RelayConnectionErrorEvent(e));
     } finally {
       _connecting = false;
       // Preserve the SDK's connection-only timeout recovery after releasing

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reown_appkit/reown_appkit.dart';
@@ -41,6 +42,14 @@ void main() {
         'Relay unavailable',
       ),
       (Exception('Wallet RPC failed'), 'Wallet RPC failed'),
+      (
+        FlutterError('No MaterialLocalizations found.\nWidget and diagnostic details.'),
+        'No MaterialLocalizations found.',
+      ),
+      (
+        ErrorOpeningWallet(description: 'Android could not resolve the wallet activity'),
+        'Android could not resolve the wallet activity',
+      ),
     ]) {
       expect(failureFromReown(error).reason, message, reason: '${error.runtimeType}');
     }

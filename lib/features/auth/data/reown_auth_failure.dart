@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:reown_appkit/reown_appkit.dart';
 
@@ -22,6 +23,13 @@ AuthFailure failureFromReown(Object error) {
       null,
       message is String ? message : apiErrorDetails(message).message,
     ),
+    ModalError(:final message, :final description) => (null, walletReason(description) ?? message),
+    FlutterError() => (
+      null,
+      error.diagnostics.whereType<ErrorSummary>().firstOrNull?.toDescription(),
+    ),
+    HandshakeException(:final message) => (null, message),
+    HttpException(:final message) => (null, message),
     TimeoutException(:final message) => (null, message),
     SocketException(:final message) => (null, message),
     WebSocketException(:final message) => (null, message),

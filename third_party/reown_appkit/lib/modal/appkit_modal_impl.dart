@@ -1213,7 +1213,9 @@ class ReownAppKitModal
           // WILL HANDLE SESSION REQUEST
           return;
         }
-        onModalError.broadcast(ModalError('Error connecting to wallet'));
+        onModalError.broadcast(
+          ModalError('Error connecting to wallet', description: message),
+        );
         _analyticsService.sendEvent(ConnectErrorEvent(message: message));
       }
       if (e is ReownSignError || e is ReownCoreError) {

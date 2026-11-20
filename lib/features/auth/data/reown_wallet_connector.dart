@@ -165,20 +165,28 @@ class ReownWalletConnector
         .whenComplete(() => _preparation = null);
     await _waitForPreparation(modal, preparation);
     if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
-    // If preparation left the modal open (e.g. mid-init relay error closed the
-    // connection but not the sheet), dismiss it before opening a fresh view.
-    if (modal.isOpen) modal.closeModal();
-    if (modal.status != ReownAppKitModalStatus.initialized || modal.isConnected || modal.isOpen) {
-      debugPrint('[REOWN] status check failed: status=${modal.status} isConnected=${modal.isConnected} isOpen=${modal.isOpen}');
-      throw const AuthFailure('authWalletUnavailable');
+    if (modal.status != ReownAppKitModalStatus.initialized) {
+      throw const AuthFailure('authWalletConfiguration');
     }
-    await modal.openModalView();
+    if (modal.isConnected || modal.isOpen) throw const AuthFailure('authWalletBusy');
+    AuthFailure? connectionFailure;
+    void onError(ModalError? event) {
+      if (event != null) connectionFailure = failureFromReown(event);
+    }
+
+    modal.onModalError.subscribe(onError);
+    try {
+      await modal.openModalView();
+    } finally {
+      modal.onModalError.unsubscribe(onError);
+    }
     if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
+    if (!modal.isConnected) {
+      throw connectionFailure ?? const AuthFailure('authWalletCancelled');
+    }
     final sessionAddress = modal.session?.getAddress('eip155');
     final chain = modal.selectedChain?.chainId;
-    if (!modal.isConnected || sessionAddress == null || chain == null) {
-      throw const AuthFailure('authWalletCancelled');
-    }
+    if (sessionAddress == null || chain == null) throw const AuthFailure('authWalletUnsupported');
     final address = canonicalEvmAddress(sessionAddress);
     if (!chain.startsWith('eip155:') ||
         !WalletConfiguration.chains.contains(chain.substring(7)) ||
@@ -196,13 +204,9 @@ class ReownWalletConnector
     void onError(ErrorEvent? event) {
       if (!failed.isCompleted) {
         final Object? error = event?.error;
-        // Relay errors during preparation are network/connectivity failures.
-        // Map them to a network error rather than the wallet-unavailable message.
-        final failure = error == null
+        final failure = error == null ? const AuthFailure('authNetwork') : failureFromReown(error);
+        final remapped = failure.key == 'authWalletUnavailable' && failure.reason == null
             ? const AuthFailure('authNetwork')
-            : failureFromReown(error);
-        final remapped = failure.key == 'authWalletUnavailable'
-            ? AuthFailure('authWalletConnectionTimeout', reason: failure.reason)
             : failure;
         failed.completeError(remapped);
       }
@@ -297,7 +301,6 @@ Future<T> _sdkCall<T>(Future<T> Function() operation) {
   final result = Completer<T>();
   final parent = Zone.current;
   void fail(Object error, StackTrace stack) {
-    debugPrint('[REOWN] _sdkCall fail: ${error.runtimeType} | $error');
     if (result.isCompleted) {
       parent.handleUncaughtError(error, stack);
       return;

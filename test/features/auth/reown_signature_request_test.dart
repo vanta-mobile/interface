@@ -127,6 +127,57 @@ void main() {
     await pumpEventQueue();
   });
 
+  for (final recovers in [true, false]) {
+    test(
+      'a relay DNS failure after wallet handoff preserves the pending RPC: recovers=$recovers',
+      () {
+        fakeAsync((time) {
+          final binding = TestWidgetsFlutterBinding.instance;
+          binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+          final relay = modal.sdk.core.relayClient as TestRelayClient;
+          modal.gate = Completer<void>();
+          AuthFailure? failure;
+          String? signature;
+          connection
+              .signPersonalMessage('Verify wallet')
+              .then<void>(
+                (value) => signature = value,
+                onError: (Object error) => failure = error as AuthFailure,
+              );
+          time.flushMicrotasks();
+          expect(modal.requests, hasLength(1));
+          binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+          relay.isConnected = false;
+          modal.sdk.relayErrors.broadcast(RelayConnectionErrorEvent('Relay DNS lookup failed'));
+          time.elapse(const Duration(seconds: 12));
+          expect(failure, isNull);
+          expect(modal.relayReconnects, 1);
+
+          binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+          time.elapse(const Duration(seconds: 1));
+          expect(modal.relayReconnects, 2);
+          if (recovers) {
+            relay.isConnected = true;
+            relay.onRelayClientConnect.broadcast();
+            modal.gate!.complete();
+            time.flushMicrotasks();
+            expect(signature, modal.result);
+            expect(failure, isNull);
+          } else {
+            time.elapse(const Duration(seconds: 9));
+            expect(failure?.key, 'authNetwork');
+            expect(failure?.reason, 'Relay DNS lookup failed');
+            modal.gate!.complete();
+            time.flushMicrotasks();
+            expect(signature, isNull);
+          }
+          expect(modal.requests, hasLength(1));
+          expect(connection.needsReconnect, false);
+        });
+      },
+    );
+  }
+
   for (final beforeDispatch in [true, false]) {
     test('relay string errors retain their reason: beforeDispatch=$beforeDispatch', () async {
       final gate = Completer<void>();

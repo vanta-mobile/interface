@@ -83,10 +83,7 @@ class ReownWalletConnection
       // eat into the short signing window. After an irn_publish relay error the
       // relay may need several seconds to reconnect; doing it here keeps that
       // cost outside the nonce age measurement.
-      await modal.reconnectRelay().timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => throw const AuthFailure('authWalletConnectionTimeout'),
-      );
+      await prepareReownRelay(modal);
       if (!this.isCurrent || !isCurrent()) throw const AuthFailure('authWalletChanged');
       await prepareReownSigningNetwork(
         modal: modal,

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/account_switch_authorization.dart';
 import '../data/privy_configuration.dart';
 import '../data/privy_identity_repository.dart';
+import '../data/reown_auth_failure.dart';
 import '../domain/auth_session.dart';
 import '../domain/wallet_connection.dart';
 import '../domain/wallet_network_source.dart';
@@ -196,11 +197,13 @@ class AuthController extends Notifier<AuthSession> {
       (identity) {
         if (!ref.mounted || state.identity == null) return;
         if (identity == null) {
-          if (!state.busy) {
+          // A reconnect can replace the old relay session as part of the
+          // same operation. An SDK expiry during wallet creation still wins.
+          if (!_loggingOut && state.walletStep != WalletLoginStep.connecting) {
             _generation++;
             state = AuthSession(
               phase: AuthPhase.signedOut,
-              failure: _loggingOut ? null : const AuthFailure('authSessionUnavailable'),
+              failure: const AuthFailure('authSessionUnavailable'),
             );
           }
         } else if (!state.busy &&
@@ -382,10 +385,8 @@ class AuthController extends Notifier<AuthSession> {
   }
 
   Future<void> connectWallet(BuildContext context, {String? expectedAddress}) async {
-    debugPrint('[AUTH] connectWallet: busy=${state.busy} identity=${state.identity?.walletKind} walletKind=${state.identity?.walletKind}');
     if (state.busy ||
         (state.identity != null && state.identity?.walletKind != WalletKind.external)) {
-      debugPrint('[AUTH] connectWallet: early return (busy=${state.busy} identity=${state.identity})');
       return;
     }
     final generation = _generation;
@@ -403,7 +404,6 @@ class AuthController extends Notifier<AuthSession> {
       _observe(repository);
       if (!_isCurrent(generation) || !context.mounted) return;
       connection = await ref.read(walletConnectorProvider).connect(context);
-      debugPrint('[AUTH] connectWallet: connect() returned, isConnected=${connection.address}');
       if (!_isCurrent(generation) || !context.mounted) {
         await connection.disconnect();
         return;
@@ -425,7 +425,7 @@ class AuthController extends Notifier<AuthSession> {
           identity: previous.identity,
           email: previous.email,
           resendAt: previous.resendAt,
-          failure: error is AuthFailure ? error : const AuthFailure('authWalletUnavailable'),
+          failure: failureFromReown(error),
         );
       }
       try {
@@ -535,7 +535,7 @@ class AuthController extends Notifier<AuthSession> {
         state = AuthSession(
           phase: previous.phase,
           identity: previous.identity,
-          failure: error is AuthFailure ? error : const AuthFailure('authWalletUnavailable'),
+          failure: failureFromReown(error),
         );
       }
       await _releaseSwitchConnection(connection);

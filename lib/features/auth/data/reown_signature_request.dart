@@ -10,6 +10,27 @@ import 'reown_auth_failure.dart';
 import 'wallet_error_message.dart';
 import 'wallet_launch_report.dart';
 
+Future<void> prepareReownRelay(ReownAppKitModal modal) async {
+  final relay = modal.appKit?.core.relayClient;
+  final failure = Completer<void>();
+  void onRelayError(ErrorEvent? event) {
+    if (failure.isCompleted) return;
+    final Object? error = event?.error;
+    failure.completeError(error ?? const AuthFailure('authNetwork'));
+  }
+
+  relay?.onRelayClientError.subscribe(onRelayError);
+  try {
+    await Future.any([failure.future, Future<void>.sync(modal.reconnectRelay)]).timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => throw const AuthFailure('authWalletConnectionTimeout'),
+    );
+    if (relay?.isConnected != true) throw const AuthFailure('authNetwork');
+  } finally {
+    relay?.onRelayClientError.unsubscribe(onRelayError);
+  }
+}
+
 /// Keep dispatch and wallet launch inside AppKit. Its modal error events and
 /// async-void launch errors can arrive without settling `request`, so bridge
 /// them into this request's future and release the caller's signing/network lease.
@@ -41,7 +62,9 @@ Future<dynamic> requestReownWallet({
   final result = Completer<dynamic>();
   final topic = modal.session?.topic;
   final relay = modal.appKit?.core.relayClient;
-  Timer? responseTimer, probeTimer, graceTimer;
+  Timer? responseTimer, probeTimer, graceTimer, relayRetryTimer;
+  AuthFailure? relayConnectionFailure;
+  var retriedRelay = false;
   var answered = false, dispatched = false, deadlinePassed = false;
   var probeRevision = 0, awaitingRelay = false;
   void current() {
@@ -81,7 +104,7 @@ Future<dynamic> requestReownWallet({
     if (!dispatched || answered || result.isCompleted) return;
     probeTimer = Timer(probeTimeout, () {
       if (relay?.isConnected != true) {
-        fail(const AuthFailure('authNetwork'), StackTrace.current);
+        fail(relayConnectionFailure ?? const AuthFailure('authNetwork'), StackTrace.current);
       } else {
         unresponsive();
       }
@@ -93,10 +116,21 @@ Future<dynamic> requestReownWallet({
     _ => false,
   };
 
+  void scheduleRelayRecovery() {
+    if (retriedRelay || relayRetryTimer != null || !foreground()) return;
+    relayRetryTimer = Timer(const Duration(seconds: 1), () {
+      relayRetryTimer = null;
+      if (!foreground() || result.isCompleted || relay?.isConnected == true) return;
+      retriedRelay = true;
+      // Reopen the transport only. The SDK keeps awaiting the original RPC.
+      unawaited(modal.reconnectRelay());
+    });
+  }
+
   void expire() {
     if (result.isCompleted) return;
     if (relay?.isConnected != true) {
-      return fail(const AuthFailure('authNetwork'), StackTrace.current);
+      return fail(relayConnectionFailure ?? const AuthFailure('authNetwork'), StackTrace.current);
     }
     if (!answered) return unresponsive();
     fail(const AuthFailure('authWalletResponseTimeout'), StackTrace.current);
@@ -120,7 +154,8 @@ Future<dynamic> requestReownWallet({
             onError: (Object error) {
               if (revision != probeRevision || result.isCompleted) return;
               if (relay?.isConnected != true) {
-                fail(const AuthFailure('authNetwork'), StackTrace.current);
+                awaitingRelay = true;
+                if (foreground()) probe();
               } else {
                 unresponsive(error);
               }
@@ -130,6 +165,7 @@ Future<dynamic> requestReownWallet({
   }
 
   void onRelayConnect(EventArgs? _) {
+    relayConnectionFailure = null;
     if (awaitingRelay && WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
       pingPeer();
       probe();
@@ -150,8 +186,26 @@ Future<dynamic> requestReownWallet({
   }
 
   void onRelayError(ErrorEvent? event) {
-    // AppKit swallows publish failures; the request may never reach the wallet.
     final Object? error = event?.error;
+    if (event is RelayConnectionErrorEvent) {
+      final failure = AuthFailure(
+        'authNetwork',
+        reason: error == null ? null : failureFromReown(error).reason,
+      );
+      if (!dispatched) {
+        fail(failure, StackTrace.current);
+        return;
+      }
+      final firstFailure = relayConnectionFailure == null;
+      relayConnectionFailure = failure;
+      awaitingRelay = true;
+      answered = false;
+      probeRevision++;
+      if (firstFailure && foreground()) probe();
+      scheduleRelayRecovery();
+      return;
+    }
+    // AppKit can swallow publish failures before the wallet receives the request.
     fail(error ?? const AuthFailure('authWalletUnavailable'), StackTrace.current);
   }
 
@@ -173,6 +227,7 @@ Future<dynamic> requestReownWallet({
     // pong does not prove that the wallet kept the session while backgrounded.
     pingPeer();
     probe();
+    if (relayConnectionFailure != null) scheduleRelayRecovery();
     // The deadline passed in the wallet: give its answer time to arrive.
     if (deadlinePassed && dispatched && !result.isCompleted) {
       graceTimer?.cancel();
@@ -244,6 +299,7 @@ Future<dynamic> requestReownWallet({
     responseTimer?.cancel();
     probeTimer?.cancel();
     graceTimer?.cancel();
+    relayRetryTimer?.cancel();
     WidgetsBinding.instance.removeObserver(lifecycle);
     unawaited(subscription.cancel());
     relayErrors?.unsubscribe(onRelayError);
