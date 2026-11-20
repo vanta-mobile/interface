@@ -140,14 +140,25 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
         ? Decimal.zero
         : info.account?.assets[asset.asset]?.chains[asset.chainId]?.maximum(TransferMarket.perp);
     final balances = <String, String?>{};
+    final rawAmounts = <String, Decimal?>{};
     for (final a in choice.assets) {
       final amount = depositRequired
           ? Decimal.zero
           : info.account?.assets[a.asset]?.chains[a.chainId]?.maximum(TransferMarket.perp);
-      balances[a.asset] = amount != null
-          ? fundingBalanceText(amount.toString(), a.asset)
-          : null;
+      rawAmounts[a.asset] = amount;
+      balances[a.asset] = amount != null ? fundingBalanceText(amount.toString(), a.asset) : null;
     }
+    final sortedAssets = [
+      ...choice.assets.where((a) => a.isNative),
+      ...(choice.assets.where((a) => !a.isNative).toList()
+        ..sort((a, b) {
+          final ba = rawAmounts[a.asset], bb = rawAmounts[b.asset];
+          if (ba == null && bb == null) return 0;
+          if (ba == null) return 1;
+          if (bb == null) return -1;
+          return bb.compareTo(ba);
+        })),
+    ];
     final fee = asset == null ? null : ref.watch(fundingFeeProvider(_feeQuery(asset))).quote;
     final amountKey = asset == null
         ? null
@@ -202,7 +213,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
           ),
         ],
         const SizedBox(height: 12),
-        _amount(choice, amountKey != null, balances),
+        _amount(choice, amountKey != null, balances, sortedAssets),
         if (error != null) ...[const SizedBox(height: 12), FundingError(error)],
         const SizedBox(height: 12),
         FundingGuidance(
@@ -268,11 +279,11 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
     ),
   );
 
-  Widget _amount(FundingChoice choice, bool error, Map<String, String?> balances) {
+  Widget _amount(FundingChoice choice, bool error, Map<String, String?> balances, List<FundingAsset> sortedAssets) {
     final asset = choice.asset;
     return FundingDropdown<String>(
       options: [
-        for (final a in choice.assets) FundingOption(a.asset, a.asset, FundingAssetIcon(a.asset), balance: balances[a.asset]),
+        for (final a in sortedAssets) FundingOption(a.asset, a.asset, FundingAssetIcon(a.asset), balance: balances[a.asset]),
       ],
       selected: asset?.asset,
       onSelected: (value) {
