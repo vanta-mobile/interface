@@ -3921,12 +3921,6 @@ abstract class AppLocalizations {
   /// **'Avbl. {value}'**
   String quickOrderAvailable(String value);
 
-  /// No description provided for @quickOrderValue.
-  ///
-  /// In en, this message translates to:
-  /// **'≈ {value} {asset}'**
-  String quickOrderValue(String value, String asset);
-
   /// No description provided for @quickOrderChartTab.
   ///
   /// In en, this message translates to:

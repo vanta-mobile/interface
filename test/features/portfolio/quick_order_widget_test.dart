@@ -52,17 +52,15 @@ void main() {
   String quantity(WidgetTester tester) =>
       tester.widget<TextField>(find.byKey(const Key('quick-order-quantity'))).controller!.text;
 
-  /// A chosen percentage stays selected; the field shows the quote amount it
-  /// stands for (the percentage itself only until sizing is read).
-  void expectPercent(WidgetTester tester, ProviderContainer container, int percent) {
-    expect(container.read(quickOrderProvider).percent, percent);
-    final amount = container.read(quickOrderProvider.notifier).percentAmount();
-    expect(quantity(tester), amount ?? '$percent%');
-    if (amount != null) expect(amount, isNot(contains('%')));
-  }
-
   AppLocalizations l10n(WidgetTester tester) =>
       AppLocalizations.of(tester.element(find.byType(QuickOrderPanel)));
+
+  void expectPercent(WidgetTester tester, ProviderContainer container, int percent) {
+    expect(container.read(quickOrderProvider).percent, percent);
+    expect(quantity(tester), '$percent%');
+    expect(find.textContaining('≈'), findsNothing);
+  }
+
   Future<void> dispose(WidgetTester tester, ProviderContainer container) async {
     await tester.pumpWidget(const SizedBox());
     container.dispose();
@@ -171,8 +169,6 @@ void main() {
       await tap(tester, 'quick-order-percent-50');
       expect(sizing.reads, 1);
       expectPercent(tester, container, 50);
-      // Once sizing is read the field shows an amount, not "50%".
-      expect(quantity(tester), matches(RegExp(r'^\d+\.\d{2}$')));
       await field(tester, '80.01');
       expect(quantity(tester), '80.01');
       await tap(tester, 'quick-order-buy');

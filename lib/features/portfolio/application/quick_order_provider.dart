@@ -122,22 +122,11 @@ class QuickOrderController extends Notifier<QuickOrderState> {
     return sizing.quantity(buy, state.percent!)?.toString();
   }
 
-  /// The quote amount a selected percentage stands for: the smaller of the
-  /// two directions' sized quantities at their ask/bid, floored to cents.
-  /// Shown in place of the percentage; orders still use the exact percentage
-  /// sizing of their direction. Null until sizing is read.
-  String? percentAmount() {
-    final data = context, sizing = state.sizing, percent = state.percent;
-    if (data == null || percent == null || sizing == null || sizing.context != data) return null;
-    Decimal? amount(bool buy) {
-      final quantity = sizing.quantity(buy, percent), price = buy ? data.ask : data.bid;
-      return quantity == null || price == null ? null : quantity * price;
-    }
-
-    final values = [?amount(true), ?amount(false)];
-    if (values.isEmpty) return null;
-    final smaller = values.reduce((a, b) => a < b ? a : b);
-    return (smaller * Decimal.fromInt(100)).floor().shift(-2).toStringAsFixed(2);
+  QuickOrderSizing? get displaySizing {
+    final sizing = state.sizing;
+    final live = ref.read(liveOrderProvider);
+    final data = context ?? (live.busy && live.intent == null ? live.context : null);
+    return data != null && sizing?.context == data ? sizing : null;
   }
 
   String? validation(bool buy) {

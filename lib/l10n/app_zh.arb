@@ -832,7 +832,6 @@
   "quickOrderMarketSell": "做空",
   "quickOrderAmount": "市价 · 金额 · {asset}",
   "quickOrderAvailable": "可用 {value}",
-  "quickOrderValue": "≈ {value} {asset}",
   "quickOrderChartTab": "K 线页面",
   "attachedOrderTitle": "开仓附加止盈／止损",
   "attachedOrderTakeProfit": "附加止盈",

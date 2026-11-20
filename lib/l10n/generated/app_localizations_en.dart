@@ -2137,11 +2137,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String quickOrderValue(String value, String asset) {
-    return '≈ $value $asset';
-  }
-
-  @override
   String get quickOrderChartTab => 'Chart view';
 
   @override

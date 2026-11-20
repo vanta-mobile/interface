@@ -2002,11 +2002,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String quickOrderValue(String value, String asset) {
-    return '≈ $value $asset';
-  }
-
-  @override
   String get quickOrderChartTab => 'K 线页面';
 
   @override
