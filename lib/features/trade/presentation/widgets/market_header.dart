@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/motion/animated_number_text.dart';
-import '../../../../core/strings.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../market/application/public_leverage_provider.dart';
 import '../../../market/domain/market.dart';
@@ -16,114 +15,130 @@ import 'primitives.dart';
 import 'futures_workspace_tabs.dart';
 export 'futures_workspace_tabs.dart';
 
-class MarketHeader extends ConsumerWidget {
-  const MarketHeader({super.key});
+/// The market selector row: coin icon, symbol, leverage badge / change, and
+/// workspace tab switcher.  Shown in the trading page header whenever the
+/// futures workspace is active (sticky in chart mode via the [Scaffold.appBar],
+/// scrollable in trade/order-entry mode).
+class MarketHeaderRow extends ConsumerWidget {
+  const MarketHeaderRow({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final market = ref.watch(currentMarketProvider);
     final symbol = ref.watch(symbolProvider), base = symbol.replaceAll('USDT', '');
-    final chart = ref.watch(futuresWorkspaceTabProvider) == FuturesWorkspaceTab.chart;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              // Only the symbol itself opens the selector, not the blank space after it.
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: InkWell(
-                  key: const Key('trade-market-selector'),
-                  onTap: () => openMarketSelector(context),
-                  borderRadius: BorderRadius.circular(12),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 48),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CoinIcon(base: base, size: 32),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+        Expanded(
+          // Only the symbol itself opens the selector, not the blank space after it.
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: InkWell(
+              key: const Key('trade-market-selector'),
+              onTap: () => openMarketSelector(context),
+              borderRadius: BorderRadius.circular(12),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CoinIcon(base: base, size: 32),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Flexible(
-                                    child: Text.rich(
+                              Flexible(
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(text: base),
                                       TextSpan(
-                                        children: [
-                                          TextSpan(text: base),
-                                          TextSpan(
-                                            text: 'USDT',
-                                            style: TradeTypography.symbol.copyWith(
-                                              color: TradeColors.muted,
-                                            ),
-                                          ),
-                                        ],
+                                        text: 'USDT',
+                                        style: TradeTypography.symbol.copyWith(
+                                          color: TradeColors.muted,
+                                        ),
                                       ),
-                                      style: TradeTypography.symbol,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const Icon(
-                                    Icons.arrow_drop_down,
-                                    size: 16,
-                                    color: TradeColors.muted,
-                                  ),
-                                ],
-                              ),
-                              if (!chart)
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Signed brackets first; the public brackets
-                                    // cover a wallet that has not read them yet.
-                                    if (ref.watch(symbolMaximumLeverageProvider)[symbol] ??
-                                            ref.watch(
-                                              publicLeverageProvider.select(
-                                                (s) => s.value?[symbol]?.maximumLeverage,
-                                              ),
-                                            )
-                                        case final leverage?) ...[
-                                      MaxLeverageBadge(
-                                        leverage,
-                                        key: const Key('trade-max-leverage'),
-                                      ),
-                                      const SizedBox(width: 4),
                                     ],
-                                    Flexible(child: _Change(market: market)),
-                                  ],
-                                )
-                              else
-                                Text(tr(context, 'perpetual'), style: TradeTypography.small),
+                                  ),
+                                  style: TradeTypography.symbol,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const Icon(Icons.arrow_drop_down, size: 16, color: TradeColors.muted),
                             ],
                           ),
-                        ),
-                      ],
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Signed brackets first; the public brackets
+                              // cover a wallet that has not read them yet.
+                              if (ref.watch(symbolMaximumLeverageProvider)[symbol] ??
+                                      ref.watch(
+                                        publicLeverageProvider.select(
+                                          (s) => s.value?[symbol]?.maximumLeverage,
+                                        ),
+                                      )
+                                  case final leverage?) ...[
+                                MaxLeverageBadge(leverage, key: const Key('trade-max-leverage')),
+                                const SizedBox(width: 4),
+                              ],
+                              const Flexible(child: _MarketChange()),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            const FuturesWorkspaceTabs(),
-          ],
+          ),
         ),
-        if (chart) ...[const SizedBox(height: 20), _ChartSummary(market: market)],
+        const SizedBox(width: 8),
+        const FuturesWorkspaceTabs(),
       ],
     );
   }
 }
 
-class _ChartSummary extends StatelessWidget {
-  const _ChartSummary({this.market});
-  final Market? market;
+class _MarketChange extends ConsumerWidget {
+  const _MarketChange();
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) =>
+      _Change(market: ref.watch(currentMarketProvider));
+}
+
+class MarketHeader extends ConsumerWidget {
+  const MarketHeader({super.key});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chart = ref.watch(futuresWorkspaceTabProvider) == FuturesWorkspaceTab.chart;
+    if (chart) {
+      // The selector row is pinned in the Scaffold.appBar in chart mode; only
+      // the scrollable chart summary remains here.
+      return const Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [_ChartSummary()],
+      );
+    }
+    // The selector row is pinned in the Scaffold.appBar; nothing scrollable here.
+    return const SizedBox.shrink();
+  }
+}
+
+class _ChartSummary extends ConsumerWidget {
+  const _ChartSummary();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final market = ref.watch(currentMarketProvider);
     final l = AppLocalizations.of(context);
+    String number(double? value) => value == null
+        ? '—'
+        : marketNumber(value, minimumDecimals: market?.precision.priceDecimals ?? 2);
     return LayoutBuilder(
       builder: (context, constraints) {
         final price = Column(
@@ -132,7 +147,7 @@ class _ChartSummary extends StatelessWidget {
             _FittingNumber(
               market == null
                   ? '—'
-                  : '\$${marketNumber(market!.price, minimumDecimals: market!.precision.priceDecimals)}',
+                  : '\$${marketNumber(market.price, minimumDecimals: market.precision.priceDecimals)}',
               style: TradeTypography.heading.copyWith(fontSize: 24, height: 32 / 24),
             ),
             const SizedBox(height: 8),
@@ -141,9 +156,9 @@ class _ChartSummary extends StatelessWidget {
         );
         final stats = Column(
           children: [
-            _Stat('${l.volume24h} (USDT)', market == null ? '—' : compact(market!.volume)),
-            _Stat(l.tradeHigh24h, _number(market?.high)),
-            _Stat(l.tradeLow24h, _number(market?.low)),
+            _Stat('${l.volume24h} (USDT)', market == null ? '—' : compact(market.volume)),
+            _Stat(l.tradeHigh24h, number(market?.high)),
+            _Stat(l.tradeLow24h, number(market?.low)),
           ],
         );
         if (constraints.maxWidth < 340 && MediaQuery.textScalerOf(context).scale(12) > 16) {
@@ -163,9 +178,6 @@ class _ChartSummary extends StatelessWidget {
       },
     );
   }
-
-  String _number(double? value) =>
-      value == null ? '—' : marketNumber(value, minimumDecimals: market!.precision.priceDecimals);
 }
 
 class _Stat extends StatelessWidget {

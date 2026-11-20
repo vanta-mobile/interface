@@ -11,6 +11,7 @@ import '../application/trading_lifecycle_provider.dart';
 import 'futures_workspace.dart';
 import 'widgets/app_bottom_navigation.dart';
 import 'destinations.dart';
+import 'widgets/market_header.dart';
 import 'widgets/trade_page_header.dart';
 
 class TradingScreen extends ConsumerStatefulWidget {
@@ -46,13 +47,21 @@ class _TradingScreenState extends ConsumerState<TradingScreen> with WidgetsBindi
       backgroundColor: AppColors.authBackground,
       // Every other destination draws its own design header.
       appBar: futures
-          ? const PreferredSize(
-              preferredSize: Size.fromHeight(44),
+          ? PreferredSize(
+              preferredSize: Size.fromHeight(
+                44.0 + MediaQuery.textScalerOf(context).scale(40.0).clamp(48.0, double.infinity),
+              ),
               child: SafeArea(
                 bottom: false,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: SizedBox(height: 44, child: TradePageHeader()),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 44, child: TradePageHeader()),
+                      const MarketHeaderRow(),
+                    ],
+                  ),
                 ),
               ),
             )

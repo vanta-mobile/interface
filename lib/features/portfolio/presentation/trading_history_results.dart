@@ -79,100 +79,138 @@ class _TradingHistoryResultsState extends ConsumerState<TradingHistoryResults> {
     final failedEmpty = page != null && all.isEmpty && failure != null;
     return RefreshIndicator(
       onRefresh: refresh,
-      child: ListView(
+      child: CustomScrollView(
         key: const Key('futures-history-page'),
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        children: [
-          if (tab != TradingHistoryTab.transactions)
-            TradeCheckOption(
-              tapKey: const Key('history-filter'),
-              value: filtered,
-              label: tab == TradingHistoryTab.orders
-                  ? l.tradingHistoryHideCanceled
-                  : l.openOrdersCurrentSymbol,
-              onChanged: (value) => setState(() => filtered = value),
-            ),
-          if (page == null && (state.busy && session.ready || session.pending)) ...[
-            for (var i = 0; i < 3; i++)
-              const Padding(
-                padding: EdgeInsets.only(top: 12),
-                child: SkeletonBox(height: 150, radius: 20),
-              ),
-          ] else if ((page == null || failedEmpty) && (blocked || failure != null))
-            StatusFailureView(
-              key: const Key('history-failure'),
-              title: blocked
-                  ? session.unavailable
-                        ? l.vantaApiUnavailableTitle
-                        : l.vantaApiSignInTitle
-                  : null,
-              message: failure != null
-                  ? reportFailure && failure is! VantaApiFailure
-                        ? l.tradingHistoryPartial
-                        : portfolioStatsErrorText(context, failure)
-                  : session.unavailable
-                  ? l.vantaApiUnavailable
-                  : l.vantaApiSignIn,
-              retryLabel: blocked ? l.vantaApiSignInAction : null,
-              onRetry: session.unavailable ? null : retry,
-            ),
-          if (page != null && !failedEmpty) ...[
-            if (page.recentDays case final days?)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  l.tradingHistoryRecentDays(days),
-                  style: TradeTypography.body.copyWith(color: TradeColors.muted),
-                ),
-              ),
-            if (state.hasError && !reportFailure)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  portfolioStatsErrorText(context, state.error!),
-                  style: TradeTypography.body.copyWith(color: TradeColors.negative),
-                ),
-              ),
-            if (page.partial)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  l.tradingHistoryPartial,
-                  style: TradeTypography.body.copyWith(color: TradeColors.muted),
-                ),
-              ),
-            if (records.isEmpty)
-              StatusEmptyView(key: const Key('futures-history-empty'), message: l.historyEmpty),
-            for (final r in records)
-              Padding(
-                key: ValueKey(r.key),
-                padding: EdgeInsets.only(
-                  top: tab == TradingHistoryTab.orders || tab == TradingHistoryTab.transactions
-                      ? 0
-                      : 12,
-                ),
-                child: switch (r) {
-                  HistoryOrder() => TradingHistoryOrderCard(order: r, units: units[r.symbol]),
-                  HistoryPosition() => TradingHistoryPositionCard(
-                    position: r,
-                    units: units[r.symbol],
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            sliver: SliverMainAxisGroup(
+              slivers: [
+                if (tab != TradingHistoryTab.transactions)
+                  SliverToBoxAdapter(
+                    child: TradeCheckOption(
+                      tapKey: const Key('history-filter'),
+                      value: filtered,
+                      label: tab == TradingHistoryTab.orders
+                          ? l.tradingHistoryHideCanceled
+                          : l.openOrdersCurrentSymbol,
+                      onChanged: (value) => setState(() => filtered = value),
+                    ),
                   ),
-                  HistoryFill() => TradingHistoryFillCard(fill: r, units: units[r.symbol]),
-                  HistoryTransaction() => TradingHistoryTransactionRow(transaction: r),
-                },
-              ),
-            if (page.next != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: StatusActionButton(
-                  key: const Key('history-load-more'),
-                  label: l.historyContinue,
-                  loading: state.busy,
-                  onPressed: () => ref.read(tradingHistoryProvider(tab).notifier).loadMore(),
-                ),
-              ),
-          ],
+                if (page == null && (state.busy && session.ready || session.pending))
+                  SliverList.list(
+                    children: [
+                      for (var i = 0; i < 3; i++)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: SkeletonBox(height: 150, radius: 20),
+                        ),
+                    ],
+                  )
+                else if ((page == null || failedEmpty) && (blocked || failure != null))
+                  SliverToBoxAdapter(
+                    child: StatusFailureView(
+                      key: const Key('history-failure'),
+                      title: blocked
+                          ? session.unavailable
+                                ? l.vantaApiUnavailableTitle
+                                : l.vantaApiSignInTitle
+                          : null,
+                      message: failure != null
+                          ? reportFailure && failure is! VantaApiFailure
+                                ? l.tradingHistoryPartial
+                                : portfolioStatsErrorText(context, failure)
+                          : session.unavailable
+                          ? l.vantaApiUnavailable
+                          : l.vantaApiSignIn,
+                      retryLabel: blocked ? l.vantaApiSignInAction : null,
+                      onRetry: session.unavailable ? null : retry,
+                    ),
+                  ),
+                if (page != null && !failedEmpty) ...[
+                  if (page.recentDays case final days?)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          l.tradingHistoryRecentDays(days),
+                          style: TradeTypography.body.copyWith(color: TradeColors.muted),
+                        ),
+                      ),
+                    ),
+                  if (state.hasError && !reportFailure)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Text(
+                          portfolioStatsErrorText(context, state.error!),
+                          style: TradeTypography.body.copyWith(color: TradeColors.negative),
+                        ),
+                      ),
+                    ),
+                  if (page.partial)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          l.tradingHistoryPartial,
+                          style: TradeTypography.body.copyWith(color: TradeColors.muted),
+                        ),
+                      ),
+                    ),
+                  if (records.isEmpty)
+                    SliverToBoxAdapter(
+                      child: StatusEmptyView(
+                        key: const Key('futures-history-empty'),
+                        message: l.historyEmpty,
+                      ),
+                    )
+                  else
+                    SliverList.builder(
+                      itemCount: records.length,
+                      itemBuilder: (context, index) {
+                        final r = records[index];
+                        return Padding(
+                          key: ValueKey(r.key),
+                          padding: EdgeInsets.only(
+                            top: tab == TradingHistoryTab.orders ||
+                                    tab == TradingHistoryTab.transactions
+                                ? 0
+                                : 12,
+                          ),
+                          child: switch (r) {
+                            HistoryOrder() =>
+                              TradingHistoryOrderCard(order: r, units: units[r.symbol]),
+                            HistoryPosition() => TradingHistoryPositionCard(
+                              position: r,
+                              units: units[r.symbol],
+                            ),
+                            HistoryFill() =>
+                              TradingHistoryFillCard(fill: r, units: units[r.symbol]),
+                            HistoryTransaction() =>
+                              TradingHistoryTransactionRow(transaction: r),
+                          },
+                        );
+                      },
+                    ),
+                  if (page.next != null)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: StatusActionButton(
+                          key: const Key('history-load-more'),
+                          label: l.historyContinue,
+                          loading: state.busy,
+                          onPressed: () =>
+                              ref.read(tradingHistoryProvider(tab).notifier).loadMore(),
+                        ),
+                      ),
+                    ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
