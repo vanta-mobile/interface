@@ -31,12 +31,12 @@ Future<void> _openUsdt(WidgetTester tester, FundingHarness h) async {
 void main() {
   testWidgets('first wallet and amount estimate show loading without cached data', (tester) async {
     final h = FundingHarness();
-    await h.open(tester);
-    await tester.tap(find.byKey(const Key('funding-asset-selector')));
+    await h.open(tester, network: null);
+    await tester.tap(find.byKey(const Key('funding-network')));
     await tester.pumpAndSettle();
     final walletGate = Completer<void>();
     h.wallet.gate = walletGate;
-    await tester.tap(find.byKey(const Key('funding-option-USDT')).last);
+    await tester.tap(find.byKey(const Key('funding-option-56')).last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(_action(tester).busy, isTrue);

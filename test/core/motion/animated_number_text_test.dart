@@ -107,14 +107,14 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('a widening amount turns in from an empty wheel', (tester) async {
+  testWidgets('a widening amount flips as a single unit', (tester) async {
     await pumpValue(tester, r'$99');
     await pumpValue(tester, r'$101');
     await tester.pump(const Duration(milliseconds: 40));
 
-    // Paired from the right: '$99' becomes ' $99' against '$101', so every
-    // cell differs and the leading one turns in from blank.
-    expect(rolling, findsNWidgets(8));
+    expect(rolling, findsNWidgets(2));
+    expect(find.text(r'$99'), findsOneWidget);
+    expect(find.text(r'$101'), findsOneWidget);
 
     await tester.pumpAndSettle();
     expect(find.text(r'$101'), findsOneWidget);

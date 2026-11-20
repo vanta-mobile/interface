@@ -62,6 +62,13 @@ void main() {
         query: depositQuery(native: true, minimum: '0.01'),
         nativeUnits: BigInt.parse(_bnb),
       );
+      if (name == 'deposit-asset-open') {
+        h.wallet.resultFor = (query) => depositSnapshot(
+          query: query,
+          assetUnits: query.asset.isNative ? null : BigInt.parse('1620000000000000000000'),
+          nativeUnits: BigInt.parse(_bnb),
+        );
+      }
       if (name.contains('usdt') || name.contains('approve')) {
         h.wallet.result = depositSnapshot(
           query: depositQuery(minimum: '0.01'),

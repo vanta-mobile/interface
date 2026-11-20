@@ -162,7 +162,7 @@ void main() {
     expect(find.text('BNB'), findsOneWidget);
     expect(find.text('10 BNB'), findsOneWidget);
     expect(find.text(l.fundingDepositTime(l.fundingNetworkBnb)), findsOneWidget);
-    expect(h.wallet.calls.length, 1);
+    expect(h.wallet.calls.map((call) => call.$2.asset.asset), unorderedEquals(['BNB', 'USDT']));
     expect(_submit(tester).onPressed, isNull);
 
     h.gas.failure = const AccountReadFailure('depositGasBalanceInsufficient');

@@ -248,7 +248,8 @@ void main() {
       ];
     await tester.pump(const Duration(seconds: 11));
     await tester.pumpAndSettle();
-    expect(find.text(l.fundingWithdrawCompleted), findsOneWidget);
+    expect(find.text(l.fundingWithdrawCompleted), findsNWidgets(2));
+    expect(find.text(l.fundingStepWithdrawCompletedHint), findsOneWidget);
     final settled = h.history.calls;
     await tester.pump(const Duration(seconds: 22));
     await tester.pumpAndSettle();
