@@ -12202,6 +12202,12 @@ abstract class AppLocalizations {
   /// **'Enter an amount no larger than the position.'**
   String get positionTpslMissingAmount;
 
+  /// No description provided for @positionTpslAmountBelowMinimum.
+  ///
+  /// In en, this message translates to:
+  /// **'The amount is below the minimum order quantity.'**
+  String get positionTpslAmountBelowMinimum;
+
   /// No description provided for @positionTpslMissingLimit.
   ///
   /// In en, this message translates to:

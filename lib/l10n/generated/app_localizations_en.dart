@@ -7030,6 +7030,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get positionTpslMissingAmount => 'Enter an amount no larger than the position.';
 
   @override
+  String get positionTpslAmountBelowMinimum => 'The amount is below the minimum order quantity.';
+
+  @override
   String get positionTpslMissingLimit => 'Enter a limit price or choose BBO.';
 
   @override

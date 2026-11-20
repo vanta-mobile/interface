@@ -3173,6 +3173,7 @@
   "positionTpslRoiHint": "Set by Estimated ROI",
   "positionTpslMissingTrigger": "Enter a take-profit or stop-loss trigger price.",
   "positionTpslMissingAmount": "Enter an amount no larger than the position.",
+  "positionTpslAmountBelowMinimum": "The amount is below the minimum order quantity.",
   "positionTpslMissingLimit": "Enter a limit price or choose BBO.",
   "positionTpslPlaced": "TP/SL orders placed.",
   "positionTpslLegFailed": "{leg} not placed: {reason}",

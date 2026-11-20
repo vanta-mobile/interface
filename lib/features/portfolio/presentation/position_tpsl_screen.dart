@@ -361,6 +361,17 @@ class _PositionTpSlScreenState extends ConsumerState<PositionTpSlScreen> {
             percent == null &&
             (Decimal.tryParse(amount.text.trim()) ?? Decimal.zero) <= Decimal.zero) {
       problem = l10n.positionTpslMissingAmount;
+    } else if (partial) {
+      final data = _view?.data;
+      if (data != null) {
+        final typed = Decimal.tryParse(amount.text.trim());
+        final quantity = percent != null
+            ? data.closeFraction(p.side, percent!, market: false, conditional: true)
+            : closeQuantityForQuote(data, typed, data.markPrice);
+        if (quantity == null || quantity <= Decimal.zero) {
+          problem = l10n.positionTpslAmountBelowMinimum;
+        }
+      }
     }
     if (problem != null) {
       setState(() => issue = problem);

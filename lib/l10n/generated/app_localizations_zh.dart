@@ -6548,6 +6548,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get positionTpslMissingAmount => '请输入不超过仓位的数量。';
 
   @override
+  String get positionTpslAmountBelowMinimum => '金额换算后不足最小委托数量。';
+
+  @override
   String get positionTpslMissingLimit => '请输入限价或选择 BBO。';
 
   @override
