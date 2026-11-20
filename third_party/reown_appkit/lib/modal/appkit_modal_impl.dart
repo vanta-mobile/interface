@@ -923,6 +923,7 @@ class ReownAppKitModal
       final mqData = MediaQueryData.fromView(View.of(_context!));
       final safeGap = mqData.viewPadding.bottom;
       final maxHeight = mqData.size.height - safeGap - 20.0;
+      final navigatorContext = Navigator.of(_context!, rootNavigator: true).context;
       await showModalBottomSheet(
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
@@ -930,17 +931,18 @@ class ReownAppKitModal
         elevation: 0.0,
         useRootNavigator: true,
         constraints: BoxConstraints(maxHeight: maxHeight),
-        context: _context!,
+        context: navigatorContext,
         builder: (_) => rootWidget,
       );
       _close();
     } else {
+      final navigatorContext = Navigator.of(_context!, rootNavigator: true).context;
       await showDialog(
         barrierDismissible: false,
         useSafeArea: true,
         useRootNavigator: true,
         anchorPoint: Offset(0, 0),
-        context: _context!,
+        context: navigatorContext,
         builder: (_) {
           final radiuses = ReownAppKitModalTheme.radiusesOf(_context!);
           final maxRadius = min(radiuses.radiusM, 36.0);

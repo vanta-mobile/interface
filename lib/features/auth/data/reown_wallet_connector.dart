@@ -88,8 +88,7 @@ class ReownWalletConnector
       _sdkCall(() async {
         if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
         if (!configuration.isConfigured) throw const AuthFailure('authWalletConfiguration');
-        final host = Navigator.of(context).context;
-        final modal = _getModal(host);
+        final modal = _getModal(context);
         final preparation = _preparation ??= _sdkCall(() async {
           if (modal.status != ReownAppKitModalStatus.initialized) {
             await modal.init(restoreOnly: true);
@@ -127,11 +126,13 @@ class ReownWalletConnector
     final previous = _modal;
     if (previous != null &&
         (previous.modalContext == null ||
-            previous.status == ReownAppKitModalStatus.error)) {
+            previous.status == ReownAppKitModalStatus.error ||
+            previous.isOpen)) {
       if (_preparation case final preparation?) {
         // A detached context must wait for preparation to settle before disposal.
-        // A broken modal (bad status but context alive) swallows the error so
-        // the connect can clear it and retry with a fresh modal.
+        // A broken modal (bad status but context alive, or left open after a
+        // mid-connection error) swallows the error so the connect can clear it
+        // and retry with a fresh modal.
         try {
           await _waitForPreparation(previous, preparation);
         } catch (_) {
@@ -141,17 +142,15 @@ class ReownWalletConnector
       }
       if (_modal == previous &&
           (previous.modalContext == null ||
-              previous.status == ReownAppKitModalStatus.error)) {
+              previous.status == ReownAppKitModalStatus.error ||
+              previous.isOpen)) {
         _redirects.detach();
         await previous.dispose();
         _modal = null;
       }
     }
     if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
-    // Keep the host alive after the account sheet closes, so subsequent
-    // signatures can still launch the connected wallet app.
-    final host = Navigator.of(context).context;
-    final modal = _getModal(host);
+    final modal = _getModal(context);
     // A restore/earlier timed-out preparation may still be unwinding. Wait for
     // it, then run this explicit connection's own catalog/disconnect work.
     if (_preparation case final earlier?) {
@@ -165,13 +164,14 @@ class ReownWalletConnector
     final preparation = _preparation ??= _sdkCall(() => _prepare(modal))
         .whenComplete(() => _preparation = null);
     await _waitForPreparation(modal, preparation);
-    debugPrint('[REOWN] after waitForPreparation: status=${modal.status} isConnected=${modal.isConnected} isOpen=${modal.isOpen}');
     if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
+    // If preparation left the modal open (e.g. mid-init relay error closed the
+    // connection but not the sheet), dismiss it before opening a fresh view.
+    if (modal.isOpen) modal.closeModal();
     if (modal.status != ReownAppKitModalStatus.initialized || modal.isConnected || modal.isOpen) {
       debugPrint('[REOWN] status check failed: status=${modal.status} isConnected=${modal.isConnected} isOpen=${modal.isOpen}');
       throw const AuthFailure('authWalletUnavailable');
     }
-    debugPrint('[REOWN] calling openModalView...');
     await modal.openModalView();
     if (_disposed || !context.mounted) throw const AuthFailure('authWalletCancelled');
     final sessionAddress = modal.session?.getAddress('eip155');
@@ -230,9 +230,7 @@ class ReownWalletConnector
   Future<void> _prepare(ReownAppKitModal modal) async {
     // Restoration deliberately skips the remote wallet catalog. Explicit
     // connection prepares it, even when local session initialization finished.
-    debugPrint('[REOWN] _prepare: calling modal.init()...');
     await modal.init();
-    debugPrint('[REOWN] _prepare: modal.init() done, status=${modal.status} isConnected=${modal.isConnected}');
     _acceptRedirects(modal);
     if (_disposed || !modal.isConnected) return;
     final disconnected = Completer<void>();
@@ -299,6 +297,7 @@ Future<T> _sdkCall<T>(Future<T> Function() operation) {
   final result = Completer<T>();
   final parent = Zone.current;
   void fail(Object error, StackTrace stack) {
+    debugPrint('[REOWN] _sdkCall fail: ${error.runtimeType} | $error');
     if (result.isCompleted) {
       parent.handleUncaughtError(error, stack);
       return;
