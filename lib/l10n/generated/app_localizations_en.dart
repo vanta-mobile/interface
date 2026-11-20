@@ -6090,6 +6090,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fundingStepCreditingHint => 'Waiting for your account to be credited.';
 
   @override
+  String get fundingStepCredited => 'Account credited';
+
+  @override
+  String get fundingStepCreditedHint => 'Funds have been credited to your Futures Account.';
+
+  @override
   String get fundingTrackHint => 'You can close this page and continue tracking in Transactions.';
 
   @override
@@ -6129,10 +6135,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fundingStepNetworkHint => 'Waiting for network confirmation.';
 
   @override
+  String get fundingStepNetworkConfirmed => 'Network confirmed';
+
+  @override
+  String fundingStepNetworkConfirmedHint(String network) {
+    return 'Confirmed on $network.';
+  }
+
+  @override
   String get fundingStepWithdrawCompletion => 'Withdrawal completion';
 
   @override
   String get fundingStepWithdrawCompletionHint => 'Waiting for the withdrawal to complete.';
+
+  @override
+  String get fundingStepWithdrawCompletedHint => 'Funds have been sent to your destination wallet.';
 
   @override
   String get fundingWithdrawalId => 'Withdrawal ID';

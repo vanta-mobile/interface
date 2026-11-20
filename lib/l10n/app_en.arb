@@ -2605,6 +2605,8 @@
   "fundingStepChainConfirmed": "On-chain transaction confirmed",
   "fundingStepCrediting": "Crediting account",
   "fundingStepCreditingHint": "Waiting for your account to be credited.",
+  "fundingStepCredited": "Account credited",
+  "fundingStepCreditedHint": "Funds have been credited to your Futures Account.",
   "fundingTrackHint": "You can close this page and continue tracking in Transactions.",
   "fundingViewTransactions": "View Transactions",
   "fundingWithdrawable": "Withdrawable Amount",
@@ -2627,8 +2629,18 @@
   "fundingWithdrawFailedTitle": "Withdrawal failed",
   "fundingStepNetwork": "Network confirmation",
   "fundingStepNetworkHint": "Waiting for network confirmation.",
+  "fundingStepNetworkConfirmed": "Network confirmed",
+  "fundingStepNetworkConfirmedHint": "Confirmed on {network}.",
+  "@fundingStepNetworkConfirmedHint": {
+    "placeholders": {
+      "network": {
+        "type": "String"
+      }
+    }
+  },
   "fundingStepWithdrawCompletion": "Withdrawal completion",
   "fundingStepWithdrawCompletionHint": "Waiting for the withdrawal to complete.",
+  "fundingStepWithdrawCompletedHint": "Funds have been sent to your destination wallet.",
   "fundingWithdrawalId": "Withdrawal ID",
   "fundingStatus": "Status",
   "fundingStatusFailed": "Failed",

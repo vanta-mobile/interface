@@ -184,8 +184,8 @@ class _DepositProcessingScreenState extends ConsumerState<DepositProcessingScree
               active: !chainDone,
             ),
             FundingStep(
-              l.fundingStepCrediting,
-              l.fundingStepCreditingHint,
+              credited ? l.fundingStepCredited : l.fundingStepCrediting,
+              credited ? l.fundingStepCreditedHint : l.fundingStepCreditingHint,
               done: credited,
               active: chainDone && !credited,
             ),
@@ -216,6 +216,7 @@ class _WithdrawalStatusScreenState extends ConsumerState<WithdrawalStatusScreen>
     final chain = int.tryParse(record.terms['chain'] ?? '') ?? 0;
     final amount = fundingAmountText(record.terms['amount']!, record.terms['asset']!);
     final failed = status == TransferStatus.failed, done = status == TransferStatus.success;
+    final networkConfirmed = done || match?.txHash != null;
     return FundingStatusPage(
       title: failed
           ? l.fundingWithdrawFailedTitle
@@ -254,15 +255,18 @@ class _WithdrawalStatusScreenState extends ConsumerState<WithdrawalStatusScreen>
               FundingStepsCard(
                 steps: [
                   FundingStep(
-                    l.fundingStepNetwork,
-                    l.fundingStepNetworkHint,
-                    done: done,
-                    active: !done,
+                    networkConfirmed ? l.fundingStepNetworkConfirmed : l.fundingStepNetwork,
+                    networkConfirmed
+                        ? l.fundingStepNetworkConfirmedHint(fundingNetworkName(l, chain))
+                        : l.fundingStepNetworkHint,
+                    done: networkConfirmed,
+                    active: !networkConfirmed,
                   ),
                   FundingStep(
-                    l.fundingStepWithdrawCompletion,
-                    l.fundingStepWithdrawCompletionHint,
+                    done ? l.fundingWithdrawCompleted : l.fundingStepWithdrawCompletion,
+                    done ? l.fundingStepWithdrawCompletedHint : l.fundingStepWithdrawCompletionHint,
                     done: done,
+                    active: networkConfirmed && !done,
                   ),
                 ],
               ),

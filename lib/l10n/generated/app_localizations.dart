@@ -10689,6 +10689,18 @@ abstract class AppLocalizations {
   /// **'Waiting for your account to be credited.'**
   String get fundingStepCreditingHint;
 
+  /// No description provided for @fundingStepCredited.
+  ///
+  /// In en, this message translates to:
+  /// **'Account credited'**
+  String get fundingStepCredited;
+
+  /// No description provided for @fundingStepCreditedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Funds have been credited to your Futures Account.'**
+  String get fundingStepCreditedHint;
+
   /// No description provided for @fundingTrackHint.
   ///
   /// In en, this message translates to:
@@ -10761,6 +10773,18 @@ abstract class AppLocalizations {
   /// **'Waiting for network confirmation.'**
   String get fundingStepNetworkHint;
 
+  /// No description provided for @fundingStepNetworkConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Network confirmed'**
+  String get fundingStepNetworkConfirmed;
+
+  /// No description provided for @fundingStepNetworkConfirmedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed on {network}.'**
+  String fundingStepNetworkConfirmedHint(String network);
+
   /// No description provided for @fundingStepWithdrawCompletion.
   ///
   /// In en, this message translates to:
@@ -10772,6 +10796,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waiting for the withdrawal to complete.'**
   String get fundingStepWithdrawCompletionHint;
+
+  /// No description provided for @fundingStepWithdrawCompletedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Funds have been sent to your destination wallet.'**
+  String get fundingStepWithdrawCompletedHint;
 
   /// No description provided for @fundingWithdrawalId.
   ///

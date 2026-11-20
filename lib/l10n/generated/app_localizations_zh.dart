@@ -5658,6 +5658,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fundingStepCreditingHint => '正在等待账户入账。';
 
   @override
+  String get fundingStepCredited => '账户已入账';
+
+  @override
+  String get fundingStepCreditedHint => '资金已入账至你的合约账户。';
+
+  @override
   String get fundingTrackHint => '你可以关闭此页面，并在资金记录中继续跟踪。';
 
   @override
@@ -5696,10 +5702,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fundingStepNetworkHint => '正在等待网络确认。';
 
   @override
+  String get fundingStepNetworkConfirmed => '网络已确认';
+
+  @override
+  String fundingStepNetworkConfirmedHint(String network) {
+    return '已在 $network 上确认。';
+  }
+
+  @override
   String get fundingStepWithdrawCompletion => '提现完成';
 
   @override
   String get fundingStepWithdrawCompletionHint => '正在等待提现完成。';
+
+  @override
+  String get fundingStepWithdrawCompletedHint => '资金已发送至你的目标钱包。';
 
   @override
   String get fundingWithdrawalId => '提现编号';
