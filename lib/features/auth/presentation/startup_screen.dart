@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'startup_splash.dart';
 import '../application/auth_provider.dart';
+import '../application/geo_restriction_provider.dart';
 import '../application/wallet_onboarding_provider.dart';
 import '../domain/auth_session.dart';
+import 'geo_restriction_dialog.dart';
 import 'wallet_onboarding_flow.dart';
 import 'wallet_session_host.dart';
 
@@ -23,6 +25,7 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
   bool _startupResolved = false;
   String? _restoredKey;
   bool _checkOnEntry = false, _entryCheckScheduled = false, _entryPromptOpen = false;
+  bool _geoChecked = false;
 
   void _finish() => setState(() => _finished = true);
 
@@ -82,7 +85,22 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
   Widget build(BuildContext context) {
     // Startup restoration runs during the intro; its destination waits for it.
     final destination = _destination();
-    if (_introPlayed) return destination;
+    if (_introPlayed) {
+      if (!_geoChecked) {
+        final geo = ref.watch(geoRestrictionProvider);
+        geo.whenData((restriction) {
+          if (restriction.blocked && !_geoChecked) {
+            _geoChecked = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) unawaited(showGeoRestrictionDialog(context));
+            });
+          } else if (!restriction.blocked) {
+            _geoChecked = true;
+          }
+        });
+      }
+      return destination;
+    }
     return StartupSplash(onIntroCompleted: () => setState(() => _introPlayed = true));
   }
 

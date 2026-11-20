@@ -13473,6 +13473,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Maximum qty is {value}'**
   String scaledMaximumSize(String value);
+
+  /// No description provided for @geoRestrictionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Access Restricted'**
+  String get geoRestrictionTitle;
+
+  /// No description provided for @geoRestrictionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This service is not available in certain regions: United States, Canada, United Kingdom, Mainland China, Hong Kong, Japan, Indonesia, Philippines, Thailand, Turkey, Australia, New Zealand, Brazil, Singapore, Malaysia, South Korea, India, Vietnam, Russia, Iran, North Korea, Pakistan, Bangladesh, Argentina, Mexico, South Africa, Saudi Arabia, United Arab Emirates, Egypt, Nigeria, and Taiwan.'**
+  String get geoRestrictionDescription;
+
+  /// No description provided for @geoRestrictionViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get geoRestrictionViewAll;
+
+  /// No description provided for @geoRestrictionFold.
+  ///
+  /// In en, this message translates to:
+  /// **'Fold'**
+  String get geoRestrictionFold;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

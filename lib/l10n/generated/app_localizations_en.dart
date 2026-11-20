@@ -7793,4 +7793,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String scaledMaximumSize(String value) {
     return 'Maximum qty is $value';
   }
+
+  @override
+  String get geoRestrictionTitle => 'Access Restricted';
+
+  @override
+  String get geoRestrictionDescription =>
+      'This service is not available in certain regions: United States, Canada, United Kingdom, Mainland China, Hong Kong, Japan, Indonesia, Philippines, Thailand, Turkey, Australia, New Zealand, Brazil, Singapore, Malaysia, South Korea, India, Vietnam, Russia, Iran, North Korea, Pakistan, Bangladesh, Argentina, Mexico, South Africa, Saudi Arabia, United Arab Emirates, Egypt, Nigeria, and Taiwan.';
+
+  @override
+  String get geoRestrictionViewAll => 'View All';
+
+  @override
+  String get geoRestrictionFold => 'Fold';
 }
