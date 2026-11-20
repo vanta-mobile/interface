@@ -798,7 +798,7 @@
 ## 2026-11-16 Integrated changes and pre-commit verification
 
 - Integrated owner-signed Aster Builder approval/update for the configured public Vanta address. The client never needs a Builder private key. Live binding reads confirm approval; durable journals retain uncertain writes, and only a renewed explicit action after verification permits a missing Builder grant to be signed again. Wallet initialization, relay correlation and launch recovery use the scoped, documented Reown patches with upstream licenses. Builder signing uses a 50-second local deadline within the general V3 60-second nonce window; Agent registration retains its separate stricter deadline.
-- Crypto and RWA targets remain total Maker 0.015% / Taker 0.05%. New order/strategy placement reads current symbol commission and binding, computes one additional Builder fee with Decimal for every possible entry/protection fill, rejects applicable base fees above budget and signs the exact attribution bytes. Uncertain orders are queried by their original IDs without replay. The additive fee formula, actual fill accounting and backend Builder discovery/archive completeness remain operational acceptance boundaries; successful wallet signing alone does not establish them.
+- At this stage, Crypto and RWA used total fee targets of Maker 0.015% and Taker 0.05%. The current additive policy is documented below. Uncertain orders are queried by their original IDs without replay. The additive fee formula, actual fill accounting and backend Builder discovery/archive completeness remain operational acceptance boundaries; successful wallet signing alone does not establish them.
 - Included backend history/notification contract updates, income archival, quantity-unit mapping, app-update handling, safe-read cancellation/backoff and order input/allocation feedback and refresh improvements. Financial writes do not use automatic read retries. Builder fixes retain the agreed authorization UI and copy; unrelated UI changes in this working tree belong to their existing feature work.
 - Before committing all current changes, `dart format --output=none --set-exit-if-changed lib test` checked 1,357 files with no changes, `flutter analyze --no-pub` reported no issues, and the full `flutter test --no-pub` suite passed **5,973 tests with 3 skipped**. Application whitespace checks passed. Staged whitespace diagnostics in vendored licenses, README and generated SDK files were verified byte-for-byte against the published package cache; their upstream formatting was retained. Logs: `/tmp/vanta-commit-format.log`, `/tmp/vanta-commit-analysis.log`, `/tmp/vanta-commit-tests.log`. The existing Linux Rive native-library warnings/skips remain. No app launch, reload/restart, native build or real signed financial write was performed for this verification.
 
@@ -1016,3 +1016,40 @@
 **边界：** 若 `state.busy=true` 期间收到的 null identity 是真实退登，`connectWallet` 的 catch 路径会将 state 设为连接失败错误，UI 显示错误提示；不会静默忽略真实退登。
 
 **验收：** `flutter analyze lib/features/auth/` 无新 error/warning。未在真机验证。
+
+## Android 本地调试（Nix）
+
+- 本机 Android SDK 的 CMake 3.22.1 自带 Ninja 执行 `--version` 时发生段错误，导致 `jni` 配置失败。本机通过忽略入库的 `android/local.properties` 中的 `cmake.dir` 指向本地 CMake 目录，该目录使用 SDK 的 CMake 和 Nix 的 Ninja 1.13.2。
+- 在 `emulator-5554` 上实际验证 `make run FLUTTER_ARGS="-d emulator-5554 --no-dds"`，Debug APK 构建、安装及 Flutter 调试连接均成功。默认调试连接曾在安装后断开。
+
+## 外部钱包选择器与连接错误
+
+- 中文 Android 登录页点击「连接钱包」时，Reown 的原生 Flutter Material 底部弹窗曾因缺少原生 `MaterialLocalizations` 抛错。应用在保留 `material_ui` 本地化委托的同时注册 Flutter 原生 Material 委托。
+- SDK 打开选择器抛出的框架错误保留诊断摘要。钱包选择器未获得批准时，将 SDK 已报告的具体错误传到登录页；用户直接关闭仍按取消处理。JSON-RPC 错误的描述经现有过滤后才进入应用提示。
+- 在 Android 模拟器用 `make run FLUTTER_ARGS="-d emulator-5554 --no-dds"` 验证选择器打开及跳转到 MetaMask，未执行钱包授权或签名。三个定向测试文件共 28 项通过，改动文件静态分析通过。扩大到 auth 和 error_text 后，413 项通过、3 项跳过、12 项失败；提交基线复现了相同失败。
+
+## 外部钱包签名返回时的中继重连
+
+- 签名请求发出后，如果 WalletConnect 中继连接建立失败，保留原请求等待回复。应用回到前台后可尝试一次额外的传输重连，由现有超时收尾，期间不重新发送签名请求。最终连接失败时保留具体的中继错误，发布失败仍立即返回。
+- 本机 Android 模拟器复查时已能解析 `relay.walletconnect.org` 并连到 TCP 443。最新版本已通过 `make run` 构建、安装并连上调试服务。未在 MetaMask 内完成新一轮授权签名。58 项钱包及中继定向测试通过，其中覆盖 DNS 失败后恢复、持续失败及无重复签名请求。
+- 中继改动之前的全量 Flutter 测试有 5,937 项通过、3 项跳过、145 项失败。最新改动的 CI 范围格式检查通过，`dart analyze --fatal-infos` 无问题。
+
+## 地域限制、会话失效与 Builder 费率复核
+
+- 地域限制弹窗通过 `PopScope` 拦截系统返回，保留不可通过遮罩关闭的行为。Widget 回归测试确认系统返回后遮罩仍可见。
+- 会话失效的例外限于显式钱包连接和主动登出。已有回归测试确认创建钱包期间收到 SDK 会话失效事件后，迟到的结果不能恢复旧身份。
+- Builder 费叠加在 Aster 基础费率上。仅保证 Maker 成交的 Post Only 单（无附带退出单）加收 0.015%，可能发生 Taker 成交的普通单或策略加收 0.05%。普通单及附带止盈止损的订单在签名前核对 Builder 授权及附加费上限。容量估算使用 Aster 基础 Taker 费率加 0.05%。例如，Aster 基础 Taker 费率为 0.04% 时，合计为 0.09%。
+- 验证：地域限制、认证、Reown 连接定向测试通过。另用应用当前委托配置验证旧版 Flutter Material 底部弹窗可在英文和中文下打开，两项通过。全仓 `flutter analyze --no-pub` 和 `git diff --check` 通过。本轮未启动应用、未构建 Android/iOS，也未执行真实钱包签名或下单。
+
+## 全量测试修复
+
+- 应用入口与组件测试共用同一组本地化委托，覆盖 `material_ui`、`cupertino_ui` 和依赖 Flutter 原生 Material 的 SDK 路由。生成的本地化文件由生成器管理。
+- 钱包创建期间收到 SDK 会话过期事件时，废弃晚到的钱包创建结果。切链前的中继准备直接传递 SDK 错误。快捷下单在后台更新账户快照期间可用现有估值选择百分比，提交前仍以当前快照重新校验和计算。
+- 数字动画、入金余额预读和出金状态的断言与当前界面行为对齐。入金资产菜单的截图基准更新为同时展示 BNB 和 USDT 的余额。
+- 叠加费率口径确认后，Builder 费率、下单传输与容量估算定向测试 62 项通过，全仓静态分析通过。
+- 验证：`flutter test --no-pub` 全量 6,085 项通过、3 项 Rive 启动动画测试跳过、0 项失败。CI 范围的 Dart 格式检查、`dart analyze --fatal-infos` 和 `git diff --check` 均通过。
+
+## K 线快捷下单百分比显示
+
+- 选择百分比后，快捷下单输入框只显示百分比。方向数量计算和确认页订单估值仍使用原有逻辑。
+- 快捷下单组件测试 18 项通过。改动代码已格式化，`dart analyze --fatal-infos` 无问题。
