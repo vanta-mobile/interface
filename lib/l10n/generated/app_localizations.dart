@@ -1,17 +1,14 @@
 import 'dart:async';
 
-import 'package:cupertino_ui/cupertino_ui.dart' show GlobalCupertinoLocalizations;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_localizations/flutter_localizations.dart'
-    hide GlobalMaterialLocalizations, GlobalCupertinoLocalizations;
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
-import 'package:material_ui/material_ui.dart' show GlobalMaterialLocalizations;
 
 import 'app_localizations_en.dart';
 import 'app_localizations_zh.dart';
 
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, deprecated_member_use
 
 /// Callers can lookup localized strings with an instance of AppLocalizations
 /// returned by `AppLocalizations.of(context)`.
