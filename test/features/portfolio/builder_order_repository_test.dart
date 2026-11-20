@@ -12,7 +12,6 @@ import 'package:vanta/features/portfolio/data/aster_account_service.dart';
 import 'package:vanta/features/portfolio/data/builder_order_preflight.dart';
 import 'package:vanta/features/portfolio/data/signed_account_request.dart';
 import 'package:vanta/features/portfolio/data/signed_live_order_repository.dart';
-import 'package:vanta/features/portfolio/domain/account_request_signing.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/domain/live_order_time_in_force.dart';

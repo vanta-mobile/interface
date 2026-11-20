@@ -1,5 +1,5 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/presentation/drag_throttle.dart';
 import '../../trade/presentation/trade_theme.dart';

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/presentation/status_view.dart';
@@ -174,22 +174,26 @@ class _TradingHistoryResultsState extends ConsumerState<TradingHistoryResults> {
                         return Padding(
                           key: ValueKey(r.key),
                           padding: EdgeInsets.only(
-                            top: tab == TradingHistoryTab.orders ||
+                            top:
+                                tab == TradingHistoryTab.orders ||
                                     tab == TradingHistoryTab.transactions
                                 ? 0
                                 : 12,
                           ),
                           child: switch (r) {
-                            HistoryOrder() =>
-                              TradingHistoryOrderCard(order: r, units: units[r.symbol]),
+                            HistoryOrder() => TradingHistoryOrderCard(
+                              order: r,
+                              units: units[r.symbol],
+                            ),
                             HistoryPosition() => TradingHistoryPositionCard(
                               position: r,
                               units: units[r.symbol],
                             ),
-                            HistoryFill() =>
-                              TradingHistoryFillCard(fill: r, units: units[r.symbol]),
-                            HistoryTransaction() =>
-                              TradingHistoryTransactionRow(transaction: r),
+                            HistoryFill() => TradingHistoryFillCard(
+                              fill: r,
+                              units: units[r.symbol],
+                            ),
+                            HistoryTransaction() => TradingHistoryTransactionRow(transaction: r),
                           },
                         );
                       },

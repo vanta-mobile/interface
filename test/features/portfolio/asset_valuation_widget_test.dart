@@ -3,7 +3,7 @@ import 'package:vanta/features/portfolio/application/asset_metadata_provider.dar
 import '../../support/asset_metadata.dart';
 
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/theme.dart';

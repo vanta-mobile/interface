@@ -253,11 +253,7 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
       ).submit(intent: intent, isCurrent: isCurrent, canSubmit: canSubmit, onStep: onStep);
     }
     var submitted = false;
-    final quote = await builder?.read(
-      intent: intent,
-      isCurrent: isCurrent,
-      canSubmit: canSubmit,
-    );
+    final quote = await builder?.read(intent: intent, isCurrent: isCurrent, canSubmit: canSubmit);
     final Object? payload;
     try {
       payload =

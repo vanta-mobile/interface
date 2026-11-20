@@ -2,7 +2,7 @@ import '../../support/portfolio_account_tools.dart';
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/portfolio/application/account_read_provider.dart';
 import 'package:vanta/features/portfolio/application/spot_account_provider.dart';

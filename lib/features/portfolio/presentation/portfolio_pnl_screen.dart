@@ -1,8 +1,9 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/presentation/responsive_insets.dart';
 import '../../../core/presentation/status_view.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
@@ -80,9 +81,7 @@ class _PortfolioPnlScreenState extends ConsumerState<PortfolioPnlScreen> {
               ref.read(portfolioRefreshProvider)(calendarMonth: _calendar ? _month : null),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final horizontal = constraints.maxWidth > 820
-                  ? (constraints.maxWidth - 788) / 2
-                  : 16.0;
+              final horizontal = responsiveHorizontalInset(constraints.maxWidth);
               return ListView(
                 key: const Key('portfolio-pnl-page'),
                 physics: const AlwaysScrollableScrollPhysics(),

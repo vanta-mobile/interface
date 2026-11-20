@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/domain/decimal_value.dart';
 import '../../../core/formatters/token_amount_formatter.dart';

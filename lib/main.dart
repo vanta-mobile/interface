@@ -4,7 +4,7 @@ import 'core/application/wallet_operation_provider.dart';
 import 'features/portfolio/application/position_margin_storage_provider.dart';
 import 'core/data/wallet_operation_journal.dart';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -2,7 +2,7 @@ import 'package:vanta/features/trade/application/navigation_provider.dart';
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:k_chart_plus/k_chart_plus.dart';

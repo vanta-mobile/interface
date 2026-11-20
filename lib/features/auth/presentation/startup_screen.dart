@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'startup_splash.dart';
@@ -92,7 +92,8 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
           if (restriction.blocked && !_geoChecked) {
             _geoChecked = true;
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) unawaited(showGeoRestrictionDialog(context, restriction.restrictedAreas));
+              if (mounted)
+                unawaited(showGeoRestrictionDialog(context, restriction.restrictedAreas));
             });
           } else if (!restriction.blocked) {
             _geoChecked = true;

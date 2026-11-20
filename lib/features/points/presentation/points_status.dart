@@ -1,7 +1,7 @@
 import '../../../core/errors/api_error_details.dart';
 import '../../../core/errors/error_text.dart';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/presentation/status_view.dart';
 import '../../../core/theme.dart';

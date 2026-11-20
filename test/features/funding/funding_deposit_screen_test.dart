@@ -1,5 +1,5 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/auth/domain/auth_session.dart';
 import 'package:vanta/features/auth/domain/wallet_transaction.dart';

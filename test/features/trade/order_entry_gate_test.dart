@@ -6,7 +6,7 @@ import 'package:vanta/features/authorization/presentation/enable_trading_screen.
 import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
 import 'package:vanta/features/authorization/domain/trading_agent.dart';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:vanta/core/presentation/status_view.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_form.dart';
 import 'package:vanta/features/portfolio/presentation/embedded_time_in_force_selector.dart';

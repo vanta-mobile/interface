@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/settings/data/app_cache_repository.dart';
 import 'package:vanta/features/settings/presentation/settings_components.dart';

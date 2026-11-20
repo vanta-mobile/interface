@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// k_chart_plus' scale recognizer wins even one-finger vertical gestures.
 /// Forward that intent to the surrounding scroll view without claiming the

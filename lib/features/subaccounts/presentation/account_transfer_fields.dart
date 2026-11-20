@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/formatters/decimal_text_input_formatter.dart';
 import '../../../core/theme.dart';

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/motion/animated_number_text.dart';
 import '../../../core/presentation/status_view.dart';

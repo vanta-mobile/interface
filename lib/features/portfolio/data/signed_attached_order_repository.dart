@@ -48,11 +48,7 @@ class SignedAttachedOrderRepository {
     required void Function(LiveOrderStep) onStep,
   }) => RequestScope.run(isCurrent, () async {
     var submitted = false;
-    final quote = await builder?.read(
-      intent: intent,
-      isCurrent: isCurrent,
-      canSubmit: canSubmit,
-    );
+    final quote = await builder?.read(intent: intent, isCurrent: isCurrent, canSubmit: canSubmit);
     AccountReadFailure? postFailure;
     try {
       final payload =

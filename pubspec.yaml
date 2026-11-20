@@ -9,6 +9,7 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  material_ui: ^1.11.0
   flutter_riverpod: ^3.4.3
   # Render the original Figma social and wallet SVG icons.
   flutter_svg: ^2.3.2

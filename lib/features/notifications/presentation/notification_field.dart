@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class NotificationField extends StatelessWidget {
   const NotificationField(this.label, this.value, {super.key});

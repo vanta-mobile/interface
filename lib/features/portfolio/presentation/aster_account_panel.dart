@@ -4,7 +4,7 @@ import '../../funding/presentation/funding_info_screen.dart';
 import '../../funding/domain/transfer_history.dart';
 
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

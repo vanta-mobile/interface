@@ -1,7 +1,7 @@
 import '../../../core/presentation/status_view.dart';
 
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:rational/rational.dart';
 
 import '../../../core/domain/decimal_value.dart';

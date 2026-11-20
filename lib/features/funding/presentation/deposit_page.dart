@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/error_text.dart';
@@ -248,14 +248,13 @@ class _DepositPageState extends ConsumerState<DepositPage> {
     }
     final sortedAssets = [
       ...choice.assets.where((a) => a.isNative),
-      ...(choice.assets.where((a) => !a.isNative).toList()
-        ..sort((a, b) {
-          final ba = rawAmounts[a.asset], bb = rawAmounts[b.asset];
-          if (ba == null && bb == null) return 0;
-          if (ba == null) return 1;
-          if (bb == null) return -1;
-          return bb.compareTo(ba);
-        })),
+      ...(choice.assets.where((a) => !a.isNative).toList()..sort((a, b) {
+        final ba = rawAmounts[a.asset], bb = rawAmounts[b.asset];
+        if (ba == null && bb == null) return 0;
+        if (ba == null) return 1;
+        if (bb == null) return -1;
+        return bb.compareTo(ba);
+      })),
     ];
     final model = query == null ? null : _model(query);
     final catalogError = catalog.failureKey == null || catalog.catalog != null
@@ -339,11 +338,18 @@ class _DepositPageState extends ConsumerState<DepositPage> {
         ),
       );
 
-  Widget _amount(FundingChoice choice, DepositWalletQuery? query, _DepositModel? model, Map<String, String?> balances, List<FundingAsset> sortedAssets) {
+  Widget _amount(
+    FundingChoice choice,
+    DepositWalletQuery? query,
+    _DepositModel? model,
+    Map<String, String?> balances,
+    List<FundingAsset> sortedAssets,
+  ) {
     final asset = choice.asset;
     return FundingDropdown<String>(
       options: [
-        for (final a in sortedAssets) FundingOption(a.asset, a.asset, FundingAssetIcon(a.asset), balance: balances[a.asset]),
+        for (final a in sortedAssets)
+          FundingOption(a.asset, a.asset, FundingAssetIcon(a.asset), balance: balances[a.asset]),
       ],
       selected: asset?.asset,
       onSelected: (value) {

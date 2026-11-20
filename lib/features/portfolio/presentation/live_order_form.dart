@@ -2,7 +2,7 @@ import 'minimum_order_size_hint.dart';
 import 'embedded_time_in_force_selector.dart';
 
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/generated/app_localizations.dart';

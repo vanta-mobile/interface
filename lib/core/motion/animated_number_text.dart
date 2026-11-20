@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Which way a number moved, deciding which way its digits roll.
 enum NumberTrend { up, down, flat }

@@ -13,10 +13,7 @@ void main() {
   test('fixed taker rate applies to market, GTC, IOC, and hidden orders', () {
     final rates = const BuilderCommissionRates();
     expect(rates.feeFor(liveDraft(market: true)), VantaBuilder.takerRate);
-    expect(
-      rates.feeFor(liveDraft(timeInForce: LiveOrderTimeInForce.ioc)),
-      VantaBuilder.takerRate,
-    );
+    expect(rates.feeFor(liveDraft(timeInForce: LiveOrderTimeInForce.ioc)), VantaBuilder.takerRate);
     expect(rates.feeFor(liveDraft()), VantaBuilder.takerRate);
     expect(
       rates.feeFor(liveDraft(timeInForce: LiveOrderTimeInForce.hidden)),

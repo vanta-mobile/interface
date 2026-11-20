@@ -4,7 +4,7 @@ import '../../support/workspace_navigation.dart';
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/market/domain/market.dart';

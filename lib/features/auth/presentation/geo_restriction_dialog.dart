@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/theme.dart';
@@ -9,30 +9,30 @@ import '../../../core/presentation/no_press_feedback.dart';
 
 Future<void> showGeoRestrictionDialog(BuildContext context, List<String> restrictedAreas) =>
     showGeneralDialog<void>(
-  context: context,
-  barrierDismissible: false,
-  barrierLabel: '',
-  barrierColor: PortfolioColors.transparent,
-  transitionDuration: const Duration(milliseconds: 200),
-  pageBuilder: (context, animation, secondaryAnimation) => Stack(
-    children: [
-      Positioned.fill(
-        child: IgnorePointer(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-            child: const ColoredBox(color: AppColors.authOverlay),
+      context: context,
+      barrierDismissible: false,
+      barrierLabel: '',
+      barrierColor: PortfolioColors.transparent,
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder: (context, animation, secondaryAnimation) => Stack(
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                child: const ColoredBox(color: AppColors.authOverlay),
+              ),
+            ),
           ),
-        ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _GeoRestrictionDialog(restrictedAreas: restrictedAreas),
+            ),
+          ),
+        ],
       ),
-      Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: _GeoRestrictionDialog(restrictedAreas: restrictedAreas),
-        ),
-      ),
-    ],
-  ),
-);
+    );
 
 class _GeoRestrictionDialog extends StatefulWidget {
   const _GeoRestrictionDialog({required this.restrictedAreas});

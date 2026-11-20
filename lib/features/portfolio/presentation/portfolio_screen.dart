@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/presentation/responsive_insets.dart';
 import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/application/auth_provider.dart';
@@ -47,9 +48,7 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
               onRefresh: ref.watch(portfolioRefreshProvider),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final horizontal = constraints.maxWidth > 820
-                      ? (constraints.maxWidth - 788) / 2
-                      : 16.0;
+                  final horizontal = responsiveHorizontalInset(constraints.maxWidth);
                   return CustomScrollView(
                     key: const Key('portfolio-page'),
                     physics: const AlwaysScrollableScrollPhysics(),

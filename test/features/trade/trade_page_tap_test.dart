@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/trade/presentation/widgets/futures_workspace_tabs.dart';
 import 'package:vanta/features/trade/presentation/widgets/market_sheet.dart';
