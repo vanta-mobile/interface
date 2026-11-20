@@ -11,6 +11,7 @@ import 'package:vanta/features/settings/data/app_update_repository.dart';
 import 'package:vanta/features/settings/domain/app_version.dart';
 import 'package:vanta/features/settings/presentation/settings_app_card.dart';
 import 'package:vanta/features/settings/presentation/settings_update_sheet.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/vanta_api.dart';
@@ -205,7 +206,7 @@ void main() {
             child: MaterialApp(
               theme: vantaTheme(),
               locale: Locale(locale),
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: appLocalizationDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               builder: (context, child) => MediaQuery(
                 data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(2)),
@@ -249,7 +250,7 @@ void main() {
       ProviderScope(
         child: MaterialApp(
           theme: vantaTheme(),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SettingsUpdateSheet(

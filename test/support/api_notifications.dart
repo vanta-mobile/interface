@@ -21,6 +21,7 @@ import 'package:vanta/features/notifications/application/api_notification_provid
 import 'package:vanta/features/notifications/application/api_notification_units_provider.dart';
 import 'package:vanta/features/notifications/domain/api_notification.dart';
 import 'package:vanta/features/notifications/presentation/notification_screen.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import 'vanta_api.dart';
@@ -189,7 +190,7 @@ class InboxFixture {
         child: MaterialApp(
           theme: vantaTheme(),
           locale: Locale(language),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),

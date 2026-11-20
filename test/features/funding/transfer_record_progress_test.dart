@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/features/funding/application/transfer_confirmation_provider.dart';
 import 'package:vanta/features/funding/presentation/transfer_record_progress.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/transfers.dart';
@@ -15,7 +16,7 @@ void main() {
         overrides: [...overrides.cast()],
         child: MaterialApp(
           locale: const Locale('en'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(body: child),
         ),

@@ -14,6 +14,7 @@ import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/presentation/account_read_controls.dart';
 import 'package:vanta/features/assistant/domain/assistant_view_state.dart';
 import 'package:vanta/features/portfolio/data/order_response_failure.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -27,7 +28,7 @@ void main() {
             MaterialApp(
               locale: Locale(locale),
               supportedLocales: AppLocalizations.supportedLocales,
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: appLocalizationDelegates,
               home: Builder(
                 builder: (context) {
                   l10n = AppLocalizations.of(context);
@@ -63,7 +64,7 @@ void main() {
         MaterialApp(
           locale: Locale(locale),
           supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           home: Builder(
             builder: (value) {
               context = value;
@@ -97,7 +98,7 @@ void main() {
         MaterialApp(
           locale: Locale(locale),
           supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           home: Builder(
             builder: (context) => Text(
               accountErrorText(
@@ -125,7 +126,7 @@ void main() {
         MaterialApp(
           locale: Locale(locale),
           supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           home: Builder(
             builder: (value) {
               context = value;
@@ -160,7 +161,7 @@ void main() {
           child: MaterialApp(
             locale: Locale(locale),
             supportedLocales: AppLocalizations.supportedLocales,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationDelegates,
             home: Scaffold(
               body: AccountReadControls(
                 state: const AccountSnapshotState(
@@ -186,7 +187,7 @@ void main() {
     late BuildContext context;
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (c) {

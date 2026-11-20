@@ -10,6 +10,7 @@ import 'package:vanta/features/portfolio/application/main_order_refresh_provider
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
 import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/main_order_live_pricing.dart';
@@ -33,7 +34,7 @@ void main() {
             child: MaterialApp(
               theme: vantaTheme(),
               locale: const Locale('zh'),
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: appLocalizationDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: const Scaffold(
                 body: SingleChildScrollView(child: LiveOrderScreen(symbol: 'BTCUSDT')),

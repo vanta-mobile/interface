@@ -5,13 +5,14 @@ import 'package:vanta/features/portfolio/domain/live_order_trigger.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_trailing_controls.dart';
 import 'package:vanta/features/portfolio/presentation/order_confirmation_terms.dart';
 import 'package:vanta/features/trade/presentation/trade_theme.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/live_order.dart';
 
 Future<void> _pump(WidgetTester tester, Widget child) => tester.pumpWidget(
   MaterialApp(
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    localizationsDelegates: appLocalizationDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(body: SizedBox(width: 202, child: child)),
   ),

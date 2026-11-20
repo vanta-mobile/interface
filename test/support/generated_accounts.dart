@@ -23,6 +23,7 @@ import 'package:vanta/features/subaccounts/application/subaccount_list_provider.
 import 'package:vanta/features/subaccounts/application/subaccount_management_provider.dart';
 import 'package:vanta/features/subaccounts/data/subaccount_wallet_store.dart';
 import 'package:vanta/features/subaccounts/domain/subaccount_management.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import 'account_operations.dart';
@@ -145,7 +146,7 @@ class GeneratedAccountsFixture {
         child: MaterialApp(
           theme: vantaTheme(),
           locale: Locale(locale),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => RepaintBoundary(
             key: captureKey,

@@ -26,6 +26,7 @@ import 'package:vanta/features/funding/presentation/transfer_record_screen.dart'
 import 'package:vanta/features/notifications/application/notification_provider.dart';
 import 'package:vanta/features/notifications/data/local_notification_repository.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
@@ -403,7 +404,7 @@ void main() {
           child: MaterialApp(
             theme: vantaTheme(),
             locale: Locale(locale),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             builder: (context, child) => MediaQuery(
               data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.5)),
@@ -453,7 +454,7 @@ void main() {
         child: MaterialApp(
           theme: vantaTheme(),
           locale: const Locale('en'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const Scaffold(body: PortfolioFundingActivity(hidden: false)),
         ),

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/theme.dart';
 import 'package:vanta/features/notifications/presentation/notification_screen.dart';
 import 'package:vanta/features/trade/application/providers.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 /// Exercise notification routes independently of the wallet onboarding flow.
@@ -14,7 +15,7 @@ Future<void> launchNotificationCenter(WidgetTester tester, ProviderContainer con
       child: MaterialApp(
         theme: vantaTheme(),
         locale: container.read(localeProvider),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: const NotificationScreen(),
       ),

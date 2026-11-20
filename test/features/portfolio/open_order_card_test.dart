@@ -10,6 +10,7 @@ import 'package:vanta/features/portfolio/domain/aster_account.dart';
 import 'package:vanta/features/portfolio/domain/aster_open_orders.dart';
 import 'package:vanta/features/portfolio/domain/order_modification.dart';
 import 'package:vanta/features/portfolio/presentation/aster_open_order_card.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 const _units = AsterContractUnits(base: 'AAPL', quote: 'USDT', margin: 'USDT');
@@ -57,7 +58,7 @@ Future<void> _pump(
     ],
     child: MaterialApp(
       locale: locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: SingleChildScrollView(child: card)),
     ),

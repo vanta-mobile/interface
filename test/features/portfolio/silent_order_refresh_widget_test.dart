@@ -17,6 +17,7 @@ import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
 import 'package:vanta/features/portfolio/presentation/position_margin_mode_sheet.dart';
 import 'package:vanta/features/portfolio/application/symbol_settings_activity.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/main_order_live_pricing.dart';
@@ -58,7 +59,7 @@ void main() {
         child: MaterialApp(
           theme: vantaTheme(),
           locale: Locale(locale),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),

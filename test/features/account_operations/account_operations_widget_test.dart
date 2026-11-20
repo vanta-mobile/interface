@@ -12,6 +12,7 @@ import 'package:vanta/features/funding/application/deposit_gas_provider.dart';
 import 'package:vanta/features/funding/application/funding_catalog_provider.dart';
 import 'package:vanta/features/funding/presentation/withdrawal_screen.dart';
 import 'package:vanta/features/funding/presentation/deposit_submission_panel.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/identity_repository.dart';
@@ -59,7 +60,7 @@ Future<void> mount(
         theme: vantaTheme(),
         locale: Locale(locale),
         supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationDelegates,
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.5)),
           child: child!,

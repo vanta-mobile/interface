@@ -8,6 +8,7 @@ import 'package:vanta/features/portfolio/application/position_margin_storage_pro
 import 'package:vanta/features/portfolio/domain/position_margin_adjustment.dart';
 import 'package:vanta/features/portfolio/domain/position_risk.dart';
 import 'package:vanta/features/portfolio/presentation/position_margin_screen.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
@@ -48,7 +49,7 @@ void main() {
         container: container,
         child: MaterialApp(
           locale: Locale(zh ? 'zh' : 'en'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: home ?? const PositionMarginScreen(symbol: 'BTCUSDT', side: 'BOTH'),
         ),

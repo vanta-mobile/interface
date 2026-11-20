@@ -18,6 +18,7 @@ import 'package:vanta/features/portfolio/domain/live_order_capacity.dart';
 import 'package:vanta/features/portfolio/domain/live_order_peg.dart';
 import 'package:vanta/features/portfolio/domain/live_order_size.dart';
 import 'package:vanta/features/portfolio/presentation/main_order_capacity_panel.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
@@ -85,7 +86,7 @@ void main() {
         child: MaterialApp(
           theme: vantaTheme(),
           locale: Locale(locale),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),

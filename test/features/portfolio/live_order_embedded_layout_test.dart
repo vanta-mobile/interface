@@ -12,13 +12,14 @@ import 'package:vanta/features/portfolio/presentation/live_order_embedded_inputs
 import 'package:vanta/features/trade/presentation/widgets/trade_icon.dart';
 import 'package:vanta/features/trade/presentation/widgets/trade_option_sheet.dart';
 import 'package:vanta/features/portfolio/presentation/main_order_direction_card.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/main_order_capacity.dart';
 
 Widget _app(Widget child) => MaterialApp(
   locale: const Locale('en'),
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  localizationsDelegates: appLocalizationDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   home: Scaffold(body: SizedBox(width: 220, child: child)),
 );

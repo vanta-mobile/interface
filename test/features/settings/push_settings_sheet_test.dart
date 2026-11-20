@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/theme.dart';
 import 'package:vanta/features/settings/presentation/push_settings_sheet.dart';
 import 'package:vanta/features/settings/presentation/settings_components.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/api_notifications.dart';
@@ -37,7 +38,7 @@ Future<void> _mount(WidgetTester tester, InboxFixture f, {String language = 'en'
       child: MaterialApp(
         theme: vantaTheme(),
         locale: Locale(language),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => Scaffold(

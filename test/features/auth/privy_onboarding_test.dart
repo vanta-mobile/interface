@@ -27,6 +27,7 @@ import 'package:vanta/features/authorization/domain/trading_authorization.dart';
 import 'package:vanta/features/portfolio/data/aster_account_service.dart';
 import 'package:vanta/features/portfolio/data/aster_spot_service.dart';
 import 'package:vanta/features/portfolio/data/signed_account_request.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_signatures.dart';
@@ -136,7 +137,7 @@ void main() {
             child: MaterialApp(
               theme: vantaTheme(),
               locale: const Locale('en'),
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: appLocalizationDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: Builder(
                 builder: (context) => Scaffold(

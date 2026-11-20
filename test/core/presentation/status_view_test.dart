@@ -3,10 +3,11 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/presentation/status_view.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 Widget host(Widget child, {double width = 361}) => MaterialApp(
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  localizationsDelegates: appLocalizationDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   home: Scaffold(
     body: SingleChildScrollView(

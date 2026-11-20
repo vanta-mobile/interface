@@ -11,6 +11,7 @@ import 'package:vanta/features/portfolio/application/portfolio_overview_provider
 import 'package:vanta/features/portfolio/domain/aster_account.dart';
 import 'package:vanta/features/portfolio/domain/portfolio_overview.dart';
 import 'package:vanta/features/portfolio/presentation/portfolio_assets.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/asset_indices.dart';
@@ -59,7 +60,7 @@ void main() {
         child: MaterialApp(
           theme: vantaTheme(),
           locale: Locale(locale),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),

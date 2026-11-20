@@ -18,6 +18,7 @@ import 'package:vanta/features/portfolio/domain/asset_yield.dart';
 import 'package:vanta/features/portfolio/presentation/aster_account_rows.dart';
 import 'package:vanta/features/portfolio/presentation/asset_yield_badge.dart';
 import 'package:vanta/features/portfolio/presentation/spot_balance_rows.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/asset_indices.dart';
@@ -63,7 +64,7 @@ void main() {
           theme: vantaTheme(),
           locale: Locale(language),
           supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
             child: child!,

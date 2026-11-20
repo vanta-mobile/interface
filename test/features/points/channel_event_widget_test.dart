@@ -14,6 +14,7 @@ import 'package:vanta/features/points/data/trading_event_mapper.dart';
 import 'package:vanta/features/points/domain/event_registration.dart';
 import 'package:vanta/features/points/presentation/trading_event_page.dart';
 import 'package:vanta/features/points/presentation/trading_events_page.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/channel_events.dart';
@@ -74,7 +75,7 @@ void main() {
           theme: vantaTheme(),
           locale: Locale(locale),
           supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
             child: child!,

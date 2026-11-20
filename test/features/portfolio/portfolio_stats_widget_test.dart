@@ -22,6 +22,7 @@ import 'package:vanta/features/portfolio/domain/portfolio_stats.dart';
 import 'package:vanta/features/portfolio/presentation/portfolio_pnl_screen.dart';
 import 'package:vanta/features/portfolio/presentation/portfolio_summary.dart';
 import 'package:vanta/features/portfolio/data/portfolio_stats_repository.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/vanta_api.dart';
@@ -54,7 +55,7 @@ Widget app(List<dynamic> overrides, Widget child) => ProviderScope(
   overrides: [authProvider.overrideWith(_SignedIn.new), ...overrides.cast()],
   child: MaterialApp(
     locale: const Locale('en'),
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    localizationsDelegates: appLocalizationDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: child,
   ),

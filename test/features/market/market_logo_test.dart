@@ -15,6 +15,7 @@ import 'package:vanta/features/portfolio/application/asset_metadata_refresh_prov
 import 'package:vanta/features/portfolio/domain/asset_metadata.dart';
 import 'package:vanta/features/trade/presentation/widgets/coin_icon.dart';
 import 'package:vanta/features/trade/presentation/widgets/market_list_row.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/asset_metadata.dart';
@@ -60,7 +61,7 @@ void main() {
         container: container,
         child: MaterialApp(
           theme: vantaTheme(),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(body: child),
         ),

@@ -4,6 +4,7 @@ import 'package:vanta/core/theme.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/domain/live_order_trigger.dart';
 import 'package:vanta/features/portfolio/presentation/attached_exit_input_controls.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/live_order.dart';
@@ -21,7 +22,7 @@ void main() {
       MaterialApp(
         theme: vantaTheme(),
         locale: const Locale('zh'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SingleChildScrollView(
@@ -69,7 +70,7 @@ void main() {
           MaterialApp(
             theme: vantaTheme(),
             locale: Locale(language),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: ValueListenableBuilder<LiveOrderDraft>(

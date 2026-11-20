@@ -7,6 +7,7 @@ import 'package:vanta/features/portfolio/domain/live_order_time_in_force.dart';
 import 'package:vanta/features/portfolio/presentation/embedded_time_in_force_selector.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_embedded_controls.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/main_order_live_pricing.dart';
@@ -24,7 +25,7 @@ void main() {
           MaterialApp(
             theme: vantaTheme(),
             locale: Locale(locale),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             builder: (context, child) => MediaQuery(
               data: MediaQuery.of(context)
@@ -102,7 +103,7 @@ void main() {
           container: f.container,
           child: MaterialApp(
             theme: vantaTheme(),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: const Scaffold(
               body: SingleChildScrollView(child: LiveOrderScreen(symbol: 'BTCUSDT')),

@@ -34,6 +34,7 @@ import 'package:vanta/features/notifications/application/notification_provider.d
 import 'package:vanta/features/notifications/data/local_notification_repository.dart';
 import 'package:vanta/features/portfolio/application/rebalance_provider.dart';
 import 'package:vanta/features/portfolio/application/asset_metadata_provider.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import 'aster_account.dart';
@@ -228,7 +229,7 @@ class FundingHarness {
             theme: vantaTheme(),
             locale: locale,
             supportedLocales: AppLocalizations.supportedLocales,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationDelegates,
             home: Builder(
               builder: (context) => Scaffold(
                 body: Center(

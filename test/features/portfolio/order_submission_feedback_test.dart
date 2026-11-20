@@ -16,6 +16,7 @@ import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_mode_selector.dart';
 import 'package:vanta/features/portfolio/application/main_order_allocation_provider.dart';
 import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/live_order.dart';
@@ -25,7 +26,7 @@ import '../../support/quick_order.dart';
 Widget _app(Widget child, {String language = 'en'}) => MaterialApp(
   theme: vantaTheme(),
   locale: Locale(language),
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  localizationsDelegates: appLocalizationDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   home: Scaffold(body: child),
 );

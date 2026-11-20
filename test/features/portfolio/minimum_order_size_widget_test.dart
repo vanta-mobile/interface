@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/theme.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/main_order_live_pricing.dart';
@@ -27,7 +28,7 @@ void main() {
               theme: vantaTheme(),
               locale: Locale(locale),
               supportedLocales: AppLocalizations.supportedLocales,
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: appLocalizationDelegates,
               builder: (context, child) => MediaQuery(
                 data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.5)),
                 child: child!,

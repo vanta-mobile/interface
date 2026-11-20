@@ -25,6 +25,7 @@ import 'package:vanta/features/authorization/application/trading_authorization_p
 import 'package:vanta/features/authorization/domain/trading_authorization.dart';
 import 'package:vanta/features/authorization/presentation/enable_trading_screen.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/identity_repository.dart';
@@ -81,7 +82,7 @@ Future<ProviderContainer> _launch(
       child: MaterialApp(
         theme: vantaTheme(),
         locale: Locale(language),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),

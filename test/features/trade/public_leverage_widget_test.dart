@@ -5,6 +5,7 @@ import 'package:vanta/core/theme.dart';
 import 'package:vanta/features/market/application/public_leverage_provider.dart';
 import 'package:vanta/features/market/domain/public_leverage.dart';
 import 'package:vanta/features/trade/presentation/widgets/trade_account_settings.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -24,7 +25,7 @@ void main() {
           ],
           child: MaterialApp(
             theme: vantaTheme(),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(body: TradeAccountSettings(symbol: symbol, data: null, enabled: false)),
           ),

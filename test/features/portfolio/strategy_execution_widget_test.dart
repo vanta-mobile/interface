@@ -10,6 +10,7 @@ import 'package:vanta/features/portfolio/application/symbol_settings_activity.da
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/strategy_execution.dart';
 import 'package:vanta/features/portfolio/presentation/strategy_execution_screen.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
@@ -60,7 +61,7 @@ void main() {
           builder: (context, value, child) => MaterialApp(
             locale: value,
             supportedLocales: AppLocalizations.supportedLocales,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationDelegates,
             home: route
                 ? Builder(
                     builder: (context) => Scaffold(

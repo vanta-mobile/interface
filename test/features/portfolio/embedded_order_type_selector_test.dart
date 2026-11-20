@@ -6,6 +6,7 @@ import 'package:vanta/features/portfolio/domain/live_order_entry_mode.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_mode_selector.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
 import 'package:vanta/features/trade/presentation/widgets/trade_option_sheet.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/main_order_live_pricing.dart';
@@ -13,7 +14,7 @@ import '../../support/main_order_live_pricing.dart';
 Widget _app(Widget child, {String locale = 'en', double scale = 1}) => MaterialApp(
   theme: vantaTheme(),
   locale: Locale(locale),
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  localizationsDelegates: appLocalizationDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   builder: (context, child) => MediaQuery(
     data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),

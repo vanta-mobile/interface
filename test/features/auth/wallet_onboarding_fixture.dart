@@ -20,6 +20,7 @@ import 'package:vanta/features/auth/presentation/startup_screen.dart';
 import 'package:vanta/features/authorization/application/trading_agent_provider.dart';
 import 'package:vanta/features/authorization/application/trading_authorization_provider.dart';
 import 'package:vanta/features/authorization/domain/trading_agent.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/identity_repository.dart';
@@ -127,7 +128,7 @@ class OnboardingHarness {
           child: MaterialApp(
             theme: vantaTheme(),
             locale: Locale(language),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: StartupScreen(home: home ?? const Scaffold(body: Text('Main page'))),
           ),

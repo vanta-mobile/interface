@@ -9,6 +9,7 @@ import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme.dart';
+import 'l10n/app_localization_delegates.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'features/auth/presentation/startup_screen.dart';
 import 'features/deep_link/application/deep_link_provider.dart';
@@ -141,10 +142,7 @@ class VantaApp extends ConsumerWidget {
       theme: vantaTheme(),
       locale: ref.watch(localeProvider),
       supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: [
-        AppLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
-      ],
+      localizationsDelegates: appLocalizationDelegates,
       home: const StartupScreen(home: DeepLinkHost(child: TradingScreen())),
     );
   }

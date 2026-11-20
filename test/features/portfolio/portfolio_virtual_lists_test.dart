@@ -14,6 +14,7 @@ import 'package:vanta/features/portfolio/domain/aster_account.dart';
 import 'package:vanta/features/portfolio/domain/position_card_metrics.dart';
 import 'package:vanta/features/portfolio/domain/position_risk.dart';
 import 'package:vanta/features/portfolio/presentation/trade_position_card.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 final _snapshot = NotifierProvider<_Snapshot, PortfolioOverview>(_Snapshot.new);
@@ -79,7 +80,7 @@ void main() {
         child: MaterialApp(
           theme: vantaTheme(),
           locale: const Locale('en'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),

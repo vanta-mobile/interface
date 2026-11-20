@@ -10,6 +10,7 @@ import 'package:vanta/features/points/application/points_provider.dart';
 import 'package:vanta/features/points/domain/points.dart';
 import 'package:vanta/features/points/presentation/points_page.dart';
 import 'package:vanta/features/points/presentation/total_leaderboard_page.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/identity_repository.dart';
@@ -51,7 +52,7 @@ void main() {
           theme: vantaTheme(),
           locale: Locale(language),
           supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
             child: child!,

@@ -10,6 +10,7 @@ import 'package:vanta/features/portfolio/domain/live_order_peg.dart';
 import 'package:vanta/features/portfolio/domain/live_order_time_in_force.dart';
 import 'package:vanta/features/portfolio/domain/live_order_trigger.dart';
 import 'package:vanta/features/portfolio/presentation/order_confirmation_dialog.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/live_order.dart';
@@ -38,7 +39,7 @@ Future<void> _open(
   await tester.pumpWidget(
     MaterialApp(
       locale: Locale(language),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Builder(
         builder: (context) => Scaffold(

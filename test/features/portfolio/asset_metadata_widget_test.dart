@@ -17,6 +17,7 @@ import 'package:vanta/features/portfolio/domain/aster_spot_account.dart';
 import 'package:vanta/features/portfolio/presentation/asset_identity.dart';
 import 'package:vanta/features/portfolio/presentation/aster_account_rows.dart';
 import 'package:vanta/features/portfolio/presentation/spot_balance_rows.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/asset_metadata.dart';
@@ -90,7 +91,7 @@ void main() {
           theme: vantaTheme(),
           locale: Locale(locale),
           supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.5)),
             child: child!,

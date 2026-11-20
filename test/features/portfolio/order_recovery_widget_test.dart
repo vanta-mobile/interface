@@ -12,6 +12,7 @@ import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
 import 'package:vanta/features/portfolio/presentation/position_leverage_sheet.dart';
 import 'package:vanta/features/portfolio/presentation/position_margin_mode_sheet.dart';
 import 'package:vanta/features/portfolio/presentation/position_tpsl_screen.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/aster_account.dart';
@@ -71,7 +72,7 @@ void main() {
               child: MaterialApp(
                 theme: vantaTheme(),
                 locale: Locale(language),
-                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                localizationsDelegates: appLocalizationDelegates,
                 supportedLocales: AppLocalizations.supportedLocales,
                 home: page,
               ),

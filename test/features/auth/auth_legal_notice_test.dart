@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vanta/core/theme.dart';
 import 'package:vanta/features/auth/presentation/auth_legal_notice.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -37,7 +38,7 @@ void main() {
       MaterialApp(
         theme: vantaTheme(),
         locale: Locale(language),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: Center(

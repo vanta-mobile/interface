@@ -16,6 +16,7 @@ import 'package:vanta/features/portfolio/presentation/portfolio_asset_row.dart';
 import 'package:vanta/features/portfolio/presentation/portfolio_assets.dart';
 import 'package:vanta/features/portfolio/presentation/portfolio_screen.dart';
 import 'package:vanta/features/portfolio/presentation/portfolio_summary.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/asset_indices.dart';
@@ -62,7 +63,7 @@ void main() {
         child: MaterialApp(
           theme: vantaTheme(),
           locale: Locale(locale),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const Scaffold(body: PortfolioPage()),
         ),

@@ -9,6 +9,7 @@ import 'package:vanta/features/subaccounts/application/subaccount_list_provider.
 import 'package:vanta/features/subaccounts/application/subaccount_management_provider.dart';
 import 'package:vanta/features/subaccounts/presentation/subaccount_list_screen.dart';
 import 'package:vanta/features/subaccounts/presentation/subaccount_management_screen.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/account_operations.dart';
@@ -80,7 +81,7 @@ void main() {
           theme: vantaTheme(),
           locale: Locale(spec.$3),
           supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.5)),
             child: child!,

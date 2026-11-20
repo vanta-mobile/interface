@@ -8,6 +8,7 @@ import 'package:vanta/features/portfolio/application/live_order_provider.dart';
 import 'package:vanta/features/portfolio/application/main_order_refresh_provider.dart';
 import 'package:vanta/features/portfolio/application/order_review_activity_provider.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_review.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/live_order.dart';
@@ -39,7 +40,7 @@ void main() {
           UncontrolledProviderScope(
             container: f.container,
             child: MaterialApp(
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: appLocalizationDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: Scaffold(
                 body: Consumer(

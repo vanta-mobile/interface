@@ -17,6 +17,7 @@ import 'package:vanta/features/portfolio/domain/trading_history.dart';
 import 'package:vanta/features/portfolio/presentation/futures_history_screen.dart';
 import 'package:vanta/features/portfolio/presentation/history_destination_page.dart';
 import 'package:vanta/features/trade/application/providers.dart' show symbolProvider;
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 const historyAddress = '0x1111111111111111111111111111111111111111';
@@ -251,7 +252,7 @@ Future<ProviderContainer> launchTradingHistory(
       child: MaterialApp(
         theme: vantaTheme(),
         locale: Locale(locale),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),

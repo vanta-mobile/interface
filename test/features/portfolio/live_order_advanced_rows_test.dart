@@ -8,6 +8,7 @@ import 'package:vanta/features/portfolio/presentation/embedded_time_in_force_sel
 import 'package:vanta/features/portfolio/presentation/live_order_embedded_controls.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_form.dart';
 import 'package:vanta/features/portfolio/presentation/live_order_screen.dart';
+import 'package:vanta/l10n/app_localization_delegates.dart';
 import 'package:vanta/l10n/generated/app_localizations.dart';
 
 import '../../support/live_order.dart';
@@ -35,7 +36,7 @@ void main() {
         child: MaterialApp(
           theme: vantaTheme(),
           locale: const Locale('en'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SingleChildScrollView(
