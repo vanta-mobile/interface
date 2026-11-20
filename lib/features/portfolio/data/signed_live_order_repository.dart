@@ -254,10 +254,6 @@ class SignedLiveOrderRepository implements LiveOrderRepository {
     }
     var submitted = false;
     final quote = await builder?.read(
-      service: service,
-      sign: sign,
-      nonces: nonces,
-      authorization: authorization,
       intent: intent,
       isCurrent: isCurrent,
       canSubmit: canSubmit,

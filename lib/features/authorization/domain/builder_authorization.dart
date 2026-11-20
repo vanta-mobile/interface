@@ -1,13 +1,14 @@
 import 'package:decimal/decimal.dart';
 
 /// Public attribution configuration. No Builder signing credential is used by
-/// the client. These are total trading-fee budgets, not additional Builder fees.
+/// the client. These are additional builder fees overlaid on top of the
+/// exchange base rates.
 class VantaBuilder {
   static const address = '0x8e56a61FAF72a8BaD21585a89a3004f8a01D8AAA';
   static const name = 'Vanta';
-  static final makerTotal = Decimal.parse('0.00015');
-  static final takerTotal = Decimal.parse('0.0005');
-  static final approvalCap = takerTotal;
+  static final makerRate = Decimal.parse('0.00015');
+  static final takerRate = Decimal.parse('0.0005');
+  static final approvalCap = takerRate;
 }
 
 class BuilderAuthorization {

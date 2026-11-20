@@ -10,8 +10,9 @@ import 'package:vanta/features/authorization/data/builder_authorization_reposito
 import 'package:vanta/features/authorization/domain/builder_authorization.dart';
 import 'package:vanta/features/portfolio/data/aster_account_service.dart';
 import 'package:vanta/features/portfolio/data/builder_order_preflight.dart';
-import 'package:vanta/features/portfolio/data/signed_live_order_repository.dart';
 import 'package:vanta/features/portfolio/data/signed_account_request.dart';
+import 'package:vanta/features/portfolio/data/signed_live_order_repository.dart';
+import 'package:vanta/features/portfolio/domain/account_request_signing.dart';
 import 'package:vanta/features/portfolio/domain/account_snapshot.dart';
 import 'package:vanta/features/portfolio/domain/live_order.dart';
 import 'package:vanta/features/portfolio/domain/live_order_time_in_force.dart';
@@ -28,14 +29,9 @@ void main() {
   late LiveOrderIntent intent;
   late List<http.Request> requests;
   late bool current, canSend, approved, timeout, expireAfterSignature;
-  late String maker, taker;
-  Object? fees;
   setUp(() {
     current = canSend = approved = true;
     timeout = expireAfterSignature = false;
-    maker = '0';
-    taker = '0.0004';
-    fees = null;
     requests = [];
     intent = LiveOrderIntent(
       context: liveContext(address: fixtureMaster),
@@ -71,18 +67,6 @@ void main() {
                     'maxFeeRate': 0.0005,
                   },
               ]),
-              200,
-            );
-          case '/fapi/v3/commissionRate':
-            return http.Response(
-              jsonEncode(
-                fees ??
-                    {
-                      'symbol': 'BTCUSDT',
-                      'makerCommissionRate': maker,
-                      'takerCommissionRate': taker,
-                    },
-              ),
               200,
             );
           case '/fapi/v3/positionRisk':
@@ -158,10 +142,9 @@ void main() {
         final post = requests.singleWhere((r) => r.method == 'POST');
         final p = Uri.splitQueryString(post.body);
         expect(p['builder'], VantaBuilder.address);
-        expect(p['feeRate'], '0.0001');
+        expect(p['feeRate'], '0.0005');
         expect(p['type'], market ? 'MARKET' : 'LIMIT');
         expect(p['newClientOrderId'], intent.clientOrderId);
-        expect(requests.where((r) => r.url.path.endsWith('/commissionRate')), hasLength(1));
       },
     );
   }
@@ -173,32 +156,20 @@ void main() {
       final post = requests.singleWhere((r) => r.method == 'POST');
       final p = Uri.splitQueryString(post.body);
       expect(post.url.path, '/fapi/v3/placeStrategyOrder');
-      expect(p['feeRate'], '0.0001');
+      expect(p['feeRate'], '0.0005');
       expect(p['builder'], VantaBuilder.address);
       final legs = jsonDecode(p['subOrderList']!) as List;
       expect((legs.first as Map)['timeInForce'], 'GTX');
       expect(legs.every((l) => !(l as Map).containsKey('builder')), true);
     },
   );
-  test('live revocation, malformed fees, and budget excess prevent every placement POST', () async {
+  test('live revocation prevents every placement POST', () async {
     approved = false;
     await expectLater(
       submit(),
       throwsA(
         isA<AccountReadFailure>().having((e) => e.key, 'key', 'builderAuthorizationRequired'),
       ),
-    );
-    approved = true;
-    fees = {'symbol': 'BTCUSDT', 'takerCommissionRate': '0.0004'};
-    await expectLater(
-      submit(),
-      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'accountDataInvalid')),
-    );
-    fees = null;
-    taker = '0.001';
-    await expectLater(
-      submit(),
-      throwsA(isA<AccountReadFailure>().having((e) => e.key, 'key', 'builderFeeAboveBudget')),
     );
     expect(requests.where((r) => r.method == 'POST'), isEmpty);
   });
@@ -216,7 +187,6 @@ void main() {
       expect((await submit()).status, 'NEW');
       await repo.recheck(intent: intent, isCurrent: () => current, onStep: (_) {});
       expect(requests.where((r) => r.method == 'POST'), hasLength(1));
-      expect(requests.where((r) => r.url.path.endsWith('/commissionRate')), hasLength(1));
       final queries = requests.where((r) => r.method == 'GET' && r.url.path == '/fapi/v3/order');
       expect(queries, hasLength(2));
       expect(

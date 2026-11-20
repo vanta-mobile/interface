@@ -177,7 +177,7 @@ void main() {
       ]);
       expect(messages.length, 6);
       expect(requests.where((r) => r.url.path.endsWith('/time')).length, 1);
-      expect(result.marketFacts!.takerFee, Decimal.parse('0.0005'));
+      expect(result.marketFacts!.takerFee, Decimal.parse('0.0009'));
       for (var i = 0; i < signed.length; i++) {
         final p = signed[i].url.queryParameters;
         expect(signed[i].url.query.split('&signature=').first, messages[i]);
@@ -235,8 +235,8 @@ void main() {
       unit: OrderSizeUnit.base,
       input: '2',
     );
-    expect(preview.buy.liquidation, d('50.10') / d('1.99'));
-    expect(preview.sell.liquidation, d('349.90') / d('2.01'));
+    expect(preview.buy.liquidation, d('50.18') / d('1.99'));
+    expect(preview.sell.liquidation, d('349.82') / d('2.01'));
     expect(requests.every((r) => r.method == 'GET'), true);
   });
   for (final invalid in <Object?>[
@@ -288,7 +288,7 @@ void main() {
       isCurrent: () => current,
       onStep: (_) {},
     );
-    expect(snapshot.marketFacts!.takerFee, Decimal.parse('0.001'));
+    expect(snapshot.marketFacts!.takerFee, Decimal.parse('0.0015'));
   });
   for (var signature = 1; signature <= 6; signature++) {
     test('refusal at signature $signature stops all later signatures and GETs', () async {
