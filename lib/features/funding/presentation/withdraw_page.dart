@@ -139,6 +139,15 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
         : depositRequired
         ? Decimal.zero
         : info.account?.assets[asset.asset]?.chains[asset.chainId]?.maximum(TransferMarket.perp);
+    final balances = <String, String?>{};
+    for (final a in choice.assets) {
+      final amount = depositRequired
+          ? Decimal.zero
+          : info.account?.assets[a.asset]?.chains[a.chainId]?.maximum(TransferMarket.perp);
+      balances[a.asset] = amount != null
+          ? fundingBalanceText(amount.toString(), a.asset)
+          : null;
+    }
     final fee = asset == null ? null : ref.watch(fundingFeeProvider(_feeQuery(asset))).quote;
     final amountKey = asset == null
         ? null
@@ -193,7 +202,7 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
           ),
         ],
         const SizedBox(height: 12),
-        _amount(choice, amountKey != null),
+        _amount(choice, amountKey != null, balances),
         if (error != null) ...[const SizedBox(height: 12), FundingError(error)],
         const SizedBox(height: 12),
         FundingGuidance(
@@ -259,11 +268,11 @@ class _WithdrawPageState extends ConsumerState<WithdrawPage> {
     ),
   );
 
-  Widget _amount(FundingChoice choice, bool error) {
+  Widget _amount(FundingChoice choice, bool error, Map<String, String?> balances) {
     final asset = choice.asset;
     return FundingDropdown<String>(
       options: [
-        for (final a in choice.assets) FundingOption(a.asset, a.asset, FundingAssetIcon(a.asset)),
+        for (final a in choice.assets) FundingOption(a.asset, a.asset, FundingAssetIcon(a.asset), balance: balances[a.asset]),
       ],
       selected: asset?.asset,
       onSelected: (value) {

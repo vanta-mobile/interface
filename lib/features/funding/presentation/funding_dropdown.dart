@@ -5,10 +5,11 @@ import '../../portfolio/presentation/portfolio_components.dart';
 
 /// One selectable row of an in-place funding dropdown.
 class FundingOption<T> {
-  const FundingOption(this.value, this.label, this.icon);
+  const FundingOption(this.value, this.label, this.icon, {this.balance});
   final T value;
   final String label;
   final Widget icon;
+  final String? balance;
 }
 
 /// In-place dropdown below its anchor; tapping outside closes it.
@@ -145,8 +146,12 @@ class _FundingDropdownState<T> extends State<FundingDropdown<T>> {
                             option.icon,
                             const SizedBox(width: 8),
                             Expanded(child: Text(option.label, style: AccountTypography.body)),
-                            if (option.value == widget.selected)
+                            if (option.balance != null)
+                              Text(option.balance!, style: AccountTypography.secondary),
+                            if (option.value == widget.selected) ...[
+                              if (option.balance != null) const SizedBox(width: 8),
                               const PortfolioIcon('check-circle.svg', size: 16),
+                            ],
                           ],
                         ),
                       ),

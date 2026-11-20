@@ -235,6 +235,15 @@ class _DepositPageState extends ConsumerState<DepositPage> {
     final query = asset == null
         ? null
         : DepositWalletQuery(market: TransferMarket.perp, asset: asset);
+    final balances = <String, String?>{};
+    for (final a in choice.assets) {
+      final q = DepositWalletQuery(market: TransferMarket.perp, asset: a);
+      ref.watch(depositWalletAutoReadProvider(q));
+      final snap = ref.watch(depositWalletProvider(q)).account;
+      balances[a.asset] = snap?.query.sameAsset(q) == true
+          ? fundingBalanceText(snap!.assetBalance.toString(), a.asset)
+          : null;
+    }
     final model = query == null ? null : _model(query);
     final catalogError = catalog.failureKey == null || catalog.catalog != null
         ? null
@@ -267,7 +276,7 @@ class _DepositPageState extends ConsumerState<DepositPage> {
         const SizedBox(height: 12),
         _network(l, choice, query),
         const SizedBox(height: 12),
-        _amount(choice, query, model),
+        _amount(choice, query, model, balances),
         if (model?.error ?? catalogError case final error?) ...[
           const SizedBox(height: 12),
           FundingError(error),
@@ -317,11 +326,11 @@ class _DepositPageState extends ConsumerState<DepositPage> {
         ),
       );
 
-  Widget _amount(FundingChoice choice, DepositWalletQuery? query, _DepositModel? model) {
+  Widget _amount(FundingChoice choice, DepositWalletQuery? query, _DepositModel? model, Map<String, String?> balances) {
     final asset = choice.asset;
     return FundingDropdown<String>(
       options: [
-        for (final a in choice.assets) FundingOption(a.asset, a.asset, FundingAssetIcon(a.asset)),
+        for (final a in choice.assets) FundingOption(a.asset, a.asset, FundingAssetIcon(a.asset), balance: balances[a.asset]),
       ],
       selected: asset?.asset,
       onSelected: (value) {
