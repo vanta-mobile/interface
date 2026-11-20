@@ -101,7 +101,6 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
         isCurrent: isCurrent,
       );
       current();
-      final clock = Stopwatch()..start();
       final serverTime = await futures.serverTime();
       current();
       final nonce = nonces.next(serverTime);
@@ -121,14 +120,15 @@ class AsterTradingAuthorizationRepository implements TradingAuthorizationReposit
       ).query;
       final data = asterReadTypedData(query);
       data['domain'] = {...data['domain']! as Map<String, Object?>, 'chainId': 56};
+      // Nonce age measured from just before signing, not from server time fetch.
+      // No implicit second prompt, nonce refresh or retry after an expired one.
+      final clock = Stopwatch()..start();
       onStep?.call(TradingAuthorizationStep.signing);
       final signature = await sign(expectedAddress: address, typedData: data);
       current();
       if (!verifyAsterWalletSignature(address, data, signature)) {
         throw const AccountReadFailure('authWalletSignature');
       }
-      // Fetching time and signing both count towards the strict 10s window.
-      // No implicit second prompt, nonce refresh or retry after an expired one.
       if (clock.elapsed >= const Duration(seconds: 9)) {
         throw const AccountReadFailure('accountSignatureExpired');
       }
