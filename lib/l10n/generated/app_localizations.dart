@@ -13483,8 +13483,8 @@ abstract class AppLocalizations {
   /// No description provided for @geoRestrictionDescription.
   ///
   /// In en, this message translates to:
-  /// **'This service is not available in certain regions: United States, Canada, United Kingdom, Mainland China, Hong Kong, Japan, Indonesia, Philippines, Thailand, Turkey, Australia, New Zealand, Brazil, Singapore, Malaysia, South Korea, India, Vietnam, Russia, Iran, North Korea, Pakistan, Bangladesh, Argentina, Mexico, South Africa, Saudi Arabia, United Arab Emirates, Egypt, Nigeria, and Taiwan.'**
-  String get geoRestrictionDescription;
+  /// **'This service is not available in certain regions: {areas}.'**
+  String geoRestrictionDescription(String areas);
 
   /// No description provided for @geoRestrictionViewAll.
   ///

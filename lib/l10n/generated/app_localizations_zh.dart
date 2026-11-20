@@ -7295,8 +7295,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get geoRestrictionTitle => '访问受限';
 
   @override
-  String get geoRestrictionDescription =>
-      '本服务在以下地区不可用：美国、加拿大、英国、中国大陆、香港、日本、印度尼西亚、菲律宾、泰国、土耳其、澳大利亚、新西兰、巴西、新加坡、马来西亚、韩国、印度、越南、俄罗斯、伊朗、朝鲜、巴基斯坦、孟加拉国、阿根廷、墨西哥、南非、沙特阿拉伯、阿拉伯联合酋长国、埃及、尼日利亚及台湾。';
+  String geoRestrictionDescription(String areas) {
+    return '本服务在以下地区不可用：$areas。';
+  }
 
   @override
   String get geoRestrictionViewAll => '查看全部';

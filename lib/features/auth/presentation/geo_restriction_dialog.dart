@@ -7,7 +7,8 @@ import '../../../core/theme.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/presentation/no_press_feedback.dart';
 
-Future<void> showGeoRestrictionDialog(BuildContext context) => showGeneralDialog<void>(
+Future<void> showGeoRestrictionDialog(BuildContext context, List<String> restrictedAreas) =>
+    showGeneralDialog<void>(
   context: context,
   barrierDismissible: false,
   barrierLabel: '',
@@ -23,10 +24,10 @@ Future<void> showGeoRestrictionDialog(BuildContext context) => showGeneralDialog
           ),
         ),
       ),
-      const Center(
+      Center(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: _GeoRestrictionDialog(),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: _GeoRestrictionDialog(restrictedAreas: restrictedAreas),
         ),
       ),
     ],
@@ -34,7 +35,8 @@ Future<void> showGeoRestrictionDialog(BuildContext context) => showGeneralDialog
 );
 
 class _GeoRestrictionDialog extends StatefulWidget {
-  const _GeoRestrictionDialog();
+  const _GeoRestrictionDialog({required this.restrictedAreas});
+  final List<String> restrictedAreas;
 
   @override
   State<_GeoRestrictionDialog> createState() => _GeoRestrictionDialogState();
@@ -46,6 +48,9 @@ class _GeoRestrictionDialogState extends State<_GeoRestrictionDialog> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final description = widget.restrictedAreas.isEmpty
+        ? ''
+        : l.geoRestrictionDescription(widget.restrictedAreas.join(', '));
     return Material(
       color: PortfolioColors.inset,
       shape: RoundedRectangleBorder(
@@ -61,7 +66,7 @@ class _GeoRestrictionDialogState extends State<_GeoRestrictionDialog> {
             _ExplanationSection(title: l.geoRestrictionTitle),
             const SizedBox(height: 16),
             _DescriptionSection(
-              description: l.geoRestrictionDescription,
+              description: description,
               expanded: _expanded,
               onToggle: () => setState(() => _expanded = !_expanded),
               viewAllLabel: l.geoRestrictionViewAll,
