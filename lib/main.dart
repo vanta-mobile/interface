@@ -13,6 +13,7 @@ import 'l10n/generated/app_localizations.dart';
 import 'features/auth/presentation/startup_screen.dart';
 import 'features/deep_link/application/deep_link_provider.dart';
 import 'features/deep_link/presentation/deep_link_host.dart';
+import 'features/market/application/selection_providers.dart';
 import 'features/trade/application/providers.dart';
 import 'features/trade/presentation/trading_screen.dart';
 
@@ -96,6 +97,12 @@ Future<void> _runApp() async {
   } catch (_) {
     // System locale remains usable if local preferences cannot be read.
   }
+  String? savedSymbol;
+  try {
+    savedSymbol = await readSavedSymbol();
+  } catch (_) {
+    // Default BTCUSDT remains usable if local preferences cannot be read.
+  }
   runApp(
     ProviderScope(
       observers: [ErrorMonitoringObserver()],
@@ -106,6 +113,7 @@ Future<void> _runApp() async {
           pushMessaging == null ? null : PushOpenSource.firebase(),
         ),
         initialLocaleProvider.overrideWithValue(localeFromPreference(saved)),
+        initialSymbolProvider.overrideWithValue(savedSymbol ?? 'BTCUSDT'),
         orderRecoveryJournalProvider.overrideWithValue(recovery),
         rebalanceJournalProvider.overrideWithValue(rebalances),
         internalTransferJournalProvider.overrideWithValue(internalTransfers),
